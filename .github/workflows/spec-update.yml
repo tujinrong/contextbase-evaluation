@@ -32,16 +32,19 @@ jobs:
           parts=[]
           for n,h in enumerate(expected,1):
               p=root/f'payload.b64.{n}'; b=p.read_bytes().strip()
-              if n==2 and len(b)==9004 and blob(b)!=h:
-                  candidates=[b[:i]+b[i+4:] for i in range(len(b)-3) if blob(b[:i]+b[i+4:])==h]
-                  if candidates: b=candidates[0]
+              if n==2 and blob(b)=='f0517b54d03b280904b093db98ff448cf2d5e00d':
+                  assert b[1992:1994]==b're' and b[1950:1952]==b'NL' and b[1608:1609]==b'X' and b[1396:1397]==b'l'
+                  b=b[:1992]+b'Po'+b[1994:]
+                  b=b[:1950]+b[1952:]
+                  b=b[:1608]+b[1609:]
+                  b=b[:1396]+b[1397:]
               assert blob(b)==h, f'Payload checksum mismatch in part {n}'
               parts.append(b)
           code=gzip.decompress(base64.b64decode(b''.join(parts),validate=True))
           target=root/'migrate.py'; target.write_bytes(code)
           print('MIGRATION_SHA256',hashlib.sha256(code).hexdigest())
           subprocess.run(['python3',str(target)],check=True)
-          if (root/'review.py').exists(): subprocess.run(['python3',str(root/'review.py')],check=True)
+          subprocess.run(['python3',str(root/'review.py')],check=True)
           Path('/tmp/spec-update-complete').touch()
           PY
       - name: Commit documentation directly to main
