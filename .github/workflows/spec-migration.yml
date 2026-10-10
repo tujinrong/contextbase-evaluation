@@ -1,0 +1,58 @@
+name: Specification migration workspace
+on:
+  push:
+    branches: [docs/spec-rules-migration-20261010]
+    paths: ['.github/workflows/spec-migration.yml', '.migration/**']
+permissions:
+  contents: write
+jobs:
+  migrate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Inspect or migrate specifications
+        shell: bash
+        run: |
+          set -euo pipefail
+          if test -f .migration/reformat.py; then
+            python3 .migration/reformat.py
+          else
+            python3 - <<'PY'
+          from pathlib import Path
+          for p in sorted(Path('spec').rglob('*.md')):
+              print('\nFILE:', p)
+              for line in p.read_text(encoding='utf-8').splitlines():
+                  if line.startswith(('# ', '## ', '### ')):
+                      print(line)
+          PY
+          fi
+      - name: Save generated documents on workspace branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- spec docs
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'docs: apply specification structure and one-function-per-file rules'
+            git push origin HEAD:refs/heads/docs/spec-rules-migration-20261010
+          fi
+          git rev-parse HEAD
+      - name: Package specification snapshot
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile, ZIP_DEFLATED
+          with ZipFile('specification-snapshot.zip', 'w', ZIP_DEFLATED) as z:
+              for root in ('spec', 'docs'):
+                  for p in sorted(Path(root).rglob('*.md')):
+                      z.write(p, str(p))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: specification-snapshot
+          path: specification-snapshot.zip
+          retention-days: 1
+          if-no-files-found: error
