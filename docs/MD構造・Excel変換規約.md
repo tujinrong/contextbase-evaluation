@@ -1,10 +1,10 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-MD-EXCEL","version":"6.0","path":"docs/MD構造・Excel変換規約.md","sheets":[{"heading":"章とシートの対応","kind":"GRID","sheet":"01_章とシートの対応"},{"heading":"LIST構文","kind":"GRID","sheet":"02_LIST構文"},{"heading":"LISTのExcel配置","kind":"GRID","sheet":"03_LISTのExcel配置"},{"heading":"GRIDのExcel配置","kind":"GRID","sheet":"04_GRIDのExcel配置"},{"heading":"メタ情報と復元","kind":"GRID","sheet":"05_メタ情報と復元"},{"heading":"検査と参照資料","kind":"GRID","sheet":"06_検査と参照資料"},{"heading":"描画可能な画面HTML・評価チェックリスト","kind":"GRID","sheet":"07_描画可能な画面HTML・評価チェックリスト"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-MD-EXCEL","version":"7.0","path":"docs/MD構造・Excel変換規約.md","sheets":[{"heading":"章とシートの対応","kind":"GRID","sheet":"01_章とシートの対応"},{"heading":"LIST構文","kind":"GRID","sheet":"02_LIST構文"},{"heading":"LISTのExcel配置","kind":"GRID","sheet":"03_LISTのExcel配置"},{"heading":"GRIDのExcel配置","kind":"GRID","sheet":"04_GRIDのExcel配置"},{"heading":"メタ情報と復元","kind":"GRID","sheet":"05_メタ情報と復元"},{"heading":"検査と参照資料","kind":"GRID","sheet":"06_検査と参照資料"},{"heading":"描画可能な画面HTML・評価チェックリスト","kind":"GRID","sheet":"07_描画可能な画面HTML・評価チェックリスト"}]} -->
 # MD構造・Excel変換規約
 
 | 項目 | 内容 |
 | --- | --- |
 | 文書ID | DOC-MD-EXCEL |
-| 版数・日付 | 6.0／2026-10-11 |
+| 版数・日付 | 7.0／2026-10-11 |
 | 根拠 | 利用者指定：一覧章はListシート、その他は細かい列のExcel方眼で表現する |
 | 適用 | docs、基本、詳細、共通、DB定義。出力の正本はUTF-8 Markdown |
 | 現在の成果物 | 変換しやすいMDと変換規約。XLSX変換器と実際のExcel描画は未実装・未試験 |
@@ -46,7 +46,7 @@ GRID章内に小さな説明表を置くことはできる。その表だけを�
 文書先頭に1つのHTMLコメントを置き、JSONオブジェクトを格納する。コメントは書式制御用であり業務情報を隠す場所ではない。説明例のコードフェンス内を実際の章と数えない。
 
 ```text
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DET-VB-SRC","version":"6.0","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"項目一覧","kind":"LIST","sheet":"02_項目一覧","key":["項目ID"]}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DET-VB-SRC","version":"7.0","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"項目一覧","kind":"LIST","sheet":"02_項目一覧","key":["項目ID"]}]} -->
 ```
 
 各章のheadingは実見出しと完全一致。sheetは空でない31文字以内とし、`/ \ ? * : [ ]`を禁止する。大文字小文字を無視して同一ワークブック内で重複させず、予約名・先頭末尾アポストロフィ等も避ける。自動短縮時は元見出しとsheetの対応を保持し、衝突は安定した番号で解決する。[EX-02]
@@ -67,6 +67,6 @@ EX-01：Microsoft「Excel specifications and limits」https://support.microsoft.
 
 LIST章には引き続き表１つ以外を置かない。描画用HTML・CSS・PNG・説明はGRIDである概要章だけへ置く。Excel変換時は画面を方眼領域へ画像として配置してよいが、元HTML・CSS・項目IDをメタ情報へ保持し、画像だけからDBや制約を逆推定しない。描画例を表の単なるセル結合へ劣化させない。
 
-原仕様に紐付く採点可能な[仕様書チェックリスト](評価/00_採点規則.md)を作る。項目一覧は１画面項目１点、イベント概要・ER図等は各３点。単一表でER図を省略する場合は非適用理由と除外後の満点を明示する。項目ごとの必須・長さ・型・参照先を具体的な期待値として書き、見出しの有無だけで満点にしない。採点表は逆生成Agentに渡さず、独立抽出した後で評価する。得点と実装の動作保証は分ける。
+各プロジェクトのspec-evalに具体的な期待値と配点を持つ評価表を置く。一般規則は[評価規約](評価規約.md)。一覧1行1レコードとし、評価期待値をAgentの一般書式へ混在させない。
 
 描画技術の参照：Playwright Python Screenshots https://playwright.dev/python/docs/screenshots 。Markdownの表・HTML構文と安全化の注意：https://github.github.com/gfm/ （2026-10-11参照）。本プロジェクト独自のLIST／GRIDと配点は上記外部仕様が定めたものではない。
