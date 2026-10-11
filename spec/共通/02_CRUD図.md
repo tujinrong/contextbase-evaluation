@@ -1,6 +1,7 @@
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"COM-STU-002","version":"6.0","path":"spec/共通/02_CRUD図.md","sheets":[{"heading":"確定境界","kind":"GRID","sheet":"01_確定境界"},{"heading":"一時情報","kind":"GRID","sheet":"02_一時情報"},{"heading":"技術補助情報の区別","kind":"GRID","sheet":"03_技術補助情報の区別"}]} -->
 # CRUD図（言語非依存）
 
-版：5.0／2026-10-10。文書ID：COM-STU-002。
+版：6.0／2026-10-11。文書ID：COM-STU-002。
 
 C＝登録、R＝参照、U＝変更、D＝物理削除。通常処理のDはなし。論理削除は削除状態の変更なのでU。ロックを取得しても業務値を変えなければUとはしない。方式固有の一時状態・制御表は本表の業務5表に含めない。
 
