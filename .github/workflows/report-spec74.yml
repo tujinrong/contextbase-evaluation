@@ -1,0 +1,68 @@
+name: Review report and correct specifications 7.4
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/report-spec74.yml']
+permissions:
+  contents: write
+concurrency:
+  group: report-spec74
+  cancel-in-progress: false
+jobs:
+  specification-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify reviewed base and restrict maintenance scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          base='9ca00ce673a3f4533f79288d9854b578272b936b'
+          paths=set(subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines())
+          allowed={'tools/spec-maintenance/report_spec74.py','.github/workflows/report-spec74.yml'}
+          if paths != allowed:
+              raise SystemExit('Reviewed baseline changed; refusing to overwrite: '+repr(paths))
+          PY
+      - name: Apply reviewed specification changes and static checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/spec-maintenance/report_spec74.py --verification test-project1/report/20261012-spec-04-verification.json
+          python - <<'PY'
+          import subprocess
+          paths=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+          if not all(p.startswith(('test-project1/spec/','test-project1/spec-eval/','test-project1/docs/開発規約/')) for p in paths):
+              raise SystemExit('Unexpected tracked-file write: '+repr(paths))
+          new=set(subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines())
+          allowed={'test-project1/report/20261012-spec-04-仕様修正回答.md','test-project1/report/20261012-spec-04-verification.json'}
+          if new != allowed:
+              raise SystemExit('Unexpected new files: '+repr(new))
+          PY
+      - name: Publish specification-only commit to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm tools/spec-maintenance/report_spec74.py .github/workflows/report-spec74.yml
+          git add test-project1/spec test-project1/spec-eval test-project1/docs/開発規約 test-project1/report/20261012-spec-04-仕様修正回答.md test-project1/report/20261012-spec-04-verification.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'docs: resolve report specification conflicts and define Access retest contract'
+          git push origin HEAD:main
+      - name: Package specification set and unchanged source reports
+        shell: bash
+        run: |
+          set -euo pipefail
+          git archive --format=zip --output=specification-report-corrections-7.4.zip HEAD docs AGENTS.md README.md agents test-project1/spec test-project1/spec-eval test-project1/docs test-project1/report test-project1/README.md test-project1/プロジェクト情報.md
+          git rev-parse HEAD > published-commit.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: specification-report-corrections-7.4
+          path: |
+            specification-report-corrections-7.4.zip
+            published-commit.txt
+          retention-days: 7
