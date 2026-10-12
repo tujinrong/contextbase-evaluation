@@ -78,7 +78,7 @@ int32_t StUnicodeNormalize(const uint16_t *input,int32_t units,int32_t rawMax,in
     end=n;while(end>start) { int32_t p=end-1;if(stage[p]>=0xdc00&&stage[p]<=0xdfff)p--;int32_t q=p;scalar(stage,n,&q,&cp);if(!white(cp))break;end=p; }
     n=end-start;memmove(stage,stage+start,(size_t)n*2);
     if(!n) return required?1:0;
-    if(mode>=2&&mode<=8 || mode==10 || mode==11) {
+    if((mode>=2&&mode<=8) || mode==10 || mode==11) {
         m=unorm_normalize(stage,n,UNORM_NFKC,0,norm,4096,&error);
         if(U_FAILURE(error)||m>4096) return 2;
     } else { m=n;memcpy(norm,stage,(size_t)n*2); }
@@ -93,8 +93,8 @@ int32_t StUnicodeNormalize(const uint16_t *input,int32_t units,int32_t rawMax,in
         if(mode==7||mode==8) { if(hyphen(cp)||(mode==8&&(cp==0x28||cp==0x29)))continue; }
         if(mode==3||mode==4) {
             if(white(cp)) { pending=n>0;continue; }
-            if(cp>=0x3041&&cp<=0x3096||cp==0x309d||cp==0x309e) cp+=0x60;
-            if(!(cp>=0x30a1&&cp<=0x30fa||cp==0x30fc||cp==0x30fb||cp==0x30fd||cp==0x30fe)) return 3;
+            if((cp>=0x3041&&cp<=0x3096)||cp==0x309d||cp==0x309e) cp+=0x60;
+            if(!((cp>=0x30a1&&cp<=0x30fa)||cp==0x30fc||cp==0x30fb||cp==0x30fd||cp==0x30fe)) return 3;
             if(mode==3&&pending) { if(!put(output,capacity,&n,0x20))return 2;pending=0; }
         }
         if(!put(output,capacity,&n,cp)) return 2;
@@ -102,7 +102,7 @@ int32_t StUnicodeNormalize(const uint16_t *input,int32_t units,int32_t rawMax,in
     c=StUnicodeScalars(output,n);if(c<0||c>savedMax) return 2;
     if(mode==5) {
         if(!n||!(ascii_letter(output[0])||ascii_digit(output[0]))) return 3;
-        for(i=0;i<n;i++) if(!(output[i]>=0x41&&output[i]<=0x5a||ascii_digit(output[i])||output[i]==0x2d))return 3;
+        for(i=0;i<n;i++) if(!((output[i]>=0x41&&output[i]<=0x5a)||ascii_digit(output[i])||output[i]==0x2d))return 3;
     } else if(mode==6) {
         for(i=0;i<n;i++) if(!ascii_digit(output[i]))return 3;
         if(n!=savedMax) return 3;

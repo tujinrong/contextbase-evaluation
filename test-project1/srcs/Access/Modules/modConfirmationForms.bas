@@ -13,6 +13,7 @@ Public Function InitConfirmation(ByVal frm As Access.Form) As Boolean
     If ConfirmationMode = "DELETE" Then
         frm!lblPrompt.Caption = "学生 " & ConfirmationStudentNo & " を論理削除します。理由を入力し、確認してください。"
     Else
+        If ConfirmationRows Is Nothing Then Set ConfirmationRows = New Collection
         frm!lblPrompt.Caption = CStr(ConfirmationRows.Count) & "件の同一人物候補があります。表示は最大20件です。氏名・生年月日・クラスを確認し、別人として続行する理由を入力してください。"
         frm!lstCandidates.Requery
     End If
@@ -35,14 +36,16 @@ End Function
 Public Function CandidateListCallback(ctl As Control, id As Variant, row As Variant, col As Variant, code As Variant) As Variant
     Dim item As Object
     Select Case code
-    Case acLBInitialize: CandidateListCallback = Not ConfirmationRows Is Nothing
+    Case acLBInitialize: CandidateListCallback = True
     Case acLBOpen: CandidateListCallback = Timer + 1
     Case acLBGetRowCount
+        If ConfirmationRows Is Nothing Then CandidateListCallback = 0: Exit Function
         CandidateListCallback = ConfirmationRows.Count
         If ConfirmationRows.Count > 20 Then CandidateListCallback = 20
     Case acLBGetColumnCount: CandidateListCallback = 4
     Case acLBGetColumnWidth, acLBGetFormat: CandidateListCallback = -1
     Case acLBGetValue
+        If ConfirmationRows Is Nothing Then Exit Function
         If row < 0 Or row >= ConfirmationRows.Count Or row >= 20 Then Exit Function
         Set item = ConfirmationRows(row + 1)
         Select Case col

@@ -1,0 +1,41 @@
+       >>SOURCE FORMAT FREE
+identification division.
+program-id. STHINT.
+environment division.
+configuration section.
+repository. function all intrinsic.
+data division.
+working-storage section.
+copy "ST-FIELDS.cpy".
+copy "ST-APP.cpy".
+copy "ST-LOCAL.cpy".
+
+procedure division.
+    CALL "STUNICODE" USING BY VALUE 5
+      BY REFERENCE R-VALUE(F-GRADECODE) N-VALUE(26) BY VALUE 2 2
+      RETURNING RC END-CALL
+    IF RC NOT = 0 PERFORM HINT-ERROR END-IF
+    IF N-NULL(26) = 0
+      IF N-LENGTH(26) NOT = 2 OR N-DATA(26)(1:2) IS NOT NUMERIC
+        PERFORM HINT-ERROR END-IF
+    END-IF
+    CALL "STUNICODE" USING BY VALUE 5
+      BY REFERENCE R-VALUE(F-SCHOOLYEAR) N-VALUE(27) BY VALUE 4 4
+      RETURNING RC END-CALL
+    IF RC NOT = 0 PERFORM HINT-ERROR END-IF
+    IF N-NULL(27) = 0
+      CALL "STINTEGER" USING N-VALUE(27) V RETURNING RC END-CALL
+      IF RC NOT = 0 OR N-LENGTH(27) NOT = 4 OR V < 1900 OR V > 9998
+        PERFORM HINT-ERROR END-IF
+    END-IF
+    CALL "STUNICODE" USING BY VALUE 5
+      BY REFERENCE R-VALUE(F-ENROLLMENTSTATUSCODE) N-VALUE(28) BY VALUE 2 2
+      RETURNING RC END-CALL
+    IF RC NOT = 0 PERFORM HINT-ERROR END-IF
+    GOBACK.
+HINT-ERROR.
+    MOVE "E-STU-010: 年度または学年の形式が無効です。" TO ERROR-TEXT
+    PERFORM ADD-ERROR.
+
+copy "ST-HELPERS.cpy".
+end program STHINT.

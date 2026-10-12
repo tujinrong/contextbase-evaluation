@@ -1,5 +1,5 @@
 Imports System.Windows.Forms
-Imports Core = StudentManagement.Core
+Imports Core = StudentManagement.WinForms.Domain
 
 Namespace Controls
     ' REG-005 / UI-15. Each raw component is preserved rather than DateTimePicker coercion.

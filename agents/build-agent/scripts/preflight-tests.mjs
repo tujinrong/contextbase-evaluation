@@ -23,6 +23,12 @@ try {
  write(file,valid+'| A | duplicate |\n');if(!run('duplicate-key',2).findings.some(f=>f.code==='TABLE_KEY')) throw new Error('Duplicate key not reported');passed++;
  write(file,valid.replace('## 定義','## 別の章'));if(!run('chapter',2).findings.some(f=>f.code==='CHAPTER_MAPPING')) throw new Error('Chapter mismatch not reported');passed++;
  write(file,valid.replace('| A | fixture |','| A | [missing](missing.md) |'));if(!run('missing-reference',2).findings.some(f=>f.code==='LINK_MISSING')) throw new Error('Missing reference not reported');passed++;
+ write(file,valid);
+ const isolated='test-project1/srcs/CSharp_ASPNET/spec/unit.md';
+ write(isolated,document(isolated,'ISOLATED'));
+ if(run('isolated-positive',0).findings.length)throw new Error('Valid independent specification rejected');passed++;
+ write(isolated,document(isolated,'ISOLATED').replace('| A | fixture |','| A | [shared](../../../spec/unit.md) |'));
+ if(!run('isolated-cross-reference',2).findings.some(f=>f.code==='LINK_ISOLATION'))throw new Error('Cross-package specification reference not rejected');passed++;
  console.log(`PASS ${passed} preflight assertions: structural stop, input exclusion, fresh reports; fixture only.`);
 } finally {
  const resolved=path.resolve(fixture);if(!resolved.startsWith(base+path.sep)) throw new Error('Cleanup target outside agent fixture area');

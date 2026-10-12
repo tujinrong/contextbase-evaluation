@@ -38,34 +38,34 @@ End Function
 Public Function NormalizeDraft(ByVal raw As Object, ByVal day As String) As Object
     Dim d As Object, k As Variant
     Set d = Map()
-    d.Add "student_no", TextValue(raw("student_no"), 15, 15, "number")
-    d.Add "student_name", TextValue(raw("student_name"), 8, 8, "text")
-    d.Add "student_name_kana", TextValue(raw("student_name_kana"), 36, 18, "kana")
+    d.Add "student_no", DraftText(raw, "student_no", 15, 15, "number")
+    d.Add "student_name", DraftText(raw, "student_name", 8, 8, "text")
+    d.Add "student_name_kana", DraftText(raw, "student_name_kana", 36, 18, "kana")
     d.Add "birth_date", ParseBirthDate(Nz(raw("birth_era"), ""), Nz(raw("birth_year"), ""), Nz(raw("birth_month"), ""), Nz(raw("birth_day"), ""), day)
-    d.Add "gender_code", TextValue(raw("gender_code"), 1, 1, "code")
-    d.Add "postal_code", TextValue(raw("postal_code"), 10, 7, "postal")
-    d.Add "prefecture_code", TextValue(raw("prefecture_code"), 2, 2, "code")
+    d.Add "gender_code", DraftText(raw, "gender_code", 1, 1, "code")
+    d.Add "postal_code", DraftText(raw, "postal_code", 10, 7, "postal")
+    d.Add "prefecture_code", DraftText(raw, "prefecture_code", 2, 2, "code")
     d.Add "address_line1", TextValue(raw("address_line1"), 45, 45, "text")
     d.Add "address_line2", TextValue(raw("address_line2"), 45, 45, "text")
-    d.Add "phone_number", TextValue(raw("phone_number"), 20, 16, "phone")
-    d.Add "email_address", TextValue(raw("email_address"), 60, 60, "email")
+    d.Add "phone_number", DraftText(raw, "phone_number", 20, 16, "phone")
+    d.Add "email_address", DraftText(raw, "email_address", 60, 60, "email")
     d.Add "admission_date", StrictIso(raw("admission_date"), True)
-    d.Add "enrollment_status_code", TextValue(raw("enrollment_status_code"), 2, 2, "code")
+    d.Add "enrollment_status_code", DraftText(raw, "enrollment_status_code", 2, 2, "code")
     d.Add "enrollment_end_date", StrictIso(raw("enrollment_end_date"), False)
     If Nz(raw("class_id"), "") = "" Then d.Add "class_id", Null Else d.Add "class_id", PositiveId(raw("class_id"))
-    d.Add "emergency_contact_name", TextValue(raw("emergency_contact_name"), 8, 8, "text")
-    d.Add "relationship_code", TextValue(raw("relationship_code"), 2, 2, "code")
-    d.Add "emergency_phone_number", TextValue(raw("emergency_phone_number"), 20, 16, "phone")
-    d.Add "remarks", TextValue(raw("remarks"), 120, 120, "memo")
+    d.Add "emergency_contact_name", DraftText(raw, "emergency_contact_name", 8, 8, "text")
+    d.Add "relationship_code", DraftText(raw, "relationship_code", 2, 2, "code")
+    d.Add "emergency_phone_number", DraftText(raw, "emergency_phone_number", 20, 16, "phone")
+    d.Add "remarks", DraftText(raw, "remarks", 120, 120, "memo")
     For Each k In Split("student_no student_name student_name_kana gender_code postal_code prefecture_code address_line1 enrollment_status_code", " ")
-        If IsNull(d(k)) Then Err.Raise vbObjectError + 120, , "E-STU-001: " & k
+        If IsNull(d(k)) Then Err.Raise vbObjectError + 120, , "E-STU-001|fieldKey=" & k & "|field=" & FieldLabel(CStr(k))
     Next
     If Not Match(d("student_no"), "^[A-Z0-9][A-Z0-9-]{0,14}$") Then Err.Raise vbObjectError + 120, , "E-STU-003"
     If Not Match(d("gender_code"), "^[0-9]$") Or Not Match(d("prefecture_code"), "^[0-9]{2}$") Or Not Match(d("enrollment_status_code"), "^0[1-4]$") Then Err.Raise vbObjectError + 120, , "E-STU-009"
     If Not Match(d("postal_code"), "^[0-9]{7}$") Then Err.Raise vbObjectError + 120, , "E-STU-015"
     For Each k In Array("phone_number", "emergency_phone_number")
         If Not IsNull(d(k)) Then
-            If Not Match(d(k), "^(0[0-9]{9,10}|\+[1-9][0-9]{6,14})$") Then Err.Raise vbObjectError + 120, , "E-STU-016"
+            If Not Match(d(k), "^(0[0-9]{9,10}|\+[1-9][0-9]{6,14})$") Then Err.Raise vbObjectError + 120, , "E-STU-016|fieldKey=" & k & "|field=" & FieldLabel(CStr(k))
         End If
     Next
     If Not IsNull(d("email_address")) Then
@@ -87,6 +87,16 @@ Public Function NormalizeDraft(ByVal raw As Object, ByVal day As String) As Obje
     d.Add "name_key", TextValue(d("student_name"), 8, 160, "nameKey")
     d.Add "kana_key", WithoutWhite(d("student_name_kana"))
     Set NormalizeDraft = d
+End Function
+Private Function DraftText(ByVal raw As Object, ByVal key As String, ByVal maxRaw As Long, ByVal maxSaved As Long, ByVal kind As String) As Variant
+    On Error GoTo Invalid
+    DraftText = TextValue(raw(key), maxRaw, maxSaved, kind)
+    Exit Function
+Invalid:
+    Dim message As String, number As Long
+    message = Err.Description: number = Err.Number
+    If Left$(message, 2) <> "E-" Then message = "E-STU-002"
+    Err.Raise number, , message & "|fieldKey=" & key & "|field=" & FieldLabel(key) & "|max=" & CStr(maxSaved)
 End Function
 
 Public Function Seat(ByVal d As Object) As Variant

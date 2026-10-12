@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text.Json.Serialization;
 using StudentManagement.Core;
 namespace StudentManagement.Web;
-// REG-002..024, COM-Vue_CSharpAPI. The transport contains only explicitly permitted values.
+// REG-002..024, COM-CSharp_ASPNET. The transport contains only explicitly permitted values.
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed class StudentSaveInput
 {

@@ -1,0 +1,9 @@
+# VB.NET方式内 SQL Server 2022
+
+入力はこの方式内specのDB定義と共通コード定義版8.0です。`node database/generate.mjs` はDDL/seedだけを生成し、DBへ接続しません。空の専用評価DBへ001_schema.sql、002_seed.sqlを順に適用してください。既存DBを削除・移行しません。業務5表に確認と検索状態の技術2表、5分類70コードを用意し、学生・クラス・ログインは作りません。
+
+個別認証したDB主体をstudent_viewer/student_staff/student_adminへ承認所属させます。閲覧のSELECTとstudent_apiのEXECだけを割り当て、直接DMLを認めません。SQLCLR normalizerとstudent_api入口の配備はこの方式内native資源の手順に従い、署名・信頼するアセンブリー・暗号化/証明書・SQL CLR実行権限を環境管理者が確認してください。Windows上のソースビルドはDBへの配備証拠ではありません。
+
+実DB試験は `dotnet run --project database/tests/SqlServer.IntegrationTests.vbproj`。STUDENT_TEST_DB_CONNECTION（セットアップ用）とSTUDENT_TEST_NATIVE_DB_CONNECTION（アプリ用）の両方を要求し、いずれか未設定なら接続せずSKIPです。同じSQL Server 2022上の明示したcontextbase_test_*空DBと、作成済みの非dbo・非db_owner・非sysadminアプリUSERを用意してください。管理者がCLR有効化と000_sqlclr.sqlの正確なSHA512の信頼登録を先に承認・実施する必要があります。ハーネスはread-onlyで事前条件を検査し、不足ならDDL前に停止します。
+
+条件確認後、001/002/000/010/020を当方式の資源から適用し、アプリUSERをfixture内student_adminへ追加して当該主体で業務入口を実行します。000のservertrust登録を含む先頭batchは除外し、グローバルなCLR設定・信頼登録を変更しません。作成・NULL往復・確認続行・版競合・候補の表示項目・論理削除・監査の実行後にfixtureを保持します。既存オブジェクトの上書き・DB作成・DB削除・自動移行は行いません。並行更新・別ロール・障害注入は別試験として残します。

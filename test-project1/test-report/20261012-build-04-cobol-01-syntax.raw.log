@@ -1,0 +1,99 @@
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STAUDIT.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STAUTH.cob
+cobol/STAUTH.cob:31: warning: alphanumeric literal has zero length; a SPACE will be assumed [-Wothers]
+   29 |       END-IF
+   30 |     ELSE
+   31 >       IF FUNCTION TRIM(R-DATA(F-ACTION)) NOT = "" AND "INITIAL"
+   32 |          AND "NEW" AND "EDIT" AND "RESUME"
+   33 |         MOVE 405 TO APP-STATUS
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STCAND.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STCLOCK.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STDATE.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STDATEOUT.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STDELT.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STDUP.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STEDIT.cob
+cobol/STEDIT.cob: in paragraph 'MAP-LOADED-RAW':
+cobol/STEDIT.cob:146: warning: duplicate USING BY REFERENCE item 'R-VALUE (8)' [-Wothers]
+  144 |     MOVE N-VALUE(19) TO R-VALUE(25)
+  145 |     CALL "STDATEOUT" USING N-DATA(4) R-VALUE(F-BIRTHERA)
+  146 >       R-VALUE(F-BIRTHYEAR) R-VALUE(F-BIRTHMONTH) R-VALUE(F-BIRTHDAY)
+  147 |       WAREKI-OUT WAREKI-LENGTH RETURNING RC END-CALL
+  148 |     MOVE EXPECTED-VERSION TO V PERFORM ID-AS-TEMP
+cobol/STEDIT.cob:146: warning: duplicate USING BY REFERENCE item 'R-VALUE (9)' [-Wothers]
+cobol/STEDIT.cob:146: warning: duplicate USING BY REFERENCE item 'R-VALUE (10)' [-Wothers]
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STFLASH.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STISODATE.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STMAIN.cob
+cobol/STMAIN.cob:44: warning: alphanumeric literal has zero length; a SPACE will be assumed [-Wothers]
+   42 |       WHEN "DELETE"
+   43 |         MOVE "Edit" TO VIEW-MODE CALL "STDELT" END-CALL
+   44 >       WHEN "" WHEN "INITIAL" WHEN "SEARCH" WHEN "PAGE"
+   45 |       WHEN "CLEAR" WHEN "RESUME" WHEN "OPTIONS"
+   46 |         CALL "STSRCH" END-CALL
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STMAINT.cob
+cobol/STMAINT.cob: in paragraph 'CLASS-MAINT':
+cobol/STMAINT.cob:152: warning: suggest parentheses around AND within OR [-Wparentheses]
+  150 |     CALL "STINTEGER" USING N-VALUE(8) V RETURNING RC END-CALL
+  151 |     IF RC NOT = 0 OR V > 2147483647 PERFORM BAD-INPUT END-IF
+  152 >     IF N-DATA(9)(1:1) NOT = "0" AND "1" OR N-LENGTH(9) NOT = 1 PERFORM BA..
+  153 |     IF R-NULL(F-CLASSID) = 0
+  154 |       CALL "STINTEGER" USING R-VALUE(F-CLASSID) STUDENT-ID RETURNING RC E..
+cobol/STMAINT.cob: in paragraph 'CODE-MAINT':
+cobol/STMAINT.cob:287: warning: suggest parentheses around AND within OR [-Wparentheses]
+  285 |     CALL "STINTEGER" USING N-VALUE(2) V RETURNING RC END-CALL
+  286 |     IF RC NOT = 0 OR V > 2147483647 PERFORM BAD-INPUT END-IF
+  287 >     IF N-DATA(3)(1:1) NOT = "0" AND "1" OR N-LENGTH(3) NOT = 1 PERFORM BA..
+  288 |     MOVE "9999-12-31" TO MAX-DAY
+  289 |     CALL "STISODATE" USING N-VALUE(4) MAX-DAY RETURNING RC END-CALL
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STMCHECK.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STMLOOK.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STMSG.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STNORM.cob
+cobol/STNORM.cob:143: warning: duplicate USING BY REFERENCE item 'N-VALUE (20)' [-Wothers]
+  141 |     CALL "STDATE" END-CALL
+  142 |     CALL "STUNICODE" USING BY VALUE 2 BY REFERENCE N-VALUE(2)
+  143 >       N-VALUE(20) BY VALUE 8 160 RETURNING RC END-CALL
+  144 |     IF RC NOT = 0
+  145 |       MOVE "E-STU-002: 氏名照合値が上限を超えています。"..
+cobol/STNORM.cob:149: warning: duplicate USING BY REFERENCE item 'N-VALUE (21)' [-Wothers]
+  147 |     END-IF
+  148 |     CALL "STUNICODE" USING BY VALUE 2 BY REFERENCE N-VALUE(3)
+  149 >       N-VALUE(21) BY VALUE 18 18 RETURNING RC END-CALL
+  150 |     IF RC NOT = 0
+  151 |       MOVE "E-STU-002: カナ照合値が無効です。" TO ERROR-TEXT P..
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STRENDER.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STRULES.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STSAVE.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STSRCH.cob
+cobol/STSRCH.cob:21: warning: alphanumeric literal has zero length; a SPACE will be assumed [-Wothers]
+   19 |     MOVE "Search" TO VIEW-MODE MOVE 0 TO ROW-COUNT
+   20 |     CALL "STSTATE" END-CALL IF APP-STATUS NOT = 200 GOBACK END-IF
+   21 >     IF R-DATA(F-ACTION) = "" OR "INITIAL" OR "CLEAR"
+   22 |       PERFORM DEFAULTS
+   23 |       MOVE 0 TO SEARCH-EXECUTED TOTAL-COUNT ROW-COUNT
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STSTATE.cob
+
+COMMAND: cobc -free -fsyntax-only -Wall -I copy cobol/STVALID.cob
+

@@ -76,7 +76,36 @@ Public Function MessageText(ByVal value As String, Optional ByVal name As String
     template = Replace(template, "{fromField}", "開始日")
     template = Replace(template, "{toField}", "終了日")
     template = Replace(template, "{correlationId}", GuidText())
+    template = Replace(template, "{minDate}", "1900-01-01")
+    template = Replace(template, "{maxDate}", BusinessDay(UtcNow()))
+    template = Replace(template, "{minYear}", "1900")
+    template = Replace(template, "{maxYear}", "9998")
+    template = Replace(template, "{count}", data)
     MessageText = id & ": " & template
+End Function
+Public Function FieldLabel(ByVal key As String) As String
+    Select Case key
+    Case "student_no": FieldLabel = "学籍番号"
+    Case "student_name": FieldLabel = "氏名"
+    Case "student_name_kana": FieldLabel = "氏名カナ"
+    Case "birth_date": FieldLabel = "生年月日"
+    Case "gender_code", "GENDER": FieldLabel = "性別"
+    Case "postal_code": FieldLabel = "郵便番号"
+    Case "prefecture_code", "PREFECTURE": FieldLabel = "都道府県"
+    Case "address_line1": FieldLabel = "住所1"
+    Case "address_line2": FieldLabel = "住所2"
+    Case "phone_number": FieldLabel = "本人電話番号"
+    Case "email_address": FieldLabel = "本人メール"
+    Case "admission_date": FieldLabel = "入学日"
+    Case "enrollment_status_code", "ENROLLMENT_STATUS": FieldLabel = "在籍区分"
+    Case "enrollment_end_date": FieldLabel = "卒業・退学日"
+    Case "class_id": FieldLabel = "クラス"
+    Case "emergency_contact_name": FieldLabel = "緊急連絡先氏名"
+    Case "relationship_code", "RELATIONSHIP": FieldLabel = "続柄"
+    Case "emergency_phone_number": FieldLabel = "緊急連絡先電話"
+    Case "remarks": FieldLabel = "備考"
+    Case Else: FieldLabel = "入力項目"
+    End Select
 End Function
 Public Function ErrorKind(ByVal message As String) As String
     Select Case Split(message, "|")(0)

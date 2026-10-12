@@ -2,10 +2,10 @@ Imports System.Security.Principal
 Imports System.Threading
 Imports System.Threading.Tasks
 Imports Microsoft.Data.SqlClient
-Imports Core = StudentManagement.Core
+Imports Core = StudentManagement.WinForms.Domain
 
 Namespace Application
-    ' COM-VB.NET_WinForms: trusted evaluation adapter; DB roles remain authoritative.
+    ' COM-VB.NET_WinForms: individual DB identity; native stored procedures authorize writes.
     Public Class StudentApplicationService
         Private ReadOnly _connection As String
         Private ReadOnly _service As Core.IStudentService
@@ -13,7 +13,7 @@ Namespace Application
         Public Sub New(connection As String)
             _connection = New SqlConnectionStringBuilder(connection) With {.Encrypt = SqlConnectionEncryptOption.Mandatory, .TrustServerCertificate = False}.ConnectionString
             _user = New Core.CurrentUser(WindowsIdentity.GetCurrent().Name, Guid.NewGuid().ToString("D"), Core.Role.Viewer)
-            _service = New Core.SqlServerStudentService(connection, Function() _user, webTokens:=False)
+            _service = New Core.SqlServerStudentService(_connection, Function() _user)
         End Sub
         Public ReadOnly Property User As Core.CurrentUser
             Get

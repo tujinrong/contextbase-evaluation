@@ -1,4 +1,4 @@
--- Generated from test-project1 physical definitions; no actual database execution.
+-- Generated exclusively from Access/spec. Apply DAO properties/relations through Build-Access.ps1.
 
 CREATE TABLE m_code_category (
   category_id TEXT(48) NOT NULL,
@@ -77,7 +77,7 @@ CREATE TABLE m_student (
   enrollment_end_date TEXT(10),
   class_id LONG,
   emergency_contact_name TEXT(16),
-  relationship_category TEXT(48) NOT NULL,
+  relationship_category TEXT(48),
   relationship_code TEXT(4),
   emergency_phone_number TEXT(32),
   remarks TEXT(240),

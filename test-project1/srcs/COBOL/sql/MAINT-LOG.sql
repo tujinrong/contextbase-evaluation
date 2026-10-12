@@ -1,0 +1,1 @@
+INSERT INTO dbo.t_operation_log(target_table,target_key,operation_type,before_version,after_version,changed_columns,executed_by,executed_at,correlation_id,operation_reason,duplicate_confirmed) VALUES (?,?,?,?,?,?,?,?,CONVERT(uniqueidentifier,?),?,0);

@@ -12,20 +12,30 @@ Private Sub EnsureMaps()
     If edits Is Nothing Then Set edits = Map()
 End Sub
 Public Function InitSearch(ByVal frm As Access.Form) As Boolean
-    Dim ctx As New clsSearchContext
+    Dim ctx As clsSearchContext
+    Dim stage As String
     On Error GoTo Failed
-    EnsureMaps: Authorize "Read"
-    frm.Tag = GuidText(): ctx.Reset: contexts.Add frm.Tag, ctx
+    Set ctx = New clsSearchContext
+    stage = "EnsureMaps": EnsureMaps
+    stage = "Authorize": Authorize "Read"
+    stage = "SetTag": frm.Tag = GuidText()
+    stage = "ResetContext": ctx.Reset
+    stage = "AddContext": contexts.Add frm.Tag, ctx
     initializes = True
-    frm!chkEnrolled = True: frm!chkLeave = True: frm!cboPageSize = 20
+    stage = "Defaults": frm!chkEnrolled = True: frm!chkLeave = True: frm!cboPageSize = 20
     frm!cboSortKey = "studentNo": frm!cboSortDirection = "asc"
     frm!cmdNew.Visible = CurrentRole() <> "Reader"
-    Dim empty As New Collection
-    listRows.Add frm.Tag, empty
+    Dim emptyRows As New Collection
+    stage = "AddRows": listRows.Add frm.Tag, emptyRows
     initializes = False: InitSearch = True
     Exit Function
 Failed:
-    MsgBox "E-COM-001: 起動できません。", vbExclamation
+    Dim errorText As String
+    errorText = FailureMessage(Err.Description, Err.Number, "InitSearch:" & stage)
+    On Error Resume Next
+    frm!lblMessage.Caption = MessageText(errorText)
+    frm!cmdSearch.Enabled = False: frm!cmdNew.Enabled = False
+    initializes = False
 End Function
 Private Function ReadCriteria(ByVal frm As Access.Form) As Object
     Dim raw As Object
@@ -86,7 +96,16 @@ Failed:
 End Function
 Public Function StudentListCallback(ctl As Control, id As Variant, row As Variant, col As Variant, code As Variant) As Variant
     Dim key As String, rows As Collection, item As Object
+    On Error GoTo NotReady
+    Select Case code
+    Case acLBInitialize: StudentListCallback = True: Exit Function
+    Case acLBOpen: StudentListCallback = CLng(Timer) + 1: Exit Function
+    Case acLBGetColumnCount: StudentListCallback = 12: Exit Function
+    Case acLBGetColumnWidth, acLBGetFormat: StudentListCallback = -1: Exit Function
+    Case acLBEnd: Exit Function
+    End Select
     EnsureMaps: key = ctl.Parent.Tag
+    If code = acLBGetRowCount Then StudentListCallback = 0
     If Not listRows.Exists(key) Then Exit Function
     Set rows = listRows(key)
     Select Case code
@@ -114,6 +133,9 @@ Public Function StudentListCallback(ctl As Control, id As Variant, row As Varian
         Case 11: StudentListCallback = IIf(CurrentRole() = "Reader", "参照", "編集")
         End Select
     End Select
+    Exit Function
+NotReady:
+    If code = acLBGetRowCount Then StudentListCallback = 0
 End Function
 Public Function ClassChanged(Optional ByVal changed As String = "") As Boolean
     Dim frm As Access.Form, classroom As Object, original As Object, originalId As Variant
@@ -148,6 +170,7 @@ Public Function ClassChanged(Optional ByVal changed As String = "") As Boolean
         frm!lblMessage.Caption = "条件変更はまだ一覧に反映されていません。"
     End If
     RefreshClassChoices frm, originalId
+    If frm.Name = "frmStudentEdit" Then RefreshCapacity frm
 End Function
 Public Function OpenStudent(ByVal fresh As Boolean) As Boolean
     Dim frm As Access.Form, id As Variant
@@ -163,7 +186,7 @@ Public Function OpenStudent(ByVal fresh As Boolean) As Boolean
     SearchClick "REFRESH"
 End Function
 Public Function ClearSearch() As Boolean
-    Dim frm As Access.Form, ctl As Access.Control, empty As New Collection
+    Dim frm As Access.Form, ctl As Access.Control, emptyRows As New Collection
     Set frm = Screen.ActiveForm
     initializes = True
     For Each ctl In frm.Controls
@@ -171,7 +194,7 @@ Public Function ClearSearch() As Boolean
     Next
     frm!chkEnrolled = True: frm!chkLeave = True: frm!chkGraduated = False: frm!chkWithdrawn = False: frm!chkUnassignedOnly = False
     frm!cboPageSize = 20: frm!cboSortKey = "studentNo": frm!cboSortDirection = "asc"
-    contexts(frm.Tag).Reset: Set listRows(frm.Tag) = empty
+    contexts(frm.Tag).Reset: Set listRows(frm.Tag) = emptyRows
     frm!cboSchoolYear.Enabled = True: frm!cboGrade.Enabled = True: frm!cboClass.Enabled = True
     frm!lstStudents.Requery: frm!lblCount.Caption = "未検索": frm!lblSearchedAt.Caption = "": frm!lblMessage.Caption = "": initializes = False
 End Function
@@ -189,10 +212,19 @@ Public Function InitEdit(ByVal frm As Access.Form) As Boolean
         Set state("original") = old
         ShowDraft frm, old
     Else
-        frm!cboGender = "0": frm!cboEnrollmentStatus = "01"
+        frm!cboGender = "0": frm!cboEnrollmentStatus = "01": frm!cboSchoolYear = CurrentSchoolYear()
     End If
     RefreshCodeChoices frm, old
     RefreshClassChoices frm, ValueOrClass(old)
+    RefreshCapacity frm
+    If IsNull(state("id")) Then
+        Dim initialRepo As New clsStudentRepository, initialTx As New clsUnitOfWork
+        initialTx.BeginWork: Set initialRepo.Database = initialTx.Database
+        initialRepo.CheckCode "GENDER", "0", Null, BusinessDay(UtcNow())
+        initialRepo.CheckCode "ENROLLMENT_STATUS", "01", Null, BusinessDay(UtcNow())
+        initialTx.CloseWork
+        If frm!cboClass.ListCount = 0 Then frm!lblMessage.Caption = MessageText("W-STU-108")
+    End If
     frm!txtEnrollmentEndDate.Enabled = Nz(frm!cboEnrollmentStatus, "") = "03" Or Nz(frm!cboEnrollmentStatus, "") = "04"
     frm!txtStudentNo.Locked = Not IsNull(state("id"))
     frm!cmdDelete.Visible = CurrentRole() = "Admin" And Not IsNull(state("id"))
@@ -221,6 +253,8 @@ Private Sub ShowDraft(ByVal frm As Access.Form, ByVal d As Object)
         Dim classroom As Object
         Set classroom = CandidateClass(d("class_id"))
         If Not classroom Is Nothing Then frm!cboSchoolYear = classroom("school_year"): frm!cboGrade = classroom("grade_code")
+    Else
+        frm!cboSchoolYear = Null: frm!cboGrade = Null
     End If
     frm!lblUpdated.Caption = Format$(DateAdd("h", 9, d("updated_at")), "yyyy/mm/dd hh:nn:ss") & " " & d("updated_by")
     initializes = False
@@ -278,7 +312,7 @@ Public Function SaveEdit(Optional ByVal confirmed As Boolean = False) As Boolean
         MsgBox savedMessage, vbInformation
         DoCmd.Close acForm, frm.Name
     Else
-        frm!lblMessage.Caption = MessageText(result("message"))
+        DisplayInputError frm, result("message")
         If result("kind") = "Unknown" Then MsgBox "再保存前に検索で結果を確認してください。", vbExclamation
     End If
     Exit Function
@@ -290,6 +324,7 @@ End Function
 Public Function DeleteEdit() As Boolean
     Dim frm As Access.Form, state As Object, service As New clsStudentService, result As Object, reason As String
     Set frm = Screen.ActiveForm: Set state = edits(frm.Tag)
+    If state("busy") Then Exit Function
     ConfirmationMode = "DELETE": ConfirmationStudentNo = Nz(frm!txtStudentNo, ""): ConfirmationReason = Null
     DoCmd.OpenForm "frmDeleteConfirm", , , , , acDialog
     If Not ConfirmationAccepted Then Exit Function
@@ -300,6 +335,7 @@ End Function
 Public Function ResetEdit(Optional ByVal reload As Boolean = False) As Boolean
     Dim frm As Access.Form, state As Object, service As New clsStudentService, old As Object
     Set frm = Screen.ActiveForm: Set state = edits(frm.Tag)
+    If state("busy") Then Exit Function
     If MsgBox("入力内容を取り消しますか。", vbYesNo + vbDefaultButton2 + vbQuestion) <> vbYes Then Exit Function
     If IsNull(state("id")) Then
         Dim ctl As Access.Control
@@ -307,7 +343,7 @@ Public Function ResetEdit(Optional ByVal reload As Boolean = False) As Boolean
         For Each ctl In frm.Controls
             If ctl.ControlType = acTextBox Or ctl.ControlType = acComboBox Then ctl.Value = Null
         Next
-        frm!cboGender = "0": frm!cboEnrollmentStatus = "01": initializes = False
+        frm!cboGender = "0": frm!cboEnrollmentStatus = "01": frm!cboSchoolYear = CurrentSchoolYear(): initializes = False
     Else
         If reload Then
             Set old = service.LoadStudent(state("id"))
@@ -317,11 +353,54 @@ Public Function ResetEdit(Optional ByVal reload As Boolean = False) As Boolean
         End If
         ShowDraft frm, old
     End If
+    RefreshCodeChoices frm, old: RefreshClassChoices frm, ValueOrClass(old): RefreshCapacity frm
+    frm!txtEnrollmentEndDate.Enabled = Nz(frm!cboEnrollmentStatus, "") = "03" Or Nz(frm!cboEnrollmentStatus, "") = "04"
+    state("confirmation").Consumed = True
     state("dirty") = False
 End Function
+Private Function CurrentSchoolYear() As Long
+    Dim day As String
+    day = BusinessDay(UtcNow()): CurrentSchoolYear = CLng(Left$(day, 4))
+    If Mid$(day, 6, 2) < "04" Then CurrentSchoolYear = CurrentSchoolYear - 1
+End Function
+Public Sub RefreshCapacity(ByVal frm As Access.Form)
+    Dim tx As New clsUnitOfWork, repo As New clsStudentRepository, c As Object
+    On Error GoTo Failed
+    frm!lblCapacity.Caption = "人数／定員：－"
+    If IsNull(frm!cboClass) Then Exit Sub
+    Authorize "Read": tx.BeginWork: Set repo.Database = tx.Database
+    Set c = repo.ClassById(PositiveId(frm!cboClass))
+    If c Is Nothing Then
+        frm!lblCapacity.Caption = "人数／定員：[不整合]"
+    Else
+        frm!lblCapacity.Caption = "人数／定員：" & CStr(repo.Occupancy(c("class_id"), 0)) & "／" & Nz(c("capacity"), "－") & "（参考）"
+    End If
+    tx.CloseWork
+    Exit Sub
+Failed:
+    On Error Resume Next: tx.CloseWork: frm!lblCapacity.Caption = "人数／定員：[取得失敗]"
+End Sub
+Private Sub DisplayInputError(ByVal frm As Access.Form, ByVal message As String)
+    Dim pieces As Variant, p As Variant, i As Long, field As String, fields As Variant, controls As Variant
+    frm!lblMessage.Caption = MessageText(message)
+    pieces = Split(message, "|")
+    For i = 1 To UBound(pieces)
+        p = Split(pieces(i), "=", 2)
+        If UBound(p) = 1 Then If p(0) = "fieldKey" Then field = p(1)
+    Next
+    fields = SavedFields(): controls = FieldControls()
+    On Error Resume Next
+    For i = 0 To UBound(fields)
+        If fields(i) = field Then
+            If field = "birth_date" Then frm!cboBirthEra.SetFocus Else frm.Controls(controls(i)).SetFocus
+            Exit Sub
+        End If
+    Next
+End Sub
 Public Function BackEdit() As Boolean
     Dim state As Object
     Set state = edits(Screen.ActiveForm.Tag)
+    If state("busy") Then Exit Function
     If state("dirty") Then
         If MsgBox("未保存の変更を破棄して戻りますか。", vbYesNo + vbDefaultButton2 + vbQuestion) <> vbYes Then Exit Function
     End If
@@ -340,3 +419,16 @@ Public Sub CloseSearch(ByVal frm As Access.Form)
     If Not contexts Is Nothing Then If contexts.Exists(frm.Tag) Then contexts.Remove frm.Tag
     If Not listRows Is Nothing Then If listRows.Exists(frm.Tag) Then listRows.Remove frm.Tag
 End Sub
+Public Function SelectedStudentDetails() As Boolean
+    Dim frm As Access.Form, rows As Collection, item As Object, i As Long
+    Set frm = Screen.ActiveForm: frm!txtSelectedDetails = Null
+    If IsNull(frm!lstStudents) Then Exit Function
+    Set rows = listRows(frm.Tag)
+    For i = 1 To rows.Count
+        Set item = rows(i)
+        If item("student_id") = frm!lstStudents Then
+            frm!txtSelectedDetails = item("student_no") & "　" & item("student_name") & vbCrLf & item("student_name_kana") & "　" & FormatBirthDate(item("birth_date")) & vbCrLf & Nz(item("school_year"), "－") & "　" & item("grade_name") & "　" & item("class_display") & "　" & item("enrollment_name") & vbCrLf & item("address_display") & vbCrLf & Nz(item("phone_number"), "－") & "　" & Format$(DateAdd("h", 9, item("updated_at")), "yyyy/mm/dd hh:nn:ss")
+            Exit For
+        End If
+    Next
+End Function

@@ -5,7 +5,7 @@ Imports System.Windows.Forms
 Imports StudentManagement.WinForms.Application
 Imports StudentManagement.WinForms.Controls
 Imports StudentManagement.WinForms.Forms
-Imports Core = StudentManagement.Core
+Imports Core = StudentManagement.WinForms.Domain
 
 Namespace Presenters
     ' SCR-STU-001 / EV-SRC-001..006: form-instance context, 30-minute sliding expiry.

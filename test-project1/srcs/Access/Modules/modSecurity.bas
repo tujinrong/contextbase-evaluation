@@ -2,6 +2,8 @@ Attribute VB_Name = "modSecurity"
 Option Explicit
 Option Compare Binary
 Private Declare PtrSafe Function GetUserNameW Lib "advapi32" (ByVal buffer As LongPtr, ByRef size As Long) As Long
+Private lastRole As String
+Private authenticationGeneration As Long
 
 ' Evaluation adapter: trusted process identity + administrator-deployed role configuration.
 ' ACE direct editing remains outside the role boundary specified by COM-Access.
@@ -14,6 +16,18 @@ Public Function CurrentUserId() As String
 End Function
 Public Function CurrentRole() As String
     Dim fs As Object, text As Object, line As String, p As Long
+    Dim q As DAO.QueryDef, rs As DAO.Recordset, db As DAO.Database
+    On Error GoTo InvalidIdentity
+    If CurrentDb.Properties("StudentBackendPath") = "SELF" Then
+        Set db = CurrentDb
+        Set q = db.CreateQueryDef("", "PARAMETERS pUser TEXT(128); SELECT user_id,role_name FROM t_app_role WHERE user_id=pUser")
+        q.Parameters!pUser = CurrentUserId(): Set rs = q.OpenRecordset(dbOpenSnapshot)
+        If Not rs.EOF Then
+            If StrComp(rs!user_id, CurrentUserId(), vbBinaryCompare) = 0 Then CurrentRole = rs!role_name
+        End If
+        rs.Close: q.Close: Set rs = Nothing: Set q = Nothing: Set db = Nothing
+        GoTo ValidateRole
+    End If
     Set fs = CreateObject("Scripting.FileSystemObject")
     Set text = fs.OpenTextFile(CurrentProject.Path & "\roles.conf", 1, False, -1)
     Do Until text.AtEndOfStream
@@ -23,7 +37,21 @@ Public Function CurrentRole() As String
         End If
     Loop
     text.Close
+ValidateRole:
     If CurrentRole <> "Reader" And CurrentRole <> "Staff" And CurrentRole <> "Admin" Then Err.Raise vbObjectError + 116, , "E-COM-001"
+    If lastRole <> CurrentRole Then
+        If authenticationGeneration = 2147483647 Then Err.Raise vbObjectError + 116, , "E-COM-001"
+        authenticationGeneration = authenticationGeneration + 1: lastRole = CurrentRole
+    End If
+    Exit Function
+InvalidIdentity:
+    lastRole = ""
+    On Error Resume Next
+    If Not text Is Nothing Then text.Close
+    If Not rs Is Nothing Then rs.Close
+    If Not q Is Nothing Then q.Close
+    On Error GoTo 0
+    Err.Raise vbObjectError + 116, , "E-COM-001"
 End Function
 Public Sub Authorize(ByVal operation As String)
     Dim role As String
@@ -36,6 +64,10 @@ End Sub
 Public Function AuthorizationStamp() As String
     Dim fs As Object, file As Object
     Set fs = CreateObject("Scripting.FileSystemObject")
+    If CurrentDb.Properties("StudentBackendPath") = "SELF" Then
+        AuthorizationStamp = CurrentUserId() & "|" & CurrentRole() & "|" & CStr(authenticationGeneration)
+        Exit Function
+    End If
     Set file = fs.GetFile(CurrentProject.Path & "\roles.conf")
-    AuthorizationStamp = CurrentUserId() & "|" & CurrentRole() & "|" & CStr(file.DateLastModified) & "|" & CStr(file.Size)
+    AuthorizationStamp = CurrentUserId() & "|" & CurrentRole() & "|" & CStr(authenticationGeneration) & "|" & CStr(file.DateLastModified) & "|" & CStr(file.Size)
 End Function

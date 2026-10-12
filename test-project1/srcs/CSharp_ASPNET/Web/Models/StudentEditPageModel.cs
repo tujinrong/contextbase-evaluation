@@ -10,5 +10,6 @@ public sealed class StudentEditPageModel
     public SaveResult? Result {get;set;}
     public string Message {get;set;}="";
     public string SnapshotId {get;set;}="";
+    public string? ReturnRevision {get;set;}
     public bool CanEdit=>User.Role!=Role.Viewer;
 }

@@ -1,34 +1,39 @@
 # VB.NET / WinForms 学生管理
 
-`SCR-STU-001` の学生検索と `SCR-STU-002` の登録・編集・参照・論理削除を実装する。フォーム、Designer、Presenter、業務サービスを分け、共有 `StudentManagement.Core` が正規化、認可、コード・クラス、定員、重複確認、版検査、監査、SQL Server の確定単位を受け持つ。
+この方式内の `spec/`（独立化版8.0と方式内参照の明確化版8.1）を入力とする独立プロジェクトです。画面・Designer・Presenter、Application、Domain、Infrastructureの業務層はVB.NETで実装し、他方式のコード・DLL・共通プロジェクトを参照しません。DB定義・seed・生成器・保守CLI・VB試験も方式内にあります。
 
-Windows と .NET 10 SDK（検査時 10.0.401）が必要。SQL Server の表と初期値は `../Database/SQLServer/` の手順で管理者が配置する。接続先は環境変数 `STUDENT_DB_CONNECTION` を指定する。
+Windows、.NET 10 SDK（検査時10.0.401）、Microsoft.Data.SqlClient 6.1.3、SQL Server 2022を使用します。Option Strict/Explicit/InferはOnです。`database/README.md` の手順で個別主体とDB入口を配備し、接続は秘密管理から環境変数 `STUDENT_DB_CONNECTION` に設定してください。
 
 ```powershell
-$env:STUDENT_DB_CONNECTION = 'Server=localhost;Database=StudentManagement;Integrated Security=true;Encrypt=true;TrustServerCertificate=false'
 dotnet build .\StudentManagement.WinForms.vbproj
 dotnet run --project .\StudentManagement.WinForms.vbproj
 ```
 
-実行主体は SQL Server の `ORIGINAL_LOGIN()`、ロールは `student_admin` / `student_staff` / `student_viewer` から取得する。管理者のみ削除、担当者は登録・更新、参照者は検索と参照を利用する。共有資格情報ではなく承認済み個別 DB 主体を設定する。
+実行主体はSQL ServerのORIGINAL_LOGIN()、権限はstudent_admin/student_staff/student_viewerから毎要求取得します。保存はstudent_api.prepare_save/persist_student、削除はdelete_student、保守はsave_class/save_codeを呼びます。原入力だけをXMLで渡し、DB側が正規化、認可、マスタ・定員・候補・版・理由を再検査します。確認待ち情報と保存結果は呼出側のトランザクションでCOMMITし、確定成功後に結果を返します。既知の拒否結果をROLLBACK済み例外で上書きせず、確定不明時は再保存前の照会を案内します。暗号化と証明書検証を強制し、共有資格情報を埋め込みません。
 
-これは仕様で許可された、信頼するアプリケーション内サービスによる評価構成である。本番向け EXEC-only DB 更新入口と DB 側での正規化再生成は未実装であり、本番の強いセキュリティ境界として配備しない。ロールと直接 DML 権限の配備は別途必要。DB に接続した保存、競合、認可、履歴失敗の試験は未実施。
-
-検索は raw 入力と適用済み条件を分離し、20/50/100 件、4 種類の並び順、10,000 件上限、30 分の画面保持期限を扱う。学生 ID・版・クラス ID は `Long` を維持する。登録の19業務項目、和暦4原入力、年度・学年補助、任意 NULL、元スナップショット、確認情報を分離する。不正日付は原文字列のまま保持する。重複確認と削除確認は取消を既定とし、確認理由を必須にする。
-
-画面を表示せず DB に接続しない smoke 検査は次で実行する。実際の画面表示、IME、DPI、DB の往復はこの検査に含まない。
+検索は原条件と実行済み条件を分け、20/50/100件、4種の順序、10,000件上限、30分保持を扱います。登録は19業務入力、和暦4原入力、年度・学年補助、任意NULL、元スナップショット、確認情報を分けます。不正日付を文字列のまま保持し、確認は取消を既定にします。
 
 ```powershell
-dotnet run --project .\Tests\NativeSmoke.csproj
+dotnet run --project .\Tests\StudentManagement.WinForms.Tests.vbproj
+dotnet run --project .\Maintenance\StudentMaintenance.vbproj -- class approved-input.json
+python .\tools\test_project.py --run-id 20261012-run1
 ```
+
+VB独立試験は和暦、Unicode、正規化、複合チェック、監査種別、Raw XML、型付きSQLパラメーター、非表示画面構築を実行します。保守入力はJSONの未知・重複項目を拒否し、DBが管理者を再検査します。JSON項目はDomain/ClassChange.vbまたはCodeChange.vbのcamelCaseです。処理結果と受付番号を保存し、確定不明時は照会してから再投入してください。
+
+SQL Server実試験は `database/tests/SqlServer.IntegrationTests.vbproj` です。STUDENT_TEST_DB_CONNECTION（セットアップ用）とSTUDENT_TEST_NATIVE_DB_CONNECTION（一般アプリ主体）のどちらかが未設定ならSKIPとしてDBを開きません。同じcontextbase_test_*専用空DB、作成済みの非dbo・非db_owner・非sysadminアプリUSER、管理者によるCLR有効化とexact SHA512の信頼登録を要求します。事前条件のread-only検査後に当方式のDDL/seed/native入口を適用し、fixture内のAdmin役割にアプリUSERを追加して作成・確認・版競合・NULL往復・論理削除・監査を試験します。グローバル設定・信頼登録は変更せず、試験後の行は検査用に残します。2026年度のfixtureを使用します。
+
+現時点で主アプリ・Tests・保守CLI・DBハーネス・SQLCLR・Framework試験を含む6プロジェクトのSLNXは0警告/0エラーです。VB独立実行111件、配備対象と同じSQLCLR DLLの実.NET Framework試験23件、静的55件がPASSです。年度はraw4文字制限→共通NFKC→ASCII4桁・範囲の順で検査し、02026を拒否します。候補返却は学籍番号・氏名・生年月日・クラスのみに限定しています。
+
+実DB、対話画面、IME、DPI、並行更新、監査障害・接続断は未実施です。SQLCLR/DB入口の配備完了や本番安全性をビルド成功から推定しません。DBのSQLCLR補助だけはSQL Serverの.NET Frameworkホスト用の独立C#アセンブリーです。VBアプリの全業務層はVB.NETで、SQLCLR資源はdatabase/native内へ独立固定し、他方式への参照はありません。SQLCLRでDateOnly/Runeを使えないホスト契約と、サーバー正規化の厳密なワイヤー契約を維持するためDB専用実装を採用しています。同じrun-idの報告を上書きせず、結果は方式内test-reportへ保存します。結果はmetadata/test-status.json、入力はmetadata/spec-inputs.jsonです。最新結果はtest-report/20261012-isolated-final4-vb-results.jsonです。
 
 | 仕様 | 実装 |
 | --- | --- |
-| SCR-STU-001 / SRC / EV-SRC-001～006 / OP-PAGE | Forms/FrmStudentSearch.*、Presenters/StudentSearchPresenter.vb |
+| SCR-STU-001 / SRC / EV-SRC / OP-PAGE | Forms/FrmStudentSearch.*、Presenters/StudentSearchPresenter.vb |
 | SCR-STU-002 / REG / EV-REG / UPD | Forms/FrmStudentEdit.*、Presenters/StudentEditPresenter.vb |
-| REG-005 / DATE-R01～06 / UI-15 | Controls/JapaneseBirthDateControl.vb、共有 JapaneseDateService |
-| 任意日付の原入力保持 | Controls/NullableDateControl.vb |
-| COM-VB.NET_WinForms / 共通01～17 | Application/StudentApplicationService.vb、共有 StudentManagement.Core |
-| 共通11 / 重複・削除確認 | Forms/ConfirmationDialog.vb、共有サービス |
+| DATE-R / UI-15 | Controls/JapaneseBirthDateControl.vb、Domain/JapaneseDateService.vb |
+| 共通正規化・長さ・任意NULL | Domain/StudentNormalizer.vb、NormalizedStudent.vb、Contracts群 |
+| COM-VB.NET_WinForms / DB更新・確定 | Application/StudentApplicationService.vb、Infrastructure/SqlServerStudentService.vb、NativeStoredProcedureClient.vb |
+| 管理者保守 | Maintenance/Program.vb、Infrastructure/MasterMaintenanceService.vb、方式内DB入口 |
 
-マスタ保守は共有の管理者 CLI を使用する。詳細な検査結果と未実施は `test-project1/report/native-implementation.md` を参照する。
+`build/migration` と `build/converter` は一度のVB移植で使用した開発資源です。ビルド・実行に使用せず、配布ソースから除外します。EXE/DLL/obj/cacheもsourceOnlyとは区別します。

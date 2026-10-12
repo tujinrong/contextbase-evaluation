@@ -6,7 +6,7 @@ Imports System.Windows.Forms
 Imports StudentManagement.WinForms.Application
 Imports StudentManagement.WinForms.Controls
 Imports StudentManagement.WinForms.Forms
-Imports Core = StudentManagement.Core
+Imports Core = StudentManagement.WinForms.Domain
 
 Namespace Presenters
     ' SCR-STU-002: raw draft, DB snapshot and expected version are distinct.

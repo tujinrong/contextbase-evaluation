@@ -1,29 +1,28 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-README","version":"7.2","path":"test-project1/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入口一覧","kind":"LIST","sheet":"02_入口一覧","key":["区分"]},{"heading":"境界","kind":"GRID","sheet":"03_境界"},{"heading":"テーブル仕様の現行書式","kind":"GRID","sheet":"04_テーブル仕様の現行書式"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-README","version":"8.0","path":"test-project1/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"方式一覧","kind":"LIST","sheet":"02_方式一覧","key":["方式ID"]},{"heading":"入力と報告","kind":"GRID","sheet":"03_入力と報告"},{"heading":"隔離境界","kind":"GRID","sheet":"04_隔離境界"}]} -->
 # test-project1 学生管理
 
-版7.2／2026-10-12。設計・評価基準。アプリ実装・実機試験・逆生成採点は未実施。
+版8.0／2026-10-12。現行の独立配置。各実行結果は試験報告の範囲で判定する。
 
-## 概要
+## 対象
 
-学生基本情報管理を題材にした仕様作成・往復生成の評価プロジェクト。検索/登録、氏名/住所、クラス/コードを対象とし、成績は対象外。
+仕様書解析Agent検証用の7つの独立プロジェクト。検索と登録・編集・参照・論理削除、およびクラス・コード保守を題材とする。各方式の原仕様、ソース、DB資源、生成器、ビルド、試験を当該方式内に置く。
 
-## 入口一覧
+## 方式一覧
 
-| 区分 | 入口 |
-| --- | --- |
-| プロジェクト情報 | [対象・プロファイル](プロジェクト情報.md) |
-| 仕様書 | [文書一覧](spec/共通/00_設計書一覧.md) |
-| 評価 | [基本・詳細・共通・DBの評価](spec-eval/00_採点規則.md) |
-| 項目長 | [基準値＋50%](spec/共通/11_項目長設計基準.md) |
-| SQL Server | [DB定義](spec/DB定義/SQLServer/01_DB定義書.md) |
-| レビュー | [更新検証記録](docs/仕様書レビュー結果.md) |
+| 方式ID | 言語 | DB | 独立入口 |
+| --- | --- | --- | --- |
+| VB.NET_WinForms | VB.NET / WinForms | SQL Server 2022 | [ソース・手順](srcs/VB.NET_WinForms/README.md) |
+| CSharp_WPF | C# / WPF | SQL Server 2022 | [ソース・手順](srcs/CSharp_WPF/README.md) |
+| CSharp_ASPNET | C# / ASP.NET Core MVC | SQL Server 2022 | [ソース・手順](srcs/CSharp_ASPNET/README.md) |
+| Vue_CSharpAPI | Vue / TypeScript + C# API | SQL Server 2022 | [ソース・手順](srcs/Vue_CSharpAPI/README.md) |
+| COBOL | GnuCOBOL / C / CGI | SQL Server 2022 | [ソース・手順](srcs/COBOL/README.md) |
+| AS400_RPG | ILE RPG / DDS / CL | Db2 for i | [ソース・手順](srcs/AS400_RPG/README.md) |
+| Access | VBA / DAO / Access forms | ACE | [ソース・手順](srcs/Access/README.md) |
 
-## 境界
+## 入力と報告
 
-Agent共通情報は[agents](../agents/README.md)、全体ルールは[docs](../docs/リポジトリ構成.md)。この題材の期待値を逆生成Agentの共通規約へ混入しない。
+[プロジェクト情報](プロジェクト情報.md)／[仕様索引](spec/README.md)／[試験結果](test-report/README.md)。入力版・入力SHA-256・構造検査・出力SHA-256はreportの現行実行IDのJSONを参照する。過去の中断報告や試験合格を現行版へ流用しない。
 
-## テーブル仕様の現行書式
+## 隔離境界
 
-[論理テーブル索引](spec/基本設計書/03_テーブル仕様書.md)と各DB定義を、１テーブル１ファイル・１シートの「テーブルヘッダー＋９列明細」へ分冊化した。従来の総合ファイル名は索引・共通制約への入口として維持する。詳細は[7.1レビュー](docs/テーブル仕様正規化レビュー_7.1.md)。画面と業務ルールの変更はない。
-
-7.2の表記変更は[NOT NULL・タイプ欄レビュー](docs/テーブル表記レビュー_7.2.md)を参照。
+各方式は他方式のコード、仕様、DB定義、生成器を引用しない。原仕様は各方式内のspecだけを正本とする。旧横断仕様と共有ソースは[履歴](report/archive/20261012-pre-isolation/README.md)へ退避した。逆生成の入力はagent-inputの当該方式のソース用ZIPだけとし、元のspec、spec-eval、履歴、入力manifestは渡さない。全体docsや他Agent契約は変更していない。

@@ -1,10 +1,55 @@
 """Materialize COBOL programs; business branches remain visible in *.cob."""
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-def put(name,text):(ROOT/name).write_text(text,encoding='utf-8',newline='\n')
+def put(name,text):
+ if name.endswith(('.cob','.cpy')):
+  import re
+  result=[]
+  for line in text.splitlines():
+   if len(line.encode('utf-8')) <= 240: result.append(line);continue
+   tokens=re.findall(r"'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|[^\s]+",line)
+   expanded=[]
+   for tok in tokens:
+    if len(tok.encode('utf-8'))>180 and tok[0] in "'\"":
+     quote=tok[0];body=tok[1:-1].replace(quote*2,quote);chunk=''
+     for ch in body:
+      if len((chunk+ch).encode('utf-8'))>150:
+       expanded.append(quote+chunk.replace(quote,quote*2)+quote);chunk=''
+      chunk+=ch
+     if chunk:expanded.append(quote+chunk.replace(quote,quote*2)+quote)
+    else:expanded.append(tok)
+   current='    '
+   for tok in expanded:
+    if len((current+tok).encode('utf-8'))>235:
+     result.append(current.rstrip());current='      '
+    current+=tok+' '
+   result.append(current.rstrip())
+  text='\n'.join(result)+'\n'
+ import time
+ for attempt in range(4):
+  try:
+   (ROOT/name).write_text(text,encoding='utf-8',newline='\n');break
+  except OSError:
+   if attempt==3:raise
+   time.sleep(0.2*(attempt+1))
 abi=(ROOT/'copy/ST-DB-REQUEST.cpy').read_text().replace('01 ST-DB-REQUEST.','05 ST-DB-REQUEST.').replace('\n  05','\n  10').replace('\n    10','\n    15')+(ROOT/'copy/ST-DB-RESULT.cpy').read_text().replace('01 ST-DB-RESULT.','05 ST-DB-RESULT.').replace('\n  05','\n  10')
 put('copy/ST-APP.cpy', '''01 APP EXTERNAL.
   05 DB-HANDLE USAGE POINTER.
+  05 UI-FIELD PIC S9(9) COMP-5.
+  05 UI-CATEGORY PIC X(24).
+  05 UI-CURRENT PIC X(1024).
+  05 UI-LOOKUP.
+    10 LOOKUP-VALUE OCCURS 11 TIMES.
+      15 LOOKUP-LENGTH PIC S9(9) COMP-5.
+      15 LOOKUP-NULL PIC S9(4) COMP-5.
+      15 FILLER PIC X(2).
+      15 LOOKUP-DATA PIC X(1024).
+  05 FLASH-ID PIC X(64).
+  05 FILLER PIC X(4).
+  05 FLASH-REVISION PIC S9(18) COMP-5.
+  05 FLASH-PAYLOAD.
+    10 FLASH-LENGTH PIC S9(9) COMP-5.
+    10 FLASH-MESSAGE PIC X(1024).
   05 APP-STATUS PIC S9(9) COMP-5.
   05 APP-OUTCOME PIC X(24).
   05 APP-MESSAGE PIC X(1024).
@@ -24,6 +69,7 @@ put('copy/ST-APP.cpy', '''01 APP EXTERNAL.
     10 SESSION-DATA PIC X(1024).
   05 CSRF-TOKEN PIC X(64).
   05 BUSINESS-DAY PIC X(10).
+  05 FILLER PIC X(6).
   05 BUSINESS-TIME PIC X(32).
   05 CORRELATION-ID PIC X(36).
   05 CONTEXT-ID PIC X(64).
@@ -60,6 +106,8 @@ put('copy/ST-APP.cpy', '''01 APP EXTERNAL.
     10 SEARCH-EXECUTED PIC S9(9) COMP-5.
     10 SEARCH-TAB PIC X(64).
     10 SEARCH-RAW PIC X(66048).
+    10 SEARCH-PENDING PIC X(66048).
+    10 SEARCH-TIMESTAMP PIC X(32).
     10 SEARCH-COUNT PIC S9(9) COMP-5.
     10 SEARCH-PAGE PIC S9(9) COMP-5.
     10 SEARCH-SIZE PIC S9(9) COMP-5.
@@ -70,7 +118,7 @@ put('copy/ST-APP.cpy', '''01 APP EXTERNAL.
     10 EDITOR-VERSION PIC S9(18) COMP-5.
     10 EDITOR-TAB PIC X(64).
     10 EDITOR-RAW PIC X(66048).
-    10 EDITOR-NORMAL PIC X(24768).
+    10 EDITOR-NORMAL PIC X(28896).
   05 ST-RAW.
     10 R-VALUE OCCURS 64 TIMES.
       15 R-LENGTH PIC S9(9) COMP-5.
@@ -78,13 +126,13 @@ put('copy/ST-APP.cpy', '''01 APP EXTERNAL.
       15 FILLER PIC X(2).
       15 R-DATA PIC X(1024).
   05 ST-NORMAL.
-    10 N-VALUE OCCURS 24 TIMES.
+    10 N-VALUE OCCURS 28 TIMES.
       15 N-LENGTH PIC S9(9) COMP-5.
       15 N-NULL PIC S9(4) COMP-5.
       15 FILLER PIC X(2).
       15 N-DATA PIC X(1024).
   05 ST-OLD.
-    10 O-VALUE OCCURS 24 TIMES.
+    10 O-VALUE OCCURS 28 TIMES.
       15 O-LENGTH PIC S9(9) COMP-5.
       15 O-NULL PIC S9(4) COMP-5.
       15 FILLER PIC X(2).
@@ -102,7 +150,7 @@ put('copy/ST-APP.cpy', '''01 APP EXTERNAL.
       15 PARAM-NULL PIC S9(4) COMP-5.
       15 FILLER PIC X(2).
       15 PARAM-DATA PIC X(1024).
-'''+abi)
+'''+ '  05 FILLER PIC X(4).\n'+abi)
 put('copy/ST-LOCAL.cpy','''01 RC PIC S9(9) COMP-5.
 01 I PIC S9(9) COMP-5.
 01 J PIC S9(9) COMP-5.
@@ -250,6 +298,16 @@ program('STMAIN','''    INITIALIZE APP
         MOVE "E-COM-003: 要求形式またはサイズが無効です。" TO ERROR-TEXT
         PERFORM ADD-ERROR
     ELSE
+        IF R-NULL(F-OPENSTUDENTID) = 0
+          MOVE "EDIT" TO R-DATA(F-ACTION) MOVE 4 TO R-LENGTH(F-ACTION)
+          MOVE 0 TO R-NULL(F-ACTION)
+          MOVE R-VALUE(F-OPENSTUDENTID) TO R-VALUE(F-STUDENTID)
+        END-IF
+        IF R-NULL(F-PAGETARGET) = 0
+          MOVE "PAGE" TO R-DATA(F-ACTION) MOVE 4 TO R-LENGTH(F-ACTION)
+          MOVE 0 TO R-NULL(F-ACTION)
+          MOVE R-VALUE(F-PAGETARGET) TO R-VALUE(F-PAGE)
+        END-IF
         CALL "STAUTH" END-CALL
     END-IF
     IF APP-STATUS = 200
@@ -260,17 +318,18 @@ program('STMAIN','''    INITIALIZE APP
         PERFORM ADD-ERROR
       ELSE
         CALL "STCLOCK" END-CALL
+        IF APP-STATUS = 200 CALL "STMCHECK" END-CALL END-IF
       END-IF
     END-IF
     IF APP-STATUS = 200
       EVALUATE FUNCTION TRIM(R-DATA(F-ACTION))
-      WHEN "NEW" WHEN "EDIT" WHEN "RESET" WHEN "RELOAD"
+      WHEN "NEW" WHEN "EDIT" WHEN "RESET" WHEN "RELOAD" WHEN "EDITOPTIONS" WHEN "CANCEL"
         CALL "STEDIT" END-CALL
       WHEN "SAVE" WHEN "CONFIRM"
         MOVE "Edit" TO VIEW-MODE CALL "STSAVE" END-CALL
       WHEN "DELETE"
         MOVE "Edit" TO VIEW-MODE CALL "STDELT" END-CALL
-      WHEN "" WHEN "INITIAL" WHEN "SEARCH" WHEN "PAGE"
+      WHEN SPACES WHEN "INITIAL" WHEN "SEARCH" WHEN "PAGE"
       WHEN "CLEAR" WHEN "RESUME" WHEN "OPTIONS"
         CALL "STSRCH" END-CALL
       WHEN OTHER
@@ -279,8 +338,11 @@ program('STMAIN','''    INITIALIZE APP
       END-EVALUATE
     END-IF
     IF APP-OUTCOME = "Saved"
-        CALL "STREDIRECT" USING CONTEXT-ID TAB-ID END-CALL
+        CALL "STFLASH" END-CALL
+        CALL "STREDIRECT" USING CONTEXT-ID TAB-ID FLASH-ID
+          BY VALUE CONTEXT-REVISION END-CALL
     ELSE
+        CALL "STFLASH" END-CALL
         CALL "STRENDER" END-CALL
     END-IF
     CALL "STCLOSE" USING BY VALUE DB-HANDLE END-CALL
@@ -303,7 +365,7 @@ program('STAUTH','''    CALL "STIDENTITY" USING OWNER-VALUE SESSION-VALUE ROLE-C
         PERFORM ADD-ERROR
       END-IF
     ELSE
-      IF FUNCTION TRIM(R-DATA(F-ACTION)) NOT = "" AND "INITIAL"
+      IF FUNCTION TRIM(R-DATA(F-ACTION)) NOT = SPACES AND "INITIAL"
          AND "NEW" AND "EDIT" AND "RESUME"
         MOVE 405 TO APP-STATUS
         MOVE "E-COM-003: POSTが必要です。" TO ERROR-TEXT PERFORM ADD-ERROR
@@ -315,7 +377,12 @@ program('STAUTH','''    CALL "STIDENTITY" USING OWNER-VALUE SESSION-VALUE ROLE-C
       IF R-LENGTH(F-TABID) NOT = 64
         MOVE 400 TO APP-STATUS
         MOVE "E-COM-003: 画面識別が無効です。" TO ERROR-TEXT PERFORM ADD-ERROR
-      ELSE MOVE R-DATA(F-TABID) TO TAB-ID END-IF
+      ELSE
+        CALL "STHEX" USING R-VALUE(F-TABID) RETURNING RC END-CALL
+        IF RC NOT = 0 MOVE 400 TO APP-STATUS
+          MOVE "E-COM-003: 画面識別が無効です。" TO ERROR-TEXT PERFORM ADD-ERROR
+        ELSE MOVE R-DATA(F-TABID) TO TAB-ID END-IF
+      END-IF
     END-IF
     GOBACK.
 ''')
@@ -360,13 +427,15 @@ for i,(r,m,rmax,smax) in enumerate(zip(rawmap,modes,rawmax,savedmax),1):
 '''
 norm+='''    CALL "STDATE" END-CALL
     CALL "STUNICODE" USING BY VALUE 2 BY REFERENCE N-VALUE(2)
-      N-VALUE(20) BY VALUE 8 160 RETURNING RC END-CALL
+      TMP-VALUE BY VALUE 8 160 RETURNING RC END-CALL
+    MOVE TMP-VALUE TO N-VALUE(20)
     IF RC NOT = 0
       MOVE "E-STU-002: 氏名照合値が上限を超えています。" TO ERROR-TEXT
       PERFORM ADD-ERROR
     END-IF
     CALL "STUNICODE" USING BY VALUE 2 BY REFERENCE N-VALUE(3)
-      N-VALUE(21) BY VALUE 18 18 RETURNING RC END-CALL
+      TMP-VALUE BY VALUE 18 18 RETURNING RC END-CALL
+    MOVE TMP-VALUE TO N-VALUE(21)
     IF RC NOT = 0
       MOVE "E-STU-002: カナ照合値が無効です。" TO ERROR-TEXT PERFORM ADD-ERROR
     END-IF
@@ -374,6 +443,12 @@ norm+='''    CALL "STDATE" END-CALL
       N-VALUE(22) BY VALUE 60 60 RETURNING RC END-CALL
     IF RC NOT = 0
       MOVE "E-STU-107: 理由は60文字以内です。" TO ERROR-TEXT PERFORM ADD-ERROR
+    END-IF
+    CALL "STHINT" END-CALL
+    INITIALIZE N-VALUE(25) MOVE -1 TO N-NULL(25)
+    IF N-NULL(17) = 0
+      MOVE "RELATIONSHIP" TO N-DATA(25) MOVE 12 TO N-LENGTH(25)
+      MOVE 0 TO N-NULL(25)
     END-IF
     GOBACK.
 '''
@@ -589,3 +664,30 @@ REAL-DATE.
 '''
 program('STVALID',valid)
 print('Generated main, auth, clock, normalization, date and raw/business validation programs.')
+
+program('STHINT','''    CALL "STUNICODE" USING BY VALUE 5
+      BY REFERENCE R-VALUE(F-GRADECODE) N-VALUE(26) BY VALUE 2 2
+      RETURNING RC END-CALL
+    IF RC NOT = 0 PERFORM HINT-ERROR END-IF
+    IF N-NULL(26) = 0
+      IF N-LENGTH(26) NOT = 2 OR N-DATA(26)(1:2) IS NOT NUMERIC
+        PERFORM HINT-ERROR END-IF
+    END-IF
+    CALL "STUNICODE" USING BY VALUE 5
+      BY REFERENCE R-VALUE(F-SCHOOLYEAR) N-VALUE(27) BY VALUE 4 4
+      RETURNING RC END-CALL
+    IF RC NOT = 0 PERFORM HINT-ERROR END-IF
+    IF N-NULL(27) = 0
+      CALL "STINTEGER" USING N-VALUE(27) V RETURNING RC END-CALL
+      IF RC NOT = 0 OR N-LENGTH(27) NOT = 4 OR V < 1900 OR V > 9998
+        PERFORM HINT-ERROR END-IF
+    END-IF
+    CALL "STUNICODE" USING BY VALUE 5
+      BY REFERENCE R-VALUE(F-ENROLLMENTSTATUSCODE) N-VALUE(28) BY VALUE 2 2
+      RETURNING RC END-CALL
+    IF RC NOT = 0 PERFORM HINT-ERROR END-IF
+    GOBACK.
+HINT-ERROR.
+    MOVE "E-STU-010: 年度または学年の形式が無効です。" TO ERROR-TEXT
+    PERFORM ADD-ERROR.
+''')

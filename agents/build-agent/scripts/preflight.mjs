@@ -50,6 +50,11 @@ const fixed = [
 for (const name of fixed) { const target = path.join(root, name); assertRegular(target); files.push(target); }
 walk(path.join(projectRoot, 'docs/開発規約'));
 walk(path.join(projectRoot, 'spec'));
+const isolatedProfiles = ['VB.NET_WinForms','CSharp_WPF','CSharp_ASPNET','Vue_CSharpAPI','COBOL','AS400_RPG','Access'];
+for (const profile of isolatedProfiles) {
+  const localSpec=path.join(projectRoot,'srcs',profile,'spec');
+  if (fs.existsSync(localSpec)) walk(localSpec);
+}
 const findings = [], records = [], ids = new Map();
 const add = (file, line, code, detail) => findings.push({ file, line, code, detail });
 function visibleLines(text) {
@@ -134,7 +139,7 @@ for (const target of files.sort()) {
       }
     }
   }
-  if (file.startsWith(`${project}/spec/詳細仕様書/`) && /\/0[12]_/.test(file)) {
+  if ((file.startsWith(`${project}/spec/詳細仕様書/`) || new RegExp(`^${project}/srcs/[^/]+/spec/詳細仕様書/`).test(file)) && /\/0[12]_/.test(file)) {
     const required = ['処理概要', '処理手順', '処理フロー', 'SQL・テーブル関連（ER図）', 'DB操作の詳細', '結果・例外時の扱い'];
     for (let i = 0; i < lines.length; i++) {
       if (!/^### EV-/.test(lines[i].text)) continue;
@@ -151,6 +156,8 @@ for (const target of files.sort()) {
       if (/^[a-z][a-z\d+.-]*:/i.test(href) || href.startsWith('#')) continue;
       const destination = path.resolve(path.dirname(target), decodeURIComponent(href.split('#')[0]));
       const local = relative(destination);
+      const isolatedPrefix=file.match(new RegExp(`^(${project}/srcs/[^/]+/spec/)`))?.[1];
+      if (isolatedPrefix && !local.startsWith(isolatedPrefix)) { add(file,row.line,'LINK_ISOLATION',`Reference leaves independent specification package: ${href}`); continue; }
       if (local.split('/').includes('spec-eval')) continue; // Do not inspect evaluation inputs.
       const allowed = local === 'AGENTS.md' || /^(docs|agents)\//.test(local) || local.startsWith(`${project}/`);
       if (!allowed) { add(file, row.line, 'LINK_SCOPE', `Link outside allowed inputs: ${href}`); continue; }

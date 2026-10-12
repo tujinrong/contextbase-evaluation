@@ -16,7 +16,7 @@ public sealed class StudentGateway : IStudentGateway
     {
         connectionString = new SqlConnectionStringBuilder(connection) { Encrypt=SqlConnectionEncryptOption.Mandatory,TrustServerCertificate=false }.ConnectionString;
         current = new(WindowsIdentity.GetCurrent().Name, Guid.NewGuid().ToString("D"), Core.Role.Viewer);
-        service = new Core.SqlServerStudentService(connection, () => current, webTokens: false);
+        service = new Core.SqlServerStudentService(connection, () => current);
     }
     public static StudentGateway Create() => new(Environment.GetEnvironmentVariable("STUDENT_DB_CONNECTION") ?? throw new InvalidOperationException("STUDENT_DB_CONNECTIONに証明書検証付きSQL Server接続文字列を設定してください。"));
     public bool CanEdit => authenticated && current.Role != Core.Role.Viewer;

@@ -30,7 +30,11 @@ Public Function SaveStudent(ByVal raw As Object, ByVal target As Variant, ByVal 
     On Error GoTo Failed
     Authorize "Save": utc = UtcNow(): day = BusinessDay(utc): user = CurrentUserId()
     Set d = NormalizeDraft(raw, day): reason = TextValue(reasonRaw, 60, 60, "memo")
-    If Not IsNull(target) Then id = PositiveId(target): expected = PositiveId(expected)
+    If Not IsNull(target) Then
+        id = PositiveId(target): expected = PositiveId(expected)
+    ElseIf Not IsNull(expected) Then
+        Err.Raise vbObjectError + 119, , "E-COM-003"
+    End If
     tx.BeginWork: Set repo.Database = tx.Database
     If id <> 0 Then
         Set old = repo.LoadStudent(id)
@@ -78,7 +82,8 @@ Public Function SaveStudent(ByVal raw As Object, ByVal target As Variant, ByVal 
 Failed:
     Dim e As String, unknown As Boolean, errorNumber As Long
     e = Err.Description: errorNumber = Err.Number: unknown = tx.CommitStarted
-    result.Add "diagnostic", e
+    e = FailureMessage(e, errorNumber, "SaveStudent")
+    result.Add "diagnostic", "Error " & CStr(errorNumber)
     On Error Resume Next: tx.CloseWork: On Error GoTo 0
     If Left$(e, 2) <> "E-" Then e = "E-COM-004"
     result.Add "kind", IIf(unknown, "Unknown", ErrorKind(e))
@@ -93,6 +98,17 @@ Private Sub CheckMasters(ByVal repo As clsStudentRepository, ByVal d As Object, 
         If Not old Is Nothing Then oldValue = old(pair(1))
         repo.CheckCode pair(0), d(pair(1)), oldValue, day
     Next
+    If raw.Exists("school_year") Then
+        If Nz(raw("school_year"), "") <> "" Then
+            If Not Match(NFKC(CStr(raw("school_year"))), "^[0-9]{4}$") Then Err.Raise vbObjectError + 130, , "E-DATE-003|field=年度"
+            If CLng(NFKC(raw("school_year"))) < 1900 Or CLng(NFKC(raw("school_year"))) > 9998 Then Err.Raise vbObjectError + 130, , "E-DATE-003|field=年度"
+        End If
+    End If
+    If raw.Exists("grade_code") Then
+        If Nz(raw("grade_code"), "") <> "" Then
+            If Not Match(NFKC(CStr(raw("grade_code"))), "^[0-9]{2}$") Then Err.Raise vbObjectError + 130, , "E-STU-009|field=学年"
+        End If
+    End If
     If IsNull(d("class_id")) Then Exit Sub
     Set c = repo.ClassById(d("class_id"))
     If c Is Nothing Then Err.Raise vbObjectError + 130, , "E-STU-010"
@@ -148,6 +164,7 @@ Public Function DeleteStudent(ByVal target As Variant, ByVal expected As Variant
 Failed:
     Dim e As String, unknown As Boolean, errorNumber As Long
     e = Err.Description: errorNumber = Err.Number: unknown = tx.CommitStarted
+    e = FailureMessage(e, errorNumber, "DeleteStudent")
     On Error Resume Next: tx.CloseWork: On Error GoTo 0
     If Left$(e, 2) <> "E-" Then e = "E-COM-004"
     result.Add "kind", IIf(unknown, "Unknown", ErrorKind(e))

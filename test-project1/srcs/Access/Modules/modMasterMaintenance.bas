@@ -46,11 +46,11 @@ Public Function MaintainClass(ByVal raw As Object, ByVal target As Variant, ByVa
     rs.Close
     id = WriteMaster(repo.Database, "m_class", "class_id", id, old, d, utc, user, version, changed, before)
     If changed = "" Then tx.CloseWork: result.Add "kind", "NoChange": Exit Function
-    MasterAudit repo.Database, "m_class", CStr(id), before, version, changed, utc, user
+    MasterAudit repo.Database, "m_class", CStr(id), before, version, changed, utc, user, AuditOperation(old, d)
     tx.Commit: tx.CloseWork: result.Add "kind", "Saved": result.Add "class_id", id: result.Add "row_version", version
     Exit Function
 Failed:
-    MasterFailure tx, result, Err.Description
+    MasterFailure tx, result, FailureMessage(Err.Description, Err.Number, "MaintainClass")
 End Function
 
 Public Function MaintainCode(ByVal category As String, ByVal code As String, ByVal raw As Object, ByVal expected As Variant) As Object
@@ -70,7 +70,7 @@ Public Function MaintainCode(ByVal category As String, ByVal code As String, ByV
     Set rs = repo.Query("pCat TEXT(48)", "SELECT * FROM m_code_category WHERE category_id=pCat", Array(category))
     If rs.EOF Then rs.Close: Err.Raise vbObjectError + 141, , "E-MST-001"
     Set cat = repo.RowMap(rs): rs.Close
-    If Len(code) <> cat("code_length") Or Not Match(code, "^[A-Z0-9-]+$") Then Err.Raise vbObjectError + 141, , "E-STU-009"
+    If Len(code) <> cat("code_length") Or Not Match(code, "^[0-9]+$") Then Err.Raise vbObjectError + 141, , "E-STU-009"
     Set rs = repo.Query("pCat TEXT(48),pCode TEXT(20)", "SELECT * FROM m_code WHERE category_id=pCat AND code_value=pCode", Array(category, code))
     If Not rs.EOF Then Set old = repo.RowMap(rs)
     rs.Close
@@ -108,11 +108,11 @@ Public Function MaintainCode(ByVal category As String, ByVal code As String, ByV
     Next
     changed = changed & """row_version"",""updated_at"",""updated_by""]"
     rs!row_version = version: rs!updated_at = utc: rs!updated_by = user: rs.Update: rs.Close
-    MasterAudit repo.Database, "m_code", category & ":" & code, before, version, changed, utc, user
+    MasterAudit repo.Database, "m_code", category & ":" & code, before, version, changed, utc, user, AuditOperation(old, d)
     tx.Commit: tx.CloseWork: result.Add "kind", "Saved": result.Add "row_version", version
     Exit Function
 Failed:
-    MasterFailure tx, result, Err.Description
+    MasterFailure tx, result, FailureMessage(Err.Description, Err.Number, "MaintainCode")
 End Function
 Private Function NonnegativeInteger(ByVal raw As Variant) As Long
     Dim s As String
@@ -153,10 +153,17 @@ Private Function WriteMaster(ByVal db As DAO.Database, ByVal table As String, By
     rs!row_version = version: rs!updated_at = utc: rs!updated_by = user: rs.Update: rs.Bookmark = rs.LastModified
     WriteMaster = rs.Fields(idColumn): rs.Close
 End Function
-Private Sub MasterAudit(ByVal db As DAO.Database, ByVal table As String, ByVal key As String, ByVal before As Variant, ByVal after As Long, ByVal changed As String, ByVal utc As Date, ByVal user As String)
+Private Function AuditOperation(ByVal old As Object, ByVal d As Object) As String
+    AuditOperation = "CREATE"
+    If old Is Nothing Then Exit Function
+    AuditOperation = "UPDATE"
+    If old("is_active") And Not d("is_active") Then AuditOperation = "DISABLE"
+    If Not old("is_active") And d("is_active") Then AuditOperation = "ENABLE"
+End Function
+Private Sub MasterAudit(ByVal db As DAO.Database, ByVal table As String, ByVal key As String, ByVal before As Variant, ByVal after As Long, ByVal changed As String, ByVal utc As Date, ByVal user As String, ByVal operation As String)
     Dim rs As DAO.Recordset
     Set rs = db.OpenRecordset("t_operation_log", dbOpenDynaset): rs.AddNew
-    rs!target_table = table: rs!target_key = key: rs!operation_type = IIf(IsNull(before), "CREATE", "UPDATE")
+    rs!target_table = table: rs!target_key = key: rs!operation_type = operation
     rs!before_version = before: rs!after_version = after: rs!changed_columns = changed
     rs!executed_at = utc: rs!executed_by = user: rs!correlation_id = GuidText(): rs!duplicate_confirmed = False
     rs.Update: rs.Close
@@ -165,7 +172,7 @@ Private Sub MasterFailure(ByVal tx As clsUnitOfWork, ByVal result As Object, ByV
     Dim unknown As Boolean
     unknown = tx.CommitStarted
     On Error Resume Next: tx.CloseWork: On Error GoTo 0
-    result.Add "kind", IIf(unknown, "Unknown", "ValidationFailed")
+    result.Add "kind", IIf(unknown, "Unknown", ErrorKind(message))
     If Left$(message, 2) <> "E-" Then message = "E-COM-004"
     result.Add "message", message
 End Sub

@@ -1,0 +1,202 @@
+**********************
+PowerShell transcript start
+Start time: 20261012193531
+Username: DELL_DISKTOP1\tujin
+RunAs User: DELL_DISKTOP1\tujin
+Configuration Name: 
+Machine: DELL_DISKTOP1 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Users\tujin\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.dll -Command try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}
+$ErrorActionPreference='Stop'; $taskJson=Join-Path $PWD '../../../../test-report/20261012-build-09-access-source-package.json'; $taskRaw=Join-Path $PWD '../../../../test-report/20261012-build-09-access-source-package.raw.log'; if((Test-Path -LiteralPath $taskJson) -or (Test-Path -LiteralPath $taskRaw)){throw 'Fresh evidence names required.'}; Start-Transcript -LiteralPath $taskRaw; Write-Output "Working directory: $PWD"; Write-Output 'COMMAND: Verify Access-source.zip SHA256 and manifest; compare each ZIP member to extracted local files.'; @'
+from pathlib import Path
+import hashlib,json,zipfile
+clone=Path.cwd();root=clone.parents[3]
+manifest=json.loads((root/'report/20261012-build-09-source-packages.json').read_text(encoding='utf-8-sig'))
+pkg=next(x for x in manifest['packages'] if x['profile']=='Access')
+zipfile_path=root/'agent-input/Access-source.zip'
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest().upper()
+assert sha(zipfile_path)==pkg['sha256'].upper()
+rows=[]
+with zipfile.ZipFile(zipfile_path) as archive:
+ for item in archive.infolist():
+  if item.is_dir():continue
+  p=clone/item.filename
+  data=archive.read(item)
+  expected=hashlib.sha256(data).hexdigest().upper()
+  assert p.is_file() and sha(p)==expected,item.filename
+  assert not {'spec','spec-eval','tests','test-report','tools'}.intersection(Path(item.filename).parts),item.filename
+  rows.append({'path':item.filename,'sha256':expected,'bytes':len(data)})
+assert len(rows)==27
+build=clone/'build';build.mkdir(exist_ok=True)
+pre={'runId':'20261012-build-09-access-source-package','workingDirectory':str(clone),'sourceZip':str(zipfile_path),'sourceZipSha256':sha(zipfile_path),'sourceManifest':'20261012-build-09-source-packages.json','archiveEntries':rows,'archiveExtractMatches':True,'sourceZipSpecAndTestsExcluded':True,'mainDistribution':str(clone.parents[1]/'StudentManagement.accdb'),'mainBeforeSha256':sha(clone.parents[1]/'StudentManagement.accdb')}
+(build/'source-package-preflight.json').write_text(json.dumps(pre,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+print(json.dumps({'sourceZipSha256':pre['sourceZipSha256'],'entries':len(rows),'mainBeforeSha256':pre['mainBeforeSha256'],'archiveExtractMatches':True},ensure_ascii=False))
+'@ | python -X utf8 -; if($LASTEXITCODE -ne 0){throw 'ZIP preflight failed.'}; Write-Output 'COMMAND: ./Build-Access.ps1 -SingleFile -CreateBackend -Compile'; & './Build-Access.ps1' -SingleFile -CreateBackend -Compile; $taskCode=$LASTEXITCODE; Write-Output "Build last exit code: $taskCode"; [pscustomobject]@{cloneProductionSha256=(Get-FileHash -LiteralPath './StudentManagement.accdb' -Algorithm SHA256).Hash;cloneStagingSha256=(Get-FileHash -LiteralPath './build/StudentBackend.accdb' -Algorithm SHA256).Hash;mainDistributionSha256=(Get-FileHash -LiteralPath '../../StudentManagement.accdb' -Algorithm SHA256).Hash} | ConvertTo-Json; Stop-Transcript
+Process ID: 165472
+PSVersion: 7.6.5
+PSEdition: Core
+GitCommitId: 7.6.5
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is D:\開発\contextbase-evaluation\test-project1\srcs\Access\build\source-isolation\..\..\..\..\test-report\20261012-build-09-access-source-package.raw.log
+Working directory: D:\開発\contextbase-evaluation\test-project1\srcs\Access\build\source-isolation
+COMMAND: Verify Access-source.zip SHA256 and manifest; compare each ZIP member to extracted local files.
+COMMAND: ./Build-Access.ps1 -SingleFile -CreateBackend -Compile
+VBA modules compiled.
+Frontend generated: D:\開発\contextbase-evaluation\test-project1\srcs\Access\build\source-isolation\StudentManagement.accdb
+Build last exit code: 0
+{
+  "cloneProductionSha256": "C4714BE004F16BF31C4F4D26F5382BA44E08EB25BEFD7C4EB38CC8D62940E6E0",
+  "cloneStagingSha256": "DC5477FEFEF12290F2D1B44CD5A1EA5384121825094F3B7B85431251E8F52C5B",
+  "mainDistributionSha256": "C477C908EC3081DD1CEEB16885922BF3CBD5A04E79645E2ACE9E8A3FF002ACFB"
+}
+**********************
+PowerShell transcript end
+End time: 20261012193537
+**********************
+**********************
+PowerShell transcript start
+Start time: 20261012193658
+Username: DELL_DISKTOP1\tujin
+RunAs User: DELL_DISKTOP1\tujin
+Configuration Name: 
+Machine: DELL_DISKTOP1 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Users\tujin\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.dll -Command try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}
+$ErrorActionPreference='Stop'; $taskRaw=Join-Path $PWD '../../../../test-report/20261012-build-09-access-source-package.raw.log'; Start-Transcript -LiteralPath $taskRaw -Append; Write-Output 'COMMAND: Copy compiled clone production to a fresh disposable test fixture; do not open or modify original distribution or clone production.'; $taskProduction=(Get-FileHash -LiteralPath './StudentManagement.accdb' -Algorithm SHA256).Hash; $taskFixture=Join-Path $PWD 'build/20261012-build-04-access-single-source-package-09.accdb'; if(Test-Path -LiteralPath $taskFixture){throw 'Fresh application fixture required.'}; Copy-Item -LiteralPath './StudentManagement.accdb' -Destination $taskFixture; $taskOriginalModule=[IO.Path]::GetFullPath((Join-Path $PWD '../../Modules/modSelfTests.bas')); $taskHarnessDirectory=Join-Path $PWD 'build/external-harness'; New-Item -ItemType Directory -Path $taskHarnessDirectory | Out-Null; Copy-Item -LiteralPath $taskOriginalModule -Destination (Join-Path $taskHarnessDirectory 'modSelfTests.bas'); $taskApp=New-Object -ComObject Access.Application; $taskBefore=[ordered]@{fixture=$taskFixture;cloneProductionBeforeSha256=$taskProduction;fixtureBeforeInjectionSha256=(Get-FileHash -LiteralPath $taskFixture -Algorithm SHA256).Hash;harnessOriginalSha256=(Get-FileHash -LiteralPath $taskOriginalModule -Algorithm SHA256).Hash;fixtureNameReason='Fresh build09 fixture retains build04 single prefix only for existing external testcase CheckFixture guard.'}; Write-Output 'COMMAND: In fixture only inspect physical tables/forms/VBA, import exact existing external modSelfTests, clear StartupForm for harness, compile VBA.'; try { $taskApp.Visible=$false; $taskApp.OpenCurrentDatabase($taskFixture); $taskDb=$taskApp.CurrentDb(); $taskCounts=@{}; $taskLinks=@(); foreach($taskTable in $taskDb.TableDefs){if($taskTable.Name -like 'MSys*'){continue}; if($taskTable.Connect){$taskLinks+=$taskTable.Name}; $taskRs=$taskDb.OpenRecordset("SELECT Count(*) AS n FROM [$($taskTable.Name)]"); $taskCounts[$taskTable.Name]=$taskRs.Fields.Item('n').Value; $taskRs.Close() }; $taskBefore.countsBeforeInjection=$taskCounts; $taskBefore.externalLinksBeforeInjection=$taskLinks; $taskBefore.formsBeforeInjection=@($taskApp.CurrentProject.AllForms | ForEach-Object {$_.Name}); $taskBefore.modulesBeforeInjection=@($taskApp.VBE.ActiveVBProject.VBComponents | ForEach-Object {$_.Name}); $taskBefore.officeVersion=$taskApp.Version; $taskBefore.selfBackend=($taskDb.Properties.Item('StudentBackendPath').Value -eq 'SELF'); if($taskCounts.m_code_category -ne 5 -or $taskCounts.m_code -ne 70 -or $taskCounts.m_class -ne 0 -or $taskCounts.m_student -ne 0 -or $taskCounts.t_operation_log -ne 0 -or $taskLinks.Count -ne 0 -or @($taskBefore.modulesBeforeInjection | Where-Object {$_ -eq 'modSelfTests'}).Count -ne 0){throw 'Clone initial production checks failed.'}; if($taskApp.CurrentProject.AllForms.Item('frmStudentSearch').IsLoaded){$taskApp.DoCmd.Close(2,'frmStudentSearch',2)}; $taskDb.Properties.Item('StartupForm').Value=''; $taskCode=Get-Content -LiteralPath (Join-Path $taskHarnessDirectory 'modSelfTests.bas') -Encoding UTF8 -Raw; $taskComponent=$taskApp.VBE.ActiveVBProject.VBComponents.Add(1); $taskComponent.Name='modSelfTests'; if($taskComponent.CodeModule.CountOfLines){$taskComponent.CodeModule.DeleteLines(1,$taskComponent.CodeModule.CountOfLines)}; $taskComponent.CodeModule.AddFromString(($taskCode -replace '(?m)^Attribute VB_Name.*\r?\n','')); $taskApp.DoCmd.Save(5,'modSelfTests'); $taskApp.DoCmd.RunCommand(126); $taskBefore.injectedTestModuleCompiled=$true; $taskBefore.testStartupFormCleared=$true; Write-Output 'Initial clone production: local tables,5 categories/70 codes,class/student/audit0,4 forms,no test module; external test module compiled in copy.' } finally {if($null -ne $taskDb){$taskDb.Close();[Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskDb)|Out-Null}; $taskRs=$null;$taskTable=$null;$taskComponent=$null; $taskApp.CloseCurrentDatabase();$taskApp.Quit(2);[Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskApp)|Out-Null;[GC]::Collect();[GC]::WaitForPendingFinalizers()}; $taskBefore.fixtureAfterInjectionSha256=(Get-FileHash -LiteralPath $taskFixture -Algorithm SHA256).Hash; $taskBefore.cloneProductionAfterInjectionSha256=(Get-FileHash -LiteralPath './StudentManagement.accdb' -Algorithm SHA256).Hash; $taskBefore | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath './build/source-package-injection.json' -Encoding UTF8; Write-Output ($taskBefore | ConvertTo-Json -Depth 8); Write-Output 'COMMAND: Copy external Test-Application harness into clone/build and remove only its original-spec hash collection; test assertions remain unchanged.'; $taskOriginalScript=[IO.Path]::GetFullPath((Join-Path $PWD '../../tests/Test-Application.ps1')); $taskHarness=Get-Content -LiteralPath $taskOriginalScript -Raw -Encoding UTF8; $taskHarness=$taskHarness -replace '(?m)^\$taskInputs=@\(Get-ChildItem[^\r\n]*','\$taskInputs=@()'; $taskHarness=$taskHarness.Replace('\$taskInputs=@()','$taskInputs=@()'); if($taskHarness -match "Get-ChildItem[^\r\n]*../spec"){throw 'Original-spec read must be removed from external harness.'}; [IO.File]::WriteAllText((Join-Path $taskHarnessDirectory 'Test-Application.ps1'),$taskHarness,[Text.UTF8Encoding]::new($false)); Write-Output 'COMMAND: ./build/external-harness/Test-Application.ps1 -Frontend ./build/20261012-build-04-access-single-source-package-09.accdb -Backend same-file -RunId 20261012-build-09-access-source-package-application -SpecVersion source-zip-no-spec -InputManifest Access-source.zip -ReportDirectory ./build'; & './build/external-harness/Test-Application.ps1' -Frontend $taskFixture -Backend $taskFixture -RunId '20261012-build-09-access-source-package-application' -SpecVersion 'source-zip-no-spec' -InputManifest 'Access-source.zip SHA256 9A1D7F0E6B74028263BB064D35F7A285FE8632E9ECDD290E7E005E79DA9E9085' -ReportDirectory (Join-Path $PWD 'build'); if($LASTEXITCODE -ne 0){throw 'Clone application test failed.'}; Stop-Transcript
+Process ID: 366772
+PSVersion: 7.6.5
+PSEdition: Core
+GitCommitId: 7.6.5
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is D:\開発\contextbase-evaluation\test-project1\srcs\Access\build\source-isolation\..\..\..\..\test-report\20261012-build-09-access-source-package.raw.log
+COMMAND: Copy compiled clone production to a fresh disposable test fixture; do not open or modify original distribution or clone production.
+COMMAND: In fixture only inspect physical tables/forms/VBA, import exact existing external modSelfTests, clear StartupForm for harness, compile VBA.
+PS>TerminatingError(): "ユーザー定義プロパティでは Null 値をサポートできません。"
+OperationStopped:
+Line |
+   2 |  … tSearch',2)}; $taskDb.Properties.Item('StartupForm').Value=''; $taskC …
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | ユーザー定義プロパティでは Null 値をサポートできません。
+PS>$global:?
+False
+**********************
+PowerShell transcript end
+End time: 20261012193704
+**********************
+**********************
+PowerShell transcript start
+Start time: 20261012193849
+Username: DELL_DISKTOP1\tujin
+RunAs User: DELL_DISKTOP1\tujin
+Configuration Name: 
+Machine: DELL_DISKTOP1 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Users\tujin\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.dll -Command try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}
+$taskRaw=Join-Path $PWD '../../../../test-report/20261012-build-09-access-source-package.raw.log'; Start-Transcript -LiteralPath $taskRaw -Append; Write-Output 'COMMAND: ./build/Run-SourcePackageTests.ps1'; & './build/Run-SourcePackageTests.ps1'; $taskExit=$LASTEXITCODE; Write-Output "External test process exit: $taskExit"; Stop-Transcript; if($taskExit -ne 0){exit $taskExit}
+Process ID: 367876
+PSVersion: 7.6.5
+PSEdition: Core
+GitCommitId: 7.6.5
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is D:\開発\contextbase-evaluation\test-project1\srcs\Access\build\source-isolation\..\..\..\..\test-report\20261012-build-09-access-source-package.raw.log
+COMMAND: ./build/Run-SourcePackageTests.ps1
+COMMAND: Copy untouched compiled ZIP production into disposable fixture02.
+COMMAND: On fixture02 only delete StartupForm property, import unchanged external modSelfTests, compile.
+Initial production copy: five categories/seventy codes, class/student/audit0, four forms, local tables only, no test module; fixture external module compiled.
+COMMAND: Copy external PowerShell tester; omit only original-spec metadata enumeration, keep all application assertions.
+COMMAND: ./build/external-harness-02/Test-Application.ps1 -Frontend ./build/20261012-build-04-access-single-source-package-09-02.accdb -Backend same-file -RunId 20261012-build-09-access-source-package-application-02 -SpecVersion source-zip-no-spec -InputManifest Access-source.zip -ReportDirectory ./build
+31 assertions passed
+77 assertions passed
+29 assertions passed
+PS>TerminatingError(): "ZIP-clone application assertions failed."
+>> TerminatingError(): "ZIP-clone application assertions failed."
+Exception: D:\開発\contextbase-evaluation\test-project1\srcs\Access\build\source-isolation\build\Run-SourcePackageTests.ps1:65
+Line |
+  65 |  … LASTEXITCODE -ne 0){throw 'ZIP-clone application assertions failed.'}
+     |                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | ZIP-clone application assertions failed.
+
+PS>$global:?
+False
+**********************
+PowerShell transcript end
+End time: 20261012193901
+**********************
+**********************
+PowerShell transcript start
+Start time: 20261012194008
+Username: DELL_DISKTOP1\tujin
+RunAs User: DELL_DISKTOP1\tujin
+Configuration Name: 
+Machine: DELL_DISKTOP1 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Users\tujin\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.dll -Command try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}
+$taskRunner=Get-Content -LiteralPath './build/Run-SourcePackageTests.ps1' -Raw -Encoding UTF8; $taskRunner=$taskRunner.Replace('source-package-09-02.accdb','source-package-09-03.accdb').Replace('external-harness-02','external-harness-03').Replace('source-package-injection-02.json','source-package-injection-03.json').Replace('source-package-application-02','source-package-application-03').Replace('fixture02','fixture03'); $taskOld="if(`$LASTEXITCODE -ne 0){throw 'ZIP-clone application assertions failed.'}"; $taskNew="`$taskResult=Get-Content -LiteralPath (Join-Path `$PSScriptRoot '20261012-build-09-access-source-package-application-03.json') -Raw -Encoding UTF8 | ConvertFrom-Json`r`nif(`$taskResult.status -ne 'Passed'){throw 'ZIP-clone application assertions failed.'}`r`nWrite-Output 'External tester JSON status: Passed (PowerShell script completion checked by actual result, not stale native exit code).'"; if(-not $taskRunner.Contains($taskOld)){throw 'Expected wrapper check absent.'}; $taskRunner=$taskRunner.Replace($taskOld,$taskNew); [IO.File]::WriteAllText((Join-Path $PWD 'build/Run-SourcePackageTests-03.ps1'),$taskRunner,[Text.UTF8Encoding]::new($false)); $taskRaw=Join-Path $PWD '../../../../test-report/20261012-build-09-access-source-package.raw.log'; Start-Transcript -LiteralPath $taskRaw -Append; Write-Output 'Correction: fixture02 all137 assertions and JSON Passed; final wrapper wrongly compared unset LASTEXITCODE. Preserve evidence; fresh fixture03 uses actual JSON status.'; Write-Output 'COMMAND: ./build/Run-SourcePackageTests-03.ps1'; & './build/Run-SourcePackageTests-03.ps1'; Stop-Transcript
+Process ID: 95140
+PSVersion: 7.6.5
+PSEdition: Core
+GitCommitId: 7.6.5
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is D:\開発\contextbase-evaluation\test-project1\srcs\Access\build\source-isolation\..\..\..\..\test-report\20261012-build-09-access-source-package.raw.log
+Correction: fixture02 all137 assertions and JSON Passed; final wrapper wrongly compared unset LASTEXITCODE. Preserve evidence; fresh fixture03 uses actual JSON status.
+COMMAND: ./build/Run-SourcePackageTests-03.ps1
+COMMAND: Copy untouched compiled ZIP production into disposable fixture03.
+COMMAND: On fixture03 only delete StartupForm property, import unchanged external modSelfTests, compile.
+Initial production copy: five categories/seventy codes, class/student/audit0, four forms, local tables only, no test module; fixture external module compiled.
+COMMAND: Copy external PowerShell tester; omit only original-spec metadata enumeration, keep all application assertions.
+COMMAND: ./build/external-harness-03/Test-Application.ps1 -Frontend ./build/20261012-build-04-access-single-source-package-09-03.accdb -Backend same-file -RunId 20261012-build-09-access-source-package-application-03 -SpecVersion source-zip-no-spec -InputManifest Access-source.zip -ReportDirectory ./build
+31 assertions passed
+77 assertions passed
+29 assertions passed
+External tester JSON status: Passed (PowerShell script completion checked by actual result, not stale native exit code).
+**********************
+PowerShell transcript end
+End time: 20261012194031
+**********************
+**********************
+PowerShell transcript start
+Start time: 20261012194423
+Username: DELL_DISKTOP1\tujin
+RunAs User: DELL_DISKTOP1\tujin
+Configuration Name: 
+Machine: DELL_DISKTOP1 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Users\tujin\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.dll -Command try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}
+$taskRaw=Join-Path $PWD '../../../../test-report/20261012-build-09-access-source-package.raw.log'; Start-Transcript -LiteralPath $taskRaw -Append; Write-Output 'COMMAND: python -X utf8 ./build/Finalize-SourcePackageEvidence.py'; & python -X utf8 './build/Finalize-SourcePackageEvidence.py'; $taskCode=$LASTEXITCODE; Stop-Transcript; if($taskCode -ne 0){exit $taskCode}
+Process ID: 79344
+PSVersion: 7.6.5
+PSEdition: Core
+GitCommitId: 7.6.5
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is D:\開発\contextbase-evaluation\test-project1\srcs\Access\build\source-isolation\..\..\..\..\test-report\20261012-build-09-access-source-package.raw.log
+COMMAND: python -X utf8 ./build/Finalize-SourcePackageEvidence.py
+
+**********************
+PowerShell transcript end
+End time: 20261012194424
+**********************

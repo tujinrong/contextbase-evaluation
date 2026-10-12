@@ -1,0 +1,1 @@
+SELECT (SELECT COUNT_BIG(*) FROM dbo.m_code_category WHERE category_id IN ('GENDER','ENROLLMENT_STATUS','PREFECTURE','RELATIONSHIP','GRADE')),(SELECT COUNT_BIG(*) FROM dbo.m_code WHERE category_id='GENDER' AND code_value='0' OR category_id='GRADE' AND code_value='00' OR category_id='ENROLLMENT_STATUS' AND code_value IN ('01','02','03','04'));

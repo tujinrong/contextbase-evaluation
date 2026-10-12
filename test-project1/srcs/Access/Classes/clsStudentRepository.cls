@@ -35,11 +35,11 @@ Public Sub CheckCode(ByVal category As String, ByVal value As Variant, ByVal old
     Dim row As DAO.Recordset, active As Boolean
     If IsNull(value) Then Exit Sub
     Set row = Query("pCat TEXT(48), pValue TEXT(20)", "SELECT c.*, k.is_active AS category_active FROM m_code AS c INNER JOIN m_code_category AS k ON c.category_id=k.category_id WHERE c.category_id=pCat AND c.code_value=pValue", Array(category, value))
-    If row.EOF Then row.Close: Err.Raise vbObjectError + 123, , "E-STU-009"
+    If row.EOF Then row.Close: Err.Raise vbObjectError + 123, , "E-STU-009|field=" & FieldLabel(category)
     active = row!is_active And row!category_active And row!valid_from <= day
     If Not IsNull(row!valid_to) Then active = active And row!valid_to >= day
     row.Close
-    If Not active And Not EqualValue(value, oldValue) Then Err.Raise vbObjectError + 123, , "E-STU-011"
+    If Not active And Not EqualValue(value, oldValue) Then Err.Raise vbObjectError + 123, , "E-STU-011|field=" & FieldLabel(category)
 End Sub
 Public Function Duplicates(ByVal d As Object, ByVal excludeId As Long, ByRef digest As String) As Collection
     Dim rs As DAO.Recordset, item As Object, classroom As Object
@@ -80,13 +80,15 @@ Public Function Occupancy(ByVal classId As Long, ByVal excludeId As Long) As Lon
     Occupancy = rs!seats: rs.Close
 End Function
 Public Function WriteStudent(ByVal d As Object, ByVal original As Object, ByVal utc As Date, ByVal user As String, ByRef version As Long, ByRef changed As String) As Long
-    Dim rs As DAO.Recordset, q As DAO.QueryDef, k As Variant, id As Long
+    Dim rs As DAO.Recordset, q As DAO.QueryDef, k As Variant, id As Long, relationshipCategory As Variant
+    relationshipCategory = Null
+    If Not IsNull(d("relationship_code")) Then relationshipCategory = "RELATIONSHIP"
     If original Is Nothing Then
         Set rs = Database.OpenRecordset("m_student", dbOpenDynaset)
         rs.AddNew: version = 1
         rs!created_at = utc: rs!created_by = user
         rs!gender_category = "GENDER": rs!prefecture_category = "PREFECTURE"
-        rs!enrollment_category = "ENROLLMENT_STATUS": rs!relationship_category = "RELATIONSHIP"
+        rs!enrollment_category = "ENROLLMENT_STATUS"
         rs!is_deleted = False: rs!deleted_at = Null: rs!deleted_by = Null: rs!delete_reason = Null
     Else
         id = original("student_id")
@@ -107,6 +109,10 @@ Public Function WriteStudent(ByVal d As Object, ByVal original As Object, ByVal 
             If Not EqualValue(d(k), original(k)) Then changed = changed & """" & k & ""","
         End If
     Next
+    rs!relationship_category = relationshipCategory
+    If Not original Is Nothing Then
+        If Not EqualValue(relationshipCategory, original("relationship_category")) Then changed = changed & """relationship_category"","
+    End If
     If original Is Nothing Then changed = changed & """gender_category"",""prefecture_category"",""enrollment_category"",""relationship_category"",""is_deleted"",""created_at"",""created_by"","
     changed = changed & """row_version"",""updated_at"",""updated_by""]"
     rs!row_version = version: rs!updated_at = utc: rs!updated_by = user

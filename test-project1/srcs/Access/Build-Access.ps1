@@ -1,18 +1,23 @@
 param(
-    [string]$Frontend = (Join-Path $PSScriptRoot 'build/StudentFrontend.accdb'),
+    [string]$Frontend = (Join-Path $PSScriptRoot 'StudentManagement.accdb'),
     [string]$Backend = (Join-Path $PSScriptRoot 'build/StudentBackend.accdb'),
     [switch]$CreateBackend,
     [switch]$Compile,
-    [switch]$NoStartup
+    [switch]$NoStartup,
+    [switch]$IncludeTests,
+    [switch]$SingleFile,
+    [string]$InitialUser = ([Security.Principal.WindowsIdentity]::GetCurrent().Name.Split('\')[-1]),
+    [ValidateSet('Reader','Staff','Admin')][string]$InitialRole = 'Admin'
 )
 $ErrorActionPreference = 'Stop'
-$taskOutputRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot 'build'))
+$taskOutputRoot = [IO.Path]::GetFullPath($PSScriptRoot)
 foreach ($taskPath in @($Frontend, $Backend)) {
     $taskFullPath = [IO.Path]::GetFullPath($taskPath)
-    if (-not $taskFullPath.StartsWith($taskOutputRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Build outputs must stay under Access/build.' }
+    if (-not $taskFullPath.StartsWith($taskOutputRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetExtension($taskFullPath) -ne '.accdb') { throw 'Build outputs must stay under Access and be ACCDB files.' }
     if ((Test-Path -LiteralPath $taskFullPath) -and ($taskPath -eq $Frontend -or $CreateBackend)) { throw "Output already exists; move it explicitly before rebuilding: $taskFullPath" }
 }
-New-Item -ItemType Directory -Path $taskOutputRoot -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $PSScriptRoot 'build') -Force | Out-Null
+if ($SingleFile -and -not $CreateBackend) { throw 'SingleFile requires a new initial backend staging file.' }
 $taskAccess = New-Object -ComObject Access.Application
 $taskAccess.Visible = $false
 function Set-DaoProperty($object, [string]$name, [int]$type, $value) {
@@ -70,7 +75,11 @@ try {
         $taskAccess.NewCurrentDatabase([IO.Path]::GetFullPath($Backend), 10)
         $taskDb = $taskAccess.CurrentDb()
         $taskDdl = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'database/schema.sql') -Encoding UTF8 -Raw) -replace '(?m)^--.*$', ''
-        foreach ($taskStatement in $taskDdl.Split(';')) { if ($taskStatement.Trim()) { $taskDb.Execute(($taskStatement.Trim() -replace ' DEFAULT (True|False|\d+)',''), 128) } }
+        foreach ($taskStatement in $taskDdl.Split(';')) {
+            if ($taskStatement.Trim() -and $taskStatement.Trim() -notmatch '^ALTER TABLE .* FOREIGN KEY') {
+                $taskDb.Execute(($taskStatement.Trim() -replace ' DEFAULT (True|False|\d+)',''), 128)
+            }
+        }
         $taskSchema = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'database/schema.json') -Encoding UTF8 -Raw | ConvertFrom-Json
         foreach ($taskTable in $taskSchema) {
             foreach ($taskColumn in $taskTable.columns) {
@@ -80,9 +89,26 @@ try {
                 if ($taskColumn.name -eq 'row_version') { $taskField.ValidationRule = '>0' }
             }
         }
-        $taskValidationTable=$taskDb.TableDefs.Item('m_class'); $taskValidationTable.ValidationRule='[school_year]>=1900 And [school_year]<=9998 And ([capacity] Is Null Or ([capacity]>=1 And [capacity]<=9999)) And [display_order]>=0 And [grade_category]="GRADE" And [valid_from]<=[valid_to]'
-        $taskValidationTable=$taskDb.TableDefs.Item('m_student'); $taskValidationTable.ValidationRule='[birth_date]>="1900-01-01" And [birth_date]<=[admission_date] And (([enrollment_status_code] In ("01","02") And [class_id] Is Not Null And [enrollment_end_date] Is Null) Or ([enrollment_status_code] In ("03","04") And [enrollment_end_date] Is Not Null And [admission_date]<=[enrollment_end_date])) And ([phone_number] Is Not Null Or [email_address] Is Not Null Or [emergency_phone_number] Is Not Null) And (([emergency_contact_name] Is Null And [relationship_code] Is Null And [emergency_phone_number] Is Null) Or ([emergency_contact_name] Is Not Null And [relationship_code] Is Not Null And [emergency_phone_number] Is Not Null)) And (([is_deleted]=False And [deleted_at] Is Null And [deleted_by] Is Null And [delete_reason] Is Null) Or ([is_deleted]=True And [deleted_at] Is Not Null And [deleted_by] Is Not Null And [delete_reason] Is Not Null))'
+        $taskValidationTable=$taskDb.TableDefs.Item('m_class'); $taskValidationTable.ValidationRule='[school_year]>=1900 And [school_year]<=9998 And ([capacity] Is Null Or ([capacity]>=1 And [capacity]<=9999)) And [display_order]>=0 And [grade_category]="GRADE" And [valid_from]<=[valid_to] And [valid_from]>=CStr([school_year]) & "-04-01" And [valid_to]<=CStr([school_year]+1) & "-03-31"'
+        $taskValidationTable=$taskDb.TableDefs.Item('m_code_category'); $taskValidationTable.ValidationRule='[code_length]>=1 And [code_length]<=10'
+        $taskValidationTable=$taskDb.TableDefs.Item('m_code'); $taskValidationTable.ValidationRule='[display_order]>=0 And ([valid_to] Is Null Or [valid_from]<=[valid_to]) And [code_value] Not Like "*[!0-9]*"'
+        $taskValidationTable=$taskDb.TableDefs.Item('t_operation_log'); $taskValidationTable.ValidationRule='[after_version]>0 And ([before_version] Is Null Or [before_version]>0) And [operation_type] In ("CREATE","UPDATE","DELETE","DISABLE","ENABLE")'
+        $taskValidationTable=$taskDb.TableDefs.Item('m_student'); $taskValidationTable.ValidationRule='[gender_category]="GENDER" And [prefecture_category]="PREFECTURE" And [enrollment_category]="ENROLLMENT_STATUS" And [birth_date]>="1900-01-01" And [birth_date]<=[admission_date] And (([enrollment_status_code] In ("01","02") And [class_id] Is Not Null And [enrollment_end_date] Is Null) Or ([enrollment_status_code] In ("03","04") And [enrollment_end_date] Is Not Null And [admission_date]<=[enrollment_end_date])) And ([phone_number] Is Not Null Or [email_address] Is Not Null Or [emergency_phone_number] Is Not Null) And (([emergency_contact_name] Is Null And [relationship_category] Is Null And [relationship_code] Is Null And [emergency_phone_number] Is Null) Or ([emergency_contact_name] Is Not Null And [relationship_category] Is Not Null And [relationship_category]="RELATIONSHIP" And [relationship_code] Is Not Null And [emergency_phone_number] Is Not Null)) And (([is_deleted]=False And [deleted_at] Is Null And [deleted_by] Is Null And [delete_reason] Is Null) Or ([is_deleted]=True And [deleted_at] Is Not Null And [deleted_by] Is Not Null And [delete_reason] Is Not Null))'
+        foreach ($taskColumnName in @('relationship_category','relationship_code')) {
+            $taskField=$taskDb.TableDefs.Item('m_student').Fields.Item($taskColumnName)
+            $taskField.Required=$false; $taskField.AllowZeroLength=$false; $taskField.DefaultValue=''
+        }
         $taskValidationTable=$taskDb.TableDefs.Item('t_write_guard'); $taskValidationTable.ValidationRule='[guard_id]=1'
+        $taskRelations=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'database/relations.json') -Encoding UTF8 -Raw | ConvertFrom-Json
+        foreach ($taskRelationSpec in $taskRelations) {
+            $taskRelation=$taskDb.CreateRelation($taskRelationSpec.name,$taskRelationSpec.parent,$taskRelationSpec.child,0)
+            for ($taskRelationColumn=0; $taskRelationColumn -lt $taskRelationSpec.parent_columns.Count; $taskRelationColumn++) {
+                $taskRelationField=$taskRelation.CreateField($taskRelationSpec.parent_columns[$taskRelationColumn])
+                $taskRelationField.ForeignName=$taskRelationSpec.child_columns[$taskRelationColumn]
+                $taskRelation.Fields.Append($taskRelationField)
+            }
+            $taskDb.Relations.Append($taskRelation)
+        }
         $taskSeed = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'database/seed.json') -Encoding UTF8 -Raw | ConvertFrom-Json
         $taskAt = [DateTime]::UtcNow
         foreach ($taskCategory in $taskSeed.categories) {
@@ -101,14 +127,39 @@ try {
     $taskAccess.DoCmd.CopyObject('', 'frmDuplicateConfirm', 2, 'frmStudentSearch')
     $taskAccess.DoCmd.CopyObject('', 'frmDeleteConfirm', 2, 'frmStudentSearch')
     $taskDb = $taskAccess.CurrentDb()
-    Set-DaoProperty $taskDb 'StudentBackendPath' 10 ([IO.Path]::GetFullPath($Backend))
+    Set-DaoProperty $taskDb 'StudentBackendPath' 10 $(if ($SingleFile) { 'SELF' } else { [IO.Path]::GetFullPath($Backend) })
     if (Test-Path -LiteralPath $Backend) {
         $taskSchema = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'database/schema.json') -Encoding UTF8 -Raw | ConvertFrom-Json
         foreach ($taskTable in $taskSchema) {
-            $taskLink=$taskDb.CreateTableDef($taskTable.name); $taskLink.Connect=";DATABASE=$([IO.Path]::GetFullPath($Backend))"; $taskLink.SourceTableName=$taskTable.name; $taskDb.TableDefs.Append($taskLink)
+            if ($SingleFile) {
+                $taskAccess.DoCmd.TransferDatabase(0,'Microsoft Access',[IO.Path]::GetFullPath($Backend),0,$taskTable.name,$taskTable.name,$false)
+            } else {
+                $taskLink=$taskDb.CreateTableDef($taskTable.name); $taskLink.Connect=";DATABASE=$([IO.Path]::GetFullPath($Backend))"; $taskLink.SourceTableName=$taskTable.name; $taskDb.TableDefs.Append($taskLink)
+            }
+        }
+        if ($SingleFile) {
+            $taskDb=$taskAccess.CurrentDb()
+            $taskRelations=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'database/relations.json') -Encoding UTF8 -Raw | ConvertFrom-Json
+            foreach ($taskRelationSpec in $taskRelations) {
+                $taskExisting=$null
+                try { $taskExisting=$taskDb.Relations.Item($taskRelationSpec.name) } catch { }
+                if ($null -ne $taskExisting) { continue }
+                $taskRelation=$taskDb.CreateRelation($taskRelationSpec.name,$taskRelationSpec.parent,$taskRelationSpec.child,0)
+                for ($taskRelationColumn=0; $taskRelationColumn -lt $taskRelationSpec.parent_columns.Count; $taskRelationColumn++) {
+                    $taskRelationField=$taskRelation.CreateField($taskRelationSpec.parent_columns[$taskRelationColumn])
+                    $taskRelationField.ForeignName=$taskRelationSpec.child_columns[$taskRelationColumn]; $taskRelation.Fields.Append($taskRelationField)
+                }
+                $taskDb.Relations.Append($taskRelation)
+            }
+            $taskDb.Execute('CREATE TABLE t_app_role(user_id TEXT(128) CONSTRAINT pk_app_role PRIMARY KEY,role_name TEXT(10) NOT NULL)',128)
+            $taskRoleTable=$taskDb.TableDefs.Item('t_app_role'); $taskRoleTable.ValidationRule='[role_name] In ("Reader","Staff","Admin")'
+            $taskField=$taskRoleTable.Fields.Item('user_id'); $taskField.AllowZeroLength=$false
+            $taskField=$taskRoleTable.Fields.Item('role_name'); $taskField.AllowZeroLength=$false
+            $taskDb.Execute("INSERT INTO t_app_role(user_id,role_name) VALUES($(Sql-Literal $InitialUser),$(Sql-Literal $InitialRole))",128)
         }
     }
     foreach ($taskSource in Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'Modules') -Filter '*.bas') {
+        if ($taskSource.BaseName -eq 'modSelfTests' -and -not $IncludeTests) { continue }
         $taskCode=Get-Content -LiteralPath $taskSource.FullName -Encoding UTF8 -Raw
         $taskComponent=$taskAccess.VBE.ActiveVBProject.VBComponents.Add(1); $taskComponent.Name=$taskSource.BaseName
         if ($taskComponent.CodeModule.CountOfLines -gt 0) { $taskComponent.CodeModule.DeleteLines(1,$taskComponent.CodeModule.CountOfLines) }
@@ -145,7 +196,8 @@ try {
     foreach ($taskItem in @(@('cboPageSize','ページ件数','20;50;100'),@('cboSortKey','並び順','studentNo;name;admissionDate;updatedAt'),@('cboSortDirection','方向','asc;desc'))) {
         $taskIndex=[Array]::IndexOf(@('cboPageSize','cboSortKey','cboSortDirection'),$taskItem[0]); $taskCtl=Add-Combo $taskForm $taskItem[0] (300+$taskIndex*4600) 4500 $taskItem[1] $taskItem[2]; $taskCtl.RowSourceType='Value List'; $taskCtl.ColumnCount=1; $taskCtl.ColumnWidths='4cm'; $taskCtl.AfterUpdate='=SearchClick("SORT")'
     }
-    $taskList=Add-Control $taskForm 'lstStudents' 110 300 5700 '' 14400; $taskList.Height=3100; $taskList.ColumnCount=12; $taskList.ColumnWidths='0cm;2cm;2cm;2cm;2.5cm;2cm;3cm;2cm;4cm;2cm;3cm;1cm'; $taskList.BoundColumn=1; $taskList.RowSourceType='StudentListCallback'; $taskList.OnDblClick='=OpenStudent(False)'
+    $taskList=Add-Control $taskForm 'lstStudents' 110 300 5700 '' 14400; $taskList.Height=3100; $taskList.ColumnCount=12; $taskList.ColumnWidths='0cm;2cm;2cm;2cm;2.5cm;2cm;3cm;2cm;4cm;2cm;3cm;1cm'; $taskList.BoundColumn=1; $taskList.RowSourceType='StudentListCallback'; $taskList.OnDblClick='=OpenStudent(False)'; $taskList.AfterUpdate='=SelectedStudentDetails()'
+    $taskDetails=Add-Text $taskForm 'txtSelectedDetails' 300 10400 '選択行の全文'; $taskDetails.Width=14000; $taskDetails.Height=2200; $taskDetails.Locked=$true; $taskDetails.TabStop=$false; $taskDetails.ScrollBars=2; $taskDetails.TextFormat=0; $taskForm.Section(0).Height=13000
     $null=Add-Control $taskForm 'lblCount' 100 300 5100 '未検索'; $null=Add-Control $taskForm 'lblSearchedAt' 100 4900 5100 ''; $taskMsg=Add-Control $taskForm 'lblMessage' 100 300 9500 '' 14000; $taskMsg.Height=600
     $taskBusy=Add-Text $taskForm 'IsBusy' 100 100 ''; $taskBusy.Visible=$false
     $null=Add-Button $taskForm 'cmdSearch' 300 8900 '検索' 'SearchClick("SEARCH")'; $null=Add-Button $taskForm 'cmdClear' 2100 8900 'クリア' 'ClearSearch()'; $null=Add-Button $taskForm 'cmdNew' 3900 8900 '新規登録' 'OpenStudent(True)'
@@ -165,6 +217,7 @@ try {
     foreach ($taskControlName in @('cboBirthEra','cboGender','cboPrefecture','cboSchoolYear','cboGrade','cboClass','cboRelationship')) { $taskControl=$taskForm.Controls.Item($taskControlName); $taskControl.AfterUpdate='=DirtyEdit()' }
     foreach ($taskBinding in @(@('cboSchoolYear','YEAR'),@('cboGrade','GRADE'),@('cboClass','CLASS'))) { $taskControl=$taskForm.Controls.Item($taskBinding[0]); $taskControl.AfterUpdate='=ClassChanged("' + $taskBinding[1] + '")' }
     $taskId=Add-Text $taskForm 'txtStudentId' 300 11250 '学生ID'; $taskId.Locked=$true
+    $null=Add-Control $taskForm 'lblCapacity' 100 300 11500 '人数／定員：－' 11000
     $null=Add-Control $taskForm 'lblUpdated' 100 300 11900 '' 11000; $taskMsg=Add-Control $taskForm 'lblMessage' 100 300 13600 '' 11000; $taskMsg.Height=1200
     $null=Add-Button $taskForm 'cmdSave' 300 12800 '保存' 'SaveEdit()'; $null=Add-Button $taskForm 'cmdDelete' 2100 12800 '削除' 'DeleteEdit()'; $null=Add-Button $taskForm 'cmdReset' 3900 12800 '元に戻す' 'ResetEdit(False)'; $null=Add-Button $taskForm 'cmdReload' 5700 12800 '最新再読込' 'ResetEdit(True)'; $null=Add-Button $taskForm 'cmdBack' 7500 12800 '戻る' 'BackEdit()'
     Save-Form $taskForm 'frmStudentEdit'

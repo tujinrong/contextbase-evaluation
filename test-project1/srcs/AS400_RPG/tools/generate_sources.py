@@ -66,7 +66,9 @@ dcl-ds StudentWork_t qualified template;
 for prop,col,typ,rawmax,normmax,mode,required,ctl,width in FIELDS:
     types+=f'  {prop} {typ};\n'
     if not required: types+=f'  {prop}Ind int(5) inz(-1);\n'
-types+='''  nameKey varucs2(320) ccsid(1200);
+types+='''  relationshipCategory varchar(24);
+  relationshipCategoryInd int(5) inz(-1);
+  nameKey varucs2(320) ccsid(1200);
   kanaKey varucs2(36) ccsid(1200);
 end-ds;
 dcl-ds StudentRecord_t qualified template;
@@ -207,7 +209,7 @@ PROCS={
  'StMessage':[('code','char(16) const')],
  'StLoadStudent':[('studentId','int(20) const'),('record','likeds(StudentRecord_t)'),('result','likeds(Result_t)')],
  'StSearchStudents':[('raw','likeds(SearchRaw_t) const'),('context','likeds(SearchContext_t)'),('newSearch','ind const'),('page','likeds(SearchPage_t)')],
- 'StSaveStudent':[('raw','likeds(StudentRaw_t) const'),('hints','likeds(StudentHints_t) const'),('studentId','int(20) const'),('expectedVersion','int(20) const'),('confirmation','char(36) const'),('result','likeds(Result_t)')],
+ 'StSaveStudent':[('input','likeds(StudentWork_t) const'),('hints','likeds(StudentHints_t) const'),('studentId','int(20) const'),('expectedVersion','int(20) const'),('confirmation','char(36) const'),('result','likeds(Result_t)')],
  'StDeleteStudent':[('studentId','int(20) const'),('expectedVersion','int(20) const'),('reason','varucs2(120) ccsid(1200) const'),('result','likeds(Result_t)')],
  'StLookupChoice':[('kind','varchar(24) const'),('page','int(10) const'),('schoolYear','int(10) const'),('grade','varchar(2) const'),('values','varchar(24) dim(20)'),('labels','varucs2(320) ccsid(1200) dim(20)'),('count','int(10)'),('result','likeds(Result_t)')],
  'StClassInfo':[('classId','int(20) const'),('year','varchar(4)'),('grade','varchar(2)'),('occupancy','int(10)'),('capacity','int(10)'),('capacityInd','int(5)'),('result','likeds(Result_t)')],
@@ -264,12 +266,13 @@ insert=f'''exec sql INSERT INTO STUDAPP.M_STUDENT
   ({cols},gender_category,prefecture_category,enrollment_category,relationship_category,
    created_at,created_by,updated_at,updated_by,row_version,is_deleted)
   VALUES ({', '.join(hv('work.',f) for f in FIELDS)}, :work.nameKey,:work.kanaKey,
-    'GENDER','PREFECTURE','ENROLLMENT_STATUS','RELATIONSHIP',:utc,:principal,:utc,:principal,1,0);
+    'GENDER','PREFECTURE','ENROLLMENT_STATUS',:work.relationshipCategory :work.relationshipCategoryInd,:utc,:principal,:utc,:principal,1,0);
 '''
 write('copy/STUINSERT.rpgleinc',insert)
 update='exec sql UPDATE STUDAPP.M_STUDENT SET\n'
 update+=',\n'.join('  '+f[1]+'='+hv('work.',f) for f in FIELDS[1:])
 update+=''', name_key=:work.nameKey, kana_key=:work.kanaKey,
+  relationship_category=:work.relationshipCategory :work.relationshipCategoryInd,
   updated_at=:utc,updated_by=:principal,row_version=row_version+1
   WHERE student_id=:studentId AND row_version=:expectedVersion AND is_deleted=0;
 '''
@@ -288,6 +291,8 @@ for i,f in enumerate(FIELDS,1):
     else: norm+=f'work.{p}=%char(temp);\n'
     if not req: norm+=f'if %len(temp)=0;work.{p}Ind=-1;else;work.{p}Ind=0;endif;\n'
 norm+='''StParseBirthDate(raw.birthEra:raw.birthYear:raw.birthMonth:raw.birthDay:businessDay:work.birthDate:result);
+if work.relationshipCodeInd<0;work.relationshipCategory='';work.relationshipCategoryInd=-1;
+else;work.relationshipCategory='RELATIONSHIP';work.relationshipCategoryInd=0;endif;
 work.nameKey=StNormalizeText(raw.values(2):8:160:2:*on:'studentName':result);
 work.kanaKey=StNormalizeText(raw.values(3):36:18:4:*on:'studentNameKana':result);
 '''
