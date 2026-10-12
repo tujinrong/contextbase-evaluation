@@ -1,0 +1,30 @@
+<!-- spec-meta: {"schema":"spec-md/1.1","documentId":"DBDEF-SQLSERVER-T_RUNTIME_STATE","version":"7.1","path":"test-project1/spec/DB定義/SQLServer/テーブル/07_t_runtime_state.md","layout":"TABLE","table":{"logicalName":"実行時状態情報","physicalName":"t_runtime_state","profile":"SQLServer","primaryKey":["state_id"],"fieldIds":{"state_id":"AUX-STATE-1","owner_id":"AUX-STATE-2","login_session_id":"AUX-STATE-3","state_kind":"AUX-STATE-4","encrypted_payload":"AUX-STATE-5","expires_at":"AUX-STATE-6","revision":"AUX-STATE-7","consumed":"AUX-STATE-8"}},"sheets":[{"sheet":"t_runtime_state","kind":"TABLE","sections":[{"heading":"テーブルヘッダー","kind":"HEADER"},{"heading":"項目詳細","kind":"LIST","key":["No"],"columns":["No","論理名","物理名","PK","タイプ","長さ","初期値","説明"]}]}]} -->
+# 実行時状態情報 DB定義書
+
+## テーブルヘッダー
+
+| 項目 | 内容 |
+| --- | --- |
+| 文書ID／版 | DBDEF-SQLSERVER-T_RUNTIME_STATE／7.1／2026-10-12 |
+| 論理テーブル名 | 実行時状態情報 |
+| 物理テーブル名 | t_runtime_state |
+| 対象／スキーマ | SQLServer／dbo |
+| 用途／項目数 | 利用者別の検索・確認・成功通知の技術情報。 8項目。補助表の論理名は既存物理名・説明に基づく表記補足。 |
+| 主キー（順序） | state_id |
+| 共通規則・制約 | [総合仕様・制約](../01_DB定義書.md)／[記述・Excel配置規約](../../../../../docs/テーブル仕様書記述規約.md) |
+| 長さ／初期値の基準 | 長さは業務上限。数字は整数桁.小数桁。初期値は処理設定、DB DEFAULT未定義。 |
+| 項目IDの対応 | 物理列に対応する既存DB項目IDを維持。メタ情報fieldIdsに対応を記録。 |
+| 基礎仕様 | [論理テーブル仕様](../../../基本設計書/03_テーブル仕様書.md)／[項目制約](../../../共通/09_項目制約定義.md) |
+
+## 項目詳細
+
+| No | 論理名 | 物理名 | PK | タイプ | 長さ | 初期値 | 説明 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 状態識別子 | state_id | 〇 | 文字 | 64 | － | DB:varchar(64)／NULL不可。PK、256bit乱数の64桁hex。Base64Urlと混在させない。DB DEFAULTは元資料で未定義。 |
+| 2 | 所有者 | owner_id | － | 文字 | 64 | － | DB:nvarchar(128)／NULL不可。認証主体64スカラー値。DB DEFAULTは元資料で未定義。 |
+| 3 | ログインセッション識別子 | login_session_id | － | 文字 | 64 | － | DB:varchar(64)／NULL不可。認証セッションキー、外部契約。DB DEFAULTは元資料で未定義。 |
+| 4 | 状態種別 | state_kind | － | 文字 | 16 | － | DB:varchar(16)／NULL不可。検索・確認・一回の成功通知。DB DEFAULTは元資料で未定義。 |
+| 5 | 暗号化状態情報 | encrypted_payload | － | バイナリ | － | － | DB:varbinary(max)／NULL不可。認証付き暗号。個人情報の平文永続保存禁止。DB DEFAULTは元資料で未定義。 |
+| 6 | 有効期限 | expires_at | － | 日時 | － | － | DB:datetimeoffset(7)／NULL不可。UTC、検索30分・確認10分。DB DEFAULTは元資料で未定義。 |
+| 7 | 更新管理番号 | revision | － | 数字 | 19.0 | 処理:1 | DB:bigint／NULL不可。正の更新番号、初期1。DB DEFAULTは元資料で未定義。 |
+| 8 | 消費済み状態 | consumed | － | 真偽 | － | 処理:0 | DB:bit／NULL不可。初期0、一回消費。DB DEFAULTは元資料で未定義。 |
