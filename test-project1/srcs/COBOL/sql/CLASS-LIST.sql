@@ -1,0 +1,1 @@
+SELECT class_id,school_year,grade_code,class_code,class_name,CONVERT(char(10),valid_from,23),CONVERT(char(10),valid_to,23),is_active,capacity FROM dbo.m_class c LEFT JOIN dbo.m_code g ON g.category_id=c.grade_category AND g.code_value=c.grade_code ORDER BY school_year DESC,g.display_order,c.display_order,class_code,class_id;

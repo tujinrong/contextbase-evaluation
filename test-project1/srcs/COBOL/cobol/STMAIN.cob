@@ -1,0 +1,60 @@
+       >>SOURCE FORMAT FREE
+identification division.
+program-id. STMAIN.
+environment division.
+configuration section.
+repository. function all intrinsic.
+data division.
+working-storage section.
+copy "ST-FIELDS.cpy".
+copy "ST-APP.cpy".
+copy "ST-LOCAL.cpy".
+
+procedure division.
+    INITIALIZE APP
+    MOVE 200 TO APP-STATUS MOVE 1 TO APP-ERRORS-LENGTH
+    MOVE "Search" TO VIEW-MODE
+    CALL "STHTTP" USING ST-RAW RETURNING RC END-CALL
+    IF RC NOT = 0
+        MOVE 400 TO APP-STATUS
+        MOVE "E-COM-003: 要求形式またはサイズが無効です。" TO ERROR-TEXT
+        PERFORM ADD-ERROR
+    ELSE
+        CALL "STAUTH" END-CALL
+    END-IF
+    IF APP-STATUS = 200
+      CALL "STCONNECT" RETURNING DB-HANDLE END-CALL
+      IF DB-HANDLE = NULL
+        MOVE 503 TO APP-STATUS
+        MOVE "E-COM-004: DBへ接続できませんでした。" TO ERROR-TEXT
+        PERFORM ADD-ERROR
+      ELSE
+        CALL "STCLOCK" END-CALL
+      END-IF
+    END-IF
+    IF APP-STATUS = 200
+      EVALUATE FUNCTION TRIM(R-DATA(F-ACTION))
+      WHEN "NEW" WHEN "EDIT" WHEN "RESET" WHEN "RELOAD"
+        CALL "STEDIT" END-CALL
+      WHEN "SAVE" WHEN "CONFIRM"
+        MOVE "Edit" TO VIEW-MODE CALL "STSAVE" END-CALL
+      WHEN "DELETE"
+        MOVE "Edit" TO VIEW-MODE CALL "STDELT" END-CALL
+      WHEN "" WHEN "INITIAL" WHEN "SEARCH" WHEN "PAGE"
+      WHEN "CLEAR" WHEN "RESUME" WHEN "OPTIONS"
+        CALL "STSRCH" END-CALL
+      WHEN OTHER
+        MOVE 400 TO APP-STATUS
+        MOVE "E-COM-003: 操作が無効です。" TO ERROR-TEXT PERFORM ADD-ERROR
+      END-EVALUATE
+    END-IF
+    IF APP-OUTCOME = "Saved"
+        CALL "STREDIRECT" USING CONTEXT-ID TAB-ID END-CALL
+    ELSE
+        CALL "STRENDER" END-CALL
+    END-IF
+    CALL "STCLOSE" USING BY VALUE DB-HANDLE END-CALL
+    STOP RUN.
+
+copy "ST-HELPERS.cpy".
+end program STMAIN.

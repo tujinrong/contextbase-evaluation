@@ -1,0 +1,2 @@
+<script setup lang="ts">const props=defineProps<{ page:number; totalCount:number|null; pageSize:number; disabled:boolean }>(); defineEmits<{ move:[page:number] }>();</script>
+<template><nav class="pager" aria-label="ページ操作"><button :disabled="disabled || page<=1" @click="$emit('move',page-1)">前へ</button><span>{{ page }} / {{ Math.max(1,Math.ceil((props.totalCount || 0)/pageSize)) }}</span><button :disabled="disabled || page*pageSize>=(totalCount || 0)" @click="$emit('move',page+1)">次へ</button></nav></template>

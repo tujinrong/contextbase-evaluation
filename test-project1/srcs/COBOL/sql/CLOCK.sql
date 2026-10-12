@@ -1,0 +1,1 @@
+SELECT CONVERT(char(10),SWITCHOFFSET(SYSDATETIMEOFFSET(),'+09:00'),23),CONVERT(varchar(32),SWITCHOFFSET(SYSDATETIMEOFFSET(),'+00:00'),127),CONVERT(varchar(36),NEWID()),snapshot_isolation_state FROM sys.databases WHERE database_id=DB_ID();

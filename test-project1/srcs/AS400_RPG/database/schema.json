@@ -1,0 +1,1045 @@
+[
+  {
+    "name": "m_code_category",
+    "version": "7.2",
+    "source": "spec/DB定義/Db2_for_i/テーブル/03_m_code_category.md",
+    "columns": [
+      {
+        "number": 1,
+        "logical": "コード分類",
+        "name": "category_id",
+        "pk": true,
+        "required": true,
+        "type": "VARCHAR(24) CCSID1208",
+        "length": "24",
+        "default": "",
+        "description": "分類の識別情報。登録後変更不可。"
+      },
+      {
+        "number": 2,
+        "logical": "コード分類名",
+        "name": "category_name",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(24) CCSID1200",
+        "length": "12",
+        "default": "",
+        "description": "性別・在籍区分等。"
+      },
+      {
+        "number": 3,
+        "logical": "コード値の桁数",
+        "name": "code_length",
+        "pk": false,
+        "required": true,
+        "type": "SMALLINT",
+        "length": "2.0",
+        "default": "",
+        "description": "分類内の値を固定桁で管理。"
+      },
+      {
+        "number": 4,
+        "logical": "値の追加可否",
+        "name": "allow_add",
+        "pk": false,
+        "required": true,
+        "type": "SMALLINT",
+        "length": "",
+        "default": "",
+        "description": "通常保守で新しい値を増やせるか。"
+      },
+      {
+        "number": 5,
+        "logical": "分類の利用可否",
+        "name": "is_active",
+        "pk": false,
+        "required": true,
+        "type": "SMALLINT",
+        "length": "",
+        "default": "1",
+        "description": "必須・利用可。本版の5分類は利用可を維持。"
+      },
+      {
+        "number": 6,
+        "logical": "備考",
+        "name": "remarks",
+        "pk": false,
+        "required": false,
+        "type": "VARGRAPHIC(240) CCSID1200",
+        "length": "120",
+        "default": "",
+        "description": "分類の用途・保守上の注意。"
+      },
+      {
+        "number": 7,
+        "logical": "作成日時",
+        "name": "created_at",
+        "pk": false,
+        "required": true,
+        "type": "TIMESTAMP(6)",
+        "length": "",
+        "default": "",
+        "description": "自動。最初の保存日時。変更不可。"
+      },
+      {
+        "number": 8,
+        "logical": "作成者",
+        "name": "created_by",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(128) CCSID1200",
+        "length": "64",
+        "default": "",
+        "description": "自動。認証された登録者。変更不可。"
+      },
+      {
+        "number": 9,
+        "logical": "更新日時",
+        "name": "updated_at",
+        "pk": false,
+        "required": true,
+        "type": "TIMESTAMP(6)",
+        "length": "",
+        "default": "",
+        "description": "自動。実変更の保存時点。"
+      },
+      {
+        "number": 10,
+        "logical": "更新者",
+        "name": "updated_by",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(128) CCSID1200",
+        "length": "64",
+        "default": "",
+        "description": "自動。認証された変更者。"
+      },
+      {
+        "number": 11,
+        "logical": "更新管理番号",
+        "name": "row_version",
+        "pk": false,
+        "required": true,
+        "type": "BIGINT",
+        "length": "19.0",
+        "default": "1",
+        "description": "自動。新規1、実変更ごとに1加算、上限で停止。9223372036854775807到達後の加算を拒否。"
+      }
+    ]
+  },
+  {
+    "name": "m_code",
+    "version": "7.2",
+    "source": "spec/DB定義/Db2_for_i/テーブル/04_m_code.md",
+    "columns": [
+      {
+        "number": 1,
+        "logical": "コード分類",
+        "name": "category_id",
+        "pk": true,
+        "required": true,
+        "type": "VARCHAR(24) CCSID1208",
+        "length": "24",
+        "default": "",
+        "description": "コード種別マスタに存在する分類。FK:m_code_category.category_id。"
+      },
+      {
+        "number": 2,
+        "logical": "コード値",
+        "name": "code_value",
+        "pk": true,
+        "required": true,
+        "type": "VARCHAR(10) CCSID1208",
+        "length": "10",
+        "default": "",
+        "description": "分類で決めた固定桁。先頭ゼロを保持。"
+      },
+      {
+        "number": 3,
+        "logical": "コード名称",
+        "name": "code_name",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(24) CCSID1200",
+        "length": "12",
+        "default": "",
+        "description": "画面に表示する名称。"
+      },
+      {
+        "number": 4,
+        "logical": "表示順",
+        "name": "display_order",
+        "pk": false,
+        "required": true,
+        "type": "INTEGER",
+        "length": "10.0",
+        "default": "0",
+        "description": "必須・0。同順位はコード値順。"
+      },
+      {
+        "number": 5,
+        "logical": "利用可否",
+        "name": "is_active",
+        "pk": false,
+        "required": true,
+        "type": "SMALLINT",
+        "length": "",
+        "default": "1",
+        "description": "必須・利用可。利用不可は新規選択不可。"
+      },
+      {
+        "number": 6,
+        "logical": "有効開始日",
+        "name": "valid_from",
+        "pk": false,
+        "required": true,
+        "type": "DATE",
+        "length": "",
+        "default": "",
+        "description": "必須・1900年1月1日。両端を含む。"
+      },
+      {
+        "number": 7,
+        "logical": "有効終了日",
+        "name": "valid_to",
+        "pk": false,
+        "required": false,
+        "type": "DATE",
+        "length": "",
+        "default": "",
+        "description": "空は期限なし。開始日以上。"
+      },
+      {
+        "number": 8,
+        "logical": "保護対象",
+        "name": "is_protected",
+        "pk": false,
+        "required": true,
+        "type": "SMALLINT",
+        "length": "",
+        "default": "",
+        "description": "保護値の停止・期間短縮等を禁止。"
+      },
+      {
+        "number": 9,
+        "logical": "備考",
+        "name": "remarks",
+        "pk": false,
+        "required": false,
+        "type": "VARGRAPHIC(240) CCSID1200",
+        "length": "120",
+        "default": "",
+        "description": "意味や使用上の注意。"
+      },
+      {
+        "number": 10,
+        "logical": "作成日時",
+        "name": "created_at",
+        "pk": false,
+        "required": true,
+        "type": "TIMESTAMP(6)",
+        "length": "",
+        "default": "",
+        "description": "自動。最初の保存日時。変更不可。"
+      },
+      {
+        "number": 11,
+        "logical": "作成者",
+        "name": "created_by",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(128) CCSID1200",
+        "length": "64",
+        "default": "",
+        "description": "自動。認証された登録者。変更不可。"
+      },
+      {
+        "number": 12,
+        "logical": "更新日時",
+        "name": "updated_at",
+        "pk": false,
+        "required": true,
+        "type": "TIMESTAMP(6)",
+        "length": "",
+        "default": "",
+        "description": "自動。実変更の保存時点。"
+      },
+      {
+        "number": 13,
+        "logical": "更新者",
+        "name": "updated_by",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(128) CCSID1200",
+        "length": "64",
+        "default": "",
+        "description": "自動。認証された変更者。"
+      },
+      {
+        "number": 14,
+        "logical": "更新管理番号",
+        "name": "row_version",
+        "pk": false,
+        "required": true,
+        "type": "BIGINT",
+        "length": "19.0",
+        "default": "1",
+        "description": "自動。新規1、実変更ごとに1加算、上限で停止。9223372036854775807到達後の加算を拒否。"
+      }
+    ]
+  },
+  {
+    "name": "m_class",
+    "version": "7.2",
+    "source": "spec/DB定義/Db2_for_i/テーブル/02_m_class.md",
+    "columns": [
+      {
+        "number": 1,
+        "logical": "クラス管理番号",
+        "name": "class_id",
+        "pk": true,
+        "required": true,
+        "type": "BIGINT",
+        "length": "19.0",
+        "default": "自動採番",
+        "description": "GENERATED ALWAYS AS IDENTITY。内部識別子、変更不可。"
+      },
+      {
+        "number": 2,
+        "logical": "学校年度",
+        "name": "school_year",
+        "pk": false,
+        "required": true,
+        "type": "SMALLINT",
+        "length": "4.0",
+        "default": "",
+        "description": "4月1日～翌年3月31日、登録後変更不可。"
+      },
+      {
+        "number": 3,
+        "logical": "学年のコード分類",
+        "name": "grade_category",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(24) CCSID1208",
+        "length": "24",
+        "default": "",
+        "description": "自動固定。学年の分類。固定値GRADE。"
+      },
+      {
+        "number": 4,
+        "logical": "学年",
+        "name": "grade_code",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(2) CCSID1208",
+        "length": "2",
+        "default": "",
+        "description": "必須・学年なし。参照学生がいる場合の意味変更を禁止。FK:(grade_category,grade_code)→m_code(category_id,code_value)。"
+      },
+      {
+        "number": 5,
+        "logical": "クラスコード",
+        "name": "class_code",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(9) CCSID1208",
+        "length": "9",
+        "default": "",
+        "description": "英数字・ハイフン、先頭英数字。年度内で一意、変更不可。"
+      },
+      {
+        "number": 6,
+        "logical": "クラス名",
+        "name": "class_name",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(36) CCSID1200",
+        "length": "18",
+        "default": "",
+        "description": "顧客向けの名称。"
+      },
+      {
+        "number": 7,
+        "logical": "利用開始日",
+        "name": "valid_from",
+        "pk": false,
+        "required": true,
+        "type": "DATE",
+        "length": "",
+        "default": "",
+        "description": "必須・年度開始日。学校年度内、終了日以下。"
+      },
+      {
+        "number": 8,
+        "logical": "利用終了日",
+        "name": "valid_to",
+        "pk": false,
+        "required": true,
+        "type": "DATE",
+        "length": "",
+        "default": "",
+        "description": "必須・年度終了日。学校年度内。両端を含む。"
+      },
+      {
+        "number": 9,
+        "logical": "定員",
+        "name": "capacity",
+        "pk": false,
+        "required": false,
+        "type": "INTEGER",
+        "length": "4.0",
+        "default": "",
+        "description": "任意・未設定。未設定は制限なし。0人定員は指定しない。"
+      },
+      {
+        "number": 10,
+        "logical": "表示順",
+        "name": "display_order",
+        "pk": false,
+        "required": true,
+        "type": "INTEGER",
+        "length": "10.0",
+        "default": "0",
+        "description": "必須・0。候補表示の順番。"
+      },
+      {
+        "number": 11,
+        "logical": "利用可否",
+        "name": "is_active",
+        "pk": false,
+        "required": true,
+        "type": "SMALLINT",
+        "length": "",
+        "default": "1",
+        "description": "必須・利用可。停止しても既存参照は残す。"
+      },
+      {
+        "number": 12,
+        "logical": "備考",
+        "name": "remarks",
+        "pk": false,
+        "required": false,
+        "type": "VARGRAPHIC(240) CCSID1200",
+        "length": "120",
+        "default": "",
+        "description": "クラス説明。担任の人事管理は対象外。"
+      },
+      {
+        "number": 13,
+        "logical": "作成日時",
+        "name": "created_at",
+        "pk": false,
+        "required": true,
+        "type": "TIMESTAMP(6)",
+        "length": "",
+        "default": "",
+        "description": "自動。最初の保存日時。変更不可。"
+      },
+      {
+        "number": 14,
+        "logical": "作成者",
+        "name": "created_by",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(128) CCSID1200",
+        "length": "64",
+        "default": "",
+        "description": "自動。認証された登録者。変更不可。"
+      },
+      {
+        "number": 15,
+        "logical": "更新日時",
+        "name": "updated_at",
+        "pk": false,
+        "required": true,
+        "type": "TIMESTAMP(6)",
+        "length": "",
+        "default": "",
+        "description": "自動。実変更の保存時点。"
+      },
+      {
+        "number": 16,
+        "logical": "更新者",
+        "name": "updated_by",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(128) CCSID1200",
+        "length": "64",
+        "default": "",
+        "description": "自動。認証された変更者。"
+      },
+      {
+        "number": 17,
+        "logical": "更新管理番号",
+        "name": "row_version",
+        "pk": false,
+        "required": true,
+        "type": "BIGINT",
+        "length": "19.0",
+        "default": "1",
+        "description": "自動。新規1、実変更ごとに1加算、上限で停止。9223372036854775807到達後の加算を拒否。"
+      }
+    ]
+  },
+  {
+    "name": "m_student",
+    "version": "7.2",
+    "source": "spec/DB定義/Db2_for_i/テーブル/01_m_student.md",
+    "columns": [
+      {
+        "number": 1,
+        "logical": "学生管理番号",
+        "name": "student_id",
+        "pk": true,
+        "required": true,
+        "type": "BIGINT",
+        "length": "19.0",
+        "default": "自動採番",
+        "description": "GENERATED ALWAYS AS IDENTITY。学生を内部的に識別。不変、欠番可。"
+      },
+      {
+        "number": 2,
+        "logical": "学籍番号",
+        "name": "student_no",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(15) CCSID1208",
+        "length": "15",
+        "default": "",
+        "description": "学校が付番。全学生で一意、削除後も再利用不可、変更不可。"
+      },
+      {
+        "number": 3,
+        "logical": "学生氏名",
+        "name": "student_name",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(16) CCSID1200",
+        "length": "8",
+        "default": "",
+        "description": "原表記を保持。前後空白を除く。"
+      },
+      {
+        "number": 4,
+        "logical": "学生氏名カナ",
+        "name": "student_name_kana",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(36) CCSID1200",
+        "length": "18",
+        "default": "",
+        "description": "全角カナへ整えた表記。"
+      },
+      {
+        "number": 5,
+        "logical": "氏名照合用情報",
+        "name": "name_key",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(320) CCSID1200",
+        "length": "160",
+        "default": "",
+        "description": "自動。氏名検索・候補比較用。氏名変更と同時に再作成。"
+      },
+      {
+        "number": 6,
+        "logical": "氏名カナ照合用情報",
+        "name": "kana_key",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(36) CCSID1200",
+        "length": "18",
+        "default": "",
+        "description": "自動。カナの空白差を除いて比較する情報。"
+      },
+      {
+        "number": 7,
+        "logical": "生年月日",
+        "name": "birth_date",
+        "pk": false,
+        "required": true,
+        "type": "DATE",
+        "length": "",
+        "default": "",
+        "description": "内部は日付、画面は和暦。DATE-R01の下限・業務日・入学日を検査。固定下限1900-01-01／保存時業務日以下。"
+      },
+      {
+        "number": 8,
+        "logical": "性別のコード分類",
+        "name": "gender_category",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(24) CCSID1208",
+        "length": "24",
+        "default": "",
+        "description": "自動固定。性別の値を他分類と誤認しないための分類情報。固定値GENDER。"
+      },
+      {
+        "number": 9,
+        "logical": "性別",
+        "name": "gender_code",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(1) CCSID1208",
+        "length": "1",
+        "default": "",
+        "description": "必須・未回答。未回答を許容。新規入力初期値0を保存入口が設定。FK:(gender_category,gender_code)→m_code(category_id,code_value)。"
+      },
+      {
+        "number": 10,
+        "logical": "郵便番号",
+        "name": "postal_code",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(7) CCSID1208",
+        "length": "7",
+        "default": "",
+        "description": "区切りなし。先頭ゼロを保持。"
+      },
+      {
+        "number": 11,
+        "logical": "都道府県のコード分類",
+        "name": "prefecture_category",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(24) CCSID1208",
+        "length": "24",
+        "default": "",
+        "description": "自動固定。都道府県の分類。固定値PREFECTURE。"
+      },
+      {
+        "number": 12,
+        "logical": "都道府県",
+        "name": "prefecture_code",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(2) CCSID1208",
+        "length": "2",
+        "default": "",
+        "description": "国内都道府県。FK:(prefecture_category,prefecture_code)→m_code(category_id,code_value)。"
+      },
+      {
+        "number": 13,
+        "logical": "住所1",
+        "name": "address_line1",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(90) CCSID1200",
+        "length": "45",
+        "default": "",
+        "description": "市区町村・町域・番地。"
+      },
+      {
+        "number": 14,
+        "logical": "住所2",
+        "name": "address_line2",
+        "pk": false,
+        "required": false,
+        "type": "VARGRAPHIC(90) CCSID1200",
+        "length": "45",
+        "default": "",
+        "description": "建物名・部屋番号。"
+      },
+      {
+        "number": 15,
+        "logical": "本人電話",
+        "name": "phone_number",
+        "pk": false,
+        "required": false,
+        "type": "VARCHAR(16) CCSID1208",
+        "length": "16",
+        "default": "",
+        "description": "条件付き。国内または国番号付きの区切りなし表記。"
+      },
+      {
+        "number": 16,
+        "logical": "本人メール",
+        "name": "email_address",
+        "pk": false,
+        "required": false,
+        "type": "VARCHAR(60) CCSID1208",
+        "length": "60",
+        "default": "",
+        "description": "条件付き。共通形式に従う。共有可。"
+      },
+      {
+        "number": 17,
+        "logical": "入学日",
+        "name": "admission_date",
+        "pk": false,
+        "required": true,
+        "type": "DATE",
+        "length": "",
+        "default": "",
+        "description": "生年月日以上、本日以前。固定下限1900-01-01／保存時業務日以下。"
+      },
+      {
+        "number": 18,
+        "logical": "在籍区分のコード分類",
+        "name": "enrollment_category",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(24) CCSID1208",
+        "length": "24",
+        "default": "",
+        "description": "自動固定。在籍区分の分類。固定値ENROLLMENT_STATUS。"
+      },
+      {
+        "number": 19,
+        "logical": "在籍区分",
+        "name": "enrollment_status_code",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(2) CCSID1208",
+        "length": "2",
+        "default": "",
+        "description": "必須・在学。在学・休学・卒業・退学。新規入力初期値01を保存入口が設定。FK:(enrollment_category,enrollment_status_code)→m_code(category_id,code_value)。"
+      },
+      {
+        "number": 20,
+        "logical": "卒業・退学日",
+        "name": "enrollment_end_date",
+        "pk": false,
+        "required": false,
+        "type": "DATE",
+        "length": "",
+        "default": "",
+        "description": "条件付き。卒業・退学なら必須。在学・休学なら空。固定下限1900-01-01／保存時業務日以下。"
+      },
+      {
+        "number": 21,
+        "logical": "現在・最終所属クラス",
+        "name": "class_id",
+        "pk": false,
+        "required": false,
+        "type": "BIGINT",
+        "length": "19.0",
+        "default": "",
+        "description": "条件付き。在学・休学は必須。学生1人につき最大1件。FK:m_class.class_id。"
+      },
+      {
+        "number": 22,
+        "logical": "緊急連絡先氏名",
+        "name": "emergency_contact_name",
+        "pk": false,
+        "required": false,
+        "type": "VARGRAPHIC(16) CCSID1200",
+        "length": "8",
+        "default": "",
+        "description": "一式指定時必須。続柄・電話と組で入力。"
+      },
+      {
+        "number": 23,
+        "logical": "続柄のコード分類",
+        "name": "relationship_category",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(24) CCSID1208",
+        "length": "24",
+        "default": "",
+        "description": "自動固定。続柄の値が空でも分類情報を保持。固定値RELATIONSHIP。"
+      },
+      {
+        "number": 24,
+        "logical": "緊急連絡先続柄",
+        "name": "relationship_code",
+        "pk": false,
+        "required": false,
+        "type": "VARCHAR(2) CCSID1208",
+        "length": "2",
+        "default": "",
+        "description": "一式指定時必須。父・母・その他等。FK:(relationship_category,relationship_code)→m_code(category_id,code_value)。"
+      },
+      {
+        "number": 25,
+        "logical": "緊急連絡先電話",
+        "name": "emergency_phone_number",
+        "pk": false,
+        "required": false,
+        "type": "VARCHAR(16) CCSID1208",
+        "length": "16",
+        "default": "",
+        "description": "一式指定時必須。本人電話と同形式。"
+      },
+      {
+        "number": 26,
+        "logical": "備考",
+        "name": "remarks",
+        "pk": false,
+        "required": false,
+        "type": "VARGRAPHIC(240) CCSID1200",
+        "length": "120",
+        "default": "",
+        "description": "改行可。成績の管理対象ではない。"
+      },
+      {
+        "number": 27,
+        "logical": "削除の状態",
+        "name": "is_deleted",
+        "pk": false,
+        "required": true,
+        "type": "SMALLINT",
+        "length": "",
+        "default": "0",
+        "description": "自動・未削除。在籍区分と別に管理。"
+      },
+      {
+        "number": 28,
+        "logical": "削除日時",
+        "name": "deleted_at",
+        "pk": false,
+        "required": false,
+        "type": "TIMESTAMP(6)",
+        "length": "",
+        "default": "",
+        "description": "削除時に自動。未削除では空。"
+      },
+      {
+        "number": 29,
+        "logical": "削除者",
+        "name": "deleted_by",
+        "pk": false,
+        "required": false,
+        "type": "VARGRAPHIC(128) CCSID1200",
+        "length": "64",
+        "default": "",
+        "description": "削除時に自動。未削除では空。"
+      },
+      {
+        "number": 30,
+        "logical": "削除理由",
+        "name": "delete_reason",
+        "pk": false,
+        "required": false,
+        "type": "VARGRAPHIC(120) CCSID1200",
+        "length": "60",
+        "default": "",
+        "description": "削除時必須。空白だけは不可。未削除では空。"
+      },
+      {
+        "number": 31,
+        "logical": "作成日時",
+        "name": "created_at",
+        "pk": false,
+        "required": true,
+        "type": "TIMESTAMP(6)",
+        "length": "",
+        "default": "",
+        "description": "自動。最初の保存日時。変更不可。"
+      },
+      {
+        "number": 32,
+        "logical": "作成者",
+        "name": "created_by",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(128) CCSID1200",
+        "length": "64",
+        "default": "",
+        "description": "自動。認証された登録者。変更不可。"
+      },
+      {
+        "number": 33,
+        "logical": "更新日時",
+        "name": "updated_at",
+        "pk": false,
+        "required": true,
+        "type": "TIMESTAMP(6)",
+        "length": "",
+        "default": "",
+        "description": "自動。実変更の保存時点。"
+      },
+      {
+        "number": 34,
+        "logical": "更新者",
+        "name": "updated_by",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(128) CCSID1200",
+        "length": "64",
+        "default": "",
+        "description": "自動。認証された変更者。"
+      },
+      {
+        "number": 35,
+        "logical": "更新管理番号",
+        "name": "row_version",
+        "pk": false,
+        "required": true,
+        "type": "BIGINT",
+        "length": "19.0",
+        "default": "1",
+        "description": "自動。新規1、実変更ごとに1加算、上限で停止。9223372036854775807到達後の加算を拒否。"
+      }
+    ]
+  },
+  {
+    "name": "t_operation_log",
+    "version": "7.2",
+    "source": "spec/DB定義/Db2_for_i/テーブル/05_t_operation_log.md",
+    "columns": [
+      {
+        "number": 1,
+        "logical": "操作履歴番号",
+        "name": "log_id",
+        "pk": true,
+        "required": true,
+        "type": "BIGINT",
+        "length": "19.0",
+        "default": "自動採番",
+        "description": "GENERATED ALWAYS AS IDENTITY。追記記録の識別子。"
+      },
+      {
+        "number": 2,
+        "logical": "対象情報の種類",
+        "name": "target_table",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(21) CCSID1208",
+        "length": "21",
+        "default": "",
+        "description": "自動。学生、クラス、コード分類、コード値のいずれか。"
+      },
+      {
+        "number": 3,
+        "logical": "対象の識別情報",
+        "name": "target_key",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(35) CCSID1208",
+        "length": "35",
+        "default": "",
+        "description": "自動。管理番号または分類と値。氏名等を含めない。"
+      },
+      {
+        "number": 4,
+        "logical": "操作の種類",
+        "name": "operation_type",
+        "pk": false,
+        "required": true,
+        "type": "VARCHAR(11) CCSID1208",
+        "length": "11",
+        "default": "",
+        "description": "自動。新規・変更・論理削除・停止・再開。"
+      },
+      {
+        "number": 5,
+        "logical": "変更前の更新管理番号",
+        "name": "before_version",
+        "pk": false,
+        "required": false,
+        "type": "BIGINT",
+        "length": "19.0",
+        "default": "",
+        "description": "新規以外必須。新規は空。"
+      },
+      {
+        "number": 6,
+        "logical": "変更後の更新管理番号",
+        "name": "after_version",
+        "pk": false,
+        "required": true,
+        "type": "BIGINT",
+        "length": "19.0",
+        "default": "",
+        "description": "自動。新規は1、変更は以前の番号＋1。"
+      },
+      {
+        "number": 7,
+        "logical": "変更項目一覧",
+        "name": "changed_columns",
+        "pk": false,
+        "required": true,
+        "type": "CLOB(16K) CCSID1208",
+        "length": "",
+        "default": "",
+        "description": "自動。変更した項目を記録。入力値自体は複写しない。許可列名のJSON配列、実値は保持しない。"
+      },
+      {
+        "number": 8,
+        "logical": "実行者",
+        "name": "executed_by",
+        "pk": false,
+        "required": true,
+        "type": "VARGRAPHIC(128) CCSID1200",
+        "length": "64",
+        "default": "",
+        "description": "自動。認証された利用者番号。"
+      },
+      {
+        "number": 9,
+        "logical": "実行日時",
+        "name": "executed_at",
+        "pk": false,
+        "required": true,
+        "type": "TIMESTAMP(6)",
+        "length": "",
+        "default": "",
+        "description": "自動。対応する保存操作の日時。"
+      },
+      {
+        "number": 10,
+        "logical": "受付番号",
+        "name": "correlation_id",
+        "pk": false,
+        "required": true,
+        "type": "CHAR(36)",
+        "length": "",
+        "default": "",
+        "description": "自動。障害調査用。同一要求で関連付ける。"
+      },
+      {
+        "number": 11,
+        "logical": "操作・確認理由",
+        "name": "operation_reason",
+        "pk": false,
+        "required": false,
+        "type": "VARGRAPHIC(120) CCSID1200",
+        "length": "60",
+        "default": "",
+        "description": "条件付き。削除・終了区分訂正・重複警告続行時は必須。"
+      },
+      {
+        "number": 12,
+        "logical": "重複警告の確認有無",
+        "name": "duplicate_confirmed",
+        "pk": false,
+        "required": true,
+        "type": "SMALLINT",
+        "length": "",
+        "default": "0",
+        "description": "自動。別人確認を経た保存で有。"
+      }
+    ]
+  },
+  {
+    "name": "t_write_guard",
+    "version": "7.2",
+    "source": "spec/DB定義/Db2_for_i/テーブル/06_t_write_guard.md",
+    "columns": [
+      {
+        "number": 1,
+        "logical": "制御行番号",
+        "name": "guard_id",
+        "pk": true,
+        "required": true,
+        "type": "SMALLINT",
+        "length": "1.0",
+        "default": "処理:1",
+        "description": "固定値1。"
+      },
+      {
+        "number": 2,
+        "logical": "ロック状態",
+        "name": "lock_bit",
+        "pk": false,
+        "required": true,
+        "type": "SMALLINT",
+        "length": "",
+        "default": "処理:0",
+        "description": "初期0、全協調更新・必要な検索で制御行を取得。"
+      }
+    ]
+  }
+]

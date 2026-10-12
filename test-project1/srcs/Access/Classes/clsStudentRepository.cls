@@ -1,0 +1,145 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1
+END
+Attribute VB_Name = "clsStudentRepository"
+Option Explicit
+Option Compare Binary
+Public Database As DAO.Database
+
+Public Function Query(ByVal declarations As String, ByVal sql As String, ByVal values As Variant) As DAO.Recordset
+    Dim q As DAO.QueryDef, i As Long
+    Set q = Database.CreateQueryDef("", "PARAMETERS " & declarations & "; " & sql)
+    For i = LBound(values) To UBound(values): q.Parameters(i).Value = values(i): Next
+    Set Query = q.OpenRecordset(dbOpenSnapshot)
+    q.Close
+End Function
+Public Function RowMap(ByVal row As DAO.Recordset) As Object
+    Dim f As DAO.Field
+    Set RowMap = Map()
+    For Each f In row.Fields: RowMap.Add f.Name, f.Value: Next
+End Function
+Public Function LoadStudent(ByVal id As Long) As Object
+    Dim row As DAO.Recordset
+    Set row = Query("pId LONG", "SELECT * FROM m_student WHERE student_id=pId AND is_deleted=False", Array(id))
+    If Not row.EOF Then Set LoadStudent = RowMap(row)
+    row.Close
+End Function
+Public Function ClassById(ByVal id As Long) As Object
+    Dim row As DAO.Recordset
+    Set row = Query("pId LONG", "SELECT * FROM m_class WHERE class_id=pId", Array(id))
+    If Not row.EOF Then Set ClassById = RowMap(row)
+    row.Close
+End Function
+Public Sub CheckCode(ByVal category As String, ByVal value As Variant, ByVal oldValue As Variant, ByVal day As String)
+    Dim row As DAO.Recordset, active As Boolean
+    If IsNull(value) Then Exit Sub
+    Set row = Query("pCat TEXT(48), pValue TEXT(20)", "SELECT c.*, k.is_active AS category_active FROM m_code AS c INNER JOIN m_code_category AS k ON c.category_id=k.category_id WHERE c.category_id=pCat AND c.code_value=pValue", Array(category, value))
+    If row.EOF Then row.Close: Err.Raise vbObjectError + 123, , "E-STU-009"
+    active = row!is_active And row!category_active And row!valid_from <= day
+    If Not IsNull(row!valid_to) Then active = active And row!valid_to >= day
+    row.Close
+    If Not active And Not EqualValue(value, oldValue) Then Err.Raise vbObjectError + 123, , "E-STU-011"
+End Sub
+Public Function Duplicates(ByVal d As Object, ByVal excludeId As Long, ByRef digest As String) As Collection
+    Dim rs As DAO.Recordset, item As Object, classroom As Object
+    Set Duplicates = New Collection: digest = ""
+    Set rs = Query("pId LONG, pBirth TEXT(10)", "SELECT student_id,student_no,student_name,birth_date,class_id,row_version,name_key,kana_key FROM m_student WHERE is_deleted=False AND student_id<>pId AND birth_date=pBirth ORDER BY student_id", Array(excludeId, d("birth_date")))
+    Do Until rs.EOF
+        If StrComp(rs!name_key, d("name_key"), vbBinaryCompare) = 0 Or StrComp(rs!kana_key, d("kana_key"), vbBinaryCompare) = 0 Then
+            digest = digest & CStr(rs!student_id) & ":" & CStr(rs!row_version) & ";"
+            Set item = Map()
+            item.Add "student_id", rs!student_id: item.Add "student_no", rs!student_no
+            item.Add "student_name", rs!student_name: item.Add "birth_date", rs!birth_date
+            item.Add "class_id", rs!class_id
+            item.Add "class_display", "－"
+            If Not IsNull(rs!class_id) Then
+                Set classroom = ClassById(rs!class_id)
+                If classroom Is Nothing Then
+                    item("class_display") = "[不整合]"
+                Else
+                    item("class_display") = classroom("class_code") & " " & classroom("class_name")
+                    If Not classroom("is_active") Then item("class_display") = "[停止] " & item("class_display")
+                End If
+            End If
+            Duplicates.Add item
+        End If
+        rs.MoveNext
+    Loop
+    rs.Close
+End Function
+Public Sub CheckUnique(ByVal number As String, ByVal excludeId As Long)
+    Dim rs As DAO.Recordset
+    Set rs = Query("pNumber TEXT(30), pId LONG", "SELECT student_id FROM m_student WHERE student_no=pNumber AND student_id<>pId", Array(number, excludeId))
+    If Not rs.EOF Then rs.Close: Err.Raise vbObjectError + 124, , "E-STU-101"
+    rs.Close
+End Sub
+Public Function Occupancy(ByVal classId As Long, ByVal excludeId As Long) As Long
+    Dim rs As DAO.Recordset
+    Set rs = Query("pClass LONG,pId LONG", "SELECT Count(*) AS seats FROM m_student WHERE class_id=pClass AND student_id<>pId AND is_deleted=False AND enrollment_status_code IN ('01','02')", Array(classId, excludeId))
+    Occupancy = rs!seats: rs.Close
+End Function
+Public Function WriteStudent(ByVal d As Object, ByVal original As Object, ByVal utc As Date, ByVal user As String, ByRef version As Long, ByRef changed As String) As Long
+    Dim rs As DAO.Recordset, q As DAO.QueryDef, k As Variant, id As Long
+    If original Is Nothing Then
+        Set rs = Database.OpenRecordset("m_student", dbOpenDynaset)
+        rs.AddNew: version = 1
+        rs!created_at = utc: rs!created_by = user
+        rs!gender_category = "GENDER": rs!prefecture_category = "PREFECTURE"
+        rs!enrollment_category = "ENROLLMENT_STATUS": rs!relationship_category = "RELATIONSHIP"
+        rs!is_deleted = False: rs!deleted_at = Null: rs!deleted_by = Null: rs!delete_reason = Null
+    Else
+        id = original("student_id")
+        If original("row_version") = 2147483647 Then Err.Raise vbObjectError + 125, , "E-COM-004"
+        version = original("row_version") + 1
+        Set q = Database.CreateQueryDef("", "PARAMETERS pId LONG,pVersion LONG; SELECT * FROM m_student WHERE student_id=pId AND row_version=pVersion AND is_deleted=False")
+        q.Parameters!pId = id: q.Parameters!pVersion = original("row_version")
+        Set rs = q.OpenRecordset(dbOpenDynaset)
+        If rs.EOF Then Err.Raise vbObjectError + 126, , "E-STU-105"
+        rs.Edit
+    End If
+    changed = "["
+    For Each k In d.Keys
+        If original Is Nothing Then
+            rs.Fields(k).Value = d(k): changed = changed & """" & k & ""","
+        Else
+            If k <> "student_no" Then rs.Fields(k).Value = d(k)
+            If Not EqualValue(d(k), original(k)) Then changed = changed & """" & k & ""","
+        End If
+    Next
+    If original Is Nothing Then changed = changed & """gender_category"",""prefecture_category"",""enrollment_category"",""relationship_category"",""is_deleted"",""created_at"",""created_by"","
+    changed = changed & """row_version"",""updated_at"",""updated_by""]"
+    rs!row_version = version: rs!updated_at = utc: rs!updated_by = user
+    rs.Update: rs.Bookmark = rs.LastModified
+    WriteStudent = rs!student_id
+    rs.Close
+    If Not q Is Nothing Then q.Close
+End Function
+Public Sub DeleteStudent(ByVal original As Object, ByVal reason As String, ByVal utc As Date, ByVal user As String)
+    Dim q As DAO.QueryDef
+    If original("row_version") = 2147483647 Then Err.Raise vbObjectError + 125, , "E-COM-004"
+    Set q = Database.CreateQueryDef("", "PARAMETERS pId LONG,pVersion LONG,pReason TEXT(120),pAt DATETIME,pBy TEXT(128); UPDATE m_student SET is_deleted=True,deleted_at=pAt,deleted_by=pBy,delete_reason=pReason,updated_at=pAt,updated_by=pBy,row_version=row_version+1 WHERE student_id=pId AND row_version=pVersion AND is_deleted=False")
+    q.Parameters!pId = original("student_id"): q.Parameters!pVersion = original("row_version")
+    q.Parameters!pReason = reason: q.Parameters!pAt = utc: q.Parameters!pBy = user
+    q.Execute dbFailOnError
+    If q.RecordsAffected <> 1 Then q.Close: Err.Raise vbObjectError + 126, , "E-STU-105"
+    q.Close
+End Sub
+Public Sub AppendAudit(ByVal id As Long, ByVal operation As String, ByVal before As Variant, ByVal after As Long, ByVal changed As String, ByVal reason As Variant, ByVal confirmed As Boolean, ByVal utc As Date, ByVal user As String)
+    Dim rs As DAO.Recordset
+    Set rs = Database.OpenRecordset("t_operation_log", dbOpenDynaset)
+    rs.AddNew
+    rs!target_table = "m_student": rs!target_key = CStr(id): rs!operation_type = operation
+    rs!before_version = before: rs!after_version = after: rs!changed_columns = changed
+    rs!executed_by = user: rs!executed_at = utc: rs!correlation_id = GuidText()
+    rs!operation_reason = reason: rs!duplicate_confirmed = confirmed
+    rs.Update: rs.Close
+End Sub
+Public Function CodeName(ByVal category As String, ByVal value As Variant) As String
+    Dim rs As DAO.Recordset
+    CodeName = "－"
+    If IsNull(value) Then Exit Function
+    Set rs = Query("pCat TEXT(48),pValue TEXT(20)", "SELECT code_name FROM m_code WHERE category_id=pCat AND code_value=pValue", Array(category, value))
+    If rs.EOF Then CodeName = "[不整合: " & value & "]" Else CodeName = rs!code_name
+    rs.Close
+End Function

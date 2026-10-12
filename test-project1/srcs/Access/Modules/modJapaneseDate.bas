@@ -1,0 +1,67 @@
+Attribute VB_Name = "modJapaneseDate"
+Option Explicit
+Option Compare Binary
+
+' COM-STU-007 / DATE-R01..06 / DATE-T01..20. No locale-dependent date parsing.
+Public Function StrictIso(ByVal raw As Variant, ByVal required As Boolean) As Variant
+    Dim s As String, y As Long, m As Long, d As Long, lastDay As Long
+    s = Nz(raw, "")
+    If ScalarCount(s) > 10 Then Err.Raise vbObjectError + 110, , "E-STU-005"
+    If s = "" And Not required Then StrictIso = Null: Exit Function
+    s = NFKC(s)
+    If Not Match(s, "^[0-9]{4}-[0-9]{2}-[0-9]{2}$") Then Err.Raise vbObjectError + 110, , "E-STU-005"
+    y = CLng(Left$(s, 4)): m = CLng(Mid$(s, 6, 2)): d = CLng(Right$(s, 2))
+    If y < 1 Or y > 9999 Or m < 1 Or m > 12 Or d < 1 Then Err.Raise vbObjectError + 110, , "E-STU-005"
+    lastDay = Choose(m, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+    If m = 2 And (y Mod 4 = 0 And (y Mod 100 <> 0 Or y Mod 400 = 0)) Then lastDay = 29
+    If d > lastDay Then Err.Raise vbObjectError + 110, , "E-STU-005"
+    StrictIso = s
+End Function
+
+Public Function ParseBirthDate(ByVal era As String, ByVal yearRaw As String, ByVal monthRaw As String, ByVal dayRaw As String, ByVal businessDay As String) As String
+    Dim y As Long, offset As Long, first As String, last As String, s As String
+    If ScalarCount(era) > 10 Or ScalarCount(yearRaw) > 4 Or ScalarCount(monthRaw) > 2 Or ScalarCount(dayRaw) > 2 Then Err.Raise vbObjectError + 111, , "E-DATE-001"
+    yearRaw = NFKC(yearRaw): monthRaw = NFKC(monthRaw): dayRaw = NFKC(dayRaw)
+    If yearRaw = "元" Then yearRaw = "1"
+    If Not Match(yearRaw, "^[0-9]{1,4}$") Or Not Match(monthRaw, "^[0-9]{1,2}$") Or Not Match(dayRaw, "^[0-9]{1,2}$") Then Err.Raise vbObjectError + 111, , "E-DATE-001"
+    y = CLng(yearRaw)
+    If y < 1 Then Err.Raise vbObjectError + 111, , "E-DATE-001"
+    Select Case era
+    Case "MEIJI": offset = 1867: first = "1900-01-01": last = "1912-07-29"
+    Case "TAISHO": offset = 1911: first = "1912-07-30": last = "1926-12-24"
+    Case "SHOWA": offset = 1925: first = "1926-12-25": last = "1989-01-07"
+    Case "HEISEI": offset = 1988: first = "1989-01-08": last = "2019-04-30"
+    Case "REIWA": offset = 2018: first = "2019-05-01": last = businessDay
+    Case Else: Err.Raise vbObjectError + 111, , "E-DATE-001"
+    End Select
+    If y + offset > 9999 Then Err.Raise vbObjectError + 111, , "E-DATE-001"
+    s = Format$(y + offset, "0000") & "-" & Format$(CLng(monthRaw), "00") & "-" & Format$(CLng(dayRaw), "00")
+    s = StrictIso(s, True)
+    If s < first Or s > last Then Err.Raise vbObjectError + 111, , "E-DATE-001"
+    If s < "1900-01-01" Or s > businessDay Then Err.Raise vbObjectError + 112, , "E-DATE-002"
+    ParseBirthDate = s
+End Function
+
+Public Function BirthParts(ByVal s As String) As Variant
+    Dim era As String, label As String, offset As Long
+    s = StrictIso(s, True)
+    If s >= "2019-05-01" Then
+        era = "REIWA": label = "令和": offset = 2018
+    ElseIf s >= "1989-01-08" Then
+        era = "HEISEI": label = "平成": offset = 1988
+    ElseIf s >= "1926-12-25" Then
+        era = "SHOWA": label = "昭和": offset = 1925
+    ElseIf s >= "1912-07-30" Then
+        era = "TAISHO": label = "大正": offset = 1911
+    Else
+        era = "MEIJI": label = "明治": offset = 1867
+    End If
+    BirthParts = Array(era, CStr(CLng(Left$(s, 4)) - offset), Mid$(s, 6, 2), Right$(s, 2), label)
+End Function
+
+Public Function FormatBirthDate(ByVal s As String) As String
+    Dim p As Variant, year As String
+    p = BirthParts(s): year = p(1)
+    If year = "1" Then year = "元"
+    FormatBirthDate = p(4) & year & "年" & p(2) & "月" & p(3) & "日"
+End Function

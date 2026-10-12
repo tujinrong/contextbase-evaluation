@@ -1,0 +1,123 @@
+// Included in STUSVC: same gate, authority, UTC and audit helpers as students.
+dcl-proc StMaintainClass export;
+ dcl-pi *n;work likeds(ClassWork_t) const;result likeds(Result_t);end-pi;
+ dcl-s x likeds(ClassWork_t);dcl-s old likeds(ClassWork_t);dcl-s principal varchar(128);dcl-s role int(10);dcl-s utc timestamp;dcl-s day date;
+ dcl-s references int(10);dcl-s occupied int(10);dcl-s affected int(10);dcl-s from date;dcl-s to date;dcl-s changed varchar(16000);dcl-s operation varchar(11);
+ clear result;clear old;x=work;StNewId(result.requestId);StAuthorize('MAINTAIN':principal:role:result);if result.kind<>0;return;endif;StClock(utc:day);
+ x.className=StNormalizeText(work.className:18:18:0:*on:'className':result);
+ x.classCode=%char(StNormalizeText(%ucs2(work.classCode):9:9:5:*on:'classCode':result));
+ x.remarks=StNormalizeText(work.remarks:120:120:1:*off:'remarks':result);x.remarksInd=0;if %len(x.remarks)=0;x.remarksInd=-1;endif;
+ x.reason=StNormalizeText(work.reason:60:60:1:*off:'reason':result);
+ if x.schoolYear<1900 or x.schoolYear>9998;StError(result:'schoolYear':'E-DATE-003');endif;
+ if x.capacityInd=0 and (x.capacity<1 or x.capacity>9999);StError(result:'capacity':'E-MST-001');endif;
+ if x.displayOrder<0 or (x.isActive<>0 and x.isActive<>1);StError(result:'master':'E-MST-001');endif;
+ if x.classId<0 or (x.classId=0 and x.expectedVersion<>0) or (x.classId>0 and x.expectedVersion<=0);StError(result:'classId':'E-COM-003');endif;
+ if result.kind<>0;return;endif;
+ from=%date(%char(x.schoolYear)+'-04-01':*iso);to=%date(%char(x.schoolYear+1)+'-03-31':*iso);
+ if x.validFrom<from or x.validTo>to or x.validFrom>x.validTo;StError(result:'period':'E-DATE-002');return;endif;
+ monitor;
+  BeginWork(result);
+  if result.kind=0 and x.classId>0;
+   exec sql SELECT class_id,row_version,school_year,grade_code,class_code,class_name,valid_from,valid_to,capacity,display_order,is_active,remarks
+    INTO :old.classId,:old.expectedVersion,:old.schoolYear,:old.gradeCode,:old.classCode,:old.className,:old.validFrom,:old.validTo,:old.capacity :old.capacityInd,:old.displayOrder,:old.isActive,:old.remarks :old.remarksInd
+    FROM STUDAPP.M_CLASS WHERE class_id=:x.classId;
+   if SQLCOD=100;result.kind=RK_NOTFOUND;result.messageId='E-MST-002';elseif SQLCOD<>0;SqlFailure(result:SQLSTT:'MASTER');endif;
+   if result.kind=0 and old.expectedVersion<>x.expectedVersion;result.kind=RK_CONFLICT;result.messageId='E-STU-105';endif;
+   if result.kind=0 and (old.schoolYear<>x.schoolYear or old.classCode<>x.classCode);StError(result:'key':'E-MST-003');endif;
+   exec sql SELECT COUNT(*),COALESCE(SUM(CASE WHEN is_deleted=0 AND enrollment_status_code IN ('01','02') THEN 1 ELSE 0 END),0)
+    INTO :references,:occupied FROM STUDAPP.M_STUDENT WHERE class_id=:x.classId;
+   if SQLCOD<>0;SqlFailure(result:SQLSTT:'MASTER');endif;
+   if references>0 and (old.gradeCode<>x.gradeCode or old.validFrom<>x.validFrom or old.validTo<>x.validTo);StError(result:'classId':'E-MST-003');endif;
+   if x.capacityInd=0 and x.capacity<occupied;StError(result:'capacity':'E-MST-003');endif;
+  endif;
+  if result.kind=0;CheckCode('GRADE':x.gradeCode:old.gradeCode:*on:day:'gradeCode':result);endif;
+  changed='[';
+  if x.classId=0 or x.className<>old.className;changed+='"class_name",';endif;
+  if x.classId=0 or x.gradeCode<>old.gradeCode;changed+='"grade_code",';endif;
+  if x.classId=0 or x.validFrom<>old.validFrom;changed+='"valid_from",';endif;
+  if x.classId=0 or x.validTo<>old.validTo;changed+='"valid_to",';endif;
+  if x.classId=0 or x.capacityInd<>old.capacityInd or (x.capacityInd=0 and x.capacity<>old.capacity);changed+='"capacity",';endif;
+  if x.classId=0 or x.displayOrder<>old.displayOrder;changed+='"display_order",';endif;
+  if x.classId=0 or x.isActive<>old.isActive;changed+='"is_active",';endif;
+  if x.classId=0 or x.remarksInd<>old.remarksInd or (x.remarksInd=0 and x.remarks<>old.remarks);changed+='"remarks",';endif;
+  if changed='[' and result.kind=0;result.kind=RK_NOCHANGE;result.messageId='I-STU-004';endif;
+  if result.kind=0;
+   if x.classId=0;
+    exec sql INSERT INTO STUDAPP.M_CLASS(school_year,grade_category,grade_code,class_code,class_name,valid_from,valid_to,capacity,display_order,is_active,remarks,created_at,created_by,updated_at,updated_by,row_version)
+     VALUES(:x.schoolYear,'GRADE',:x.gradeCode,:x.classCode,:x.className,:x.validFrom,:x.validTo,:x.capacity :x.capacityInd,:x.displayOrder,:x.isActive,:x.remarks :x.remarksInd,:utc,:principal,:utc,:principal,1);
+    if SQLCOD=0;exec sql VALUES BIGINT(IDENTITY_VAL_LOCAL()) INTO :result.studentId;endif;
+    result.rowVersion=1;operation='CREATE';changed+='"school_year","class_code","grade_category","created_at","created_by",';
+   else;
+    exec sql UPDATE STUDAPP.M_CLASS SET grade_code=:x.gradeCode,class_name=:x.className,valid_from=:x.validFrom,valid_to=:x.validTo,
+     capacity=:x.capacity :x.capacityInd,display_order=:x.displayOrder,is_active=:x.isActive,remarks=:x.remarks :x.remarksInd,
+     updated_at=:utc,updated_by=:principal,row_version=row_version+1 WHERE class_id=:x.classId AND row_version=:x.expectedVersion;
+    if SQLCOD=0;exec sql GET DIAGNOSTICS :affected=ROW_COUNT;if affected<>1;result.kind=RK_CONFLICT;result.messageId='E-STU-105';endif;endif;
+    result.studentId=x.classId;result.rowVersion=x.expectedVersion+1;operation='UPDATE';
+    if old.isActive=1 and x.isActive=0;operation='DISABLE';elseif old.isActive=0 and x.isActive=1;operation='ENABLE';endif;
+   endif;
+   if SQLCOD<>0;SqlFailure(result:SQLSTT:'MASTER');endif;
+   changed+='"updated_at","updated_by","row_version"]';
+   if result.kind=0;AppendAudit('m_class':%char(result.studentId):operation:x.expectedVersion:result.rowVersion:changed:principal:utc:x.reason:0:result);endif;
+  endif;
+  if result.kind=0;exec sql COMMIT;if SQLCOD=0;result.kind=RK_SAVED;else;result.kind=RK_UNKNOWN;result.messageId='E-COM-004';exec sql ROLLBACK;endif;
+  else;exec sql ROLLBACK;endif;
+ on-error;exec sql ROLLBACK;result.kind=RK_SYSTEM;result.messageId='E-COM-004';endmon;
+end-proc;
+
+dcl-proc StMaintainCode export;
+ dcl-pi *n;work likeds(CodeWork_t) const;result likeds(Result_t);end-pi;
+ dcl-s x likeds(CodeWork_t);dcl-s old likeds(CodeWork_t);dcl-s principal varchar(128);dcl-s role int(10);dcl-s utc timestamp;dcl-s day date;
+ dcl-s allowAdd int(5);dcl-s length int(5);dcl-s protected int(5);dcl-s affected int(10);dcl-s changed varchar(16000);dcl-s operation varchar(11);
+ clear result;clear old;x=work;StNewId(result.requestId);StAuthorize('MAINTAIN':principal:role:result);if result.kind<>0;return;endif;StClock(utc:day);
+ x.codeName=StNormalizeText(work.codeName:12:12:0:*on:'codeName':result);
+ x.remarks=StNormalizeText(work.remarks:120:120:1:*off:'remarks':result);x.remarksInd=0;if %len(x.remarks)=0;x.remarksInd=-1;endif;
+ x.reason=StNormalizeText(work.reason:60:60:1:*off:'reason':result);
+ if x.expectedVersion<0 or x.displayOrder<0 or (x.isActive<>0 and x.isActive<>1);StError(result:'master':'E-MST-001');endif;
+ if x.validFrom<d'1900-01-01' or (x.validToInd=0 and x.validTo<x.validFrom);StError(result:'period':'E-DATE-002');endif;
+ if result.kind<>0;return;endif;
+ monitor;
+  BeginWork(result);
+  exec sql SELECT allow_add,code_length INTO :allowAdd,:length FROM STUDAPP.M_CODE_CATEGORY WHERE category_id=:x.categoryId AND is_active=1;
+  if SQLCOD=100;StError(result:'categoryId':'E-MST-001');elseif SQLCOD<>0;SqlFailure(result:SQLSTT:'MASTER');endif;
+  if %len(x.codeValue)<>length or %check('0123456789':x.codeValue)>0;StError(result:'codeValue':'E-MST-001');endif;
+  if result.kind=0;
+   exec sql SELECT category_id,code_value,row_version,code_name,display_order,is_active,valid_from,valid_to,remarks,is_protected
+    INTO :old.categoryId,:old.codeValue,:old.expectedVersion,:old.codeName,:old.displayOrder,:old.isActive,:old.validFrom,:old.validTo :old.validToInd,:old.remarks :old.remarksInd,:protected
+    FROM STUDAPP.M_CODE WHERE category_id=:x.categoryId AND code_value=:x.codeValue;
+   if SQLCOD=100;
+    if x.expectedVersion<>0;result.kind=RK_NOTFOUND;result.messageId='E-MST-002';
+    elseif allowAdd<>1;StError(result:'codeValue':'E-MST-003');endif;
+   elseif SQLCOD<>0;SqlFailure(result:SQLSTT:'MASTER');
+   elseif x.expectedVersion<>old.expectedVersion;result.kind=RK_CONFLICT;result.messageId='E-STU-105';
+   elseif protected=1 and (x.isActive<>1 or x.validFrom>old.validFrom or
+    (old.validToInd<0 and x.validToInd=0) or (old.validToInd=0 and x.validToInd=0 and x.validTo<old.validTo));StError(result:'protected':'E-MST-003');endif;
+  endif;
+  changed='[';
+  if old.expectedVersion=0 or x.codeName<>old.codeName;changed+='"code_name",';endif;
+  if old.expectedVersion=0 or x.displayOrder<>old.displayOrder;changed+='"display_order",';endif;
+  if old.expectedVersion=0 or x.isActive<>old.isActive;changed+='"is_active",';endif;
+  if old.expectedVersion=0 or x.validFrom<>old.validFrom;changed+='"valid_from",';endif;
+  if old.expectedVersion=0 or x.validToInd<>old.validToInd or (x.validToInd=0 and x.validTo<>old.validTo);changed+='"valid_to",';endif;
+  if old.expectedVersion=0 or x.remarksInd<>old.remarksInd or (x.remarksInd=0 and x.remarks<>old.remarks);changed+='"remarks",';endif;
+  if changed='[' and result.kind=0;result.kind=RK_NOCHANGE;result.messageId='I-STU-004';endif;
+  if result.kind=0;
+   if old.expectedVersion=0;
+    exec sql INSERT INTO STUDAPP.M_CODE(category_id,code_value,code_name,display_order,is_active,valid_from,valid_to,is_protected,remarks,created_at,created_by,updated_at,updated_by,row_version)
+     VALUES(:x.categoryId,:x.codeValue,:x.codeName,:x.displayOrder,:x.isActive,:x.validFrom,:x.validTo :x.validToInd,0,:x.remarks :x.remarksInd,:utc,:principal,:utc,:principal,1);
+    result.rowVersion=1;operation='CREATE';changed+='"category_id","code_value","is_protected","created_at","created_by",';
+   else;
+    exec sql UPDATE STUDAPP.M_CODE SET code_name=:x.codeName,display_order=:x.displayOrder,is_active=:x.isActive,
+     valid_from=:x.validFrom,valid_to=:x.validTo :x.validToInd,remarks=:x.remarks :x.remarksInd,
+     updated_at=:utc,updated_by=:principal,row_version=row_version+1
+     WHERE category_id=:x.categoryId AND code_value=:x.codeValue AND row_version=:x.expectedVersion;
+    if SQLCOD=0;exec sql GET DIAGNOSTICS :affected=ROW_COUNT;if affected<>1;result.kind=RK_CONFLICT;result.messageId='E-STU-105';endif;endif;
+    result.rowVersion=x.expectedVersion+1;operation='UPDATE';
+    if old.isActive=1 and x.isActive=0;operation='DISABLE';elseif old.isActive=0 and x.isActive=1;operation='ENABLE';endif;
+   endif;
+   if SQLCOD<>0;SqlFailure(result:SQLSTT:'MASTER');endif;changed+='"updated_at","updated_by","row_version"]';
+   if result.kind=0;AppendAudit('m_code':x.categoryId+':'+x.codeValue:operation:x.expectedVersion:result.rowVersion:changed:principal:utc:x.reason:0:result);endif;
+  endif;
+  if result.kind=0;exec sql COMMIT;if SQLCOD=0;result.kind=RK_SAVED;else;result.kind=RK_UNKNOWN;result.messageId='E-COM-004';exec sql ROLLBACK;endif;
+  else;exec sql ROLLBACK;endif;
+ on-error;exec sql ROLLBACK;result.kind=RK_SYSTEM;result.messageId='E-COM-004';endmon;
+end-proc;

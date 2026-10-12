@@ -1,0 +1,48 @@
+       >>SOURCE FORMAT FREE
+identification division.
+program-id. STAUTH.
+environment division.
+configuration section.
+repository. function all intrinsic.
+data division.
+working-storage section.
+copy "ST-FIELDS.cpy".
+copy "ST-APP.cpy".
+copy "ST-LOCAL.cpy".
+
+procedure division.
+    CALL "STIDENTITY" USING OWNER-VALUE SESSION-VALUE ROLE-CODE
+      CSRF-TOKEN RETURNING RC END-CALL
+    IF RC NOT = 0
+      MOVE 401 TO APP-STATUS
+      MOVE "E-COM-001: 認証が無効です。" TO ERROR-TEXT PERFORM ADD-ERROR
+      GOBACK
+    END-IF
+    CALL "STPOST" RETURNING RC END-CALL
+    IF RC = 1
+      CALL "STCSRF" USING R-VALUE(F-CSRFTOKEN) CSRF-TOKEN
+        RETURNING RC END-CALL
+      IF RC NOT = 0
+        MOVE 400 TO APP-STATUS
+        MOVE "E-COM-003: CSRF情報が無効です。" TO ERROR-TEXT
+        PERFORM ADD-ERROR
+      END-IF
+    ELSE
+      IF FUNCTION TRIM(R-DATA(F-ACTION)) NOT = "" AND "INITIAL"
+         AND "NEW" AND "EDIT" AND "RESUME"
+        MOVE 405 TO APP-STATUS
+        MOVE "E-COM-003: POSTが必要です。" TO ERROR-TEXT PERFORM ADD-ERROR
+      END-IF
+    END-IF
+    IF R-NULL(F-TABID) = -1
+      CALL "STRANDOM" USING TAB-ID RETURNING RC END-CALL
+    ELSE
+      IF R-LENGTH(F-TABID) NOT = 64
+        MOVE 400 TO APP-STATUS
+        MOVE "E-COM-003: 画面識別が無効です。" TO ERROR-TEXT PERFORM ADD-ERROR
+      ELSE MOVE R-DATA(F-TABID) TO TAB-ID END-IF
+    END-IF
+    GOBACK.
+
+copy "ST-HELPERS.cpy".
+end program STAUTH.

@@ -1,0 +1,198 @@
+**free
+ctl-opt nomain option(*srcstmt:*nodebugio) ccsid(*ucs2:1200);
+/copy '../copy/STUTYPES.rpgleinc'
+/copy '../copy/STUPROTO.rpgleinc'
+exec sql set option commit=*cs, naming=*sql, datfmt=*iso, closqlcsr=*endactgrp;
+
+dcl-proc StError export;
+ dcl-pi *n; result likeds(Result_t); field varchar(32) const; message char(16) const; end-pi;
+ result.kind=RK_VALIDATION; result.messageId=message;
+ if result.errorCount<30;
+  result.errorCount+=1;result.fieldErrors(result.errorCount).field=field;
+  result.fieldErrors(result.errorCount).messageId=message;
+ endif;
+end-proc;
+
+dcl-proc StAuthorize export;
+ dcl-pi *n; operation varchar(16) const; principal varchar(128); role int(10); result likeds(Result_t); end-pi;
+ dcl-s allowed int(10);
+ role=0;
+ exec sql VALUES SESSION_USER INTO :principal;
+ if SQLCOD<>0; result.kind=RK_SYSTEM;result.messageId='E-COM-004';return;endif;
+ // This COPY/compile-time group mapping is the approved deployment configuration.
+ // UI labels, program parameters and IFS contents never choose an execution role.
+ exec sql SELECT COALESCE(MAX(CASE group_profile_name
+  WHEN 'STUADMIN' THEN 3 WHEN 'STUSTAFF' THEN 2 WHEN 'STUVIEW' THEN 1 ELSE 0 END),0)
+  INTO :role FROM QSYS2.GROUP_PROFILE_ENTRIES
+  WHERE user_profile_name=:principal;
+ if SQLCOD<>0;result.kind=RK_SYSTEM;result.messageId='E-COM-004';return;endif;
+ allowed=1;
+ if role=0;allowed=0;endif;
+ if operation='SAVE' and role<2;allowed=0;endif;
+ if (operation='DELETE' or operation='MAINTAIN' or operation='CORRECT') and role<3;allowed=0;endif;
+ if allowed=0;result.kind=RK_FORBIDDEN;result.messageId='E-COM-002';endif;
+end-proc;
+
+dcl-proc StClock export;
+ dcl-pi *n;utc timestamp;businessDay date;end-pi;
+ exec sql VALUES CURRENT_TIMESTAMP - CURRENT_TIMEZONE INTO :utc;
+ businessDay=%date(utc+%hours(9));
+end-proc;
+dcl-proc StNewId export;
+ dcl-pi *n;id char(36);end-pi;
+ dcl-s uniqueHex char(32);
+ exec sql VALUES LOWER(HEX(GENERATE_UNIQUE())) CONCAT '000000' INTO :uniqueHex;
+ id=%subst(uniqueHex:1:8)+'-'+%subst(uniqueHex:9:4)+'-'+%subst(uniqueHex:13:4)+'-'+%subst(uniqueHex:17:4)+'-'+%subst(uniqueHex:21:12);
+end-proc;
+dcl-proc StStartup export;
+ dcl-pi *n;result likeds(Result_t);end-pi;
+ dcl-s count int(10);dcl-s role int(10);dcl-s principal varchar(128);
+ clear result;StAuthorize('READ':principal:role:result);if result.kind<>0;return;endif;
+ exec sql SELECT COUNT(*) INTO :count FROM TABLE(QSYS2.OBJECT_STATISTICS('STUDAPP','*FILE')) x
+  WHERE OBJNAME IN ('M_STUDENT','M_CLASS','MCAT','M_CODE','T_OPLOG','STGUARD')
+   AND JOURNALED='YES' AND JOURNAL_NAME IS NOT NULL;
+ if SQLCOD<>0 or count<>6;result.kind=RK_SYSTEM;result.messageId='E-COM-004';return;endif;
+ exec sql SELECT COUNT(*) INTO :count FROM STUDAPP.T_WRITE_GUARD WHERE GUARD_ID=1;
+ if SQLCOD<>0 or count<>1;result.kind=RK_SYSTEM;result.messageId='E-COM-004';return;endif;
+ exec sql SELECT COUNT(*) INTO :count FROM STUDAPP.M_CODE
+  WHERE (category_id='GENDER' AND code_value='0') OR (category_id='ENROLLMENT_STATUS' AND code_value='01');
+ if SQLCOD<>0 or count<>2;result.kind=RK_SYSTEM;result.messageId='E-COM-004';endif;
+ exec sql ROLLBACK;
+end-proc;
+
+dcl-proc StNormalizeText export;
+ dcl-pi *n varucs2(320) ccsid(1200);
+  raw varucs2(320) ccsid(1200) const;rawMax int(10) const;savedMax int(10) const;
+  mode int(10) const;required ind const;field varchar(32) const;result likeds(Result_t);
+ end-pi;
+ dcl-s out ucs2(320) ccsid(1200);dcl-s n int(10);dcl-s rc int(10);dcl-s req int(10);
+ if required;req=1;else;req=0;endif;
+ rc=StUnicodeNormalize(%addr(raw:*data):%len(raw):rawMax:savedMax:mode:req:%addr(out):320:n);
+ if rc<>0;
+  select;when rc=1;StError(result:field:'E-STU-001');when rc=2;StError(result:field:'E-STU-002');other;select;when mode=3 or mode=4;StError(result:field:'E-STU-004');when mode=5;StError(result:field:'E-STU-003');when mode=7;StError(result:field:'E-STU-015');when mode=8;StError(result:field:'E-STU-016');when mode=9;StError(result:field:'E-STU-017');when mode=10;StError(result:field:'E-STU-005');other;StError(result:field:'E-COM-003');endsl;endsl;
+  return %ucs2('');
+ endif;
+ if n=0;return %ucs2('');endif;
+ return %subst(out:1:n);
+end-proc;
+dcl-proc StLong export;
+ dcl-pi *n int(20);raw varucs2(320) ccsid(1200) const;required ind const;field varchar(32) const;result likeds(Result_t);end-pi;
+ dcl-s text varchar(640);dcl-s value int(20);
+ text=%char(raw);
+ if text='';if required;StError(result:field:'E-STU-001');endif;return 0;endif;
+ if %len(text)>19 or %check('0123456789':text)>0;StError(result:field:'E-COM-003');return 0;endif;
+ monitor;value=%int(text);on-error;StError(result:field:'E-COM-003');return 0;endmon;
+ if value<=0;StError(result:field:'E-COM-003');endif;
+ return value;
+end-proc;
+dcl-proc StIsoDate export;
+ dcl-pi *n;raw varucs2(320) ccsid(1200) const;maximum date const;value date;field varchar(32) const;result likeds(Result_t);end-pi;
+ dcl-s text varchar(640);
+ text=%char(raw);
+ if %len(text)<>10 or %subst(text:5:1)<>'-' or %subst(text:8:1)<>'-' or
+  %check('0123456789':%subst(text:1:4)+%subst(text:6:2)+%subst(text:9:2))>0;
+  StError(result:field:'E-STU-005');return;
+ endif;
+ monitor;value=%date(text:*iso);on-error;StError(result:field:'E-STU-005');return;endmon;
+ if value<d'1900-01-01' or value>maximum;StError(result:field:'E-DATE-002');endif;
+end-proc;
+dcl-proc StParseBirthDate export;
+ dcl-pi *n;era varchar(10) const;year varucs2(8) ccsid(1200) const;
+  month varucs2(4) ccsid(1200) const;day varucs2(4) ccsid(1200) const;
+  businessDay date const;birth date;result likeds(Result_t);end-pi;
+ dcl-s y int(10);dcl-s m int(10);dcl-s d int(10);dcl-s offset int(10);dcl-s begin date;dcl-s finish date;
+ dcl-s text varucs2(320) ccsid(1200);dcl-s iso char(10);dcl-s before int(10);
+ dcl-s reverseEra varchar(10);dcl-s reverseYear varucs2(8) ccsid(1200);dcl-s reverseMonth varucs2(4) ccsid(1200);dcl-s reverseDay varucs2(4) ccsid(1200);dcl-s display varucs2(80) ccsid(1200);
+ before=result.errorCount;
+ select;
+ when era='MEIJI';offset=1867;begin=d'1900-01-01';finish=d'1912-07-29';
+ when era='TAISHO';offset=1911;begin=d'1912-07-30';finish=d'1926-12-24';
+ when era='SHOWA';offset=1925;begin=d'1926-12-25';finish=d'1989-01-07';
+ when era='HEISEI';offset=1988;begin=d'1989-01-08';finish=d'2019-04-30';
+ when era='REIWA';offset=2018;begin=d'2019-05-01';finish=d'9999-12-31';
+ other;StError(result:'birthDate':'E-DATE-001');return;
+ endsl;
+ if year=U'5143';y=1;else;text=StNormalizeText(year:4:4:11:*on:'birthDate':result);y=StLong(text:*on:'birthDate':result);endif;
+ text=StNormalizeText(month:2:2:11:*on:'birthDate':result);m=StLong(text:*on:'birthDate':result);
+ text=StNormalizeText(day:2:2:11:*on:'birthDate':result);d=StLong(text:*on:'birthDate':result);
+ if before<>result.errorCount;return;endif;
+ if y+offset>9999 or m>12 or d>31;StError(result:'birthDate':'E-DATE-001');return;endif;
+ iso=%subst(%char(10000+y+offset):2:4)+'-'+%subst(%char(100+m):2:2)+'-'+%subst(%char(100+d):2:2);
+ StIsoDate(%ucs2(iso):businessDay:birth:'birthDate':result);
+ if before<>result.errorCount;return;endif;
+ if birth<begin or birth>finish;StError(result:'birthDate':'E-DATE-001');return;endif;
+ StFormatBirthDate(birth:reverseEra:reverseYear:reverseMonth:reverseDay:display);
+ if reverseEra<>era or %int(%char(reverseYear))<>y;StError(result:'birthDate':'E-DATE-001');endif;
+end-proc;
+dcl-proc StFormatBirthDate export;
+ dcl-pi *n;birth date const;era varchar(10);year varucs2(8) ccsid(1200);month varucs2(4) ccsid(1200);day varucs2(4) ccsid(1200);display varucs2(80) ccsid(1200);end-pi;
+ dcl-s offset int(10);dcl-s name varucs2(4) ccsid(1200);dcl-s iso char(10);
+ select;
+ when birth>=d'2019-05-01';era='REIWA';offset=2018;name=U'4EE4548C';
+ when birth>=d'1989-01-08';era='HEISEI';offset=1988;name=U'5E736210';
+ when birth>=d'1926-12-25';era='SHOWA';offset=1925;name=U'662D548C';
+ when birth>=d'1912-07-30';era='TAISHO';offset=1911;name=U'59276B63';
+ other;era='MEIJI';offset=1867;name=U'660E6CBB';endsl;
+ year=%ucs2(%char(%subdt(birth:*years)-offset));iso=%char(birth:*iso);
+ month=%ucs2(%subst(iso:6:2));day=%ucs2(%subst(iso:9:2));
+ if year=%ucs2('1');display=name+U'51435E74'+month+U'6708'+day+U'65E5';
+ else;display=name+year+U'5E74'+month+U'6708'+day+U'65E5';endif;
+end-proc;
+dcl-proc StNormalize export;
+ dcl-pi *n;raw likeds(StudentRaw_t) const;work likeds(StudentWork_t);businessDay date const;result likeds(Result_t);end-pi;
+ dcl-s temp varucs2(320) ccsid(1200);
+ clear work;
+ /copy '../copy/STUNORM.rpgleinc'
+end-proc;
+dcl-proc StValidate export;
+ dcl-pi *n;work likeds(StudentWork_t) const;result likeds(Result_t);end-pi;
+ dcl-s emergency int(10);
+ if work.birthDate>work.admissionDate;StError(result:'admissionDate':'E-STU-007');endif;
+ if work.enrollmentStatusCode<>'01' and work.enrollmentStatusCode<>'02' and work.enrollmentStatusCode<>'03' and work.enrollmentStatusCode<>'04';StError(result:'enrollmentStatusCode':'E-STU-009');endif;
+ if work.enrollmentStatusCode='01' or work.enrollmentStatusCode='02';
+  if work.enrollmentEndDateInd>=0;StError(result:'enrollmentEndDate':'E-STU-008');endif;
+  if work.classIdInd<0;StError(result:'classId':'E-STU-012');endif;
+ else;
+  if work.enrollmentEndDateInd<0 or work.enrollmentEndDate<work.admissionDate;StError(result:'enrollmentEndDate':'E-STU-008');endif;
+ endif;
+ if work.phoneNumberInd<0 and work.emailAddressInd<0 and work.emergencyPhoneNumberInd<0;StError(result:'phoneNumber':'E-STU-018');endif;
+ emergency=0;
+ if work.emergencyContactNameInd=0;emergency+=1;endif;
+ if work.relationshipCodeInd=0;emergency+=1;endif;
+ if work.emergencyPhoneNumberInd=0;emergency+=1;endif;
+ if emergency<>0 and emergency<>3;StError(result:'emergencyContactName':'E-STU-019');endif;
+end-proc;
+dcl-proc StEscapeLike export;
+ dcl-pi *n varucs2(642) ccsid(1200);value varucs2(320) ccsid(1200) const;prefix ind const;end-pi;
+ dcl-s out varucs2(642) ccsid(1200);dcl-s i int(10);dcl-s cp ucs2(1) ccsid(1200);
+ if prefix;out=%ucs2('');else;out=%ucs2('%');endif;
+ for i=1 to %len(value);cp=%subst(value:i:1);if cp=U'0021' or cp=U'0025' or cp=U'005F' or cp=U'005B';out+=U'0021';endif;out+=cp;endfor;
+ return out+U'0025';
+end-proc;
+dcl-proc StHash export;
+ dcl-pi *n char(64);value varucs2(8000) ccsid(1200) const;end-pi;
+ dcl-s digest char(64);StUnicodeDigest(%addr(value:*data):%len(value):digest);return digest;
+end-proc;
+dcl-proc StBusinessHash export;
+ dcl-pi *n char(64);work likeds(StudentWork_t) const;end-pi;
+ dcl-s canonical varucs2(8000) ccsid(1200);dcl-s piece varucs2(320) ccsid(1200);
+ /copy '../copy/STUHASH.rpgleinc'
+ return StHash(canonical);
+end-proc;
+dcl-proc StMessage export;
+ dcl-pi *n varucs2(320) ccsid(1200);code char(16) const;end-pi;
+ select;
+ when code='I-STU-001';return %ucs2('登録しました。');
+ when code='I-STU-002';return %ucs2('更新しました。');
+ when code='I-STU-003';return %ucs2('削除しました。');
+ when code='I-STU-004';return %ucs2('変更内容がありません。');
+ when code='I-SRC-001';return %ucs2('該当する学生がありません。');
+ when code='W-SRC-001';return %ucs2('検索結果が10,000件を超えています。検索条件を追加してください。');
+ when code='W-SRC-002';return %ucs2('検索条件の保持期限が切れました。再検索してください。');
+ when code='W-STU-101';return %ucs2('同姓同名・同生年月日の候補があります。別人確認と理由が必要です。');
+ when code='E-STU-103';return %ucs2('対象の学生が見つからないか、既に削除されています。');
+ when code='E-STU-105';return %ucs2('他の利用者が更新しました。最新情報を再読込してください。');
+ when code='E-COM-002';return %ucs2('この操作を実行する権限がありません。');
+ when code='E-COM-004';return %ucs2('処理に失敗しました。受付番号を確認し、検索で結果を確認してください。');
+ other;return %ucs2(%trim(code)+' 入力項目と仕様の条件を確認してください。');endsl;
+end-proc;

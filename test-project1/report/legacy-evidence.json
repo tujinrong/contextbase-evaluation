@@ -1,0 +1,110 @@
+{
+  "projectId": "test-project1",
+  "stage": "build",
+  "date": "2026-10-12",
+  "status": "interrupted_structural_compatibility",
+  "issueId": "S-ACE-001",
+  "scope": "Standard enforced ACE composite foreign key rejects valid partial-null relationship input; alternative index settings are unverified.",
+  "environment": {
+    "officeFileVersion": "16.0.20430.20146",
+    "daoComProgId": "DAO.DBEngine.120",
+    "aceDaoFileVersion": "16.0.20430.20032",
+    "format": "accdb"
+  },
+  "serviceTest": {
+    "frontend": "srcs/Access/build/StudentFrontend-23.accdb",
+    "backend": "srcs/Access/build/StudentBackend-23.accdb",
+    "passedAssertions": 11,
+    "outcome": "SystemError",
+    "messageId": "E-COM-004",
+    "daoErrorNumber": 3201,
+    "rawOutput": "FAILED after 11 checks: -2147221314 create student returned SystemError E-COM-004 error=3201 テーブル 'm_code' にリレーションシップが設定されたレコードが必要なので、レコードの追加や変更を行うことはできません。"
+  },
+  "sqlProbe": {
+    "ddl": [
+      "CREATE TABLE z_fk_probe (cat TEXT(48) NOT NULL, val TEXT(20));",
+      "ALTER TABLE z_fk_probe ADD CONSTRAINT fk_probe FOREIGN KEY(cat,val) REFERENCES m_code(category_id,code_value);"
+    ],
+    "insert": "INSERT INTO z_fk_probe(cat,val) VALUES('RELATIONSHIP',NULL);",
+    "parent": "existing fixture m_code contains 70 initial values",
+    "rawOutput": "ACE partly-null composite foreign key rejected: テーブル 'm_code' にリレーションシップが設定されたレコードが必要なので、レコードの追加や変更を行うことはできません。",
+    "probeTableRemoved": true
+  },
+  "daoRelationProbe": {
+    "table": "z_dao_fk_probe",
+    "relation": "dao_fk_probe",
+    "attributes": 0,
+    "parent": "m_code",
+    "parentColumns": [
+      "category_id",
+      "code_value"
+    ],
+    "childColumns": [
+      "cat",
+      "val"
+    ],
+    "insert": "INSERT INTO z_dao_fk_probe(cat,val) VALUES('RELATIONSHIP',NULL)",
+    "rawOutput": "DAO.Relation rejects partly-null key: テーブル 'm_code' にリレーションシップが設定されたレコードが必要なので、レコードの追加や変更を行うことはできません。"
+  },
+  "unconfirmedAlternative": {
+    "setting": "Index.IgnoreNulls / Index.Required and creation order",
+    "excludedAttempt": "re-appending deleted Relation object after precreating IGNORE NULL index failed with invalid/unset object; no FK resolution result",
+    "status": "requires design and independent verification"
+  },
+  "backendCounts": {
+    "m_code_category": 5,
+    "m_code": 70,
+    "m_class": 1,
+    "m_student": 0,
+    "t_operation_log": 1,
+    "t_write_guard": 1,
+    "z_dao_fk_probe": 0
+  },
+  "bootstrapStatus": "production initial backend not generated; test fixtures contain explicit test class/audit",
+  "inputs": [
+    {
+      "path": "spec/DB定義/Access/01_DB定義書.md",
+      "version": "7.2",
+      "sha256": "287d5b6cebb3997cb775b8537c92009e7d30bd4366482d977b51dedd5764ec3a"
+    },
+    {
+      "path": "spec/DB定義/Access/テーブル/01_m_student.md",
+      "version": "7.2",
+      "sha256": "af8c9da27e42a453dc216c1fa51b802cf006ceaa8b243d2c628c5de1c225cdf5"
+    },
+    {
+      "path": "spec/共通/09_項目制約定義.md",
+      "version": "7.0",
+      "sha256": "3c4f56c84fcadcc42c5d0d31be5069b8936913381e70499fd84a81c2077cb34e"
+    },
+    {
+      "path": "spec/詳細仕様書/Access/01_学生検索画面.md",
+      "version": "7.3",
+      "sha256": "f5453cb7c0609ad8be8e84b1c3b50e7c63081bf8e7708122ede0a1ebe777b505"
+    },
+    {
+      "path": "spec/詳細仕様書/Access/02_学生登録画面.md",
+      "version": "7.0",
+      "sha256": "b8ad53fbeccd4a5e029c9d8a946ae93e4d37d0bd2f14dbb478e3aa5930056493"
+    },
+    {
+      "path": "spec/共通/方式別/Access/01_共通実装仕様.md",
+      "version": "7.0",
+      "sha256": "0ec5b4339935daf803db85fbdf60fbb7a6cf2eee5605c07ea613488f5b01a687"
+    },
+    {
+      "path": "spec/共通/05_チェック・メッセージ設計.md",
+      "version": "7.3",
+      "sha256": "1bdad6f3834ebb5764196292d31f5a86bc2cb6773b953d6eff1bd7f7579b0a16"
+    },
+    {
+      "path": "spec/共通/10_業務コード定義.md",
+      "version": "7.3",
+      "sha256": "73375985e20be894b1e3271935573053b22cbb1a243fbb8ab801bca046acd5a1"
+    }
+  ],
+  "authoritySources": [
+    "https://learn.microsoft.com/en-us/office/client-developer/access/desktop-database-reference/relation-object-dao",
+    "https://learn.microsoft.com/en-us/office/client-developer/access/desktop-database-reference/index-ignorenulls-property-dao"
+  ]
+}

@@ -1,0 +1,2 @@
+<script setup lang="ts">import type { ApiError } from '../api/contracts'; defineProps<{ message: string; error: ApiError | null }>();</script>
+<template><section v-if="message || error" aria-live="polite" :class="['message',error ? 'error' : 'info']"><strong>{{ error ? 'エラー' : '情報' }}</strong> {{ error?.message || message }}<span v-if="error?.correlationId">（受付番号 {{ error.correlationId }}）</span><ul v-if="error"><li v-for="(errors, field) in error.fieldErrors" :key="field"><a :href="'#'+field">{{ field }}：{{ errors.join('、') }}</a></li></ul></section></template>

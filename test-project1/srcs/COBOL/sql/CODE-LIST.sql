@@ -1,0 +1,1 @@
+SELECT c.category_id,c.code_value,c.code_name,c.is_active,k.is_active,CONVERT(char(10),c.valid_from,23),CONVERT(char(10),c.valid_to,23) FROM dbo.m_code c JOIN dbo.m_code_category k ON k.category_id=c.category_id ORDER BY c.category_id,c.display_order,c.code_value;

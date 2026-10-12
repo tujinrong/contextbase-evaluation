@@ -1,0 +1,1 @@
+SELECT c.is_active,k.is_active,CONVERT(char(10),c.valid_from,23),CONVERT(char(10),c.valid_to,23) FROM dbo.m_code c JOIN dbo.m_code_category k ON c.category_id=k.category_id WHERE c.category_id=? AND c.code_value=?;
