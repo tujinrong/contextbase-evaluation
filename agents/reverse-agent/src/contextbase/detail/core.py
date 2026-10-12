@@ -23,7 +23,6 @@ from specgen.adapters.csharp_relations import SemanticIndex
 from .semantics import terminology, field_labels, enrich_event, attach_item_storage, client_events
 from .layout import build_screen, build_relation_diagram
 from .database import collect as collect_sql, java_related, database_documents
-from contextbase.shared.logical_names import load_names
 from .bindings import BindingIndex
 from .event_templates import enrich as enrich_event_document
 
@@ -43,7 +42,7 @@ def flow_relations(methods, memory_fields=()):
             elif re.search(r'\b(?:BeginTransaction|Commit|Rollback)\s*\(',expr):
                 kind='transaction';operation='control'
             if kind:
-                result.append({'kind':kind,'store':'職員情報等（セッション）' if kind=='session' else 'プログラム内コレクション' if kind=='memory' else 'トランザクション',
+                result.append({'kind':kind,'store':'セッション保持情報' if kind=='session' else 'プログラム内コレクション' if kind=='memory' else 'トランザクション',
                                'operation':operation,'event':m['name'],'evidence':[{'path':m['path'],'line':step['line']}],
                                'guards':step.get('guards',[]),'expression':expr})
     return result
@@ -149,9 +148,14 @@ def run(root: Path, *, feature=None, cold=False, config_file='config/project.tom
                                 'line':s.get('line',1),'guards':[]} for s in m.get('steps',[])],
                                 'calls':m.get('calls',[]),'flow':[]} for m in units[p].get('symbols',[]))
         for m in methods:m['id']='M-'+digest([m['path'],m['name'],m['signature']])[:14]
-        semantic_index=SemanticIndex(texts,methods,terminology(root))
+        terminology_diagnostics=[]
+        terminology_context={'project':base['project'],'input_dir':base['input'],
+                             'source_hashes':hashes,'diagnostics':terminology_diagnostics}
+        type_names=terminology(root,**terminology_context)
+        field_names=terminology(root,'fields',**terminology_context)
+        semantic_index=SemanticIndex(texts,methods,type_names)
         sql_operations=collect_sql(texts)
-        logical_names=load_names(root,texts)
+        logical_names={**type_names,**field_names}
         models_index=defaultdict(list)
         for p,u in units.items():
             for t in u.get('types',[]):models_index[t['name']].append((texts[p],p))
@@ -215,7 +219,7 @@ def run(root: Path, *, feature=None, cold=False, config_file='config/project.tom
                 if f.get('entry_paths'):
                     entries += [m for m in methods if m['path'] in f['entry_paths'] and m['name']=='perform']
                 events=[];reached=[];storage_effects=[]
-                labels_by_field={**terminology(root,'fields'),**field_labels(normalized)}
+                labels_by_field={**field_names,**field_labels(normalized)}
                 for m in entries:
                     visits,call_edges,missed=semantic_index.trace(m,set(f['dependencies']))
                     related=list({v['method']['id']:v['method'] for v in visits}.values())
@@ -375,6 +379,7 @@ def run(root: Path, *, feature=None, cold=False, config_file='config/project.tom
                 'generation':manifest['generation'],'errors':0}
         write(safe(root,'report/detail/result.json'),result)
         write(safe(root,'report/incomplete/detail.json'),{'unresolved_calls':unresolved,'source_changed':changed,'layout_findings':layout_findings,
+                'terminology_adoptions':terminology_diagnostics,
                 'limitations':['型解決・間接呼出・例外伝播の完全解析ではない。','他言語の詳細は既存アダプターの抽出範囲に限定する。','入力のDB定義書（Excel等）を自動確定する汎用読取は未実装。','QA自由記述回答は自動採用せず、approvedの型付き判断と依存ハッシュを検査する。']})
         write(safe(root,'ContextBase/manifest.json'),{'schema':'contextbase.v1','project':base['project'],
               'foundation_generation':base['generation'],'detail_generation':manifest['generation'],'detail_state':'resolved'})

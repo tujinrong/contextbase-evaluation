@@ -1,0 +1,72 @@
+test_arbitrary_classes_css_and_control_values_are_retained (contextbase.tests.test_ai_rendering.SafetyTests.test_arbitrary_classes_css_and_control_values_are_retained) ... ok
+test_css_internal_svg_filter_is_preserved (contextbase.tests.test_ai_rendering.SafetyTests.test_css_internal_svg_filter_is_preserved) ... FAIL
+test_declarative_svg_animation_is_not_static_content (contextbase.tests.test_ai_rendering.SafetyTests.test_declarative_svg_animation_is_not_static_content) ... FAIL
+test_external_css_is_removed_but_inert_strings_are_preserved (contextbase.tests.test_ai_rendering.SafetyTests.test_external_css_is_removed_but_inert_strings_are_preserved) ... ok
+test_external_svg_script_and_attribute_are_rejected (contextbase.tests.test_ai_rendering.SafetyTests.test_external_svg_script_and_attribute_are_rejected) ... ok
+test_invalid_png_is_not_success (contextbase.tests.test_ai_rendering.SafetyTests.test_invalid_png_is_not_success) ... ok
+test_local_raster_is_verified_and_embedded (contextbase.tests.test_ai_rendering.SafetyTests.test_local_raster_is_verified_and_embedded) ... ok
+test_outside_image_is_not_read (contextbase.tests.test_ai_rendering.SafetyTests.test_outside_image_is_not_read) ... ok
+test_png_decoding_is_real (contextbase.tests.test_ai_rendering.SafetyTests.test_png_decoding_is_real) ... ok
+test_script_inline_events_and_embedded_frames_are_removed (contextbase.tests.test_ai_rendering.SafetyTests.test_script_inline_events_and_embedded_frames_are_removed) ... ok
+test_svg_external_presentation_resource_is_rejected (contextbase.tests.test_ai_rendering.SafetyTests.test_svg_external_presentation_resource_is_rejected) ... 
+  test_svg_external_presentation_resource_is_rejected (contextbase.tests.test_ai_rendering.SafetyTests.test_svg_external_presentation_resource_is_rejected) (attribute='fill') ... FAIL
+  test_svg_external_presentation_resource_is_rejected (contextbase.tests.test_ai_rendering.SafetyTests.test_svg_external_presentation_resource_is_rejected) (attribute='filter') ... FAIL
+  test_svg_external_presentation_resource_is_rejected (contextbase.tests.test_ai_rendering.SafetyTests.test_svg_external_presentation_resource_is_rejected) (attribute='clip-path') ... FAIL
+test_svg_quoted_internal_resource_is_preserved (contextbase.tests.test_ai_rendering.SafetyTests.test_svg_quoted_internal_resource_is_preserved) ... ERROR
+test_svg_viewbox_case_is_preserved (contextbase.tests.test_ai_rendering.SafetyTests.test_svg_viewbox_case_is_preserved) ... ok
+
+======================================================================
+ERROR: test_svg_quoted_internal_resource_is_preserved (contextbase.tests.test_ai_rendering.SafetyTests.test_svg_quoted_internal_resource_is_preserved)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\開発\contextbase-evaluation\agents\reverse-agent\src\contextbase\tests\test_ai_rendering.py", line 78, in test_svg_quoted_internal_resource_is_preserved
+    value = _svg_safe('<svg xmlns="http://www.w3.org/2000/svg"><path style=\'fill:url("#marker")\'/></svg>')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\開発\contextbase-evaluation\agents\reverse-agent\src\contextbase\ai\rendering.py", line 197, in _svg_safe
+    raise ValueError("Unexpected external SVG CSS")
+ValueError: Unexpected external SVG CSS
+
+======================================================================
+FAIL: test_css_internal_svg_filter_is_preserved (contextbase.tests.test_ai_rendering.SafetyTests.test_css_internal_svg_filter_is_preserved)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\開発\contextbase-evaluation\agents\reverse-agent\src\contextbase\tests\test_ai_rendering.py", line 94, in test_css_internal_svg_filter_is_preserved
+    self.assertFalse(removed)
+AssertionError: [{'kind': 'css-resource', 'name': 'url', 'reason': 'ValueError'}] is not false
+
+======================================================================
+FAIL: test_declarative_svg_animation_is_not_static_content (contextbase.tests.test_ai_rendering.SafetyTests.test_declarative_svg_animation_is_not_static_content)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\開発\contextbase-evaluation\agents\reverse-agent\src\contextbase\tests\test_ai_rendering.py", line 88, in test_declarative_svg_animation_is_not_static_content
+    self.assertNotIn("<set", safe)
+AssertionError: '<set' unexpectedly found in '<svg><set attributename="href" to="https://example.invalid/a.svg"></set><animate attributename="x" values="0;100"></animate></svg>'
+
+======================================================================
+FAIL: test_svg_external_presentation_resource_is_rejected (contextbase.tests.test_ai_rendering.SafetyTests.test_svg_external_presentation_resource_is_rejected) (attribute='fill')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\開発\contextbase-evaluation\agents\reverse-agent\src\contextbase\tests\test_ai_rendering.py", line 83, in test_svg_external_presentation_resource_is_rejected
+    with self.subTest(attribute=attribute), self.assertRaises(ValueError):
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_svg_external_presentation_resource_is_rejected (contextbase.tests.test_ai_rendering.SafetyTests.test_svg_external_presentation_resource_is_rejected) (attribute='filter')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\開発\contextbase-evaluation\agents\reverse-agent\src\contextbase\tests\test_ai_rendering.py", line 83, in test_svg_external_presentation_resource_is_rejected
+    with self.subTest(attribute=attribute), self.assertRaises(ValueError):
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_svg_external_presentation_resource_is_rejected (contextbase.tests.test_ai_rendering.SafetyTests.test_svg_external_presentation_resource_is_rejected) (attribute='clip-path')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\開発\contextbase-evaluation\agents\reverse-agent\src\contextbase\tests\test_ai_rendering.py", line 83, in test_svg_external_presentation_resource_is_rejected
+    with self.subTest(attribute=attribute), self.assertRaises(ValueError):
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.065s
+
+FAILED (failures=5, errors=1)

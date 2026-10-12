@@ -2,12 +2,17 @@
 from __future__ import annotations
 import argparse
 import json
+import sys
 from pathlib import Path
 from .registry import configure, resolve_profile
 from .discovery import probe
 
 
 def main(argv=None) -> int:
+    actual = list(sys.argv[1:] if argv is None else argv)
+    if actual and actual[0] == 'ai':
+        from .ai.__main__ import main as ai_main
+        return ai_main(actual[1:])
     p=argparse.ArgumentParser(description='汎用検出・対象別解析・Markdown/HTML生成と検証')
     p.add_argument('command',choices=['probe','rebuild','build','check','pdf','excel','foundation','detail','specification','validate'])
     p.add_argument('--root',default='.')
@@ -19,7 +24,7 @@ def main(argv=None) -> int:
     p.add_argument('--excel',action='store_true',help='build/rebuildでExcel仕様書を生成')
     p.add_argument('--feature',help='P2/P3の対象機能ID')
     p.add_argument('--cold',action='store_true',help='P1/P2のキャッシュを再利用しない')
-    a=p.parse_args(argv);root=Path(a.root).resolve()
+    a=p.parse_args(actual);root=Path(a.root).resolve()
     if a.excel and a.command not in {'build','rebuild'}:
         p.error('--excelはbuild/rebuild用です。Excelのみの生成にはexcelコマンドを使用してください。')
     if a.pdf and a.command not in {'build','rebuild'}:

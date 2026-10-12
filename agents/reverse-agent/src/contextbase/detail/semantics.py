@@ -7,16 +7,41 @@ from __future__ import annotations
 import re
 from bs4 import BeautifulSoup
 from contextbase.shared.store import digest, read, safe
-from specgen.common import tokens, pairs
+from specgen.common import tokens, pairs, TOKEN
 
 OPS={'create':'追加','read':'参照','update':'更新','delete':'削除','upsert':'追加／更新'}
 
 
-def terminology(root, category="types"):
+def terminology(root, category="types", *, project=None, input_dir=None,
+                source_hashes=None, diagnostics=None):
+    """Adopt labels only from a reviewed dictionary pinned to this snapshot.
+
+    A source-root name is not a provenance check: unrelated applications can
+    use the same folder or type names. Historical unpinned dictionaries remain
+    on disk, but cannot supply business names to this analysis.
+    """
     result={}
     for p in sorted(safe(root,'src-dynamic').glob('*/terminology.json')):
         safe(root,p);data=read(p)
-        if data.get('trust')=='repository-reviewed':result.update(data.get(category,{}))
+        reason=None
+        if data.get('trust')!='repository-reviewed':reason='unreviewed_dictionary'
+        elif not project or not input_dir or not source_hashes:reason='missing_current_snapshot'
+        elif data.get('schema')!='contextbase.terminology.v1':reason='unpinned_dictionary_schema'
+        elif data.get('project_id')!=project:reason='project_mismatch'
+        elif data.get('input_root')!=input_dir:reason='input_root_mismatch'
+        elif data.get('source_hashes')!=source_hashes:reason='source_snapshot_mismatch'
+        labels=data.get(category,{})
+        if reason is None and (not isinstance(labels,dict) or
+                any(not isinstance(k,str) or not isinstance(v,str) for k,v in labels.items())):
+            reason='invalid_labels'
+        if diagnostics is not None:
+            diagnostics.append({'path':p.relative_to(root).as_posix(),'category':category,
+                                'adopted':reason is None,'reason':reason or 'snapshot_matched'})
+        if reason is not None:continue
+        for key,value in labels.items():
+            if key in result and result[key]!=value:
+                raise ValueError('Conflicting reviewed terminology: '+key)
+            result[key]=value
     return result
 
 
@@ -34,6 +59,12 @@ def field_labels(items):
 def explain(expression, labels):
     """Loss-aware expression display: labels and operators, not free inference."""
     value=str(expression).strip()
+    literals=[]
+    def preserve(match):
+        if match.lastgroup!='string':return match.group()
+        literals.append(match.group())
+        return '\ufff0'+str(len(literals)-1)+'\ufff1'
+    value=TOKEN.sub(preserve,value)
     value=re.sub(r'\bMessage\b','結果メッセージ',value)
     if value=='Input':return '画面入力'
     roles={'item':'保存データ','row':'保存データ','branch':'候補データ','Input':'画面入力','input':'画面入力','copy':'保存用データ','reservation':'受渡しデータ','entity':'処理対象データ','record':'処理対象データ'}
@@ -49,7 +80,7 @@ def explain(expression, labels):
                   ' is null':' が存在しない','null':'未設定','true':'はい','false':'いいえ'}
     for a,b in replacements.items():value=value.replace(a,b)
     value=re.sub(r'\s+',' ',value)
-    return value[:700]+('…（詳細仕様に原文）' if len(value)>700 else '')
+    return re.sub('\ufff0([0-9]+)\ufff1',lambda m:literals[int(m[1])],value)
 
 
 

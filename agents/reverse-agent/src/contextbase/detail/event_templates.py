@@ -97,7 +97,7 @@ class Narrator:
             return {'commit':'変更内容を確定する（コミット）','rollback':'このトランザクションの変更を取り消す（ロールバック）','close':'使用した接続・処理資源を解放する','setAutoCommit':'変更内容の確定を明示的に制御する' if args.strip()=='false' else '接続の自動確定方式を設定する'}[short]
         if '.getParameter(' in body and '.set' in body:return '画面の入力値を読み取り、処理用データへ設定する'
         if 'getParameter(' in body and 'getMethod()' in body and 'equals' in body:return '送信方法と画面確認用トークンの一致を確認する'
-        if 'getSession' in body and ('ログイン' in body or 'LOGIN_INFO' in body) and ('return false' in body or 'return true' in body):return 'ログイン済み職員を確認し、セッションを準備する'
+        if 'getSession' in body and ('ログイン' in body or 'LOGIN_INFO' in body) and ('return false' in body or 'return true' in body):return 'セッション情報の確認結果を返す'
         if 'getRoleCode' in body or re.search(r'\b(?:hasRole|isUserInRole)\(',body):return '操作権限の制限を確認する'
         if 'Normalizer.normalize' in body and 'equals' in body:return '照合キーが一致するか確認する'
         if 'getAttribute(' in body and 'return' in body:return 'セッションに保持された利用者情報を取得する'
@@ -139,7 +139,7 @@ class Narrator:
             text=self.describe_call(m[2],m[3])
             if text:
                 if 'トークン' in text:return '送信方法・確認用トークン'+('が一致しない' if m[1] else 'が一致する')
-                if 'ログイン済み職員' in text:return 'ログイン職員を'+('確認できない' if m[1] else '確認できる')
+                if text=='セッション情報の確認結果を返す':return 'セッション情報の確認結果が'+('不成立' if m[1] else '成立')
                 if '照合キー' in text:return '照合キー'+('が一致しない' if m[1] else 'が一致する')
                 if '操作権限' in text:return '操作権限'+('が制限されない' if m[1] else 'が制限される')
                 text=text.removesuffix('を確認する').removesuffix('か確認する')

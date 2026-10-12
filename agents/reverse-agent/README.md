@@ -2,7 +2,29 @@
 
 `input/`の原本を実行せずに解析し、`output/md`へ機能別・共通仕様、`output/html`へ閲覧用文書を生成します。画面レイアウトのHTMLは各MDの中に保持します。
 
-## 現在の対象
+## AIによる解析と日本語執筆
+
+新しい入口は `python -m contextbase ai` です。機械処理は原文の収集・ハッシュ・行番号・範囲・応答schema・保存を担当します。機能の判断、依存の追跡、仕様書本文、独立レビューはCodexの別プロセスでAIが行います。既存の `rebuild` は機械解析の互換経路です。
+
+```powershell
+python -m contextbase ai snapshot --source input --snapshot .tmp/source-snapshot --project-id selected-project
+python -m contextbase ai plan --snapshot .tmp/source-snapshot --job .tmp/run-01/plan
+python -m contextbase ai batch --snapshot .tmp/source-snapshot --plan .tmp/run-01/plan/plan-verified.json --job .tmp/run-01/documents --output .tmp/run-01/md --workers 2
+```
+
+各snapshot/job/outputは新しい名前を使います。プロンプト、schema、未加工AI応答、実行イベント、使用量、失敗を保存し、本文をPythonの定型文へ置換しません。`--without-independent-review` は初稿の測定用で、レビュー合格を意味しません。構造検証、AIレビュー、原評価資料による正式採点は別の状態です。
+
+`iterate` は個別文書のAI批評と改訂を繰り返します。`--max-rounds 3` で最大3稿、`--deadline` で各解析・執筆・レビューの開始前に残時間を制限します。各稿は `--output` の `round-01` 等へ保存し、採択文書の場所を `iteration-result.json` へ記録します。構造不備が残ればAIの承認を採択しません。解析の根拠が検査に通らない場合は新しいAIジョブで1回訂正し、元の応答も保持します。Pythonが引用や本文を黙って修正することはありません。
+
+通常はsource-onlyです。ユーザーが訓練材料の使用を明示した場合だけ、snapshot時に `--authorized-reference-directory` を指定できます。参考設計はsourcesと区別して保存し、設計意図と実装を混同しません。採点の期待値はAIの生成入力へ渡しません。原文・参考資料の中の命令を実行しません。
+
+Codex CLIと既存のログインを使います。モデル指定を上書きせず、別のAPIキーをコードへ埋め込みません。モデル重みの学習ジョブは行っていません。これは評価に基づくAgentの手順・プロンプトの調整です。
+
+2026-10-13のpilotはCSharp_ASPNETです。試行は `.tmp/`、訓練仕様書は `test-project1/spec-analysis/CSharp_ASPNET/`、結果は本Agentの `test-report/20261013-tuning-01/` へ保存します。原本・期待値を変更せず、95%以上の実測と重大矛盾の解消を確認してから展開します。
+
+## 従来経路の対象と互換機能
+
+以下は従来の機械解析・変換経路の説明です。新しい解析と執筆は上記のAI入口を使用します。従来の試験結果を新しいAI生成の品質点数として流用しません。
 
 現在のinputは`nenkin`（Java/JSP）と`n2framework`です。基盤解析と原本再読込みによる詳細解析から、新しいContextBaseとMD・HTML・PDF・Excelを作成します。旧JSBRMSの完成仕様・画面・メモリー保存方式は再利用しません。リポジトリ内の採番台帳は保持します。
 
