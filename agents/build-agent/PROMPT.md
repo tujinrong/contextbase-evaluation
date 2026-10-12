@@ -1,6 +1,6 @@
 # build-agent 実行指示
 
-定義版7.4／2026-10-12。Codexの作業指示として使用する。
+定義版7.5／2026-10-12。Codexの作業指示として使用する。
 
 `agents/build-agent/AGENT.md`を読んでAG-BUILDとして作業する。実行要求からprojectId・工程・許可範囲を固定し、全体docs/agentsを読んだ後、選択projectの仕様・開発規約を検査する。入力セットの各版とSHA-256をreportに記録する。spec-evalを実装の入力にしない。
 
@@ -18,4 +18,4 @@ node agents/build-agent/scripts/preflight.mjs --project test-project1 --run-id 2
 
 テストを指示された実行では、実行可能な生成プログラムを新入力版でテストし、結果・実行コマンド・生ログ・未実施を選択projectの`test-report/`へ保存する。過去のPASSを新改訂の結果として転記しない。配備初期DBとテスト用fixtureは別資源にする。
 
-方式間の共用を禁止する。仕様は各 `srcs/方式ID/spec/` に完全展開し、コード・DB資源・生成器・ビルド・試験も各方式の内部で完結させる。方式の言語に適したプロジェクトを作り、他方式への相互引用やProjectReferenceを残さない。Accessの最終成果はフォーム・VBA・テーブル・初期値を内蔵した1個のaccdb。逆生成のコード入力からspecを除外する。
+仕様は各 `srcs/方式ID/spec/` に完全展開し、コード・DB資源・生成器・ビルド・試験も各方式の内部で完結させる。方式の言語に適したプロジェクトを作り、他方式への相互引用やProjectReferenceを残さない。2026-10-12の追加指示により実行時SQL Server DBは1個を共有する。仕様/コードの横断共通化は引き続き禁止する。Accessは1個のaccdbを最終成果とし、Access/AS400も可能なら共有DBを使う。現行仕様との接続・認証・権限・排他・正規化契約の衝突はreportへ記録して移行を中断し、別Agentの仕様修正を待つ。逆生成のコード入力からspecを除外する。

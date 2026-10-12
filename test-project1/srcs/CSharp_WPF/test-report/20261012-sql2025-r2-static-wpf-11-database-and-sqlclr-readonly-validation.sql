@@ -1,0 +1,14 @@
+SET NOCOUNT ON;
+IF DB_NAME()<>N'contextbase_test_project1_wpf' THROW 51130,'Unexpected database.',1;
+IF (SELECT is_trustworthy_on FROM sys.databases WHERE database_id=DB_ID())<>0 THROW 51131,'TRUSTWORTHY must remain OFF.',1;
+IF (SELECT compatibility_level FROM sys.databases WHERE database_id=DB_ID())<>160 THROW 51132,'Unexpected database compatibility level.',1;
+IF (SELECT snapshot_isolation_state FROM sys.databases WHERE database_id=DB_ID())<>1 THROW 51133,'Snapshot isolation was not deployed.',1;
+IF (SELECT COUNT(*) FROM sys.tables WHERE schema_id=SCHEMA_ID('dbo') AND name IN ('m_student','m_class','m_code','m_code_category','t_operation_log','t_confirmation','t_runtime_state'))<>7 THROW 51134,'Project tables are incomplete.',1;
+IF (SELECT COUNT(*) FROM dbo.m_code_category)<>5 OR (SELECT COUNT(*) FROM dbo.m_code)<70 THROW 51135,'Seed definitions are incomplete.',1;
+IF (SELECT COUNT(*) FROM sys.database_principals WHERE type='R' AND name IN ('student_viewer','student_staff','student_admin'))<>3 THROW 51136,'Application roles are incomplete.',1;
+IF (SELECT COUNT(*) FROM sys.procedures WHERE schema_id=SCHEMA_ID('student_api') AND name IN ('prepare_save','persist_student','delete_student','save_class','save_code'))<>5 THROW 51137,'Native procedures are incomplete.',1;
+IF NOT EXISTS(SELECT 1 FROM sys.assemblies a JOIN sys.assembly_files f ON f.assembly_id=a.assembly_id AND f.file_id=1 WHERE a.name='StudentNativeNormalization' AND a.permission_set_desc='SAFE_ACCESS' AND HASHBYTES('SHA2_512',f.content)=0xA5889EAA82A078761A59AD48F79472437671FB8AFAECFA2706948AC9DD95915A727F0717500CF01BA0DB4CF5F4EC32C5B5609F4F5D49D739616AE1D73E6D5468) THROW 51138,'Deployed assembly differs from the exact reviewed binary.',1;
+DECLARE @normalization xml=TRY_CONVERT(xml,student_api.normalize_reason(N'導入検証理由'));
+IF @normalization IS NULL OR @normalization.value('(/normalized/@ok)[1]','varchar(5)')<>'true' THROW 51139,'SQL Server CLR hosting failed.',1;
+SELECT DB_NAME() database_name,compatibility_level,snapshot_isolation_state,is_trustworthy_on FROM sys.databases WHERE database_id=DB_ID();
+SELECT (SELECT COUNT(*) FROM dbo.m_student) students,(SELECT COUNT(*) FROM dbo.m_class) classes,(SELECT COUNT(*) FROM dbo.m_code_category) categories,(SELECT COUNT(*) FROM dbo.m_code) codes;

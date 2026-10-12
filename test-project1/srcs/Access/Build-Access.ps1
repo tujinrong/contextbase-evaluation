@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$Frontend = (Join-Path $PSScriptRoot 'StudentManagement.accdb'),
     [string]$Backend = (Join-Path $PSScriptRoot 'build/StudentBackend.accdb'),
     [switch]$CreateBackend,
@@ -72,7 +72,7 @@ function Create-NamedForm([string]$name) {
 }
 try {
     if ($CreateBackend) {
-        $taskAccess.NewCurrentDatabase([IO.Path]::GetFullPath($Backend), 10)
+        $taskAccess.NewCurrentDatabase([IO.Path]::GetFullPath($Backend), 12)
         $taskDb = $taskAccess.CurrentDb()
         $taskDdl = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'database/schema.sql') -Encoding UTF8 -Raw) -replace '(?m)^--.*$', ''
         foreach ($taskStatement in $taskDdl.Split(';')) {
@@ -119,7 +119,7 @@ try {
         }
         $taskDb.Close(); $taskAccess.CloseCurrentDatabase()
     }
-    $taskAccess.NewCurrentDatabase([IO.Path]::GetFullPath($Frontend), 10)
+    $taskAccess.NewCurrentDatabase([IO.Path]::GetFullPath($Frontend), 12)
     $taskBlankForm=$taskAccess.CreateForm()
     Save-Form $taskBlankForm 'frmStudentSearch'
     $taskBlankForm=$null

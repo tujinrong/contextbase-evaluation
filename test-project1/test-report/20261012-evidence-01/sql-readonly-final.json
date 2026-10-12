@@ -1,0 +1,87 @@
+{
+  "runId": "20261012-evidence-01",
+  "phase": "FINAL_READ_ONLY_SNAPSHOT",
+  "recordedAt": "2026-10-12T14:51:29.5195073Z",
+  "status": "INFRASTRUCTURE_PASSED_MIGRATION_BLOCKED",
+  "connectionString": "Driver={ODBC Driver 18 for SQL Server};Server=tcp:127.0.0.1,1433;HostnameInCertificate=localhost;Database=contextbase_test_project1;Trusted_Connection=Yes;Encrypt=Yes;TrustServerCertificate=No;APP=contextbase evidence final read-only audit;",
+  "authentication": "Windows integrated",
+  "encrypt": true,
+  "trustServerCertificate": false,
+  "hostnameInCertificate": "localhost",
+  "readOnlyScope": "Four literal SELECT metadata queries only; no DDL/DML, roles, service or server setting changes",
+  "queries": [
+    {
+      "sql": "SELECT DB_NAME() AS database_name,CONVERT(nvarchar(128),SERVERPROPERTY('Edition')) AS edition,CONVERT(nvarchar(128),SERVERPROPERTY('ProductVersion')) AS version,CONVERT(int,SERVERPROPERTY('IsIntegratedSecurityOnly')) AS windows_only,ORIGINAL_LOGIN() AS original_login,IS_SRVROLEMEMBER('sysadmin') AS sysadmin,(SELECT encrypt_option FROM sys.dm_exec_connections WHERE session_id=@@SPID) AS encrypt_option",
+      "rows": [
+        {
+          "database_name": "contextbase_test_project1",
+          "edition": "Express Edition (64-bit)",
+          "version": "17.0.5005.3",
+          "windows_only": 1,
+          "original_login": "MicrosoftAccount\\tujinrong@hotmail.com",
+          "sysadmin": 1,
+          "encrypt_option": "TRUE"
+        }
+      ]
+    },
+    {
+      "sql": "SELECT name,state_desc,compatibility_level,collation_name,SUSER_SNAME(owner_sid) AS owner_name FROM sys.databases WHERE database_id=DB_ID()",
+      "rows": [
+        {
+          "name": "contextbase_test_project1",
+          "state_desc": "ONLINE",
+          "compatibility_level": 160,
+          "collation_name": "Japanese_XJIS_140_CI_AS",
+          "owner_name": "sa"
+        }
+      ]
+    },
+    {
+      "sql": "SELECT (SELECT COUNT(*) FROM sys.tables WHERE is_ms_shipped=0) AS user_table_count,(SELECT COUNT(*) FROM sys.objects WHERE is_ms_shipped=0) AS user_object_count,(SELECT COUNT(*) FROM sys.assemblies WHERE is_user_defined=1) AS user_assembly_count,(SELECT COUNT(*) FROM sys.database_principals WHERE type='R' AND is_fixed_role=0 AND name<>N'public') AS application_role_count",
+      "rows": [
+        {
+          "user_table_count": 0,
+          "user_object_count": 0,
+          "user_assembly_count": 0,
+          "application_role_count": 0
+        }
+      ]
+    },
+    {
+      "sql": "SELECT name FROM sys.databases WHERE database_id>4 ORDER BY name",
+      "rows": [
+        {
+          "name": "contextbase_test_project1"
+        }
+      ]
+    }
+  ],
+  "businessTestDataInserted": false,
+  "sharedMigrationStatus": "STOPPED_PENDING_SHARED_CONTRACT",
+  "error": null,
+  "checks": {
+    "sharedDatabaseName": true,
+    "windowsOnly": true,
+    "encrypted": true,
+    "express17": true,
+    "completeMetadataVisibility": true,
+    "online": true,
+    "compatibility160": true,
+    "collation": true,
+    "tablesZero": true,
+    "objectsZero": true,
+    "assembliesZero": true,
+    "appRolesZero": true,
+    "onlySharedUserDatabase": true
+  },
+  "checksPassed": 13,
+  "applicationAuthorizationVerified": false,
+  "schemaStatementsExecuted": 0,
+  "dmlStatementsExecuted": 0,
+  "priorSnapshot": {
+    "file": "sql-readonly.json",
+    "sha256": "d17780430354d47f6920f551e8d7cc7056ec9e5ae06ab4f8750f6f09f040787a",
+    "preserved": true
+  },
+  "finished": "2026-10-12T14:51:29.7571079Z"
+}

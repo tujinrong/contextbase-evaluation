@@ -1,0 +1,179 @@
+{
+  "runId": "20261012-shared-sql-root-review-r2",
+  "recordedAt": "2026-10-12T13:00:53.8653156Z",
+  "status": "STATIC_AND_PLAN_REVIEW",
+  "inputs": [
+    {
+      "path": "agents/build-agent/scripts/Install-LocalSqlExpress.ps1",
+      "sha256": "F6B3CFF9FA403DCF35B7923A28E63D583F851CC615B884E53C42C53228526BCB"
+    },
+    {
+      "path": "agents/build-agent/scripts/Setup-LocalSqlExpressAndDatabases.ps1",
+      "sha256": "46467468F925125ADCE9A67BD7166983C2AAC71D9B72A29B4C4018B2F5F1D4B6"
+    },
+    {
+      "path": "agents/build-agent/scripts/Start-LocalSqlExpressSetup.ps1",
+      "sha256": "63BC5472897D821EC4C8EC1F3414C2479AF85868E085F5CFF108A33713449EAC"
+    },
+    {
+      "path": "agents/build-agent/scripts/Repair-LocalSqlExpressConnection.ps1",
+      "sha256": "4498444A2E4120F30968D9D488FB7B4CFCE88038F9F6D7188BB7D16C3E3325A0"
+    },
+    {
+      "path": "agents/build-agent/scripts/Create-SharedSqlDatabase.ps1",
+      "sha256": "D79248ED74C3B027D0B23820D436BD64806FEF139367EFC6EF58C03F44042AFF"
+    }
+  ],
+  "inputHashesStable": true,
+  "parser": {
+    "powershellVersion": "5.1.26100.9549",
+    "mode": "Parser only; no target script invocation",
+    "scripts": [
+      {
+        "path": "D:\\開発\\contextbase-evaluation\\agents\\build-agent\\scripts\\Install-LocalSqlExpress.ps1",
+        "errorCount": 0,
+        "errors": []
+      },
+      {
+        "path": "D:\\開発\\contextbase-evaluation\\agents\\build-agent\\scripts\\Setup-LocalSqlExpressAndDatabases.ps1",
+        "errorCount": 0,
+        "errors": []
+      },
+      {
+        "path": "D:\\開発\\contextbase-evaluation\\agents\\build-agent\\scripts\\Start-LocalSqlExpressSetup.ps1",
+        "errorCount": 0,
+        "errors": []
+      },
+      {
+        "path": "D:\\開発\\contextbase-evaluation\\agents\\build-agent\\scripts\\Repair-LocalSqlExpressConnection.ps1",
+        "errorCount": 0,
+        "errors": []
+      },
+      {
+        "path": "D:\\開発\\contextbase-evaluation\\agents\\build-agent\\scripts\\Create-SharedSqlDatabase.ps1",
+        "errorCount": 0,
+        "errors": []
+      }
+    ]
+  },
+  "sqlParser": "TSql170Parser",
+  "sqlStatements": [
+    {
+      "path": "agents/build-agent/scripts/Install-LocalSqlExpress.ps1",
+      "line": 122,
+      "errorCount": 0,
+      "errors": [],
+      "sql": "SELECT CONVERT(nvarchar(128),SERVERPROPERTY('Edition')) edition, CONVERT(nvarchar(128),SERVERPROPERTY('ProductVersion')) version, CONVERT(int,SERVERPROPERTY('IsIntegratedSecurityOnly')) windows_only, ORIGINAL_LOGIN() original_login, (SELECT encrypt_option FROM sys.dm_exec_connections WHERE session_id=@@SPID) encrypt_option"
+    },
+    {
+      "path": "agents/build-agent/scripts/Repair-LocalSqlExpressConnection.ps1",
+      "line": 24,
+      "errorCount": 0,
+      "errors": [],
+      "sql": "SELECT CONVERT(nvarchar(128),SERVERPROPERTY('ProductVersion'))+'|'+CONVERT(nvarchar(128),SERVERPROPERTY('Edition'))+'|'+CONVERT(nvarchar(1),SERVERPROPERTY('IsIntegratedSecurityOnly'))"
+    },
+    {
+      "path": "agents/build-agent/scripts/Repair-LocalSqlExpressConnection.ps1",
+      "line": 49,
+      "errorCount": 0,
+      "errors": [],
+      "sql": "SELECT CONVERT(nvarchar(128),SERVERPROPERTY('Edition')) edition, CONVERT(nvarchar(128),SERVERPROPERTY('ProductVersion')) version,CONVERT(int,SERVERPROPERTY('IsIntegratedSecurityOnly')) windows_only, ORIGINAL_LOGIN() original_login,(SELECT encrypt_option FROM sys.dm_exec_connections WHERE session_id=@@SPID) encrypt_option"
+    },
+    {
+      "path": "agents/build-agent/scripts/Create-SharedSqlDatabase.ps1",
+      "line": 22,
+      "errorCount": 0,
+      "errors": [],
+      "sql": "SELECT CONVERT(nvarchar(128),SERVERPROPERTY('Edition')) edition,CONVERT(nvarchar(128),SERVERPROPERTY('ProductVersion')) version,CONVERT(int,SERVERPROPERTY('IsIntegratedSecurityOnly')) windows_only,ORIGINAL_LOGIN() original_login,IS_SRVROLEMEMBER('sysadmin') sysadmin,(SELECT encrypt_option FROM sys.dm_exec_connections WHERE session_id=@@SPID) encrypt_option"
+    },
+    {
+      "path": "agents/build-agent/scripts/Create-SharedSqlDatabase.ps1",
+      "line": 27,
+      "errorCount": 0,
+      "errors": [],
+      "sql": "SELECT COUNT(*) FROM sys.databases WHERE name=N'contextbase_test_project1'"
+    },
+    {
+      "path": "agents/build-agent/scripts/Create-SharedSqlDatabase.ps1",
+      "line": 32,
+      "errorCount": 0,
+      "errors": [],
+      "sql": "CREATE DATABASE [contextbase_test_project1] COLLATE Japanese_XJIS_140_CI_AS;"
+    },
+    {
+      "path": "agents/build-agent/scripts/Create-SharedSqlDatabase.ps1",
+      "line": 34,
+      "errorCount": 0,
+      "errors": [],
+      "sql": "ALTER DATABASE [contextbase_test_project1] SET COMPATIBILITY_LEVEL=160; ALTER AUTHORIZATION ON DATABASE::[contextbase_test_project1] TO [sa];"
+    },
+    {
+      "path": "agents/build-agent/scripts/Create-SharedSqlDatabase.ps1",
+      "line": 37,
+      "errorCount": 0,
+      "errors": [],
+      "sql": "SELECT name,state_desc,compatibility_level,collation_name,SUSER_SNAME(owner_sid) owner_name FROM sys.databases WHERE name=N'contextbase_test_project1'"
+    },
+    {
+      "path": "agents/build-agent/scripts/Create-SharedSqlDatabase.ps1",
+      "line": 42,
+      "errorCount": 0,
+      "errors": [],
+      "sql": "SELECT COUNT(*) FROM sys.tables WHERE is_ms_shipped=0"
+    },
+    {
+      "path": "agents/build-agent/scripts/Create-SharedSqlDatabase.ps1",
+      "line": 45,
+      "errorCount": 0,
+      "errors": [],
+      "sql": "SELECT COUNT(*) FROM sys.objects WHERE is_ms_shipped=0"
+    },
+    {
+      "path": "agents/build-agent/scripts/Create-SharedSqlDatabase.ps1",
+      "line": 47,
+      "errorCount": 0,
+      "errors": [],
+      "sql": "SELECT COUNT(*) FROM sys.assemblies WHERE is_user_defined=1"
+    },
+    {
+      "path": "agents/build-agent/scripts/Create-SharedSqlDatabase.ps1",
+      "line": 49,
+      "errorCount": 0,
+      "errors": [],
+      "sql": "SELECT COUNT(*) FROM sys.database_principals WHERE type='R' AND is_fixed_role=0 AND name<>N'public'"
+    },
+    {
+      "path": "agents/build-agent/scripts/Create-SharedSqlDatabase.ps1",
+      "line": 53,
+      "errorCount": 0,
+      "errors": [],
+      "sql": "SELECT name FROM sys.databases WHERE database_id>4 ORDER BY name"
+    }
+  ],
+  "plans": [
+    {
+      "command": "Start-LocalSqlExpressSetup.ps1 -RunId 20261012-review-r2-plan-start -PlanOnly",
+      "status": "PLAN_ONLY",
+      "valid": true
+    },
+    {
+      "command": "Create-SharedSqlDatabase.ps1 -RunId 20261012-review-r2-plan-create",
+      "status": "PLAN_ONLY",
+      "valid": true
+    }
+  ],
+  "sqlConnected": false,
+  "sqlExecuted": false,
+  "serverChanged": false,
+  "certificateCreated": false,
+  "elevated": false,
+  "installRepairCreateExecuteModesInvoked": false,
+  "oldFinding": "REV-SHARED-SQL-001 resolved by source read",
+  "notRun": [
+    "Live TLS connections",
+    "SQLCMD16/ODBC18 after repair",
+    "Install/repair/create/VerifyOnly",
+    "Application identities/CRUD",
+    "CLR/shared schema migration"
+  ]
+}

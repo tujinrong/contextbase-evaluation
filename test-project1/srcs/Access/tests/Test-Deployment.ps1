@@ -1,4 +1,4 @@
-param([string]$Database=(Join-Path $PSScriptRoot '../StudentManagement.accdb'),[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId=('access-deployment-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmssfff')+'-'+[Guid]::NewGuid().ToString('N').Substring(0,8)),[string]$ReportDirectory=(Join-Path $PSScriptRoot '../test-report'),[string]$SourceDatabase)
+﻿param([string]$Database=(Join-Path $PSScriptRoot '../StudentManagement.accdb'),[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId=('access-deployment-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmssfff')+'-'+[Guid]::NewGuid().ToString('N').Substring(0,8)),[string]$ReportDirectory=(Join-Path $PSScriptRoot '../test-report'),[string]$SourceDatabase)
 $ErrorActionPreference='Stop'
 $taskReport=[IO.Path]::GetFullPath($ReportDirectory)
 New-Item -ItemType Directory -Path $taskReport -Force | Out-Null
@@ -18,6 +18,8 @@ $taskCounts=@{}; $taskTables=@(); $taskRelations=@(); $taskModules=@(); $taskFor
 function Check-Deployment([bool]$condition,[string]$name) { $script:taskChecks+=@{name=$name;passed=$condition}; Write-Output "$(if($condition){'PASS'}else{'FAIL'}): $name" }
 try {
  $taskAccess.Visible=$false; $taskAccess.OpenCurrentDatabase($taskFile); $taskDb=$taskAccess.CurrentDb()
+ $taskFileFormat=[int]$taskAccess.CurrentProject.FileFormat
+ if($taskFileFormat -ne 12){throw 'Actual Access FileFormat=12 required for ACCDB deployment.'}
  $taskHealth=$taskAccess.Run('DeploymentHealth'); Write-Output $taskHealth
  Check-Deployment ($taskHealth -like 'PASS|*') 'actual startup/form/DAO service health'
  foreach ($taskTd in $taskDb.TableDefs) {
@@ -61,6 +63,7 @@ finally {
  [GC]::Collect(); [GC]::WaitForPendingFinalizers()
  $taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../spec') -Recurse -File | Sort-Object FullName | ForEach-Object { @{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} })
  $taskOutput=[ordered]@{runId=$RunId;status=$taskState;specConfigurationVersion='8.1';specDatabaseIndexVersion='8.2';specBusinessVersion='8.0';database=$taskFile;databaseBeforeSha256=$taskBeforeHash;databaseSha256=(Get-FileHash -LiteralPath $taskFile -Algorithm SHA256).Hash;sourceDatabase=$taskSource;sourceBeforeSha256=$taskSourceHash;sourceAfterSha256=(Get-FileHash -LiteralPath $taskSource -Algorithm SHA256).Hash;exactSourceCopy=($taskBeforeHash -eq $taskSourceHash);officeVersion=$taskVersion;fixtureOnly=($taskFile -ne $taskSource);health=$taskHealth;counts=$taskCounts;checks=$taskChecks;physicalTables=$taskTables;relations=$taskRelations;forms=$taskForms;modules=$taskModules;fatal=$taskFatal;inputs=$taskInputs;notTested=@('Office 32-bit','LAN outage','manual pixel/layout review','10000/10001-record search performance','commit-response loss')}
+ $taskOutput.fileFormat=$taskFileFormat
  $taskOutput | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $taskReport "$RunId.json") -Encoding UTF8
 }
 if ($taskState -ne 'Passed') { exit 1 }

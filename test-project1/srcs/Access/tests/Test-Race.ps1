@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$Fixture,[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId=('access-race-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmssfff')+'-'+[Guid]::NewGuid().ToString('N').Substring(0,8)),[string]$ReportDirectory=(Join-Path $PSScriptRoot '../test-report'))
+﻿param([Parameter(Mandatory=$true)][string]$Fixture,[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId=('access-race-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmssfff')+'-'+[Guid]::NewGuid().ToString('N').Substring(0,8)),[string]$ReportDirectory=(Join-Path $PSScriptRoot '../test-report'))
 $ErrorActionPreference='Stop'
 $taskFixture=[IO.Path]::GetFullPath($Fixture)
 $taskOwned=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../build'))
@@ -33,7 +33,8 @@ foreach ($taskNumber in 1..2) {
    while (-not (Test-Path -LiteralPath (Join-Path $taskDirectory 'go'))) { if ([DateTime]::UtcNow -gt $taskDeadline) { throw 'Barrier timeout.' }; Start-Sleep -Milliseconds 100 }
    $taskResult.startAt=[DateTime]::UtcNow.ToString('o')
    $taskName=if ($taskWorker -eq 1) { 'キョウソウア' } else { 'キョウソウイ' }
-   $taskResult.result=$taskApp.Run('RaceSaveFixture',"RACE-$taskWorker",$taskName)
+   $taskNumberText="RACE-$taskWorker"
+   $taskResult.result=$taskApp.Run('RaceSaveFixture',[ref]$taskNumberText,[ref]$taskName)
    $taskResult.endAt=[DateTime]::UtcNow.ToString('o')
   } catch { $taskResult.fatal=$_.Exception.Message }
   finally {

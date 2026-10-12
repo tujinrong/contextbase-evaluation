@@ -10,3 +10,5 @@ node database/generate.mjs
 
 
 実機結合試験はtests/SqlServer.IntegrationTests.csproj。明示STUDENT_TEST_DB_CONNECTIONがない場合SKIP。供給する場合は空の専用contextbase_test_* DBを指定し、SQL Server2022、暗号化、証明書検証を満たす。既存DBを置換せず、DB作成・削除を行わない。
+
+2026-10-12の最新Express 17.x・Windows認証への導入要求は [EXPRESS17.md](EXPRESS17.md) と Deploy-Database.ps1 を参照する。7表の既存001/002は維持し、方式専用の役割権限003と読取検証004を追加した。準備時点ではSQL未実行。現行のmajor16・空DB専用結合試験とは検査範囲を分ける。

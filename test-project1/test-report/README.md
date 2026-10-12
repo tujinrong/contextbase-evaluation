@@ -1,8 +1,14 @@
 # test-project1 試験結果
 
-2026-10-12。現行生成・隔離記録は **20261012-build-10**。入力版は方式内文書ごとの8.0/8.1（Access DB索引だけ8.2）。途中の失敗や過去の合格もその実行IDのまま保持しました。
+2026-10-12の最新の実行・画面撮影・不具合修正は **[20261012-evidence-01](20261012-evidence-01/README.md)**。各方式に独立した架空データを用意し、実行可能な部分を新規に試験しました。[画面エビデンス](../test-evidence/20261012-evidence-01/test-evidence.html)は原画像を埋め込んだ単独HTMLです。修正前・修正後を区別しています。共有SQL業務試験とIBM i / 5250は未実施です。build-10のZIPは旧改訂の凍結成果として保持し、今回の修正は現行srcsと新しい出力manifestを参照してください。
 
-| 方式 | 現在の検証 | 未実施 |
+SQL Server導入・共有DBの最新結果は[20261012-shared-sql-validation-01](20261012-shared-sql-validation-01/README.md)。旧LocalDB3版を削除、Express2025 CU9（17.0.5005.3）とODBC18.7.1.1を導入し、Windows認証の共有DB `contextbase_test_project1` を作成した。x64/x86の厳格TLS接続・証明書名の負例・空DB、および既存DB拒否/読取り検証の8件が成功。現DBは業務表なし、アプリ認可/CRUDは未実施。共有role/CLR・Access/IBM iの移行契約を[中断報告](../report/20261012-shared-sql-migration-stop.md)へ記録し、生成/業務DDL/移行を停止中。コード・仕様の独立性は維持する。
+
+[初回の準備・UAC取消](20261012-sqlserver-preparation-01/README.md)、[導入時の最初のTCP確認失敗](20261012-sqlserver-execute-01/installation/installation.json)、AUTO_CLOSE読取検証の初回失敗は履歴として保持する。初回計画の5方式別DBは作成していない。下表の旧生成試験を共有SQL実配備の合格へ読み替えない。
+
+以下は **20261012-build-10時点の履歴**。入力版は方式内文書ごとの8.0/8.1（Access DB索引だけ8.2）。途中の失敗や過去の合格もその実行IDのまま保持しました。最新改訂の検査結果へ読み替えません。
+
+| 方式 | build-10時点の検証 | 当時の未実施 |
 | --- | --- | --- |
 | VB.NET_WinForms | 6プロジェクトの独立ビルド警告0/エラー0、VB111件、実Framework SQLCLR23件、静的55件、SQL3ファイル構文0件、ZIP単体ビルド | 実SQL配備・CRUD・監査・競合・権限、表示/IME/DPI受入 |
 | CSharp_WPF | 独立ビルド警告0/エラー0、Core96件、非表示XAML/画面7件、native境界102件、実Framework SQLCLR27件、SQL3ファイル構文0件、ZIP単体ビルド | 実SQL配備・CRUD・監査・競合・権限、表示/IME/DPI受入 |

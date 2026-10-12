@@ -1,0 +1,1101 @@
+{
+  "RunId": "20261012-web-express17-provisioning-preparation",
+  "RecordedAt": "2026-10-12T12:24:32.1814945+00:00",
+  "Succeeded": true,
+  "Checks": [
+    {
+      "Profile": "CSharp_ASPNET",
+      "Check": "PowerShell full syntax parse",
+      "Passed": true
+    },
+    {
+      "Profile": "CSharp_ASPNET",
+      "Check": "Install PlanOnly; no SQL process/connection",
+      "Passed": true,
+      "PlannedSqlOperations": 9
+    },
+    {
+      "Profile": "CSharp_ASPNET",
+      "Check": "Verify PlanOnly; no SQL process/connection",
+      "Passed": true,
+      "PlannedSqlOperations": 2
+    },
+    {
+      "Profile": "CSharp_ASPNET",
+      "Check": "BindPrincipal PlanOnly; no SQL process/connection",
+      "Passed": true,
+      "PlannedSqlOperations": 3
+    },
+    {
+      "Profile": "CSharp_ASPNET",
+      "Check": "BindPrincipal without principal rejected before SQL",
+      "Passed": true
+    },
+    {
+      "Profile": "Vue_CSharpAPI",
+      "Check": "PowerShell full syntax parse",
+      "Passed": true
+    },
+    {
+      "Profile": "Vue_CSharpAPI",
+      "Check": "Install PlanOnly; no SQL process/connection",
+      "Passed": true,
+      "PlannedSqlOperations": 9
+    },
+    {
+      "Profile": "Vue_CSharpAPI",
+      "Check": "Verify PlanOnly; no SQL process/connection",
+      "Passed": true,
+      "PlannedSqlOperations": 2
+    },
+    {
+      "Profile": "Vue_CSharpAPI",
+      "Check": "BindPrincipal PlanOnly; no SQL process/connection",
+      "Passed": true,
+      "PlannedSqlOperations": 3
+    },
+    {
+      "Profile": "Vue_CSharpAPI",
+      "Check": "BindPrincipal without principal rejected before SQL",
+      "Passed": true
+    }
+  ],
+  "Passed": 10,
+  "SqlConnections": 0,
+  "SqlStatementsExecuted": 0,
+  "InputHashes": [
+    {
+      "Profile": "CSharp_ASPNET",
+      "File": "001_schema.sql",
+      "Sha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a"
+    },
+    {
+      "Profile": "CSharp_ASPNET",
+      "File": "002_seed.sql",
+      "Sha256": "b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee"
+    },
+    {
+      "Profile": "CSharp_ASPNET",
+      "File": "003_web_permissions.sql",
+      "Sha256": "782df16a150e377da3d087264f6ba649d7c587f97af058530340a0eff89fc0b7"
+    },
+    {
+      "Profile": "CSharp_ASPNET",
+      "File": "004_verify_deployment.sql",
+      "Sha256": "80d9a7c01f809f749acaade923c507878cc74b03595e88a09adab6a4d21ec4a4"
+    },
+    {
+      "Profile": "CSharp_ASPNET",
+      "File": "Deploy-Database.ps1",
+      "Sha256": "3e34114f583f49e6a9b2e156adb01b363d287dc06877deac1672a126942f99e4"
+    },
+    {
+      "Profile": "CSharp_ASPNET",
+      "File": "EXPRESS17.md",
+      "Sha256": "8244fe9144d158b7e3cad56e3b5f0de6a4e68ca7571d5d27b2cc4bcef6c5382e"
+    },
+    {
+      "Profile": "Vue_CSharpAPI",
+      "File": "001_schema.sql",
+      "Sha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a"
+    },
+    {
+      "Profile": "Vue_CSharpAPI",
+      "File": "002_seed.sql",
+      "Sha256": "b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee"
+    },
+    {
+      "Profile": "Vue_CSharpAPI",
+      "File": "003_web_permissions.sql",
+      "Sha256": "8cf6357e2ebb945189fa168aae85e224747f25340a2313699c03c9eaa4184dd2"
+    },
+    {
+      "Profile": "Vue_CSharpAPI",
+      "File": "004_verify_deployment.sql",
+      "Sha256": "95074bc573d27408cde841fd45a725d16b139f45acad7472b44e0ba98729cb3e"
+    },
+    {
+      "Profile": "Vue_CSharpAPI",
+      "File": "Deploy-Database.ps1",
+      "Sha256": "03c48689e68499714c004861ac3c704f01099c48ace9af624f73bc0b5f1d563d"
+    },
+    {
+      "Profile": "Vue_CSharpAPI",
+      "File": "EXPRESS17.md",
+      "Sha256": "957002afe1a8a539e0d4119fa8d1cedaf990bc4b1b91283e5b71df526c796f30"
+    }
+  ],
+  "Plans": [
+    {
+      "Profile": "CSharp_ASPNET",
+      "Action": "Install",
+      "Parameters": {
+        "UseExistingEmptyDatabase": true,
+        "Action": "Install",
+        "ServerInstance": ".\\SQLEXPRESS",
+        "PlanOnly": true
+      },
+      "Output": [
+        {
+          "PlanOnly": true,
+          "Database": "master",
+          "SqlFile": "",
+          "Query": "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_ID(N'contextbase_test_project1_mvc') IS NULL BEGIN CREATE DATABASE [contextbase_test_project1_mvc]; END\nELSE IF 1<>1 THROW 51204,N'Database already exists. No replacement/drop is performed. Explicitly allow an existing empty dedicated database if appropriate.',1;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "master",
+            "-Q",
+            "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_ID(N'contextbase_test_project1_mvc') IS NULL BEGIN CREATE DATABASE [contextbase_test_project1_mvc]; END\nELSE IF 1<>1 THROW 51204,N'Database already exists. No replacement/drop is performed. Explicitly allow an existing empty dedicated database if appropriate.',1;"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "SqlFile": "",
+          "Query": "SET NOCOUNT ON;\nIF DB_NAME()<>N'contextbase_test_project1_mvc' THROW 51205,N'Unexpected database.',1;\nIF EXISTS(SELECT 1 FROM sys.objects WHERE is_ms_shipped=0)\n OR EXISTS(SELECT 1 FROM sys.database_principals WHERE name IN(N'student_viewer',N'student_staff',N'student_admin'))\n OR EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project')\n THROW 51206,N'Dedicated database must be empty. Existing objects and data are never overwritten.',1;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_mvc",
+            "-Q",
+            "SET NOCOUNT ON;\nIF DB_NAME()<>N'contextbase_test_project1_mvc' THROW 51205,N'Unexpected database.',1;\nIF EXISTS(SELECT 1 FROM sys.objects WHERE is_ms_shipped=0)\n OR EXISTS(SELECT 1 FROM sys.database_principals WHERE name IN(N'student_viewer',N'student_staff',N'student_admin'))\n OR EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project')\n THROW 51206,N'Dedicated database must be empty. Existing objects and data are never overwritten.',1;"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "SqlFile": "001_schema.sql",
+          "Query": "",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_mvc",
+            "-i",
+            "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\CSharp_ASPNET\\database\\001_schema.sql"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "SqlFile": "002_seed.sql",
+          "Query": "",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_mvc",
+            "-i",
+            "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\CSharp_ASPNET\\database\\002_seed.sql"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "SqlFile": "003_web_permissions.sql",
+          "Query": "",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_mvc",
+            "-i",
+            "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\CSharp_ASPNET\\database\\003_web_permissions.sql"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "SqlFile": "",
+          "Query": "SET XACT_ABORT ON;\nBEGIN TRANSACTION;\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.Project',@value=N'test-project1/CSharp_ASPNET';\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.SchemaSha256',@value=N'e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a';\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.SeedSha256',@value=N'b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee';\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.PermissionsSha256',@value=N'782df16a150e377da3d087264f6ba649d7c587f97af058530340a0eff89fc0b7';\nCOMMIT;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_mvc",
+            "-Q",
+            "SET XACT_ABORT ON;\nBEGIN TRANSACTION;\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.Project',@value=N'test-project1/CSharp_ASPNET';\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.SchemaSha256',@value=N'e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a';\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.SeedSha256',@value=N'b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee';\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.PermissionsSha256',@value=N'782df16a150e377da3d087264f6ba649d7c587f97af058530340a0eff89fc0b7';\nCOMMIT;"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "SqlFile": "",
+          "Query": "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_NAME()<>N'contextbase_test_project1_mvc' THROW 51205,N'Unexpected database.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project' AND CONVERT(nvarchar(128),value)=N'test-project1/CSharp_ASPNET')\n THROW 51207,N'Independent project deployment marker is absent or differs.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SchemaSha256' AND CONVERT(varchar(64),value)='e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SeedSha256' AND CONVERT(varchar(64),value)='b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.PermissionsSha256' AND CONVERT(varchar(64),value)='782df16a150e377da3d087264f6ba649d7c587f97af058530340a0eff89fc0b7')\n THROW 51208,N'Deployed SQL input hashes differ from the local production files.',1;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_mvc",
+            "-Q",
+            "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_NAME()<>N'contextbase_test_project1_mvc' THROW 51205,N'Unexpected database.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project' AND CONVERT(nvarchar(128),value)=N'test-project1/CSharp_ASPNET')\n THROW 51207,N'Independent project deployment marker is absent or differs.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SchemaSha256' AND CONVERT(varchar(64),value)='e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SeedSha256' AND CONVERT(varchar(64),value)='b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.PermissionsSha256' AND CONVERT(varchar(64),value)='782df16a150e377da3d087264f6ba649d7c587f97af058530340a0eff89fc0b7')\n THROW 51208,N'Deployed SQL input hashes differ from the local production files.',1;"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "SqlFile": "004_verify_deployment.sql",
+          "Query": "",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_mvc",
+            "-i",
+            "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\CSharp_ASPNET\\database\\004_verify_deployment.sql"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "SqlFile": "",
+          "Query": "IF EXISTS(SELECT 1 FROM dbo.m_student) OR EXISTS(SELECT 1 FROM dbo.m_class)\n OR EXISTS(SELECT 1 FROM dbo.t_operation_log) OR EXISTS(SELECT 1 FROM dbo.t_confirmation) OR EXISTS(SELECT 1 FROM dbo.t_runtime_state)\n OR (SELECT COUNT(*) FROM dbo.m_code_category)<>5 OR (SELECT COUNT(*) FROM dbo.m_code)<>70\n THROW 51213,N'Initial deployment requires five categories / 70 codes and no invented business data.',1;\nSELECT N'PASS initial deployment data' AS Result;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_mvc",
+            "-Q",
+            "IF EXISTS(SELECT 1 FROM dbo.m_student) OR EXISTS(SELECT 1 FROM dbo.m_class)\n OR EXISTS(SELECT 1 FROM dbo.t_operation_log) OR EXISTS(SELECT 1 FROM dbo.t_confirmation) OR EXISTS(SELECT 1 FROM dbo.t_runtime_state)\n OR (SELECT COUNT(*) FROM dbo.m_code_category)<>5 OR (SELECT COUNT(*) FROM dbo.m_code)<>70\n THROW 51213,N'Initial deployment requires five categories / 70 codes and no invented business data.',1;\nSELECT N'PASS initial deployment data' AS Result;"
+          ]
+        },
+        {
+          "Action": "Install",
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "Project": "test-project1/CSharp_ASPNET",
+          "ConnectionString": "Server=.\\SQLEXPRESS;Database=contextbase_test_project1_mvc;Integrated Security=true;Encrypt=true;TrustServerCertificate=false;",
+          "ApplicationPrincipal": "",
+          "ApplicationRole": "Staff",
+          "SqlFiles": [
+            "001_schema.sql",
+            "002_seed.sql",
+            "003_web_permissions.sql",
+            "004_verify_deployment.sql"
+          ],
+          "SchemaSha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a",
+          "SeedSha256": "b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee",
+          "PermissionsSha256": "782df16a150e377da3d087264f6ba649d7c587f97af058530340a0eff89fc0b7"
+        }
+      ]
+    },
+    {
+      "Profile": "CSharp_ASPNET",
+      "Action": "Verify",
+      "Parameters": {
+        "Action": "Verify",
+        "ServerInstance": ".\\SQLEXPRESS",
+        "PlanOnly": true
+      },
+      "Output": [
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "SqlFile": "",
+          "Query": "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_NAME()<>N'contextbase_test_project1_mvc' THROW 51205,N'Unexpected database.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project' AND CONVERT(nvarchar(128),value)=N'test-project1/CSharp_ASPNET')\n THROW 51207,N'Independent project deployment marker is absent or differs.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SchemaSha256' AND CONVERT(varchar(64),value)='e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SeedSha256' AND CONVERT(varchar(64),value)='b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.PermissionsSha256' AND CONVERT(varchar(64),value)='782df16a150e377da3d087264f6ba649d7c587f97af058530340a0eff89fc0b7')\n THROW 51208,N'Deployed SQL input hashes differ from the local production files.',1;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_mvc",
+            "-Q",
+            "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_NAME()<>N'contextbase_test_project1_mvc' THROW 51205,N'Unexpected database.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project' AND CONVERT(nvarchar(128),value)=N'test-project1/CSharp_ASPNET')\n THROW 51207,N'Independent project deployment marker is absent or differs.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SchemaSha256' AND CONVERT(varchar(64),value)='e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SeedSha256' AND CONVERT(varchar(64),value)='b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.PermissionsSha256' AND CONVERT(varchar(64),value)='782df16a150e377da3d087264f6ba649d7c587f97af058530340a0eff89fc0b7')\n THROW 51208,N'Deployed SQL input hashes differ from the local production files.',1;"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "SqlFile": "004_verify_deployment.sql",
+          "Query": "",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_mvc",
+            "-i",
+            "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\CSharp_ASPNET\\database\\004_verify_deployment.sql"
+          ]
+        },
+        {
+          "Action": "Verify",
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "Project": "test-project1/CSharp_ASPNET",
+          "ConnectionString": "Server=.\\SQLEXPRESS;Database=contextbase_test_project1_mvc;Integrated Security=true;Encrypt=true;TrustServerCertificate=false;",
+          "ApplicationPrincipal": "",
+          "ApplicationRole": "Staff",
+          "SqlFiles": [
+            "001_schema.sql",
+            "002_seed.sql",
+            "003_web_permissions.sql",
+            "004_verify_deployment.sql"
+          ],
+          "SchemaSha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a",
+          "SeedSha256": "b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee",
+          "PermissionsSha256": "782df16a150e377da3d087264f6ba649d7c587f97af058530340a0eff89fc0b7"
+        }
+      ]
+    },
+    {
+      "Profile": "CSharp_ASPNET",
+      "Action": "BindPrincipal",
+      "Parameters": {
+        "ApplicationPrincipal": "EXAMPLE\\O'Brien",
+        "Action": "BindPrincipal",
+        "ApplicationRole": "Staff",
+        "ServerInstance": ".\\SQLEXPRESS",
+        "PlanOnly": true
+      },
+      "Output": [
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "SqlFile": "",
+          "Query": "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_NAME()<>N'contextbase_test_project1_mvc' THROW 51205,N'Unexpected database.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project' AND CONVERT(nvarchar(128),value)=N'test-project1/CSharp_ASPNET')\n THROW 51207,N'Independent project deployment marker is absent or differs.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SchemaSha256' AND CONVERT(varchar(64),value)='e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SeedSha256' AND CONVERT(varchar(64),value)='b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.PermissionsSha256' AND CONVERT(varchar(64),value)='782df16a150e377da3d087264f6ba649d7c587f97af058530340a0eff89fc0b7')\n THROW 51208,N'Deployed SQL input hashes differ from the local production files.',1;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_mvc",
+            "-Q",
+            "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_NAME()<>N'contextbase_test_project1_mvc' THROW 51205,N'Unexpected database.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project' AND CONVERT(nvarchar(128),value)=N'test-project1/CSharp_ASPNET')\n THROW 51207,N'Independent project deployment marker is absent or differs.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SchemaSha256' AND CONVERT(varchar(64),value)='e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SeedSha256' AND CONVERT(varchar(64),value)='b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.PermissionsSha256' AND CONVERT(varchar(64),value)='782df16a150e377da3d087264f6ba649d7c587f97af058530340a0eff89fc0b7')\n THROW 51208,N'Deployed SQL input hashes differ from the local production files.',1;"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "SqlFile": "",
+          "Query": "SET XACT_ABORT ON;\nDECLARE @principal sysname=N'EXAMPLE\\O''Brien',@role sysname=N'student_staff';\nIF NOT EXISTS(SELECT 1 FROM sys.server_principals WHERE name=@principal AND type IN('U','G'))\n THROW 51209,N'An existing Windows server login/group is required. This script never creates or alters server logins.',1;\nIF COALESCE(IS_SRVROLEMEMBER(N'sysadmin',@principal),1)<>0\n OR SUSER_SID(@principal)=(SELECT owner_sid FROM sys.databases WHERE database_id=DB_ID())\n THROW 51210,N'Application principal must be separate from sysadmin and database owner.',1;\nIF EXISTS(SELECT 1 FROM sys.database_principals WHERE name=@principal AND (sid<>SUSER_SID(@principal) OR type NOT IN('U','G')))\n THROW 51211,N'Existing database principal conflicts with the Windows login.',1;\nIF EXISTS(SELECT 1 FROM sys.database_role_members rm JOIN sys.database_principals u ON u.principal_id=rm.member_principal_id JOIN sys.database_principals r ON r.principal_id=rm.role_principal_id WHERE u.name=@principal AND r.name<>@role)\n THROW 51212,N'Existing role membership differs. Privileges are never automatically replaced.',1;\nBEGIN TRANSACTION;\nDECLARE @sql nvarchar(max);\nIF DATABASE_PRINCIPAL_ID(@principal) IS NULL BEGIN SET @sql=N'CREATE USER '+QUOTENAME(@principal)+N' FOR LOGIN '+QUOTENAME(@principal)+N';'; EXEC sys.sp_executesql @sql; END;\nIF NOT EXISTS(SELECT 1 FROM sys.database_role_members WHERE role_principal_id=DATABASE_PRINCIPAL_ID(@role) AND member_principal_id=DATABASE_PRINCIPAL_ID(@principal))\n BEGIN SET @sql=N'ALTER ROLE '+QUOTENAME(@role)+N' ADD MEMBER '+QUOTENAME(@principal)+N';'; EXEC sys.sp_executesql @sql; END;\nCOMMIT;\nSELECT @principal AS WindowsPrincipal,@role AS DirectDatabaseRole;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_mvc",
+            "-Q",
+            "SET XACT_ABORT ON;\nDECLARE @principal sysname=N'EXAMPLE\\O''Brien',@role sysname=N'student_staff';\nIF NOT EXISTS(SELECT 1 FROM sys.server_principals WHERE name=@principal AND type IN('U','G'))\n THROW 51209,N'An existing Windows server login/group is required. This script never creates or alters server logins.',1;\nIF COALESCE(IS_SRVROLEMEMBER(N'sysadmin',@principal),1)<>0\n OR SUSER_SID(@principal)=(SELECT owner_sid FROM sys.databases WHERE database_id=DB_ID())\n THROW 51210,N'Application principal must be separate from sysadmin and database owner.',1;\nIF EXISTS(SELECT 1 FROM sys.database_principals WHERE name=@principal AND (sid<>SUSER_SID(@principal) OR type NOT IN('U','G')))\n THROW 51211,N'Existing database principal conflicts with the Windows login.',1;\nIF EXISTS(SELECT 1 FROM sys.database_role_members rm JOIN sys.database_principals u ON u.principal_id=rm.member_principal_id JOIN sys.database_principals r ON r.principal_id=rm.role_principal_id WHERE u.name=@principal AND r.name<>@role)\n THROW 51212,N'Existing role membership differs. Privileges are never automatically replaced.',1;\nBEGIN TRANSACTION;\nDECLARE @sql nvarchar(max);\nIF DATABASE_PRINCIPAL_ID(@principal) IS NULL BEGIN SET @sql=N'CREATE USER '+QUOTENAME(@principal)+N' FOR LOGIN '+QUOTENAME(@principal)+N';'; EXEC sys.sp_executesql @sql; END;\nIF NOT EXISTS(SELECT 1 FROM sys.database_role_members WHERE role_principal_id=DATABASE_PRINCIPAL_ID(@role) AND member_principal_id=DATABASE_PRINCIPAL_ID(@principal))\n BEGIN SET @sql=N'ALTER ROLE '+QUOTENAME(@role)+N' ADD MEMBER '+QUOTENAME(@principal)+N';'; EXEC sys.sp_executesql @sql; END;\nCOMMIT;\nSELECT @principal AS WindowsPrincipal,@role AS DirectDatabaseRole;"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "SqlFile": "004_verify_deployment.sql",
+          "Query": "",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_mvc",
+            "-i",
+            "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\CSharp_ASPNET\\database\\004_verify_deployment.sql"
+          ]
+        },
+        {
+          "Action": "BindPrincipal",
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_mvc",
+          "Project": "test-project1/CSharp_ASPNET",
+          "ConnectionString": "Server=.\\SQLEXPRESS;Database=contextbase_test_project1_mvc;Integrated Security=true;Encrypt=true;TrustServerCertificate=false;",
+          "ApplicationPrincipal": "EXAMPLE\\O'Brien",
+          "ApplicationRole": "Staff",
+          "SqlFiles": [
+            "001_schema.sql",
+            "002_seed.sql",
+            "003_web_permissions.sql",
+            "004_verify_deployment.sql"
+          ],
+          "SchemaSha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a",
+          "SeedSha256": "b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee",
+          "PermissionsSha256": "782df16a150e377da3d087264f6ba649d7c587f97af058530340a0eff89fc0b7"
+        }
+      ]
+    },
+    {
+      "Profile": "Vue_CSharpAPI",
+      "Action": "Install",
+      "Parameters": {
+        "UseExistingEmptyDatabase": true,
+        "Action": "Install",
+        "ServerInstance": ".\\SQLEXPRESS",
+        "PlanOnly": true
+      },
+      "Output": [
+        {
+          "PlanOnly": true,
+          "Database": "master",
+          "SqlFile": "",
+          "Query": "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_ID(N'contextbase_test_project1_vue') IS NULL BEGIN CREATE DATABASE [contextbase_test_project1_vue]; END\nELSE IF 1<>1 THROW 51204,N'Database already exists. No replacement/drop is performed. Explicitly allow an existing empty dedicated database if appropriate.',1;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "master",
+            "-Q",
+            "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_ID(N'contextbase_test_project1_vue') IS NULL BEGIN CREATE DATABASE [contextbase_test_project1_vue]; END\nELSE IF 1<>1 THROW 51204,N'Database already exists. No replacement/drop is performed. Explicitly allow an existing empty dedicated database if appropriate.',1;"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "SqlFile": "",
+          "Query": "SET NOCOUNT ON;\nIF DB_NAME()<>N'contextbase_test_project1_vue' THROW 51205,N'Unexpected database.',1;\nIF EXISTS(SELECT 1 FROM sys.objects WHERE is_ms_shipped=0)\n OR EXISTS(SELECT 1 FROM sys.database_principals WHERE name IN(N'student_viewer',N'student_staff',N'student_admin'))\n OR EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project')\n THROW 51206,N'Dedicated database must be empty. Existing objects and data are never overwritten.',1;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_vue",
+            "-Q",
+            "SET NOCOUNT ON;\nIF DB_NAME()<>N'contextbase_test_project1_vue' THROW 51205,N'Unexpected database.',1;\nIF EXISTS(SELECT 1 FROM sys.objects WHERE is_ms_shipped=0)\n OR EXISTS(SELECT 1 FROM sys.database_principals WHERE name IN(N'student_viewer',N'student_staff',N'student_admin'))\n OR EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project')\n THROW 51206,N'Dedicated database must be empty. Existing objects and data are never overwritten.',1;"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "SqlFile": "001_schema.sql",
+          "Query": "",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_vue",
+            "-i",
+            "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Vue_CSharpAPI\\database\\001_schema.sql"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "SqlFile": "002_seed.sql",
+          "Query": "",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_vue",
+            "-i",
+            "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Vue_CSharpAPI\\database\\002_seed.sql"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "SqlFile": "003_web_permissions.sql",
+          "Query": "",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_vue",
+            "-i",
+            "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Vue_CSharpAPI\\database\\003_web_permissions.sql"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "SqlFile": "",
+          "Query": "SET XACT_ABORT ON;\nBEGIN TRANSACTION;\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.Project',@value=N'test-project1/Vue_CSharpAPI';\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.SchemaSha256',@value=N'e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a';\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.SeedSha256',@value=N'b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee';\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.PermissionsSha256',@value=N'8cf6357e2ebb945189fa168aae85e224747f25340a2313699c03c9eaa4184dd2';\nCOMMIT;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_vue",
+            "-Q",
+            "SET XACT_ABORT ON;\nBEGIN TRANSACTION;\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.Project',@value=N'test-project1/Vue_CSharpAPI';\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.SchemaSha256',@value=N'e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a';\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.SeedSha256',@value=N'b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee';\nEXEC sys.sp_addextendedproperty @name=N'Contextbase.PermissionsSha256',@value=N'8cf6357e2ebb945189fa168aae85e224747f25340a2313699c03c9eaa4184dd2';\nCOMMIT;"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "SqlFile": "",
+          "Query": "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_NAME()<>N'contextbase_test_project1_vue' THROW 51205,N'Unexpected database.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project' AND CONVERT(nvarchar(128),value)=N'test-project1/Vue_CSharpAPI')\n THROW 51207,N'Independent project deployment marker is absent or differs.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SchemaSha256' AND CONVERT(varchar(64),value)='e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SeedSha256' AND CONVERT(varchar(64),value)='b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.PermissionsSha256' AND CONVERT(varchar(64),value)='8cf6357e2ebb945189fa168aae85e224747f25340a2313699c03c9eaa4184dd2')\n THROW 51208,N'Deployed SQL input hashes differ from the local production files.',1;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_vue",
+            "-Q",
+            "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_NAME()<>N'contextbase_test_project1_vue' THROW 51205,N'Unexpected database.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project' AND CONVERT(nvarchar(128),value)=N'test-project1/Vue_CSharpAPI')\n THROW 51207,N'Independent project deployment marker is absent or differs.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SchemaSha256' AND CONVERT(varchar(64),value)='e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SeedSha256' AND CONVERT(varchar(64),value)='b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.PermissionsSha256' AND CONVERT(varchar(64),value)='8cf6357e2ebb945189fa168aae85e224747f25340a2313699c03c9eaa4184dd2')\n THROW 51208,N'Deployed SQL input hashes differ from the local production files.',1;"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "SqlFile": "004_verify_deployment.sql",
+          "Query": "",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_vue",
+            "-i",
+            "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Vue_CSharpAPI\\database\\004_verify_deployment.sql"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "SqlFile": "",
+          "Query": "IF EXISTS(SELECT 1 FROM dbo.m_student) OR EXISTS(SELECT 1 FROM dbo.m_class)\n OR EXISTS(SELECT 1 FROM dbo.t_operation_log) OR EXISTS(SELECT 1 FROM dbo.t_confirmation) OR EXISTS(SELECT 1 FROM dbo.t_runtime_state)\n OR (SELECT COUNT(*) FROM dbo.m_code_category)<>5 OR (SELECT COUNT(*) FROM dbo.m_code)<>70\n THROW 51213,N'Initial deployment requires five categories / 70 codes and no invented business data.',1;\nSELECT N'PASS initial deployment data' AS Result;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_vue",
+            "-Q",
+            "IF EXISTS(SELECT 1 FROM dbo.m_student) OR EXISTS(SELECT 1 FROM dbo.m_class)\n OR EXISTS(SELECT 1 FROM dbo.t_operation_log) OR EXISTS(SELECT 1 FROM dbo.t_confirmation) OR EXISTS(SELECT 1 FROM dbo.t_runtime_state)\n OR (SELECT COUNT(*) FROM dbo.m_code_category)<>5 OR (SELECT COUNT(*) FROM dbo.m_code)<>70\n THROW 51213,N'Initial deployment requires five categories / 70 codes and no invented business data.',1;\nSELECT N'PASS initial deployment data' AS Result;"
+          ]
+        },
+        {
+          "Action": "Install",
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "Project": "test-project1/Vue_CSharpAPI",
+          "ConnectionString": "Server=.\\SQLEXPRESS;Database=contextbase_test_project1_vue;Integrated Security=true;Encrypt=true;TrustServerCertificate=false;",
+          "ApplicationPrincipal": "",
+          "ApplicationRole": "Staff",
+          "SqlFiles": [
+            "001_schema.sql",
+            "002_seed.sql",
+            "003_web_permissions.sql",
+            "004_verify_deployment.sql"
+          ],
+          "SchemaSha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a",
+          "SeedSha256": "b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee",
+          "PermissionsSha256": "8cf6357e2ebb945189fa168aae85e224747f25340a2313699c03c9eaa4184dd2"
+        }
+      ]
+    },
+    {
+      "Profile": "Vue_CSharpAPI",
+      "Action": "Verify",
+      "Parameters": {
+        "Action": "Verify",
+        "ServerInstance": ".\\SQLEXPRESS",
+        "PlanOnly": true
+      },
+      "Output": [
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "SqlFile": "",
+          "Query": "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_NAME()<>N'contextbase_test_project1_vue' THROW 51205,N'Unexpected database.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project' AND CONVERT(nvarchar(128),value)=N'test-project1/Vue_CSharpAPI')\n THROW 51207,N'Independent project deployment marker is absent or differs.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SchemaSha256' AND CONVERT(varchar(64),value)='e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SeedSha256' AND CONVERT(varchar(64),value)='b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.PermissionsSha256' AND CONVERT(varchar(64),value)='8cf6357e2ebb945189fa168aae85e224747f25340a2313699c03c9eaa4184dd2')\n THROW 51208,N'Deployed SQL input hashes differ from the local production files.',1;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_vue",
+            "-Q",
+            "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_NAME()<>N'contextbase_test_project1_vue' THROW 51205,N'Unexpected database.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project' AND CONVERT(nvarchar(128),value)=N'test-project1/Vue_CSharpAPI')\n THROW 51207,N'Independent project deployment marker is absent or differs.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SchemaSha256' AND CONVERT(varchar(64),value)='e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SeedSha256' AND CONVERT(varchar(64),value)='b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.PermissionsSha256' AND CONVERT(varchar(64),value)='8cf6357e2ebb945189fa168aae85e224747f25340a2313699c03c9eaa4184dd2')\n THROW 51208,N'Deployed SQL input hashes differ from the local production files.',1;"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "SqlFile": "004_verify_deployment.sql",
+          "Query": "",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_vue",
+            "-i",
+            "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Vue_CSharpAPI\\database\\004_verify_deployment.sql"
+          ]
+        },
+        {
+          "Action": "Verify",
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "Project": "test-project1/Vue_CSharpAPI",
+          "ConnectionString": "Server=.\\SQLEXPRESS;Database=contextbase_test_project1_vue;Integrated Security=true;Encrypt=true;TrustServerCertificate=false;",
+          "ApplicationPrincipal": "",
+          "ApplicationRole": "Staff",
+          "SqlFiles": [
+            "001_schema.sql",
+            "002_seed.sql",
+            "003_web_permissions.sql",
+            "004_verify_deployment.sql"
+          ],
+          "SchemaSha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a",
+          "SeedSha256": "b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee",
+          "PermissionsSha256": "8cf6357e2ebb945189fa168aae85e224747f25340a2313699c03c9eaa4184dd2"
+        }
+      ]
+    },
+    {
+      "Profile": "Vue_CSharpAPI",
+      "Action": "BindPrincipal",
+      "Parameters": {
+        "ApplicationPrincipal": "EXAMPLE\\O'Brien",
+        "Action": "BindPrincipal",
+        "ApplicationRole": "Staff",
+        "ServerInstance": ".\\SQLEXPRESS",
+        "PlanOnly": true
+      },
+      "Output": [
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "SqlFile": "",
+          "Query": "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_NAME()<>N'contextbase_test_project1_vue' THROW 51205,N'Unexpected database.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project' AND CONVERT(nvarchar(128),value)=N'test-project1/Vue_CSharpAPI')\n THROW 51207,N'Independent project deployment marker is absent or differs.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SchemaSha256' AND CONVERT(varchar(64),value)='e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SeedSha256' AND CONVERT(varchar(64),value)='b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.PermissionsSha256' AND CONVERT(varchar(64),value)='8cf6357e2ebb945189fa168aae85e224747f25340a2313699c03c9eaa4184dd2')\n THROW 51208,N'Deployed SQL input hashes differ from the local production files.',1;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_vue",
+            "-Q",
+            "SET NOCOUNT ON;\nIF ISNULL(CONVERT(int,SERVERPROPERTY('ProductMajorVersion')),0)<>17 THROW 51200,N'SQL Server Express major 17 is required by this deployment request.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('Edition')),N'') NOT LIKE N'%Express%' THROW 51201,N'Express edition is required.',1;\nIF ISNULL(CONVERT(nvarchar(128),SERVERPROPERTY('MachineName')),N'<missing>')<>ISNULL(CONVERT(nvarchar(128),HOST_NAME()),N'<unknown>') THROW 51202,N'This script targets a local Windows SQL Server instance only.',1;\nIF ISNULL(CONVERT(nvarchar(40),CONNECTIONPROPERTY('auth_scheme')),N'') NOT IN(N'NTLM',N'KERBEROS') THROW 51203,N'Windows integrated authentication is required.',1;IF DB_NAME()<>N'contextbase_test_project1_vue' THROW 51205,N'Unexpected database.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.Project' AND CONVERT(nvarchar(128),value)=N'test-project1/Vue_CSharpAPI')\n THROW 51207,N'Independent project deployment marker is absent or differs.',1;\nIF NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SchemaSha256' AND CONVERT(varchar(64),value)='e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.SeedSha256' AND CONVERT(varchar(64),value)='b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee')\n OR NOT EXISTS(SELECT 1 FROM sys.extended_properties WHERE class=0 AND name=N'Contextbase.PermissionsSha256' AND CONVERT(varchar(64),value)='8cf6357e2ebb945189fa168aae85e224747f25340a2313699c03c9eaa4184dd2')\n THROW 51208,N'Deployed SQL input hashes differ from the local production files.',1;"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "SqlFile": "",
+          "Query": "SET XACT_ABORT ON;\nDECLARE @principal sysname=N'EXAMPLE\\O''Brien',@role sysname=N'student_staff';\nIF NOT EXISTS(SELECT 1 FROM sys.server_principals WHERE name=@principal AND type IN('U','G'))\n THROW 51209,N'An existing Windows server login/group is required. This script never creates or alters server logins.',1;\nIF COALESCE(IS_SRVROLEMEMBER(N'sysadmin',@principal),1)<>0\n OR SUSER_SID(@principal)=(SELECT owner_sid FROM sys.databases WHERE database_id=DB_ID())\n THROW 51210,N'Application principal must be separate from sysadmin and database owner.',1;\nIF EXISTS(SELECT 1 FROM sys.database_principals WHERE name=@principal AND (sid<>SUSER_SID(@principal) OR type NOT IN('U','G')))\n THROW 51211,N'Existing database principal conflicts with the Windows login.',1;\nIF EXISTS(SELECT 1 FROM sys.database_role_members rm JOIN sys.database_principals u ON u.principal_id=rm.member_principal_id JOIN sys.database_principals r ON r.principal_id=rm.role_principal_id WHERE u.name=@principal AND r.name<>@role)\n THROW 51212,N'Existing role membership differs. Privileges are never automatically replaced.',1;\nBEGIN TRANSACTION;\nDECLARE @sql nvarchar(max);\nIF DATABASE_PRINCIPAL_ID(@principal) IS NULL BEGIN SET @sql=N'CREATE USER '+QUOTENAME(@principal)+N' FOR LOGIN '+QUOTENAME(@principal)+N';'; EXEC sys.sp_executesql @sql; END;\nIF NOT EXISTS(SELECT 1 FROM sys.database_role_members WHERE role_principal_id=DATABASE_PRINCIPAL_ID(@role) AND member_principal_id=DATABASE_PRINCIPAL_ID(@principal))\n BEGIN SET @sql=N'ALTER ROLE '+QUOTENAME(@role)+N' ADD MEMBER '+QUOTENAME(@principal)+N';'; EXEC sys.sp_executesql @sql; END;\nCOMMIT;\nSELECT @principal AS WindowsPrincipal,@role AS DirectDatabaseRole;",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_vue",
+            "-Q",
+            "SET XACT_ABORT ON;\nDECLARE @principal sysname=N'EXAMPLE\\O''Brien',@role sysname=N'student_staff';\nIF NOT EXISTS(SELECT 1 FROM sys.server_principals WHERE name=@principal AND type IN('U','G'))\n THROW 51209,N'An existing Windows server login/group is required. This script never creates or alters server logins.',1;\nIF COALESCE(IS_SRVROLEMEMBER(N'sysadmin',@principal),1)<>0\n OR SUSER_SID(@principal)=(SELECT owner_sid FROM sys.databases WHERE database_id=DB_ID())\n THROW 51210,N'Application principal must be separate from sysadmin and database owner.',1;\nIF EXISTS(SELECT 1 FROM sys.database_principals WHERE name=@principal AND (sid<>SUSER_SID(@principal) OR type NOT IN('U','G')))\n THROW 51211,N'Existing database principal conflicts with the Windows login.',1;\nIF EXISTS(SELECT 1 FROM sys.database_role_members rm JOIN sys.database_principals u ON u.principal_id=rm.member_principal_id JOIN sys.database_principals r ON r.principal_id=rm.role_principal_id WHERE u.name=@principal AND r.name<>@role)\n THROW 51212,N'Existing role membership differs. Privileges are never automatically replaced.',1;\nBEGIN TRANSACTION;\nDECLARE @sql nvarchar(max);\nIF DATABASE_PRINCIPAL_ID(@principal) IS NULL BEGIN SET @sql=N'CREATE USER '+QUOTENAME(@principal)+N' FOR LOGIN '+QUOTENAME(@principal)+N';'; EXEC sys.sp_executesql @sql; END;\nIF NOT EXISTS(SELECT 1 FROM sys.database_role_members WHERE role_principal_id=DATABASE_PRINCIPAL_ID(@role) AND member_principal_id=DATABASE_PRINCIPAL_ID(@principal))\n BEGIN SET @sql=N'ALTER ROLE '+QUOTENAME(@role)+N' ADD MEMBER '+QUOTENAME(@principal)+N';'; EXEC sys.sp_executesql @sql; END;\nCOMMIT;\nSELECT @principal AS WindowsPrincipal,@role AS DirectDatabaseRole;"
+          ]
+        },
+        {
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "SqlFile": "004_verify_deployment.sql",
+          "Query": "",
+          "Arguments": [
+            "-S",
+            ".\\SQLEXPRESS",
+            "-E",
+            "-N",
+            "-b",
+            "-r",
+            "1",
+            "-l",
+            "15",
+            "-t",
+            "120",
+            "-f",
+            "65001",
+            "-x",
+            "-X1",
+            "-I",
+            "-d",
+            "contextbase_test_project1_vue",
+            "-i",
+            "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Vue_CSharpAPI\\database\\004_verify_deployment.sql"
+          ]
+        },
+        {
+          "Action": "BindPrincipal",
+          "PlanOnly": true,
+          "Database": "contextbase_test_project1_vue",
+          "Project": "test-project1/Vue_CSharpAPI",
+          "ConnectionString": "Server=.\\SQLEXPRESS;Database=contextbase_test_project1_vue;Integrated Security=true;Encrypt=true;TrustServerCertificate=false;",
+          "ApplicationPrincipal": "EXAMPLE\\O'Brien",
+          "ApplicationRole": "Staff",
+          "SqlFiles": [
+            "001_schema.sql",
+            "002_seed.sql",
+            "003_web_permissions.sql",
+            "004_verify_deployment.sql"
+          ],
+          "SchemaSha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a",
+          "SeedSha256": "b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee",
+          "PermissionsSha256": "8cf6357e2ebb945189fa168aae85e224747f25340a2313699c03c9eaa4184dd2"
+        }
+      ]
+    }
+  ],
+  "Unexecuted": [
+    "SQL Server Express17 installation; root UAC cancelled",
+    "CREATE DATABASE / local schema / seed / role grants",
+    "SQL certificate/real Windows principal effective permissions",
+    "Read-only live SQL verification",
+    "Web/API/DB integration; existing major16 empty-fixture harness requires explicit adaptation"
+  ]
+}

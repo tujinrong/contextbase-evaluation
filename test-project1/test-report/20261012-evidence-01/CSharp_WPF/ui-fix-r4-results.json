@@ -1,0 +1,272 @@
+{
+  "runId": "20261012-evidence-01-wpf-ui-fix-r4",
+  "projectId": "test-project1",
+  "profile": "CSharp_WPF",
+  "recordedAtUtc": "2026-10-12T14:30:57.6468049+00:00",
+  "status": "SEARCH_CLASS_WARNING_AND_UNASSIGNED_ENABLED_STATE_FIXED",
+  "issues": [
+    "WPF-REVIEW-001: W-STU-107 overwritten after applied search",
+    "WPF-REVIEW-002: unassigned ON hierarchy controls not disabled"
+  ],
+  "specBasis": [
+    "spec/詳細仕様書/CSharp_WPF/01_学生検索画面.md:255 ON clears and disables hierarchy; OFF does not restore prior criteria",
+    "spec/詳細仕様書/CSharp_WPF/01_学生検索画面.md:256 incompatible class cleared with W-STU-107"
+  ],
+  "productionChanges": [
+    {
+      "path": "test-project1/srcs/CSharp_WPF/ViewModels/StudentSearchViewModel.cs",
+      "beforeSha256": "4eecea7b557cab5e1dbfc729060197bd3ba7e30f440f1a1bd0eac90cbb9f507c",
+      "afterSha256": "7059717a44d6e5a9d7978e3bec075a9a1028a015834bd6ca7604a6aa27ce8b8e"
+    },
+    {
+      "path": "test-project1/srcs/CSharp_WPF/Views/StudentSearchView.xaml",
+      "beforeSha256": "256263c89edb5e14859f4f59ccd5fba1b8d4a383abcbec6673cdeb9ab4c1ad02",
+      "afterSha256": "37c37f99ddf3304d3171fd1abedfb16f92d50a1e94ec06c3adad61d95acbaf43"
+    }
+  ],
+  "productionFilesChanged": 2,
+  "cumulativeChangesFromInitialEvidence": [
+    {
+      "path": "test-project1/srcs/CSharp_WPF/Services/NativeModels.cs",
+      "beforeSha256": "d6f2c8bcef26bd03a18af0e5eae878871999c4f280cc16dc0956bcc838030c03",
+      "currentSha256": "c30893e7c10beaefc56a0a176ef2c0c328ed24652e05e223d02b1994da3e0ab2"
+    },
+    {
+      "path": "test-project1/srcs/CSharp_WPF/ViewModels/StudentSearchViewModel.cs",
+      "beforeSha256": "feb9e6b303582919c3bb742bc5e98ce5f767bffd3d2551c1ec039b5b156f7dd8",
+      "currentSha256": "7059717a44d6e5a9d7978e3bec075a9a1028a015834bd6ca7604a6aa27ce8b8e"
+    },
+    {
+      "path": "test-project1/srcs/CSharp_WPF/Views/StudentEditView.xaml",
+      "beforeSha256": "125d78ce83a564049d2144038c8287d97681c24a93d48603b5bf6691ac0b1d3e",
+      "currentSha256": "d62eba6261f7b4a759e8ebf31b695c062080138d2586de3f8e580d74beee0570"
+    },
+    {
+      "path": "test-project1/srcs/CSharp_WPF/Views/StudentSearchView.xaml",
+      "beforeSha256": "1e8ab57b77b291b48a72feb70360e568e6286978c4618c70dc45a0af5fa38010",
+      "currentSha256": "37c37f99ddf3304d3171fd1abedfb16f92d50a1e94ec06c3adad61d95acbaf43"
+    }
+  ],
+  "testSourceChanges": [
+    "tests/GuiEvidence/Program.cs actual Window regression and pausable fixture gateway only"
+  ],
+  "behavior": "Preserve class-cleared warning against generic draft message. Enable hierarchy only when idle and unassigned OFF; notify on busy, unassigned and candidate refresh/clear.",
+  "inputManifest": "ui-fix-r4-inputs.json",
+  "specInputFiles": 46,
+  "specDocuments": 42,
+  "specVersions": [
+    "8.0",
+    "8.1"
+  ],
+  "specShaDrift": 0,
+  "baselineProductionFiles": 35,
+  "before": {
+    "buildExitCode": 0,
+    "runExitCode": 1,
+    "result": "EXPECTED_FAILURE",
+    "failure": "Applied search class cleared but warning overwritten with generic message",
+    "log": "ui-fix-r4.before-search.log",
+    "disabledStateRegression": "Added before fix but warning failure stopped the initial run first; disabled state issue was source-confirmed, then verified after fix."
+  },
+  "freshTests": [
+    {
+      "command": "dotnet tests/GuiEvidence/bin/Debug/net10.0-windows/Wpf.GuiEvidence.dll --verify-startup search",
+      "exitCode": 0,
+      "actualWindow": {
+        "profile": "CSharp_WPF",
+        "screen": "search",
+        "passed": true,
+        "window": "StudentManagement.Wpf.Views.StudentSearchView",
+        "title": "学生管理：検索",
+        "visible": true,
+        "loaded": true,
+        "hwnd": 3543690,
+        "resourceCount": 4,
+        "searchChecks": [
+          "initial",
+          "compatible-class-selected-and-preserved",
+          "applied-incompatible-class-warning-preserved",
+          "normal-draft-change-notice-preserved",
+          "clear",
+          "unassigned",
+          "unassigned-three-criteria-disabled",
+          "unassigned-off-enabled-null-preserved",
+          "busy-three-criteria-disabled",
+          "busy-complete-criteria-restored",
+          "incompatible-class-cleared"
+        ],
+        "backend": "fixture",
+        "database": "NOT_RUN",
+        "interactiveUI": "STARTUP_AND_FIXTURE_FILTER_DEFAULTS",
+        "screenshots": "NOT_RUN"
+      },
+      "checkpoints": 11,
+      "sqlIntegration": false
+    },
+    {
+      "command": "dotnet tests/GuiEvidence/bin/Debug/net10.0-windows/Wpf.GuiEvidence.dll --self-test",
+      "exitCode": 0,
+      "passed": 15,
+      "result": {
+        "profile": "CSharp_WPF",
+        "passed": 15,
+        "failed": 0,
+        "cases": [
+          "FIX-WPF-013 same loader reads original production App resources",
+          "FIX-WPF-001 search lookup omits occupancy",
+          "FIX-WPF-002 editor lookup fixture occupancy",
+          "FIX-WPF-015 search all options match NULL criteria",
+          "FIX-WPF-003 production search VM default status filter",
+          "FIX-WPF-004 production search VM exact fixture",
+          "FIX-WPF-005 production zero-results state",
+          "FIX-WPF-006 production clear state",
+          "FIX-WPF-007 production editor loads fixture immutable number",
+          "FIX-WPF-008 fixture refuses persistence without claiming saved",
+          "FIX-WPF-009 production new defaults",
+          "FIX-WPF-014 registration selection keys match empty/raw string ID",
+          "FIX-WPF-010 fixture viewer display flags only",
+          "FIX-WPF-011 real production XAML constructs",
+          "FIX-WPF-012 fixture read returns detached values"
+        ],
+        "database": "NOT_RUN",
+        "interactiveUI": "NOT_RUN",
+        "screenshots": "NOT_RUN",
+        "backend": "fixture"
+      },
+      "sqlIntegration": false
+    },
+    {
+      "command": "dotnet tests/Smoke/bin/Debug/net10.0-windows/NativeSmoke.dll",
+      "exitCode": 0,
+      "passed": 7,
+      "windowsShown": 0,
+      "sqlIntegration": false
+    }
+  ],
+  "builds": [
+    {
+      "command": "dotnet build tests/GuiEvidence/GuiEvidence.csproj --no-restore --nologo",
+      "exitCode": 0,
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "command": "dotnet build tests/Smoke/NativeSmoke.csproj --no-restore --nologo",
+      "exitCode": 0,
+      "warnings": 0,
+      "errors": 0
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "test-project1/test-report/20261012-evidence-01/CSharp_WPF/ui-fix-r4.before-build.log",
+      "sha256": "3aa4b22f6c294ce876196caa17b82af47256fcdd12519c77a351b684d3fdd22c",
+      "bytes": 532
+    },
+    {
+      "path": "test-project1/test-report/20261012-evidence-01/CSharp_WPF/ui-fix-r4.before-search.log",
+      "sha256": "66a4f44f936b7cdce3ff0b8a1493eac5e9ad4a262a4ed8340837b2cc1b35d7d4",
+      "bytes": 393
+    },
+    {
+      "path": "test-project1/test-report/20261012-evidence-01/CSharp_WPF/ui-fix-r4.after-build.log",
+      "sha256": "174d184a1582ff83c5e1332120152a1f569dd060e8174557d6f997b5b0ba7597",
+      "bytes": 532
+    },
+    {
+      "path": "test-project1/test-report/20261012-evidence-01/CSharp_WPF/ui-fix-r4.after-search.log",
+      "sha256": "3bb39ddf18b7a974bb5f53ad2030525079f8306bb448e35ad0075a50462a2c6c",
+      "bytes": 696
+    },
+    {
+      "path": "test-project1/test-report/20261012-evidence-01/CSharp_WPF/ui-fix-r4.fixture-selftest.log",
+      "sha256": "1db83a15e1078bb4047e7b4997cd6009fd72286ed7f168ab267783db1b90b2e1",
+      "bytes": 925
+    },
+    {
+      "path": "test-project1/test-report/20261012-evidence-01/CSharp_WPF/ui-fix-r4.smoke-build.log",
+      "sha256": "f5e20621584ae3e6517f65423c552ec4279199cecc669784ddba228155308a23",
+      "bytes": 522
+    },
+    {
+      "path": "test-project1/test-report/20261012-evidence-01/CSharp_WPF/ui-fix-r4.smoke.log",
+      "sha256": "4c1537e28a2ebb03681e9d3aa7d1b3a1fa0675e1df46803484212accfbc96eac",
+      "bytes": 72
+    },
+    {
+      "path": "test-project1/test-report/20261012-evidence-01/CSharp_WPF/ui-fix-r4.production.diff",
+      "sha256": "49d7d196edcef1cc4790ce80f7c23ee9b635b6bd6cb2b99862e62edfaf3ac6cc",
+      "bytes": 7304
+    },
+    {
+      "path": "test-project1/test-report/20261012-evidence-01/CSharp_WPF/ui-fix-r4.before-StudentSearchViewModel.cs",
+      "sha256": "4eecea7b557cab5e1dbfc729060197bd3ba7e30f440f1a1bd0eac90cbb9f507c",
+      "bytes": 10893
+    },
+    {
+      "path": "test-project1/test-report/20261012-evidence-01/CSharp_WPF/ui-fix-r4.before-StudentSearchView.xaml",
+      "sha256": "256263c89edb5e14859f4f59ccd5fba1b8d4a383abcbec6673cdeb9ab4c1ad02",
+      "bytes": 6046
+    },
+    {
+      "path": "test-project1/test-report/20261012-evidence-01/CSharp_WPF/ui-fix-r4.before-Program.cs",
+      "sha256": "08c026155d578e161ea2dcd6522199d1dcd660ab707fc20daaa59f9b4ad2ac57",
+      "bytes": 12244
+    }
+  ],
+  "outputAssemblies": [
+    {
+      "path": "test-project1/srcs/CSharp_WPF/bin/Debug/net10.0-windows/StudentManagement.Wpf.dll",
+      "sha256": "7fd097ebfda70f7313a72d585847f540acf0d68e085b0034b0bebdf5718cc057",
+      "bytes": 116736
+    },
+    {
+      "path": "test-project1/srcs/CSharp_WPF/Core/bin/Debug/net10.0/StudentManagement.Core.dll",
+      "sha256": "99110e5fdb8f15f66e23f75a30931b1781bba48172897cd2d440a9d2995ec712",
+      "bytes": 145920
+    },
+    {
+      "path": "test-project1/srcs/CSharp_WPF/tests/GuiEvidence/bin/Debug/net10.0-windows/Wpf.GuiEvidence.exe",
+      "sha256": "fa2e2695cc4a616b1946bb9e17c871f8d43c79cd1d096f30400d94fb1e3a77cc",
+      "bytes": 162304
+    },
+    {
+      "path": "test-project1/srcs/CSharp_WPF/tests/GuiEvidence/bin/Debug/net10.0-windows/Wpf.GuiEvidence.dll",
+      "sha256": "97257a47be82d45e0e4ddd49598c83f4f3d65bbd55e2d56c1b37b29ed15ab058",
+      "bytes": 46592
+    }
+  ],
+  "fixture": {
+    "path": "test-project1/srcs/CSharp_WPF/tests/GuiEvidence/fixture.json",
+    "sha256": "e01889280fe00aec2a2984efc1fee8e4f3aeb027dbea4eb7248e0df3c26bafd0",
+    "bytes": 5308
+  },
+  "nullCriteriaMeaning": "Unchanged: empty all option maps NULL; valid GRADE00 is retained; raw registration ID remains independent.",
+  "frozenSourceZip": {
+    "manifest": "report/20261012-build-10-source-packages.json",
+    "file": "test-project1/agent-input/CSharp_WPF-source.zip",
+    "sha256": "5e62c980e552429d83f77fc3b1518bbb6287174d39154240dba69134cf624f83",
+    "changed": false,
+    "containsCurrentUiFixes": false,
+    "status": "OLD_REVISION_FROZEN_NOT_UPDATED"
+  },
+  "screenshotLauncher": {
+    "exe": "test-project1/srcs/CSharp_WPF/tests/GuiEvidence/bin/Debug/net10.0-windows/Wpf.GuiEvidence.exe",
+    "command": "--screen search",
+    "stop": "Close window",
+    "state": "Rebuilt, automated test Window closed, parent captures separately"
+  },
+  "screenshotOperator": "parent Agent",
+  "screenshotsByThisAgent": 0,
+  "sqlConnections": 0,
+  "sqlExecutions": 0,
+  "notExecuted": [
+    "SQL Server integration or SQLCLR hosting",
+    "DB identity/roles/authorization",
+    "Production CRUD/confirmation/concurrency/audit rollback",
+    "DPI150/200 matrix",
+    "Core/native normalization rerun for this UI-only fix",
+    "New/edit real startup rerun for this search-only fix"
+  ],
+  "preserved": "R1/R2/R3 evidence unchanged; pre-fix source/failed regression and new current lock are separate. Legacy ZIP kept immutable."
+}

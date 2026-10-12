@@ -1,0 +1,1 @@
+ALTER AUTHORIZATION ON DATABASE::[contextbase_test_project1_vb] TO [sa];

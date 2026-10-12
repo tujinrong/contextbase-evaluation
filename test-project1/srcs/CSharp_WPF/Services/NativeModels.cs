@@ -2,10 +2,15 @@ namespace StudentManagement.Wpf.Services;
 
 public sealed record CodeOption(string Value, string Name, bool Selectable = true)
 {
+    // Search has a NULL criterion for the explicit "all" option; registration keeps its raw string.
+    public string? SearchValue => Value == "" ? null : Value;
     public override string ToString() => Name + (Selectable ? "" : "（停止・期間外）");
 }
 public sealed record ClassOption(long Id, int Year, string Grade, string Name, bool Selectable, int Occupancy, int? Capacity)
 {
+    public long? SearchId => Id == 0 ? null : Id;
+    // Registration binds raw strings; an unselected ID stays empty instead of converting "" to Int64.
+    public string Value => Id == 0 ? "" : Id.ToString(System.Globalization.CultureInfo.InvariantCulture);
     public override string ToString() => Name + (Selectable ? "" : "（停止・期間外）");
 }
 public sealed record LookupSet(IReadOnlyDictionary<string, IReadOnlyList<CodeOption>> Codes, IReadOnlyList<ClassOption> Classes);

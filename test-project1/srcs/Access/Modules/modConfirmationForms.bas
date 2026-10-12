@@ -1,4 +1,4 @@
-Attribute VB_Name = "modConfirmationForms"
+﻿Attribute VB_Name = "modConfirmationForms"
 Option Explicit
 Option Compare Binary
 Public ConfirmationRows As Collection
@@ -14,7 +14,7 @@ Public Function InitConfirmation(ByVal frm As Access.Form) As Boolean
         frm!lblPrompt.Caption = "学生 " & ConfirmationStudentNo & " を論理削除します。理由を入力し、確認してください。"
     Else
         If ConfirmationRows Is Nothing Then Set ConfirmationRows = New Collection
-        frm!lblPrompt.Caption = CStr(ConfirmationRows.Count) & "件の同一人物候補があります。表示は最大20件です。氏名・生年月日・クラスを確認し、別人として続行する理由を入力してください。"
+        frm!lblPrompt.Caption = CStr(ConfirmationRows.Count) & "件の同一人物候補があります。表示は最大20件です。氏名" & ChrW(&H30FB) & "生年月日" & ChrW(&H30FB) & "クラスを確認し、別人として続行する理由を入力してください。"
         frm!lstCandidates.Requery
     End If
     InitConfirmation = True

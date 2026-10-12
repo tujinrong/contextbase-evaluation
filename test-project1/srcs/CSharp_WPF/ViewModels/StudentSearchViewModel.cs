@@ -15,7 +15,9 @@ public sealed class StudentSearchViewModel : Bindable, IDisposable
     private int requestSequence;
     private bool busy;
     private bool ready;
+    private bool refreshingClasses;
     public bool IsIdle => !busy;
+    public bool CanSelectClassCriteria => IsIdle && !Draft.UnassignedOnly;
     private string message = "未検索";
     private string countText = "未検索";
     private string searchedAt = "";
@@ -28,6 +30,11 @@ public sealed class StudentSearchViewModel : Bindable, IDisposable
     public ObservableCollection<CodeOption> Grades { get; } = [];
     public ObservableCollection<CodeOption> Prefectures { get; } = [];
     public ObservableCollection<ClassOption> Classes { get; } = [];
+    public ClassOption? SelectedClass
+    {
+        get => Classes.FirstOrDefault(x => x.SearchId == Draft.ClassId);
+        set { if (!refreshingClasses) Draft.ClassId = value?.SearchId; }
+    }
     public int[] PageSizes { get; } = [20, 50, 100];
     public CodeOption[] SortKeys { get; } = [new("studentNo", "学籍番号"), new("name", "氏名"), new("admissionDate", "入学日"), new("updatedAt", "更新日時")];
     public CodeOption[] Directions { get; } = [new("asc", "昇順"), new("desc", "降順")];
@@ -56,7 +63,7 @@ public sealed class StudentSearchViewModel : Bindable, IDisposable
     public StudentSearchViewModel(IStudentGateway gateway, NavigationService navigation)
     {
         this.gateway = gateway; this.navigation = navigation;
-        Draft.PropertyChanged += (_, _) => MarkDraftChanged();
+        ObserveDraft();
         void Error(Exception ex) { Items.Clear(); Message = ex is InvalidOperationException ? ex.Message : "E-COM-004 検索に失敗しました。"; }
         SearchCommand = new(_ => RunAsync(SearchNewAsync), () => ready && IsIdle, Error);
         ClearCommand = new(_ => { Clear(); return Task.CompletedTask; }, () => IsIdle, Error);
@@ -76,9 +83,9 @@ public sealed class StudentSearchViewModel : Bindable, IDisposable
     private async Task RunAsync(Func<Task> operation)
     {
         if (busy) return;
-        busy = true; Changed(nameof(IsIdle)); RefreshCommands();
+        busy = true; Changed(nameof(IsIdle)); Changed(nameof(CanSelectClassCriteria)); RefreshCommands();
         try { await operation(); }
-        finally { busy = false; Changed(nameof(IsIdle)); RefreshCommands(); }
+        finally { busy = false; Changed(nameof(IsIdle)); Changed(nameof(CanSelectClassCriteria)); RefreshCommands(); }
     }
     public async Task InitializeAsync()
     {
@@ -100,14 +107,24 @@ public sealed class StudentSearchViewModel : Bindable, IDisposable
     {
         if (applied is not null) Message = "条件を変更しました。検索結果にはまだ反映されていません。";
     }
+    private void ObserveDraft()
+    {
+        Draft.PropertyChanged += (_, e) => { MarkDraftChanged(); if (e.PropertyName == nameof(SearchDraft.ClassId)) Changed(nameof(SelectedClass)); if (e.PropertyName == nameof(SearchDraft.UnassignedOnly)) Changed(nameof(CanSelectClassCriteria)); };
+    }
     public void RefreshClasses()
     {
         if (Draft.UnassignedOnly) { Draft.SchoolYear = null; Draft.GradeCode = null; Draft.ClassId = null; Changed(nameof(Draft)); }
-        Classes.Clear();
-        Classes.Add(new(0, 0, "", "すべて", true, 0, null));
-        foreach (var x in lookup.Classes.Where(x => (Draft.SchoolYear is null || x.Year == Draft.SchoolYear) && (string.IsNullOrEmpty(Draft.GradeCode) || x.Grade == Draft.GradeCode))) Classes.Add(x);
-        if (Draft.ClassId is > 0 && Classes.All(x => x.Id != Draft.ClassId)) { Draft.ClassId = null; Message = "W-STU-107 選択条件が変わったためクラスの選択を解除しました。"; Changed(nameof(Draft)); }
-        if (applied is not null) Message = "条件を変更しました。検索結果にはまだ反映されていません。";
+        var classCleared = false;
+        refreshingClasses = true;
+        try
+        {
+            Classes.Clear();
+            Classes.Add(new(0, 0, "", "すべて", true, 0, null));
+            foreach (var x in lookup.Classes.Where(x => (Draft.SchoolYear is null || x.Year == Draft.SchoolYear) && (string.IsNullOrEmpty(Draft.GradeCode) || x.Grade == Draft.GradeCode))) Classes.Add(x);
+            if (Draft.ClassId is > 0 && Classes.All(x => x.Id != Draft.ClassId)) { classCleared = true; Draft.ClassId = null; Message = "W-STU-107 選択条件が変わったためクラスの選択を解除しました。"; Changed(nameof(Draft)); }
+        }
+        finally { refreshingClasses = false; Changed(nameof(SelectedClass)); Changed(nameof(CanSelectClassCriteria)); }
+        if (!classCleared && applied is not null) Message = "条件を変更しました。検索結果にはまだ反映されていません。";
     }
     public void SelectClass()
     {
@@ -157,7 +174,7 @@ public sealed class StudentSearchViewModel : Bindable, IDisposable
     }
     public void Clear()
     {
-        ++requestSequence; Draft = new(); Draft.PropertyChanged += (_, _) => MarkDraftChanged(); applied = null; page = 1; total = null; Items.Clear();
+        ++requestSequence; Draft = new(); ObserveDraft(); applied = null; page = 1; total = null; Items.Clear();
         PageSize = 20; SortKey = "studentNo"; SortDirection = "asc"; Status01 = Status02 = true; Status03 = Status04 = false;
         CountText = "未検索"; SearchedAt = ""; Message = "未検索";
         foreach (var p in new[] { nameof(Draft), nameof(PageSize), nameof(SortKey), nameof(SortDirection), nameof(Status01), nameof(Status02), nameof(Status03), nameof(Status04), nameof(HasSearched) }) Changed(p);

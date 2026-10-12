@@ -22,7 +22,11 @@ Public Function InitSearch(ByVal frm As Access.Form) As Boolean
     stage = "ResetContext": ctx.Reset
     stage = "AddContext": contexts.Add frm.Tag, ctx
     initializes = True
-    stage = "Defaults": frm!chkEnrolled = True: frm!chkLeave = True: frm!cboPageSize = 20
+    stage = "SearchChoices": RefreshSearchChoices frm
+    SetSearchAllSelections frm
+    stage = "Defaults": frm!chkEnrolled = True: frm!chkLeave = True
+    frm!chkGraduated = False: frm!chkWithdrawn = False: frm!chkUnassignedOnly = False
+    frm!cboPageSize = 20
     frm!cboSortKey = "studentNo": frm!cboSortDirection = "asc"
     frm!cmdNew.Visible = CurrentRole() <> "Reader"
     Dim emptyRows As New Collection
@@ -42,14 +46,30 @@ Private Function ReadCriteria(ByVal frm As Access.Form) As Object
     Set raw = Map()
     raw.Add "studentNo", frm!txtStudentNo: raw.Add "name", frm!txtName
     raw.Add "kana", frm!txtKana: raw.Add "phone", frm!txtPhone
-    raw.Add "year", frm!cboSchoolYear: raw.Add "grade", frm!cboGrade
-    raw.Add "class", frm!cboClass: raw.Add "prefecture", frm!cboPrefecture
+    raw.Add "year", SearchFilterValue(frm, "cboSchoolYear"): raw.Add "grade", SearchFilterValue(frm, "cboGrade")
+    raw.Add "class", SearchFilterValue(frm, "cboClass"): raw.Add "prefecture", SearchFilterValue(frm, "cboPrefecture")
     raw.Add "unassigned", Nz(frm!chkUnassignedOnly, False)
     raw.Add "from", frm!txtAdmissionFrom: raw.Add "to", frm!txtAdmissionTo
     raw.Add "status01", Nz(frm!chkEnrolled, False): raw.Add "status02", Nz(frm!chkLeave, False)
     raw.Add "status03", Nz(frm!chkGraduated, False): raw.Add "status04", Nz(frm!chkWithdrawn, False)
     Set ReadCriteria = NormalizeCriteria(raw, BusinessDay(UtcNow()))
 End Function
+Public Function SearchFilterValue(ByVal frm As Access.Form, ByVal controlName As String) As Variant
+    Dim value As Variant
+    value = frm.Controls(controlName).Value
+    SearchFilterValue = value
+    If frm.Name <> "frmStudentSearch" Or IsNull(value) Then Exit Function
+    Select Case controlName
+        Case "cboSchoolYear", "cboClass"
+            If CStr(value) = "0" Then SearchFilterValue = Null
+        Case "cboGrade", "cboPrefecture"
+            If CStr(value) = "*" Then SearchFilterValue = Null
+    End Select
+End Function
+Private Sub SetSearchAllSelections(ByVal frm As Access.Form)
+    frm!cboSchoolYear = 0: frm!cboClass = 0
+    frm!cboGrade = "*": frm!cboPrefecture = "*"
+End Sub
 Public Function SearchClick(Optional ByVal operation As String = "SEARCH") As Boolean
     Dim frm As Access.Form, ctx As clsSearchContext, d As Object, result As Object, rows As Collection
     On Error GoTo Failed
@@ -138,7 +158,7 @@ NotReady:
     If code = acLBGetRowCount Then StudentListCallback = 0
 End Function
 Public Function ClassChanged(Optional ByVal changed As String = "") As Boolean
-    Dim frm As Access.Form, classroom As Object, original As Object, originalId As Variant
+    Dim frm As Access.Form, classroom As Object, original As Object, originalId As Variant, classCleared As Boolean
     If initializes Then Exit Function
     Set frm = Screen.ActiveForm
     originalId = Null
@@ -147,8 +167,8 @@ Public Function ClassChanged(Optional ByVal changed As String = "") As Boolean
         If Not original Is Nothing Then originalId = original("class_id")
         DirtyEdit
     End If
-    If Not IsNull(frm!cboClass) Then
-        Set classroom = CandidateClass(frm!cboClass)
+    If Not IsNull(SearchFilterValue(frm, "cboClass")) Then
+        Set classroom = CandidateClass(SearchFilterValue(frm, "cboClass"))
         If Not classroom Is Nothing Then
             If changed = "CLASS" Then
                 initializes = True
@@ -156,18 +176,20 @@ Public Function ClassChanged(Optional ByVal changed As String = "") As Boolean
                 If frm.Name = "frmStudentSearch" Then frm!chkUnassignedOnly = False
                 initializes = False
             ElseIf changed = "YEAR" Or changed = "GRADE" Then
-                If (Nz(frm!cboSchoolYear, "") <> "" And Nz(frm!cboSchoolYear, "") <> CStr(classroom("school_year"))) Or (Nz(frm!cboGrade, "") <> "" And Nz(frm!cboGrade, "") <> classroom("grade_code")) Then
-                    frm!cboClass = Null: frm!lblMessage.Caption = MessageText("W-STU-107")
+                If (Nz(SearchFilterValue(frm, "cboSchoolYear"), "") <> "" And Nz(SearchFilterValue(frm, "cboSchoolYear"), "") <> CStr(classroom("school_year"))) Or (Nz(SearchFilterValue(frm, "cboGrade"), "") <> "" And Nz(SearchFilterValue(frm, "cboGrade"), "") <> classroom("grade_code")) Then
+                    If frm.Name = "frmStudentSearch" Then frm!cboClass = 0 Else frm!cboClass = Null
+                    frm!lblMessage.Caption = MessageText("W-STU-107")
+                    classCleared = True
                 End If
             End If
         End If
     End If
     If frm.Name = "frmStudentSearch" Then
-        If Nz(frm!chkUnassignedOnly, False) Then frm!cboSchoolYear = Null: frm!cboGrade = Null: frm!cboClass = Null
+        If Nz(frm!chkUnassignedOnly, False) Then frm!cboSchoolYear = 0: frm!cboGrade = "*": frm!cboClass = 0
         frm!cboSchoolYear.Enabled = Not Nz(frm!chkUnassignedOnly, False)
         frm!cboGrade.Enabled = Not Nz(frm!chkUnassignedOnly, False)
         frm!cboClass.Enabled = Not Nz(frm!chkUnassignedOnly, False)
-        frm!lblMessage.Caption = "条件変更はまだ一覧に反映されていません。"
+        If Not classCleared Then frm!lblMessage.Caption = "条件変更はまだ一覧に反映されていません。"
     End If
     RefreshClassChoices frm, originalId
     If frm.Name = "frmStudentEdit" Then RefreshCapacity frm
@@ -192,10 +214,12 @@ Public Function ClearSearch() As Boolean
     For Each ctl In frm.Controls
         If ctl.ControlType = acTextBox Or ctl.ControlType = acComboBox Then ctl.Value = Null
     Next
+    SetSearchAllSelections frm
     frm!chkEnrolled = True: frm!chkLeave = True: frm!chkGraduated = False: frm!chkWithdrawn = False: frm!chkUnassignedOnly = False
     frm!cboPageSize = 20: frm!cboSortKey = "studentNo": frm!cboSortDirection = "asc"
     contexts(frm.Tag).Reset: Set listRows(frm.Tag) = emptyRows
     frm!cboSchoolYear.Enabled = True: frm!cboGrade.Enabled = True: frm!cboClass.Enabled = True
+    RefreshClassChoices frm, Null
     frm!lstStudents.Requery: frm!lblCount.Caption = "未検索": frm!lblSearchedAt.Caption = "": frm!lblMessage.Caption = "": initializes = False
 End Function
 

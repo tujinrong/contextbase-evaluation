@@ -43,8 +43,15 @@ try {
 } catch { $taskState='Failed'; $taskFatal=$_.Exception.Message; Write-Output $taskFatal }
 finally {
  $taskOfficeVersion=$taskAccess.Version
+ if ($null -ne $taskRs) { try { $taskRs.Close() } catch {}; if ([Runtime.InteropServices.Marshal]::IsComObject($taskRs)) { [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskRs) | Out-Null }; $taskRs=$null }
+ if ($null -ne $taskRelation) { if ([Runtime.InteropServices.Marshal]::IsComObject($taskRelation)) { [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskRelation) | Out-Null }; $taskRelation=$null }
+ if ($null -ne $taskDb) { $taskDb.Close(); [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskDb) | Out-Null; $taskDb=$null }
+ [GC]::Collect(); [GC]::WaitForPendingFinalizers()
+ $taskAccess.CloseCurrentDatabase()
  $taskAccess.Quit(2)
  [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskAccess) | Out-Null
+ $taskAccess=$null
+ [GC]::Collect(); [GC]::WaitForPendingFinalizers()
  $taskOutput=[ordered]@{runId=$RunId;status=$taskState;specVersion=$SpecVersion;inputManifest=$InputManifest;inputs=$taskInputs;frontend=[IO.Path]::GetFullPath($Frontend);backend=[IO.Path]::GetFullPath($Backend);officeVersion=$taskOfficeVersion;fatal=$taskFatal;countsBefore=$taskCountsBefore;tests=$taskResults;countsAfter=$taskCountsAfter;allFourNullReadback=$taskNulls;fixtureOnly=$true}
  $taskOutput.frontendSha256=(Get-FileHash -LiteralPath $Frontend -Algorithm SHA256).Hash
  $taskOutput.backendSha256=(Get-FileHash -LiteralPath $Backend -Algorithm SHA256).Hash

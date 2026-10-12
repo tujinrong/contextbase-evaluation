@@ -1,0 +1,150 @@
+using System.Text.Json;
+using System.IO;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Automation;
+using System.Windows.Threading;
+using System.Windows.Interop;
+using System.Windows.Markup;
+using System.Xml.Linq;
+using StudentManagement.Wpf.Services;
+using StudentManagement.Wpf.ViewModels;
+using StudentManagement.Wpf.Views;
+
+namespace Wpf.GuiEvidence;
+
+internal static class Program
+{
+    [STAThread]
+    private static int Main(string[] args)
+    {
+        var fixture = Path.Combine(AppContext.BaseDirectory, "fixture.json");
+        if (args.SequenceEqual(new[] { "--self-test" })) return SelfTest(fixture);
+        if (args.Length is not (2 or 4) || args[0] is not ("--screen" or "--verify-startup") || args[1] is not ("search" or "new" or "edit") || (args.Length == 4 && args[2] != "--role")) { Console.Error.WriteLine("Use --self-test or --screen search|new|edit [--role admin|staff|viewer] or --verify-startup search|new|edit"); return 2; }
+        var app = new EvidenceApp(args[1], new FixtureGateway(fixture, args.Length == 4 ? args[3] : "admin"), args[0] == "--verify-startup");
+        app.LoadProductionResources();
+        return app.Run();
+    }
+    private static int SelfTest(string path)
+    {
+        var cases = new List<string>();
+        void Check(bool ok, string id) { if (!ok) throw new Exception(id); cases.Add(id); }
+        var gateway = new FixtureGateway(path);
+        var app = new EvidenceApp("search",gateway,false); app.LoadProductionResources(); // Run/Show intentionally never invoked.
+        Check(app.Resources.Count == 4 && app.Resources[typeof(System.Windows.Controls.TextBox)] is Style, "FIX-WPF-013 same loader reads original production App resources");
+        var lookup = gateway.LookupAsync(default, false).GetAwaiter().GetResult();
+        Check(lookup.Classes.All(c => c.Occupancy == 0), "FIX-WPF-001 search lookup omits occupancy");
+        Check(gateway.LookupAsync(default).Result.Classes.Sum(c => c.Occupancy) == 2, "FIX-WPF-002 editor lookup fixture occupancy");
+        using var search = new StudentSearchViewModel(gateway, new NavigationService(gateway));
+        search.InitializeAsync().GetAwaiter().GetResult();
+        Check(search.Grades[0].SearchValue is null && search.Prefectures[0].SearchValue is null && search.Classes[0].SearchId is null && search.Draft.GradeCode is null && search.Draft.PrefectureCode is null && search.Draft.ClassId is null, "FIX-WPF-015 search all options match NULL criteria");
+        search.SearchCommand.Execute(null);
+        Check(search.Items.Count == 2 && search.CountText.StartsWith("2件"), "FIX-WPF-003 production search VM default status filter");
+        search.Draft.StudentNo = "TEST-WPF-002"; search.SearchCommand.Execute(null);
+        Check(search.Items.Count == 1 && search.Items[0].StudentName == "仮名 花子", "FIX-WPF-004 production search VM exact fixture");
+        search.Draft.StudentNo = "TEST-NONE"; search.SearchCommand.Execute(null);
+        Check(search.Items.Count == 0 && search.CountText == "0件 0–0", "FIX-WPF-005 production zero-results state");
+        search.Clear(); Check(!search.HasSearched && search.Items.Count == 0, "FIX-WPF-006 production clear state");
+        using var edit = new StudentEditViewModel(gateway, new DialogService(), 1);
+        edit.InitializeAsync().GetAwaiter().GetResult();
+        Check(edit.Model.StudentNo == "TEST-WPF-001" && edit.Model.StudentName == "仮名 太郎" && !edit.CanEditNumber, "FIX-WPF-007 production editor loads fixture immutable number");
+        var before = edit.Model.StudentName; edit.SaveCommand.Execute(null);
+        Check(edit.Message.Contains("DB未接続") && edit.Model.StudentName == before && edit.ResultNotice == "", "FIX-WPF-008 fixture refuses persistence without claiming saved");
+        using var create = new StudentEditViewModel(gateway, new DialogService(), null);
+        create.InitializeAsync().GetAwaiter().GetResult();
+        Check(create.CanEditNumber && create.Model.StudentNo == "" && create.Model.GenderCode == "0", "FIX-WPF-009 production new defaults");
+        Check(create.Classes[0].Value == "" && edit.Classes.Any(c => c.Value == edit.Model.ClassId), "FIX-WPF-014 registration selection keys match empty/raw string ID");
+        using var viewer = new StudentEditViewModel(new FixtureGateway(path,"viewer"),new DialogService(),1);
+        viewer.InitializeAsync().GetAwaiter().GetResult();
+        Check(!viewer.CanEdit && !viewer.CanDelete && viewer.Title.Contains("参照"), "FIX-WPF-010 fixture viewer display flags only");
+        var view = new StudentSearchView { DataContext = search }; var editor = new StudentEditView { DataContext = edit };
+        Check(view.Content is not null && editor.Content is not null, "FIX-WPF-011 real production XAML constructs");
+        var detail = gateway.GetAsync(1, default).Result; detail.Values["StudentName"] = "試験変更";
+        Check(gateway.GetAsync(1, default).Result.Values["StudentName"] == "仮名 太郎", "FIX-WPF-012 fixture read returns detached values");
+        Console.WriteLine(JsonSerializer.Serialize(new {profile="CSharp_WPF",passed=cases.Count,failed=0,cases,database="NOT_RUN",interactiveUI="NOT_RUN",screenshots="NOT_RUN",backend="fixture"}));
+        return 0;
+    }
+    private sealed class EvidenceApp(string screen, FixtureGateway gateway, bool verifyStartup) : Application
+    {
+        public void LoadProductionResources()
+        {
+            // Read the unchanged production source, copied by MSBuild. App's generated
+            // InitializeComponent expects its own assembly and cannot load into a subclass.
+            XNamespace presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+            var source = XDocument.Load(Path.Combine(AppContext.BaseDirectory,"Production.App.xml"));
+            var original = source.Root!.Element(presentation + "Application.Resources") ?? throw new InvalidDataException("Production resources missing.");
+            var dictionary = new XElement(presentation + "ResourceDictionary",new XAttribute("xmlns",presentation.NamespaceName),new XAttribute(XNamespace.Xmlns + "x","http://schemas.microsoft.com/winfx/2006/xaml"),original.Elements().Select(e => new XElement(e)));
+            using var reader = dictionary.CreateReader();
+            Resources = (ResourceDictionary)XamlReader.Load(reader);
+        }
+        private void VerifyWhenRendered(Window window)
+        {
+            if (!verifyStartup) return;
+            window.ContentRendered += (_,_) =>
+            {
+                try
+                {
+                    if (!window.IsVisible || !window.IsLoaded || new WindowInteropHelper(window).Handle == IntPtr.Zero || Resources.Count != 4) throw new Exception("Actual Window/resources did not initialize.");
+                    var populated = screen switch
+                    {
+                        "search" => window.DataContext is StudentSearchViewModel s && s.Items.Count == 2 && s.HasSearched,
+                        "edit" => window.DataContext is StudentEditViewModel e && e.Model.StudentNo == "TEST-WPF-001",
+                        _ => window.DataContext is StudentEditViewModel n && n.CanEditNumber && n.Model.StudentNo == ""
+                    };
+                    if (!populated) throw new Exception("Production Window did not bind fixture data/defaults.");
+                    var searchChecks = new List<string>();
+                    if (screen == "search" && window.DataContext is StudentSearchViewModel search)
+                    {
+                        IEnumerable<DependencyObject> Descendants(DependencyObject parent)
+                        {
+                            foreach (var child in LogicalTreeHelper.GetChildren(parent).OfType<DependencyObject>())
+                            { yield return child; foreach(var next in Descendants(child)) yield return next; }
+                        }
+                        var filterNames=new[] {"年度","学年","クラス","都道府県"};
+                        var combos=Descendants(window).OfType<ComboBox>().Where(c => filterNames.Contains(AutomationProperties.GetName(c))).ToDictionary(AutomationProperties.GetName);
+                        void FlushBindings() { window.Dispatcher.Invoke(() => {},DispatcherPriority.DataBind); window.UpdateLayout(); }
+                        void All(string state,params string[] names)
+                        {
+                            FlushBindings();
+                            foreach(var name in names) if(combos[name].SelectedItem is null || combos[name].Text != "すべて" || combos[name].SelectedValue is not null) throw new Exception(state+" "+name+" did not select visible all/NULL option: "+JsonSerializer.Serialize(new {combos[name].Text,combos[name].SelectedIndex,Item=combos[name].SelectedItem?.ToString(),combos[name].SelectedValue}));
+                            searchChecks.Add(state);
+                        }
+                        All("initial", "年度","学年","クラス","都道府県");
+                        combos["クラス"].SelectedItem=search.Classes.Single(x => x.Id == 101);FlushBindings();
+                        if(search.Draft.ClassId != 101 || search.Draft.SchoolYear != 2026 || search.Draft.GradeCode != "01") throw new Exception("Actual class selection did not synchronize NULL-compatible model/year/grade.");
+                        search.RefreshClasses();FlushBindings();
+                        if(search.Draft.ClassId != 101 || combos["クラス"].SelectedItem is not ClassOption {Id:101}) throw new Exception("Candidate refresh lost a compatible selected class.");
+                        searchChecks.Add("compatible-class-selected-and-preserved");
+                        search.Draft.SchoolYear=2026;search.Draft.GradeCode="01";search.Draft.ClassId=101;search.Draft.PrefectureCode="13";
+                        search.Clear();All("clear", "年度","学年","クラス","都道府県");
+                        search.Draft.UnassignedOnly=true;search.RefreshClasses();All("unassigned", "年度","学年","クラス");
+                        search.Draft.UnassignedOnly=false;search.Draft.SchoolYear=2026;search.Draft.GradeCode="01";search.RefreshClasses();search.Draft.ClassId=101;
+                        search.Draft.GradeCode="02";search.RefreshClasses();All("incompatible-class-cleared", "クラス");
+                    }
+                    Console.WriteLine(JsonSerializer.Serialize(new {profile="CSharp_WPF",screen,passed=true,window=window.GetType().FullName,title=window.Title,visible=window.IsVisible,loaded=window.IsLoaded,hwnd=new WindowInteropHelper(window).Handle.ToInt64(),resourceCount=Resources.Count,searchChecks,backend="fixture",database="NOT_RUN",interactiveUI=(screen == "search" ? "STARTUP_AND_FIXTURE_FILTER_DEFAULTS" : "STARTUP_ONLY_NO_OPERATIONS"),screenshots="NOT_RUN"}));
+                    window.Close();
+                }
+                catch(Exception ex) { Console.Error.WriteLine(ex.ToString()); Shutdown(1); }
+            };
+        }
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e); // Application base only; production App/SQL startup is not used.
+            if (screen == "search")
+            {
+                var vm = new StudentSearchViewModel(gateway, new NavigationService(gateway));
+                var window = new StudentSearchView { DataContext = vm };
+                MainWindow = window;
+                window.Loaded += async (_,_) => { await vm.InitializeAsync(); vm.SearchCommand.Execute(null); };
+                window.Closed += (_,_) => vm.Dispose(); VerifyWhenRendered(window); window.Show();
+            }
+            else
+            {
+                var vm = new StudentEditViewModel(gateway,new DialogService(),screen == "edit" ? 1 : null);
+                var window = new StudentEditView { DataContext = vm }; MainWindow=window;
+                vm.CloseRequested=window.Close; window.Loaded += async (_,_) => await vm.InitializeAsync();
+                window.Closing += (_,e) => e.Cancel = !vm.CanClose(); window.Closed += (_,_) => vm.Dispose(); VerifyWhenRendered(window); window.Show();
+            }
+        }
+    }
+}
