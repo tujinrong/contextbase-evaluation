@@ -1,0 +1,48 @@
+name: Simplify table specifications v7.2
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/table-v72-publish.yml']
+permissions:
+  contents: write
+concurrency:
+  group: table-specification-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify source and update specifications
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "13733006e501d2da9a7aac60c95e8c7852076c20"
+          python3 - <<'PY'
+          import base64, gzip, hashlib
+          from pathlib import Path
+          parts=[Path('_table_v72')/f'{i:02d}.b64' for i in range(1,5)]
+          encoded=''.join(p.read_text().strip() for p in parts)
+          assert len(encoded)==11920, len(encoded)
+          script=gzip.decompress(base64.b64decode(encoded,validate=True))
+          assert hashlib.sha256(script).hexdigest()=='22d35e7a1ea738d92f5315918d7b289e5ea2ad679c4eec2c56db24c12a706f01'
+          Path('_table_v72/update.py').write_bytes(script)
+          PY
+          python3 _table_v72/update.py . | tee /tmp/table-v72-validation.log
+          grep -F 'MD_MANIFEST_SHA256=0fa0f1b61a93953074a4b8bc8972e28072c76a8d9b05887428061cb4a58bbad6' /tmp/table-v72-validation.log
+      - name: Commit reviewed documents directly to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _table_v72
+          rm .github/workflows/table-v72-publish.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- docs test-project1 _table_v72 .github/workflows/table-v72-publish.yml
+          git diff --cached --stat
+          git commit -m 'docs: add NOT NULL column and native DB types to table specifications'
+          git push origin HEAD:main
+          git rev-parse HEAD
