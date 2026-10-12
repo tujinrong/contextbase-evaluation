@@ -1,0 +1,2628 @@
+[
+  {
+    "basis": "static_partial",
+    "call_graph": [
+      {
+        "arguments": "",
+        "callee": "M-fbd8643d1c0115",
+        "caller": "M-71f4d299d7db80",
+        "guards": [
+          "NOT (!requireStaff(request))"
+        ],
+        "line": 10
+      }
+    ],
+    "data_rules": [],
+    "description": "画面入口から呼出先をたどり、入力検証・データ操作・応答を抽出した。条件式は項目名へ対応付けて示す。",
+    "flow_model": {
+      "edges": [
+        [
+          "n1",
+          "n0",
+          ""
+        ],
+        [
+          "n2",
+          "n1",
+          ""
+        ],
+        [
+          "n3",
+          "n0",
+          ""
+        ],
+        [
+          "n4",
+          "n3",
+          "はい"
+        ],
+        [
+          "n4",
+          "n2",
+          "いいえ"
+        ],
+        [
+          "n5",
+          "n4",
+          ""
+        ]
+      ],
+      "nodes": [
+        {
+          "id": "n0",
+          "line": null,
+          "shape": "oval",
+          "text": "終了"
+        },
+        {
+          "id": "n1",
+          "line": 11,
+          "shape": "oval",
+          "text": "新規・変更・削除へ表示を戻す"
+        },
+        {
+          "id": "n2",
+          "line": 10,
+          "shape": "box",
+          "text": "処理結果とメッセージを画面の表示内容へ設定する"
+        },
+        {
+          "id": "n3",
+          "line": 9,
+          "shape": "oval",
+          "text": "年金自動受取予約管理システム - ログインへ表示を戻す"
+        },
+        {
+          "id": "n4",
+          "line": 9,
+          "shape": "diamond",
+          "text": "ログイン職員を確認できない？"
+        },
+        {
+          "id": "n5",
+          "line": null,
+          "shape": "oval",
+          "text": "開始：年金予約画面表示"
+        }
+      ],
+      "scope": "入口処理の順序・分岐を示す。呼出先の処理は別単位とし、SQLの対象と実行条件はDB操作の詳細へ記載する。例外線は範囲内で例外が発生した場合の経路で、各命令が必ず例外を送出する意味ではない。",
+      "steps": [
+        {
+          "branch": "",
+          "description": "「ログイン職員を確認できない」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む",
+          "guards": [],
+          "kind": "if",
+          "line": 9,
+          "number": "1"
+        },
+        {
+          "branch": "条件成立時",
+          "description": "条件成立時：年金自動受取予約管理システム - ログインへ表示を戻す。この経路の後続手順は実行しない",
+          "guards": [
+            "!requireStaff(request)"
+          ],
+          "kind": "return",
+          "line": 9,
+          "number": "1.1"
+        },
+        {
+          "branch": "",
+          "description": "処理結果とメッセージを画面の表示内容へ設定する",
+          "guards": [
+            "NOT (!requireStaff(request))"
+          ],
+          "kind": "call",
+          "line": 10,
+          "number": "2"
+        },
+        {
+          "branch": "",
+          "description": "新規・変更・削除へ表示を戻す。この経路の後続手順は実行しない",
+          "guards": [
+            "NOT (!requireStaff(request))"
+          ],
+          "kind": "return",
+          "line": 11,
+          "number": "3"
+        }
+      ]
+    },
+    "id": "E-71F4D299D7DB",
+    "methods": [
+      {
+        "calls": [
+          {
+            "arguments": "request",
+            "guards": [],
+            "line": 9,
+            "name": "requireStaff"
+          },
+          {
+            "arguments": "request.getSession(), pensionBean(PensionRepository.getInstance().createEmpty(currentStaff(request.getSession())), \"\", false, request.getSession())",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "setViewBean"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "request.getSession"
+          },
+          {
+            "arguments": "PensionRepository.getInstance().createEmpty(currentStaff(request.getSession())), \"\", false, request.getSession()",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "pensionBean"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "PensionRepository.getInstance"
+          },
+          {
+            "arguments": "currentStaff(request.getSession())",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "createEmpty"
+          },
+          {
+            "arguments": "request.getSession()",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "currentStaff"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "request.getSession"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "request.getSession"
+          }
+        ],
+        "end_line": 12,
+        "flow": [
+          {
+            "body": [
+              {
+                "calls": [],
+                "end_line": 9,
+                "expression": "return STAFF_JSP",
+                "guards": [
+                  "!requireStaff(request)"
+                ],
+                "kind": "return",
+                "line": 9,
+                "value": "STAFF_JSP"
+              }
+            ],
+            "calls": [
+              {
+                "arguments": "request",
+                "guards": [],
+                "line": 9,
+                "name": "requireStaff"
+              }
+            ],
+            "condition": "!requireStaff(request)",
+            "guards": [],
+            "kind": "if",
+            "line": 9
+          },
+          {
+            "calls": [
+              {
+                "arguments": "request.getSession(), pensionBean(PensionRepository.getInstance().createEmpty(currentStaff(request.getSession())), \"\", false, request.getSession())",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "setViewBean"
+              },
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "request.getSession"
+              },
+              {
+                "arguments": "PensionRepository.getInstance().createEmpty(currentStaff(request.getSession())), \"\", false, request.getSession()",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "pensionBean"
+              },
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "PensionRepository.getInstance"
+              },
+              {
+                "arguments": "currentStaff(request.getSession())",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "createEmpty"
+              },
+              {
+                "arguments": "request.getSession()",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "currentStaff"
+              },
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "request.getSession"
+              },
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "request.getSession"
+              }
+            ],
+            "end_line": 10,
+            "expression": "setViewBean(request.getSession(), pensionBean(PensionRepository.getInstance().createEmpty(currentStaff(request.getSession())), \"\", false, request.getSession()))",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "kind": "call",
+            "line": 10
+          },
+          {
+            "calls": [],
+            "end_line": 11,
+            "expression": "return PENSION_JSP",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "kind": "return",
+            "line": 11,
+            "value": "PENSION_JSP"
+          }
+        ],
+        "id": "M-71f4d299d7db80",
+        "line": 8,
+        "name": "perform",
+        "owner": "PensionViewAction",
+        "path": "nenkin/WEB-INF/src/nenkin/PensionViewAction.java",
+        "signature": "public String perform(HttpServletRequest request, HttpServletResponse response)",
+        "status": "static_partial",
+        "steps": [
+          {
+            "calls": [
+              {
+                "arguments": "request",
+                "guards": [],
+                "line": 9,
+                "name": "requireStaff"
+              }
+            ],
+            "condition": "!requireStaff(request)",
+            "guards": [],
+            "kind": "if",
+            "line": 9
+          },
+          {
+            "calls": [],
+            "end_line": 9,
+            "expression": "return STAFF_JSP",
+            "guards": [
+              "!requireStaff(request)"
+            ],
+            "kind": "return",
+            "line": 9,
+            "value": "STAFF_JSP"
+          },
+          {
+            "calls": [
+              {
+                "arguments": "request.getSession(), pensionBean(PensionRepository.getInstance().createEmpty(currentStaff(request.getSession())), \"\", false, request.getSession())",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "setViewBean"
+              },
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "request.getSession"
+              },
+              {
+                "arguments": "PensionRepository.getInstance().createEmpty(currentStaff(request.getSession())), \"\", false, request.getSession()",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "pensionBean"
+              },
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "PensionRepository.getInstance"
+              },
+              {
+                "arguments": "currentStaff(request.getSession())",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "createEmpty"
+              },
+              {
+                "arguments": "request.getSession()",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "currentStaff"
+              },
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "request.getSession"
+              },
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (!requireStaff(request))"
+                ],
+                "line": 10,
+                "name": "request.getSession"
+              }
+            ],
+            "end_line": 10,
+            "expression": "setViewBean(request.getSession(), pensionBean(PensionRepository.getInstance().createEmpty(currentStaff(request.getSession())), \"\", false, request.getSession()))",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "kind": "call",
+            "line": 10
+          },
+          {
+            "calls": [],
+            "end_line": 11,
+            "expression": "return PENSION_JSP",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "kind": "return",
+            "line": 11,
+            "value": "PENSION_JSP"
+          }
+        ]
+      },
+      {
+        "calls": [
+          {
+            "arguments": "",
+            "guards": [],
+            "line": 51,
+            "name": "request.getSession"
+          },
+          {
+            "arguments": "session",
+            "guards": [],
+            "line": 52,
+            "name": "currentStaff"
+          },
+          {
+            "arguments": "session",
+            "guards": [
+              "currentStaff(session) != null"
+            ],
+            "line": 53,
+            "name": "ensureCsrfToken"
+          },
+          {
+            "arguments": "CommonConst.SS_LOGIN_INFO_BEAN",
+            "guards": [
+              "NOT (currentStaff(session) != null)"
+            ],
+            "line": 57,
+            "name": "session.getAttribute"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "NOT (currentStaff(session) != null)"
+            ],
+            "line": 58,
+            "name": "isログイン可否"
+          },
+          {
+            "arguments": "((LoginInfoBean) value).get職員番号()",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+            ],
+            "line": 59,
+            "name": "trim"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+            ],
+            "line": 59,
+            "name": "get職員番号"
+          },
+          {
+            "arguments": "\"[0-9]{1,8}\"",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+            ],
+            "line": 60,
+            "name": "staffNo.matches"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+              "staffNo.matches(\"[0-9]{1,8}\")"
+            ],
+            "line": 61,
+            "name": "ReferenceDataService.getInstance"
+          },
+          {
+            "arguments": "Integer.parseInt(staffNo)",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+              "staffNo.matches(\"[0-9]{1,8}\")"
+            ],
+            "line": 62,
+            "name": "verifyStaff"
+          },
+          {
+            "arguments": "staffNo",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+              "staffNo.matches(\"[0-9]{1,8}\")"
+            ],
+            "line": 62,
+            "name": "Integer.parseInt"
+          },
+          {
+            "arguments": "STAFF_CONTEXT_KEY, staff",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+              "staffNo.matches(\"[0-9]{1,8}\")",
+              "staff != null"
+            ],
+            "line": 64,
+            "name": "session.setAttribute"
+          },
+          {
+            "arguments": "session",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+              "staffNo.matches(\"[0-9]{1,8}\")",
+              "staff != null"
+            ],
+            "line": 65,
+            "name": "ensureCsrfToken"
+          },
+          {
+            "arguments": "CommonConst.SS_LOGIN_INFO_BEAN",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+            ],
+            "line": 69,
+            "name": "session.removeAttribute"
+          },
+          {
+            "arguments": "CommonConst.ERROR_MSG_LIST, Collections.singletonList(\r\n\t\t\t\t\t\"ログイン職員番号が職員名簿に存在しません。管理者に確認してください。\")",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+            ],
+            "line": 70,
+            "name": "session.setAttribute"
+          },
+          {
+            "arguments": "\"ログイン職員番号が職員名簿に存在しません。管理者に確認してください。\"",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+            ],
+            "line": 70,
+            "name": "Collections.singletonList"
+          },
+          {
+            "arguments": "CommonConst.ERROR_MSG_LIST,\r\n\t\t\t\t\tCollections.singletonList(\"ログインしてください。\")",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "NOT (value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否())"
+            ],
+            "line": 73,
+            "name": "session.setAttribute"
+          },
+          {
+            "arguments": "\"ログインしてください。\"",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "NOT (value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否())"
+            ],
+            "line": 74,
+            "name": "Collections.singletonList"
+          },
+          {
+            "arguments": "STAFF_CONTEXT_KEY",
+            "guards": [
+              "NOT (currentStaff(session) != null)"
+            ],
+            "line": 76,
+            "name": "session.removeAttribute"
+          },
+          {
+            "arguments": "CSRF_TOKEN_KEY",
+            "guards": [
+              "NOT (currentStaff(session) != null)"
+            ],
+            "line": 77,
+            "name": "session.removeAttribute"
+          }
+        ],
+        "end_line": 79,
+        "flow": [
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [],
+                "line": 51,
+                "name": "request.getSession"
+              }
+            ],
+            "end_line": 51,
+            "expression": "HttpSession session = request.getSession()",
+            "guards": [],
+            "kind": "assignment",
+            "line": 51
+          },
+          {
+            "body": [
+              {
+                "calls": [
+                  {
+                    "arguments": "session",
+                    "guards": [
+                      "currentStaff(session) != null"
+                    ],
+                    "line": 53,
+                    "name": "ensureCsrfToken"
+                  }
+                ],
+                "end_line": 53,
+                "expression": "ensureCsrfToken(session)",
+                "guards": [
+                  "currentStaff(session) != null"
+                ],
+                "kind": "call",
+                "line": 53
+              },
+              {
+                "calls": [],
+                "end_line": 54,
+                "expression": "return true",
+                "guards": [
+                  "currentStaff(session) != null"
+                ],
+                "kind": "return",
+                "line": 54,
+                "value": "true"
+              }
+            ],
+            "calls": [
+              {
+                "arguments": "session",
+                "guards": [],
+                "line": 52,
+                "name": "currentStaff"
+              }
+            ],
+            "condition": "currentStaff(session) != null",
+            "guards": [],
+            "kind": "if",
+            "line": 52
+          },
+          {
+            "calls": [
+              {
+                "arguments": "CommonConst.SS_LOGIN_INFO_BEAN",
+                "guards": [
+                  "NOT (currentStaff(session) != null)"
+                ],
+                "line": 57,
+                "name": "session.getAttribute"
+              }
+            ],
+            "end_line": 57,
+            "expression": "Object value = session.getAttribute(CommonConst.SS_LOGIN_INFO_BEAN)",
+            "guards": [
+              "NOT (currentStaff(session) != null)"
+            ],
+            "kind": "assignment",
+            "line": 57
+          },
+          {
+            "body": [
+              {
+                "calls": [
+                  {
+                    "arguments": "((LoginInfoBean) value).get職員番号()",
+                    "guards": [
+                      "NOT (currentStaff(session) != null)",
+                      "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                    ],
+                    "line": 59,
+                    "name": "trim"
+                  },
+                  {
+                    "arguments": "",
+                    "guards": [
+                      "NOT (currentStaff(session) != null)",
+                      "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                    ],
+                    "line": 59,
+                    "name": "get職員番号"
+                  }
+                ],
+                "end_line": 59,
+                "expression": "String staffNo = trim(((LoginInfoBean) value).get職員番号())",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                ],
+                "kind": "assignment",
+                "line": 59
+              },
+              {
+                "body": [
+                  {
+                    "calls": [
+                      {
+                        "arguments": "",
+                        "guards": [
+                          "NOT (currentStaff(session) != null)",
+                          "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                          "staffNo.matches(\"[0-9]{1,8}\")"
+                        ],
+                        "line": 61,
+                        "name": "ReferenceDataService.getInstance"
+                      },
+                      {
+                        "arguments": "Integer.parseInt(staffNo)",
+                        "guards": [
+                          "NOT (currentStaff(session) != null)",
+                          "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                          "staffNo.matches(\"[0-9]{1,8}\")"
+                        ],
+                        "line": 62,
+                        "name": "verifyStaff"
+                      },
+                      {
+                        "arguments": "staffNo",
+                        "guards": [
+                          "NOT (currentStaff(session) != null)",
+                          "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                          "staffNo.matches(\"[0-9]{1,8}\")"
+                        ],
+                        "line": 62,
+                        "name": "Integer.parseInt"
+                      }
+                    ],
+                    "end_line": 62,
+                    "expression": "StaffContext staff = ReferenceDataService.getInstance() .verifyStaff(Integer.parseInt(staffNo))",
+                    "guards": [
+                      "NOT (currentStaff(session) != null)",
+                      "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                      "staffNo.matches(\"[0-9]{1,8}\")"
+                    ],
+                    "kind": "assignment",
+                    "line": 61
+                  },
+                  {
+                    "body": [
+                      {
+                        "calls": [
+                          {
+                            "arguments": "STAFF_CONTEXT_KEY, staff",
+                            "guards": [
+                              "NOT (currentStaff(session) != null)",
+                              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                              "staffNo.matches(\"[0-9]{1,8}\")",
+                              "staff != null"
+                            ],
+                            "line": 64,
+                            "name": "session.setAttribute"
+                          }
+                        ],
+                        "end_line": 64,
+                        "expression": "session.setAttribute(STAFF_CONTEXT_KEY, staff)",
+                        "guards": [
+                          "NOT (currentStaff(session) != null)",
+                          "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                          "staffNo.matches(\"[0-9]{1,8}\")",
+                          "staff != null"
+                        ],
+                        "kind": "call",
+                        "line": 64
+                      },
+                      {
+                        "calls": [
+                          {
+                            "arguments": "session",
+                            "guards": [
+                              "NOT (currentStaff(session) != null)",
+                              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                              "staffNo.matches(\"[0-9]{1,8}\")",
+                              "staff != null"
+                            ],
+                            "line": 65,
+                            "name": "ensureCsrfToken"
+                          }
+                        ],
+                        "end_line": 65,
+                        "expression": "ensureCsrfToken(session)",
+                        "guards": [
+                          "NOT (currentStaff(session) != null)",
+                          "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                          "staffNo.matches(\"[0-9]{1,8}\")",
+                          "staff != null"
+                        ],
+                        "kind": "call",
+                        "line": 65
+                      },
+                      {
+                        "calls": [],
+                        "end_line": 66,
+                        "expression": "return true",
+                        "guards": [
+                          "NOT (currentStaff(session) != null)",
+                          "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                          "staffNo.matches(\"[0-9]{1,8}\")",
+                          "staff != null"
+                        ],
+                        "kind": "return",
+                        "line": 66,
+                        "value": "true"
+                      }
+                    ],
+                    "calls": [],
+                    "condition": "staff != null",
+                    "guards": [
+                      "NOT (currentStaff(session) != null)",
+                      "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                      "staffNo.matches(\"[0-9]{1,8}\")"
+                    ],
+                    "kind": "if",
+                    "line": 63
+                  }
+                ],
+                "calls": [
+                  {
+                    "arguments": "\"[0-9]{1,8}\"",
+                    "guards": [
+                      "NOT (currentStaff(session) != null)",
+                      "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                    ],
+                    "line": 60,
+                    "name": "staffNo.matches"
+                  }
+                ],
+                "condition": "staffNo.matches(\"[0-9]{1,8}\")",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                ],
+                "kind": "if",
+                "line": 60
+              },
+              {
+                "calls": [
+                  {
+                    "arguments": "CommonConst.SS_LOGIN_INFO_BEAN",
+                    "guards": [
+                      "NOT (currentStaff(session) != null)",
+                      "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                    ],
+                    "line": 69,
+                    "name": "session.removeAttribute"
+                  }
+                ],
+                "end_line": 69,
+                "expression": "session.removeAttribute(CommonConst.SS_LOGIN_INFO_BEAN)",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                ],
+                "kind": "call",
+                "line": 69
+              },
+              {
+                "calls": [
+                  {
+                    "arguments": "CommonConst.ERROR_MSG_LIST, Collections.singletonList(\r\n\t\t\t\t\t\"ログイン職員番号が職員名簿に存在しません。管理者に確認してください。\")",
+                    "guards": [
+                      "NOT (currentStaff(session) != null)",
+                      "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                    ],
+                    "line": 70,
+                    "name": "session.setAttribute"
+                  },
+                  {
+                    "arguments": "\"ログイン職員番号が職員名簿に存在しません。管理者に確認してください。\"",
+                    "guards": [
+                      "NOT (currentStaff(session) != null)",
+                      "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                    ],
+                    "line": 70,
+                    "name": "Collections.singletonList"
+                  }
+                ],
+                "end_line": 71,
+                "expression": "session.setAttribute(CommonConst.ERROR_MSG_LIST, Collections.singletonList( \"ログイン職員番号が職員名簿に存在しません。管理者に確認してください。\"))",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                ],
+                "kind": "call",
+                "line": 70
+              }
+            ],
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (currentStaff(session) != null)"
+                ],
+                "line": 58,
+                "name": "isログイン可否"
+              }
+            ],
+            "condition": "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+            "else": [
+              {
+                "calls": [
+                  {
+                    "arguments": "CommonConst.ERROR_MSG_LIST,\r\n\t\t\t\t\tCollections.singletonList(\"ログインしてください。\")",
+                    "guards": [
+                      "NOT (currentStaff(session) != null)",
+                      "NOT (value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否())"
+                    ],
+                    "line": 73,
+                    "name": "session.setAttribute"
+                  },
+                  {
+                    "arguments": "\"ログインしてください。\"",
+                    "guards": [
+                      "NOT (currentStaff(session) != null)",
+                      "NOT (value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否())"
+                    ],
+                    "line": 74,
+                    "name": "Collections.singletonList"
+                  }
+                ],
+                "end_line": 74,
+                "expression": "session.setAttribute(CommonConst.ERROR_MSG_LIST, Collections.singletonList(\"ログインしてください。\"))",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "NOT (value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否())"
+                ],
+                "kind": "call",
+                "line": 73
+              }
+            ],
+            "guards": [
+              "NOT (currentStaff(session) != null)"
+            ],
+            "kind": "if",
+            "line": 58
+          },
+          {
+            "calls": [
+              {
+                "arguments": "STAFF_CONTEXT_KEY",
+                "guards": [
+                  "NOT (currentStaff(session) != null)"
+                ],
+                "line": 76,
+                "name": "session.removeAttribute"
+              }
+            ],
+            "end_line": 76,
+            "expression": "session.removeAttribute(STAFF_CONTEXT_KEY)",
+            "guards": [
+              "NOT (currentStaff(session) != null)"
+            ],
+            "kind": "call",
+            "line": 76
+          },
+          {
+            "calls": [
+              {
+                "arguments": "CSRF_TOKEN_KEY",
+                "guards": [
+                  "NOT (currentStaff(session) != null)"
+                ],
+                "line": 77,
+                "name": "session.removeAttribute"
+              }
+            ],
+            "end_line": 77,
+            "expression": "session.removeAttribute(CSRF_TOKEN_KEY)",
+            "guards": [
+              "NOT (currentStaff(session) != null)"
+            ],
+            "kind": "call",
+            "line": 77
+          },
+          {
+            "calls": [],
+            "end_line": 78,
+            "expression": "return false",
+            "guards": [
+              "NOT (currentStaff(session) != null)"
+            ],
+            "kind": "return",
+            "line": 78,
+            "value": "false"
+          }
+        ],
+        "id": "M-b0caee9154832a",
+        "line": 50,
+        "name": "requireStaff",
+        "owner": "NenkinBaseAction",
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "signature": "boolean requireStaff(HttpServletRequest request)",
+        "status": "static_partial",
+        "steps": [
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [],
+                "line": 51,
+                "name": "request.getSession"
+              }
+            ],
+            "end_line": 51,
+            "expression": "HttpSession session = request.getSession()",
+            "guards": [],
+            "kind": "assignment",
+            "line": 51
+          },
+          {
+            "calls": [
+              {
+                "arguments": "session",
+                "guards": [],
+                "line": 52,
+                "name": "currentStaff"
+              }
+            ],
+            "condition": "currentStaff(session) != null",
+            "guards": [],
+            "kind": "if",
+            "line": 52
+          },
+          {
+            "calls": [
+              {
+                "arguments": "session",
+                "guards": [
+                  "currentStaff(session) != null"
+                ],
+                "line": 53,
+                "name": "ensureCsrfToken"
+              }
+            ],
+            "end_line": 53,
+            "expression": "ensureCsrfToken(session)",
+            "guards": [
+              "currentStaff(session) != null"
+            ],
+            "kind": "call",
+            "line": 53
+          },
+          {
+            "calls": [],
+            "end_line": 54,
+            "expression": "return true",
+            "guards": [
+              "currentStaff(session) != null"
+            ],
+            "kind": "return",
+            "line": 54,
+            "value": "true"
+          },
+          {
+            "calls": [
+              {
+                "arguments": "CommonConst.SS_LOGIN_INFO_BEAN",
+                "guards": [
+                  "NOT (currentStaff(session) != null)"
+                ],
+                "line": 57,
+                "name": "session.getAttribute"
+              }
+            ],
+            "end_line": 57,
+            "expression": "Object value = session.getAttribute(CommonConst.SS_LOGIN_INFO_BEAN)",
+            "guards": [
+              "NOT (currentStaff(session) != null)"
+            ],
+            "kind": "assignment",
+            "line": 57
+          },
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (currentStaff(session) != null)"
+                ],
+                "line": 58,
+                "name": "isログイン可否"
+              }
+            ],
+            "condition": "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+            "guards": [
+              "NOT (currentStaff(session) != null)"
+            ],
+            "kind": "if",
+            "line": 58
+          },
+          {
+            "calls": [
+              {
+                "arguments": "((LoginInfoBean) value).get職員番号()",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                ],
+                "line": 59,
+                "name": "trim"
+              },
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                ],
+                "line": 59,
+                "name": "get職員番号"
+              }
+            ],
+            "end_line": 59,
+            "expression": "String staffNo = trim(((LoginInfoBean) value).get職員番号())",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+            ],
+            "kind": "assignment",
+            "line": 59
+          },
+          {
+            "calls": [
+              {
+                "arguments": "\"[0-9]{1,8}\"",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                ],
+                "line": 60,
+                "name": "staffNo.matches"
+              }
+            ],
+            "condition": "staffNo.matches(\"[0-9]{1,8}\")",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+            ],
+            "kind": "if",
+            "line": 60
+          },
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                  "staffNo.matches(\"[0-9]{1,8}\")"
+                ],
+                "line": 61,
+                "name": "ReferenceDataService.getInstance"
+              },
+              {
+                "arguments": "Integer.parseInt(staffNo)",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                  "staffNo.matches(\"[0-9]{1,8}\")"
+                ],
+                "line": 62,
+                "name": "verifyStaff"
+              },
+              {
+                "arguments": "staffNo",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                  "staffNo.matches(\"[0-9]{1,8}\")"
+                ],
+                "line": 62,
+                "name": "Integer.parseInt"
+              }
+            ],
+            "end_line": 62,
+            "expression": "StaffContext staff = ReferenceDataService.getInstance() .verifyStaff(Integer.parseInt(staffNo))",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+              "staffNo.matches(\"[0-9]{1,8}\")"
+            ],
+            "kind": "assignment",
+            "line": 61
+          },
+          {
+            "calls": [],
+            "condition": "staff != null",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+              "staffNo.matches(\"[0-9]{1,8}\")"
+            ],
+            "kind": "if",
+            "line": 63
+          },
+          {
+            "calls": [
+              {
+                "arguments": "STAFF_CONTEXT_KEY, staff",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                  "staffNo.matches(\"[0-9]{1,8}\")",
+                  "staff != null"
+                ],
+                "line": 64,
+                "name": "session.setAttribute"
+              }
+            ],
+            "end_line": 64,
+            "expression": "session.setAttribute(STAFF_CONTEXT_KEY, staff)",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+              "staffNo.matches(\"[0-9]{1,8}\")",
+              "staff != null"
+            ],
+            "kind": "call",
+            "line": 64
+          },
+          {
+            "calls": [
+              {
+                "arguments": "session",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+                  "staffNo.matches(\"[0-9]{1,8}\")",
+                  "staff != null"
+                ],
+                "line": 65,
+                "name": "ensureCsrfToken"
+              }
+            ],
+            "end_line": 65,
+            "expression": "ensureCsrfToken(session)",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+              "staffNo.matches(\"[0-9]{1,8}\")",
+              "staff != null"
+            ],
+            "kind": "call",
+            "line": 65
+          },
+          {
+            "calls": [],
+            "end_line": 66,
+            "expression": "return true",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+              "staffNo.matches(\"[0-9]{1,8}\")",
+              "staff != null"
+            ],
+            "kind": "return",
+            "line": 66,
+            "value": "true"
+          },
+          {
+            "calls": [
+              {
+                "arguments": "CommonConst.SS_LOGIN_INFO_BEAN",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                ],
+                "line": 69,
+                "name": "session.removeAttribute"
+              }
+            ],
+            "end_line": 69,
+            "expression": "session.removeAttribute(CommonConst.SS_LOGIN_INFO_BEAN)",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+            ],
+            "kind": "call",
+            "line": 69
+          },
+          {
+            "calls": [
+              {
+                "arguments": "CommonConst.ERROR_MSG_LIST, Collections.singletonList(\r\n\t\t\t\t\t\"ログイン職員番号が職員名簿に存在しません。管理者に確認してください。\")",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                ],
+                "line": 70,
+                "name": "session.setAttribute"
+              },
+              {
+                "arguments": "\"ログイン職員番号が職員名簿に存在しません。管理者に確認してください。\"",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+                ],
+                "line": 70,
+                "name": "Collections.singletonList"
+              }
+            ],
+            "end_line": 71,
+            "expression": "session.setAttribute(CommonConst.ERROR_MSG_LIST, Collections.singletonList( \"ログイン職員番号が職員名簿に存在しません。管理者に確認してください。\"))",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+            ],
+            "kind": "call",
+            "line": 70
+          },
+          {
+            "calls": [
+              {
+                "arguments": "CommonConst.ERROR_MSG_LIST,\r\n\t\t\t\t\tCollections.singletonList(\"ログインしてください。\")",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "NOT (value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否())"
+                ],
+                "line": 73,
+                "name": "session.setAttribute"
+              },
+              {
+                "arguments": "\"ログインしてください。\"",
+                "guards": [
+                  "NOT (currentStaff(session) != null)",
+                  "NOT (value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否())"
+                ],
+                "line": 74,
+                "name": "Collections.singletonList"
+              }
+            ],
+            "end_line": 74,
+            "expression": "session.setAttribute(CommonConst.ERROR_MSG_LIST, Collections.singletonList(\"ログインしてください。\"))",
+            "guards": [
+              "NOT (currentStaff(session) != null)",
+              "NOT (value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否())"
+            ],
+            "kind": "call",
+            "line": 73
+          },
+          {
+            "calls": [
+              {
+                "arguments": "STAFF_CONTEXT_KEY",
+                "guards": [
+                  "NOT (currentStaff(session) != null)"
+                ],
+                "line": 76,
+                "name": "session.removeAttribute"
+              }
+            ],
+            "end_line": 76,
+            "expression": "session.removeAttribute(STAFF_CONTEXT_KEY)",
+            "guards": [
+              "NOT (currentStaff(session) != null)"
+            ],
+            "kind": "call",
+            "line": 76
+          },
+          {
+            "calls": [
+              {
+                "arguments": "CSRF_TOKEN_KEY",
+                "guards": [
+                  "NOT (currentStaff(session) != null)"
+                ],
+                "line": 77,
+                "name": "session.removeAttribute"
+              }
+            ],
+            "end_line": 77,
+            "expression": "session.removeAttribute(CSRF_TOKEN_KEY)",
+            "guards": [
+              "NOT (currentStaff(session) != null)"
+            ],
+            "kind": "call",
+            "line": 77
+          },
+          {
+            "calls": [],
+            "end_line": 78,
+            "expression": "return false",
+            "guards": [
+              "NOT (currentStaff(session) != null)"
+            ],
+            "kind": "return",
+            "line": 78,
+            "value": "false"
+          }
+        ]
+      },
+      {
+        "calls": [
+          {
+            "arguments": "CommonConst.SS_JSP_BEAN, bean",
+            "guards": [],
+            "line": 38,
+            "name": "session.setAttribute"
+          }
+        ],
+        "end_line": 39,
+        "flow": [
+          {
+            "calls": [
+              {
+                "arguments": "CommonConst.SS_JSP_BEAN, bean",
+                "guards": [],
+                "line": 38,
+                "name": "session.setAttribute"
+              }
+            ],
+            "end_line": 38,
+            "expression": "session.setAttribute(CommonConst.SS_JSP_BEAN, bean)",
+            "guards": [],
+            "kind": "call",
+            "line": 38
+          }
+        ],
+        "id": "M-d94d08a26d6bd1",
+        "line": 37,
+        "name": "setViewBean",
+        "owner": "NenkinBaseAction",
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "signature": "void setViewBean(HttpSession session, Object bean)",
+        "status": "static_partial",
+        "steps": [
+          {
+            "calls": [
+              {
+                "arguments": "CommonConst.SS_JSP_BEAN, bean",
+                "guards": [],
+                "line": 38,
+                "name": "session.setAttribute"
+              }
+            ],
+            "end_line": 38,
+            "expression": "session.setAttribute(CommonConst.SS_JSP_BEAN, bean)",
+            "guards": [],
+            "kind": "call",
+            "line": 38
+          }
+        ]
+      },
+      {
+        "calls": [
+          {
+            "arguments": "",
+            "guards": [],
+            "line": 192,
+            "name": "PensionViewBean"
+          },
+          {
+            "arguments": "reservation",
+            "guards": [],
+            "line": 193,
+            "name": "bean.setReservation"
+          },
+          {
+            "arguments": "message",
+            "guards": [],
+            "line": 194,
+            "name": "bean.setMessage"
+          },
+          {
+            "arguments": "existing",
+            "guards": [],
+            "line": 195,
+            "name": "bean.setExisting"
+          },
+          {
+            "arguments": "session",
+            "guards": [],
+            "line": 196,
+            "name": "currentStaff"
+          },
+          {
+            "arguments": "String.format(Locale.ROOT, \"%08d\", Integer.valueOf(staff.getStaffNo()))",
+            "guards": [
+              "staff != null"
+            ],
+            "line": 198,
+            "name": "bean.setStaffNo"
+          },
+          {
+            "arguments": "Locale.ROOT, \"%08d\", Integer.valueOf(staff.getStaffNo())",
+            "guards": [
+              "staff != null"
+            ],
+            "line": 198,
+            "name": "String.format"
+          },
+          {
+            "arguments": "staff.getStaffNo()",
+            "guards": [
+              "staff != null"
+            ],
+            "line": 198,
+            "name": "Integer.valueOf"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "staff != null"
+            ],
+            "line": 198,
+            "name": "staff.getStaffNo"
+          },
+          {
+            "arguments": "staff.getStaffName()",
+            "guards": [
+              "staff != null"
+            ],
+            "line": 199,
+            "name": "bean.setStaffName"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "staff != null"
+            ],
+            "line": 199,
+            "name": "staff.getStaffName"
+          }
+        ],
+        "end_line": 202,
+        "flow": [
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [],
+                "line": 192,
+                "name": "PensionViewBean"
+              }
+            ],
+            "end_line": 192,
+            "expression": "PensionViewBean bean = new PensionViewBean()",
+            "guards": [],
+            "kind": "assignment",
+            "line": 192
+          },
+          {
+            "calls": [
+              {
+                "arguments": "reservation",
+                "guards": [],
+                "line": 193,
+                "name": "bean.setReservation"
+              }
+            ],
+            "end_line": 193,
+            "expression": "bean.setReservation(reservation)",
+            "guards": [],
+            "kind": "call",
+            "line": 193
+          },
+          {
+            "calls": [
+              {
+                "arguments": "message",
+                "guards": [],
+                "line": 194,
+                "name": "bean.setMessage"
+              }
+            ],
+            "end_line": 194,
+            "expression": "bean.setMessage(message)",
+            "guards": [],
+            "kind": "call",
+            "line": 194
+          },
+          {
+            "calls": [
+              {
+                "arguments": "existing",
+                "guards": [],
+                "line": 195,
+                "name": "bean.setExisting"
+              }
+            ],
+            "end_line": 195,
+            "expression": "bean.setExisting(existing)",
+            "guards": [],
+            "kind": "call",
+            "line": 195
+          },
+          {
+            "calls": [
+              {
+                "arguments": "session",
+                "guards": [],
+                "line": 196,
+                "name": "currentStaff"
+              }
+            ],
+            "end_line": 196,
+            "expression": "StaffContext staff = currentStaff(session)",
+            "guards": [],
+            "kind": "assignment",
+            "line": 196
+          },
+          {
+            "body": [
+              {
+                "calls": [
+                  {
+                    "arguments": "String.format(Locale.ROOT, \"%08d\", Integer.valueOf(staff.getStaffNo()))",
+                    "guards": [
+                      "staff != null"
+                    ],
+                    "line": 198,
+                    "name": "bean.setStaffNo"
+                  },
+                  {
+                    "arguments": "Locale.ROOT, \"%08d\", Integer.valueOf(staff.getStaffNo())",
+                    "guards": [
+                      "staff != null"
+                    ],
+                    "line": 198,
+                    "name": "String.format"
+                  },
+                  {
+                    "arguments": "staff.getStaffNo()",
+                    "guards": [
+                      "staff != null"
+                    ],
+                    "line": 198,
+                    "name": "Integer.valueOf"
+                  },
+                  {
+                    "arguments": "",
+                    "guards": [
+                      "staff != null"
+                    ],
+                    "line": 198,
+                    "name": "staff.getStaffNo"
+                  }
+                ],
+                "end_line": 198,
+                "expression": "bean.setStaffNo(String.format(Locale.ROOT, \"%08d\", Integer.valueOf(staff.getStaffNo())))",
+                "guards": [
+                  "staff != null"
+                ],
+                "kind": "call",
+                "line": 198
+              },
+              {
+                "calls": [
+                  {
+                    "arguments": "staff.getStaffName()",
+                    "guards": [
+                      "staff != null"
+                    ],
+                    "line": 199,
+                    "name": "bean.setStaffName"
+                  },
+                  {
+                    "arguments": "",
+                    "guards": [
+                      "staff != null"
+                    ],
+                    "line": 199,
+                    "name": "staff.getStaffName"
+                  }
+                ],
+                "end_line": 199,
+                "expression": "bean.setStaffName(staff.getStaffName())",
+                "guards": [
+                  "staff != null"
+                ],
+                "kind": "call",
+                "line": 199
+              }
+            ],
+            "calls": [],
+            "condition": "staff != null",
+            "guards": [],
+            "kind": "if",
+            "line": 197
+          },
+          {
+            "calls": [],
+            "end_line": 201,
+            "expression": "return bean",
+            "guards": [],
+            "kind": "return",
+            "line": 201,
+            "value": "bean"
+          }
+        ],
+        "id": "M-a74d89346366c8",
+        "line": 191,
+        "name": "pensionBean",
+        "owner": "NenkinBaseAction",
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "signature": "PensionViewBean pensionBean(PensionReservation reservation, String message, boolean existing, HttpSession session)",
+        "status": "static_partial",
+        "steps": [
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [],
+                "line": 192,
+                "name": "PensionViewBean"
+              }
+            ],
+            "end_line": 192,
+            "expression": "PensionViewBean bean = new PensionViewBean()",
+            "guards": [],
+            "kind": "assignment",
+            "line": 192
+          },
+          {
+            "calls": [
+              {
+                "arguments": "reservation",
+                "guards": [],
+                "line": 193,
+                "name": "bean.setReservation"
+              }
+            ],
+            "end_line": 193,
+            "expression": "bean.setReservation(reservation)",
+            "guards": [],
+            "kind": "call",
+            "line": 193
+          },
+          {
+            "calls": [
+              {
+                "arguments": "message",
+                "guards": [],
+                "line": 194,
+                "name": "bean.setMessage"
+              }
+            ],
+            "end_line": 194,
+            "expression": "bean.setMessage(message)",
+            "guards": [],
+            "kind": "call",
+            "line": 194
+          },
+          {
+            "calls": [
+              {
+                "arguments": "existing",
+                "guards": [],
+                "line": 195,
+                "name": "bean.setExisting"
+              }
+            ],
+            "end_line": 195,
+            "expression": "bean.setExisting(existing)",
+            "guards": [],
+            "kind": "call",
+            "line": 195
+          },
+          {
+            "calls": [
+              {
+                "arguments": "session",
+                "guards": [],
+                "line": 196,
+                "name": "currentStaff"
+              }
+            ],
+            "end_line": 196,
+            "expression": "StaffContext staff = currentStaff(session)",
+            "guards": [],
+            "kind": "assignment",
+            "line": 196
+          },
+          {
+            "calls": [],
+            "condition": "staff != null",
+            "guards": [],
+            "kind": "if",
+            "line": 197
+          },
+          {
+            "calls": [
+              {
+                "arguments": "String.format(Locale.ROOT, \"%08d\", Integer.valueOf(staff.getStaffNo()))",
+                "guards": [
+                  "staff != null"
+                ],
+                "line": 198,
+                "name": "bean.setStaffNo"
+              },
+              {
+                "arguments": "Locale.ROOT, \"%08d\", Integer.valueOf(staff.getStaffNo())",
+                "guards": [
+                  "staff != null"
+                ],
+                "line": 198,
+                "name": "String.format"
+              },
+              {
+                "arguments": "staff.getStaffNo()",
+                "guards": [
+                  "staff != null"
+                ],
+                "line": 198,
+                "name": "Integer.valueOf"
+              },
+              {
+                "arguments": "",
+                "guards": [
+                  "staff != null"
+                ],
+                "line": 198,
+                "name": "staff.getStaffNo"
+              }
+            ],
+            "end_line": 198,
+            "expression": "bean.setStaffNo(String.format(Locale.ROOT, \"%08d\", Integer.valueOf(staff.getStaffNo())))",
+            "guards": [
+              "staff != null"
+            ],
+            "kind": "call",
+            "line": 198
+          },
+          {
+            "calls": [
+              {
+                "arguments": "staff.getStaffName()",
+                "guards": [
+                  "staff != null"
+                ],
+                "line": 199,
+                "name": "bean.setStaffName"
+              },
+              {
+                "arguments": "",
+                "guards": [
+                  "staff != null"
+                ],
+                "line": 199,
+                "name": "staff.getStaffName"
+              }
+            ],
+            "end_line": 199,
+            "expression": "bean.setStaffName(staff.getStaffName())",
+            "guards": [
+              "staff != null"
+            ],
+            "kind": "call",
+            "line": 199
+          },
+          {
+            "calls": [],
+            "end_line": 201,
+            "expression": "return bean",
+            "guards": [],
+            "kind": "return",
+            "line": 201,
+            "value": "bean"
+          }
+        ]
+      },
+      {
+        "calls": [],
+        "end_line": 76,
+        "flow": [
+          {
+            "calls": [],
+            "end_line": 75,
+            "expression": "return INSTANCE",
+            "guards": [],
+            "kind": "return",
+            "line": 75,
+            "value": "INSTANCE"
+          }
+        ],
+        "id": "M-fbd8643d1c0115",
+        "line": 74,
+        "name": "getInstance",
+        "owner": "PensionRepository",
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "signature": "public static PensionRepository getInstance()",
+        "status": "static_partial",
+        "steps": [
+          {
+            "calls": [],
+            "end_line": 75,
+            "expression": "return INSTANCE",
+            "guards": [],
+            "kind": "return",
+            "line": 75,
+            "value": "INSTANCE"
+          }
+        ]
+      },
+      {
+        "calls": [
+          {
+            "arguments": "",
+            "guards": [],
+            "line": 79,
+            "name": "PensionReservation"
+          }
+        ],
+        "end_line": 80,
+        "flow": [
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [],
+                "line": 79,
+                "name": "PensionReservation"
+              }
+            ],
+            "end_line": 79,
+            "expression": "return new PensionReservation()",
+            "guards": [],
+            "kind": "return",
+            "line": 79,
+            "value": "new PensionReservation()"
+          }
+        ],
+        "id": "M-b4fb9f5cfe7e3e",
+        "line": 78,
+        "name": "createEmpty",
+        "owner": "PensionRepository",
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "signature": "public PensionReservation createEmpty()",
+        "status": "static_partial",
+        "steps": [
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [],
+                "line": 79,
+                "name": "PensionReservation"
+              }
+            ],
+            "end_line": 79,
+            "expression": "return new PensionReservation()",
+            "guards": [],
+            "kind": "return",
+            "line": 79,
+            "value": "new PensionReservation()"
+          }
+        ]
+      },
+      {
+        "calls": [
+          {
+            "arguments": "",
+            "guards": [],
+            "line": 83,
+            "name": "PensionReservation"
+          }
+        ],
+        "end_line": 84,
+        "flow": [
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [],
+                "line": 83,
+                "name": "PensionReservation"
+              }
+            ],
+            "end_line": 83,
+            "expression": "return new PensionReservation()",
+            "guards": [],
+            "kind": "return",
+            "line": 83,
+            "value": "new PensionReservation()"
+          }
+        ],
+        "id": "M-8cc1f07bc49132",
+        "line": 82,
+        "name": "createEmpty",
+        "owner": "PensionRepository",
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "signature": "public PensionReservation createEmpty(StaffContext staff)",
+        "status": "static_partial",
+        "steps": [
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [],
+                "line": 83,
+                "name": "PensionReservation"
+              }
+            ],
+            "end_line": 83,
+            "expression": "return new PensionReservation()",
+            "guards": [],
+            "kind": "return",
+            "line": 83,
+            "value": "new PensionReservation()"
+          }
+        ]
+      },
+      {
+        "calls": [
+          {
+            "arguments": "STAFF_CONTEXT_KEY",
+            "guards": [],
+            "line": 46,
+            "name": "session.getAttribute"
+          }
+        ],
+        "end_line": 48,
+        "flow": [
+          {
+            "calls": [
+              {
+                "arguments": "STAFF_CONTEXT_KEY",
+                "guards": [],
+                "line": 46,
+                "name": "session.getAttribute"
+              }
+            ],
+            "end_line": 46,
+            "expression": "Object value = session.getAttribute(STAFF_CONTEXT_KEY)",
+            "guards": [],
+            "kind": "assignment",
+            "line": 46
+          },
+          {
+            "calls": [],
+            "end_line": 47,
+            "expression": "return value instanceof StaffContext ? (StaffContext) value : null",
+            "guards": [],
+            "kind": "return",
+            "line": 47,
+            "value": "value instanceof StaffContext ? (StaffContext) value : null"
+          }
+        ],
+        "id": "M-5f00b480ae209b",
+        "line": 45,
+        "name": "currentStaff",
+        "owner": "NenkinBaseAction",
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "signature": "StaffContext currentStaff(HttpSession session)",
+        "status": "static_partial",
+        "steps": [
+          {
+            "calls": [
+              {
+                "arguments": "STAFF_CONTEXT_KEY",
+                "guards": [],
+                "line": 46,
+                "name": "session.getAttribute"
+              }
+            ],
+            "end_line": 46,
+            "expression": "Object value = session.getAttribute(STAFF_CONTEXT_KEY)",
+            "guards": [],
+            "kind": "assignment",
+            "line": 46
+          },
+          {
+            "calls": [],
+            "end_line": 47,
+            "expression": "return value instanceof StaffContext ? (StaffContext) value : null",
+            "guards": [],
+            "kind": "return",
+            "line": 47,
+            "value": "value instanceof StaffContext ? (StaffContext) value : null"
+          }
+        ]
+      },
+      {
+        "calls": [
+          {
+            "arguments": "CSRF_TOKEN_KEY",
+            "guards": [],
+            "line": 82,
+            "name": "session.getAttribute"
+          },
+          {
+            "arguments": "",
+            "guards": [],
+            "line": 83,
+            "name": "length"
+          },
+          {
+            "arguments": "String",
+            "guards": [
+              "current instanceof String && ((String) current).length() > 0"
+            ],
+            "line": 83,
+            "name": "return"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "NOT (current instanceof String && ((String) current).length() > 0)"
+            ],
+            "line": 84,
+            "name": "UUID.randomUUID"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "NOT (current instanceof String && ((String) current).length() > 0)"
+            ],
+            "line": 84,
+            "name": "toString"
+          },
+          {
+            "arguments": "CSRF_TOKEN_KEY, token",
+            "guards": [
+              "NOT (current instanceof String && ((String) current).length() > 0)"
+            ],
+            "line": 85,
+            "name": "session.setAttribute"
+          }
+        ],
+        "end_line": 87,
+        "flow": [
+          {
+            "calls": [
+              {
+                "arguments": "CSRF_TOKEN_KEY",
+                "guards": [],
+                "line": 82,
+                "name": "session.getAttribute"
+              }
+            ],
+            "end_line": 82,
+            "expression": "Object current = session.getAttribute(CSRF_TOKEN_KEY)",
+            "guards": [],
+            "kind": "assignment",
+            "line": 82
+          },
+          {
+            "body": [
+              {
+                "calls": [
+                  {
+                    "arguments": "String",
+                    "guards": [
+                      "current instanceof String && ((String) current).length() > 0"
+                    ],
+                    "line": 83,
+                    "name": "return"
+                  }
+                ],
+                "end_line": 83,
+                "expression": "return (String) current",
+                "guards": [
+                  "current instanceof String && ((String) current).length() > 0"
+                ],
+                "kind": "return",
+                "line": 83,
+                "value": "(String) current"
+              }
+            ],
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [],
+                "line": 83,
+                "name": "length"
+              }
+            ],
+            "condition": "current instanceof String && ((String) current).length() > 0",
+            "guards": [],
+            "kind": "if",
+            "line": 83
+          },
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (current instanceof String && ((String) current).length() > 0)"
+                ],
+                "line": 84,
+                "name": "UUID.randomUUID"
+              },
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (current instanceof String && ((String) current).length() > 0)"
+                ],
+                "line": 84,
+                "name": "toString"
+              }
+            ],
+            "end_line": 84,
+            "expression": "String token = UUID.randomUUID().toString()",
+            "guards": [
+              "NOT (current instanceof String && ((String) current).length() > 0)"
+            ],
+            "kind": "assignment",
+            "line": 84
+          },
+          {
+            "calls": [
+              {
+                "arguments": "CSRF_TOKEN_KEY, token",
+                "guards": [
+                  "NOT (current instanceof String && ((String) current).length() > 0)"
+                ],
+                "line": 85,
+                "name": "session.setAttribute"
+              }
+            ],
+            "end_line": 85,
+            "expression": "session.setAttribute(CSRF_TOKEN_KEY, token)",
+            "guards": [
+              "NOT (current instanceof String && ((String) current).length() > 0)"
+            ],
+            "kind": "call",
+            "line": 85
+          },
+          {
+            "calls": [],
+            "end_line": 86,
+            "expression": "return token",
+            "guards": [
+              "NOT (current instanceof String && ((String) current).length() > 0)"
+            ],
+            "kind": "return",
+            "line": 86,
+            "value": "token"
+          }
+        ],
+        "id": "M-76a2754fa440cd",
+        "line": 81,
+        "name": "ensureCsrfToken",
+        "owner": "NenkinBaseAction",
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "signature": "String ensureCsrfToken(HttpSession session)",
+        "status": "static_partial",
+        "steps": [
+          {
+            "calls": [
+              {
+                "arguments": "CSRF_TOKEN_KEY",
+                "guards": [],
+                "line": 82,
+                "name": "session.getAttribute"
+              }
+            ],
+            "end_line": 82,
+            "expression": "Object current = session.getAttribute(CSRF_TOKEN_KEY)",
+            "guards": [],
+            "kind": "assignment",
+            "line": 82
+          },
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [],
+                "line": 83,
+                "name": "length"
+              }
+            ],
+            "condition": "current instanceof String && ((String) current).length() > 0",
+            "guards": [],
+            "kind": "if",
+            "line": 83
+          },
+          {
+            "calls": [
+              {
+                "arguments": "String",
+                "guards": [
+                  "current instanceof String && ((String) current).length() > 0"
+                ],
+                "line": 83,
+                "name": "return"
+              }
+            ],
+            "end_line": 83,
+            "expression": "return (String) current",
+            "guards": [
+              "current instanceof String && ((String) current).length() > 0"
+            ],
+            "kind": "return",
+            "line": 83,
+            "value": "(String) current"
+          },
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (current instanceof String && ((String) current).length() > 0)"
+                ],
+                "line": 84,
+                "name": "UUID.randomUUID"
+              },
+              {
+                "arguments": "",
+                "guards": [
+                  "NOT (current instanceof String && ((String) current).length() > 0)"
+                ],
+                "line": 84,
+                "name": "toString"
+              }
+            ],
+            "end_line": 84,
+            "expression": "String token = UUID.randomUUID().toString()",
+            "guards": [
+              "NOT (current instanceof String && ((String) current).length() > 0)"
+            ],
+            "kind": "assignment",
+            "line": 84
+          },
+          {
+            "calls": [
+              {
+                "arguments": "CSRF_TOKEN_KEY, token",
+                "guards": [
+                  "NOT (current instanceof String && ((String) current).length() > 0)"
+                ],
+                "line": 85,
+                "name": "session.setAttribute"
+              }
+            ],
+            "end_line": 85,
+            "expression": "session.setAttribute(CSRF_TOKEN_KEY, token)",
+            "guards": [
+              "NOT (current instanceof String && ((String) current).length() > 0)"
+            ],
+            "kind": "call",
+            "line": 85
+          },
+          {
+            "calls": [],
+            "end_line": 86,
+            "expression": "return token",
+            "guards": [
+              "NOT (current instanceof String && ((String) current).length() > 0)"
+            ],
+            "kind": "return",
+            "line": 86,
+            "value": "token"
+          }
+        ]
+      },
+      {
+        "calls": [
+          {
+            "arguments": "",
+            "guards": [],
+            "line": 119,
+            "name": "value.trim"
+          }
+        ],
+        "end_line": 119,
+        "flow": [
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [],
+                "line": 119,
+                "name": "value.trim"
+              }
+            ],
+            "end_line": 119,
+            "expression": "return value == null ? \"\" : value.trim()",
+            "guards": [],
+            "kind": "return",
+            "line": 119,
+            "value": "value == null ? \"\" : value.trim()"
+          }
+        ],
+        "id": "M-127ea451861053",
+        "line": 119,
+        "name": "trim",
+        "owner": "NenkinBaseAction",
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "signature": "String trim(String value)",
+        "status": "static_partial",
+        "steps": [
+          {
+            "calls": [
+              {
+                "arguments": "",
+                "guards": [],
+                "line": 119,
+                "name": "value.trim"
+              }
+            ],
+            "end_line": 119,
+            "expression": "return value == null ? \"\" : value.trim()",
+            "guards": [],
+            "kind": "return",
+            "line": 119,
+            "value": "value == null ? \"\" : value.trim()"
+          }
+        ]
+      }
+    ],
+    "name": "年金予約画面表示",
+    "narrative": {
+      "notes": [
+        {
+          "expression": "NOT (!requireStaff(request))",
+          "id": "条件1",
+          "kind": "condition"
+        }
+      ],
+      "outcomes": [
+        {
+          "condition": "ログイン職員を確認できない",
+          "result": "年金自動受取予約管理システム - ログインへ表示を戻す"
+        },
+        {
+          "condition": "条件1を満たす（原本条件は補足説明を参照）",
+          "result": "新規・変更・削除へ表示を戻す"
+        }
+      ],
+      "scope": "入口処理の順序・分岐を示す。呼出先の処理は別単位とし、SQLの対象と実行条件はDB操作の詳細へ記載する。例外線は範囲内で例外が発生した場合の経路で、各命令が必ず例外を送出する意味ではない。",
+      "steps": [
+        {
+          "branch": "",
+          "description": "「ログイン職員を確認できない」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む",
+          "guards": [],
+          "kind": "if",
+          "line": 9,
+          "number": "1"
+        },
+        {
+          "branch": "条件成立時",
+          "description": "条件成立時：年金自動受取予約管理システム - ログインへ表示を戻す。この経路の後続手順は実行しない",
+          "guards": [
+            "!requireStaff(request)"
+          ],
+          "kind": "return",
+          "line": 9,
+          "number": "1.1"
+        },
+        {
+          "branch": "",
+          "description": "処理結果とメッセージを画面の表示内容へ設定する",
+          "guards": [
+            "NOT (!requireStaff(request))"
+          ],
+          "kind": "call",
+          "line": 10,
+          "number": "2"
+        },
+        {
+          "branch": "",
+          "description": "新規・変更・削除へ表示を戻す。この経路の後続手順は実行しない",
+          "guards": [
+            "NOT (!requireStaff(request))"
+          ],
+          "kind": "return",
+          "line": 11,
+          "number": "3"
+        }
+      ],
+      "summary": "年金予約画面表示で「年金予約画面表示」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。"
+    },
+    "public_steps": [],
+    "qa_id": "Q-83A0ADD3EE",
+    "related_method_ids": [
+      "M-71f4d299d7db80",
+      "M-fbd8643d1c0115"
+    ],
+    "sql_operations": [],
+    "steps": [
+      {
+        "calls": [
+          {
+            "arguments": "request",
+            "guards": [],
+            "line": 9,
+            "name": "requireStaff"
+          }
+        ],
+        "condition": "!requireStaff(request)",
+        "guards": [],
+        "kind": "if",
+        "line": 9
+      },
+      {
+        "calls": [],
+        "end_line": 9,
+        "expression": "return STAFF_JSP",
+        "guards": [
+          "!requireStaff(request)"
+        ],
+        "kind": "return",
+        "line": 9,
+        "value": "STAFF_JSP"
+      },
+      {
+        "calls": [
+          {
+            "arguments": "request.getSession(), pensionBean(PensionRepository.getInstance().createEmpty(currentStaff(request.getSession())), \"\", false, request.getSession())",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "setViewBean"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "request.getSession"
+          },
+          {
+            "arguments": "PensionRepository.getInstance().createEmpty(currentStaff(request.getSession())), \"\", false, request.getSession()",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "pensionBean"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "PensionRepository.getInstance"
+          },
+          {
+            "arguments": "currentStaff(request.getSession())",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "createEmpty"
+          },
+          {
+            "arguments": "request.getSession()",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "currentStaff"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "request.getSession"
+          },
+          {
+            "arguments": "",
+            "guards": [
+              "NOT (!requireStaff(request))"
+            ],
+            "line": 10,
+            "name": "request.getSession"
+          }
+        ],
+        "end_line": 10,
+        "expression": "setViewBean(request.getSession(), pensionBean(PensionRepository.getInstance().createEmpty(currentStaff(request.getSession())), \"\", false, request.getSession()))",
+        "guards": [
+          "NOT (!requireStaff(request))"
+        ],
+        "kind": "call",
+        "line": 10
+      },
+      {
+        "calls": [],
+        "end_line": 11,
+        "expression": "return PENSION_JSP",
+        "guards": [
+          "NOT (!requireStaff(request))"
+        ],
+        "kind": "return",
+        "line": 11,
+        "value": "PENSION_JSP"
+      }
+    ],
+    "storage_effects": [],
+    "trigger": "perform",
+    "validation_rules": []
+  }
+]

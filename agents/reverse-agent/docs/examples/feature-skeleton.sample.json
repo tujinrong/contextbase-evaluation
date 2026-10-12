@@ -1,0 +1,158 @@
+{
+  "schema_version": "1.0",
+  "artifact_kind": "feature_skeleton",
+  "data_origin": "illustrative",
+  "notice": "架空の顧客検索の骨子例。TKLの解析結果、確定した仕様、評価済み成果物ではありません。",
+  "system_id": "SAMPLE",
+  "snapshot_id": null,
+  "feature": {
+    "id": "SAMPLE-001",
+    "name": "顧客検索",
+    "kind": "screen",
+    "group": "顧客管理",
+    "purpose": "説明用の顧客IDで検索し、顧客名を表示する。",
+    "output_filename": "概要仕様書SAMPLE-001_顧客検索.md"
+  },
+  "analysis_status": "skeleton",
+  "source_enumeration": {
+    "status": "not_performed",
+    "baseline_id": null,
+    "reason": "原本なしの説明用例のため、ソース上の件数は確定しない。"
+  },
+  "items": [
+    {
+      "id": "SAMPLE-001-F001",
+      "name": "顧客ID",
+      "role": "search",
+      "type": {"value": "文字列", "status": "example"},
+      "order": {"scope_id": "search_area", "ordinal": 1, "basis": "example", "state": "initial"},
+      "input": {
+        "required": {"value": true, "condition": "検索実行時", "status": "example"},
+        "max_length": {"value": 6, "unit": "characters", "encoding": null, "status": "example"}
+      },
+      "display_format": "先頭ゼロを保持する。",
+      "storage_length": {"value": null, "status": "unknown"},
+      "description": "説明用の検索条件。完全一致で使用する。",
+      "db_binding_ids": ["SAMPLE-BIND-001"],
+      "evidence_ids": []
+    },
+    {
+      "id": "SAMPLE-001-F002",
+      "name": "顧客名",
+      "role": "display",
+      "type": {"value": "文字列", "status": "example"},
+      "order": {"scope_id": "result_area", "ordinal": 1, "basis": "example", "state": "initial"},
+      "input": null,
+      "input_status": "not_applicable",
+      "display_format": "文字列表示。",
+      "storage_length": {"value": null, "status": "unknown"},
+      "description": "検索結果として表示する。利用者が入力する項目ではない。",
+      "db_binding_ids": ["SAMPLE-BIND-002"],
+      "evidence_ids": []
+    },
+    {
+      "id": "SAMPLE-001-B001",
+      "name": "検索",
+      "role": "control",
+      "type": {"value": "操作", "status": "example"},
+      "order": {"scope_id": "search_area", "ordinal": 2, "basis": "example", "state": "initial"},
+      "input": null,
+      "input_status": "not_applicable",
+      "storage_length": {"value": null, "status": "not_applicable"},
+      "description": "検索を開始する。DB列はボタンではなく対応イベントで管理する。",
+      "db_binding_ids": [],
+      "event_ids": ["SAMPLE-001-E001"],
+      "evidence_ids": []
+    }
+  ],
+  "events": [
+    {
+      "id": "SAMPLE-001-E001",
+      "name": "顧客検索",
+      "trigger_item_ids": ["SAMPLE-001-B001"],
+      "input_item_ids": ["SAMPLE-001-F001"],
+      "output_item_ids": ["SAMPLE-001-F002"],
+      "precondition": "説明用の必須条件を満たすこと。",
+      "data_operation_ids": ["SAMPLE-DOP-001"],
+      "message_ids": ["SAMPLE-MSG-001"],
+      "common_spec_ids": ["SAMPLE-COM-001"],
+      "branches": [
+        {"condition": "顧客IDが空欄", "result": "検索を実行せず、再入力を求める。", "status": "example"},
+        {"condition": "該当データあり", "result": "検索した顧客名を表示する。", "status": "example"},
+        {"condition": "該当データなし", "result": "該当なしのメッセージを表示する。", "status": "example"}
+      ],
+      "error_contract": {"status": "unknown", "reason": "DB接続失敗・タイムアウト時の契約は、この骨子例では未定義。"},
+      "evidence_ids": []
+    }
+  ],
+  "data_operations": [
+    {
+      "id": "SAMPLE-DOP-001",
+      "event_id": "SAMPLE-001-E001",
+      "object_id": "SAMPLE-DB-001",
+      "kind": "read",
+      "columns": ["customer_id", "customer_name"],
+      "filter": "顧客IDが入力値と一致すること。",
+      "cardinality": {"value": null, "status": "unknown"},
+      "status": "example",
+      "evidence_ids": []
+    }
+  ],
+  "data_objects": [
+    {
+      "id": "SAMPLE-DB-001",
+      "logical_name": "顧客",
+      "physical_name": "customers",
+      "kind": {"value": "table", "status": "example"},
+      "columns_observed": ["customer_id", "customer_name"],
+      "physical_definition_status": "unknown",
+      "primary_key": {"value": null, "status": "unknown"},
+      "foreign_keys": {"value": null, "status": "unknown"},
+      "evidence_ids": []
+    }
+  ],
+  "db_bindings": [
+    {"id": "SAMPLE-BIND-001", "item_id": "SAMPLE-001-F001", "object_id": "SAMPLE-DB-001", "column": "customer_id", "usage": "filter", "status": "example"},
+    {"id": "SAMPLE-BIND-002", "item_id": "SAMPLE-001-F002", "object_id": "SAMPLE-DB-001", "column": "customer_name", "usage": "read_origin", "status": "example"}
+  ],
+  "messages": [
+    {
+      "id": "SAMPLE-MSG-001",
+      "template": "該当する顧客はありません。",
+      "kind": "information",
+      "event_ids": ["SAMPLE-001-E001"],
+      "condition": "検索結果0件",
+      "parameters": [],
+      "status": "example",
+      "evidence_ids": []
+    }
+  ],
+  "io": [
+    {"direction": "input", "item_ids": ["SAMPLE-001-F001"], "medium": "screen", "status": "example"},
+    {"direction": "output", "item_ids": ["SAMPLE-001-F002"], "medium": "screen", "status": "example"}
+  ],
+  "transitions": [],
+  "transition_status": "not_analyzed",
+  "common_refs": [
+    {"id": "SAMPLE-COM-001", "name": "共通入力検証", "version": null, "applies_when": "検索実行時", "resolution": "unresolved"}
+  ],
+  "dependencies": [
+    {"consumer_id": "SAMPLE-001-E001", "provider_id": "SAMPLE-DB-001", "kind": "reads", "resolution": "example"},
+    {"consumer_id": "SAMPLE-001-E001", "provider_id": "SAMPLE-COM-001", "kind": "uses_contract", "resolution": "unresolved"}
+  ],
+  "evidence": [],
+  "coverage": {
+    "status": "not_evaluated",
+    "independent_expected_counts": null,
+    "skeleton_item_counts": {"search": 1, "display": 1, "control": 1},
+    "skeleton_event_count": 1,
+    "source_to_spec_mapping_status": "not_performed",
+    "publishable": false
+  },
+  "open_questions": [
+    {"id": "Q-001", "blocking": true, "question": "実原本のスナップショットと根拠を確定すること。"},
+    {"id": "Q-002", "blocking": true, "question": "共通入力検証の定義・適用版を解決すること。"},
+    {"id": "Q-003", "blocking": true, "question": "複数件が一致した場合と、DB失敗時の結果を定義すること。"},
+    {"id": "Q-004", "blocking": true, "question": "配置・全項目・イベント・遷移・DB定義の独立評価を行うこと。"}
+  ]
+}

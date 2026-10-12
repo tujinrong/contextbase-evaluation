@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "contextbase-specgen"
+version = "5.0.0"
+description = "Source-independent orchestration and reviewed project-specific specification adapters"
+requires-python = ">=3.11"
+dependencies = ["markdown-it-py==4.2.0", "beautifulsoup4==4.14.3", "tinycss2==1.5.1", "Pillow>=10,<13", "jsonschema==4.25.1"]
+
+[project.optional-dependencies]
+pdf = ["weasyprint==68.0", "pypdf==5.9.0"]
+
+[project.scripts]
+md-to-excel = "docsite.excel:main"
+contextbase = "contextbase.__main__:main"
+docsite = "docsite.__main__:main"
+specgen = "specgen.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["*.tests", "*.tests.*"]
+
+[tool.setuptools.package-data]
+docsite = ["assets/*.css", "requirements.txt", "v2/*.json"]
+
+contextbase = ["templates/*.json", "templates/*.md"]

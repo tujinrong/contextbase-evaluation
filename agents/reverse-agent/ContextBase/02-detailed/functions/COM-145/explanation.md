@@ -1,0 +1,1 @@
+Access と同じ年金業務表を N2 JNDI 経由で操作する Repositoryの入力・表示・要求処理を行う。

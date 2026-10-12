@@ -1,0 +1,892 @@
+[
+  {
+    "event": "requireStaff",
+    "evidence": [
+      {
+        "line": 57,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "Object value = session.getAttribute(CommonConst.SS_LOGIN_INFO_BEAN)",
+    "guards": [
+      "NOT (currentStaff(session) != null)"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "requireStaff",
+    "evidence": [
+      {
+        "line": 64,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.setAttribute(STAFF_CONTEXT_KEY, staff)",
+    "guards": [
+      "NOT (currentStaff(session) != null)",
+      "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+      "staffNo.matches(\"[0-9]{1,8}\")",
+      "staff != null"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "requireStaff",
+    "evidence": [
+      {
+        "line": 69,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.removeAttribute(CommonConst.SS_LOGIN_INFO_BEAN)",
+    "guards": [
+      "NOT (currentStaff(session) != null)",
+      "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "requireStaff",
+    "evidence": [
+      {
+        "line": 70,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.setAttribute(CommonConst.ERROR_MSG_LIST, Collections.singletonList( \"ログイン職員番号が職員名簿に存在しません。管理者に確認してください。\"))",
+    "guards": [
+      "NOT (currentStaff(session) != null)",
+      "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "requireStaff",
+    "evidence": [
+      {
+        "line": 73,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.setAttribute(CommonConst.ERROR_MSG_LIST, Collections.singletonList(\"ログインしてください。\"))",
+    "guards": [
+      "NOT (currentStaff(session) != null)",
+      "NOT (value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否())"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "requireStaff",
+    "evidence": [
+      {
+        "line": 76,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.removeAttribute(STAFF_CONTEXT_KEY)",
+    "guards": [
+      "NOT (currentStaff(session) != null)"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "requireStaff",
+    "evidence": [
+      {
+        "line": 77,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.removeAttribute(CSRF_TOKEN_KEY)",
+    "guards": [
+      "NOT (currentStaff(session) != null)"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "setViewBean",
+    "evidence": [
+      {
+        "line": 38,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.setAttribute(CommonConst.SS_JSP_BEAN, bean)",
+    "guards": [],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "currentStaff",
+    "evidence": [
+      {
+        "line": 46,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "Object value = session.getAttribute(STAFF_CONTEXT_KEY)",
+    "guards": [],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "ensureCsrfToken",
+    "evidence": [
+      {
+        "line": 82,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "Object current = session.getAttribute(CSRF_TOKEN_KEY)",
+    "guards": [],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "ensureCsrfToken",
+    "evidence": [
+      {
+        "line": 85,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.setAttribute(CSRF_TOKEN_KEY, token)",
+    "guards": [
+      "NOT (current instanceof String && ((String) current).length() > 0)"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 42,
+        "path": "n2framework/WEB-INF/src/webon/base/InsertPathMngStatBase.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "C",
+    "store": "NAVI.ＵＳパス管理ステータス"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 37,
+        "path": "n2framework/WEB-INF/src/webon/base/SelectDB2KamokuBase.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "DB2.ＵＪ科目"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 65,
+        "path": "n2framework/WEB-INF/src/webon/base/SelectDB2KamokuBase.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "DB2.ＵＪ科目"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 39,
+        "path": "n2framework/WEB-INF/src/webon/base/SelectFunctionMasterBase.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "NAVI.ＵＭ機能マスタ"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 60,
+        "path": "n2framework/WEB-INF/src/webon/base/SelectFunctionMasterBase.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "NAVI.ＵＪ機能マスタ"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 41,
+        "path": "n2framework/WEB-INF/src/webon/base/SelectOnlineOperationMastBase.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "NAVI.ＵＭオンラインＯＰマスタ"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 41,
+        "path": "n2framework/WEB-INF/src/webon/base/SelectOperationBranchMstBase.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "NAVI.ＵＪ稼動店舗管理マスタ"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 69,
+        "path": "n2framework/WEB-INF/src/webon/base/SelectOperationBranchMstBase.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "NAVI.ＵＪ稼動店舗管理マスタ"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 100,
+        "path": "n2framework/WEB-INF/src/webon/base/SelectOperationBranchMstBase.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "NAVI.ＵＪ稼動店舗管理マスタ"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 35,
+        "path": "n2framework/WEB-INF/src/webon/base/SelectPathMngMstBase.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "NAVI.ＵＭパス管理マスタ"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 39,
+        "path": "n2framework/WEB-INF/src/webon/base/SelectPathMngStatBase.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "NAVI.ＵＳパス管理ステータス"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 69,
+        "path": "n2framework/WEB-INF/src/webon/base/SelectPathMngStatBase.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "NAVI.ＵＳパス管理ステータス"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 41,
+        "path": "n2framework/WEB-INF/src/webon/base/UpdatePathMngStatBase.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "U",
+    "store": "NAVI.ＵＳパス管理ステータス"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 70,
+        "path": "n2framework/WEB-INF/src/webon/base/UpdatePathMngStatBase.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "U",
+    "store": "NAVI.ＵＳパス管理ステータス"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 60,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "C",
+    "store": "年金1_LK"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 63,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "C",
+    "store": "年金＿削除明細"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 66,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "U",
+    "store": "年金1_LK"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 88,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "N2_SIGHT.Ｂ顧客基本表"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 150,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "年金1_LK"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 150,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "店名テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 150,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "性別テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 150,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "裁定請求テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 150,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "受給有無テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 150,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "年金種類テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 224,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "年金1_LK"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 224,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "店名テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 224,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "性別テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 224,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "裁定請求テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 224,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "受給有無テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 224,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "年金種類テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 334,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "D",
+    "store": "年金1_LK"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 427,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "年金1_LK"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 440,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "年金＿削除明細"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 468,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "D",
+    "store": "年金＿削除明細"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 543,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "店名テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 609,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "年金種類テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 628,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "年金1_LK"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 645,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "年金1_LK"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 645,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "店名テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 645,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "性別テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 645,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "裁定請求テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 645,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "受給有無テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 645,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "年金種類テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 661,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "C",
+    "store": "年金1_LK"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 676,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "U",
+    "store": "年金1_LK"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 694,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "C",
+    "store": "年金＿削除明細"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 185,
+        "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "店名テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 207,
+        "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "DB2.Ｕ職員名簿表"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 291,
+        "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "店名テーブル"
+  },
+  {
+    "event": "listByBranch@223",
+    "event_label": "listByBranch",
+    "evidence": [
+      {
+        "line": 224,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "read",
+    "store": "年金1_LK",
+    "store_id": "DB-8d36cf6e7b"
+  },
+  {
+    "event": "listByBranch@223",
+    "event_label": "listByBranch",
+    "evidence": [
+      {
+        "line": 224,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "read",
+    "store": "店名テーブル",
+    "store_id": "DB-81d667afce"
+  },
+  {
+    "event": "listByBranch@223",
+    "event_label": "listByBranch",
+    "evidence": [
+      {
+        "line": 224,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "read",
+    "store": "性別テーブル",
+    "store_id": "DB-75313fdb69"
+  },
+  {
+    "event": "listByBranch@223",
+    "event_label": "listByBranch",
+    "evidence": [
+      {
+        "line": 224,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "read",
+    "store": "裁定請求テーブル",
+    "store_id": "DB-fc948fdc68"
+  },
+  {
+    "event": "listByBranch@223",
+    "event_label": "listByBranch",
+    "evidence": [
+      {
+        "line": 224,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "read",
+    "store": "受給有無テーブル",
+    "store_id": "DB-0e3402a09a"
+  },
+  {
+    "event": "listByBranch@223",
+    "event_label": "listByBranch",
+    "evidence": [
+      {
+        "line": 224,
+        "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "read",
+    "store": "年金種類テーブル",
+    "store_id": "DB-823f66e53a"
+  },
+  {
+    "event": "getBranch@184",
+    "event_label": "getBranch",
+    "evidence": [
+      {
+        "line": 185,
+        "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "read",
+    "store": "店名テーブル",
+    "store_id": "DB-81d667afce"
+  },
+  {
+    "event": "getStaff@206",
+    "event_label": "getStaff",
+    "evidence": [
+      {
+        "line": 207,
+        "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "read",
+    "store": "DB2.Ｕ職員名簿表",
+    "store_id": "DB-604eca488b"
+  },
+  {
+    "event": "loadBranchNames@289",
+    "event_label": "loadBranchNames",
+    "evidence": [
+      {
+        "line": 291,
+        "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "read",
+    "store": "店名テーブル",
+    "store_id": "DB-81d667afce"
+  }
+]

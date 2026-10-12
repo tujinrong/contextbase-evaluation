@@ -1,0 +1,256 @@
+[
+  {
+    "event": "requireStaff",
+    "evidence": [
+      {
+        "line": 57,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "Object value = session.getAttribute(CommonConst.SS_LOGIN_INFO_BEAN)",
+    "guards": [
+      "NOT (currentStaff(session) != null)"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "requireStaff",
+    "evidence": [
+      {
+        "line": 64,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.setAttribute(STAFF_CONTEXT_KEY, staff)",
+    "guards": [
+      "NOT (currentStaff(session) != null)",
+      "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()",
+      "staffNo.matches(\"[0-9]{1,8}\")",
+      "staff != null"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "requireStaff",
+    "evidence": [
+      {
+        "line": 69,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.removeAttribute(CommonConst.SS_LOGIN_INFO_BEAN)",
+    "guards": [
+      "NOT (currentStaff(session) != null)",
+      "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "requireStaff",
+    "evidence": [
+      {
+        "line": 70,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.setAttribute(CommonConst.ERROR_MSG_LIST, Collections.singletonList( \"ログイン職員番号が職員名簿に存在しません。管理者に確認してください。\"))",
+    "guards": [
+      "NOT (currentStaff(session) != null)",
+      "value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否()"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "requireStaff",
+    "evidence": [
+      {
+        "line": 73,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.setAttribute(CommonConst.ERROR_MSG_LIST, Collections.singletonList(\"ログインしてください。\"))",
+    "guards": [
+      "NOT (currentStaff(session) != null)",
+      "NOT (value instanceof LoginInfoBean && ((LoginInfoBean) value).isログイン可否())"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "requireStaff",
+    "evidence": [
+      {
+        "line": 76,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.removeAttribute(STAFF_CONTEXT_KEY)",
+    "guards": [
+      "NOT (currentStaff(session) != null)"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "requireStaff",
+    "evidence": [
+      {
+        "line": 77,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.removeAttribute(CSRF_TOKEN_KEY)",
+    "guards": [
+      "NOT (currentStaff(session) != null)"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "setViewBean",
+    "evidence": [
+      {
+        "line": 38,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.setAttribute(CommonConst.SS_JSP_BEAN, bean)",
+    "guards": [],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "currentStaff",
+    "evidence": [
+      {
+        "line": 46,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "Object value = session.getAttribute(STAFF_CONTEXT_KEY)",
+    "guards": [],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "ensureCsrfToken",
+    "evidence": [
+      {
+        "line": 82,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "Object current = session.getAttribute(CSRF_TOKEN_KEY)",
+    "guards": [],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "ensureCsrfToken",
+    "evidence": [
+      {
+        "line": 85,
+        "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      }
+    ],
+    "expression": "session.setAttribute(CSRF_TOKEN_KEY, token)",
+    "guards": [
+      "NOT (current instanceof String && ((String) current).length() > 0)"
+    ],
+    "kind": "session",
+    "operation": "read",
+    "store": "職員情報等（セッション）"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 185,
+        "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "店名テーブル"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 207,
+        "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "DB2.Ｕ職員名簿表"
+  },
+  {
+    "event": "literal_sql",
+    "evidence": [
+      {
+        "line": 291,
+        "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "R",
+    "store": "店名テーブル"
+  },
+  {
+    "event": "getBranch@184",
+    "event_label": "getBranch",
+    "evidence": [
+      {
+        "line": 185,
+        "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "read",
+    "store": "店名テーブル",
+    "store_id": "DB-81d667afce"
+  },
+  {
+    "event": "getStaff@206",
+    "event_label": "getStaff",
+    "evidence": [
+      {
+        "line": 207,
+        "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "read",
+    "store": "DB2.Ｕ職員名簿表",
+    "store_id": "DB-604eca488b"
+  },
+  {
+    "event": "loadBranchNames@289",
+    "event_label": "loadBranchNames",
+    "evidence": [
+      {
+        "line": 291,
+        "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java"
+      }
+    ],
+    "kind": "database",
+    "operation": "read",
+    "store": "店名テーブル",
+    "store_id": "DB-81d667afce"
+  }
+]

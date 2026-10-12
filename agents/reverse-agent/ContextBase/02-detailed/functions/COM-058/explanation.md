@@ -1,0 +1,1 @@
+SessionAgent セッション単位生成されるエージェント 修正履歴：2005/10/21 NEC Soft, Ltd. 「FormCraft Pro. for Web」から「Form Managの入力・表示・要求処理を行う。

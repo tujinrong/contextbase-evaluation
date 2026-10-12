@@ -1,0 +1,82 @@
+Option Strict On
+Imports System
+Imports System.Collections.Generic
+
+' Generated from the fixed event specification contract; external I/O is mocked.
+Public Class RebuiltEvents
+    Public M As SpecialModel
+    Public Active As Boolean
+    Public Mode As String
+    Public Minus As Boolean
+    Public Selected As Boolean
+    Public PriceEnabled As Boolean = False
+    Public MaxLength As Integer = 4
+    Public Style As String = "initial"
+    Public Sub New(model As SpecialModel, activeValue As Boolean, modeValue As String, minusValue As Boolean, selectedValue As Boolean)
+        M=model : Active=activeValue : Mode=modeValue : Minus=minusValue : Selected=selectedValue
+    End Sub
+    Public Sub Dispatch(eventName As String)
+        If Array.IndexOf(New String() {@GUARDED@},eventName)>=0 AndAlso Not Active Then Return
+        Select Case eventName
+            Case "rate"
+                EventPorts.SourceUpdates+=1
+                M.Discounts=RebuiltRules.Discount(CInt(M.ReducePercent),M.FixedPrice)
+                Reprice()
+            Case "discount"
+                EventPorts.SourceUpdates+=1
+                Reprice()
+            Case "calculate"
+                M.SeikyuPrice=RebuiltRules.Amount(M.SeikyuTanka,M.SendCopies)
+            Case "minus"
+                M.SendCopies=If(Minus,@MINUS_QUANTITY@,@PLUS_QUANTITY@)
+                MaxLength=If(Minus,@MINUS_LENGTH@,@PLUS_LENGTH@)
+                Style=If(Minus,"@MINUS_STYLE@","@PLUS_STYLE@")
+                M.SeikyuPrice=RebuiltRules.Amount(M.SeikyuTanka,M.SendCopies)
+            Case "book"
+                PriceEnabled=Selected
+                If M.BookCd="" Then
+                    M.BookCd="" : M.UriageKbn=Nothing : M.FixedPrice=0 : M.ReducePercent=0
+                    M.Discounts=0 : M.SeikyuTanka=0 : M.SeikyuPrice=0
+                    M.SendCopies=If(Minus,@MINUS_QUANTITY@,@PLUS_QUANTITY@)
+                    PriceEnabled=False
+                Else
+                    If Mode="ADD" Then
+                        M.SendCopies=If(Minus,@MINUS_QUANTITY@,@PLUS_QUANTITY@)
+                        PriceEnabled=True
+                    End If
+                    ReadPrice()
+                End If
+            Case "price"
+                ReadPrice()
+            Case "postal"
+                EventPorts.SourceUpdates+=1
+                Dim leftValue=If(M.SagawaPostalno1,"").Trim(), rightValue=If(M.SagawaPostalno3,"").Trim()
+                If leftValue.Length=@POSTAL_LEFT@ AndAlso rightValue.Length=@POSTAL_RIGHT@ Then
+                    Dim address=EventPorts.ReadPostal(leftValue,rightValue)
+                    If address<>"" Then M.SagawaAddress=address
+                End If
+            Case Else
+                Throw New ArgumentOutOfRangeException(NameOf(eventName))
+        End Select
+    End Sub
+    Private Sub Reprice()
+        M.SeikyuTanka=RebuiltRules.UnitPrice(M.FixedPrice,M.Discounts)
+        M.SeikyuPrice=RebuiltRules.Amount(M.SeikyuTanka,M.SendCopies)
+    End Sub
+    Private Sub ReadPrice()
+        Dim row=EventPorts.PriceRow("conditional",M.BookCd,M.CustomerKbn,M.DeliveryKbn)
+        Dim conditional=row IsNot Nothing
+        If row Is Nothing Then row=EventPorts.PriceRow("base",M.BookCd,M.CustomerKbn,M.DeliveryKbn)
+        Dim sale As Short?=Nothing, priceValue=0, discountValue=0, rateValue=0
+        If row IsNot Nothing Then
+            sale=CShort(row("sell_kbn"))
+            priceValue=CInt(row("fixedprice"))
+            If conditional Then
+                discountValue=CInt(row("discount"))
+                rateValue=CInt(row("reducepercent"))
+            End If
+        End If
+        M.UriageKbn=sale : M.FixedPrice=priceValue : M.Discounts=discountValue : M.ReducePercent=rateValue
+        Reprice()
+    End Sub
+End Class

@@ -1,0 +1,2216 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; file:; img-src &#x27;self&#x27; data: file:; font-src &#x27;self&#x27; file:; connect-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;"><meta name="docsite-source-sha256" content="84a0f87dfaa2ea892e1aad89a9bb275d864d9c4b76704f453f219c82bf6e8867"><title>ログイン処理</title><style>:root{color-scheme:light;--ink:#203043;--muted:#5d6c7b;--line:#dde4eb;--accent:#196786;--paper:#fff;--background:#f3f6f8}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:80px}body{margin:0;font-family:system-ui,-apple-system,"Yu Gothic UI","Meiryo",sans-serif;background:var(--background);color:var(--ink);font-size:15px;line-height:1.85}.topbar{height:64px;position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:0 30px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.97)}.brand{font-size:14px;letter-spacing:.1em;font-weight:750;text-decoration:none;color:var(--ink)}.brand span{margin-left:14px;letter-spacing:0;color:var(--muted);font-weight:500}.topbar nav{display:flex;gap:22px;font-size:13px}.topbar a{color:var(--accent)}.page-shell{max-width:1660px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:28px;padding:30px}.toc{position:sticky;top:94px;align-self:start;max-height:calc(100vh - 118px);overflow:auto;font-size:12px;padding-right:12px}.toc-heading{font-weight:700;padding-bottom:12px;border-bottom:1px solid var(--line)}.toc ol{list-style:none;padding:0;margin:12px 0}.toc li{margin:8px 0}.toc .level-3{padding-left:12px;font-size:11px}.toc a{color:var(--muted);text-decoration:none}.toc a:hover{color:var(--accent)}.document{min-width:0;background:var(--paper);padding:36px 42px;border:1px solid var(--line);border-radius:10px}.doc-body{overflow-wrap:anywhere}.doc-body>h1{font-size:27px;line-height:1.5;margin:0 0 24px;letter-spacing:.01em}.doc-body>h2{font-size:22px;margin:48px 0 20px;padding-bottom:10px;border-bottom:2px solid var(--line)}.doc-body>h3{font-size:18px;margin:32px 0 16px}.doc-body h4{font-size:16px}.doc-body a{color:var(--accent);text-underline-offset:3px}.doc-body p{margin:14px 0}.doc-body li{margin:7px 0}.doc-body li>p{margin:5px 0}.doc-body blockquote{margin:20px 0;padding:12px 20px;border-left:4px solid #c59e4a;background:#fcf8ed;color:#5d523e}.doc-body blockquote p{margin:0}.doc-body :not(.screen-layout) code{font-family:ui-monospace,"Cascadia Code",Consolas,monospace;font-size:.88em}.doc-body :not(pre)>code{padding:2px 5px;background:#edf2f6;border-radius:3px}.doc-body pre{white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;padding:18px;background:#f4f7fa;border:1px solid var(--line);border-radius:6px;line-height:1.55}.table-scroll{width:100%;max-width:100%;overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:6px}.table-scroll table{border-collapse:collapse;width:100%;font-size:13px}.table-scroll th{background:#eef3f7;text-align:left;font-weight:650;white-space:normal}.table-scroll th,.table-scroll td{border-bottom:1px solid var(--line);padding:10px 12px;vertical-align:top;min-width:72px;max-width:600px}.table-scroll tbody tr:nth-child(even){background:#fafcfd}.table-scroll tr:last-child td{border-bottom:0}.diagram{margin:22px 0;padding:12px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow-x:auto;max-width:100%}.diagram .mermaid{display:block;background:#fff;border:0;padding:0;min-height:30px;margin:0}.diagram svg{height:auto;display:block;margin:0 auto;max-width:100%}.diagram-source{font-size:12px;color:var(--muted);margin-top:10px}.diagram-source pre{margin:8px 0}.diagram-error{color:#a52626;background:#fff2f2;padding:8px}.screen-layout{margin:24px 0;border:1px solid var(--line);border-radius:8px;max-width:100%;overflow:auto;isolation:isolate}.screen-layout .layout-root{max-width:100%;min-width:0}.screen-layout .field{min-width:0}.screen-layout input,.screen-layout select{max-width:100%}.screen-layout label{overflow-wrap:anywhere}.screen-layout small{overflow-wrap:anywhere}.doc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.doc-card{display:flex;flex-direction:column;gap:6px;padding:18px;border:1px solid var(--line);border-radius:6px;text-decoration:none}.doc-card:hover{background:#f5f9fb}.doc-card span{font-size:11px;color:var(--muted);font-weight:500}.doc-card strong{font-size:14px}.lead{color:var(--muted)}footer{margin-top:50px;border-top:1px solid var(--line);padding-top:16px;font-size:11px;color:var(--muted)}@media(max-width:1100px){.page-shell{grid-template-columns:190px minmax(0,1fr);gap:18px;padding:20px}.document{padding:28px}.screen-layout .fields{grid-template-columns:1fr}}@media(max-width:800px){.topbar{padding:0 16px}.brand span{display:none}.page-shell{display:block;padding:12px}.toc{position:static;max-height:220px;margin-bottom:16px;padding:12px;border:1px solid var(--line);border-radius:6px}.document{padding:22px 18px}.doc-body>h1{font-size:23px}.doc-grid{grid-template-columns:1fr}.screen-layout .field{grid-template-columns:1fr}.screen-layout small{grid-column:1}}@media print{body{background:white;font-size:10pt}.topbar,.toc,footer,.diagram-source{display:none}.page-shell{display:block;max-width:none;padding:0}.document{border:0;padding:0}.doc-body>h2{break-after:avoid}.table-scroll{overflow:visible}.diagram{break-inside:avoid}.screen-layout{break-inside:auto}a{color:inherit!important;text-decoration:none}}
+
+.page-shell.no-toc{display:block;max-width:1240px}
+
+.doc-body img{display:block;max-width:100%;height:auto;margin:12px 0}
+</style></head><body><header class="topbar"><a class="brand" href="../index.html">CONTEXTBASE <span>仕様書</span></a><nav><a href="../index.html">文書一覧</a><a href="../../md/%E5%85%B1%E9%80%9A/%E5%85%B1%E9%80%9A%E4%BB%95%E6%A7%98%E6%9B%B8_COM-015_%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3%E5%87%A6%E7%90%86.md">MD原本</a></nav></header><div class="page-shell"><aside class="toc"><div class="toc-heading">この文書の内容</div><ol><li class="level-2"><a href="#表紙">表紙</a></li><li class="level-2"><a href="#概要">概要</a></li><li class="level-3"><a href="#概要説明">概要説明</a></li><li class="level-2"><a href="#項目一覧">項目一覧</a></li><li class="level-2"><a href="#イベント仕様">イベント仕様</a></li><li class="level-3"><a href="#ログイン処理-1">ログイン処理</a></li><li class="level-3"><a href="#db関連処理">DB関連処理</a></li><li class="level-2"><a href="#補足説明">補足説明</a></li><li class="level-3"><a href="#適用条件">適用条件</a></li><li class="level-3"><a href="#処理条件の原本対応">処理・条件の原本対応</a></li></ol></aside><main class="document"><article class="doc-body"><h1 id="ログイン処理">ログイン処理</h1>
+<h2 id="表紙">表紙</h2>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文書名</td>
+<td>基本設計書</td>
+</tr>
+<tr>
+<td>システム名</td>
+<td></td>
+</tr>
+<tr>
+<td>機能ID</td>
+<td>COM-015</td>
+</tr>
+<tr>
+<td>画面名</td>
+<td>ログイン処理</td>
+</tr>
+<tr>
+<td>会社名</td>
+<td></td>
+</tr>
+<tr>
+<td>作成日</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="概要">概要</h2>
+<h3 id="概要説明">概要説明</h3>
+<p>ログイン処理の入力・表示・要求処理を行う。</p>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象種別</td>
+<td>common</td>
+</tr>
+<tr>
+<td>開始契機</td>
+<td>呼出元からの要求</td>
+</tr>
+<tr>
+<td>処理対象</td>
+<td>DB2.Ｕ職員名簿表、DB2.Ｕ職員所属課係一覧表、DB2.ＵＪＶ役職コード表、DB2.ＵＷＥＢログイン情報表、N2_DWH.Ｊ事業所コード表２、職員情報等（セッション）</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="項目一覧">項目一覧</h2>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>グループ</th>
+<th>項目名</th>
+<th>種類</th>
+<th>入出力</th>
+<th>DB連携項目</th>
+<th>候補取得元</th>
+<th>必須</th>
+<th>形式・桁</th>
+<th>説明</th>
+</tr>
+</thead>
+</table></div>
+<p>項目定義数：0項目。表示順と反復行の定義数を区別する。</p>
+<h2 id="イベント仕様">イベント仕様</h2>
+<h3 id="ログイン処理-1">ログイン処理</h3>
+<h4 id="処理概要">処理概要</h4>
+<p>ログイン処理で「ログイン処理」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順">処理手順</h4>
+<ol>
+<li>
+<p>関連情報を取得・設定する（処理137：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理138：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理139：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理140：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理141：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理142：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理143：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理144：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理145：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理146：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理147：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理148：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理149：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理150：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理151：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理152：詳細仕様参照）。</p>
+</li>
+<li>
+<p>「対象項目がある、または対象項目がある、または対象項目がある」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+</li>
+</ol>
+<p>17.1. 条件成立時：「条件153を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>17.1.1. 条件成立時：関連情報を取得・設定する（処理154：詳細仕様参照）。</p>
+<p>17.1.2. 条件成立時：関連情報を取得・設定する（処理155：詳細仕様参照）。</p>
+<p>17.1.3. 条件成立時：関連情報を取得・設定する（処理156：詳細仕様参照）。</p>
+<p>17.1-別.1. 条件不成立時：getユーザを実行する。</p>
+<p>17.1-別.2. 条件不成立時：getパスワードを実行する。</p>
+<p>17.1-別.3. 条件不成立時：getアプリケーション名を実行する。</p>
+<p>17.2. 条件成立時：「対象項目がある」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>17.2.1. 条件成立時：関連情報を取得・設定する（処理157：詳細仕様参照）。</p>
+<p>17.2.2. 条件成立時：関連情報を取得・設定する（処理158：詳細仕様参照）。</p>
+<p>17.2.3. 条件成立時：「(wk_CustNr  が等しい  未設定 &amp;&amp; wk_Br  が等しい  未設定)、または(「対象項目」 &amp;&amp; 「対象項目」)」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>17.2.3.1. 条件成立時：関連情報を取得・設定する（処理159：詳細仕様参照）。</p>
+<p>17.2.3-別.1. 条件不成立時：関連情報を取得・設定する（処理160：詳細仕様参照）。</p>
+<p>17.2.4. 条件成立時：「ＵＮＩＦＹフラグ」を設定する。</p>
+<p>17-別.1. 条件不成立時：関連情報を取得・設定する（処理161：詳細仕様参照）。</p>
+<p>17-別.2. 条件不成立時：関連情報を取得・設定する（処理162：詳細仕様参照）。</p>
+<p>17-別.3. 条件不成立時：関連情報を取得・設定する（処理163：詳細仕様参照）。</p>
+<p>17-別.4. 条件不成立時：関連情報を取得・設定する（処理164：詳細仕様参照）。</p>
+<p>17-別.5. 条件不成立時：関連情報を取得・設定する（処理165：詳細仕様参照）。</p>
+<p>17-別.6. 条件不成立時：関連情報を取得・設定する（処理166：詳細仕様参照）。</p>
+<ol start="18">
+<li>
+<p>関連情報を取得・設定する（処理167：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理168：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理169：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理170：詳細仕様参照）。</p>
+</li>
+<li>
+<p>「条件171を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+</li>
+</ol>
+<p>22.1. 条件成立時：関連情報を取得・設定する（処理172：詳細仕様参照）。</p>
+<p>22.2. 条件成立時：関連情報を取得・設定する（処理173：詳細仕様参照）。</p>
+<p>22-別.1. 条件不成立時：「条件174を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>22-別.1.1. 条件成立時：関連情報を取得・設定する（処理175：詳細仕様参照）。</p>
+<p>22-別.1.2. 条件成立時：関連情報を取得・設定する（処理176：詳細仕様参照）。</p>
+<p>22-別.1-別.1. 条件不成立時：「条件177を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>22-別.1-別.1.1. 条件成立時：関連情報を取得・設定する（処理178：詳細仕様参照）。</p>
+<p>22-別.1-別.1.2. 条件成立時：関連情報を取得・設定する（処理179：詳細仕様参照）。</p>
+<p>22-別.1-別.1-別.1. 条件不成立時：「条件180を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>22-別.1-別.1-別.1.1. 条件成立時：関連情報を取得・設定する（処理181：詳細仕様参照）。</p>
+<p>22-別.1-別.1-別.1.2. 条件成立時：関連情報を取得・設定する（処理182：詳細仕様参照）。</p>
+<p>22-別.1-別.1-別.1-別.1. 条件不成立時：「条件183を満たす（原本条件は補足説明を参照）、または条件184を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>22-別.1-別.1-別.1-別.1.1. 条件成立時：「対象項目がある、または対象項目がある、または対象項目がある」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>22-別.1-別.1-別.1-別.1.1.1. 条件成立時：関連情報を取得・設定する（処理185：詳細仕様参照）。</p>
+<p>22-別.1-別.1-別.1-別.1.1.2. 条件成立時：関連情報を取得・設定する（処理186：詳細仕様参照）。</p>
+<p>22-別.1-別.1-別.1-別.1.1.3. 条件成立時：関連情報を取得・設定する（処理187：詳細仕様参照）。</p>
+<p>22-別.1-別.1-別.1-別.1.1-別.1. 条件不成立時：関連情報を取得・設定する（処理188：詳細仕様参照）。</p>
+<p>22-別.1-別.1-別.1-別.1.1-別.2. 条件不成立時：関連情報を取得・設定する（処理189：詳細仕様参照）。</p>
+<p>22-別.1-別.1-別.1-別.1-別.1. 条件不成立時：「条件190を満たす（原本条件は補足説明を参照）」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>22-別.1-別.1-別.1-別.1-別.1.1. 条件成立時：関連情報を取得・設定する（処理191：詳細仕様参照）。</p>
+<p>22-別.1-別.1-別.1-別.1-別.1.2. 条件成立時：関連情報を取得・設定する（処理192：詳細仕様参照）。</p>
+<ol start="23">
+<li>「(sUser が等しい 未設定)、または条件193を満たす（原本条件は補足説明を参照）、または(sPass が等しい 未設定)、または条件194を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</li>
+</ol>
+<p>23.1. 条件成立時：関連情報を取得・設定する（処理195：詳細仕様参照）。</p>
+<p>23.2. 条件成立時：「ユーザ名・パスワードを入力してください。」を設定する。</p>
+<p>23-別.1. 条件不成立時：「(applName が等しい 未設定)、または条件196を満たす（原本条件は補足説明を参照）、または(dwhUserId が等しい 未設定)、または条件197を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>23-別.1.1. 条件成立時：関連情報を取得・設定する（処理198：詳細仕様参照）。</p>
+<p>23-別.1.2. 条件成立時：「ログインに失敗しました。」を設定する。</p>
+<p>23-別.1-別.1. 条件不成立時：関連情報を取得・設定する（処理199：詳細仕様参照）。</p>
+<p>23-別.1-別.2. 条件不成立時：通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+<p>23-別.1-別.2.1. 通常処理：関連情報を取得・設定する（処理200：詳細仕様参照）。</p>
+<p>23-別.1-別.2.2. 通常処理：「条件201を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>23-別.1-別.2.2.1. 条件成立時：「条件202を満たす（原本条件は補足説明を参照）、または対象項目がある」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>23-別.1-別.2.2.1.1. 条件成立時：通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+<p>23-別.1-別.2.2.1.1.1. 通常処理：指定した条件でデータを照会する（照会結果3）。</p>
+<p>23-別.1-別.2.2.1.1.2. 通常処理：関連情報を取得・設定する（処理203：詳細仕様参照）。</p>
+<p>23-別.1-別.2.2.1.1.3. 通常処理：select職員名簿表を実行する。</p>
+<p>23-別.1-別.2.2.1.1.4. 通常処理：関連情報を取得・設定する（処理204：詳細仕様参照）。</p>
+<p>23-別.1-別.2.2.1.1-例外1. 例外条件「NumberFormatException e2」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<p>23-別.1-別.2.2.1.1-例外1.1. 例外発生時：関連情報を取得・設定する（処理205：詳細仕様参照）。</p>
+<p>23-別.1-別.2.2.2. 条件成立時：関連情報を取得・設定する（処理206：詳細仕様参照）。</p>
+<p>23-別.1-別.2.2.3. 条件成立時：「債権書類権限」を設定する。</p>
+<p>23-別.1-別.2.2-別.1. 条件不成立時：指定した条件でデータを照会する（照会結果3）。</p>
+<p>23-別.1-別.2.2-別.2. 条件不成立時：selectＷＥＢログイン情報表を実行する。</p>
+<p>23-別.1-別.2.2-別.3. 条件不成立時：関連情報を取得・設定する（処理207：詳細仕様参照）。</p>
+<p>23-別.1-別.2.2-別.4. 条件不成立時：「対象項目がない、または「対象項目」」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>23-別.1-別.2.2-別.4.1. 条件成立時：関連情報を取得・設定する（処理208：詳細仕様参照）。</p>
+<p>23-別.1-別.2.2-別.4.2. 条件成立時：「ログインに失敗しました。ユーザ名・パスワードを確認してください。」を設定する。</p>
+<p>23-別.1-別.2.2-別.4-別.1. 条件不成立時：通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+<p>23-別.1-別.2.2-別.4-別.1.1. 通常処理：「条件209を満たす（原本条件は補足説明を参照）」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>23-別.1-別.2.2-別.4-別.1.1.1. 条件成立時：「ログイン可否」を設定する。</p>
+<p>23-別.1-別.2.2-別.4-別.1.1.2. 条件成立時：「アプリケーション名」を設定する。</p>
+<p>23-別.1-別.2.2-別.4-別.1.1.3. 条件成立時：「遷移元アプリケーション名」を設定する。</p>
+<p>23-別.1-別.2.2-別.4-別.1.1.4. 条件成立時：「職員番号」を設定する。</p>
+<p>23-別.1-別.2.2-別.4-別.1.1.5. 条件成立時：「性別コード」を設定する。</p>
+<p>23-別.1-別.2.2-別.4-別.1.1.6. 条件成立時：「職員氏名」を設定する。</p>
+<p>23-別.1-別.2.2-別.4-別.1.1.7. 条件成立時：「職員カナ氏名」を設定する。</p>
+<p>23-別.1-別.2.2-別.4-別.1.1.8. 条件成立時：「所属店番」を設定する。</p>
+<p>23-別.1-別.2.2-別.4-別.1.1.9. 条件成立時：「詳細部室店コード」を設定する。</p>
+<p>23-別.1-別.2.2-別.4-別.1.1.10. 条件成立時：「詳細部室店枝番」を設定する。</p>
+<p>23-別.1-別.2.2-別.4-別.1.1.11. 条件成立時：「所属店名」を設定する。</p>
+<p>23-別.1-別.2.2-別.4-別.1.1.12. 条件成立時：「対象項目」を設定する。</p>
+<p>23-別.1-別.2.2-別.4-別.1.1.13. 条件成立時：終了時の共通後処理を行ってから、処理結果を呼出元へ返す。この経路の後続手順は実行しない。</p>
+<p>23-別.1-別.2.2-別.4-別.1.2. 通常処理：関連情報を取得・設定する（処理210：詳細仕様参照）。</p>
+<p>23-別.1-別.2.2-別.4-別.1.3. 通常処理：select職員名簿表を実行する。</p>
+<p>23-別.1-別.2.2-別.4-別.1.4. 通常処理：関連情報を取得・設定する（処理211：詳細仕様参照）。</p>
+<p>23-別.1-別.2.2-別.4-別.1-例外1. 例外条件「NumberFormatException e2」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<p>23-別.1-別.2.2-別.4-別.1-例外1.1. 例外発生時：関連情報を取得・設定する（処理212：詳細仕様参照）。</p>
+<p>23-別.1-別.2.2-別.4-別.2. 条件不成立時：関連情報を取得・設定する（処理213：詳細仕様参照）。</p>
+<p>23-別.1-別.2-例外1. 例外条件「Exception e」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<p>23-別.1-別.2-例外1.1. 例外発生時：終了時の共通後処理を行ってから、処理の異常を通知し、この経路を終了する。この経路の後続手順は実行しない。</p>
+<p>23-別.1-別.2-後処理. 通常終了・例外・途中のreturnのいずれでも、この範囲を抜ける前に次の共通後処理を行う。</p>
+<p>23-別.1-別.2-後処理.1. 終了時の共通後処理：通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+<p>23-別.1-別.2-後処理.1.1. 通常処理：「対象項目がある」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>23-別.1-別.2-後処理.1.1.1. 条件成立時：使用した接続・処理資源を解放する。</p>
+<p>23-別.1-別.2-後処理.1.2. 通常処理：関連情報を取得・設定する（処理214：詳細仕様参照）。</p>
+<p>23-別.1-別.2-後処理.1-例外1. 例外条件「SQLException e1」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<p>23-別.1-別.2-後処理.1-例外1.1. 例外発生時：関連情報を取得・設定する（処理215：詳細仕様参照）。</p>
+<ol start="24">
+<li>
+<p>「ログイン可否」を設定する。</p>
+</li>
+<li>
+<p>「アプリケーション名」を設定する。</p>
+</li>
+<li>
+<p>「(dwhUserId が等しい 未設定)、または条件216を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+</li>
+</ol>
+<p>26.1. 条件成立時：「職員番号」を設定する。</p>
+<p>26-別.1. 条件不成立時：「職員番号」を設定する。</p>
+<ol start="27">
+<li>「条件217を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</li>
+</ol>
+<p>27.1. 条件成立時：関連情報を取得・設定する（処理218：詳細仕様参照）。</p>
+<p>27.2. 条件成立時：関連情報を取得・設定する（処理219：詳細仕様参照）。</p>
+<p>27.3. 条件成立時：関連情報を取得・設定する（処理220：詳細仕様参照）。</p>
+<p>27.4. 条件成立時：関連情報を取得・設定する（処理221：詳細仕様参照）。</p>
+<p>27.5. 条件成立時：関連情報を取得・設定する（処理222：詳細仕様参照）。</p>
+<p>27.6. 条件成立時：関連情報を取得・設定する（処理223：詳細仕様参照）。</p>
+<p>27.7. 条件成立時：「未設定  が異なる  from_applName、かつ""  が異なる  from_applName」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>27.7.1. 条件成立時：「遷移元アプリケーション名」を設定する。</p>
+<p>27.8. 条件成立時：「対象項目がある、かつ!「対象項目」」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.8.1. 条件成立時：関連情報を取得・設定する（処理224：詳細仕様参照）。</p>
+<p>27.8.2. 条件成立時：「所属店番」を設定する。</p>
+<p>27.8.3. 条件成立時：関連情報を取得・設定する（処理225：詳細仕様参照）。</p>
+<p>27.8.4. 条件成立時：関連情報を取得・設定する（処理226：詳細仕様参照）。</p>
+<p>27.8.5. 条件成立時：「条件227を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.8.5.1. 条件成立時：「所属店番」を設定する。</p>
+<p>27.8.5-別.1. 条件不成立時：「所属店番」を設定する。</p>
+<p>27.8.6. 条件成立時：「詳細部室店コード」を設定する。</p>
+<p>27.8.7. 条件成立時：「詳細部室店枝番」を設定する。</p>
+<p>27.8.8. 条件成立時：「職員氏名」を設定する。</p>
+<p>27.8.9. 条件成立時：「職員カナ氏名」を設定する。</p>
+<p>27.8.10. 条件成立時：「性別コード」を設定する。</p>
+<p>27.8.11. 条件成立時：「役職コード」を設定する。</p>
+<p>27.8.12. 条件成立時：「Integer.parseInt(syozokuTenban) が等しい 65、またはInteger.parseInt(syozokuTenban) が等しい 70」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.8.12.1. 条件成立時：「システム事務統括部職員」を設定する。</p>
+<p>27.8.12-別.1. 条件不成立時：「システム事務統括部職員」を設定する。</p>
+<p>27.8-別.1. 条件不成立時：「所属店番」を設定する。</p>
+<p>27.8-別.2. 条件不成立時：「詳細部室店コード」を設定する。</p>
+<p>27.8-別.3. 条件不成立時：「詳細部室店枝番」を設定する。</p>
+<p>27.8-別.4. 条件不成立時：「職員氏名」を設定する。</p>
+<p>27.8-別.5. 条件不成立時：「性別コード」を設定する。</p>
+<p>27.8-別.6. 条件不成立時：関連情報を取得・設定する（処理228：詳細仕様参照）。</p>
+<p>27.8-別.7. 条件不成立時：「システム事務統括部職員」を設定する。</p>
+<p>27.9. 条件成立時：「役職コード」を設定する。</p>
+<p>27.10. 条件成立時：「対象項目がある、かつ条件229を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.10.1. 条件成立時：関連情報を取得・設定する（処理230：詳細仕様参照）。</p>
+<p>27.10.2. 条件成立時：通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+<p>27.10.2.1. 通常処理：関連情報を取得・設定する（処理231：詳細仕様参照）。</p>
+<p>27.10.2.2. 通常処理：関連情報を取得・設定する（処理232：詳細仕様参照）。</p>
+<p>27.10.2.3. 通常処理：関連情報を取得・設定する（処理233：詳細仕様参照）。</p>
+<p>27.10.2.4. 通常処理：関連情報を取得・設定する（処理234：詳細仕様参照）。</p>
+<p>27.10.2.5. 通常処理：「対象項目がある、かつ!「対象項目」」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.10.2.5.1. 条件成立時：関連情報を取得・設定する（処理235：詳細仕様参照）。</p>
+<p>27.10.2.5.2. 条件成立時：「所属店名」を設定する。</p>
+<p>27.10.2.5-別.1. 条件不成立時：「所属店名」を設定する。</p>
+<p>27.10.2-例外1. 例外条件「Exception e」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<p>27.10.2-例外1.1. 例外発生時：終了時の共通後処理を行ってから、処理の異常を通知し、この経路を終了する。この経路の後続手順は実行しない。</p>
+<p>27.10.2-後処理. 通常終了・例外・途中のreturnのいずれでも、この範囲を抜ける前に次の共通後処理を行う。</p>
+<p>27.10.2-後処理.1. 終了時の共通後処理：通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+<p>27.10.2-後処理.1.1. 通常処理：「対象項目がある」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>27.10.2-後処理.1.1.1. 条件成立時：使用した接続・処理資源を解放する。</p>
+<p>27.10.2-後処理.1.2. 通常処理：関連情報を取得・設定する（処理236：詳細仕様参照）。</p>
+<p>27.10.2-後処理.1-例外1. 例外条件「SQLException e1」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<p>27.10.2-後処理.1-例外1.1. 例外発生時：関連情報を取得・設定する（処理237：詳細仕様参照）。</p>
+<p>27.10-別.1. 条件不成立時：「所属店名」を設定する。</p>
+<p>27.11. 条件成立時：関連情報を取得・設定する（処理238：詳細仕様参照）。</p>
+<p>27.12. 条件成立時：関連情報を取得・設定する（処理239：詳細仕様参照）。</p>
+<p>27.13. 条件成立時：関連情報を取得・設定する（処理240：詳細仕様参照）。</p>
+<p>27.14. 条件成立時：通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+<p>27.14.1. 通常処理：関連情報を取得・設定する（処理241：詳細仕様参照）。</p>
+<p>27.14.2. 通常処理：指定した条件でデータを照会する（照会結果3）。</p>
+<p>27.14.3. 通常処理：「対象項目がある、かつ条件242を満たす（原本条件は補足説明を参照）、かつ条件243を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.14.3.1. 条件成立時：select役職コード表を実行する。</p>
+<p>27.14.3.2. 条件成立時：関連情報を取得・設定する（処理244：詳細仕様参照）。</p>
+<p>27.14.3.3. 条件成立時：「対象項目がある、かつ!「対象項目」」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.14.3.3.1. 条件成立時：関連情報を取得・設定する（処理245：詳細仕様参照）。</p>
+<p>27.14.3.3.2. 条件成立時：「役職名」を設定する。</p>
+<p>27.14.3.3.3. 条件成立時：「役職」を設定する。</p>
+<p>27.14.3.3-別.1. 条件不成立時：「役職名」を設定する。</p>
+<p>27.14.3.3-別.2. 条件不成立時：「該当なし」を設定する。</p>
+<p>27.14.3-別.1. 条件不成立時：「役職名」を設定する。</p>
+<p>27.14.3-別.2. 条件不成立時：「該当なし」を設定する。</p>
+<p>27.14.4. 通常処理：通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+<p>27.14.4.1. 通常処理：関連情報を取得・設定する（処理246：詳細仕様参照）。</p>
+<p>27.14.4.2. 通常処理：select職員所属課係一覧表を実行する。</p>
+<p>27.14.4.3. 通常処理：関連情報を取得・設定する（処理247：詳細仕様参照）。</p>
+<p>27.14.4-例外1. 例外条件「NumberFormatException e2」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<p>27.14.4-例外1.1. 例外発生時：関連情報を取得・設定する（処理248：詳細仕様参照）。</p>
+<p>27.14.5. 通常処理：「対象項目がある、かつ!「対象項目」」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.14.5.1. 条件成立時：関連情報を取得・設定する（処理249：詳細仕様参照）。</p>
+<p>27.14.5.2. 条件成立時：「所属課係コード」を設定する。</p>
+<p>27.14.5.3. 条件成立時：「所属課係コード」を設定する。</p>
+<p>27.14.5.4. 条件成立時：「CommonConverter.convertInt(code)  が等しい  10」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.14.5.4.1. 条件成立時：「所属課係名」を設定する。</p>
+<p>27.14.5.4-別.1. 条件不成立時：「CommonConverter.convertInt(code)  が等しい  100」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.14.5.4-別.1.1. 条件成立時：「所属課係名」を設定する。</p>
+<p>27.14.5.4-別.1-別.1. 条件不成立時：「CommonConverter.convertInt(code)  が等しい  600」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.14.5.4-別.1-別.1.1. 条件成立時：「所属課係名」を設定する。</p>
+<p>27.14.5.4-別.1-別.1-別.1. 条件不成立時：「所属課係名」を設定する。</p>
+<p>27.14.5-別.1. 条件不成立時：「所属課係コード」を設定する。</p>
+<p>27.14.5-別.2. 条件不成立時：「所属課係名」を設定する。</p>
+<p>27.14-例外1. 例外条件「Exception e」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<p>27.14-例外1.1. 例外発生時：終了時の共通後処理を行ってから、処理の異常を通知し、この経路を終了する。この経路の後続手順は実行しない。</p>
+<p>27.14-後処理. 通常終了・例外・途中のreturnのいずれでも、この範囲を抜ける前に次の共通後処理を行う。</p>
+<p>27.14-後処理.1. 終了時の共通後処理：通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+<p>27.14-後処理.1.1. 通常処理：「対象項目がある」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>27.14-後処理.1.1.1. 条件成立時：使用した接続・処理資源を解放する。</p>
+<p>27.14-後処理.1.2. 通常処理：関連情報を取得・設定する（処理250：詳細仕様参照）。</p>
+<p>27.14-後処理.1-例外1. 例外条件「SQLException e1」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<p>27.14-後処理.1-例外1.1. 例外発生時：関連情報を取得・設定する（処理251：詳細仕様参照）。</p>
+<p>27.15. 条件成立時：「条件252を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.15.1. 条件成立時：関連情報を取得・設定する（処理253：詳細仕様参照）。</p>
+<p>27.15.2. 条件成立時：「融資系ユーザーＩＤ」を設定する。</p>
+<p>27.15.3. 条件成立時：「融資系ユーザー名」を設定する。</p>
+<p>27.15.4. 条件成立時：「所属店番」を設定する。</p>
+<p>27.15.5. 条件成立時：「債権書類権限」を設定する。</p>
+<p>27.15.6. 条件成立時：「決算書権限」を設定する。</p>
+<p>27.15.7. 条件成立時：「ＣＲＤ権限」を設定する。</p>
+<p>27.15.8. 条件成立時：「格付権限」を設定する。</p>
+<p>27.15.9. 条件成立時：「自己査定権限」を設定する。</p>
+<p>27.15-別.1. 条件不成立時：「条件254を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.15-別.1.1. 条件成立時：「融資系ユーザーＩＤ」を設定する。</p>
+<p>27.15-別.1.2. 条件成立時：「融資系ユーザー名」を設定する。</p>
+<p>27.15-別.1-別.1. 条件不成立時：「条件255を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.15-別.1-別.1.1. 条件成立時：「融資系ユーザーＩＤ」を設定する。</p>
+<p>27.15-別.1-別.1.2. 条件成立時：「融資系ユーザー名」を設定する。</p>
+<p>27.15-別.1-別.1.3. 条件成立時：「債権書類権限」を設定する。</p>
+<p>27.15-別.1-別.1-別.1. 条件不成立時：「融資系ユーザーＩＤ」を設定する。</p>
+<p>27.15-別.1-別.1-別.2. 条件不成立時：「融資系ユーザー名」を設定する。</p>
+<p>27.16. 条件成立時：「対象項目」を設定する。</p>
+<p>27.17. 条件成立時：「条件256を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.17.1. 条件成立時：処理結果を呼出元へ返す。この経路の後続手順は実行しない。</p>
+<p>27.17-別.1. 条件不成立時：「条件257を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.17-別.1.1. 条件成立時：「ＵＮＩＦＹフラグ」を設定する。</p>
+<p>27.17-別.1.2. 条件成立時：「条件258を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.17-別.1.2.1. 条件成立時：処理結果を呼出元へ返す。この経路の後続手順は実行しない。</p>
+<p>27.17-別.1.2-別.1. 条件不成立時：「条件259を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.17-別.1.2-別.1.1. 条件成立時：処理結果を呼出元へ返す。この経路の後続手順は実行しない。</p>
+<p>27.17-別.1.2-別.1-別.1. 条件不成立時：「条件260を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>27.17-別.1.2-別.1-別.1.1. 条件成立時：処理結果を呼出元へ返す。この経路の後続手順は実行しない。</p>
+<p>27.17-別.1.2-別.1-別.1-別.1. 条件不成立時：処理結果を呼出元へ返す。この経路の後続手順は実行しない。</p>
+<p>27.17-別.1-別.1. 条件不成立時：処理結果を呼出元へ返す。この経路の後続手順は実行しない。</p>
+<p>27-別.1. 条件不成立時：「対象項目」を設定する。</p>
+<p>27-別.2. 条件不成立時：「対象項目」を設定する。</p>
+<p>27-別.3. 条件不成立時：処理結果を呼出元へ返す。この経路の後続手順は実行しない。</p>
+<h4 id="db操作の詳細">DB操作の詳細</h4>
+<h4 id="db操作-sql-f393da844bf7">DB操作 SQL-F393DA844BF7</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-F393DA844BF7</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＷＥＢログイン情報表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>対象テーブルの対象データを読み取る。設定項目・対象条件・確定取消は以下の定義に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：アプリケーション名 = '〈applName〉' and ユーザーＩＤ = '〈userId〉' and パスワード = '〈password〉'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java:40 / selectＷＥＢログイン情報表@40</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="db操作-sql-418d30bdb59a">DB操作 SQL-418D30BDB59A</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-418D30BDB59A</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＷＥＢログイン情報表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>対象テーブルの対象データを読み取る。設定項目・対象条件・確定取消は以下の定義に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：アプリケーション名 = '〈applName〉' and ユーザーＩＤ = '〈userId〉'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java:75 / selectＷＥＢログイン情報表@75</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="db操作-sql-691f64e50533">DB操作 SQL-691F64E50533</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-691F64E50533</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.Ｕ職員名簿表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>対象テーブルの対象データを読み取る。設定項目・対象条件・確定取消は以下の定義に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：職員番号 = 〈shokuinNo〉</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java:107 / select職員名簿表@107</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="db操作-sql-8b483872ef3b">DB操作 SQL-8B483872EF3B</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-8B483872EF3B</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.Ｕ職員所属課係一覧表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>対象テーブルの対象データを読み取る。設定項目・対象条件・確定取消は以下の定義に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：職員番号 = 〈shokuinNo〉</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java:137 / select職員所属課係一覧表@137</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="db操作-sql-01b370ebe516">DB操作 SQL-01B370EBE516</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-01B370EBE516</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＪＶ役職コード表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>対象テーブルの対象データを読み取る。設定項目・対象条件・確定取消は以下の定義に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：役職コード = 〈yakusyokucode〉</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java:167 / select役職コード表@167</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="db操作-sql-adba2ff6d73f">DB操作 SQL-ADBA2FF6D73F</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-ADBA2FF6D73F</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>N2_DWH.Ｊ事業所コード表２</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>対象テーブルの対象データを読み取る。設定項目・対象条件・確定取消は以下の定義に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：店舗コード = 〈code〉 and 枝番 = 〈edaban〉</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java:39 / select@39</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="結果例外時の扱い">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NOT ((sUser が等しい 未設定) || (sUser.equals("")) || (sPass が等しい 未設定) || (sPass.equals("")))・NOT ((applName が等しい 未設定) || (applName.equals("")) || (dwhUserId が等しい 未設定) || (dwhUserId.equals("")))・条件261を満たす（原本条件は補足説明を参照）・NOT (lsWebLogin  が等しい  未設定 || 「対象項目」)・条件262を満たす（原本条件は補足説明を参照）</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+<tr>
+<td>NOT ((sUser が等しい 未設定) || (sUser.equals("")) || (sPass が等しい 未設定) || (sPass.equals("")))・NOT ((applName が等しい 未設定) || (applName.equals("")) || (dwhUserId が等しい 未設定) || (dwhUserId.equals("")))・条件263を満たす（原本条件は補足説明を参照）</td>
+<td>処理の異常を通知し、この経路を終了する</td>
+</tr>
+<tr>
+<td>条件264を満たす（原本条件は補足説明を参照）・対象項目がある、かつ条件265を満たす（原本条件は補足説明を参照）・条件266を満たす（原本条件は補足説明を参照）</td>
+<td>処理の異常を通知し、この経路を終了する</td>
+</tr>
+<tr>
+<td>条件267を満たす（原本条件は補足説明を参照）・条件268を満たす（原本条件は補足説明を参照）</td>
+<td>処理の異常を通知し、この経路を終了する</td>
+</tr>
+<tr>
+<td>条件269を満たす（原本条件は補足説明を参照）・条件270を満たす（原本条件は補足説明を参照）</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+<tr>
+<td>条件271を満たす（原本条件は補足説明を参照）・条件272を満たす（原本条件は補足説明を参照）・条件273を満たす（原本条件は補足説明を参照）・条件274を満たす（原本条件は補足説明を参照）</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+<tr>
+<td>条件275を満たす（原本条件は補足説明を参照）・条件276を満たす（原本条件は補足説明を参照）・条件277を満たす（原本条件は補足説明を参照）・条件278を満たす（原本条件は補足説明を参照）・条件279を満たす（原本条件は補足説明を参照）</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+<tr>
+<td>条件280を満たす（原本条件は補足説明を参照）・条件281を満たす（原本条件は補足説明を参照）・条件282を満たす（原本条件は補足説明を参照）・条件283を満たす（原本条件は補足説明を参照）・条件284を満たす（原本条件は補足説明を参照）・条件285を満たす（原本条件は補足説明を参照）</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+<tr>
+<td>条件286を満たす（原本条件は補足説明を参照）・条件287を満たす（原本条件は補足説明を参照）・条件288を満たす（原本条件は補足説明を参照）・条件289を満たす（原本条件は補足説明を参照）・条件290を満たす（原本条件は補足説明を参照）・条件291を満たす（原本条件は補足説明を参照）</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+<tr>
+<td>条件292を満たす（原本条件は補足説明を参照）・条件293を満たす（原本条件は補足説明を参照）・条件294を満たす（原本条件は補足説明を参照）</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+<tr>
+<td>条件295を満たす（原本条件は補足説明を参照）</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="db関連処理">DB関連処理</h3>
+<h2 id="補足説明">補足説明</h2>
+<h3 id="適用条件">適用条件</h3>
+<p>各仮定のQA番号を確認する。静的に確認できた操作・条件を適用する。</p>
+<h3 id="処理条件の原本対応">処理・条件の原本対応</h3>
+<p>文書内の条件番号・処理番号は次の原本表記に対応する。完全な業務用語への置換を行っていない箇所はQA・reportで確認する。</p>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>イベント</th>
+<th>参照番号</th>
+<th>原本条件・処理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ログイン処理</td>
+<td>条件1</td>
+<td>"3".equals(unify_flg)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件2</td>
+<td>"1".equals(unify_flg)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件3</td>
+<td>"0".equals(unify_flg)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件4</td>
+<td>"unify".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件5</td>
+<td>"credit".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理6</td>
+<td>Map mapWebLogin = (Map)lsWebLogin.get(0)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件7</td>
+<td>"ringi".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件8</td>
+<td>"cif".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件9</td>
+<td>"credit".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理10</td>
+<td>FWLog.error(e1)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理11</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理12</td>
+<td>FWLog.error(e1)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理13</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理14</td>
+<td>FWLog.error(e1)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理15</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理16</td>
+<td>Map mapSyokuinSyozoku = (Map)lsSyokuinSyozoku.get(0)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理17</td>
+<td>lsSyokuinSyozoku = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理18</td>
+<td>lsSyokuinSyozoku = base.getList()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理19</td>
+<td>Long.parseLong(dwhUserId)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理20</td>
+<td>Map mapyakusyokucode = (Map)lsYakusyokuCode.get(0)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理21</td>
+<td>lsYakusyokuCode = base.getList()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件22</td>
+<td>!"".equals(yakusyokuCode)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件23</td>
+<td>!"0".equals(yakusyokuCode)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理24</td>
+<td>con = getConnection(new InitialContext(), CommonConst.JDBC_ORACLE_SP2NM)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理25</td>
+<td>Connection con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理26</td>
+<td>List lsSyokuinSyozoku = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理27</td>
+<td>List lsYakusyokuCode = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理28</td>
+<td>FWLog.error(e1)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理29</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理30</td>
+<td>FWLog.error(e1)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理31</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理32</td>
+<td>FWLog.error(e1)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理33</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理34</td>
+<td>Map mapJigyoCode2 = (Map)lsJigyoCode2.get(0)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理35</td>
+<td>List lsJigyoCode2 = base.getList()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理36</td>
+<td>base.select(syosaiBushitsuCode,syosaiBushitsuEdaban)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理37</td>
+<td>SelectJigyosyoCodeHyo2Base base = new SelectJigyosyoCodeHyo2Base(con)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理38</td>
+<td>con = getConnection(new InitialContext(), CommonConst.JDBC_ORACLE_DWH)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理39</td>
+<td>Connection con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件40</td>
+<td>!"".equals(syozokuTenban)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件41</td>
+<td>Integer.parseInt(syozokuTenban) &lt; 100</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理42</td>
+<td>syosaiBushitsuEdaban = syozokuTenban.substring(2,4)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理43</td>
+<td>syosaiBushitsuCode = syozokuTenban.substring(0,2)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理44</td>
+<td>Map mapSyokuinMeibo = (Map)lsSyokuinMeibo.get(0)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理45</td>
+<td>yakusyokuCode = "0"</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理46</td>
+<td>String from_applName = req.getParameter("FROM_APPL_NAME")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理47</td>
+<td>String yakusyoku = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理48</td>
+<td>String yakusyokuCode = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理49</td>
+<td>String syosaiBushitsuEdaban = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理50</td>
+<td>String syosaiBushitsuCode = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理51</td>
+<td>String syozokuTenban = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件52</td>
+<td>loginStatus</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件53</td>
+<td>(dwhUserId.equals(""))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理54</td>
+<td>loginStatus = false</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理55</td>
+<td>loginStatus = false</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理56</td>
+<td>FWLog.error(e1)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理57</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理58</td>
+<td>FWLog.error(e1)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理59</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理60</td>
+<td>FWLog.error(e1)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理61</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理62</td>
+<td>loginStatus = true</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理63</td>
+<td>lsSyokuinMeibo = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理64</td>
+<td>lsSyokuinMeibo = base.getList()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理65</td>
+<td>Long.parseLong(dwhUserId)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件66</td>
+<td>!"".equals(dwhUserId)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理67</td>
+<td>loginStatus = false</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理68</td>
+<td>loginStatus = true</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理69</td>
+<td>lsSyokuinMeibo = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理70</td>
+<td>lsSyokuinMeibo = base.getList()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理71</td>
+<td>Long.parseLong(dwhUserId)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件72</td>
+<td>"bat".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理73</td>
+<td>lsWebLogin = base.getList()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件74</td>
+<td>"ringi".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理75</td>
+<td>con = getConnection(new InitialContext(), CommonConst.JDBC_ORACLE_SP2NM)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理76</td>
+<td>Connection con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件77</td>
+<td>(applName.equals(""))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件78</td>
+<td>(dwhUserId.equals(""))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件79</td>
+<td>(sUser.equals(""))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件80</td>
+<td>(sPass.equals(""))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理81</td>
+<td>sPass = dwhPassWord</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理82</td>
+<td>sUser = applName</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理83</td>
+<td>sPass = creditPassWord</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理84</td>
+<td>sUser = creditUserId</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理85</td>
+<td>sPass = dwhPassWord</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理86</td>
+<td>sUser = applName</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理87</td>
+<td>sPass = dwhPassWord</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理88</td>
+<td>sUser = dwhUserId</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理89</td>
+<td>sPass = OTHER_PASS_WORD</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理90</td>
+<td>sUser = applName</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理91</td>
+<td>dwhUserId = OTHER_USER_ID</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理92</td>
+<td>sPass = dwhPassWord</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理93</td>
+<td>sUser = applName</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理94</td>
+<td>sPass = dwhPassWord</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理95</td>
+<td>sUser = applName</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件96</td>
+<td>"ringi".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件97</td>
+<td>"unify".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件98</td>
+<td>"cif".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件99</td>
+<td>"bat".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件100</td>
+<td>"navi".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件101</td>
+<td>"credit".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件102</td>
+<td>"dwh".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理103</td>
+<td>List lsSyokuinMeibo = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理104</td>
+<td>List lsWebLogin = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理105</td>
+<td>List lsMessage = new ArrayList()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理106</td>
+<td>boolean loginStatus = false</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理107</td>
+<td>unify_flg = "1"</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理108</td>
+<td>unify_flg = "2"</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理109</td>
+<td>String wk_Br = req.getParameter("intBr")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理110</td>
+<td>String wk_CustNr =req.getParameter("intCustNr")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理111</td>
+<td>applName = req.getParameter("APPL_NAME")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理112</td>
+<td>dwhPassWord =req.getParameter("DWH_PASS_WORD")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理113</td>
+<td>dwhUserId = req.getParameter("DWH_USER_ID")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件114</td>
+<td>"ringi".equals(o_apl)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理115</td>
+<td>unify_flg = req.getParameter("UNIFY_FLG")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理116</td>
+<td>applName =req.getParameter("APPL_NAME")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理117</td>
+<td>creditPassWord =req.getParameter("CREDIT_PASS_WORD")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理118</td>
+<td>creditUserId =req.getParameter("CREDIT_USER_ID")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理119</td>
+<td>dwhPassWord =req.getParameter("DWH_PASS_WORD")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理120</td>
+<td>dwhUserId =req.getParameter("DWH_USER_ID")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理121</td>
+<td>LoginInfoBean loginInfo = new LoginInfoBean()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理122</td>
+<td>OtherUserBean OtherUserInfo = (OtherUserBean)session.getAttribute(CommonConst.SS_OTHER_INFO_BEAN)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理123</td>
+<td>HttpSession session = req.getSession()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理124</td>
+<td>String charCommonuid = req.getParameter("charCommonUID")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理125</td>
+<td>String tm_opk = req.getParameter("OPK")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理126</td>
+<td>String o_apl = req.getParameter("Otheflg")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理127</td>
+<td>String sPass = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理128</td>
+<td>String sUser = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理129</td>
+<td>String unify_flg = ""</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理130</td>
+<td>String OTHER_PASS_WORD =""</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理131</td>
+<td>String OTHER_USER_ID =""</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理132</td>
+<td>String applName =""</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理133</td>
+<td>String creditPassWord ='[REDACTED]'</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理134</td>
+<td>String creditUserId =""</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理135</td>
+<td>String dwhPassWord ='[REDACTED]'</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理136</td>
+<td>String dwhUserId =""</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理137</td>
+<td>String dwhUserId =""</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理138</td>
+<td>String dwhPassWord ='[REDACTED]'</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理139</td>
+<td>String creditUserId =""</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理140</td>
+<td>String creditPassWord ='[REDACTED]'</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理141</td>
+<td>String applName =""</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理142</td>
+<td>String OTHER_USER_ID =""</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理143</td>
+<td>String OTHER_PASS_WORD =""</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理144</td>
+<td>String unify_flg = ""</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理145</td>
+<td>String sUser = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理146</td>
+<td>String sPass = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理147</td>
+<td>String o_apl = req.getParameter("Otheflg")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理148</td>
+<td>String tm_opk = req.getParameter("OPK")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理149</td>
+<td>String charCommonuid = req.getParameter("charCommonUID")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理150</td>
+<td>HttpSession session = req.getSession()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理151</td>
+<td>OtherUserBean OtherUserInfo = (OtherUserBean)session.getAttribute(CommonConst.SS_OTHER_INFO_BEAN)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理152</td>
+<td>LoginInfoBean loginInfo = new LoginInfoBean()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件153</td>
+<td>"ringi".equals(o_apl)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理154</td>
+<td>dwhUserId = req.getParameter("DWH_USER_ID")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理155</td>
+<td>dwhPassWord =req.getParameter("DWH_PASS_WORD")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理156</td>
+<td>applName = req.getParameter("APPL_NAME")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理157</td>
+<td>String wk_CustNr =req.getParameter("intCustNr")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理158</td>
+<td>String wk_Br = req.getParameter("intBr")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理159</td>
+<td>unify_flg = "1"</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理160</td>
+<td>unify_flg = "2"</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理161</td>
+<td>dwhUserId =req.getParameter("DWH_USER_ID")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理162</td>
+<td>dwhPassWord =req.getParameter("DWH_PASS_WORD")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理163</td>
+<td>creditUserId =req.getParameter("CREDIT_USER_ID")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理164</td>
+<td>creditPassWord =req.getParameter("CREDIT_PASS_WORD")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理165</td>
+<td>applName =req.getParameter("APPL_NAME")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理166</td>
+<td>unify_flg = req.getParameter("UNIFY_FLG")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理167</td>
+<td>boolean loginStatus = false</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理168</td>
+<td>List lsMessage = new ArrayList()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理169</td>
+<td>List lsWebLogin = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理170</td>
+<td>List lsSyokuinMeibo = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件171</td>
+<td>"dwh".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理172</td>
+<td>sUser = applName</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理173</td>
+<td>sPass = dwhPassWord</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件174</td>
+<td>"credit".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理175</td>
+<td>sUser = creditUserId</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理176</td>
+<td>sPass = creditPassWord</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件177</td>
+<td>"navi".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理178</td>
+<td>sUser = applName</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理179</td>
+<td>sPass = dwhPassWord</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件180</td>
+<td>"bat".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理181</td>
+<td>sUser = dwhUserId</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理182</td>
+<td>sPass = dwhPassWord</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件183</td>
+<td>"unify".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件184</td>
+<td>"cif".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理185</td>
+<td>dwhUserId = OTHER_USER_ID</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理186</td>
+<td>sUser = applName</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理187</td>
+<td>sPass = OTHER_PASS_WORD</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理188</td>
+<td>sUser = applName</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理189</td>
+<td>sPass = dwhPassWord</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件190</td>
+<td>"ringi".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理191</td>
+<td>sUser = applName</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理192</td>
+<td>sPass = dwhPassWord</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件193</td>
+<td>(sUser.equals(""))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件194</td>
+<td>(sPass.equals(""))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理195</td>
+<td>loginStatus = false</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件196</td>
+<td>(applName.equals(""))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件197</td>
+<td>(dwhUserId.equals(""))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理198</td>
+<td>loginStatus = false</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理199</td>
+<td>Connection con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理200</td>
+<td>con = getConnection(new InitialContext(), CommonConst.JDBC_ORACLE_SP2NM)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件201</td>
+<td>"ringi".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件202</td>
+<td>!"".equals(dwhUserId)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理203</td>
+<td>Long.parseLong(dwhUserId)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理204</td>
+<td>lsSyokuinMeibo = base.getList()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理205</td>
+<td>lsSyokuinMeibo = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理206</td>
+<td>loginStatus = true</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理207</td>
+<td>lsWebLogin = base.getList()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理208</td>
+<td>loginStatus = false</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件209</td>
+<td>"bat".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理210</td>
+<td>Long.parseLong(dwhUserId)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理211</td>
+<td>lsSyokuinMeibo = base.getList()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理212</td>
+<td>lsSyokuinMeibo = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理213</td>
+<td>loginStatus = true</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理214</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理215</td>
+<td>FWLog.error(e1)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件216</td>
+<td>(dwhUserId.equals(""))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件217</td>
+<td>loginStatus</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理218</td>
+<td>String syozokuTenban = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理219</td>
+<td>String syosaiBushitsuCode = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理220</td>
+<td>String syosaiBushitsuEdaban = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理221</td>
+<td>String yakusyokuCode = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理222</td>
+<td>String yakusyoku = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理223</td>
+<td>String from_applName = req.getParameter("FROM_APPL_NAME")</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理224</td>
+<td>Map mapSyokuinMeibo = (Map)lsSyokuinMeibo.get(0)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理225</td>
+<td>syosaiBushitsuCode = syozokuTenban.substring(0,2)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理226</td>
+<td>syosaiBushitsuEdaban = syozokuTenban.substring(2,4)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件227</td>
+<td>Integer.parseInt(syozokuTenban) &lt; 100</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理228</td>
+<td>yakusyokuCode = "0"</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件229</td>
+<td>!"".equals(syozokuTenban)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理230</td>
+<td>Connection con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理231</td>
+<td>con = getConnection(new InitialContext(), CommonConst.JDBC_ORACLE_DWH)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理232</td>
+<td>SelectJigyosyoCodeHyo2Base base = new SelectJigyosyoCodeHyo2Base(con)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理233</td>
+<td>base.select(syosaiBushitsuCode,syosaiBushitsuEdaban)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理234</td>
+<td>List lsJigyoCode2 = base.getList()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理235</td>
+<td>Map mapJigyoCode2 = (Map)lsJigyoCode2.get(0)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理236</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理237</td>
+<td>FWLog.error(e1)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理238</td>
+<td>List lsYakusyokuCode = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理239</td>
+<td>List lsSyokuinSyozoku = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理240</td>
+<td>Connection con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理241</td>
+<td>con = getConnection(new InitialContext(), CommonConst.JDBC_ORACLE_SP2NM)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件242</td>
+<td>!"".equals(yakusyokuCode)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件243</td>
+<td>!"0".equals(yakusyokuCode)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理244</td>
+<td>lsYakusyokuCode = base.getList()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理245</td>
+<td>Map mapyakusyokucode = (Map)lsYakusyokuCode.get(0)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理246</td>
+<td>Long.parseLong(dwhUserId)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理247</td>
+<td>lsSyokuinSyozoku = base.getList()</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理248</td>
+<td>lsSyokuinSyozoku = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理249</td>
+<td>Map mapSyokuinSyozoku = (Map)lsSyokuinSyozoku.get(0)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理250</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理251</td>
+<td>FWLog.error(e1)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件252</td>
+<td>"credit".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>処理253</td>
+<td>Map mapWebLogin = (Map)lsWebLogin.get(0)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件254</td>
+<td>"cif".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件255</td>
+<td>"ringi".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件256</td>
+<td>"credit".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件257</td>
+<td>"unify".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件258</td>
+<td>"0".equals(unify_flg)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件259</td>
+<td>"1".equals(unify_flg)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件260</td>
+<td>"3".equals(unify_flg)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件261</td>
+<td>NOT ("ringi".equals(applName))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件262</td>
+<td>"bat".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件263</td>
+<td>Exception e</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件264</td>
+<td>loginStatus</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件265</td>
+<td>!"".equals(syozokuTenban)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件266</td>
+<td>Exception e</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件267</td>
+<td>loginStatus</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件268</td>
+<td>Exception e</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件269</td>
+<td>loginStatus</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件270</td>
+<td>"credit".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件271</td>
+<td>loginStatus</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件272</td>
+<td>NOT ("credit".equals(applName))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件273</td>
+<td>"unify".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件274</td>
+<td>"0".equals(unify_flg)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件275</td>
+<td>loginStatus</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件276</td>
+<td>NOT ("credit".equals(applName))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件277</td>
+<td>"unify".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件278</td>
+<td>NOT ("0".equals(unify_flg))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件279</td>
+<td>"1".equals(unify_flg)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件280</td>
+<td>loginStatus</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件281</td>
+<td>NOT ("credit".equals(applName))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件282</td>
+<td>"unify".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件283</td>
+<td>NOT ("0".equals(unify_flg))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件284</td>
+<td>NOT ("1".equals(unify_flg))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件285</td>
+<td>"3".equals(unify_flg)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件286</td>
+<td>loginStatus</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件287</td>
+<td>NOT ("credit".equals(applName))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件288</td>
+<td>"unify".equals(applName)</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件289</td>
+<td>NOT ("0".equals(unify_flg))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件290</td>
+<td>NOT ("1".equals(unify_flg))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件291</td>
+<td>NOT ("3".equals(unify_flg))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件292</td>
+<td>loginStatus</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件293</td>
+<td>NOT ("credit".equals(applName))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件294</td>
+<td>NOT ("unify".equals(applName))</td>
+</tr>
+<tr>
+<td>ログイン処理</td>
+<td>条件295</td>
+<td>NOT (loginStatus)</td>
+</tr>
+</tbody>
+</table></div>
+</article><footer>Markdown原本から生成した閲覧用HTMLです。画面例は実システムを操作しません。</footer></main></div></body></html>

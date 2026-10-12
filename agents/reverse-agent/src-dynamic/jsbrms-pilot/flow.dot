@@ -1,0 +1,16 @@
+digraph Staff {
+  graph [rankdir=LR, bgcolor="white", pad="0.22", nodesep="0.35", ranksep="0.50", fontname="Noto Sans CJK JP"];
+  node [shape=box, style="rounded,filled", fillcolor="#f4f6f8", color="#708090", fontname="Noto Sans CJK JP", fontsize=13, margin="0.14,0.11"];
+  edge [fontname="Noto Sans CJK JP",fontsize=11,color="#596879"];
+  Start [label="初期表示\n職員情報があれば番号表示"];
+  Screen [label="職員番号入力\n/Staff", fillcolor="#e0ecf6"];
+  Check [label="メニュー画面へ\n入力条件・職員存在を確認",shape=diamond,fillcolor="#fff6df"];
+  Menu [label="3項目をセッションへ設定\nメニュー /Index", fillcolor="#e4f1e6"];
+  Error [label="同一画面にエラー表示\n入力値・既存職員情報は保持"];
+  Clear [label="クリア\n入力・エラー・職員情報3項目を消去"];
+  Empty [label="通常送信：同一画面\n入力空・エラーなし"];
+  Ajax [label="AJAX／JSON指定：HTTP 204\nHTML返却なし",fillcolor="#fff6df"];
+  Start -> Screen;
+  Screen -> Check; Check -> Menu [label="成功"]; Check -> Error [label="入力不備／職員なし"];
+  Screen -> Clear; Clear -> Empty; Clear -> Ajax;
+}

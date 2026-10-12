@@ -1,0 +1,6769 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; file:; img-src &#x27;self&#x27; data: file:; font-src &#x27;self&#x27; file:; connect-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;"><meta name="docsite-source-sha256" content="eb43cf2c90d3b168861357c19ea7539bd8749762993b36b311177e792303e216"><title>日次 / 月次処理 詳細仕様</title><style>:root{color-scheme:light;--ink:#203043;--muted:#5d6c7b;--line:#dde4eb;--accent:#196786;--paper:#fff;--background:#f3f6f8}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:80px}body{margin:0;font-family:system-ui,-apple-system,"Yu Gothic UI","Meiryo",sans-serif;background:var(--background);color:var(--ink);font-size:15px;line-height:1.85}.topbar{height:64px;position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:0 30px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.97)}.brand{font-size:14px;letter-spacing:.1em;font-weight:750;text-decoration:none;color:var(--ink)}.brand span{margin-left:14px;letter-spacing:0;color:var(--muted);font-weight:500}.topbar nav{display:flex;gap:22px;font-size:13px}.topbar a{color:var(--accent)}.page-shell{max-width:1660px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:28px;padding:30px}.toc{position:sticky;top:94px;align-self:start;max-height:calc(100vh - 118px);overflow:auto;font-size:12px;padding-right:12px}.toc-heading{font-weight:700;padding-bottom:12px;border-bottom:1px solid var(--line)}.toc ol{list-style:none;padding:0;margin:12px 0}.toc li{margin:8px 0}.toc .level-3{padding-left:12px;font-size:11px}.toc a{color:var(--muted);text-decoration:none}.toc a:hover{color:var(--accent)}.document{min-width:0;background:var(--paper);padding:36px 42px;border:1px solid var(--line);border-radius:10px}.doc-body{overflow-wrap:anywhere}.doc-body>h1{font-size:27px;line-height:1.5;margin:0 0 24px;letter-spacing:.01em}.doc-body>h2{font-size:22px;margin:48px 0 20px;padding-bottom:10px;border-bottom:2px solid var(--line)}.doc-body>h3{font-size:18px;margin:32px 0 16px}.doc-body h4{font-size:16px}.doc-body a{color:var(--accent);text-underline-offset:3px}.doc-body p{margin:14px 0}.doc-body li{margin:7px 0}.doc-body li>p{margin:5px 0}.doc-body blockquote{margin:20px 0;padding:12px 20px;border-left:4px solid #c59e4a;background:#fcf8ed;color:#5d523e}.doc-body blockquote p{margin:0}.doc-body :not(.screen-layout) code{font-family:ui-monospace,"Cascadia Code",Consolas,monospace;font-size:.88em}.doc-body :not(pre)>code{padding:2px 5px;background:#edf2f6;border-radius:3px}.doc-body pre{white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;padding:18px;background:#f4f7fa;border:1px solid var(--line);border-radius:6px;line-height:1.55}.table-scroll{width:100%;max-width:100%;overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:6px}.table-scroll table{border-collapse:collapse;width:100%;font-size:13px}.table-scroll th{background:#eef3f7;text-align:left;font-weight:650;white-space:normal}.table-scroll th,.table-scroll td{border-bottom:1px solid var(--line);padding:10px 12px;vertical-align:top;min-width:72px;max-width:600px}.table-scroll tbody tr:nth-child(even){background:#fafcfd}.table-scroll tr:last-child td{border-bottom:0}.diagram{margin:22px 0;padding:12px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow-x:auto;max-width:100%}.diagram .mermaid{display:block;background:#fff;border:0;padding:0;min-height:30px;margin:0}.diagram svg{height:auto;display:block;margin:0 auto;max-width:100%}.diagram-source{font-size:12px;color:var(--muted);margin-top:10px}.diagram-source pre{margin:8px 0}.diagram-error{color:#a52626;background:#fff2f2;padding:8px}.screen-layout{margin:24px 0;border:1px solid var(--line);border-radius:8px;max-width:100%;overflow:auto;isolation:isolate}.screen-layout .layout-root{max-width:100%;min-width:0}.screen-layout .field{min-width:0}.screen-layout input,.screen-layout select{max-width:100%}.screen-layout label{overflow-wrap:anywhere}.screen-layout small{overflow-wrap:anywhere}.doc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.doc-card{display:flex;flex-direction:column;gap:6px;padding:18px;border:1px solid var(--line);border-radius:6px;text-decoration:none}.doc-card:hover{background:#f5f9fb}.doc-card span{font-size:11px;color:var(--muted);font-weight:500}.doc-card strong{font-size:14px}.lead{color:var(--muted)}footer{margin-top:50px;border-top:1px solid var(--line);padding-top:16px;font-size:11px;color:var(--muted)}@media(max-width:1100px){.page-shell{grid-template-columns:190px minmax(0,1fr);gap:18px;padding:20px}.document{padding:28px}.screen-layout .fields{grid-template-columns:1fr}}@media(max-width:800px){.topbar{padding:0 16px}.brand span{display:none}.page-shell{display:block;padding:12px}.toc{position:static;max-height:220px;margin-bottom:16px;padding:12px;border:1px solid var(--line);border-radius:6px}.document{padding:22px 18px}.doc-body>h1{font-size:23px}.doc-grid{grid-template-columns:1fr}.screen-layout .field{grid-template-columns:1fr}.screen-layout small{grid-column:1}}@media print{body{background:white;font-size:10pt}.topbar,.toc,footer,.diagram-source{display:none}.page-shell{display:block;max-width:none;padding:0}.document{border:0;padding:0}.doc-body>h2{break-after:avoid}.table-scroll{overflow:visible}.diagram{break-inside:avoid}.screen-layout{break-inside:auto}a{color:inherit!important;text-decoration:none}}
+
+.page-shell.no-toc{display:block;max-width:1240px}
+
+.doc-body img{display:block;max-width:100%;height:auto;margin:12px 0}
+</style></head><body><header class="topbar"><a class="brand" href="../index.html">CONTEXTBASE <span>仕様書</span></a><nav><a href="../index.html">文書一覧</a><a href="../../md/%E8%A9%B3%E7%B4%B0%E4%BB%95%E6%A7%98%E6%9B%B8/%E8%A9%B3%E7%B4%B0%E4%BB%95%E6%A7%98%E6%9B%B8_SCR-014_%E6%97%A5%E6%AC%A1%20_%20%E6%9C%88%E6%AC%A1%E5%87%A6%E7%90%86.md">MD原本</a></nav></header><div class="page-shell"><aside class="toc"><div class="toc-heading">この文書の内容</div><ol><li class="level-2"><a href="#概要">概要</a></li><li class="level-2"><a href="#処理詳細">処理詳細</a></li><li class="level-3"><a href="#バッチ実行要求">バッチ実行要求</a></li><li class="level-3"><a href="#バッチ処理画面表示">バッチ処理画面表示</a></li><li class="level-3"><a href="#データ関連">データ関連</a></li><li class="level-2"><a href="#検証シナリオ">検証シナリオ</a></li></ol></aside><main class="document"><article class="doc-body"><h1 id="日次--月次処理-詳細仕様">日次 / 月次処理 詳細仕様</h1>
+<h2 id="概要">概要</h2>
+<p>日次 / 月次処理の入力・表示・要求処理を行う。</p>
+<h2 id="処理詳細">処理詳細</h2>
+<h3 id="バッチ実行要求">バッチ実行要求</h3>
+<h4 id="performnenkinweb-infsrcnenkinbatchrunactionjava">perform：nenkin/WEB-INF/src/nenkin/BatchRunAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>if</td>
+<td></td>
+<td>!requireStaff(request)</td>
+<td>14</td>
+</tr>
+<tr>
+<td>2</td>
+<td>return</td>
+<td>!requireStaff(request)</td>
+<td>return STAFF_JSP</td>
+<td>14</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td>NOT (!requireStaff(request))</td>
+<td>BatchViewBean bean=new BatchViewBean()</td>
+<td>15</td>
+</tr>
+<tr>
+<td>4</td>
+<td>call</td>
+<td>NOT (!requireStaff(request))</td>
+<td>bean.setStaffNo(trim(request.getParameter("STAFF_NO")))</td>
+<td>15</td>
+</tr>
+<tr>
+<td>5</td>
+<td>call</td>
+<td>NOT (!requireStaff(request))</td>
+<td>bean.setIncludeNew(isChecked(request,"INCLUDE_NEW"))</td>
+<td>15</td>
+</tr>
+<tr>
+<td>6</td>
+<td>call</td>
+<td>NOT (!requireStaff(request))</td>
+<td>bean.setIncludeChanged(isChecked(request,"INCLUDE_CHANGED"))</td>
+<td>15</td>
+</tr>
+<tr>
+<td>7</td>
+<td>call</td>
+<td>NOT (!requireStaff(request))</td>
+<td>bean.setIncludeDeleted(isChecked(request,"INCLUDE_DELETED"))</td>
+<td>15</td>
+</tr>
+<tr>
+<td>8</td>
+<td>call</td>
+<td>NOT (!requireStaff(request))</td>
+<td>bean.setDailyDate(trim(request.getParameter("DAILY_DATE")))</td>
+<td>15</td>
+</tr>
+<tr>
+<td>9</td>
+<td>call</td>
+<td>NOT (!requireStaff(request))</td>
+<td>bean.setMonthStart(trim(request.getParameter("MONTH_START")))</td>
+<td>15</td>
+</tr>
+<tr>
+<td>10</td>
+<td>call</td>
+<td>NOT (!requireStaff(request))</td>
+<td>bean.setMonthEnd(trim(request.getParameter("MONTH_END")))</td>
+<td>15</td>
+</tr>
+<tr>
+<td>11</td>
+<td>call</td>
+<td>NOT (!requireStaff(request))</td>
+<td>bean.setDeleteCutoffDate(trim(request.getParameter("DELETE_CUTOFF_DATE")))</td>
+<td>15</td>
+</tr>
+<tr>
+<td>12</td>
+<td>if</td>
+<td>NOT (!requireStaff(request))</td>
+<td>!isAuthorizedMutation(request)</td>
+<td>16</td>
+</tr>
+<tr>
+<td>13</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / !isAuthorizedMutation(request)</td>
+<td>bean.setMessage(INVALID_REQUEST_MESSAGE)</td>
+<td>16</td>
+</tr>
+<tr>
+<td>14</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / !isAuthorizedMutation(request)</td>
+<td>setViewBean(request.getSession(),bean)</td>
+<td>16</td>
+</tr>
+<tr>
+<td>15</td>
+<td>return</td>
+<td>NOT (!requireStaff(request)) / !isAuthorizedMutation(request)</td>
+<td>return BATCH_JSP</td>
+<td>16</td>
+</tr>
+<tr>
+<td>16</td>
+<td>if</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request))</td>
+<td>!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()</td>
+<td>17</td>
+</tr>
+<tr>
+<td>17</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / !bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()</td>
+<td>bean.setMessage("新規分、変更分、削除分のどれかを選択してから再度、実行ボタンを選択してください")</td>
+<td>17</td>
+</tr>
+<tr>
+<td>18</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / !bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()</td>
+<td>setViewBean(request.getSession(),bean)</td>
+<td>17</td>
+</tr>
+<tr>
+<td>19</td>
+<td>return</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / !bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()</td>
+<td>return BATCH_JSP</td>
+<td>17</td>
+</tr>
+<tr>
+<td>20</td>
+<td>if</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted())</td>
+<td>bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)</td>
+<td>18</td>
+</tr>
+<tr>
+<td>21</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)</td>
+<td>bean.setMessage("職員番号は8桁以内の数字で入力してください")</td>
+<td>18</td>
+</tr>
+<tr>
+<td>22</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)</td>
+<td>setViewBean(request.getSession(),bean)</td>
+<td>18</td>
+</tr>
+<tr>
+<td>23</td>
+<td>return</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)</td>
+<td>return BATCH_JSP</td>
+<td>18</td>
+</tr>
+<tr>
+<td>24</td>
+<td>assignment</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8))</td>
+<td>PensionBatchExportRequest input=new PensionBatchExportRequest()</td>
+<td>19</td>
+</tr>
+<tr>
+<td>25</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8))</td>
+<td>input.setRunMode(runMode())</td>
+<td>19</td>
+</tr>
+<tr>
+<td>26</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8))</td>
+<td>input.setDailyDate(bean.getDailyDate())</td>
+<td>19</td>
+</tr>
+<tr>
+<td>27</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8))</td>
+<td>input.setMonthStart(bean.getMonthStart())</td>
+<td>19</td>
+</tr>
+<tr>
+<td>28</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8))</td>
+<td>input.setMonthEnd(bean.getMonthEnd())</td>
+<td>19</td>
+</tr>
+<tr>
+<td>29</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8))</td>
+<td>input.setStaffNo(bean.getStaffNo())</td>
+<td>19</td>
+</tr>
+<tr>
+<td>30</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8))</td>
+<td>input.setIncludeNew(bean.isIncludeNew())</td>
+<td>19</td>
+</tr>
+<tr>
+<td>31</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8))</td>
+<td>input.setIncludeChanged(bean.isIncludeChanged())</td>
+<td>19</td>
+</tr>
+<tr>
+<td>32</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8))</td>
+<td>input.setIncludeDeleted(bean.isIncludeDeleted())</td>
+<td>19</td>
+</tr>
+<tr>
+<td>33</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8))</td>
+<td>input.setDeleteCutoffDate(bean.getDeleteCutoffDate())</td>
+<td>19</td>
+</tr>
+<tr>
+<td>34</td>
+<td>try</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8))</td>
+<td></td>
+<td>20</td>
+</tr>
+<tr>
+<td>35</td>
+<td>assignment</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / try</td>
+<td>PensionBatchExportResult result=PensionBatchExportService.getInstance().build(input)</td>
+<td>20</td>
+</tr>
+<tr>
+<td>36</td>
+<td>if</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / try</td>
+<td>!result.hasContent()</td>
+<td>20</td>
+</tr>
+<tr>
+<td>37</td>
+<td>assignment</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / try / !result.hasContent()</td>
+<td>StringBuilder message=new StringBuilder()</td>
+<td>20</td>
+</tr>
+<tr>
+<td>38</td>
+<td>for</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / try / !result.hasContent()</td>
+<td>int i=0;i&lt;result.getMessages().size();i++</td>
+<td>20</td>
+</tr>
+<tr>
+<td>39</td>
+<td>if</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / try / !result.hasContent() / int i=0;i&lt;result.getMessages().size();i++</td>
+<td>i&gt;0</td>
+<td>20</td>
+</tr>
+<tr>
+<td>40</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / try / !result.hasContent() / int i=0;i&lt;result.getMessages().size();i++ / i&gt;0</td>
+<td>message.append(' ')</td>
+<td>20</td>
+</tr>
+<tr>
+<td>41</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / try / !result.hasContent() / int i=0;i&lt;result.getMessages().size();i++</td>
+<td>message.append(result.getMessages().get(i))</td>
+<td>20</td>
+</tr>
+<tr>
+<td>42</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / try / !result.hasContent()</td>
+<td>bean.setMessage(message.toString())</td>
+<td>20</td>
+</tr>
+<tr>
+<td>43</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / try / !result.hasContent()</td>
+<td>setViewBean(request.getSession(),bean)</td>
+<td>20</td>
+</tr>
+<tr>
+<td>44</td>
+<td>return</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / try / !result.hasContent()</td>
+<td>return BATCH_JSP</td>
+<td>20</td>
+</tr>
+<tr>
+<td>45</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / try / NOT (!result.hasContent())</td>
+<td>writeDownload(response,result.getFileName(),result.getContentType(),result.getContent())</td>
+<td>20</td>
+</tr>
+<tr>
+<td>46</td>
+<td>return</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / try / NOT (!result.hasContent())</td>
+<td>return "CSV"</td>
+<td>20</td>
+</tr>
+<tr>
+<td>47</td>
+<td>catch</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8))</td>
+<td>IllegalArgumentException e</td>
+<td>21</td>
+</tr>
+<tr>
+<td>48</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / IllegalArgumentException e</td>
+<td>bean.setMessage(e.getMessage())</td>
+<td>21</td>
+</tr>
+<tr>
+<td>49</td>
+<td>call</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / IllegalArgumentException e</td>
+<td>setViewBean(request.getSession(),bean)</td>
+<td>21</td>
+</tr>
+<tr>
+<td>50</td>
+<td>return</td>
+<td>NOT (!requireStaff(request)) / NOT (!isAuthorizedMutation(request)) / NOT (!bean.isIncludeNew()&amp;&amp;!bean.isIncludeChanged()&amp;&amp;!bean.isIncludeDeleted()) / NOT (bean.getStaffNo().length()&gt;0&amp;&amp;(!bean.getStaffNo().matches("[0-9]+")||bean.getStaffNo().length()&gt;8)) / IllegalArgumentException e</td>
+<td>return BATCH_JSP</td>
+<td>21</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="requirestaffnenkinweb-infsrcnenkinnenkinbaseactionjava">requireStaff：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>HttpSession session = request.getSession()</td>
+<td>51</td>
+</tr>
+<tr>
+<td>2</td>
+<td>if</td>
+<td></td>
+<td>currentStaff(session) != null</td>
+<td>52</td>
+</tr>
+<tr>
+<td>3</td>
+<td>call</td>
+<td>currentStaff(session) != null</td>
+<td>ensureCsrfToken(session)</td>
+<td>53</td>
+</tr>
+<tr>
+<td>4</td>
+<td>return</td>
+<td>currentStaff(session) != null</td>
+<td>return true</td>
+<td>54</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td>NOT (currentStaff(session) != null)</td>
+<td>Object value = session.getAttribute(CommonConst.SS_LOGIN_INFO_BEAN)</td>
+<td>57</td>
+</tr>
+<tr>
+<td>6</td>
+<td>if</td>
+<td>NOT (currentStaff(session) != null)</td>
+<td>value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否()</td>
+<td>58</td>
+</tr>
+<tr>
+<td>7</td>
+<td>assignment</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否()</td>
+<td>String staffNo = trim(((LoginInfoBean) value).get職員番号())</td>
+<td>59</td>
+</tr>
+<tr>
+<td>8</td>
+<td>if</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否()</td>
+<td>staffNo.matches("[0-9]{1,8}")</td>
+<td>60</td>
+</tr>
+<tr>
+<td>9</td>
+<td>assignment</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否() / staffNo.matches("[0-9]{1,8}")</td>
+<td>StaffContext staff = ReferenceDataService.getInstance() .verifyStaff(Integer.parseInt(staffNo))</td>
+<td>61</td>
+</tr>
+<tr>
+<td>10</td>
+<td>if</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否() / staffNo.matches("[0-9]{1,8}")</td>
+<td>staff != null</td>
+<td>63</td>
+</tr>
+<tr>
+<td>11</td>
+<td>call</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否() / staffNo.matches("[0-9]{1,8}") / staff != null</td>
+<td>session.setAttribute(STAFF_CONTEXT_KEY, staff)</td>
+<td>64</td>
+</tr>
+<tr>
+<td>12</td>
+<td>call</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否() / staffNo.matches("[0-9]{1,8}") / staff != null</td>
+<td>ensureCsrfToken(session)</td>
+<td>65</td>
+</tr>
+<tr>
+<td>13</td>
+<td>return</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否() / staffNo.matches("[0-9]{1,8}") / staff != null</td>
+<td>return true</td>
+<td>66</td>
+</tr>
+<tr>
+<td>14</td>
+<td>call</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否()</td>
+<td>session.removeAttribute(CommonConst.SS_LOGIN_INFO_BEAN)</td>
+<td>69</td>
+</tr>
+<tr>
+<td>15</td>
+<td>call</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否()</td>
+<td>session.setAttribute(CommonConst.ERROR_MSG_LIST, Collections.singletonList( "ログイン職員番号が職員名簿に存在しません。管理者に確認してください。"))</td>
+<td>70</td>
+</tr>
+<tr>
+<td>16</td>
+<td>call</td>
+<td>NOT (currentStaff(session) != null) / NOT (value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否())</td>
+<td>session.setAttribute(CommonConst.ERROR_MSG_LIST, Collections.singletonList("ログインしてください。"))</td>
+<td>73</td>
+</tr>
+<tr>
+<td>17</td>
+<td>call</td>
+<td>NOT (currentStaff(session) != null)</td>
+<td>session.removeAttribute(STAFF_CONTEXT_KEY)</td>
+<td>76</td>
+</tr>
+<tr>
+<td>18</td>
+<td>call</td>
+<td>NOT (currentStaff(session) != null)</td>
+<td>session.removeAttribute(CSRF_TOKEN_KEY)</td>
+<td>77</td>
+</tr>
+<tr>
+<td>19</td>
+<td>return</td>
+<td>NOT (currentStaff(session) != null)</td>
+<td>return false</td>
+<td>78</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setstaffnonenkinweb-infsrcnenkinbeanbatchviewbeanjava">setStaffNo：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>staffNo = value == null ? "" : value</td>
+<td>17</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="trimnenkinweb-infsrcnenkinnenkinbaseactionjava">trim：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return value == null ? "" : value.trim()</td>
+<td>119</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setincludenewnenkinweb-infsrcnenkinbeanbatchviewbeanjava">setIncludeNew：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>includeNew = value</td>
+<td>19</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="ischeckednenkinweb-infsrcnenkinnenkinbaseactionjava">isChecked：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>String value = request.getParameter(name)</td>
+<td>134</td>
+</tr>
+<tr>
+<td>2</td>
+<td>return</td>
+<td></td>
+<td>return value != null &amp;&amp; ("1".equals(value) || "true".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value))</td>
+<td>135</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setincludechangednenkinweb-infsrcnenkinbeanbatchviewbeanjava">setIncludeChanged：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>includeChanged = value</td>
+<td>21</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setincludedeletednenkinweb-infsrcnenkinbeanbatchviewbeanjava">setIncludeDeleted：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>includeDeleted = value</td>
+<td>23</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setdailydatenenkinweb-infsrcnenkinbeanbatchviewbeanjava">setDailyDate：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>dailyDate = value == null ? "" : value</td>
+<td>25</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setmonthstartnenkinweb-infsrcnenkinbeanbatchviewbeanjava">setMonthStart：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>monthStart = value == null ? "" : value</td>
+<td>27</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setmonthendnenkinweb-infsrcnenkinbeanbatchviewbeanjava">setMonthEnd：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>monthEnd = value == null ? "" : value</td>
+<td>29</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setdeletecutoffdatenenkinweb-infsrcnenkinbeanbatchviewbeanjava">setDeleteCutoffDate：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>deleteCutoffDate = value == null ? "" : value</td>
+<td>31</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="isauthorizedmutationnenkinweb-infsrcnenkinnenkinbaseactionjava">isAuthorizedMutation：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>if</td>
+<td></td>
+<td>!"POST".equalsIgnoreCase(request.getMethod())</td>
+<td>90</td>
+</tr>
+<tr>
+<td>2</td>
+<td>return</td>
+<td>!"POST".equalsIgnoreCase(request.getMethod())</td>
+<td>return false</td>
+<td>90</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td>NOT (!"POST".equalsIgnoreCase(request.getMethod()))</td>
+<td>Object expected = request.getSession().getAttribute(CSRF_TOKEN_KEY)</td>
+<td>91</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>NOT (!"POST".equalsIgnoreCase(request.getMethod()))</td>
+<td>String actual = request.getParameter("CSRF_TOKEN")</td>
+<td>92</td>
+</tr>
+<tr>
+<td>5</td>
+<td>return</td>
+<td>NOT (!"POST".equalsIgnoreCase(request.getMethod()))</td>
+<td>return expected instanceof String &amp;&amp; expected.equals(actual)</td>
+<td>93</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setmessagenenkinweb-infsrcnenkinbeanbatchviewbeanjava">setMessage：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>message = value == null ? "" : value</td>
+<td>33</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setviewbeannenkinweb-infsrcnenkinnenkinbaseactionjava">setViewBean：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>call</td>
+<td></td>
+<td>session.setAttribute(CommonConst.SS_JSP_BEAN, bean)</td>
+<td>38</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="isincludenewnenkinweb-infsrcnenkinbeanbatchviewbeanjava">isIncludeNew：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return includeNew</td>
+<td>18</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="isincludechangednenkinweb-infsrcnenkinbeanbatchviewbeanjava">isIncludeChanged：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return includeChanged</td>
+<td>20</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="isincludedeletednenkinweb-infsrcnenkinbeanbatchviewbeanjava">isIncludeDeleted：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return includeDeleted</td>
+<td>22</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getstaffnonenkinweb-infsrcnenkinbeanbatchviewbeanjava">getStaffNo：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return staffNo</td>
+<td>16</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="pensionbatchexportrequestnenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">PensionBatchExportRequest：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+</table></div>
+<h4 id="setrunmodenenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">setRunMode：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>this.runMode = runMode</td>
+<td>23</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setdailydatenenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">setDailyDate：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>this.dailyDate = text(dailyDate)</td>
+<td>25</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getdailydatenenkinweb-infsrcnenkinbeanbatchviewbeanjava">getDailyDate：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return dailyDate</td>
+<td>24</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setmonthstartnenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">setMonthStart：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>this.monthStart = text(monthStart)</td>
+<td>27</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getmonthstartnenkinweb-infsrcnenkinbeanbatchviewbeanjava">getMonthStart：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return monthStart</td>
+<td>26</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setmonthendnenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">setMonthEnd：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>this.monthEnd = text(monthEnd)</td>
+<td>29</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getmonthendnenkinweb-infsrcnenkinbeanbatchviewbeanjava">getMonthEnd：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return monthEnd</td>
+<td>28</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setstaffnonenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">setStaffNo：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>this.staffNo = text(staffNo)</td>
+<td>31</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setincludenewnenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">setIncludeNew：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>this.includeNew = includeNew</td>
+<td>33</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setincludechangednenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">setIncludeChanged：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>this.includeChanged = includeChanged</td>
+<td>35</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setincludedeletednenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">setIncludeDeleted：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>this.includeDeleted = includeDeleted</td>
+<td>37</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setdeletecutoffdatenenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">setDeleteCutoffDate：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>this.deleteCutoffDate = text(deleteCutoffDate)</td>
+<td>40</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getdeletecutoffdatenenkinweb-infsrcnenkinbeanbatchviewbeanjava">getDeleteCutoffDate：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return deleteCutoffDate</td>
+<td>30</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getinstancenenkinweb-infsrcnenkinservicepensionbatchexportservicejava">getInstance：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return INSTANCE</td>
+<td>55</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="buildnenkinweb-infsrcnenkinservicepensionbatchexportservicejava">build：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>if</td>
+<td></td>
+<td>request == null</td>
+<td>59</td>
+</tr>
+<tr>
+<td>2</td>
+<td>throw</td>
+<td>request == null</td>
+<td>throw new IllegalArgumentException("出力条件がありません。")</td>
+<td>60</td>
+</tr>
+<tr>
+<td>3</td>
+<td>if</td>
+<td>NOT (request == null)</td>
+<td>!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()</td>
+<td>62</td>
+</tr>
+<tr>
+<td>4</td>
+<td>throw</td>
+<td>NOT (request == null) / !request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()</td>
+<td>throw new IllegalArgumentException( "新規分、変更分、削除分のいずれかを選択してください。")</td>
+<td>64</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted())</td>
+<td>DateRange range = resolveRange(request)</td>
+<td>68</td>
+</tr>
+<tr>
+<td>6</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted())</td>
+<td>Integer updatedBy = parseStaffNo(request.getStaffNo())</td>
+<td>69</td>
+</tr>
+<tr>
+<td>7</td>
+<td>if</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted())</td>
+<td>request.getDeleteCutoffDate().trim().length() &gt; 0</td>
+<td>70</td>
+</tr>
+<tr>
+<td>8</td>
+<td>call</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / request.getDeleteCutoffDate().trim().length() &gt; 0</td>
+<td>repository.purgeDeletedAuditsThrough(request.getDeleteCutoffDate())</td>
+<td>71</td>
+</tr>
+<tr>
+<td>9</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted())</td>
+<td>List&lt;ExportSpec&gt; specs = selectedSpecs(request, updatedBy != null)</td>
+<td>74</td>
+</tr>
+<tr>
+<td>10</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted())</td>
+<td>List&lt;GeneratedFile&gt; generated = new ArrayList&lt;GeneratedFile&gt;()</td>
+<td>75</td>
+</tr>
+<tr>
+<td>11</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted())</td>
+<td>List&lt;String&gt; messages = new ArrayList&lt;String&gt;()</td>
+<td>76</td>
+</tr>
+<tr>
+<td>12</td>
+<td>for</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted())</td>
+<td>int i = 0; i &lt; specs.size(); i++</td>
+<td>77</td>
+</tr>
+<tr>
+<td>13</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / int i = 0; i &lt; specs.size(); i++</td>
+<td>ExportSpec spec = specs.get(i)</td>
+<td>78</td>
+</tr>
+<tr>
+<td>14</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / int i = 0; i &lt; specs.size(); i++</td>
+<td>List&lt;PensionAuditRecord&gt; audits = repository.findAuditRecords(spec.type, range.from, range.to, updatedBy)</td>
+<td>79</td>
+</tr>
+<tr>
+<td>15</td>
+<td>if</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / int i = 0; i &lt; specs.size(); i++</td>
+<td>audits.isEmpty()</td>
+<td>81</td>
+</tr>
+<tr>
+<td>16</td>
+<td>call</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / int i = 0; i &lt; specs.size(); i++ / audits.isEmpty()</td>
+<td>messages.add(emptyMessage(spec.type, request.getRunMode(), updatedBy != null))</td>
+<td>82</td>
+</tr>
+<tr>
+<td>17</td>
+<td>statement</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / int i = 0; i &lt; specs.size(); i++ / audits.isEmpty()</td>
+<td>continue</td>
+<td>83</td>
+</tr>
+<tr>
+<td>18</td>
+<td>call</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / int i = 0; i &lt; specs.size(); i++</td>
+<td>sortAudits(audits)</td>
+<td>85</td>
+</tr>
+<tr>
+<td>19</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / int i = 0; i &lt; specs.size(); i++</td>
+<td>List&lt;String&gt; headers = spec.type == AuditType.NEW ? NEW_HEADERS : CHANGE_DELETE_HEADERS</td>
+<td>86</td>
+</tr>
+<tr>
+<td>20</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / int i = 0; i &lt; specs.size(); i++</td>
+<td>List&lt;Object[]&gt; rows = toRows(audits, spec.type)</td>
+<td>88</td>
+</tr>
+<tr>
+<td>21</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / int i = 0; i &lt; specs.size(); i++</td>
+<td>WorkbookLayout layout = buildLayout(spec, request, range, headers.size())</td>
+<td>89</td>
+</tr>
+<tr>
+<td>22</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / int i = 0; i &lt; specs.size(); i++</td>
+<td>byte[] content = OpenXmlWorkbookWriter.buildWorkbook(spec.sheetName, headers, rows, layout.leadingRows, layout.mergedRanges, layout.printScale)</td>
+<td>90</td>
+</tr>
+<tr>
+<td>23</td>
+<td>call</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / int i = 0; i &lt; specs.size(); i++</td>
+<td>generated.add(new GeneratedFile(spec, rows.size(), content))</td>
+<td>92</td>
+</tr>
+<tr>
+<td>24</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted())</td>
+<td>List&lt;PensionBatchExportFileResult&gt; files = toFileResults(generated)</td>
+<td>95</td>
+</tr>
+<tr>
+<td>25</td>
+<td>statement</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted())</td>
+<td>PensionBatchExportResult result</td>
+<td>96</td>
+</tr>
+<tr>
+<td>26</td>
+<td>if</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted())</td>
+<td>generated.isEmpty()</td>
+<td>97</td>
+</tr>
+<tr>
+<td>27</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / generated.isEmpty()</td>
+<td>result = new PensionBatchExportResult("", EXCEL_CONTENT_TYPE, new byte[0], files, messages)</td>
+<td>98</td>
+</tr>
+<tr>
+<td>28</td>
+<td>if</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / NOT (generated.isEmpty())</td>
+<td>generated.size() == 1</td>
+<td>100</td>
+</tr>
+<tr>
+<td>29</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / NOT (generated.isEmpty()) / generated.size() == 1</td>
+<td>GeneratedFile file = generated.get(0)</td>
+<td>101</td>
+</tr>
+<tr>
+<td>30</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / NOT (generated.isEmpty()) / generated.size() == 1</td>
+<td>result = new PensionBatchExportResult(file.spec.fileName, EXCEL_CONTENT_TYPE, file.content, files, messages)</td>
+<td>102</td>
+</tr>
+<tr>
+<td>31</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / NOT (generated.isEmpty()) / NOT (generated.size() == 1)</td>
+<td>String zipName = request.getRunMode() == PensionBatchRunMode.DAILY ? "年金予約データ明細リスト（日次）.zip" : "年金予約データ明細リスト（月次）.zip"</td>
+<td>105</td>
+</tr>
+<tr>
+<td>32</td>
+<td>assignment</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted()) / NOT (generated.isEmpty()) / NOT (generated.size() == 1)</td>
+<td>result = new PensionBatchExportResult(zipName, ZIP_CONTENT_TYPE, buildZip(generated, messages), files, messages)</td>
+<td>108</td>
+</tr>
+<tr>
+<td>33</td>
+<td>return</td>
+<td>NOT (request == null) / NOT (!request.isIncludeNew() &amp;&amp; !request.isIncludeChanged() &amp;&amp; !request.isIncludeDeleted())</td>
+<td>return result</td>
+<td>112</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="hascontentnenkinweb-infsrcnenkinservicepensionbatchexportresultjava">hasContent：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportResult.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return content.length &gt; 0</td>
+<td>32</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getmessagesnenkinweb-infsrcnenkinservicepensionbatchexportresultjava">getMessages：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportResult.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return messages</td>
+<td>31</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="appendnenkinweb-infsrcnenkinpensionlookupactionjava">append：nenkin/WEB-INF/src/nenkin/PensionLookupAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>if</td>
+<td></td>
+<td>b.length()&gt;1</td>
+<td>28</td>
+</tr>
+<tr>
+<td>2</td>
+<td>call</td>
+<td>b.length()&gt;1</td>
+<td>b.append(',')</td>
+<td>28</td>
+</tr>
+<tr>
+<td>3</td>
+<td>call</td>
+<td></td>
+<td>b.append('"').append(name).append("":")</td>
+<td>28</td>
+</tr>
+<tr>
+<td>4</td>
+<td>if</td>
+<td></td>
+<td>value==null</td>
+<td>28</td>
+</tr>
+<tr>
+<td>5</td>
+<td>call</td>
+<td>value==null</td>
+<td>b.append("null")</td>
+<td>28</td>
+</tr>
+<tr>
+<td>6</td>
+<td>if</td>
+<td>NOT (value==null)</td>
+<td>value instanceof Number||value instanceof Boolean</td>
+<td>28</td>
+</tr>
+<tr>
+<td>7</td>
+<td>call</td>
+<td>NOT (value==null) / value instanceof Number||value instanceof Boolean</td>
+<td>b.append(value)</td>
+<td>28</td>
+</tr>
+<tr>
+<td>8</td>
+<td>call</td>
+<td>NOT (value==null) / NOT (value instanceof Number||value instanceof Boolean)</td>
+<td>b.append('"').append(HtmlUtil.json(String.valueOf(value))).append('"')</td>
+<td>28</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getn2frameworkweb-infsrcwebonwebonbasejava">get：n2framework/WEB-INF/src/webon/WebonBase.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>if</td>
+<td></td>
+<td>query.containsKey(key)</td>
+<td>540</td>
+</tr>
+<tr>
+<td>2</td>
+<td>return</td>
+<td>query.containsKey(key)</td>
+<td>return query.get(key)</td>
+<td>541</td>
+</tr>
+<tr>
+<td>3</td>
+<td>return</td>
+<td>NOT (query.containsKey(key))</td>
+<td>return null</td>
+<td>543</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="writedownloadnenkinweb-infsrcnenkinnenkinbaseactionjava">writeDownload：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>String encoded = URLEncoder.encode(fileName, "UTF-8").replace("+", "%20")</td>
+<td>205</td>
+</tr>
+<tr>
+<td>2</td>
+<td>call</td>
+<td></td>
+<td>response.reset()</td>
+<td>206</td>
+</tr>
+<tr>
+<td>3</td>
+<td>call</td>
+<td></td>
+<td>response.setContentType(contentType)</td>
+<td>207</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td></td>
+<td>response.setHeader("Content-Disposition", "attachment; filename=download; filename*=UTF-8''" + encoded)</td>
+<td>208</td>
+</tr>
+<tr>
+<td>5</td>
+<td>call</td>
+<td></td>
+<td>response.setContentLength(content.length)</td>
+<td>209</td>
+</tr>
+<tr>
+<td>6</td>
+<td>call</td>
+<td></td>
+<td>response.getOutputStream().write(content)</td>
+<td>210</td>
+</tr>
+<tr>
+<td>7</td>
+<td>call</td>
+<td></td>
+<td>response.getOutputStream().flush()</td>
+<td>211</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getfilenamenenkinweb-infsrcnenkinservicepensionbatchexportresultjava">getFileName：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportResult.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return fileName</td>
+<td>27</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getcontenttypenenkinweb-infsrcnenkinservicepensionbatchexportresultjava">getContentType：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportResult.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return contentType</td>
+<td>28</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getcontentnenkinweb-infsrcnenkinservicepensionbatchexportresultjava">getContent：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportResult.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return content.clone()</td>
+<td>29</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="currentstaffnenkinweb-infsrcnenkinnenkinbaseactionjava">currentStaff：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>Object value = session.getAttribute(STAFF_CONTEXT_KEY)</td>
+<td>46</td>
+</tr>
+<tr>
+<td>2</td>
+<td>return</td>
+<td></td>
+<td>return value instanceof StaffContext ? (StaffContext) value : null</td>
+<td>47</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="ensurecsrftokennenkinweb-infsrcnenkinnenkinbaseactionjava">ensureCsrfToken：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>Object current = session.getAttribute(CSRF_TOKEN_KEY)</td>
+<td>82</td>
+</tr>
+<tr>
+<td>2</td>
+<td>if</td>
+<td></td>
+<td>current instanceof String &amp;&amp; ((String) current).length() &gt; 0</td>
+<td>83</td>
+</tr>
+<tr>
+<td>3</td>
+<td>return</td>
+<td>current instanceof String &amp;&amp; ((String) current).length() &gt; 0</td>
+<td>return (String) current</td>
+<td>83</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>NOT (current instanceof String &amp;&amp; ((String) current).length() &gt; 0)</td>
+<td>String token = UUID.randomUUID().toString()</td>
+<td>84</td>
+</tr>
+<tr>
+<td>5</td>
+<td>call</td>
+<td>NOT (current instanceof String &amp;&amp; ((String) current).length() &gt; 0)</td>
+<td>session.setAttribute(CSRF_TOKEN_KEY, token)</td>
+<td>85</td>
+</tr>
+<tr>
+<td>6</td>
+<td>return</td>
+<td>NOT (current instanceof String &amp;&amp; ((String) current).length() &gt; 0)</td>
+<td>return token</td>
+<td>86</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="isログイン可否n2frameworkweb-infsrccommonbeanlogininfobeanjava">isログイン可否：n2framework/WEB-INF/src/common/bean/LoginInfoBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return ログイン可否</td>
+<td>117</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="get職員番号n2frameworkweb-infsrccommonbeanlogininfobeanjava">get職員番号：n2framework/WEB-INF/src/common/bean/LoginInfoBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return 職員番号</td>
+<td>229</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getinstancenenkinweb-infsrcnenkinservicereferencedataservicejava">getInstance：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return INSTANCE</td>
+<td>38</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="verifystaffnenkinweb-infsrcnenkinservicereferencedataservicejava">verifyStaff：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>StaffLookupItem staff = getStaff(staffNo)</td>
+<td>231</td>
+</tr>
+<tr>
+<td>2</td>
+<td>return</td>
+<td></td>
+<td>return staff == null ? null : new StaffContext(staff.getStaffCode(), staff.getStaffName(), staff.getBranchNo(), staff.getRoleCode())</td>
+<td>232</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="textnenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">text：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return value == null ? "" : value</td>
+<td>43</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="isincludenewnenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">isIncludeNew：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return includeNew</td>
+<td>32</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="isincludechangednenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">isIncludeChanged：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return includeChanged</td>
+<td>34</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="isincludedeletednenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">isIncludeDeleted：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return includeDeleted</td>
+<td>36</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="resolverangenenkinweb-infsrcnenkinservicepensionbatchexportservicejava">resolveRange：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>if</td>
+<td></td>
+<td>request.getRunMode() == null</td>
+<td>116</td>
+</tr>
+<tr>
+<td>2</td>
+<td>throw</td>
+<td>request.getRunMode() == null</td>
+<td>throw new IllegalArgumentException("日次または月次を指定してください。")</td>
+<td>117</td>
+</tr>
+<tr>
+<td>3</td>
+<td>if</td>
+<td>NOT (request.getRunMode() == null)</td>
+<td>request.getRunMode() == PensionBatchRunMode.DAILY</td>
+<td>119</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>NOT (request.getRunMode() == null) / request.getRunMode() == PensionBatchRunMode.DAILY</td>
+<td>String day = requiredDate(request.getDailyDate(), "年月日を入力してください。")</td>
+<td>120</td>
+</tr>
+<tr>
+<td>5</td>
+<td>return</td>
+<td>NOT (request.getRunMode() == null) / request.getRunMode() == PensionBatchRunMode.DAILY</td>
+<td>return new DateRange(day, day)</td>
+<td>121</td>
+</tr>
+<tr>
+<td>6</td>
+<td>assignment</td>
+<td>NOT (request.getRunMode() == null) / NOT (request.getRunMode() == PensionBatchRunMode.DAILY)</td>
+<td>String from = requiredDate(request.getMonthStart(), "月初日を入力してください。")</td>
+<td>123</td>
+</tr>
+<tr>
+<td>7</td>
+<td>assignment</td>
+<td>NOT (request.getRunMode() == null) / NOT (request.getRunMode() == PensionBatchRunMode.DAILY)</td>
+<td>String to = requiredDate(request.getMonthEnd(), "月末日を入力してください。")</td>
+<td>124</td>
+</tr>
+<tr>
+<td>8</td>
+<td>if</td>
+<td>NOT (request.getRunMode() == null) / NOT (request.getRunMode() == PensionBatchRunMode.DAILY)</td>
+<td>from.compareTo(to) &gt; 0</td>
+<td>125</td>
+</tr>
+<tr>
+<td>9</td>
+<td>throw</td>
+<td>NOT (request.getRunMode() == null) / NOT (request.getRunMode() == PensionBatchRunMode.DAILY) / from.compareTo(to) &gt; 0</td>
+<td>throw new IllegalArgumentException("月初日は月末日以前で指定してください。")</td>
+<td>126</td>
+</tr>
+<tr>
+<td>10</td>
+<td>return</td>
+<td>NOT (request.getRunMode() == null) / NOT (request.getRunMode() == PensionBatchRunMode.DAILY) / NOT (from.compareTo(to) &gt; 0)</td>
+<td>return new DateRange(from, to)</td>
+<td>128</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="parsestaffnonenkinweb-infsrcnenkinservicepensionbatchexportservicejava">parseStaffNo：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>String text = value == null ? "" : value.trim()</td>
+<td>139</td>
+</tr>
+<tr>
+<td>2</td>
+<td>if</td>
+<td></td>
+<td>text.length() == 0 || "ALL".equalsIgnoreCase(text)</td>
+<td>140</td>
+</tr>
+<tr>
+<td>3</td>
+<td>return</td>
+<td>text.length() == 0 || "ALL".equalsIgnoreCase(text)</td>
+<td>return null</td>
+<td>141</td>
+</tr>
+<tr>
+<td>4</td>
+<td>try</td>
+<td>NOT (text.length() == 0 || "ALL".equalsIgnoreCase(text))</td>
+<td></td>
+<td>143</td>
+</tr>
+<tr>
+<td>5</td>
+<td>return</td>
+<td>NOT (text.length() == 0 || "ALL".equalsIgnoreCase(text)) / try</td>
+<td>return Integer.valueOf(text)</td>
+<td>144</td>
+</tr>
+<tr>
+<td>6</td>
+<td>catch</td>
+<td>NOT (text.length() == 0 || "ALL".equalsIgnoreCase(text))</td>
+<td>NumberFormatException e</td>
+<td>145</td>
+</tr>
+<tr>
+<td>7</td>
+<td>throw</td>
+<td>NOT (text.length() == 0 || "ALL".equalsIgnoreCase(text)) / NumberFormatException e</td>
+<td>throw new IllegalArgumentException("職員番号は数値で入力してください。", e)</td>
+<td>146</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getstaffnonenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">getStaffNo：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return staffNo</td>
+<td>30</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getdeletecutoffdatenenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">getDeleteCutoffDate：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return deleteCutoffDate</td>
+<td>38</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="purgedeletedauditsthroughnenkinweb-infsrcnenkinservicepensionrepositoryjava">purgeDeletedAuditsThrough：nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>String cutoff = optionalDate(cutoffDate)</td>
+<td>459</td>
+</tr>
+<tr>
+<td>2</td>
+<td>if</td>
+<td></td>
+<td>cutoff.length() == 0</td>
+<td>460</td>
+</tr>
+<tr>
+<td>3</td>
+<td>return</td>
+<td>cutoff.length() == 0</td>
+<td>return 0</td>
+<td>461</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>NOT (cutoff.length() == 0)</td>
+<td>Connection connection = null</td>
+<td>463</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td>NOT (cutoff.length() == 0)</td>
+<td>PreparedStatement statement = null</td>
+<td>464</td>
+</tr>
+<tr>
+<td>6</td>
+<td>try</td>
+<td>NOT (cutoff.length() == 0)</td>
+<td></td>
+<td>465</td>
+</tr>
+<tr>
+<td>7</td>
+<td>assignment</td>
+<td>NOT (cutoff.length() == 0) / try</td>
+<td>connection = NenkinDataSource.openConnection()</td>
+<td>466</td>
+</tr>
+<tr>
+<td>8</td>
+<td>call</td>
+<td>NOT (cutoff.length() == 0) / try</td>
+<td>connection.setAutoCommit(false)</td>
+<td>467</td>
+</tr>
+<tr>
+<td>9</td>
+<td>assignment</td>
+<td>NOT (cutoff.length() == 0) / try</td>
+<td>statement = connection.prepareStatement("DELETE FROM " + DELETE_TABLE + " WHERE データ更新日 &lt;= ?")</td>
+<td>468</td>
+</tr>
+<tr>
+<td>10</td>
+<td>call</td>
+<td>NOT (cutoff.length() == 0) / try</td>
+<td>setDate(statement, 1, cutoff)</td>
+<td>470</td>
+</tr>
+<tr>
+<td>11</td>
+<td>assignment</td>
+<td>NOT (cutoff.length() == 0) / try</td>
+<td>int count = statement.executeUpdate()</td>
+<td>471</td>
+</tr>
+<tr>
+<td>12</td>
+<td>call</td>
+<td>NOT (cutoff.length() == 0) / try</td>
+<td>connection.commit()</td>
+<td>472</td>
+</tr>
+<tr>
+<td>13</td>
+<td>return</td>
+<td>NOT (cutoff.length() == 0) / try</td>
+<td>return count</td>
+<td>473</td>
+</tr>
+<tr>
+<td>14</td>
+<td>catch</td>
+<td>NOT (cutoff.length() == 0)</td>
+<td>SQLException e</td>
+<td>474</td>
+</tr>
+<tr>
+<td>15</td>
+<td>call</td>
+<td>NOT (cutoff.length() == 0) / SQLException e</td>
+<td>rollback(connection)</td>
+<td>475</td>
+</tr>
+<tr>
+<td>16</td>
+<td>throw</td>
+<td>NOT (cutoff.length() == 0) / SQLException e</td>
+<td>throw failure("削除明細履歴の整理", e)</td>
+<td>476</td>
+</tr>
+<tr>
+<td>17</td>
+<td>finally</td>
+<td>NOT (cutoff.length() == 0)</td>
+<td></td>
+<td>477</td>
+</tr>
+<tr>
+<td>18</td>
+<td>call</td>
+<td>NOT (cutoff.length() == 0) / finally</td>
+<td>close(statement)</td>
+<td>478</td>
+</tr>
+<tr>
+<td>19</td>
+<td>call</td>
+<td>NOT (cutoff.length() == 0) / finally</td>
+<td>close(connection)</td>
+<td>479</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="selectedspecsnenkinweb-infsrcnenkinservicepensionbatchexportservicejava">selectedSpecs：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>List&lt;ExportSpec&gt; specs = new ArrayList&lt;ExportSpec&gt;()</td>
+<td>152</td>
+</tr>
+<tr>
+<td>2</td>
+<td>if</td>
+<td></td>
+<td>request.isIncludeNew()</td>
+<td>153</td>
+</tr>
+<tr>
+<td>3</td>
+<td>call</td>
+<td>request.isIncludeNew()</td>
+<td>specs.add(buildSpec(AuditType.NEW, request.getRunMode(), staffSpecified))</td>
+<td>154</td>
+</tr>
+<tr>
+<td>4</td>
+<td>if</td>
+<td></td>
+<td>request.isIncludeChanged()</td>
+<td>156</td>
+</tr>
+<tr>
+<td>5</td>
+<td>call</td>
+<td>request.isIncludeChanged()</td>
+<td>specs.add(buildSpec(AuditType.CHANGED, request.getRunMode(), staffSpecified))</td>
+<td>157</td>
+</tr>
+<tr>
+<td>6</td>
+<td>if</td>
+<td></td>
+<td>request.isIncludeDeleted()</td>
+<td>159</td>
+</tr>
+<tr>
+<td>7</td>
+<td>call</td>
+<td>request.isIncludeDeleted()</td>
+<td>specs.add(buildSpec(AuditType.DELETED, request.getRunMode(), staffSpecified))</td>
+<td>160</td>
+</tr>
+<tr>
+<td>8</td>
+<td>return</td>
+<td></td>
+<td>return specs</td>
+<td>162</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="findauditrecordsnenkinweb-infsrcnenkinservicepensionrepositoryjava">findAuditRecords：nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>if</td>
+<td></td>
+<td>type == null</td>
+<td>355</td>
+</tr>
+<tr>
+<td>2</td>
+<td>throw</td>
+<td>type == null</td>
+<td>throw new IllegalArgumentException("監査区分を指定してください。")</td>
+<td>356</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td>NOT (type == null)</td>
+<td>String from = optionalDate(dateFrom)</td>
+<td>358</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>NOT (type == null)</td>
+<td>String to = optionalDate(dateTo)</td>
+<td>359</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td>NOT (type == null)</td>
+<td>String sourceTable = type == AuditType.DELETED ? DELETE_TABLE : TABLE</td>
+<td>360</td>
+</tr>
+<tr>
+<td>6</td>
+<td>assignment</td>
+<td>NOT (type == null)</td>
+<td>StringBuilder sql = new StringBuilder("SELECT ").append(SELECT_COLUMNS) .append(", R.データ更新日 AS AUDIT_DATE, R.更新時間 AS AUDIT_TIME, ") .append("R.更新者 AS UPDATED_BY").append(fromClause(sourceTable)) .append(" WHERE 1 = 1")</td>
+<td>361</td>
+</tr>
+<tr>
+<td>7</td>
+<td>if</td>
+<td>NOT (type == null)</td>
+<td>type != AuditType.DELETED</td>
+<td>365</td>
+</tr>
+<tr>
+<td>8</td>
+<td>assignment</td>
+<td>NOT (type == null) / type != AuditType.DELETED</td>
+<td>sql.append(" AND R.変更FLG = ?")</td>
+<td>366</td>
+</tr>
+<tr>
+<td>9</td>
+<td>if</td>
+<td>NOT (type == null)</td>
+<td>from.length() &gt; 0</td>
+<td>368</td>
+</tr>
+<tr>
+<td>10</td>
+<td>call</td>
+<td>NOT (type == null) / from.length() &gt; 0</td>
+<td>sql.append(" AND R.データ更新日 &gt;= ?")</td>
+<td>369</td>
+</tr>
+<tr>
+<td>11</td>
+<td>if</td>
+<td>NOT (type == null)</td>
+<td>to.length() &gt; 0</td>
+<td>371</td>
+</tr>
+<tr>
+<td>12</td>
+<td>call</td>
+<td>NOT (type == null) / to.length() &gt; 0</td>
+<td>sql.append(" AND R.データ更新日 &lt;= ?")</td>
+<td>372</td>
+</tr>
+<tr>
+<td>13</td>
+<td>if</td>
+<td>NOT (type == null)</td>
+<td>updatedBy != null</td>
+<td>374</td>
+</tr>
+<tr>
+<td>14</td>
+<td>assignment</td>
+<td>NOT (type == null) / updatedBy != null</td>
+<td>sql.append(" AND R.更新者 = ?")</td>
+<td>375</td>
+</tr>
+<tr>
+<td>15</td>
+<td>call</td>
+<td>NOT (type == null)</td>
+<td>sql.append(" ORDER BY R.データ更新日, R.更新時間, R.店番, R.顧客番号")</td>
+<td>377</td>
+</tr>
+<tr>
+<td>16</td>
+<td>assignment</td>
+<td>NOT (type == null)</td>
+<td>List&lt;PensionAuditRecord&gt; rows = new ArrayList&lt;PensionAuditRecord&gt;()</td>
+<td>379</td>
+</tr>
+<tr>
+<td>17</td>
+<td>assignment</td>
+<td>NOT (type == null)</td>
+<td>Connection connection = null</td>
+<td>380</td>
+</tr>
+<tr>
+<td>18</td>
+<td>assignment</td>
+<td>NOT (type == null)</td>
+<td>PreparedStatement statement = null</td>
+<td>381</td>
+</tr>
+<tr>
+<td>19</td>
+<td>assignment</td>
+<td>NOT (type == null)</td>
+<td>ResultSet results = null</td>
+<td>382</td>
+</tr>
+<tr>
+<td>20</td>
+<td>try</td>
+<td>NOT (type == null)</td>
+<td></td>
+<td>383</td>
+</tr>
+<tr>
+<td>21</td>
+<td>assignment</td>
+<td>NOT (type == null) / try</td>
+<td>connection = NenkinDataSource.openConnection()</td>
+<td>384</td>
+</tr>
+<tr>
+<td>22</td>
+<td>assignment</td>
+<td>NOT (type == null) / try</td>
+<td>statement = connection.prepareStatement(sql.toString())</td>
+<td>385</td>
+</tr>
+<tr>
+<td>23</td>
+<td>assignment</td>
+<td>NOT (type == null) / try</td>
+<td>int index = 1</td>
+<td>386</td>
+</tr>
+<tr>
+<td>24</td>
+<td>if</td>
+<td>NOT (type == null) / try</td>
+<td>type != AuditType.DELETED</td>
+<td>387</td>
+</tr>
+<tr>
+<td>25</td>
+<td>call</td>
+<td>NOT (type == null) / try / type != AuditType.DELETED</td>
+<td>statement.setInt(index++, type == AuditType.NEW ? 0 : 1)</td>
+<td>388</td>
+</tr>
+<tr>
+<td>26</td>
+<td>if</td>
+<td>NOT (type == null) / try</td>
+<td>from.length() &gt; 0</td>
+<td>390</td>
+</tr>
+<tr>
+<td>27</td>
+<td>call</td>
+<td>NOT (type == null) / try / from.length() &gt; 0</td>
+<td>setDate(statement, index++, from)</td>
+<td>391</td>
+</tr>
+<tr>
+<td>28</td>
+<td>if</td>
+<td>NOT (type == null) / try</td>
+<td>to.length() &gt; 0</td>
+<td>393</td>
+</tr>
+<tr>
+<td>29</td>
+<td>call</td>
+<td>NOT (type == null) / try / to.length() &gt; 0</td>
+<td>setDate(statement, index++, to)</td>
+<td>394</td>
+</tr>
+<tr>
+<td>30</td>
+<td>if</td>
+<td>NOT (type == null) / try</td>
+<td>updatedBy != null</td>
+<td>396</td>
+</tr>
+<tr>
+<td>31</td>
+<td>call</td>
+<td>NOT (type == null) / try / updatedBy != null</td>
+<td>statement.setInt(index++, updatedBy.intValue())</td>
+<td>397</td>
+</tr>
+<tr>
+<td>32</td>
+<td>assignment</td>
+<td>NOT (type == null) / try</td>
+<td>results = statement.executeQuery()</td>
+<td>399</td>
+</tr>
+<tr>
+<td>33</td>
+<td>assignment</td>
+<td>NOT (type == null) / try</td>
+<td>long rowId = 1L</td>
+<td>400</td>
+</tr>
+<tr>
+<td>34</td>
+<td>while</td>
+<td>NOT (type == null) / try</td>
+<td>results.next()</td>
+<td>401</td>
+</tr>
+<tr>
+<td>35</td>
+<td>call</td>
+<td>NOT (type == null) / try / results.next()</td>
+<td>rows.add(new PensionAuditRecord(rowId++, type, results.getString("AUDIT_DATE"), results.getString("AUDIT_TIME"), nullableInteger(results, "UPDATED_BY"), readReservation(results)))</td>
+<td>402</td>
+</tr>
+<tr>
+<td>36</td>
+<td>return</td>
+<td>NOT (type == null) / try</td>
+<td>return rows</td>
+<td>406</td>
+</tr>
+<tr>
+<td>37</td>
+<td>catch</td>
+<td>NOT (type == null)</td>
+<td>SQLException e</td>
+<td>407</td>
+</tr>
+<tr>
+<td>38</td>
+<td>throw</td>
+<td>NOT (type == null) / SQLException e</td>
+<td>throw failure("年金予約の更新区分検索", e)</td>
+<td>408</td>
+</tr>
+<tr>
+<td>39</td>
+<td>finally</td>
+<td>NOT (type == null)</td>
+<td></td>
+<td>409</td>
+</tr>
+<tr>
+<td>40</td>
+<td>call</td>
+<td>NOT (type == null) / finally</td>
+<td>close(results)</td>
+<td>410</td>
+</tr>
+<tr>
+<td>41</td>
+<td>call</td>
+<td>NOT (type == null) / finally</td>
+<td>close(statement)</td>
+<td>411</td>
+</tr>
+<tr>
+<td>42</td>
+<td>call</td>
+<td>NOT (type == null) / finally</td>
+<td>close(connection)</td>
+<td>412</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="emptymessagenenkinweb-infsrcnenkinservicepensionbatchexportservicejava">emptyMessage：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>String period = mode == PensionBatchRunMode.DAILY ? "日次" : "月次"</td>
+<td>189</td>
+</tr>
+<tr>
+<td>2</td>
+<td>if</td>
+<td></td>
+<td>staffSpecified</td>
+<td>190</td>
+</tr>
+<tr>
+<td>3</td>
+<td>return</td>
+<td>staffSpecified</td>
+<td>return "入力した担当者の【" + type.getDisplayName() + "分（" + period + "）】の該当明細はありませんでした"</td>
+<td>191</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>NOT (staffSpecified)</td>
+<td>String dateText = mode == PensionBatchRunMode.DAILY ? "入力年月日の" : "入力年月の"</td>
+<td>194</td>
+</tr>
+<tr>
+<td>5</td>
+<td>return</td>
+<td>NOT (staffSpecified)</td>
+<td>return dateText + "【" + type.getDisplayName() + "分（" + period + "）】の該当明細はありませんでした"</td>
+<td>195</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getrunmodenenkinweb-infsrcnenkinservicepensionbatchexportrequestjava">getRunMode：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return runMode</td>
+<td>22</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="sortauditsnenkinweb-infsrcnenkinservicepensionbatchexportservicejava">sortAudits：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>Collections.sort(audits, new Comparator&lt;PensionAuditRecord&gt;() { public int compare(PensionAuditRecord left, PensionAuditRecord right) { PensionReservation a = left.getReservation(); PensionReservation b = right.getReservation(); int branch = compareInteger(a.getBranchNo(), b.getBranchNo()); if (branch != 0) { return branch; } int customer = compareInteger(a.getCustomerNo(), b.getCustomerNo()); return customer != 0 ? customer : Long.valueOf(left.getAuditId()) .compareTo(Long.valueOf(right.getAuditId())); } })</td>
+<td>200</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="torowsnenkinweb-infsrcnenkinservicepensionbatchexportservicejava">toRows：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>List&lt;Object[]&gt; rows = new ArrayList&lt;Object[]&gt;()</td>
+<td>223</td>
+</tr>
+<tr>
+<td>2</td>
+<td>for</td>
+<td></td>
+<td>int i = 0; i &lt; audits.size(); i++</td>
+<td>224</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td>int i = 0; i &lt; audits.size(); i++</td>
+<td>PensionReservation row = audits.get(i).getReservation()</td>
+<td>225</td>
+</tr>
+<tr>
+<td>4</td>
+<td>if</td>
+<td>int i = 0; i &lt; audits.size(); i++</td>
+<td>type == AuditType.NEW</td>
+<td>226</td>
+</tr>
+<tr>
+<td>5</td>
+<td>call</td>
+<td>int i = 0; i &lt; audits.size(); i++ / type == AuditType.NEW</td>
+<td>rows.add(new Object[] { Integer.valueOf(i + 1), wareki(row.getReservationRequestDate()), row.getKanaName(), row.getCustomerName(), row.getGender(), row.getAddress(), wareki(row.getBirthDate()), row.getPhoneNumber(), row.getPensionType(), row.getPlannedAge(), wareki(row.getClaimScheduledDate()), row.getNotes(), row.getSpouseName(), wareki(row.getSpouseBirthDate()), row.getBranchNo(), row.getCustomerNo(), staffCode(row.getStaffCode()) })</td>
+<td>227</td>
+</tr>
+<tr>
+<td>6</td>
+<td>call</td>
+<td>int i = 0; i &lt; audits.size(); i++ / NOT (type == AuditType.NEW)</td>
+<td>rows.add(new Object[] { Integer.valueOf(i + 1), row.getBranchNo(), row.getCustomerNo(), row.getCustomerName(), row.getKanaName(), row.getGender(), row.getAddress(), row.getPhoneNumber(), wareki(row.getBirthDate()), row.getPensionType(), row.getClaimStatus(), wareki(row.getClaimScheduledDate()), row.getPlannedAge(), row.getSpouseName(), wareki(row.getSpouseBirthDate()), row.getHasBenefit(), wareki(row.getReservationRequestDate()), staffCode(row.getStaffCode()), row.getNotes(), row.isSixMonthCheck() ? "確" : "" })</td>
+<td>236</td>
+</tr>
+<tr>
+<td>7</td>
+<td>return</td>
+<td></td>
+<td>return rows</td>
+<td>247</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="buildlayoutnenkinweb-infsrcnenkinservicepensionbatchexportservicejava">buildLayout：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>List&lt;Object[]&gt; leadingRows = new ArrayList&lt;Object[]&gt;()</td>
+<td>252</td>
+</tr>
+<tr>
+<td>2</td>
+<td>for</td>
+<td></td>
+<td>int i = 0; i &lt; 7; i++</td>
+<td>253</td>
+</tr>
+<tr>
+<td>3</td>
+<td>call</td>
+<td>int i = 0; i &lt; 7; i++</td>
+<td>leadingRows.add(new Object[columnCount])</td>
+<td>254</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td></td>
+<td>List&lt;String&gt; mergedRanges = new ArrayList&lt;String&gt;()</td>
+<td>256</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td></td>
+<td>String period = request.getRunMode() == PensionBatchRunMode.DAILY ? wareki(range.from) : wareki(range.from) + "～" + wareki(range.to)</td>
+<td>257</td>
+</tr>
+<tr>
+<td>6</td>
+<td>assignment</td>
+<td></td>
+<td>String staff = request.getStaffNo() == null || request.getStaffNo().trim().length() == 0 ? "ALL" : request.getStaffNo().trim()</td>
+<td>259</td>
+</tr>
+<tr>
+<td>7</td>
+<td>assignment</td>
+<td></td>
+<td>Object[] titleRow = leadingRows.get(0)</td>
+<td>262</td>
+</tr>
+<tr>
+<td>8</td>
+<td>assignment</td>
+<td></td>
+<td>Object[] metaRow = leadingRows.get(4)</td>
+<td>263</td>
+</tr>
+<tr>
+<td>9</td>
+<td>if</td>
+<td></td>
+<td>spec.type == AuditType.NEW</td>
+<td>264</td>
+</tr>
+<tr>
+<td>10</td>
+<td>assignment</td>
+<td>spec.type == AuditType.NEW</td>
+<td>titleRow[3] = spec.title</td>
+<td>265</td>
+</tr>
+<tr>
+<td>11</td>
+<td>assignment</td>
+<td>spec.type == AuditType.NEW</td>
+<td>metaRow[3] = "処理日"</td>
+<td>266</td>
+</tr>
+<tr>
+<td>12</td>
+<td>assignment</td>
+<td>spec.type == AuditType.NEW</td>
+<td>metaRow[5] = period</td>
+<td>267</td>
+</tr>
+<tr>
+<td>13</td>
+<td>assignment</td>
+<td>spec.type == AuditType.NEW</td>
+<td>metaRow[9] = "職員番号"</td>
+<td>268</td>
+</tr>
+<tr>
+<td>14</td>
+<td>assignment</td>
+<td>spec.type == AuditType.NEW</td>
+<td>metaRow[11] = staff</td>
+<td>269</td>
+</tr>
+<tr>
+<td>15</td>
+<td>call</td>
+<td>spec.type == AuditType.NEW</td>
+<td>mergedRanges.add("D1:M3")</td>
+<td>270</td>
+</tr>
+<tr>
+<td>16</td>
+<td>call</td>
+<td>spec.type == AuditType.NEW</td>
+<td>mergedRanges.add("D5:E6")</td>
+<td>271</td>
+</tr>
+<tr>
+<td>17</td>
+<td>call</td>
+<td>spec.type == AuditType.NEW</td>
+<td>mergedRanges.add(request.getRunMode() == PensionBatchRunMode.DAILY ? "F5:H6" : "F5:I6")</td>
+<td>272</td>
+</tr>
+<tr>
+<td>18</td>
+<td>call</td>
+<td>spec.type == AuditType.NEW</td>
+<td>mergedRanges.add("J5:K6")</td>
+<td>274</td>
+</tr>
+<tr>
+<td>19</td>
+<td>call</td>
+<td>spec.type == AuditType.NEW</td>
+<td>mergedRanges.add("L5:M6")</td>
+<td>275</td>
+</tr>
+<tr>
+<td>20</td>
+<td>assignment</td>
+<td>NOT (spec.type == AuditType.NEW)</td>
+<td>titleRow[4] = spec.title</td>
+<td>277</td>
+</tr>
+<tr>
+<td>21</td>
+<td>assignment</td>
+<td>NOT (spec.type == AuditType.NEW)</td>
+<td>metaRow[4] = "処理日"</td>
+<td>278</td>
+</tr>
+<tr>
+<td>22</td>
+<td>assignment</td>
+<td>NOT (spec.type == AuditType.NEW)</td>
+<td>metaRow[6] = period</td>
+<td>279</td>
+</tr>
+<tr>
+<td>23</td>
+<td>assignment</td>
+<td>NOT (spec.type == AuditType.NEW)</td>
+<td>metaRow[11] = "職員番号"</td>
+<td>280</td>
+</tr>
+<tr>
+<td>24</td>
+<td>assignment</td>
+<td>NOT (spec.type == AuditType.NEW)</td>
+<td>metaRow[13] = staff</td>
+<td>281</td>
+</tr>
+<tr>
+<td>25</td>
+<td>call</td>
+<td>NOT (spec.type == AuditType.NEW)</td>
+<td>mergedRanges.add("E1:P3")</td>
+<td>282</td>
+</tr>
+<tr>
+<td>26</td>
+<td>call</td>
+<td>NOT (spec.type == AuditType.NEW)</td>
+<td>mergedRanges.add("E5:F6")</td>
+<td>283</td>
+</tr>
+<tr>
+<td>27</td>
+<td>call</td>
+<td>NOT (spec.type == AuditType.NEW)</td>
+<td>mergedRanges.add(request.getRunMode() == PensionBatchRunMode.DAILY ? "G5:H6" : "G5:I6")</td>
+<td>284</td>
+</tr>
+<tr>
+<td>28</td>
+<td>call</td>
+<td>NOT (spec.type == AuditType.NEW)</td>
+<td>mergedRanges.add("L5:M6")</td>
+<td>286</td>
+</tr>
+<tr>
+<td>29</td>
+<td>call</td>
+<td>NOT (spec.type == AuditType.NEW)</td>
+<td>mergedRanges.add("N5:P6")</td>
+<td>287</td>
+</tr>
+<tr>
+<td>30</td>
+<td>return</td>
+<td></td>
+<td>return new WorkbookLayout(leadingRows, mergedRanges, spec.type == AuditType.NEW ? 70 : 60)</td>
+<td>289</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="buildworkbooknenkinweb-infsrcnenkinutilopenxmlworkbookwriterjava">buildWorkbook：nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return buildWorkbook(sheetName, headers, rows, null, null, 100)</td>
+<td>28</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="buildworkbooknenkinweb-infsrcnenkinutilopenxmlworkbookwriterjava-1">buildWorkbook：nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>if</td>
+<td></td>
+<td>headers == null || headers.isEmpty()</td>
+<td>38</td>
+</tr>
+<tr>
+<td>2</td>
+<td>throw</td>
+<td>headers == null || headers.isEmpty()</td>
+<td>throw new IllegalArgumentException("ヘッダーは1列以上必要です。")</td>
+<td>39</td>
+</tr>
+<tr>
+<td>3</td>
+<td>if</td>
+<td>NOT (headers == null || headers.isEmpty())</td>
+<td>rows == null</td>
+<td>41</td>
+</tr>
+<tr>
+<td>4</td>
+<td>throw</td>
+<td>NOT (headers == null || headers.isEmpty()) / rows == null</td>
+<td>throw new IllegalArgumentException("明細リストはnullにできません。")</td>
+<td>42</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null)</td>
+<td>ByteArrayOutputStream output = new ByteArrayOutputStream()</td>
+<td>45</td>
+</tr>
+<tr>
+<td>6</td>
+<td>assignment</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null)</td>
+<td>ZipOutputStream zip = new ZipOutputStream(output)</td>
+<td>46</td>
+</tr>
+<tr>
+<td>7</td>
+<td>try</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null)</td>
+<td></td>
+<td>47</td>
+</tr>
+<tr>
+<td>8</td>
+<td>call</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null) / try</td>
+<td>write(zip, "[Content_Types].xml", contentTypes())</td>
+<td>48</td>
+</tr>
+<tr>
+<td>9</td>
+<td>call</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null) / try</td>
+<td>write(zip, "_rels/.rels", rootRelationships())</td>
+<td>49</td>
+</tr>
+<tr>
+<td>10</td>
+<td>call</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null) / try</td>
+<td>write(zip, "xl/workbook.xml", workbookXml(sanitizeSheetName(sheetName)))</td>
+<td>50</td>
+</tr>
+<tr>
+<td>11</td>
+<td>call</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null) / try</td>
+<td>write(zip, "xl/_rels/workbook.xml.rels", workbookRelationships())</td>
+<td>51</td>
+</tr>
+<tr>
+<td>12</td>
+<td>call</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null) / try</td>
+<td>write(zip, "xl/styles.xml", stylesXml())</td>
+<td>52</td>
+</tr>
+<tr>
+<td>13</td>
+<td>call</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null) / try</td>
+<td>write(zip, "xl/worksheets/sheet1.xml", sheetXml(headers, rows, leadingRows, mergedRanges, printScale))</td>
+<td>53</td>
+</tr>
+<tr>
+<td>14</td>
+<td>call</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null) / try</td>
+<td>zip.finish()</td>
+<td>55</td>
+</tr>
+<tr>
+<td>15</td>
+<td>return</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null) / try</td>
+<td>return output.toByteArray()</td>
+<td>56</td>
+</tr>
+<tr>
+<td>16</td>
+<td>catch</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null)</td>
+<td>IOException e</td>
+<td>57</td>
+</tr>
+<tr>
+<td>17</td>
+<td>throw</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null) / IOException e</td>
+<td>throw new IllegalStateException("Excelファイルの生成に失敗しました。", e)</td>
+<td>58</td>
+</tr>
+<tr>
+<td>18</td>
+<td>finally</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null)</td>
+<td></td>
+<td>59</td>
+</tr>
+<tr>
+<td>19</td>
+<td>try</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null) / finally</td>
+<td></td>
+<td>60</td>
+</tr>
+<tr>
+<td>20</td>
+<td>call</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null) / finally / try</td>
+<td>zip.close()</td>
+<td>61</td>
+</tr>
+<tr>
+<td>21</td>
+<td>catch</td>
+<td>NOT (headers == null || headers.isEmpty()) / NOT (rows == null) / finally</td>
+<td>IOException e</td>
+<td>62</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="generatedfilenenkinweb-infsrcnenkinservicepensionbatchexportservicejava">GeneratedFile：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>this.spec = spec</td>
+<td>396</td>
+</tr>
+<tr>
+<td>2</td>
+<td>assignment</td>
+<td></td>
+<td>this.rowCount = rowCount</td>
+<td>397</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td></td>
+<td>this.content = content</td>
+<td>398</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="tofileresultsnenkinweb-infsrcnenkinservicepensionbatchexportservicejava">toFileResults：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>List&lt;PensionBatchExportFileResult&gt; results = new ArrayList&lt;PensionBatchExportFileResult&gt;()</td>
+<td>303</td>
+</tr>
+<tr>
+<td>2</td>
+<td>for</td>
+<td></td>
+<td>int i = 0; i &lt; generated.size(); i++</td>
+<td>305</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td>int i = 0; i &lt; generated.size(); i++</td>
+<td>GeneratedFile file = generated.get(i)</td>
+<td>306</td>
+</tr>
+<tr>
+<td>4</td>
+<td>call</td>
+<td>int i = 0; i &lt; generated.size(); i++</td>
+<td>results.add(new PensionBatchExportFileResult(file.spec.queryName, file.spec.fileName, file.spec.type.getDisplayName(), file.rowCount))</td>
+<td>307</td>
+</tr>
+<tr>
+<td>5</td>
+<td>return</td>
+<td></td>
+<td>return results</td>
+<td>310</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="pensionbatchexportresultnenkinweb-infsrcnenkinservicepensionbatchexportresultjava">PensionBatchExportResult：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportResult.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>this.fileName = fileName == null ? "" : fileName</td>
+<td>19</td>
+</tr>
+<tr>
+<td>2</td>
+<td>assignment</td>
+<td></td>
+<td>this.contentType = contentType == null ? "" : contentType</td>
+<td>20</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td></td>
+<td>this.content = content == null ? new byte[0] : content.clone()</td>
+<td>21</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td></td>
+<td>this.files = Collections.unmodifiableList( new ArrayList&lt;PensionBatchExportFileResult&gt;(files))</td>
+<td>22</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td></td>
+<td>this.messages = Collections.unmodifiableList(new ArrayList&lt;String&gt;(messages))</td>
+<td>24</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="buildzipnenkinweb-infsrcnenkinservicepensionbatchexportservicejava">buildZip：nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>ByteArrayOutputStream output = new ByteArrayOutputStream()</td>
+<td>314</td>
+</tr>
+<tr>
+<td>2</td>
+<td>assignment</td>
+<td></td>
+<td>ZipOutputStream zip = new ZipOutputStream(output)</td>
+<td>315</td>
+</tr>
+<tr>
+<td>3</td>
+<td>try</td>
+<td></td>
+<td></td>
+<td>316</td>
+</tr>
+<tr>
+<td>4</td>
+<td>for</td>
+<td>try</td>
+<td>int i = 0; i &lt; files.size(); i++</td>
+<td>317</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td>try / int i = 0; i &lt; files.size(); i++</td>
+<td>GeneratedFile file = files.get(i)</td>
+<td>318</td>
+</tr>
+<tr>
+<td>6</td>
+<td>call</td>
+<td>try / int i = 0; i &lt; files.size(); i++</td>
+<td>writeZipEntry(zip, file.spec.fileName, file.content)</td>
+<td>319</td>
+</tr>
+<tr>
+<td>7</td>
+<td>if</td>
+<td>try</td>
+<td>!messages.isEmpty()</td>
+<td>321</td>
+</tr>
+<tr>
+<td>8</td>
+<td>assignment</td>
+<td>try / !messages.isEmpty()</td>
+<td>StringBuilder text = new StringBuilder()</td>
+<td>322</td>
+</tr>
+<tr>
+<td>9</td>
+<td>for</td>
+<td>try / !messages.isEmpty()</td>
+<td>int i = 0; i &lt; messages.size(); i++</td>
+<td>323</td>
+</tr>
+<tr>
+<td>10</td>
+<td>call</td>
+<td>try / !messages.isEmpty() / int i = 0; i &lt; messages.size(); i++</td>
+<td>text.append(messages.get(i)).append("\r\n")</td>
+<td>324</td>
+</tr>
+<tr>
+<td>11</td>
+<td>call</td>
+<td>try / !messages.isEmpty()</td>
+<td>writeZipEntry(zip, "出力結果.txt", text.toString().getBytes(UTF8))</td>
+<td>326</td>
+</tr>
+<tr>
+<td>12</td>
+<td>call</td>
+<td>try</td>
+<td>zip.finish()</td>
+<td>328</td>
+</tr>
+<tr>
+<td>13</td>
+<td>return</td>
+<td>try</td>
+<td>return output.toByteArray()</td>
+<td>329</td>
+</tr>
+<tr>
+<td>14</td>
+<td>catch</td>
+<td></td>
+<td>IOException e</td>
+<td>330</td>
+</tr>
+<tr>
+<td>15</td>
+<td>throw</td>
+<td>IOException e</td>
+<td>throw new IllegalStateException("ZIPファイルの生成に失敗しました。", e)</td>
+<td>331</td>
+</tr>
+<tr>
+<td>16</td>
+<td>finally</td>
+<td></td>
+<td></td>
+<td>332</td>
+</tr>
+<tr>
+<td>17</td>
+<td>try</td>
+<td>finally</td>
+<td></td>
+<td>333</td>
+</tr>
+<tr>
+<td>18</td>
+<td>call</td>
+<td>finally / try</td>
+<td>zip.close()</td>
+<td>334</td>
+</tr>
+<tr>
+<td>19</td>
+<td>catch</td>
+<td>finally</td>
+<td>IOException e</td>
+<td>335</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="jsonnenkinweb-infsrcnenkinutilhtmlutiljava">json：nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>if</td>
+<td></td>
+<td>value == null</td>
+<td>52</td>
+</tr>
+<tr>
+<td>2</td>
+<td>return</td>
+<td>value == null</td>
+<td>return ""</td>
+<td>52</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td>NOT (value == null)</td>
+<td>StringBuilder result = new StringBuilder()</td>
+<td>53</td>
+</tr>
+<tr>
+<td>4</td>
+<td>for</td>
+<td>NOT (value == null)</td>
+<td>int i = 0; i &lt; value.length(); i++</td>
+<td>54</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++</td>
+<td>char c = value.charAt(i)</td>
+<td>55</td>
+</tr>
+<tr>
+<td>6</td>
+<td>switch</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++</td>
+<td>c</td>
+<td>56</td>
+</tr>
+<tr>
+<td>7</td>
+<td>call</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>case '\': result.append("\\")</td>
+<td>57</td>
+</tr>
+<tr>
+<td>8</td>
+<td>statement</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>break</td>
+<td>57</td>
+</tr>
+<tr>
+<td>9</td>
+<td>call</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>case '"': result.append("\"")</td>
+<td>58</td>
+</tr>
+<tr>
+<td>10</td>
+<td>statement</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>break</td>
+<td>58</td>
+</tr>
+<tr>
+<td>11</td>
+<td>call</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>case '\r': result.append("\r")</td>
+<td>59</td>
+</tr>
+<tr>
+<td>12</td>
+<td>statement</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>break</td>
+<td>59</td>
+</tr>
+<tr>
+<td>13</td>
+<td>call</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>case '\n': result.append("\n")</td>
+<td>60</td>
+</tr>
+<tr>
+<td>14</td>
+<td>statement</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>break</td>
+<td>60</td>
+</tr>
+<tr>
+<td>15</td>
+<td>call</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>case '\t': result.append("\t")</td>
+<td>61</td>
+</tr>
+<tr>
+<td>16</td>
+<td>statement</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>break</td>
+<td>61</td>
+</tr>
+<tr>
+<td>17</td>
+<td>call</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>case '\b': result.append("\b")</td>
+<td>62</td>
+</tr>
+<tr>
+<td>18</td>
+<td>statement</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>break</td>
+<td>62</td>
+</tr>
+<tr>
+<td>19</td>
+<td>call</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>case '\f': result.append("\f")</td>
+<td>63</td>
+</tr>
+<tr>
+<td>20</td>
+<td>statement</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>break</td>
+<td>63</td>
+</tr>
+<tr>
+<td>21</td>
+<td>call</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>case '&lt;': result.append("\u003c")</td>
+<td>64</td>
+</tr>
+<tr>
+<td>22</td>
+<td>statement</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>break</td>
+<td>64</td>
+</tr>
+<tr>
+<td>23</td>
+<td>call</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>case '&gt;': result.append("\u003e")</td>
+<td>65</td>
+</tr>
+<tr>
+<td>24</td>
+<td>statement</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>break</td>
+<td>65</td>
+</tr>
+<tr>
+<td>25</td>
+<td>call</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>default: if (c &lt; 0x20 || c == '\u2028' || c == '\u2029') result.append(String.format("\u%04x", Integer.valueOf(c)))</td>
+<td>66</td>
+</tr>
+<tr>
+<td>26</td>
+<td>call</td>
+<td>NOT (value == null) / int i = 0; i &lt; value.length(); i++ / c</td>
+<td>else result.append(c)</td>
+<td>68</td>
+</tr>
+<tr>
+<td>27</td>
+<td>return</td>
+<td>NOT (value == null)</td>
+<td>return result.toString()</td>
+<td>71</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="writenenkinweb-infsrcnenkinutilopenxmlworkbookwriterjava">write：nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>ZipEntry entry = new ZipEntry(path)</td>
+<td>293</td>
+</tr>
+<tr>
+<td>2</td>
+<td>call</td>
+<td></td>
+<td>entry.setTime(0L)</td>
+<td>294</td>
+</tr>
+<tr>
+<td>3</td>
+<td>call</td>
+<td></td>
+<td>zip.putNextEntry(entry)</td>
+<td>295</td>
+</tr>
+<tr>
+<td>4</td>
+<td>call</td>
+<td></td>
+<td>zip.write(content.getBytes(UTF8))</td>
+<td>296</td>
+</tr>
+<tr>
+<td>5</td>
+<td>call</td>
+<td></td>
+<td>zip.closeEntry()</td>
+<td>297</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getstaffnenkinweb-infsrcnenkinservicereferencedataservicejava">getStaff：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>String sql = "SELECT S.職員番号 AS STAFF_NO, S.漢字氏名 AS STAFF_NAME, " + "S.カナ氏名 AS STAFF_KANA_NAME, S.所属店番 AS BRANCH_NO, " + "S.役職コード AS ROLE_CODE FROM " + STAFF_TABLE + " S WHERE S.職員番号 = ?"</td>
+<td>207</td>
+</tr>
+<tr>
+<td>2</td>
+<td>assignment</td>
+<td></td>
+<td>Map&lt;Integer, String&gt; branchNames = loadBranchNames()</td>
+<td>211</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td></td>
+<td>Connection connection = null</td>
+<td>212</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td></td>
+<td>PreparedStatement statement = null</td>
+<td>213</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td></td>
+<td>ResultSet results = null</td>
+<td>214</td>
+</tr>
+<tr>
+<td>6</td>
+<td>try</td>
+<td></td>
+<td></td>
+<td>215</td>
+</tr>
+<tr>
+<td>7</td>
+<td>assignment</td>
+<td>try</td>
+<td>connection = NenkinDataSource.openStaffConnection()</td>
+<td>216</td>
+</tr>
+<tr>
+<td>8</td>
+<td>assignment</td>
+<td>try</td>
+<td>statement = connection.prepareStatement(sql)</td>
+<td>217</td>
+</tr>
+<tr>
+<td>9</td>
+<td>call</td>
+<td>try</td>
+<td>statement.setInt(1, staffCode)</td>
+<td>218</td>
+</tr>
+<tr>
+<td>10</td>
+<td>assignment</td>
+<td>try</td>
+<td>results = statement.executeQuery()</td>
+<td>219</td>
+</tr>
+<tr>
+<td>11</td>
+<td>return</td>
+<td>try</td>
+<td>return results.next() ? readStaff(results, branchNames) : null</td>
+<td>220</td>
+</tr>
+<tr>
+<td>12</td>
+<td>catch</td>
+<td></td>
+<td>SQLException e</td>
+<td>221</td>
+</tr>
+<tr>
+<td>13</td>
+<td>throw</td>
+<td>SQLException e</td>
+<td>throw failure("職員の取得", e)</td>
+<td>222</td>
+</tr>
+<tr>
+<td>14</td>
+<td>finally</td>
+<td></td>
+<td></td>
+<td>223</td>
+</tr>
+<tr>
+<td>15</td>
+<td>call</td>
+<td>finally</td>
+<td>close(results)</td>
+<td>224</td>
+</tr>
+<tr>
+<td>16</td>
+<td>call</td>
+<td>finally</td>
+<td>close(statement)</td>
+<td>225</td>
+</tr>
+<tr>
+<td>17</td>
+<td>call</td>
+<td>finally</td>
+<td>close(connection)</td>
+<td>226</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="staffcontextnenkinweb-infsrcnenkinmodelstaffcontextjava">StaffContext：nenkin/WEB-INF/src/nenkin/model/StaffContext.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+</table></div>
+<h4 id="staffcontextnenkinweb-infsrcnenkinmodelstaffcontextjava-1">StaffContext：nenkin/WEB-INF/src/nenkin/model/StaffContext.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>call</td>
+<td></td>
+<td>this(staffNo, staffName, branchNo, "")</td>
+<td>17</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="staffcontextnenkinweb-infsrcnenkinmodelstaffcontextjava-2">StaffContext：nenkin/WEB-INF/src/nenkin/model/StaffContext.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>this.staffNo = staffNo</td>
+<td>21</td>
+</tr>
+<tr>
+<td>2</td>
+<td>assignment</td>
+<td></td>
+<td>this.staffName = staffName == null ? "" : staffName</td>
+<td>22</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td></td>
+<td>this.branchNo = branchNo</td>
+<td>23</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td></td>
+<td>this.roleCode = roleCode == null ? "" : roleCode</td>
+<td>24</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getstaffcodenenkinweb-infsrcnenkinmodelstafflookupitemjava">getStaffCode：nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return staffCode</td>
+<td>38</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getstaffnamenenkinweb-infsrcnenkinmodelstafflookupitemjava">getStaffName：nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return staffName</td>
+<td>54</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getbranchnonenkinweb-infsrcnenkinmodelstafflookupitemjava">getBranchNo：nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return branchNo</td>
+<td>70</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="バッチ処理画面表示">バッチ処理画面表示</h3>
+<h4 id="performnenkinweb-infsrcnenkinbatchviewactionjava">perform：nenkin/WEB-INF/src/nenkin/BatchViewAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>if</td>
+<td></td>
+<td>!requireStaff(request)</td>
+<td>15</td>
+</tr>
+<tr>
+<td>2</td>
+<td>return</td>
+<td>!requireStaff(request)</td>
+<td>return STAFF_JSP</td>
+<td>15</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td>NOT (!requireStaff(request))</td>
+<td>BatchViewBean bean = new BatchViewBean()</td>
+<td>16</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>NOT (!requireStaff(request))</td>
+<td>String today = DateUtil.todayIso()</td>
+<td>17</td>
+</tr>
+<tr>
+<td>5</td>
+<td>call</td>
+<td>NOT (!requireStaff(request))</td>
+<td>bean.setDailyDate(today)</td>
+<td>18</td>
+</tr>
+<tr>
+<td>6</td>
+<td>call</td>
+<td>NOT (!requireStaff(request))</td>
+<td>bean.setMonthStart(DateUtil.firstDayOfMonth(today))</td>
+<td>19</td>
+</tr>
+<tr>
+<td>7</td>
+<td>call</td>
+<td>NOT (!requireStaff(request))</td>
+<td>bean.setMonthEnd(DateUtil.lastDayOfMonth(today))</td>
+<td>20</td>
+</tr>
+<tr>
+<td>8</td>
+<td>assignment</td>
+<td>NOT (!requireStaff(request))</td>
+<td>Calendar cutoff = Calendar.getInstance(Locale.JAPAN)</td>
+<td>21</td>
+</tr>
+<tr>
+<td>9</td>
+<td>call</td>
+<td>NOT (!requireStaff(request))</td>
+<td>cutoff.add(Calendar.MONTH, -2)</td>
+<td>22</td>
+</tr>
+<tr>
+<td>10</td>
+<td>call</td>
+<td>NOT (!requireStaff(request))</td>
+<td>bean.setDeleteCutoffDate(new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(cutoff.getTime()))</td>
+<td>23</td>
+</tr>
+<tr>
+<td>11</td>
+<td>call</td>
+<td>NOT (!requireStaff(request))</td>
+<td>setViewBean(request.getSession(), bean)</td>
+<td>24</td>
+</tr>
+<tr>
+<td>12</td>
+<td>return</td>
+<td>NOT (!requireStaff(request))</td>
+<td>return BATCH_JSP</td>
+<td>25</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="requirestaffnenkinweb-infsrcnenkinnenkinbaseactionjava-1">requireStaff：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>HttpSession session = request.getSession()</td>
+<td>51</td>
+</tr>
+<tr>
+<td>2</td>
+<td>if</td>
+<td></td>
+<td>currentStaff(session) != null</td>
+<td>52</td>
+</tr>
+<tr>
+<td>3</td>
+<td>call</td>
+<td>currentStaff(session) != null</td>
+<td>ensureCsrfToken(session)</td>
+<td>53</td>
+</tr>
+<tr>
+<td>4</td>
+<td>return</td>
+<td>currentStaff(session) != null</td>
+<td>return true</td>
+<td>54</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td>NOT (currentStaff(session) != null)</td>
+<td>Object value = session.getAttribute(CommonConst.SS_LOGIN_INFO_BEAN)</td>
+<td>57</td>
+</tr>
+<tr>
+<td>6</td>
+<td>if</td>
+<td>NOT (currentStaff(session) != null)</td>
+<td>value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否()</td>
+<td>58</td>
+</tr>
+<tr>
+<td>7</td>
+<td>assignment</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否()</td>
+<td>String staffNo = trim(((LoginInfoBean) value).get職員番号())</td>
+<td>59</td>
+</tr>
+<tr>
+<td>8</td>
+<td>if</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否()</td>
+<td>staffNo.matches("[0-9]{1,8}")</td>
+<td>60</td>
+</tr>
+<tr>
+<td>9</td>
+<td>assignment</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否() / staffNo.matches("[0-9]{1,8}")</td>
+<td>StaffContext staff = ReferenceDataService.getInstance() .verifyStaff(Integer.parseInt(staffNo))</td>
+<td>61</td>
+</tr>
+<tr>
+<td>10</td>
+<td>if</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否() / staffNo.matches("[0-9]{1,8}")</td>
+<td>staff != null</td>
+<td>63</td>
+</tr>
+<tr>
+<td>11</td>
+<td>call</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否() / staffNo.matches("[0-9]{1,8}") / staff != null</td>
+<td>session.setAttribute(STAFF_CONTEXT_KEY, staff)</td>
+<td>64</td>
+</tr>
+<tr>
+<td>12</td>
+<td>call</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否() / staffNo.matches("[0-9]{1,8}") / staff != null</td>
+<td>ensureCsrfToken(session)</td>
+<td>65</td>
+</tr>
+<tr>
+<td>13</td>
+<td>return</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否() / staffNo.matches("[0-9]{1,8}") / staff != null</td>
+<td>return true</td>
+<td>66</td>
+</tr>
+<tr>
+<td>14</td>
+<td>call</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否()</td>
+<td>session.removeAttribute(CommonConst.SS_LOGIN_INFO_BEAN)</td>
+<td>69</td>
+</tr>
+<tr>
+<td>15</td>
+<td>call</td>
+<td>NOT (currentStaff(session) != null) / value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否()</td>
+<td>session.setAttribute(CommonConst.ERROR_MSG_LIST, Collections.singletonList( "ログイン職員番号が職員名簿に存在しません。管理者に確認してください。"))</td>
+<td>70</td>
+</tr>
+<tr>
+<td>16</td>
+<td>call</td>
+<td>NOT (currentStaff(session) != null) / NOT (value instanceof LoginInfoBean &amp;&amp; ((LoginInfoBean) value).isログイン可否())</td>
+<td>session.setAttribute(CommonConst.ERROR_MSG_LIST, Collections.singletonList("ログインしてください。"))</td>
+<td>73</td>
+</tr>
+<tr>
+<td>17</td>
+<td>call</td>
+<td>NOT (currentStaff(session) != null)</td>
+<td>session.removeAttribute(STAFF_CONTEXT_KEY)</td>
+<td>76</td>
+</tr>
+<tr>
+<td>18</td>
+<td>call</td>
+<td>NOT (currentStaff(session) != null)</td>
+<td>session.removeAttribute(CSRF_TOKEN_KEY)</td>
+<td>77</td>
+</tr>
+<tr>
+<td>19</td>
+<td>return</td>
+<td>NOT (currentStaff(session) != null)</td>
+<td>return false</td>
+<td>78</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="todayisonenkinweb-infsrcnenkinutildateutiljava">todayIso：nenkin/WEB-INF/src/nenkin/util/DateUtil.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(new Date())</td>
+<td>115</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setdailydatenenkinweb-infsrcnenkinbeanbatchviewbeanjava-1">setDailyDate：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>dailyDate = value == null ? "" : value</td>
+<td>25</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setmonthstartnenkinweb-infsrcnenkinbeanbatchviewbeanjava-1">setMonthStart：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>monthStart = value == null ? "" : value</td>
+<td>27</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="firstdayofmonthnenkinweb-infsrcnenkinutildateutiljava">firstDayOfMonth：nenkin/WEB-INF/src/nenkin/util/DateUtil.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>String iso = toIsoDate(value)</td>
+<td>123</td>
+</tr>
+<tr>
+<td>2</td>
+<td>return</td>
+<td></td>
+<td>return iso.length() == 0 ? "" : iso.substring(0, 8) + "01"</td>
+<td>124</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setmonthendnenkinweb-infsrcnenkinbeanbatchviewbeanjava-1">setMonthEnd：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>monthEnd = value == null ? "" : value</td>
+<td>29</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="lastdayofmonthnenkinweb-infsrcnenkinutildateutiljava">lastDayOfMonth：nenkin/WEB-INF/src/nenkin/util/DateUtil.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>String iso = toIsoDate(value)</td>
+<td>128</td>
+</tr>
+<tr>
+<td>2</td>
+<td>if</td>
+<td></td>
+<td>iso.length() == 0</td>
+<td>129</td>
+</tr>
+<tr>
+<td>3</td>
+<td>return</td>
+<td>iso.length() == 0</td>
+<td>return ""</td>
+<td>130</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>NOT (iso.length() == 0)</td>
+<td>Date date = parseIso(iso, value)</td>
+<td>132</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td>NOT (iso.length() == 0)</td>
+<td>Calendar calendar = new GregorianCalendar()</td>
+<td>133</td>
+</tr>
+<tr>
+<td>6</td>
+<td>call</td>
+<td>NOT (iso.length() == 0)</td>
+<td>calendar.setTime(date)</td>
+<td>134</td>
+</tr>
+<tr>
+<td>7</td>
+<td>assignment</td>
+<td>NOT (iso.length() == 0)</td>
+<td>int lastDay = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)</td>
+<td>135</td>
+</tr>
+<tr>
+<td>8</td>
+<td>return</td>
+<td>NOT (iso.length() == 0)</td>
+<td>return iso.substring(0, 8) + twoDigits(lastDay)</td>
+<td>136</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setdeletecutoffdatenenkinweb-infsrcnenkinbeanbatchviewbeanjava-1">setDeleteCutoffDate：nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>deleteCutoffDate = value == null ? "" : value</td>
+<td>31</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="setviewbeannenkinweb-infsrcnenkinnenkinbaseactionjava-1">setViewBean：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>call</td>
+<td></td>
+<td>session.setAttribute(CommonConst.SS_JSP_BEAN, bean)</td>
+<td>38</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="currentstaffnenkinweb-infsrcnenkinnenkinbaseactionjava-1">currentStaff：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>Object value = session.getAttribute(STAFF_CONTEXT_KEY)</td>
+<td>46</td>
+</tr>
+<tr>
+<td>2</td>
+<td>return</td>
+<td></td>
+<td>return value instanceof StaffContext ? (StaffContext) value : null</td>
+<td>47</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="ensurecsrftokennenkinweb-infsrcnenkinnenkinbaseactionjava-1">ensureCsrfToken：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>Object current = session.getAttribute(CSRF_TOKEN_KEY)</td>
+<td>82</td>
+</tr>
+<tr>
+<td>2</td>
+<td>if</td>
+<td></td>
+<td>current instanceof String &amp;&amp; ((String) current).length() &gt; 0</td>
+<td>83</td>
+</tr>
+<tr>
+<td>3</td>
+<td>return</td>
+<td>current instanceof String &amp;&amp; ((String) current).length() &gt; 0</td>
+<td>return (String) current</td>
+<td>83</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>NOT (current instanceof String &amp;&amp; ((String) current).length() &gt; 0)</td>
+<td>String token = UUID.randomUUID().toString()</td>
+<td>84</td>
+</tr>
+<tr>
+<td>5</td>
+<td>call</td>
+<td>NOT (current instanceof String &amp;&amp; ((String) current).length() &gt; 0)</td>
+<td>session.setAttribute(CSRF_TOKEN_KEY, token)</td>
+<td>85</td>
+</tr>
+<tr>
+<td>6</td>
+<td>return</td>
+<td>NOT (current instanceof String &amp;&amp; ((String) current).length() &gt; 0)</td>
+<td>return token</td>
+<td>86</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="isログイン可否n2frameworkweb-infsrccommonbeanlogininfobeanjava-1">isログイン可否：n2framework/WEB-INF/src/common/bean/LoginInfoBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return ログイン可否</td>
+<td>117</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="trimnenkinweb-infsrcnenkinnenkinbaseactionjava-1">trim：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return value == null ? "" : value.trim()</td>
+<td>119</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="get職員番号n2frameworkweb-infsrccommonbeanlogininfobeanjava-1">get職員番号：n2framework/WEB-INF/src/common/bean/LoginInfoBean.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return 職員番号</td>
+<td>229</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getinstancenenkinweb-infsrcnenkinservicereferencedataservicejava-1">getInstance：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return INSTANCE</td>
+<td>38</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="verifystaffnenkinweb-infsrcnenkinservicereferencedataservicejava-1">verifyStaff：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>StaffLookupItem staff = getStaff(staffNo)</td>
+<td>231</td>
+</tr>
+<tr>
+<td>2</td>
+<td>return</td>
+<td></td>
+<td>return staff == null ? null : new StaffContext(staff.getStaffCode(), staff.getStaffName(), staff.getBranchNo(), staff.getRoleCode())</td>
+<td>232</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="toisodatenenkinweb-infsrcnenkinutildateutiljava">toIsoDate：nenkin/WEB-INF/src/nenkin/util/DateUtil.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>String input = normalizeInput(value)</td>
+<td>36</td>
+</tr>
+<tr>
+<td>2</td>
+<td>if</td>
+<td></td>
+<td>input.length() == 0</td>
+<td>37</td>
+</tr>
+<tr>
+<td>3</td>
+<td>return</td>
+<td>input.length() == 0</td>
+<td>return ""</td>
+<td>38</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>NOT (input.length() == 0)</td>
+<td>Matcher eraMatcher = ERA_DATE.matcher(input)</td>
+<td>41</td>
+</tr>
+<tr>
+<td>5</td>
+<td>if</td>
+<td>NOT (input.length() == 0)</td>
+<td>eraMatcher.matches()</td>
+<td>42</td>
+</tr>
+<tr>
+<td>6</td>
+<td>assignment</td>
+<td>NOT (input.length() == 0) / eraMatcher.matches()</td>
+<td>Era era = findEra(eraMatcher.group(1))</td>
+<td>43</td>
+</tr>
+<tr>
+<td>7</td>
+<td>assignment</td>
+<td>NOT (input.length() == 0) / eraMatcher.matches()</td>
+<td>int eraYear = "元".equals(eraMatcher.group(2)) ? 1 : Integer.parseInt(eraMatcher.group(2))</td>
+<td>44</td>
+</tr>
+<tr>
+<td>8</td>
+<td>if</td>
+<td>NOT (input.length() == 0) / eraMatcher.matches()</td>
+<td>eraYear &lt;= 0</td>
+<td>46</td>
+</tr>
+<tr>
+<td>9</td>
+<td>throw</td>
+<td>NOT (input.length() == 0) / eraMatcher.matches() / eraYear &lt;= 0</td>
+<td>throw invalid(value)</td>
+<td>47</td>
+</tr>
+<tr>
+<td>10</td>
+<td>assignment</td>
+<td>NOT (input.length() == 0) / eraMatcher.matches() / NOT (eraYear &lt;= 0)</td>
+<td>int year = era.baseYear + eraYear - 1</td>
+<td>49</td>
+</tr>
+<tr>
+<td>11</td>
+<td>assignment</td>
+<td>NOT (input.length() == 0) / eraMatcher.matches() / NOT (eraYear &lt;= 0)</td>
+<td>String iso = formatIso(year, Integer.parseInt(eraMatcher.group(3)), Integer.parseInt(eraMatcher.group(4)), value)</td>
+<td>50</td>
+</tr>
+<tr>
+<td>12</td>
+<td>assignment</td>
+<td>NOT (input.length() == 0) / eraMatcher.matches() / NOT (eraYear &lt;= 0)</td>
+<td>Date date = parseIso(iso, value)</td>
+<td>52</td>
+</tr>
+<tr>
+<td>13</td>
+<td>if</td>
+<td>NOT (input.length() == 0) / eraMatcher.matches() / NOT (eraYear &lt;= 0)</td>
+<td>date.before(era.start) || (era.end != null &amp;&amp; date.after(era.end))</td>
+<td>53</td>
+</tr>
+<tr>
+<td>14</td>
+<td>throw</td>
+<td>NOT (input.length() == 0) / eraMatcher.matches() / NOT (eraYear &lt;= 0) / date.before(era.start) || (era.end != null &amp;&amp; date.after(era.end))</td>
+<td>throw invalid(value)</td>
+<td>54</td>
+</tr>
+<tr>
+<td>15</td>
+<td>return</td>
+<td>NOT (input.length() == 0) / eraMatcher.matches() / NOT (eraYear &lt;= 0) / NOT (date.before(era.start) || (era.end != null &amp;&amp; date.after(era.end)))</td>
+<td>return iso</td>
+<td>56</td>
+</tr>
+<tr>
+<td>16</td>
+<td>assignment</td>
+<td>NOT (input.length() == 0) / NOT (eraMatcher.matches())</td>
+<td>Matcher western = GREGORIAN_DATE.matcher(input)</td>
+<td>59</td>
+</tr>
+<tr>
+<td>17</td>
+<td>if</td>
+<td>NOT (input.length() == 0) / NOT (eraMatcher.matches())</td>
+<td>western.matches()</td>
+<td>60</td>
+</tr>
+<tr>
+<td>18</td>
+<td>return</td>
+<td>NOT (input.length() == 0) / NOT (eraMatcher.matches()) / western.matches()</td>
+<td>return formatIso(Integer.parseInt(western.group(1)), Integer.parseInt(western.group(2)), Integer.parseInt(western.group(3)), value)</td>
+<td>61</td>
+</tr>
+<tr>
+<td>19</td>
+<td>assignment</td>
+<td>NOT (input.length() == 0) / NOT (eraMatcher.matches()) / NOT (western.matches())</td>
+<td>Matcher compact = COMPACT_DATE.matcher(input)</td>
+<td>65</td>
+</tr>
+<tr>
+<td>20</td>
+<td>if</td>
+<td>NOT (input.length() == 0) / NOT (eraMatcher.matches()) / NOT (western.matches())</td>
+<td>compact.matches()</td>
+<td>66</td>
+</tr>
+<tr>
+<td>21</td>
+<td>return</td>
+<td>NOT (input.length() == 0) / NOT (eraMatcher.matches()) / NOT (western.matches()) / compact.matches()</td>
+<td>return formatIso(Integer.parseInt(compact.group(1)), Integer.parseInt(compact.group(2)), Integer.parseInt(compact.group(3)), value)</td>
+<td>67</td>
+</tr>
+<tr>
+<td>22</td>
+<td>throw</td>
+<td>NOT (input.length() == 0) / NOT (eraMatcher.matches()) / NOT (western.matches()) / NOT (compact.matches())</td>
+<td>throw invalid(value)</td>
+<td>71</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="parseisonenkinweb-infsrcnenkinutildateutiljava">parseIso：nenkin/WEB-INF/src/nenkin/util/DateUtil.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT)</td>
+<td>174</td>
+</tr>
+<tr>
+<td>2</td>
+<td>call</td>
+<td></td>
+<td>format.setLenient(false)</td>
+<td>175</td>
+</tr>
+<tr>
+<td>3</td>
+<td>try</td>
+<td></td>
+<td></td>
+<td>176</td>
+</tr>
+<tr>
+<td>4</td>
+<td>return</td>
+<td>try</td>
+<td>return format.parse(value)</td>
+<td>177</td>
+</tr>
+<tr>
+<td>5</td>
+<td>catch</td>
+<td></td>
+<td>ParseException e</td>
+<td>178</td>
+</tr>
+<tr>
+<td>6</td>
+<td>throw</td>
+<td>ParseException e</td>
+<td>throw invalid(original)</td>
+<td>179</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="settimenenkinweb-infsrcnenkinservicepensionrepositoryjava">setTime：nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>String time = text(value)</td>
+<td>829</td>
+</tr>
+<tr>
+<td>2</td>
+<td>if</td>
+<td></td>
+<td>time.length() &lt; 8</td>
+<td>830</td>
+</tr>
+<tr>
+<td>3</td>
+<td>call</td>
+<td>time.length() &lt; 8</td>
+<td>statement.setNull(index, Types.TIME)</td>
+<td>831</td>
+</tr>
+<tr>
+<td>4</td>
+<td>call</td>
+<td>NOT (time.length() &lt; 8)</td>
+<td>statement.setTime(index, java.sql.Time.valueOf(time.substring(0, 8)))</td>
+<td>833</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="twodigitsnenkinweb-infsrcnenkinutildateutiljava">twoDigits：nenkin/WEB-INF/src/nenkin/util/DateUtil.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return value &lt; 10 ? "0" + value : Integer.toString(value)</td>
+<td>184</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getstaffnenkinweb-infsrcnenkinservicereferencedataservicejava-1">getStaff：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>String sql = "SELECT S.職員番号 AS STAFF_NO, S.漢字氏名 AS STAFF_NAME, " + "S.カナ氏名 AS STAFF_KANA_NAME, S.所属店番 AS BRANCH_NO, " + "S.役職コード AS ROLE_CODE FROM " + STAFF_TABLE + " S WHERE S.職員番号 = ?"</td>
+<td>207</td>
+</tr>
+<tr>
+<td>2</td>
+<td>assignment</td>
+<td></td>
+<td>Map&lt;Integer, String&gt; branchNames = loadBranchNames()</td>
+<td>211</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td></td>
+<td>Connection connection = null</td>
+<td>212</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td></td>
+<td>PreparedStatement statement = null</td>
+<td>213</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td></td>
+<td>ResultSet results = null</td>
+<td>214</td>
+</tr>
+<tr>
+<td>6</td>
+<td>try</td>
+<td></td>
+<td></td>
+<td>215</td>
+</tr>
+<tr>
+<td>7</td>
+<td>assignment</td>
+<td>try</td>
+<td>connection = NenkinDataSource.openStaffConnection()</td>
+<td>216</td>
+</tr>
+<tr>
+<td>8</td>
+<td>assignment</td>
+<td>try</td>
+<td>statement = connection.prepareStatement(sql)</td>
+<td>217</td>
+</tr>
+<tr>
+<td>9</td>
+<td>call</td>
+<td>try</td>
+<td>statement.setInt(1, staffCode)</td>
+<td>218</td>
+</tr>
+<tr>
+<td>10</td>
+<td>assignment</td>
+<td>try</td>
+<td>results = statement.executeQuery()</td>
+<td>219</td>
+</tr>
+<tr>
+<td>11</td>
+<td>return</td>
+<td>try</td>
+<td>return results.next() ? readStaff(results, branchNames) : null</td>
+<td>220</td>
+</tr>
+<tr>
+<td>12</td>
+<td>catch</td>
+<td></td>
+<td>SQLException e</td>
+<td>221</td>
+</tr>
+<tr>
+<td>13</td>
+<td>throw</td>
+<td>SQLException e</td>
+<td>throw failure("職員の取得", e)</td>
+<td>222</td>
+</tr>
+<tr>
+<td>14</td>
+<td>finally</td>
+<td></td>
+<td></td>
+<td>223</td>
+</tr>
+<tr>
+<td>15</td>
+<td>call</td>
+<td>finally</td>
+<td>close(results)</td>
+<td>224</td>
+</tr>
+<tr>
+<td>16</td>
+<td>call</td>
+<td>finally</td>
+<td>close(statement)</td>
+<td>225</td>
+</tr>
+<tr>
+<td>17</td>
+<td>call</td>
+<td>finally</td>
+<td>close(connection)</td>
+<td>226</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="staffcontextnenkinweb-infsrcnenkinmodelstaffcontextjava-3">StaffContext：nenkin/WEB-INF/src/nenkin/model/StaffContext.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+</table></div>
+<h4 id="staffcontextnenkinweb-infsrcnenkinmodelstaffcontextjava-4">StaffContext：nenkin/WEB-INF/src/nenkin/model/StaffContext.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>call</td>
+<td></td>
+<td>this(staffNo, staffName, branchNo, "")</td>
+<td>17</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="staffcontextnenkinweb-infsrcnenkinmodelstaffcontextjava-5">StaffContext：nenkin/WEB-INF/src/nenkin/model/StaffContext.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>this.staffNo = staffNo</td>
+<td>21</td>
+</tr>
+<tr>
+<td>2</td>
+<td>assignment</td>
+<td></td>
+<td>this.staffName = staffName == null ? "" : staffName</td>
+<td>22</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td></td>
+<td>this.branchNo = branchNo</td>
+<td>23</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td></td>
+<td>this.roleCode = roleCode == null ? "" : roleCode</td>
+<td>24</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getstaffcodenenkinweb-infsrcnenkinmodelstafflookupitemjava-1">getStaffCode：nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return staffCode</td>
+<td>38</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getstaffnamenenkinweb-infsrcnenkinmodelstafflookupitemjava-1">getStaffName：nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return staffName</td>
+<td>54</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getbranchnonenkinweb-infsrcnenkinmodelstafflookupitemjava-1">getBranchNo：nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return branchNo</td>
+<td>70</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getrolecodenenkinweb-infsrcnenkinmodelstafflookupitemjava">getRoleCode：nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return roleCode</td>
+<td>86</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="normalizeinputnenkinweb-infsrcnenkinutildateutiljava">normalizeInput：nenkin/WEB-INF/src/nenkin/util/DateUtil.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>if</td>
+<td></td>
+<td>value == null</td>
+<td>140</td>
+</tr>
+<tr>
+<td>2</td>
+<td>return</td>
+<td>value == null</td>
+<td>return ""</td>
+<td>141</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td>NOT (value == null)</td>
+<td>String result = Normalizer.normalize(value, Normalizer.Form.NFKC).trim()</td>
+<td>143</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>NOT (value == null)</td>
+<td>result = result.replace('　', ' ')</td>
+<td>144</td>
+</tr>
+<tr>
+<td>5</td>
+<td>return</td>
+<td>NOT (value == null)</td>
+<td>return result</td>
+<td>145</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="finderanenkinweb-infsrcnenkinutildateutiljava">findEra：nenkin/WEB-INF/src/nenkin/util/DateUtil.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>Era[] values = ERAS</td>
+<td>149</td>
+</tr>
+<tr>
+<td>2</td>
+<td>for</td>
+<td></td>
+<td>int i = 0; i &lt; values.length; i++</td>
+<td>150</td>
+</tr>
+<tr>
+<td>3</td>
+<td>if</td>
+<td>int i = 0; i &lt; values.length; i++</td>
+<td>values[i].code.equalsIgnoreCase(token) || values[i].name.equals(token)</td>
+<td>151</td>
+</tr>
+<tr>
+<td>4</td>
+<td>return</td>
+<td>int i = 0; i &lt; values.length; i++ / values[i].code.equalsIgnoreCase(token) || values[i].name.equals(token)</td>
+<td>return values[i]</td>
+<td>152</td>
+</tr>
+<tr>
+<td>5</td>
+<td>throw</td>
+<td></td>
+<td>throw new IllegalArgumentException("未対応の元号です: " + token)</td>
+<td>155</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="invalidnenkinweb-infsrcnenkinutildateutiljava">invalid：nenkin/WEB-INF/src/nenkin/util/DateUtil.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return new IllegalArgumentException("日付の形式または実在性が不正です: " + value)</td>
+<td>200</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="formatisonenkinweb-infsrcnenkinutildateutiljava">formatIso：nenkin/WEB-INF/src/nenkin/util/DateUtil.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>String iso = fourDigits(year) + "-" + twoDigits(month) + "-" + twoDigits(day)</td>
+<td>168</td>
+</tr>
+<tr>
+<td>2</td>
+<td>call</td>
+<td></td>
+<td>parseIso(iso, original)</td>
+<td>169</td>
+</tr>
+<tr>
+<td>3</td>
+<td>return</td>
+<td></td>
+<td>return iso</td>
+<td>170</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="textnenkinweb-infsrcnenkinservicepensionrepositoryjava">text：nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return value == null ? "" : value</td>
+<td>873</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="loadbranchnamesnenkinweb-infsrcnenkinservicereferencedataservicejava">loadBranchNames：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>Map&lt;Integer, String&gt; branchNames = new HashMap&lt;Integer, String&gt;()</td>
+<td>290</td>
+</tr>
+<tr>
+<td>2</td>
+<td>assignment</td>
+<td></td>
+<td>String sql = "SELECT 店舗ｺｰﾄﾞ AS BRANCH_NO, 店名 AS BRANCH_NAME FROM " + BRANCH_TABLE</td>
+<td>291</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td></td>
+<td>Connection connection = null</td>
+<td>293</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td></td>
+<td>PreparedStatement statement = null</td>
+<td>294</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td></td>
+<td>ResultSet results = null</td>
+<td>295</td>
+</tr>
+<tr>
+<td>6</td>
+<td>try</td>
+<td></td>
+<td></td>
+<td>296</td>
+</tr>
+<tr>
+<td>7</td>
+<td>assignment</td>
+<td>try</td>
+<td>connection = NenkinDataSource.openConnection()</td>
+<td>297</td>
+</tr>
+<tr>
+<td>8</td>
+<td>assignment</td>
+<td>try</td>
+<td>statement = connection.prepareStatement(sql)</td>
+<td>298</td>
+</tr>
+<tr>
+<td>9</td>
+<td>assignment</td>
+<td>try</td>
+<td>results = statement.executeQuery()</td>
+<td>299</td>
+</tr>
+<tr>
+<td>10</td>
+<td>while</td>
+<td>try</td>
+<td>results.next()</td>
+<td>300</td>
+</tr>
+<tr>
+<td>11</td>
+<td>call</td>
+<td>try / results.next()</td>
+<td>branchNames.put(Integer.valueOf(results.getInt("BRANCH_NO")), results.getString("BRANCH_NAME"))</td>
+<td>301</td>
+</tr>
+<tr>
+<td>12</td>
+<td>return</td>
+<td>try</td>
+<td>return branchNames</td>
+<td>304</td>
+</tr>
+<tr>
+<td>13</td>
+<td>catch</td>
+<td></td>
+<td>SQLException e</td>
+<td>305</td>
+</tr>
+<tr>
+<td>14</td>
+<td>throw</td>
+<td>SQLException e</td>
+<td>throw failure("店舗名の取得", e)</td>
+<td>306</td>
+</tr>
+<tr>
+<td>15</td>
+<td>finally</td>
+<td></td>
+<td></td>
+<td>307</td>
+</tr>
+<tr>
+<td>16</td>
+<td>call</td>
+<td>finally</td>
+<td>close(results)</td>
+<td>308</td>
+</tr>
+<tr>
+<td>17</td>
+<td>call</td>
+<td>finally</td>
+<td>close(statement)</td>
+<td>309</td>
+</tr>
+<tr>
+<td>18</td>
+<td>call</td>
+<td>finally</td>
+<td>close(connection)</td>
+<td>310</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="openstaffconnectionnenkinweb-infsrcnenkinservicenenkindatasourcejava">openStaffConnection：nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>DataSource dataSource = staffCached</td>
+<td>48</td>
+</tr>
+<tr>
+<td>2</td>
+<td>if</td>
+<td></td>
+<td>dataSource == null</td>
+<td>49</td>
+</tr>
+<tr>
+<td>3</td>
+<td>synchronized</td>
+<td>dataSource == null</td>
+<td>NenkinDataSource.class</td>
+<td>50</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>dataSource == null / NenkinDataSource.class</td>
+<td>dataSource = staffCached</td>
+<td>51</td>
+</tr>
+<tr>
+<td>5</td>
+<td>if</td>
+<td>dataSource == null / NenkinDataSource.class</td>
+<td>dataSource == null</td>
+<td>52</td>
+</tr>
+<tr>
+<td>6</td>
+<td>assignment</td>
+<td>dataSource == null / NenkinDataSource.class / dataSource == null</td>
+<td>dataSource = lookup(STAFF_JNDI_NAMES, "N2職員名簿用JNDI DataSourceを取得できません。")</td>
+<td>53</td>
+</tr>
+<tr>
+<td>7</td>
+<td>assignment</td>
+<td>dataSource == null / NenkinDataSource.class / dataSource == null</td>
+<td>staffCached = dataSource</td>
+<td>55</td>
+</tr>
+<tr>
+<td>8</td>
+<td>return</td>
+<td></td>
+<td>return dataSource.getConnection()</td>
+<td>59</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="readstaffnenkinweb-infsrcnenkinservicereferencedataservicejava">readStaff：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>int branchNo = results.getInt("BRANCH_NO")</td>
+<td>316</td>
+</tr>
+<tr>
+<td>2</td>
+<td>assignment</td>
+<td></td>
+<td>String branchName = branchNames.get(Integer.valueOf(branchNo))</td>
+<td>317</td>
+</tr>
+<tr>
+<td>3</td>
+<td>return</td>
+<td></td>
+<td>return new StaffLookupItem(results.getInt("STAFF_NO"), results.getString("STAFF_NAME"), results.getString("STAFF_KANA_NAME"), branchNo, branchName == null ? "" : branchName, results.getString("ROLE_CODE"))</td>
+<td>318</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="failurenenkinweb-infsrcnenkinservicereferencedataservicejava">failure：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return new NenkinDataAccessException(operation + "に失敗しました。", cause)</td>
+<td>376</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="closenenkinweb-infsrcnenkinservicereferencedataservicejava">close：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>if</td>
+<td></td>
+<td>value == null</td>
+<td>380</td>
+</tr>
+<tr>
+<td>2</td>
+<td>return</td>
+<td>value == null</td>
+<td>return</td>
+<td>381</td>
+</tr>
+<tr>
+<td>3</td>
+<td>try</td>
+<td>NOT (value == null)</td>
+<td></td>
+<td>383</td>
+</tr>
+<tr>
+<td>4</td>
+<td>call</td>
+<td>NOT (value == null) / try</td>
+<td>value.close()</td>
+<td>384</td>
+</tr>
+<tr>
+<td>5</td>
+<td>catch</td>
+<td>NOT (value == null)</td>
+<td>Exception e</td>
+<td>385</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="fourdigitsnenkinweb-infsrcnenkinutildateutiljava">fourDigits：nenkin/WEB-INF/src/nenkin/util/DateUtil.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>String result = Integer.toString(value)</td>
+<td>192</td>
+</tr>
+<tr>
+<td>2</td>
+<td>while</td>
+<td></td>
+<td>result.length() &lt; 4</td>
+<td>193</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td>result.length() &lt; 4</td>
+<td>result = "0" + result</td>
+<td>194</td>
+</tr>
+<tr>
+<td>4</td>
+<td>return</td>
+<td></td>
+<td>return result</td>
+<td>196</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="openconnectionnenkinweb-infsrcnenkinservicenenkindatasourcejava">openConnection：nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>DataSource dataSource = businessCached</td>
+<td>33</td>
+</tr>
+<tr>
+<td>2</td>
+<td>if</td>
+<td></td>
+<td>dataSource == null</td>
+<td>34</td>
+</tr>
+<tr>
+<td>3</td>
+<td>synchronized</td>
+<td>dataSource == null</td>
+<td>NenkinDataSource.class</td>
+<td>35</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>dataSource == null / NenkinDataSource.class</td>
+<td>dataSource = businessCached</td>
+<td>36</td>
+</tr>
+<tr>
+<td>5</td>
+<td>if</td>
+<td>dataSource == null / NenkinDataSource.class</td>
+<td>dataSource == null</td>
+<td>37</td>
+</tr>
+<tr>
+<td>6</td>
+<td>assignment</td>
+<td>dataSource == null / NenkinDataSource.class / dataSource == null</td>
+<td>dataSource = lookup(BUSINESS_JNDI_NAMES, "年金業務用JNDI DataSourceを取得できません。")</td>
+<td>38</td>
+</tr>
+<tr>
+<td>7</td>
+<td>assignment</td>
+<td>dataSource == null / NenkinDataSource.class / dataSource == null</td>
+<td>businessCached = dataSource</td>
+<td>40</td>
+</tr>
+<tr>
+<td>8</td>
+<td>return</td>
+<td></td>
+<td>return dataSource.getConnection()</td>
+<td>44</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="putn2frameworkweb-infsrcwebonwebonbasejava">put：n2framework/WEB-INF/src/webon/WebonBase.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>call</td>
+<td></td>
+<td>query.put(key, value)</td>
+<td>520</td>
+</tr>
+<tr>
+<td>2</td>
+<td>if</td>
+<td></td>
+<td>key.equals("原店番号")</td>
+<td>525</td>
+</tr>
+<tr>
+<td>3</td>
+<td>if</td>
+<td>key.equals("原店番号")</td>
+<td>query.get("原店番号").equals(query.get("取引店舗コード"))</td>
+<td>526</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>key.equals("原店番号") / query.get("原店番号").equals(query.get("取引店舗コード"))</td>
+<td>FWLog.debug(getClass(), "原店番号=取引店舗コードのため、原店番号の設定をはずします。")</td>
+<td>527</td>
+</tr>
+<tr>
+<td>5</td>
+<td>call</td>
+<td>key.equals("原店番号") / query.get("原店番号").equals(query.get("取引店舗コード"))</td>
+<td>query.put("原店番号","")</td>
+<td>528</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="putn2frameworkweb-infsrcwebonwebonbasejava-1">put：n2framework/WEB-INF/src/webon/WebonBase.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>statement</td>
+<td></td>
+<td>String key</td>
+<td>553</td>
+</tr>
+<tr>
+<td>2</td>
+<td>statement</td>
+<td></td>
+<td>String value</td>
+<td>554</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td></td>
+<td>Set&lt;String&gt; ks = map.keySet()</td>
+<td>555</td>
+</tr>
+<tr>
+<td>4</td>
+<td>for</td>
+<td></td>
+<td>Iterator&lt;String&gt; ksIt = ks.iterator(); ksIt.hasNext();</td>
+<td>556</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td>Iterator&lt;String&gt; ksIt = ks.iterator(); ksIt.hasNext();</td>
+<td>key=ksIt.next()</td>
+<td>557</td>
+</tr>
+<tr>
+<td>6</td>
+<td>assignment</td>
+<td>Iterator&lt;String&gt; ksIt = ks.iterator(); ksIt.hasNext();</td>
+<td>value=map.get(key)</td>
+<td>558</td>
+</tr>
+<tr>
+<td>7</td>
+<td>call</td>
+<td>Iterator&lt;String&gt; ksIt = ks.iterator(); ksIt.hasNext();</td>
+<td>this.put(key,value)</td>
+<td>559</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="lookupnenkinweb-infsrcnenkinservicenenkindatasourcejava">lookup：nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>NamingException last = null</td>
+<td>78</td>
+</tr>
+<tr>
+<td>2</td>
+<td>for</td>
+<td></td>
+<td>int i = 0; i &lt; jndiNames.length; i++</td>
+<td>79</td>
+</tr>
+<tr>
+<td>3</td>
+<td>try</td>
+<td>int i = 0; i &lt; jndiNames.length; i++</td>
+<td></td>
+<td>80</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td>int i = 0; i &lt; jndiNames.length; i++ / try</td>
+<td>Object value = new InitialContext().lookup(jndiNames[i])</td>
+<td>81</td>
+</tr>
+<tr>
+<td>5</td>
+<td>if</td>
+<td>int i = 0; i &lt; jndiNames.length; i++ / try</td>
+<td>value instanceof DataSource</td>
+<td>82</td>
+</tr>
+<tr>
+<td>6</td>
+<td>return</td>
+<td>int i = 0; i &lt; jndiNames.length; i++ / try / value instanceof DataSource</td>
+<td>return (DataSource) value</td>
+<td>83</td>
+</tr>
+<tr>
+<td>7</td>
+<td>catch</td>
+<td>int i = 0; i &lt; jndiNames.length; i++</td>
+<td>NamingException e</td>
+<td>85</td>
+</tr>
+<tr>
+<td>8</td>
+<td>assignment</td>
+<td>int i = 0; i &lt; jndiNames.length; i++ / NamingException e</td>
+<td>last = e</td>
+<td>86</td>
+</tr>
+<tr>
+<td>9</td>
+<td>assignment</td>
+<td></td>
+<td>SQLException failure = new SQLException(message)</td>
+<td>89</td>
+</tr>
+<tr>
+<td>10</td>
+<td>if</td>
+<td></td>
+<td>last != null</td>
+<td>90</td>
+</tr>
+<tr>
+<td>11</td>
+<td>call</td>
+<td>last != null</td>
+<td>failure.initCause(last)</td>
+<td>91</td>
+</tr>
+<tr>
+<td>12</td>
+<td>throw</td>
+<td></td>
+<td>throw failure</td>
+<td>93</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getconnectionn2frameworkweb-infsrccommonbasecommonbasejava">getConnection：n2framework/WEB-INF/src/common/base/CommonBase.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>return</td>
+<td></td>
+<td>return connection</td>
+<td>70</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="getn2frameworkweb-infsrcwebonwebonbasejava-1">get：n2framework/WEB-INF/src/webon/WebonBase.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>if</td>
+<td></td>
+<td>query.containsKey(key)</td>
+<td>540</td>
+</tr>
+<tr>
+<td>2</td>
+<td>return</td>
+<td>query.containsKey(key)</td>
+<td>return query.get(key)</td>
+<td>541</td>
+</tr>
+<tr>
+<td>3</td>
+<td>return</td>
+<td>NOT (query.containsKey(key))</td>
+<td>return null</td>
+<td>543</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="stafflookupitemnenkinweb-infsrcnenkinmodelstafflookupitemjava">StaffLookupItem：nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+</table></div>
+<h4 id="stafflookupitemnenkinweb-infsrcnenkinmodelstafflookupitemjava-1">StaffLookupItem：nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>call</td>
+<td></td>
+<td>this(staffCode, staffName, "", branchNo, branchName, "")</td>
+<td>19</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="stafflookupitemnenkinweb-infsrcnenkinmodelstafflookupitemjava-2">StaffLookupItem：nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>call</td>
+<td></td>
+<td>this(staffCode, staffName, staffKanaName, branchNo, branchName, "")</td>
+<td>24</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="stafflookupitemnenkinweb-infsrcnenkinmodelstafflookupitemjava-3">StaffLookupItem：nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>assignment</td>
+<td></td>
+<td>this.staffCode = staffCode</td>
+<td>29</td>
+</tr>
+<tr>
+<td>2</td>
+<td>assignment</td>
+<td></td>
+<td>this.staffName = staffName == null ? "" : staffName</td>
+<td>30</td>
+</tr>
+<tr>
+<td>3</td>
+<td>assignment</td>
+<td></td>
+<td>this.staffKanaName = staffKanaName == null ? "" : staffKanaName</td>
+<td>31</td>
+</tr>
+<tr>
+<td>4</td>
+<td>assignment</td>
+<td></td>
+<td>this.branchNo = branchNo</td>
+<td>32</td>
+</tr>
+<tr>
+<td>5</td>
+<td>assignment</td>
+<td></td>
+<td>this.branchName = branchName == null ? "" : branchName</td>
+<td>33</td>
+</tr>
+<tr>
+<td>6</td>
+<td>assignment</td>
+<td></td>
+<td>this.roleCode = roleCode == null ? "" : roleCode</td>
+<td>34</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="nenkindataaccessexceptionnenkinweb-infsrcnenkinservicenenkindataaccessexceptionjava">NenkinDataAccessException：nenkin/WEB-INF/src/nenkin/service/NenkinDataAccessException.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>call</td>
+<td></td>
+<td>super(message, cause)</td>
+<td>8</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="debugn2frameworkweb-infsrccommonfwlogjava">debug：n2framework/WEB-INF/src/common/FWLog.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>call</td>
+<td></td>
+<td>logger.debug(msg)</td>
+<td>50</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="debugn2frameworkweb-infsrccommonfwlogjava-1">debug：n2framework/WEB-INF/src/common/FWLog.java</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>順番</th>
+<th>分類</th>
+<th>条件・ガード</th>
+<th>処理・設定内容</th>
+<th>根拠行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>call</td>
+<td></td>
+<td>logger.debug(cls.getName() + DEVIDE_MSG + msg)</td>
+<td>60</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="データ関連">データ関連</h3>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>種別</th>
+<th>対象</th>
+<th>操作</th>
+<th>根拠</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>session</td>
+<td>職員情報等（セッション）</td>
+<td>read</td>
+<td>requireStaff</td>
+</tr>
+<tr>
+<td>session</td>
+<td>職員情報等（セッション）</td>
+<td>read</td>
+<td>requireStaff</td>
+</tr>
+<tr>
+<td>session</td>
+<td>職員情報等（セッション）</td>
+<td>read</td>
+<td>requireStaff</td>
+</tr>
+<tr>
+<td>session</td>
+<td>職員情報等（セッション）</td>
+<td>read</td>
+<td>requireStaff</td>
+</tr>
+<tr>
+<td>session</td>
+<td>職員情報等（セッション）</td>
+<td>read</td>
+<td>requireStaff</td>
+</tr>
+<tr>
+<td>session</td>
+<td>職員情報等（セッション）</td>
+<td>read</td>
+<td>requireStaff</td>
+</tr>
+<tr>
+<td>session</td>
+<td>職員情報等（セッション）</td>
+<td>read</td>
+<td>requireStaff</td>
+</tr>
+<tr>
+<td>session</td>
+<td>職員情報等（セッション）</td>
+<td>read</td>
+<td>setViewBean</td>
+</tr>
+<tr>
+<td>session</td>
+<td>職員情報等（セッション）</td>
+<td>read</td>
+<td>currentStaff</td>
+</tr>
+<tr>
+<td>session</td>
+<td>職員情報等（セッション）</td>
+<td>read</td>
+<td>ensureCsrfToken</td>
+</tr>
+<tr>
+<td>session</td>
+<td>職員情報等（セッション）</td>
+<td>read</td>
+<td>ensureCsrfToken</td>
+</tr>
+<tr>
+<td>database</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+<td>C</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>DB2.ＵＪ科目</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>DB2.ＵＪ科目</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>NAVI.ＵＭ機能マスタ</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>NAVI.ＵＪ機能マスタ</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>NAVI.ＵＭオンラインＯＰマスタ</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>NAVI.ＵＪ稼動店舗管理マスタ</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>NAVI.ＵＪ稼動店舗管理マスタ</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>NAVI.ＵＪ稼動店舗管理マスタ</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>NAVI.ＵＭパス管理マスタ</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+<td>U</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+<td>U</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金1_LK</td>
+<td>C</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金＿削除明細</td>
+<td>C</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金1_LK</td>
+<td>U</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>N2_SIGHT.Ｂ顧客基本表</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金1_LK</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>店名テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>性別テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>裁定請求テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>受給有無テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金種類テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金1_LK</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>店名テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>性別テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>裁定請求テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>受給有無テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金種類テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金1_LK</td>
+<td>D</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金1_LK</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金＿削除明細</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金＿削除明細</td>
+<td>D</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>店名テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金種類テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金1_LK</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金1_LK</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>店名テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>性別テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>裁定請求テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>受給有無テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金種類テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金1_LK</td>
+<td>C</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金1_LK</td>
+<td>U</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金＿削除明細</td>
+<td>C</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>店名テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>DB2.Ｕ職員名簿表</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>店名テーブル</td>
+<td>R</td>
+<td>literal_sql</td>
+</tr>
+<tr>
+<td>database</td>
+<td>年金＿削除明細</td>
+<td>delete</td>
+<td>purgeDeletedAuditsThrough@458</td>
+</tr>
+<tr>
+<td>database</td>
+<td>DB2.Ｕ職員名簿表</td>
+<td>read</td>
+<td>getStaff@206</td>
+</tr>
+<tr>
+<td>database</td>
+<td>店名テーブル</td>
+<td>read</td>
+<td>loadBranchNames@289</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="検証シナリオ">検証シナリオ</h2>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>入力・条件</th>
+<th>期待結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SCR-014-S01</td>
+<td>各イベントの分岐条件を満たす入力</td>
+<td>詳細仕様の分岐ごとの応答・状態変更を照合する（静的抽出による期待仕様候補）</td>
+</tr>
+</tbody>
+</table></div>
+</article><footer>Markdown原本から生成した閲覧用HTMLです。画面例は実システムを操作しません。</footer></main></div></body></html>

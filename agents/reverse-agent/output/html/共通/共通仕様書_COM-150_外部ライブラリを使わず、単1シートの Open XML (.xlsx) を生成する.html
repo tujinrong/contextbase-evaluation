@@ -1,0 +1,1610 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; file:; img-src &#x27;self&#x27; data: file:; font-src &#x27;self&#x27; file:; connect-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;"><meta name="docsite-source-sha256" content="ee9e24c5af3117bb31cb4ded927588ec5c4a13074d836bf4cb293ccd712c4869"><title>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成する</title><style>:root{color-scheme:light;--ink:#203043;--muted:#5d6c7b;--line:#dde4eb;--accent:#196786;--paper:#fff;--background:#f3f6f8}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:80px}body{margin:0;font-family:system-ui,-apple-system,"Yu Gothic UI","Meiryo",sans-serif;background:var(--background);color:var(--ink);font-size:15px;line-height:1.85}.topbar{height:64px;position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:0 30px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.97)}.brand{font-size:14px;letter-spacing:.1em;font-weight:750;text-decoration:none;color:var(--ink)}.brand span{margin-left:14px;letter-spacing:0;color:var(--muted);font-weight:500}.topbar nav{display:flex;gap:22px;font-size:13px}.topbar a{color:var(--accent)}.page-shell{max-width:1660px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:28px;padding:30px}.toc{position:sticky;top:94px;align-self:start;max-height:calc(100vh - 118px);overflow:auto;font-size:12px;padding-right:12px}.toc-heading{font-weight:700;padding-bottom:12px;border-bottom:1px solid var(--line)}.toc ol{list-style:none;padding:0;margin:12px 0}.toc li{margin:8px 0}.toc .level-3{padding-left:12px;font-size:11px}.toc a{color:var(--muted);text-decoration:none}.toc a:hover{color:var(--accent)}.document{min-width:0;background:var(--paper);padding:36px 42px;border:1px solid var(--line);border-radius:10px}.doc-body{overflow-wrap:anywhere}.doc-body>h1{font-size:27px;line-height:1.5;margin:0 0 24px;letter-spacing:.01em}.doc-body>h2{font-size:22px;margin:48px 0 20px;padding-bottom:10px;border-bottom:2px solid var(--line)}.doc-body>h3{font-size:18px;margin:32px 0 16px}.doc-body h4{font-size:16px}.doc-body a{color:var(--accent);text-underline-offset:3px}.doc-body p{margin:14px 0}.doc-body li{margin:7px 0}.doc-body li>p{margin:5px 0}.doc-body blockquote{margin:20px 0;padding:12px 20px;border-left:4px solid #c59e4a;background:#fcf8ed;color:#5d523e}.doc-body blockquote p{margin:0}.doc-body :not(.screen-layout) code{font-family:ui-monospace,"Cascadia Code",Consolas,monospace;font-size:.88em}.doc-body :not(pre)>code{padding:2px 5px;background:#edf2f6;border-radius:3px}.doc-body pre{white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;padding:18px;background:#f4f7fa;border:1px solid var(--line);border-radius:6px;line-height:1.55}.table-scroll{width:100%;max-width:100%;overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:6px}.table-scroll table{border-collapse:collapse;width:100%;font-size:13px}.table-scroll th{background:#eef3f7;text-align:left;font-weight:650;white-space:normal}.table-scroll th,.table-scroll td{border-bottom:1px solid var(--line);padding:10px 12px;vertical-align:top;min-width:72px;max-width:600px}.table-scroll tbody tr:nth-child(even){background:#fafcfd}.table-scroll tr:last-child td{border-bottom:0}.diagram{margin:22px 0;padding:12px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow-x:auto;max-width:100%}.diagram .mermaid{display:block;background:#fff;border:0;padding:0;min-height:30px;margin:0}.diagram svg{height:auto;display:block;margin:0 auto;max-width:100%}.diagram-source{font-size:12px;color:var(--muted);margin-top:10px}.diagram-source pre{margin:8px 0}.diagram-error{color:#a52626;background:#fff2f2;padding:8px}.screen-layout{margin:24px 0;border:1px solid var(--line);border-radius:8px;max-width:100%;overflow:auto;isolation:isolate}.screen-layout .layout-root{max-width:100%;min-width:0}.screen-layout .field{min-width:0}.screen-layout input,.screen-layout select{max-width:100%}.screen-layout label{overflow-wrap:anywhere}.screen-layout small{overflow-wrap:anywhere}.doc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.doc-card{display:flex;flex-direction:column;gap:6px;padding:18px;border:1px solid var(--line);border-radius:6px;text-decoration:none}.doc-card:hover{background:#f5f9fb}.doc-card span{font-size:11px;color:var(--muted);font-weight:500}.doc-card strong{font-size:14px}.lead{color:var(--muted)}footer{margin-top:50px;border-top:1px solid var(--line);padding-top:16px;font-size:11px;color:var(--muted)}@media(max-width:1100px){.page-shell{grid-template-columns:190px minmax(0,1fr);gap:18px;padding:20px}.document{padding:28px}.screen-layout .fields{grid-template-columns:1fr}}@media(max-width:800px){.topbar{padding:0 16px}.brand span{display:none}.page-shell{display:block;padding:12px}.toc{position:static;max-height:220px;margin-bottom:16px;padding:12px;border:1px solid var(--line);border-radius:6px}.document{padding:22px 18px}.doc-body>h1{font-size:23px}.doc-grid{grid-template-columns:1fr}.screen-layout .field{grid-template-columns:1fr}.screen-layout small{grid-column:1}}@media print{body{background:white;font-size:10pt}.topbar,.toc,footer,.diagram-source{display:none}.page-shell{display:block;max-width:none;padding:0}.document{border:0;padding:0}.doc-body>h2{break-after:avoid}.table-scroll{overflow:visible}.diagram{break-inside:avoid}.screen-layout{break-inside:auto}a{color:inherit!important;text-decoration:none}}
+
+.page-shell.no-toc{display:block;max-width:1240px}
+
+.doc-body img{display:block;max-width:100%;height:auto;margin:12px 0}
+</style></head><body><header class="topbar"><a class="brand" href="../index.html">CONTEXTBASE <span>仕様書</span></a><nav><a href="../index.html">文書一覧</a><a href="../../md/%E5%85%B1%E9%80%9A/%E5%85%B1%E9%80%9A%E4%BB%95%E6%A7%98%E6%9B%B8_COM-150_%E5%A4%96%E9%83%A8%E3%83%A9%E3%82%A4%E3%83%96%E3%83%A9%E3%83%AA%E3%82%92%E4%BD%BF%E3%82%8F%E3%81%9A%E3%80%81%E5%8D%981%E3%82%B7%E3%83%BC%E3%83%88%E3%81%AE%20Open%20XML%20%28.xlsx%29%20%E3%82%92%E7%94%9F%E6%88%90%E3%81%99%E3%82%8B.md">MD原本</a></nav></header><div class="page-shell"><aside class="toc"><div class="toc-heading">この文書の内容</div><ol><li class="level-2"><a href="#表紙">表紙</a></li><li class="level-2"><a href="#概要">概要</a></li><li class="level-3"><a href="#概要説明">概要説明</a></li><li class="level-2"><a href="#項目一覧">項目一覧</a></li><li class="level-2"><a href="#イベント仕様">イベント仕様</a></li><li class="level-3"><a href="#openxmlworkbookwriter">OpenXmlWorkbookWriter</a></li><li class="level-3"><a href="#buildworkbook">buildWorkbook</a></li><li class="level-3"><a href="#buildworkbook-1">buildWorkbook</a></li><li class="level-3"><a href="#contenttypes">contentTypes</a></li><li class="level-3"><a href="#rootrelationships">rootRelationships</a></li><li class="level-3"><a href="#workbookxml">workbookXml</a></li><li class="level-3"><a href="#workbookrelationships">workbookRelationships</a></li><li class="level-3"><a href="#stylesxml">stylesXml</a></li><li class="level-3"><a href="#sheetxml">sheetXml</a></li><li class="level-3"><a href="#appendcolumns">appendColumns</a></li><li class="level-3"><a href="#appendtextcell">appendTextCell</a></li><li class="level-3"><a href="#appendnumbercell">appendNumberCell</a></li><li class="level-3"><a href="#displaylength">displayLength</a></li><li class="level-3"><a href="#columnname">columnName</a></li><li class="level-3"><a href="#sanitizesheetname">sanitizeSheetName</a></li><li class="level-3"><a href="#validxmltext">validXmlText</a></li><li class="level-3"><a href="#xml">xml</a></li><li class="level-3"><a href="#write">write</a></li><li class="level-2"><a href="#補足説明">補足説明</a></li><li class="level-3"><a href="#適用条件">適用条件</a></li><li class="level-3"><a href="#処理条件の原本対応">処理・条件の原本対応</a></li></ol></aside><main class="document"><article class="doc-body"><h1 id="外部ライブラリを使わず単1シートの-open-xml-xlsx-を生成する">外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成する</h1>
+<h2 id="表紙">表紙</h2>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文書名</td>
+<td>基本設計書</td>
+</tr>
+<tr>
+<td>システム名</td>
+<td></td>
+</tr>
+<tr>
+<td>機能ID</td>
+<td>COM-150</td>
+</tr>
+<tr>
+<td>画面名</td>
+<td>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成する</td>
+</tr>
+<tr>
+<td>会社名</td>
+<td></td>
+</tr>
+<tr>
+<td>作成日</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="概要">概要</h2>
+<h3 id="概要説明">概要説明</h3>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するの入力・表示・要求処理を行う。</p>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象種別</td>
+<td>common</td>
+</tr>
+<tr>
+<td>開始契機</td>
+<td>呼出元からの要求</td>
+</tr>
+<tr>
+<td>処理対象</td>
+<td>入力値・画面状態</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="項目一覧">項目一覧</h2>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>グループ</th>
+<th>項目名</th>
+<th>種類</th>
+<th>入出力</th>
+<th>DB連携項目</th>
+<th>候補取得元</th>
+<th>必須</th>
+<th>形式・桁</th>
+<th>説明</th>
+</tr>
+</thead>
+</table></div>
+<p>項目定義数：0項目。表示順と反復行の定義数を区別する。</p>
+<h2 id="イベント仕様">イベント仕様</h2>
+<h3 id="openxmlworkbookwriter">OpenXmlWorkbookWriter</h3>
+<h4 id="処理概要">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「OpenXmlWorkbookWriter」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順">処理手順</h4>
+<ol>
+<li>関連する処理へ制御を渡す。詳細な実行経路は原本対応を参照する。</li>
+</ol>
+<h3 id="buildworkbook">buildWorkbook</h3>
+<h4 id="処理概要-1">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「buildWorkbook」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-1">処理手順</h4>
+<ol>
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="buildworkbook-1">buildWorkbook</h3>
+<h4 id="処理概要-2">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「buildWorkbook」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-2">処理手順</h4>
+<ol>
+<li>「対象項目がない、または「対象項目」」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</li>
+</ol>
+<p>1.1. 条件成立時：処理の異常を通知し、この経路を終了する。この経路の後続手順は実行しない。</p>
+<ol start="2">
+<li>「対象項目がない」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</li>
+</ol>
+<p>2.1. 条件成立時：処理の異常を通知し、この経路を終了する。この経路の後続手順は実行しない。</p>
+<ol start="3">
+<li>
+<p>関連情報を取得・設定する（処理10：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理11：詳細仕様参照）。</p>
+</li>
+<li>
+<p>通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+</li>
+</ol>
+<p>5.1. 通常処理：関連情報を取得・設定する（処理12：詳細仕様参照）。</p>
+<p>5.2. 通常処理：関連情報を取得・設定する（処理13：詳細仕様参照）。</p>
+<p>5.3. 通常処理：関連情報を取得・設定する（処理14：詳細仕様参照）。</p>
+<p>5.4. 通常処理：関連情報を取得・設定する（処理15：詳細仕様参照）。</p>
+<p>5.5. 通常処理：関連情報を取得・設定する（処理16：詳細仕様参照）。</p>
+<p>5.6. 通常処理：関連情報を取得・設定する（処理17：詳細仕様参照）。</p>
+<p>5.7. 通常処理：関連情報を取得・設定する（処理18：詳細仕様参照）。</p>
+<p>5.8. 通常処理：終了時の共通後処理を行ってから、処理結果を呼出元へ返す。この経路の後続手順は実行しない。</p>
+<p>5-例外1. 例外条件「IOException e」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<p>5-例外1.1. 例外発生時：終了時の共通後処理を行ってから、処理の異常を通知し、この経路を終了する。この経路の後続手順は実行しない。</p>
+<p>5-後処理. 通常終了・例外・途中のreturnのいずれでも、この範囲を抜ける前に次の共通後処理を行う。</p>
+<p>5-後処理.1. 終了時の共通後処理：通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+<p>5-後処理.1.1. 通常処理：使用した接続・処理資源を解放する。</p>
+<p>5-後処理.1-例外1. 例外条件「IOException e」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<h4 id="結果例外時の扱い-1">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象項目がない、または「対象項目」</td>
+<td>処理の異常を通知し、この経路を終了する</td>
+</tr>
+<tr>
+<td>NOT (headers  が等しい  未設定 || 「対象項目」)・対象項目がない</td>
+<td>処理の異常を通知し、この経路を終了する</td>
+</tr>
+<tr>
+<td>NOT (headers  が等しい  未設定 || 「対象項目」)・NOT (rows  が等しい  未設定)</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+<tr>
+<td>NOT (headers  が等しい  未設定 || 「対象項目」)・NOT (rows  が等しい  未設定)・条件19を満たす（原本条件は補足説明を参照）</td>
+<td>処理の異常を通知し、この経路を終了する</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="contenttypes">contentTypes</h3>
+<h4 id="処理概要-3">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「contentTypes」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-3">処理手順</h4>
+<ol>
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-2">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="rootrelationships">rootRelationships</h3>
+<h4 id="処理概要-4">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「rootRelationships」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-4">処理手順</h4>
+<ol>
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-3">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="workbookxml">workbookXml</h3>
+<h4 id="処理概要-5">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「workbookXml」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-5">処理手順</h4>
+<ol>
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-4">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="workbookrelationships">workbookRelationships</h3>
+<h4 id="処理概要-6">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「workbookRelationships」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-6">処理手順</h4>
+<ol>
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-5">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="stylesxml">stylesXml</h3>
+<h4 id="処理概要-7">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「stylesXml」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-7">処理手順</h4>
+<ol>
+<li>エラーまたは処理結果「&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;" + "&lt;styleSheet xmlns="" + SPREADSHEET_NS + ""&gt;" + "&lt;fonts count="4"&gt;&lt;font&gt;&lt;sz val="10"/&gt;&lt;name val="メイリオ"/&gt;&lt;/font&gt;" + "&lt;font&gt;&lt;b/&gt;&lt;sz val="10"/&gt;&lt;name val="メイリオ"/&gt;&lt;/font&gt;" + "&lt;font&gt;&lt;b/&gt;&lt;sz val="22"/&gt;&lt;name val="メイリオ"/&gt;&lt;/font&gt;" + "&lt;font&gt;&lt;sz val="16"/&gt;&lt;name val="メイリオ"/&gt;&lt;/font&gt;&lt;/fonts&gt;" + "&lt;fills count="3"&gt;&lt;fill&gt;&lt;patternFill patternType="none"/&gt;&lt;/fill&gt;" + "&lt;fill&gt;&lt;patternFill patternType="gray125"/&gt;&lt;/fill&gt;" + "&lt;fill&gt;&lt;patternFill patternType="solid"&gt;&lt;fgColor rgb="FFFFFF96"/&gt;" + "&lt;bgColor indexed="64"/&gt;&lt;/patternFill&gt;&lt;/fill&gt;&lt;/fills&gt;" + "&lt;borders count="2"&gt;&lt;border&gt;&lt;left/&gt;&lt;right/&gt;&lt;top/&gt;&lt;bottom/&gt;&lt;diagonal/&gt;&lt;/border&gt;" + "&lt;border&gt;&lt;left style="thin"/&gt;&lt;right style="thin"/&gt;&lt;top style="thin"/&gt;" + "&lt;bottom style="thin"/&gt;&lt;diagonal/&gt;&lt;/border&gt;&lt;/borders&gt;" + "&lt;cellStyleXfs count="1"&gt;&lt;xf numFmtId="0" fontId="0" fillId="0" borderId="0"/&gt;&lt;/cellStyleXfs&gt;" + "&lt;cellXfs count="5"&gt;" + "&lt;xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/&gt;" + "&lt;xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"&gt;&lt;alignment horizontal="center" vertical="center" wrapText="1"/&gt;&lt;/xf&gt;" + "&lt;xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"&gt;&lt;alignment horizontal="right" vertical="top"/&gt;&lt;/xf&gt;" + "&lt;xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"&gt;&lt;alignment horizontal="center" vertical="center"/&gt;&lt;/xf&gt;" + "&lt;xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"&gt;&lt;alignment horizontal="center" vertical="center"/&gt;&lt;/xf&gt;" + "&lt;/cellXfs&gt;&lt;cellStyles count="1"&gt;&lt;cellStyle name="Normal" xfId="0" builtinId="0"/&gt;&lt;/cellStyles&gt;" + "&lt;/styleSheet&gt;」を返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-6">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>エラーまたは処理結果「&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;" + "&lt;styleSheet xmlns="" + SPREADSHEET_NS + ""&gt;" + "&lt;fonts count="4"&gt;&lt;font&gt;&lt;sz val="10"/&gt;&lt;name val="メイリオ"/&gt;&lt;/font&gt;" + "&lt;font&gt;&lt;b/&gt;&lt;sz val="10"/&gt;&lt;name val="メイリオ"/&gt;&lt;/font&gt;" + "&lt;font&gt;&lt;b/&gt;&lt;sz val="22"/&gt;&lt;name val="メイリオ"/&gt;&lt;/font&gt;" + "&lt;font&gt;&lt;sz val="16"/&gt;&lt;name val="メイリオ"/&gt;&lt;/font&gt;&lt;/fonts&gt;" + "&lt;fills count="3"&gt;&lt;fill&gt;&lt;patternFill patternType="none"/&gt;&lt;/fill&gt;" + "&lt;fill&gt;&lt;patternFill patternType="gray125"/&gt;&lt;/fill&gt;" + "&lt;fill&gt;&lt;patternFill patternType="solid"&gt;&lt;fgColor rgb="FFFFFF96"/&gt;" + "&lt;bgColor indexed="64"/&gt;&lt;/patternFill&gt;&lt;/fill&gt;&lt;/fills&gt;" + "&lt;borders count="2"&gt;&lt;border&gt;&lt;left/&gt;&lt;right/&gt;&lt;top/&gt;&lt;bottom/&gt;&lt;diagonal/&gt;&lt;/border&gt;" + "&lt;border&gt;&lt;left style="thin"/&gt;&lt;right style="thin"/&gt;&lt;top style="thin"/&gt;" + "&lt;bottom style="thin"/&gt;&lt;diagonal/&gt;&lt;/border&gt;&lt;/borders&gt;" + "&lt;cellStyleXfs count="1"&gt;&lt;xf numFmtId="0" fontId="0" fillId="0" borderId="0"/&gt;&lt;/cellStyleXfs&gt;" + "&lt;cellXfs count="5"&gt;" + "&lt;xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/&gt;" + "&lt;xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"&gt;&lt;alignment horizontal="center" vertical="center" wrapText="1"/&gt;&lt;/xf&gt;" + "&lt;xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"&gt;&lt;alignment horizontal="right" vertical="top"/&gt;&lt;/xf&gt;" + "&lt;xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"&gt;&lt;alignment horizontal="center" vertical="center"/&gt;&lt;/xf&gt;" + "&lt;xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"&gt;&lt;alignment horizontal="center" vertical="center"/&gt;&lt;/xf&gt;" + "&lt;/cellXfs&gt;&lt;cellStyles count="1"&gt;&lt;cellStyle name="Normal" xfId="0" builtinId="0"/&gt;&lt;/cellStyles&gt;" + "&lt;/styleSheet&gt;」を返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="sheetxml">sheetXml</h3>
+<h4 id="処理概要-8">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「sheetXml」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-8">処理手順</h4>
+<ol>
+<li>
+<p>関連情報を取得・設定する（処理43：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理44：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理45：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理46：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理47：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理48：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理49：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理50：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理51：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理52：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理53：詳細仕様参照）。</p>
+</li>
+<li>
+<p>「対象項目がある」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+</li>
+</ol>
+<p>12.1. 条件成立時：繰返し条件「条件54を満たす（原本条件は補足説明を参照）」に従い、次の手順を繰り返す。条件を満たさなくなった場合は繰返しの後へ進む。</p>
+<p>12.1.1. 繰返しの各回：関連情報を取得・設定する（処理55：詳細仕様参照）。</p>
+<p>12.1.2. 繰返しの各回：関連情報を取得・設定する（処理56：詳細仕様参照）。</p>
+<p>12.1.3. 繰返しの各回：関連情報を取得・設定する（処理57：詳細仕様参照）。</p>
+<p>12.1.4. 繰返しの各回：「excelRow  が等しい  1」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>12.1.4.1. 条件成立時：関連情報を取得・設定する（処理58：詳細仕様参照）。</p>
+<p>12.1.5. 繰返しの各回：関連情報を取得・設定する（処理59：詳細仕様参照）。</p>
+<p>12.1.6. 繰返しの各回：「対象項目がある」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>12.1.6.1. 条件成立時：繰返し条件「条件60を満たす（原本条件は補足説明を参照）」に従い、次の手順を繰り返す。条件を満たさなくなった場合は繰返しの後へ進む。</p>
+<p>12.1.6.1.1. 繰返しの各回：関連情報を取得・設定する（処理61：詳細仕様参照）。</p>
+<p>12.1.6.1.2. 繰返しの各回：「対象項目がある」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>12.1.6.1.2.1. 条件成立時：関連情報を取得・設定する（処理62：詳細仕様参照）。</p>
+<p>12.1.7. 繰返しの各回：関連情報を取得・設定する（処理63：詳細仕様参照）。</p>
+<ol start="13">
+<li>
+<p>関連情報を取得・設定する（処理64：詳細仕様参照）。</p>
+</li>
+<li>
+<p>繰返し条件「条件65を満たす（原本条件は補足説明を参照）」に従い、次の手順を繰り返す。条件を満たさなくなった場合は繰返しの後へ進む。</p>
+</li>
+</ol>
+<p>14.1. 繰返しの各回：関連情報を取得・設定する（処理66：詳細仕様参照）。</p>
+<ol start="15">
+<li>
+<p>関連情報を取得・設定する（処理67：詳細仕様参照）。</p>
+</li>
+<li>
+<p>繰返し条件「条件68を満たす（原本条件は補足説明を参照）」に従い、次の手順を繰り返す。条件を満たさなくなった場合は繰返しの後へ進む。</p>
+</li>
+</ol>
+<p>16.1. 繰返しの各回：関連情報を取得・設定する（処理69：詳細仕様参照）。</p>
+<p>16.2. 繰返しの各回：関連情報を取得・設定する（処理70：詳細仕様参照）。</p>
+<p>16.3. 繰返しの各回：関連情報を取得・設定する（処理71：詳細仕様参照）。</p>
+<p>16.4. 繰返しの各回：繰返し条件「条件72を満たす（原本条件は補足説明を参照）」に従い、次の手順を繰り返す。条件を満たさなくなった場合は繰返しの後へ進む。</p>
+<p>16.4.1. 繰返しの各回：関連情報を取得・設定する（処理73：詳細仕様参照）。</p>
+<p>16.4.2. 繰返しの各回：関連情報を取得・設定する（処理74：詳細仕様参照）。</p>
+<p>16.4.3. 繰返しの各回：「条件75を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+<p>16.4.3.1. 条件成立時：関連情報を取得・設定する（処理76：詳細仕様参照）。</p>
+<p>16.4.3-別.1. 条件不成立時：関連情報を取得・設定する（処理77：詳細仕様参照）。</p>
+<p>16.5. 繰返しの各回：関連情報を取得・設定する（処理78：詳細仕様参照）。</p>
+<ol start="17">
+<li>
+<p>関連情報を取得・設定する（処理79：詳細仕様参照）。</p>
+</li>
+<li>
+<p>「対象項目がある、かつ!「対象項目」」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+</li>
+</ol>
+<p>18.1. 条件成立時：関連情報を取得・設定する（処理80：詳細仕様参照）。</p>
+<p>18.2. 条件成立時：繰返し条件「条件81を満たす（原本条件は補足説明を参照）」に従い、次の手順を繰り返す。条件を満たさなくなった場合は繰返しの後へ進む。</p>
+<p>18.2.1. 繰返しの各回：関連情報を取得・設定する（処理82：詳細仕様参照）。</p>
+<p>18.3. 条件成立時：関連情報を取得・設定する（処理83：詳細仕様参照）。</p>
+<ol start="19">
+<li>
+<p>関連情報を取得・設定する（処理84：詳細仕様参照）。</p>
+</li>
+<li>
+<p>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</p>
+</li>
+</ol>
+<h4 id="結果例外時の扱い-7">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="appendcolumns">appendColumns</h3>
+<h4 id="処理概要-9">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「appendColumns」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-9">処理手順</h4>
+<ol>
+<li>
+<p>関連情報を取得・設定する（処理12：詳細仕様参照）。</p>
+</li>
+<li>
+<p>繰返し条件「条件13を満たす（原本条件は補足説明を参照）」に従い、次の手順を繰り返す。条件を満たさなくなった場合は繰返しの後へ進む。</p>
+</li>
+</ol>
+<p>2.1. 繰返しの各回：関連情報を取得・設定する（処理14：詳細仕様参照）。</p>
+<p>2.2. 繰返しの各回：関連情報を取得・設定する（処理15：詳細仕様参照）。</p>
+<p>2.3. 繰返しの各回：繰返し条件「条件16を満たす（原本条件は補足説明を参照）」に従い、次の手順を繰り返す。条件を満たさなくなった場合は繰返しの後へ進む。</p>
+<p>2.3.1. 繰返しの各回：関連情報を取得・設定する（処理17：詳細仕様参照）。</p>
+<p>2.3.2. 繰返しの各回：関連情報を取得・設定する（処理18：詳細仕様参照）。</p>
+<p>2.3.3. 繰返しの各回：関連情報を取得・設定する（処理19：詳細仕様参照）。</p>
+<p>2.4. 繰返しの各回：関連情報を取得・設定する（処理20：詳細仕様参照）。</p>
+<p>2.5. 繰返しの各回：関連情報を取得・設定する（処理21：詳細仕様参照）。</p>
+<ol start="3">
+<li>関連情報を取得・設定する（処理22：詳細仕様参照）。</li>
+</ol>
+<h3 id="appendtextcell">appendTextCell</h3>
+<h4 id="処理概要-10">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「appendTextCell」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-10">処理手順</h4>
+<ol>
+<li>
+<p>関連情報を取得・設定する（処理7：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理8：詳細仕様参照）。</p>
+</li>
+<li>
+<p>「条件9を満たす（原本条件は補足説明を参照）、かつ条件10を満たす（原本条件は補足説明を参照）」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+</li>
+</ol>
+<p>3.1. 条件成立時：関連情報を取得・設定する（処理11：詳細仕様参照）。</p>
+<ol start="4">
+<li>関連情報を取得・設定する（処理12：詳細仕様参照）。</li>
+</ol>
+<h3 id="appendnumbercell">appendNumberCell</h3>
+<h4 id="処理概要-11">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「appendNumberCell」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-11">処理手順</h4>
+<ol>
+<li>関連情報を取得・設定する（処理2：詳細仕様参照）。</li>
+</ol>
+<h3 id="displaylength">displayLength</h3>
+<h4 id="処理概要-12">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「displayLength」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-12">処理手順</h4>
+<ol>
+<li>
+<p>関連情報を取得・設定する（処理6：詳細仕様参照）。</p>
+</li>
+<li>
+<p>繰返し条件「条件7を満たす（原本条件は補足説明を参照）」に従い、次の手順を繰り返す。条件を満たさなくなった場合は繰返しの後へ進む。</p>
+</li>
+</ol>
+<p>2.1. 繰返しの各回：関連情報を取得・設定する（処理8：詳細仕様参照）。</p>
+<p>2.2. 繰返しの各回：関連情報を取得・設定する（処理9：詳細仕様参照）。</p>
+<p>2.3. 繰返しの各回：関連情報を取得・設定する（処理10：詳細仕様参照）。</p>
+<ol start="3">
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-8">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="columnname">columnName</h3>
+<h4 id="処理概要-13">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「columnName」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-13">処理手順</h4>
+<ol>
+<li>
+<p>関連情報を取得・設定する（処理6：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理7：詳細仕様参照）。</p>
+</li>
+<li>
+<p>繰返し条件「条件8を満たす（原本条件は補足説明を参照）」に従い、次の手順を繰り返す。条件を満たさなくなった場合は繰返しの後へ進む。</p>
+</li>
+</ol>
+<p>3.1. 繰返しの各回：関連情報を取得・設定する（処理9：詳細仕様参照）。</p>
+<p>3.2. 繰返しの各回：新しいデータを登録する。</p>
+<p>3.3. 繰返しの各回：関連情報を取得・設定する（処理10：詳細仕様参照）。</p>
+<ol start="4">
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-9">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="sanitizesheetname">sanitizeSheetName</h3>
+<h4 id="処理概要-14">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「sanitizeSheetName」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-14">処理手順</h4>
+<ol>
+<li>
+<p>関連情報を取得・設定する（処理5：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理6：詳細仕様参照）。</p>
+</li>
+<li>
+<p>「条件7を満たす（原本条件は補足説明を参照）」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+</li>
+</ol>
+<p>3.1. 条件成立時：関連情報を取得・設定する（処理8：詳細仕様参照）。</p>
+<ol start="4">
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-10">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="validxmltext">validXmlText</h3>
+<h4 id="処理概要-15">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「validXmlText」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-15">処理手順</h4>
+<ol>
+<li>
+<p>関連情報を取得・設定する（処理10：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理11：詳細仕様参照）。</p>
+</li>
+<li>
+<p>繰返し条件「条件12を満たす（原本条件は補足説明を参照）」に従い、次の手順を繰り返す。条件を満たさなくなった場合は繰返しの後へ進む。</p>
+</li>
+</ol>
+<p>3.1. 繰返しの各回：関連情報を取得・設定する（処理13：詳細仕様参照）。</p>
+<p>3.2. 繰返しの各回：「codePoint  が等しい  0x9、またはcodePoint  が等しい  0xA、またはcodePoint  が等しい  0xD、または条件14を満たす（原本条件は補足説明を参照）、または条件15を満たす（原本条件は補足説明を参照）、または条件16を満たす（原本条件は補足説明を参照）」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>3.2.1. 条件成立時：関連情報を取得・設定する（処理17：詳細仕様参照）。</p>
+<p>3.3. 繰返しの各回：関連情報を取得・設定する（処理18：詳細仕様参照）。</p>
+<ol start="4">
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-11">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="xml">xml</h3>
+<h4 id="処理概要-16">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「xml」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-16">処理手順</h4>
+<ol>
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-12">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="write">write</h3>
+<h4 id="処理概要-17">処理概要</h4>
+<p>外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成するで「write」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-17">処理手順</h4>
+<ol>
+<li>
+<p>関連情報を取得・設定する（処理4：詳細仕様参照）。</p>
+</li>
+<li>
+<p>「対象項目」を設定する。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理5：詳細仕様参照）。</p>
+</li>
+<li>
+<p>指定した条件でデータを照会する。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理6：詳細仕様参照）。</p>
+</li>
+</ol>
+<h2 id="補足説明">補足説明</h2>
+<h3 id="適用条件">適用条件</h3>
+<p>各仮定のQA番号を確認する。静的に確認できた操作・条件を適用する。</p>
+<h3 id="処理条件の原本対応">処理・条件の原本対応</h3>
+<p>文書内の条件番号・処理番号は次の原本表記に対応する。完全な業務用語への置換を行っていない箇所はQA・reportで確認する。</p>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>イベント</th>
+<th>参照番号</th>
+<th>原本条件・処理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>buildWorkbook</td>
+<td>処理1</td>
+<td>zip.finish()</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理2</td>
+<td>write(zip, "xl/worksheets/sheet1.xml", sheetXml(headers, rows, leadingRows, mergedRanges, printScale))</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理3</td>
+<td>write(zip, "xl/styles.xml", stylesXml())</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理4</td>
+<td>write(zip, "xl/_rels/workbook.xml.rels", workbookRelationships())</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理5</td>
+<td>write(zip, "xl/workbook.xml", workbookXml(sanitizeSheetName(sheetName)))</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理6</td>
+<td>write(zip, "_rels/.rels", rootRelationships())</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理7</td>
+<td>write(zip, "[Content_Types].xml", contentTypes())</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理8</td>
+<td>ZipOutputStream zip = new ZipOutputStream(output)</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理9</td>
+<td>ByteArrayOutputStream output = new ByteArrayOutputStream()</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理10</td>
+<td>ByteArrayOutputStream output = new ByteArrayOutputStream()</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理11</td>
+<td>ZipOutputStream zip = new ZipOutputStream(output)</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理12</td>
+<td>write(zip, "[Content_Types].xml", contentTypes())</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理13</td>
+<td>write(zip, "_rels/.rels", rootRelationships())</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理14</td>
+<td>write(zip, "xl/workbook.xml", workbookXml(sanitizeSheetName(sheetName)))</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理15</td>
+<td>write(zip, "xl/_rels/workbook.xml.rels", workbookRelationships())</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理16</td>
+<td>write(zip, "xl/styles.xml", stylesXml())</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理17</td>
+<td>write(zip, "xl/worksheets/sheet1.xml", sheetXml(headers, rows, leadingRows, mergedRanges, printScale))</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>処理18</td>
+<td>zip.finish()</td>
+</tr>
+<tr>
+<td>buildWorkbook</td>
+<td>条件19</td>
+<td>IOException e</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理1</td>
+<td>xml.append("&lt;printOptions horizontalCentered="1"/&gt;") .append("&lt;pageMargins left="0" right="0" top="0.3937" bottom="0.3937" header="0.1181" footer="0.1181"/&gt;") .append("&lt;pageSetup paperSize="9" orientation="portrait" scale="") .append(Math.max(10, Math.min(400, printScale))).append(""/&gt;") .append("&lt;/worksheet&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理2</td>
+<td>xml.append("&lt;/mergeCells&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>条件3</td>
+<td>int i = 0; i &lt; mergedRanges.size(); i++</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理4</td>
+<td>xml.append("&lt;mergeCell ref="").append(xml(mergedRanges.get(i))).append(""/&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理5</td>
+<td>xml.append("&lt;mergeCells count="").append(mergedRanges.size()).append(""&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理6</td>
+<td>xml.append("&lt;/sheetData&gt;&lt;autoFilter ref="A").append(headerRow).append(':') .append(lastColumn).append(lastRow).append(""/&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>条件7</td>
+<td>int rowIndex = 0; rowIndex &lt; rows.size(); rowIndex++</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理8</td>
+<td>xml.append("&lt;/row&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>条件9</td>
+<td>int column = 0; column &lt; headers.size(); column++</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理10</td>
+<td>appendNumberCell(xml, reference, (Number) value)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理11</td>
+<td>appendTextCell(xml, reference, value == null ? "" : String.valueOf(value), 0)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>条件12</td>
+<td>value instanceof Number</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理13</td>
+<td>String reference = columnName(column + 1) + excelRow</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理14</td>
+<td>Object value = row != null &amp;&amp; column &lt; row.length ? row[column] : null</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理15</td>
+<td>xml.append("&lt;row r="").append(excelRow).append(""&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理16</td>
+<td>Object[] row = rows.get(rowIndex)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理17</td>
+<td>int excelRow = rowIndex + headerRow + 1</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理18</td>
+<td>xml.append("&lt;/row&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>条件19</td>
+<td>int column = 0; column &lt; headers.size(); column++</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理20</td>
+<td>appendTextCell(xml, columnName(column + 1) + headerRow, headers.get(column), 1)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理21</td>
+<td>xml.append("&lt;row r="").append(headerRow) .append("" ht="45" customHeight="1"&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>条件22</td>
+<td>int rowIndex = 0; rowIndex &lt; leadingRows.size(); rowIndex++</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理23</td>
+<td>xml.append("&lt;/row&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>条件24</td>
+<td>int column = 0; column &lt; Math.min(headers.size(), row.length); column++</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理25</td>
+<td>appendTextCell(xml, columnName(column + 1) + excelRow, String.valueOf(value), excelRow == 1 ? 3 : 4)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理26</td>
+<td>Object value = row[column]</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理27</td>
+<td>xml.append('&gt;')</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理28</td>
+<td>xml.append(" ht="28" customHeight="1"")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理29</td>
+<td>xml.append("&lt;row r="").append(excelRow).append(""")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理30</td>
+<td>Object[] row = leadingRows.get(rowIndex)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理31</td>
+<td>int excelRow = rowIndex + 1</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理32</td>
+<td>xml.append("&lt;sheetData&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理33</td>
+<td>appendColumns(xml, headers, rows)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理34</td>
+<td>xml.append("&lt;sheetViews&gt;&lt;sheetView workbookViewId="0"&gt;&lt;pane ySplit="") .append(headerRow).append("" topLeftCell="A").append(headerRow + 1) .append("" activePane="bottomLeft" state="frozen"/&gt;&lt;/sheetView&gt;&lt;/sheetViews&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理35</td>
+<td>xml.append("&lt;dimension ref="A1:").append(lastColumn).append(lastRow).append(""/&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理36</td>
+<td>xml.append("&lt;worksheet xmlns="").append(SPREADSHEET_NS).append(""&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理37</td>
+<td>xml.append("&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理38</td>
+<td>String lastColumn = columnName(headers.size())</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理39</td>
+<td>int lastRow = rows.size() + headerRow</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理40</td>
+<td>int headerRow = leadingCount + 1</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理41</td>
+<td>int leadingCount = leadingRows == null ? 0 : leadingRows.size()</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理42</td>
+<td>StringBuilder xml = new StringBuilder(4096 + rows.size() * headers.size() * 40)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理43</td>
+<td>StringBuilder xml = new StringBuilder(4096 + rows.size() * headers.size() * 40)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理44</td>
+<td>int leadingCount = leadingRows == null ? 0 : leadingRows.size()</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理45</td>
+<td>int headerRow = leadingCount + 1</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理46</td>
+<td>int lastRow = rows.size() + headerRow</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理47</td>
+<td>String lastColumn = columnName(headers.size())</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理48</td>
+<td>xml.append("&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理49</td>
+<td>xml.append("&lt;worksheet xmlns="").append(SPREADSHEET_NS).append(""&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理50</td>
+<td>xml.append("&lt;dimension ref="A1:").append(lastColumn).append(lastRow).append(""/&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理51</td>
+<td>xml.append("&lt;sheetViews&gt;&lt;sheetView workbookViewId="0"&gt;&lt;pane ySplit="") .append(headerRow).append("" topLeftCell="A").append(headerRow + 1) .append("" activePane="bottomLeft" state="frozen"/&gt;&lt;/sheetView&gt;&lt;/sheetViews&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理52</td>
+<td>appendColumns(xml, headers, rows)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理53</td>
+<td>xml.append("&lt;sheetData&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>条件54</td>
+<td>int rowIndex = 0; rowIndex &lt; leadingRows.size(); rowIndex++</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理55</td>
+<td>int excelRow = rowIndex + 1</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理56</td>
+<td>Object[] row = leadingRows.get(rowIndex)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理57</td>
+<td>xml.append("&lt;row r="").append(excelRow).append(""")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理58</td>
+<td>xml.append(" ht="28" customHeight="1"")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理59</td>
+<td>xml.append('&gt;')</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>条件60</td>
+<td>int column = 0; column &lt; Math.min(headers.size(), row.length); column++</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理61</td>
+<td>Object value = row[column]</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理62</td>
+<td>appendTextCell(xml, columnName(column + 1) + excelRow, String.valueOf(value), excelRow == 1 ? 3 : 4)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理63</td>
+<td>xml.append("&lt;/row&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理64</td>
+<td>xml.append("&lt;row r="").append(headerRow) .append("" ht="45" customHeight="1"&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>条件65</td>
+<td>int column = 0; column &lt; headers.size(); column++</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理66</td>
+<td>appendTextCell(xml, columnName(column + 1) + headerRow, headers.get(column), 1)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理67</td>
+<td>xml.append("&lt;/row&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>条件68</td>
+<td>int rowIndex = 0; rowIndex &lt; rows.size(); rowIndex++</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理69</td>
+<td>int excelRow = rowIndex + headerRow + 1</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理70</td>
+<td>Object[] row = rows.get(rowIndex)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理71</td>
+<td>xml.append("&lt;row r="").append(excelRow).append(""&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>条件72</td>
+<td>int column = 0; column &lt; headers.size(); column++</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理73</td>
+<td>Object value = row != null &amp;&amp; column &lt; row.length ? row[column] : null</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理74</td>
+<td>String reference = columnName(column + 1) + excelRow</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>条件75</td>
+<td>value instanceof Number</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理76</td>
+<td>appendNumberCell(xml, reference, (Number) value)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理77</td>
+<td>appendTextCell(xml, reference, value == null ? "" : String.valueOf(value), 0)</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理78</td>
+<td>xml.append("&lt;/row&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理79</td>
+<td>xml.append("&lt;/sheetData&gt;&lt;autoFilter ref="A").append(headerRow).append(':') .append(lastColumn).append(lastRow).append(""/&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理80</td>
+<td>xml.append("&lt;mergeCells count="").append(mergedRanges.size()).append(""&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>条件81</td>
+<td>int i = 0; i &lt; mergedRanges.size(); i++</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理82</td>
+<td>xml.append("&lt;mergeCell ref="").append(xml(mergedRanges.get(i))).append(""/&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理83</td>
+<td>xml.append("&lt;/mergeCells&gt;")</td>
+</tr>
+<tr>
+<td>sheetXml</td>
+<td>処理84</td>
+<td>xml.append("&lt;printOptions horizontalCentered="1"/&gt;") .append("&lt;pageMargins left="0" right="0" top="0.3937" bottom="0.3937" header="0.1181" footer="0.1181"/&gt;") .append("&lt;pageSetup paperSize="9" orientation="portrait" scale="") .append(Math.max(10, Math.min(400, printScale))).append(""/&gt;") .append("&lt;/worksheet&gt;")</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理1</td>
+<td>xml.append("&lt;/cols&gt;")</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>条件2</td>
+<td>int column = 0; column &lt; headers.size(); column++</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理3</td>
+<td>xml.append("&lt;col min="").append(column + 1).append("" max="") .append(column + 1).append("" width="").append(width) .append("" customWidth="1"/&gt;")</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理4</td>
+<td>width = Math.max(5, Math.min(40, width))</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>条件5</td>
+<td>int row = 0; row &lt; inspectCount; row++</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理6</td>
+<td>width = Math.max(width, displayLength(value == null ? "" : String.valueOf(value)) + 2)</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理7</td>
+<td>Object value = values != null &amp;&amp; column &lt; values.length ? values[column] : null</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理8</td>
+<td>Object[] values = rows.get(row)</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理9</td>
+<td>int inspectCount = Math.min(rows.size(), 100)</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理10</td>
+<td>int width = displayLength(headers.get(column)) + 2</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理11</td>
+<td>xml.append("&lt;cols&gt;")</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理12</td>
+<td>xml.append("&lt;cols&gt;")</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>条件13</td>
+<td>int column = 0; column &lt; headers.size(); column++</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理14</td>
+<td>int width = displayLength(headers.get(column)) + 2</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理15</td>
+<td>int inspectCount = Math.min(rows.size(), 100)</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>条件16</td>
+<td>int row = 0; row &lt; inspectCount; row++</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理17</td>
+<td>Object[] values = rows.get(row)</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理18</td>
+<td>Object value = values != null &amp;&amp; column &lt; values.length ? values[column] : null</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理19</td>
+<td>width = Math.max(width, displayLength(value == null ? "" : String.valueOf(value)) + 2)</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理20</td>
+<td>width = Math.max(5, Math.min(40, width))</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理21</td>
+<td>xml.append("&lt;col min="").append(column + 1).append("" max="") .append(column + 1).append("" width="").append(width) .append("" customWidth="1"/&gt;")</td>
+</tr>
+<tr>
+<td>appendColumns</td>
+<td>処理22</td>
+<td>xml.append("&lt;/cols&gt;")</td>
+</tr>
+<tr>
+<td>appendTextCell</td>
+<td>処理1</td>
+<td>xml.append("&gt;").append(xml(clean)).append("&lt;/t&gt;&lt;/is&gt;&lt;/c&gt;")</td>
+</tr>
+<tr>
+<td>appendTextCell</td>
+<td>処理2</td>
+<td>xml.append(" xml:space="preserve"")</td>
+</tr>
+<tr>
+<td>appendTextCell</td>
+<td>条件3</td>
+<td>clean.length() &gt; 0</td>
+</tr>
+<tr>
+<td>appendTextCell</td>
+<td>条件4</td>
+<td>(Character.isWhitespace(clean.charAt(0)) || Character.isWhitespace(clean.charAt(clean.length() - 1)))</td>
+</tr>
+<tr>
+<td>appendTextCell</td>
+<td>処理5</td>
+<td>xml.append("&lt;c r="").append(reference).append("" s="").append(style) .append("" t="inlineStr"&gt;&lt;is&gt;&lt;t")</td>
+</tr>
+<tr>
+<td>appendTextCell</td>
+<td>処理6</td>
+<td>String clean = validXmlText(value)</td>
+</tr>
+<tr>
+<td>appendTextCell</td>
+<td>処理7</td>
+<td>String clean = validXmlText(value)</td>
+</tr>
+<tr>
+<td>appendTextCell</td>
+<td>処理8</td>
+<td>xml.append("&lt;c r="").append(reference).append("" s="").append(style) .append("" t="inlineStr"&gt;&lt;is&gt;&lt;t")</td>
+</tr>
+<tr>
+<td>appendTextCell</td>
+<td>条件9</td>
+<td>clean.length() &gt; 0</td>
+</tr>
+<tr>
+<td>appendTextCell</td>
+<td>条件10</td>
+<td>(Character.isWhitespace(clean.charAt(0)) || Character.isWhitespace(clean.charAt(clean.length() - 1)))</td>
+</tr>
+<tr>
+<td>appendTextCell</td>
+<td>処理11</td>
+<td>xml.append(" xml:space="preserve"")</td>
+</tr>
+<tr>
+<td>appendTextCell</td>
+<td>処理12</td>
+<td>xml.append("&gt;").append(xml(clean)).append("&lt;/t&gt;&lt;/is&gt;&lt;/c&gt;")</td>
+</tr>
+<tr>
+<td>appendNumberCell</td>
+<td>処理1</td>
+<td>xml.append("&lt;c r="").append(reference).append("" s="2"&gt;&lt;v&gt;") .append(String.format(Locale.ROOT, "%s", value)).append("&lt;/v&gt;&lt;/c&gt;")</td>
+</tr>
+<tr>
+<td>appendNumberCell</td>
+<td>処理2</td>
+<td>xml.append("&lt;c r="").append(reference).append("" s="2"&gt;&lt;v&gt;") .append(String.format(Locale.ROOT, "%s", value)).append("&lt;/v&gt;&lt;/c&gt;")</td>
+</tr>
+<tr>
+<td>displayLength</td>
+<td>条件1</td>
+<td>int offset = 0; offset &lt; value.length();</td>
+</tr>
+<tr>
+<td>displayLength</td>
+<td>処理2</td>
+<td>offset += Character.charCount(codePoint)</td>
+</tr>
+<tr>
+<td>displayLength</td>
+<td>処理3</td>
+<td>length += codePoint &lt;= 0x7f ? 1 : 2</td>
+</tr>
+<tr>
+<td>displayLength</td>
+<td>処理4</td>
+<td>int codePoint = value.codePointAt(offset)</td>
+</tr>
+<tr>
+<td>displayLength</td>
+<td>処理5</td>
+<td>int length = 0</td>
+</tr>
+<tr>
+<td>displayLength</td>
+<td>処理6</td>
+<td>int length = 0</td>
+</tr>
+<tr>
+<td>displayLength</td>
+<td>条件7</td>
+<td>int offset = 0; offset &lt; value.length();</td>
+</tr>
+<tr>
+<td>displayLength</td>
+<td>処理8</td>
+<td>int codePoint = value.codePointAt(offset)</td>
+</tr>
+<tr>
+<td>displayLength</td>
+<td>処理9</td>
+<td>length += codePoint &lt;= 0x7f ? 1 : 2</td>
+</tr>
+<tr>
+<td>displayLength</td>
+<td>処理10</td>
+<td>offset += Character.charCount(codePoint)</td>
+</tr>
+<tr>
+<td>columnName</td>
+<td>条件1</td>
+<td>value &gt; 0</td>
+</tr>
+<tr>
+<td>columnName</td>
+<td>処理2</td>
+<td>value /= 26</td>
+</tr>
+<tr>
+<td>columnName</td>
+<td>処理3</td>
+<td>value--</td>
+</tr>
+<tr>
+<td>columnName</td>
+<td>処理4</td>
+<td>int value = column</td>
+</tr>
+<tr>
+<td>columnName</td>
+<td>処理5</td>
+<td>StringBuilder name = new StringBuilder()</td>
+</tr>
+<tr>
+<td>columnName</td>
+<td>処理6</td>
+<td>StringBuilder name = new StringBuilder()</td>
+</tr>
+<tr>
+<td>columnName</td>
+<td>処理7</td>
+<td>int value = column</td>
+</tr>
+<tr>
+<td>columnName</td>
+<td>条件8</td>
+<td>value &gt; 0</td>
+</tr>
+<tr>
+<td>columnName</td>
+<td>処理9</td>
+<td>value--</td>
+</tr>
+<tr>
+<td>columnName</td>
+<td>処理10</td>
+<td>value /= 26</td>
+</tr>
+<tr>
+<td>sanitizeSheetName</td>
+<td>処理1</td>
+<td>name = name.substring(0, 31)</td>
+</tr>
+<tr>
+<td>sanitizeSheetName</td>
+<td>条件2</td>
+<td>name.length() &gt; 31</td>
+</tr>
+<tr>
+<td>sanitizeSheetName</td>
+<td>処理3</td>
+<td>name = name.replaceAll("[\\/\?\*\[\]:]", "_")</td>
+</tr>
+<tr>
+<td>sanitizeSheetName</td>
+<td>処理4</td>
+<td>String name = value == null || value.trim().length() == 0 ? "Sheet1" : value.trim()</td>
+</tr>
+<tr>
+<td>sanitizeSheetName</td>
+<td>処理5</td>
+<td>String name = value == null || value.trim().length() == 0 ? "Sheet1" : value.trim()</td>
+</tr>
+<tr>
+<td>sanitizeSheetName</td>
+<td>処理6</td>
+<td>name = name.replaceAll("[\\/\?\*\[\]:]", "_")</td>
+</tr>
+<tr>
+<td>sanitizeSheetName</td>
+<td>条件7</td>
+<td>name.length() &gt; 31</td>
+</tr>
+<tr>
+<td>sanitizeSheetName</td>
+<td>処理8</td>
+<td>name = name.substring(0, 31)</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>条件1</td>
+<td>int offset = 0; offset &lt; source.length();</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>処理2</td>
+<td>offset += Character.charCount(codePoint)</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>処理3</td>
+<td>result.appendCodePoint(codePoint)</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>条件4</td>
+<td>(codePoint &gt;= 0x20 &amp;&amp; codePoint &lt;= 0xD7FF)</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>条件5</td>
+<td>(codePoint &gt;= 0xE000 &amp;&amp; codePoint &lt;= 0xFFFD)</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>条件6</td>
+<td>(codePoint &gt;= 0x10000 &amp;&amp; codePoint &lt;= 0x10FFFF)</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>処理7</td>
+<td>int codePoint = source.codePointAt(offset)</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>処理8</td>
+<td>String source = value == null ? "" : value</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>処理9</td>
+<td>StringBuilder result = new StringBuilder(value == null ? 0 : value.length())</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>処理10</td>
+<td>StringBuilder result = new StringBuilder(value == null ? 0 : value.length())</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>処理11</td>
+<td>String source = value == null ? "" : value</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>条件12</td>
+<td>int offset = 0; offset &lt; source.length();</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>処理13</td>
+<td>int codePoint = source.codePointAt(offset)</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>条件14</td>
+<td>(codePoint &gt;= 0x20 &amp;&amp; codePoint &lt;= 0xD7FF)</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>条件15</td>
+<td>(codePoint &gt;= 0xE000 &amp;&amp; codePoint &lt;= 0xFFFD)</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>条件16</td>
+<td>(codePoint &gt;= 0x10000 &amp;&amp; codePoint &lt;= 0x10FFFF)</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>処理17</td>
+<td>result.appendCodePoint(codePoint)</td>
+</tr>
+<tr>
+<td>validXmlText</td>
+<td>処理18</td>
+<td>offset += Character.charCount(codePoint)</td>
+</tr>
+<tr>
+<td>write</td>
+<td>処理1</td>
+<td>zip.closeEntry()</td>
+</tr>
+<tr>
+<td>write</td>
+<td>処理2</td>
+<td>zip.putNextEntry(entry)</td>
+</tr>
+<tr>
+<td>write</td>
+<td>処理3</td>
+<td>ZipEntry entry = new ZipEntry(path)</td>
+</tr>
+<tr>
+<td>write</td>
+<td>処理4</td>
+<td>ZipEntry entry = new ZipEntry(path)</td>
+</tr>
+<tr>
+<td>write</td>
+<td>処理5</td>
+<td>zip.putNextEntry(entry)</td>
+</tr>
+<tr>
+<td>write</td>
+<td>処理6</td>
+<td>zip.closeEntry()</td>
+</tr>
+</tbody>
+</table></div>
+</article><footer>Markdown原本から生成した閲覧用HTMLです。画面例は実システムを操作しません。</footer></main></div></body></html>

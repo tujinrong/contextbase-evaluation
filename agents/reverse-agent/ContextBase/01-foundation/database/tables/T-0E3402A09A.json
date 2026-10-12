@@ -1,0 +1,156 @@
+{
+  "columns": [
+    {
+      "logical_name": {
+        "basis": "inferred",
+        "evidence": [
+          {
+            "line": 92,
+            "path": "nenkin/WEB-INF/resources/db/schema.sql"
+          }
+        ],
+        "qa_id": null,
+        "review": "requires_review",
+        "value": "受給ｺｰﾄﾞ"
+      },
+      "name": "受給ｺｰﾄﾞ",
+      "status": "declared",
+      "variants": [
+        {
+          "default": "未明記",
+          "evidence": {
+            "line": 92,
+            "path": "nenkin/WEB-INF/resources/db/schema.sql"
+          },
+          "nullable": "NOT NULL",
+          "primary_key": true,
+          "type": "TINYINT"
+        }
+      ]
+    },
+    {
+      "logical_name": {
+        "basis": "inferred",
+        "evidence": [
+          {
+            "line": 93,
+            "path": "nenkin/WEB-INF/resources/db/schema.sql"
+          }
+        ],
+        "qa_id": null,
+        "review": "requires_review",
+        "value": "受給有無"
+      },
+      "name": "受給有無",
+      "status": "declared",
+      "variants": [
+        {
+          "default": "未明記",
+          "evidence": {
+            "line": 93,
+            "path": "nenkin/WEB-INF/resources/db/schema.sql"
+          },
+          "nullable": "NOT NULL",
+          "primary_key": false,
+          "type": "VARCHAR(10)"
+        }
+      ]
+    }
+  ],
+  "definitions": [
+    {
+      "columns": [
+        {
+          "default": "未明記",
+          "definition": "受給ｺｰﾄﾞ TINYINT NOT NULL PRIMARY KEY",
+          "line": 92,
+          "name": "受給ｺｰﾄﾞ",
+          "nullable": "NOT NULL",
+          "primary_key": true,
+          "type": "TINYINT"
+        },
+        {
+          "default": "未明記",
+          "definition": "受給有無 VARCHAR(10) NOT NULL",
+          "line": 93,
+          "name": "受給有無",
+          "nullable": "NOT NULL",
+          "primary_key": false,
+          "type": "VARCHAR(10)"
+        }
+      ],
+      "constraints": [],
+      "end_line": 94,
+      "indexes": [],
+      "line": 91,
+      "name": "受給有無テーブル",
+      "origin": "CREATE TABLE 宣言",
+      "path": "nenkin/WEB-INF/resources/db/schema.sql"
+    }
+  ],
+  "id": "T-0E3402A09A",
+  "logical_name": {
+    "basis": "inferred",
+    "evidence": [
+      {
+        "line": 91,
+        "path": "nenkin/WEB-INF/resources/db/schema.sql"
+      }
+    ],
+    "qa_id": null,
+    "review": "requires_review",
+    "value": "受給有無テーブル"
+  },
+  "name": "受給有無テーブル",
+  "origin": "declaration",
+  "physical_schema_verified": false,
+  "usages": [
+    {
+      "evidence": "SQLリテラル／SQLファイルの静的参照",
+      "line": 59,
+      "operation": "MERGE（要確認）",
+      "path": "nenkin/WEB-INF/resources/db/data.sql",
+      "table": "受給有無テーブル"
+    },
+    {
+      "evidence": "SQLリテラル／SQLファイルの静的参照",
+      "line": 60,
+      "operation": "MERGE（要確認）",
+      "path": "nenkin/WEB-INF/resources/db/data.sql",
+      "table": "受給有無テーブル"
+    },
+    {
+      "evidence": "Javaの文字列式・定数・SQL組立から抽出",
+      "line": 150,
+      "operation": "R",
+      "origin": "assignment",
+      "owner": "findByKanaAndPhone@144",
+      "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+      "resolution": "static_expression",
+      "sql": "SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R.\"種類：国民年金\" AS NATIONAL_PENSION, R.\"種類：厚生年金\" AS EMPLOYEE_PENSION, R.\"種類：共済年金\" AS MUTUAL_AID_PENSION, R.\"種類：厚生年金基金\" AS EMPLOYEE_PENSION_FUND, R.\"種類：国民年金基金\" AS NATIONAL_PENSION_FUND, R.\"６ヶ月先確認\" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.ふりがな = ? AND R.電話番号 = ?",
+      "table": "受給有無テーブル"
+    },
+    {
+      "evidence": "Javaの文字列式・定数・SQL組立から抽出",
+      "line": 224,
+      "operation": "R",
+      "origin": "assignment",
+      "owner": "listByBranch@223",
+      "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+      "resolution": "static_expression",
+      "sql": "SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R.\"種類：国民年金\" AS NATIONAL_PENSION, R.\"種類：厚生年金\" AS EMPLOYEE_PENSION, R.\"種類：共済年金\" AS MUTUAL_AID_PENSION, R.\"種類：厚生年金基金\" AS EMPLOYEE_PENSION_FUND, R.\"種類：国民年金基金\" AS NATIONAL_PENSION_FUND, R.\"６ヶ月先確認\" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.店番 = ? ORDER BY R.請求予定日 DESC, R.担当者コード, R.顧客番号",
+      "table": "受給有無テーブル"
+    },
+    {
+      "evidence": "Javaの文字列式・定数・SQL組立から抽出",
+      "line": 645,
+      "operation": "R",
+      "origin": "prepared_statement",
+      "owner": "findByKey@640",
+      "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+      "resolution": "static_expression",
+      "sql": "SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R.\"種類：国民年金\" AS NATIONAL_PENSION, R.\"種類：厚生年金\" AS EMPLOYEE_PENSION, R.\"種類：共済年金\" AS MUTUAL_AID_PENSION, R.\"種類：厚生年金基金\" AS EMPLOYEE_PENSION_FUND, R.\"種類：国民年金基金\" AS NATIONAL_PENSION_FUND, R.\"６ヶ月先確認\" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.ふりがな = ? AND R.電話番号 = ?",
+      "table": "受給有無テーブル"
+    }
+  ]
+}

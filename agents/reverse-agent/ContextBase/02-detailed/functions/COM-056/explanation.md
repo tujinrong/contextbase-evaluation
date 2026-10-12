@@ -1,0 +1,1 @@
+PdfFactory3 修正履歴：2005/10/21 NEC Soft, Ltd. 「FormCraft Pro. for Web」から「Form Manager V6.1」へのバージョンアップ にの入力・表示・要求処理を行う。

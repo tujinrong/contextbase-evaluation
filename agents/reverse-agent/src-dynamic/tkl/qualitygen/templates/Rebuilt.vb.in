@@ -1,0 +1,126 @@
+Option Strict On
+Imports System
+Imports System.Collections.Generic
+Imports System.Globalization
+Imports System.Linq
+Imports System.Reflection
+Imports System.Text
+
+' Generated exclusively from the frozen specification contracts, not input source.
+Public Class RebuiltRules
+    Public Shared Function Discount(rate As Integer, price As Integer) As Integer
+        Return CInt(Math.Round(price * (rate / 100.0), @ROUND_DIGITS@, MidpointRounding.ToEven))
+    End Function
+    Public Shared Function UnitPrice(price As Integer, discountValue As Integer) As Integer
+        Return price - discountValue
+    End Function
+    Public Shared Function Amount(unitValue As Integer, quantity As Integer) As Integer
+        Return unitValue * quantity
+    End Function
+    Public Shared Function Quantity(text As String, mode As String, minus As Boolean, price As Integer, previousAmount As Integer) As String
+        Dim low = @EDIT_LOW@, high = @EDIT_HIGH@
+        If mode = "ADD" Then
+            low = If(minus, @NEG_LOW@, @POS_LOW@)
+            high = If(minus, @NEG_HIGH@, @POS_HIGH@)
+        End If
+        If text = "" Then text = "0"
+        Dim value = CInt(text)
+        Dim message = If(value > high, $"{high}以下で入力してください。", If(value < low, $"{low}以上で入力してください。", ""))
+        If message <> "" Then
+            Return textResult(If(minus, "-1", "1"), previousAmount, message)
+        End If
+        Return textResult(text, Amount(price, value), "")
+    End Function
+    Public Shared Function textResult(text As String, amountValue As Integer, message As String) As String
+        Return text & "|" & amountValue.ToString(CultureInfo.InvariantCulture) & "|" & message
+    End Function
+    Public Shared Function Lookup(primary As Dictionary(Of String, Object), fallback As Dictionary(Of String, Object)) As String
+        Dim usePrimary = primary IsNot Nothing
+        Dim row = If(usePrimary, primary, fallback)
+        If row Is Nothing Then Return "0|0|0|2"
+        Dim p = CInt(row("fixedprice"))
+        Dim d = If(usePrimary, CInt(row("discount")), 0)
+        Dim r = If(usePrimary, CInt(row("reducepercent")), 0)
+        Return String.Join("|", p, d, r, If(usePrimary, 1, 2))
+    End Function
+End Class
+
+Public Class RebuiltFeature
+    Public Property Model As SpecialModel = New SpecialModel()
+    Public Property Orders As List(Of SpecialModel) = New List(Of SpecialModel)()
+    Public Property Mode As String = "ADD"
+    Public Property Changed As Boolean = True
+    Public Property Updated As Boolean = False
+    Public Property Dialog As Boolean = False
+    Public Property Closed As Boolean = False
+    Private Shared ReadOnly OrderColumns As String()() = @ORDER_COLUMNS@
+    Private Shared ReadOnly SendColumns As String()() = @SEND_COLUMNS@
+
+    Private Shared Function ValueFor(model As SpecialModel, name As String) As Object
+        Select Case name
+            Case "constant_zero" : Return 0
+            Case "current_user" : Return MyGlobal.UserNm
+            Case "OrderDate"
+                Return CInt(model.OrderDate.ToString("yyyyMMdd", CultureInfo.InvariantCulture))
+            Case Else
+                Return GetType(SpecialModel).GetProperty(name).GetValue(model)
+        End Select
+    End Function
+
+    Private Shared Sub Plan(sqls As List(Of String), batches As List(Of List(Of NpgsqlParameter)), model As SpecialModel, isSend As Boolean, create As Boolean, bulk As Boolean)
+        Dim all = If(isSend, SendColumns, OrderColumns)
+        Dim tableName = If(isSend, "@SEND_TABLE@", "@ORDER_TABLE@")
+        Dim selected = all.Where(Function(c) create OrElse (c(0) <> "order_no" AndAlso (Not bulk OrElse c(0) <> "send_id"))).ToArray()
+        Dim valueExpression As Func(Of String(), String) = Function(c) If(c(2) = "database_now", "NOW()", ":" & c(1))
+        Dim query As String
+        If create Then
+            query = "INSERT INTO " & tableName & " (" & String.Join(",", selected.Select(Function(c) c(0))) & ") VALUES (" & String.Join(",", selected.Select(valueExpression)) & ");"
+        Else
+            query = "UPDATE " & tableName & " SET " & String.Join(",", selected.Select(Function(c) c(0) & "=" & valueExpression(c))) & " WHERE "
+            If bulk Then
+                query &= "EXISTS (SELECT * FROM @ORDER_TABLE@ WHERE order_no=@SEND_TABLE@.order_no AND customer_id=:prCUSTOMER_ID AND send_id=:prSEND_ID) AND EXISTS (SELECT * FROM @ELIGIBILITY_TABLE@ WHERE order_no=@SEND_TABLE@.order_no)"
+            Else
+                query &= "order_no=:prORDER_NO;"
+            End If
+        End If
+        Dim parameters = New List(Of NpgsqlParameter)()
+        For Each c In all
+            If c(2) = "database_now" OrElse (bulk AndAlso c(0) = "order_no") Then Continue For
+            parameters.Add(New NpgsqlParameter(c(1), ValueFor(model, c(2))))
+        Next
+        If bulk Then parameters.Add(New NpgsqlParameter("prCUSTOMER_ID", model.CustomerId))
+        sqls.Add(query) : batches.Add(parameters)
+    End Sub
+
+    Public Function Persist() As Boolean
+        Dim sqls = New List(Of String)(), batches = New List(Of List(Of NpgsqlParameter))()
+        If Mode = "ADD" Then
+            For Each row In Orders
+                row.OrderNo = MyApp.GetNewOrderNo()
+                Plan(sqls, batches, row, False, True, False)
+                Plan(sqls, batches, row, True, True, False)
+                If row.SagawaBulkUpdate Then Plan(sqls, batches, row, True, False, True)
+            Next
+        ElseIf Mode = "EDT" Then
+            Plan(sqls, batches, Model, False, False, False)
+            Plan(sqls, batches, Model, True, False, False)
+            If Model.SagawaBulkUpdate Then Plan(sqls, batches, Model, True, False, True)
+        End If
+        If Not MyNpg.ExecuteData(sqls, batches) Then Return False
+        Changed = False : Updated = True : Dialog = True
+        Return True
+    End Function
+    Public Sub Confirm()
+        If Not MyMessage.Confirm Then Return
+        If Persist() Then Closed = True
+    End Sub
+    Public Function CloseRequest() As Boolean
+        If Mode = "ADD" AndAlso Not Updated AndAlso Orders.Count > 0 Then
+            Select Case MyMessage.Answer
+                Case MessageBoxResult.Yes : Return Not Persist()
+                Case MessageBoxResult.Cancel : Return True
+            End Select
+        End If
+        Return False
+    End Function
+End Class

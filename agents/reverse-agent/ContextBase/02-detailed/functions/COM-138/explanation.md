@@ -1,0 +1,1 @@
+n2framework/WebOTX とローカル H2 で共通の JNDI 接続取得の入力・表示・要求処理を行う。

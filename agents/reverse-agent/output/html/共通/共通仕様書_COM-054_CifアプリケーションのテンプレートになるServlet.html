@@ -1,0 +1,1536 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; file:; img-src &#x27;self&#x27; data: file:; font-src &#x27;self&#x27; file:; connect-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;"><meta name="docsite-source-sha256" content="366b9cd3da7555e28a86efd8d5753a21bc5741b0c2fd1c6a0a263f3fe126ea15"><title>CifアプリケーションのテンプレートになるServlet</title><style>:root{color-scheme:light;--ink:#203043;--muted:#5d6c7b;--line:#dde4eb;--accent:#196786;--paper:#fff;--background:#f3f6f8}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:80px}body{margin:0;font-family:system-ui,-apple-system,"Yu Gothic UI","Meiryo",sans-serif;background:var(--background);color:var(--ink);font-size:15px;line-height:1.85}.topbar{height:64px;position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:0 30px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.97)}.brand{font-size:14px;letter-spacing:.1em;font-weight:750;text-decoration:none;color:var(--ink)}.brand span{margin-left:14px;letter-spacing:0;color:var(--muted);font-weight:500}.topbar nav{display:flex;gap:22px;font-size:13px}.topbar a{color:var(--accent)}.page-shell{max-width:1660px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:28px;padding:30px}.toc{position:sticky;top:94px;align-self:start;max-height:calc(100vh - 118px);overflow:auto;font-size:12px;padding-right:12px}.toc-heading{font-weight:700;padding-bottom:12px;border-bottom:1px solid var(--line)}.toc ol{list-style:none;padding:0;margin:12px 0}.toc li{margin:8px 0}.toc .level-3{padding-left:12px;font-size:11px}.toc a{color:var(--muted);text-decoration:none}.toc a:hover{color:var(--accent)}.document{min-width:0;background:var(--paper);padding:36px 42px;border:1px solid var(--line);border-radius:10px}.doc-body{overflow-wrap:anywhere}.doc-body>h1{font-size:27px;line-height:1.5;margin:0 0 24px;letter-spacing:.01em}.doc-body>h2{font-size:22px;margin:48px 0 20px;padding-bottom:10px;border-bottom:2px solid var(--line)}.doc-body>h3{font-size:18px;margin:32px 0 16px}.doc-body h4{font-size:16px}.doc-body a{color:var(--accent);text-underline-offset:3px}.doc-body p{margin:14px 0}.doc-body li{margin:7px 0}.doc-body li>p{margin:5px 0}.doc-body blockquote{margin:20px 0;padding:12px 20px;border-left:4px solid #c59e4a;background:#fcf8ed;color:#5d523e}.doc-body blockquote p{margin:0}.doc-body :not(.screen-layout) code{font-family:ui-monospace,"Cascadia Code",Consolas,monospace;font-size:.88em}.doc-body :not(pre)>code{padding:2px 5px;background:#edf2f6;border-radius:3px}.doc-body pre{white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;padding:18px;background:#f4f7fa;border:1px solid var(--line);border-radius:6px;line-height:1.55}.table-scroll{width:100%;max-width:100%;overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:6px}.table-scroll table{border-collapse:collapse;width:100%;font-size:13px}.table-scroll th{background:#eef3f7;text-align:left;font-weight:650;white-space:normal}.table-scroll th,.table-scroll td{border-bottom:1px solid var(--line);padding:10px 12px;vertical-align:top;min-width:72px;max-width:600px}.table-scroll tbody tr:nth-child(even){background:#fafcfd}.table-scroll tr:last-child td{border-bottom:0}.diagram{margin:22px 0;padding:12px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow-x:auto;max-width:100%}.diagram .mermaid{display:block;background:#fff;border:0;padding:0;min-height:30px;margin:0}.diagram svg{height:auto;display:block;margin:0 auto;max-width:100%}.diagram-source{font-size:12px;color:var(--muted);margin-top:10px}.diagram-source pre{margin:8px 0}.diagram-error{color:#a52626;background:#fff2f2;padding:8px}.screen-layout{margin:24px 0;border:1px solid var(--line);border-radius:8px;max-width:100%;overflow:auto;isolation:isolate}.screen-layout .layout-root{max-width:100%;min-width:0}.screen-layout .field{min-width:0}.screen-layout input,.screen-layout select{max-width:100%}.screen-layout label{overflow-wrap:anywhere}.screen-layout small{overflow-wrap:anywhere}.doc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.doc-card{display:flex;flex-direction:column;gap:6px;padding:18px;border:1px solid var(--line);border-radius:6px;text-decoration:none}.doc-card:hover{background:#f5f9fb}.doc-card span{font-size:11px;color:var(--muted);font-weight:500}.doc-card strong{font-size:14px}.lead{color:var(--muted)}footer{margin-top:50px;border-top:1px solid var(--line);padding-top:16px;font-size:11px;color:var(--muted)}@media(max-width:1100px){.page-shell{grid-template-columns:190px minmax(0,1fr);gap:18px;padding:20px}.document{padding:28px}.screen-layout .fields{grid-template-columns:1fr}}@media(max-width:800px){.topbar{padding:0 16px}.brand span{display:none}.page-shell{display:block;padding:12px}.toc{position:static;max-height:220px;margin-bottom:16px;padding:12px;border:1px solid var(--line);border-radius:6px}.document{padding:22px 18px}.doc-body>h1{font-size:23px}.doc-grid{grid-template-columns:1fr}.screen-layout .field{grid-template-columns:1fr}.screen-layout small{grid-column:1}}@media print{body{background:white;font-size:10pt}.topbar,.toc,footer,.diagram-source{display:none}.page-shell{display:block;max-width:none;padding:0}.document{border:0;padding:0}.doc-body>h2{break-after:avoid}.table-scroll{overflow:visible}.diagram{break-inside:avoid}.screen-layout{break-inside:auto}a{color:inherit!important;text-decoration:none}}
+
+.page-shell.no-toc{display:block;max-width:1240px}
+
+.doc-body img{display:block;max-width:100%;height:auto;margin:12px 0}
+</style></head><body><header class="topbar"><a class="brand" href="../index.html">CONTEXTBASE <span>仕様書</span></a><nav><a href="../index.html">文書一覧</a><a href="../../md/%E5%85%B1%E9%80%9A/%E5%85%B1%E9%80%9A%E4%BB%95%E6%A7%98%E6%9B%B8_COM-054_Cif%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E3%81%AE%E3%83%86%E3%83%B3%E3%83%97%E3%83%AC%E3%83%BC%E3%83%88%E3%81%AB%E3%81%AA%E3%82%8BServlet.md">MD原本</a></nav></header><div class="page-shell"><aside class="toc"><div class="toc-heading">この文書の内容</div><ol><li class="level-2"><a href="#表紙">表紙</a></li><li class="level-2"><a href="#概要">概要</a></li><li class="level-3"><a href="#概要説明">概要説明</a></li><li class="level-2"><a href="#項目一覧">項目一覧</a></li><li class="level-2"><a href="#イベント仕様">イベント仕様</a></li><li class="level-3"><a href="#init">init</a></li><li class="level-3"><a href="#dopost">doPost</a></li><li class="level-3"><a href="#doget">doGet</a></li><li class="level-3"><a href="#ojiservletmain">ojiServletMain</a></li><li class="level-3"><a href="#startmain">startMain</a></li><li class="level-3"><a href="#exitmain">exitMain</a></li><li class="level-3"><a href="#errorcontrol">errorControl</a></li><li class="level-3"><a href="#makeresponseheader">makeResponseHeader</a></li><li class="level-3"><a href="#createconnection">createConnection</a></li><li class="level-3"><a href="#make">make</a></li><li class="level-3"><a href="#check">check</a></li><li class="level-3"><a href="#setservletname">setServletName</a></li><li class="level-3"><a href="#setdatabasetype">setDatabaseType</a></li><li class="level-3"><a href="#setoutputtype">setOutputType</a></li><li class="level-3"><a href="#setinputhtmlname">setInPutHtmlName</a></li><li class="level-3"><a href="#setoutputhtmlname">setOutPutHtmlName</a></li><li class="level-3"><a href="#setoutputhtmlname2">setOutPutHtmlName2</a></li><li class="level-3"><a href="#setpdffilename">setPdfFileName</a></li><li class="level-3"><a href="#setoutputlistname">setOutPutListName</a></li><li class="level-3"><a href="#seterrorreturnclassname">setErrorReturnClassName</a></li><li class="level-3"><a href="#seterrorreturnhtmlname">setErrorReturnHtmlName</a></li><li class="level-3"><a href="#setnotused">setNotUsed</a></li><li class="level-3"><a href="#gethtmlskeleton">getHtmlSkeleton</a></li><li class="level-3"><a href="#getfilepath">getFilePath</a></li><li class="level-3"><a href="#getoutputhtmlname">getOutPutHtmlName</a></li><li class="level-3"><a href="#getinputhtmlname">getInPutHtmlName</a></li><li class="level-3"><a href="#getpdffilename">getPdfFileName</a></li><li class="level-3"><a href="#get47status">get47Status</a></li><li class="level-3"><a href="#db関連処理">DB関連処理</a></li><li class="level-2"><a href="#補足説明">補足説明</a></li><li class="level-3"><a href="#適用条件">適用条件</a></li><li class="level-3"><a href="#処理条件の原本対応">処理・条件の原本対応</a></li></ol></aside><main class="document"><article class="doc-body"><h1 id="cifアプリケーションのテンプレートになるservlet">CifアプリケーションのテンプレートになるServlet</h1>
+<h2 id="表紙">表紙</h2>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文書名</td>
+<td>基本設計書</td>
+</tr>
+<tr>
+<td>システム名</td>
+<td></td>
+</tr>
+<tr>
+<td>機能ID</td>
+<td>COM-054</td>
+</tr>
+<tr>
+<td>画面名</td>
+<td>CifアプリケーションのテンプレートになるServlet</td>
+</tr>
+<tr>
+<td>会社名</td>
+<td></td>
+</tr>
+<tr>
+<td>作成日</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="概要">概要</h2>
+<h3 id="概要説明">概要説明</h3>
+<p>CifアプリケーションのテンプレートになるServletの入力・表示・要求処理を行う。</p>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象種別</td>
+<td>common</td>
+</tr>
+<tr>
+<td>開始契機</td>
+<td>呼出元からの要求</td>
+</tr>
+<tr>
+<td>処理対象</td>
+<td>DB2.ＵＤＢ管理ＤＢ</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="項目一覧">項目一覧</h2>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>グループ</th>
+<th>項目名</th>
+<th>種類</th>
+<th>入出力</th>
+<th>DB連携項目</th>
+<th>候補取得元</th>
+<th>必須</th>
+<th>形式・桁</th>
+<th>説明</th>
+</tr>
+</thead>
+</table></div>
+<p>項目定義数：0項目。表示順と反復行の定義数を区別する。</p>
+<h2 id="イベント仕様">イベント仕様</h2>
+<h3 id="init">init</h3>
+<h4 id="処理概要">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「init」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順">処理手順</h4>
+<ol>
+<li>
+<p>関連情報を取得・設定する（処理11：詳細仕様参照）。</p>
+</li>
+<li>
+<p>「対象項目」を設定する。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理12：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理13：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理14：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理15：詳細仕様参照）。</p>
+</li>
+<li>
+<p>共通処理呼出生成を実行する。</p>
+</li>
+<li>
+<p>通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+</li>
+</ol>
+<p>8.1. 通常処理：「条件16を満たす（原本条件は補足説明を参照）、かつ対象項目がある」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>8.1.1. 条件成立時：関連情報を取得・設定する（処理17：詳細仕様参照）。</p>
+<p>8.2. 通常処理：「条件18を満たす（原本条件は補足説明を参照）、かつ対象項目がある」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>8.2.1. 条件成立時：関連情報を取得・設定する（処理19：詳細仕様参照）。</p>
+<p>8-例外1. 例外条件「Exception e」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<p>8-例外1.1. 例外発生時：関連情報を取得・設定する（処理20：詳細仕様参照）。</p>
+<h3 id="dopost">doPost</h3>
+<h4 id="処理概要-1">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「doPost」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-1">処理手順</h4>
+<ol>
+<li>関連情報を取得・設定する（処理2：詳細仕様参照）。</li>
+</ol>
+<h4 id="db操作の詳細">DB操作の詳細</h4>
+<h4 id="db操作-sql-56387246d482">DB操作 SQL-56387246D482</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-56387246D482</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＤＢ管理ＤＢ</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>対象テーブルの対象データを読み取る。設定項目・対象条件・確定取消は以下の定義に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：ＤＢ名 = 'Ｕ調査カード'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>当該メソッド内で自動コミット設定を行う。例外時の処理順は詳細仕様の分岐に従う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/jhkcommon/OjiServlet.java:244 / check@244</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="doget">doGet</h3>
+<h4 id="処理概要-2">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「doGet」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-2">処理手順</h4>
+<ol>
+<li>関連情報を取得・設定する（処理2：詳細仕様参照）。</li>
+</ol>
+<h4 id="db操作の詳細-1">DB操作の詳細</h4>
+<h4 id="db操作-sql-56387246d482-1">DB操作 SQL-56387246D482</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-56387246D482</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＤＢ管理ＤＢ</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>対象テーブルの対象データを読み取る。設定項目・対象条件・確定取消は以下の定義に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：ＤＢ名 = 'Ｕ調査カード'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>当該メソッド内で自動コミット設定を行う。例外時の処理順は詳細仕様の分岐に従う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/jhkcommon/OjiServlet.java:244 / check@244</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="ojiservletmain">ojiServletMain</h3>
+<h4 id="処理概要-3">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「ojiServletMain」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-3">処理手順</h4>
+<ol>
+<li>通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</li>
+</ol>
+<p>1.1. 通常処理：関連情報を取得・設定する（処理12：詳細仕様参照）。</p>
+<p>1.2. 通常処理：関連情報を取得・設定する（処理13：詳細仕様参照）。</p>
+<p>1.3. 通常処理：関連情報を取得・設定する（処理14：詳細仕様参照）。</p>
+<p>1.4. 通常処理：「対象項目がない」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>1.4.1. 条件成立時：関連情報を取得・設定する（処理15：詳細仕様参照）。</p>
+<p>1.5. 通常処理：「条件16を満たす（原本条件は補足説明を参照）」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>1.5.1. 条件成立時：入力値の制約と変換結果を確認する。</p>
+<p>1.6. 通常処理：関連情報を取得・設定する（処理17：詳細仕様参照）。</p>
+<p>1.7. 通常処理：関連情報を取得・設定する（処理18：詳細仕様参照）。</p>
+<p>1-例外1. 例外条件「Exception e」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<p>1-例外1.1. 例外発生時：関連情報を取得・設定する（処理19：詳細仕様参照）。</p>
+<p>1-例外1.2. 例外発生時：「条件20を満たす（原本条件は補足説明を参照）」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>1-例外1.2.1. 条件成立時：関連情報を取得・設定する（処理21：詳細仕様参照）。</p>
+<p>1-例外1.2.2. 条件成立時：関連情報を取得・設定する（処理22：詳細仕様参照）。</p>
+<h4 id="db操作の詳細-2">DB操作の詳細</h4>
+<h4 id="db操作-sql-56387246d482-2">DB操作 SQL-56387246D482</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-56387246D482</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＤＢ管理ＤＢ</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>対象テーブルの対象データを読み取る。設定項目・対象条件・確定取消は以下の定義に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：ＤＢ名 = 'Ｕ調査カード'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>当該メソッド内で自動コミット設定を行う。例外時の処理順は詳細仕様の分岐に従う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/jhkcommon/OjiServlet.java:244 / check@244</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="startmain">startMain</h3>
+<h4 id="処理概要-4">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「startMain」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-4">処理手順</h4>
+<ol>
+<li>「対象項目がある」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</li>
+</ol>
+<p>1.1. 条件成立時：処理の異常を通知し、この経路を終了する。この経路の後続手順は実行しない。</p>
+<h4 id="結果例外時の扱い">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象項目がある</td>
+<td>処理の異常を通知し、この経路を終了する</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="exitmain">exitMain</h3>
+<h4 id="処理概要-5">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「exitMain」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-5">処理手順</h4>
+<ol>
+<li>関連する処理へ制御を渡す。詳細な実行経路は原本対応を参照する。</li>
+</ol>
+<h3 id="errorcontrol">errorControl</h3>
+<h4 id="処理概要-6">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「errorControl」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-6">処理手順</h4>
+<ol>
+<li>
+<p>「対象項目」を設定する。</p>
+</li>
+<li>
+<p>「対象項目」を設定する。</p>
+</li>
+<li>
+<p>「対象項目」を設定する。</p>
+</li>
+<li>
+<p>「対象項目」を設定する。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理22：詳細仕様参照）。</p>
+</li>
+<li>
+<p>「&lt;FONT SIZE=3 COLOR=#0000A0&gt;&lt;B&gt;処理がエラーとなりました。&lt;/B&gt;&lt;/FONT&gt;&lt;br&gt;&lt;br&gt;\n」を設定する。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理23：詳細仕様参照）。</p>
+</li>
+<li>
+<p>「条件24を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</p>
+</li>
+</ol>
+<p>8.1. 条件成立時：「&lt;tr&gt;&lt;td width=100 valign=top&gt;エラー理由＝&lt;/td&gt;」を設定する。</p>
+<p>8.2. 条件成立時：関連情報を取得・設定する（処理25：詳細仕様参照）。</p>
+<p>8-別.1. 条件不成立時：「システムエラーが発生しています。システム部へ問い合わせてください。&lt;br&gt;&lt;br&gt;\n\n」を設定する。</p>
+<ol start="9">
+<li>「条件26を満たす（原本条件は補足説明を参照）」に該当するか確認する。成立時と不成立時の手順を分けて行う。</li>
+</ol>
+<p>9.1. 条件成立時：関連情報を取得・設定する（処理27：詳細仕様参照）。</p>
+<p>9.2. 条件成立時：関連情報を取得・設定する（処理28：詳細仕様参照）。</p>
+<p>9.3. 条件成立時：関連情報を取得・設定する（処理29：詳細仕様参照）。</p>
+<p>9.4. 条件成立時：「&lt;input type=submit value=もう一度入力画面に戻る&gt;\n」を設定する。</p>
+<p>9.5. 条件成立時：関連情報を取得・設定する（処理30：詳細仕様参照）。</p>
+<p>9-別.1. 条件不成立時：関連情報を取得・設定する（処理31：詳細仕様参照）。</p>
+<p>9-別.2. 条件不成立時：関連情報を取得・設定する（処理32：詳細仕様参照）。</p>
+<p>9-別.3. 条件不成立時：関連情報を取得・設定する（処理33：詳細仕様参照）。</p>
+<p>9-別.4. 条件不成立時：「&lt;input type=submit value=もう一度入力画面に戻る&gt;\n」を設定する。</p>
+<p>9-別.5. 条件不成立時：関連情報を取得・設定する（処理34：詳細仕様参照）。</p>
+<ol start="10">
+<li>
+<p>関連情報を取得・設定する（処理35：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理36：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理37：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理38：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理39：詳細仕様参照）。</p>
+</li>
+<li>
+<p>通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+</li>
+</ol>
+<p>15.1. 通常処理：関連情報を取得・設定する（処理40：詳細仕様参照）。</p>
+<p>15.2. 通常処理：関連情報を取得・設定する（処理41：詳細仕様参照）。</p>
+<p>15.3. 通常処理：関連情報を取得・設定する（処理42：詳細仕様参照）。</p>
+<p>15.4. 通常処理：使用した接続・処理資源を解放する。</p>
+<p>15-例外1. 例外条件「Exception eio」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<h3 id="makeresponseheader">makeResponseHeader</h3>
+<h4 id="処理概要-7">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「makeResponseHeader」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-7">処理手順</h4>
+<ol>
+<li>
+<p>「対象項目」を設定する。</p>
+</li>
+<li>
+<p>「対象項目」を設定する。</p>
+</li>
+<li>
+<p>「対象項目」を設定する。</p>
+</li>
+<li>
+<p>「対象項目」を設定する。</p>
+</li>
+</ol>
+<h3 id="createconnection">createConnection</h3>
+<h4 id="処理概要-8">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「createConnection」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-8">処理手順</h4>
+<ol>
+<li>
+<p>関連情報を取得・設定する（処理4：詳細仕様参照）。</p>
+</li>
+<li>
+<p>通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+</li>
+</ol>
+<p>2.1. 通常処理：関連情報を取得・設定する（処理5：詳細仕様参照）。</p>
+<p>2.2. 通常処理：関連情報を取得・設定する（処理6：詳細仕様参照）。</p>
+<p>2.3. 通常処理：変更内容の確定を明示的に制御する。</p>
+<p>2-例外1. 例外条件「Exception e」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<ol start="3">
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-1">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="make">make</h3>
+<h4 id="処理概要-9">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「make」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-9">処理手順</h4>
+<ol>
+<li>関連する処理へ制御を渡す。詳細な実行経路は原本対応を参照する。</li>
+</ol>
+<h3 id="check">check</h3>
+<h4 id="処理概要-10">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「check」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-10">処理手順</h4>
+<ol>
+<li>
+<p>関連情報を取得・設定する（処理20：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理21：詳細仕様参照）。</p>
+</li>
+<li>
+<p>関連情報を取得・設定する（処理22：詳細仕様参照）。</p>
+</li>
+<li>
+<p>通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+</li>
+</ol>
+<p>4.1. 通常処理：関連情報を取得・設定する（処理23：詳細仕様参照）。</p>
+<p>4.2. 通常処理：関連情報を取得・設定する（処理24：詳細仕様参照）。</p>
+<p>4.3. 通常処理：変更内容の確定を明示的に制御する。</p>
+<p>4.4. 通常処理：関連情報を取得・設定する（処理25：詳細仕様参照）。</p>
+<p>4.5. 通常処理：関連情報を取得・設定する（処理26：詳細仕様参照）。</p>
+<p>4.6. 通常処理：関連情報を取得・設定する（処理27：詳細仕様参照）。</p>
+<p>4.7. 通常処理：「select 処理中ＦＬＧ」を設定する。</p>
+<p>4.8. 通常処理：「 from DB2.ＵＤＢ管理ＤＢ」を設定する。</p>
+<p>4.9. 通常処理：「 where ＤＢ名 = 'Ｕ調査カード'」を設定する。</p>
+<p>4.10. 通常処理：関連情報を取得・設定する（処理28：詳細仕様参照）。</p>
+<p>4.11. 通常処理：繰返し条件「条件29を満たす（原本条件は補足説明を参照）」に従い、次の手順を繰り返す。条件を満たさなくなった場合は繰返しの後へ進む。</p>
+<p>4.11.1. 繰返しの各回：「rs.getLong("処理中ＦＬＧ") が等しい 0」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>4.11.1.1. 条件成立時：関連情報を取得・設定する（処理30：詳細仕様参照）。</p>
+<p>4-例外1. 例外条件「Exception e」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<p>4-例外1.1. 例外発生時：関連情報を取得・設定する（処理31：詳細仕様参照）。</p>
+<p>4-後処理. 通常終了・例外・途中のreturnのいずれでも、この範囲を抜ける前に次の共通後処理を行う。</p>
+<p>4-後処理.1. 終了時の共通後処理：通常処理と例外時の処理を区別して実行する。例外処理は対応する例外が発生した場合に限る。</p>
+<p>4-後処理.1.1. 通常処理：「対象項目がある」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>4-後処理.1.1.1. 条件成立時：使用した接続・処理資源を解放する。</p>
+<p>4-後処理.1.2. 通常処理：「対象項目がある」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</p>
+<p>4-後処理.1.2.1. 条件成立時：使用した接続・処理資源を解放する。</p>
+<p>4-後処理.1.3. 通常処理：関連情報を取得・設定する（処理32：詳細仕様参照）。</p>
+<p>4-後処理.1-例外1. 例外条件「SQLException e1」に該当した場合に次の手順を行う。型名は原本の表記。</p>
+<p>4-後処理.1-例外1.1. 例外発生時：関連情報を取得・設定する（処理33：詳細仕様参照）。</p>
+<ol start="5">
+<li>「条件34を満たす（原本条件は補足説明を参照）」に該当するか確認する。該当する場合に限り、次の分岐内手順を行う。該当しない場合は分岐の後へ進む。</li>
+</ol>
+<p>5.1. 条件成立時：処理の異常を通知し、この経路を終了する。この経路の後続手順は実行しない。</p>
+<h4 id="db操作の詳細-3">DB操作の詳細</h4>
+<h4 id="db操作-sql-56387246d482-3">DB操作 SQL-56387246D482</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-56387246D482</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＤＢ管理ＤＢ</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>対象テーブルの対象データを読み取る。設定項目・対象条件・確定取消は以下の定義に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：ＤＢ名 = 'Ｕ調査カード'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>当該メソッド内で自動コミット設定を行う。例外時の処理順は詳細仕様の分岐に従う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/jhkcommon/OjiServlet.java:244 / check@244</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="結果例外時の扱い-2">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>条件35を満たす（原本条件は補足説明を参照）</td>
+<td>処理の異常を通知し、この経路を終了する</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="setservletname">setServletName</h3>
+<h4 id="処理概要-11">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「setServletName」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-11">処理手順</h4>
+<ol>
+<li>関連情報を取得・設定する（処理2：詳細仕様参照）。</li>
+</ol>
+<h3 id="setdatabasetype">setDatabaseType</h3>
+<h4 id="処理概要-12">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「setDatabaseType」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-12">処理手順</h4>
+<ol>
+<li>関連情報を取得・設定する（処理2：詳細仕様参照）。</li>
+</ol>
+<h3 id="setoutputtype">setOutputType</h3>
+<h4 id="処理概要-13">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「setOutputType」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-13">処理手順</h4>
+<ol>
+<li>関連情報を取得・設定する（処理2：詳細仕様参照）。</li>
+</ol>
+<h3 id="setinputhtmlname">setInPutHtmlName</h3>
+<h4 id="処理概要-14">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「setInPutHtmlName」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-14">処理手順</h4>
+<ol>
+<li>関連情報を取得・設定する（処理2：詳細仕様参照）。</li>
+</ol>
+<h3 id="setoutputhtmlname">setOutPutHtmlName</h3>
+<h4 id="処理概要-15">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「setOutPutHtmlName」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-15">処理手順</h4>
+<ol>
+<li>関連情報を取得・設定する（処理2：詳細仕様参照）。</li>
+</ol>
+<h3 id="setoutputhtmlname2">setOutPutHtmlName2</h3>
+<h4 id="処理概要-16">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「setOutPutHtmlName2」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-16">処理手順</h4>
+<ol>
+<li>関連情報を取得・設定する（処理2：詳細仕様参照）。</li>
+</ol>
+<h3 id="setpdffilename">setPdfFileName</h3>
+<h4 id="処理概要-17">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「setPdfFileName」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-17">処理手順</h4>
+<ol>
+<li>関連情報を取得・設定する（処理2：詳細仕様参照）。</li>
+</ol>
+<h3 id="setoutputlistname">setOutPutListName</h3>
+<h4 id="処理概要-18">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「setOutPutListName」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-18">処理手順</h4>
+<ol>
+<li>関連情報を取得・設定する（処理2：詳細仕様参照）。</li>
+</ol>
+<h3 id="seterrorreturnclassname">setErrorReturnClassName</h3>
+<h4 id="処理概要-19">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「setErrorReturnClassName」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-19">処理手順</h4>
+<ol>
+<li>関連情報を取得・設定する（処理2：詳細仕様参照）。</li>
+</ol>
+<h3 id="seterrorreturnhtmlname">setErrorReturnHtmlName</h3>
+<h4 id="処理概要-20">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「setErrorReturnHtmlName」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-20">処理手順</h4>
+<ol>
+<li>関連情報を取得・設定する（処理2：詳細仕様参照）。</li>
+</ol>
+<h3 id="setnotused">setNotUsed</h3>
+<h4 id="処理概要-21">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「setNotUsed」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-21">処理手順</h4>
+<ol>
+<li>関連情報を取得・設定する（処理2：詳細仕様参照）。</li>
+</ol>
+<h3 id="gethtmlskeleton">getHtmlSkeleton</h3>
+<h4 id="処理概要-22">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「getHtmlSkeleton」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-22">処理手順</h4>
+<ol>
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-3">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="getfilepath">getFilePath</h3>
+<h4 id="処理概要-23">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「getFilePath」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-23">処理手順</h4>
+<ol>
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-4">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="getoutputhtmlname">getOutPutHtmlName</h3>
+<h4 id="処理概要-24">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「getOutPutHtmlName」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-24">処理手順</h4>
+<ol>
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-5">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="getinputhtmlname">getInPutHtmlName</h3>
+<h4 id="処理概要-25">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「getInPutHtmlName」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-25">処理手順</h4>
+<ol>
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-6">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="getpdffilename">getPdfFileName</h3>
+<h4 id="処理概要-26">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「getPdfFileName」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-26">処理手順</h4>
+<ol>
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-7">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="get47status">get47Status</h3>
+<h4 id="処理概要-27">処理概要</h4>
+<p>CifアプリケーションのテンプレートになるServletで「get47Status」の要求を受け付ける。入力・確認・データ操作・応答の順と、条件が成立しない場合の処理を以下に示す。</p>
+<h4 id="処理手順-27">処理手順</h4>
+<ol>
+<li>処理結果を呼出元へ返す。この経路の後続手順は実行しない。</li>
+</ol>
+<h4 id="結果例外時の扱い-8">結果・例外時の扱い</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>到達条件</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>この終了経路へ到達した場合</td>
+<td>処理結果を呼出元へ返す</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="db関連処理">DB関連処理</h3>
+<h2 id="補足説明">補足説明</h2>
+<h3 id="適用条件">適用条件</h3>
+<p>各仮定のQA番号を確認する。静的に確認できた操作・条件を適用する。</p>
+<h3 id="処理条件の原本対応">処理・条件の原本対応</h3>
+<p>文書内の条件番号・処理番号は次の原本表記に対応する。完全な業務用語への置換を行っていない箇所はQA・reportで確認する。</p>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>イベント</th>
+<th>参照番号</th>
+<th>原本条件・処理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>init</td>
+<td>処理1</td>
+<td>initException=e</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理2</td>
+<td>htmlSkeleton2=cCom.CifComonHTMLRead(outPutHtmlName2,"")</td>
+</tr>
+<tr>
+<td>init</td>
+<td>条件3</td>
+<td>!outPutHtmlName2.equals("")</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理4</td>
+<td>htmlSkeleton=cCom.CifComonHTMLRead(outPutHtmlName,"")</td>
+</tr>
+<tr>
+<td>init</td>
+<td>条件5</td>
+<td>!outPutHtmlName.equals("")</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理6</td>
+<td>cCom = new CifComon(sFilePath, sDBServer, "", "")</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理7</td>
+<td>sPath= scntxt.getInitParameter("SSERVLETPATH")</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理8</td>
+<td>sFilePath= scntxt.getInitParameter("SFILEPATH")</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理9</td>
+<td>ServletContext scntxt = this.getServletContext()</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理10</td>
+<td>super.init(config)</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理11</td>
+<td>super.init(config)</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理12</td>
+<td>ServletContext scntxt = this.getServletContext()</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理13</td>
+<td>sFilePath= scntxt.getInitParameter("SFILEPATH")</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理14</td>
+<td>sPath= scntxt.getInitParameter("SSERVLETPATH")</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理15</td>
+<td>cCom = new CifComon(sFilePath, sDBServer, "", "")</td>
+</tr>
+<tr>
+<td>init</td>
+<td>条件16</td>
+<td>!outPutHtmlName.equals("")</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理17</td>
+<td>htmlSkeleton=cCom.CifComonHTMLRead(outPutHtmlName,"")</td>
+</tr>
+<tr>
+<td>init</td>
+<td>条件18</td>
+<td>!outPutHtmlName2.equals("")</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理19</td>
+<td>htmlSkeleton2=cCom.CifComonHTMLRead(outPutHtmlName2,"")</td>
+</tr>
+<tr>
+<td>init</td>
+<td>処理20</td>
+<td>initException=e</td>
+</tr>
+<tr>
+<td>doPost</td>
+<td>処理1</td>
+<td>ojiServletMain(req,res)</td>
+</tr>
+<tr>
+<td>doPost</td>
+<td>処理2</td>
+<td>ojiServletMain(req,res)</td>
+</tr>
+<tr>
+<td>doGet</td>
+<td>処理1</td>
+<td>ojiServletMain(req,res)</td>
+</tr>
+<tr>
+<td>doGet</td>
+<td>処理2</td>
+<td>ojiServletMain(req,res)</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理1</td>
+<td>this.getServletContext().log("log",e)</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理2</td>
+<td>e.printStackTrace()</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>条件3</td>
+<td>e.toString().startsWith("java.sql.SQLException")</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理4</td>
+<td>errorControl(e,req,res)</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理5</td>
+<td>exitMain()</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理6</td>
+<td>mainControl(req,res)</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>条件7</td>
+<td>!new String(inputParams.getBytes("iso-8859-1"),"Windows-31J").equals("LoanMain.html")</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理8</td>
+<td>inputParams = ""</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理9</td>
+<td>inputParams=req.getParameter("HTML_NAME")</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理10</td>
+<td>String inputParams</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理11</td>
+<td>startMain()</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理12</td>
+<td>startMain()</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理13</td>
+<td>String inputParams</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理14</td>
+<td>inputParams=req.getParameter("HTML_NAME")</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理15</td>
+<td>inputParams = ""</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>条件16</td>
+<td>!new String(inputParams.getBytes("iso-8859-1"),"Windows-31J").equals("LoanMain.html")</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理17</td>
+<td>mainControl(req,res)</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理18</td>
+<td>exitMain()</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理19</td>
+<td>errorControl(e,req,res)</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>条件20</td>
+<td>e.toString().startsWith("java.sql.SQLException")</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理21</td>
+<td>e.printStackTrace()</td>
+</tr>
+<tr>
+<td>ojiServletMain</td>
+<td>処理22</td>
+<td>this.getServletContext().log("log",e)</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理1</td>
+<td>e.printStackTrace(pw)</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理2</td>
+<td>pw.println(errorHtml)</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理3</td>
+<td>PrintWriter pw = res.getWriter()</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理4</td>
+<td>errorHtml+="&lt;tr&gt;&lt;td&gt;StackTrace&lt;/td&gt;&lt;td&gt;"+"\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理5</td>
+<td>errorHtml+="&lt;tr&gt;&lt;td&gt;e.toString&lt;/td&gt;&lt;td&gt;"+e.toString()+"&lt;/td&gt;&lt;/tr&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理6</td>
+<td>errorHtml+="&lt;tr&gt;&lt;td&gt;e.getMessage&lt;/td&gt;&lt;td&gt;"+e.getMessage()+"&lt;/td&gt;&lt;/tr&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理7</td>
+<td>errorHtml+="&lt;tr&gt;&lt;td width=110&gt;className&lt;/td&gt;&lt;td&gt;"+servletName+"&lt;/td&gt;&lt;/tr&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理8</td>
+<td>errorHtml+="&lt;table width=630 border=1&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理9</td>
+<td>errorHtml+="&lt;/FORM&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理10</td>
+<td>errorHtml+="&lt;input type=hidden name=SERVLET_LINE value=LineMakeBrno&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理11</td>
+<td>errorHtml+="&lt;input type=hidden name=HTML_NAME value="+inPutHtmlName+"&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理12</td>
+<td>errorHtml+="&lt;FORM name=eroor method=post action=HtmlHandler&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理13</td>
+<td>errorHtml+="&lt;/FORM&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理14</td>
+<td>errorHtml+="&lt;input type=hidden name=SERVLET_LINE value=LineMakeBrno&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理15</td>
+<td>errorHtml+="&lt;input type=hidden name=HTML_NAME value="+errorReturnHtmlName+"&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理16</td>
+<td>errorHtml+="&lt;FORM name=eroor method=post action="+errorReturnClassName+"&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>条件17</td>
+<td>errorReturnClassName.equals("")</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理18</td>
+<td>errorHtml +="&lt;td&gt;"+CifErrorCode.getErrorMessage(e.getMessage())+"&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;br&gt;&lt;br&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>条件19</td>
+<td>e.toString().startsWith("jhkcommon.CifApplicationException")</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理20</td>
+<td>errorHtml+="&lt;table width=630 border=0&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理21</td>
+<td>String errorHtml=""</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理22</td>
+<td>String errorHtml=""</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理23</td>
+<td>errorHtml+="&lt;table width=630 border=0&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>条件24</td>
+<td>e.toString().startsWith("jhkcommon.CifApplicationException")</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理25</td>
+<td>errorHtml +="&lt;td&gt;"+CifErrorCode.getErrorMessage(e.getMessage())+"&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;br&gt;&lt;br&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>条件26</td>
+<td>errorReturnClassName.equals("")</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理27</td>
+<td>errorHtml+="&lt;FORM name=eroor method=post action=HtmlHandler&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理28</td>
+<td>errorHtml+="&lt;input type=hidden name=HTML_NAME value="+inPutHtmlName+"&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理29</td>
+<td>errorHtml+="&lt;input type=hidden name=SERVLET_LINE value=LineMakeBrno&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理30</td>
+<td>errorHtml+="&lt;/FORM&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理31</td>
+<td>errorHtml+="&lt;FORM name=eroor method=post action="+errorReturnClassName+"&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理32</td>
+<td>errorHtml+="&lt;input type=hidden name=HTML_NAME value="+errorReturnHtmlName+"&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理33</td>
+<td>errorHtml+="&lt;input type=hidden name=SERVLET_LINE value=LineMakeBrno&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理34</td>
+<td>errorHtml+="&lt;/FORM&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理35</td>
+<td>errorHtml+="&lt;table width=630 border=1&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理36</td>
+<td>errorHtml+="&lt;tr&gt;&lt;td width=110&gt;className&lt;/td&gt;&lt;td&gt;"+servletName+"&lt;/td&gt;&lt;/tr&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理37</td>
+<td>errorHtml+="&lt;tr&gt;&lt;td&gt;e.getMessage&lt;/td&gt;&lt;td&gt;"+e.getMessage()+"&lt;/td&gt;&lt;/tr&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理38</td>
+<td>errorHtml+="&lt;tr&gt;&lt;td&gt;e.toString&lt;/td&gt;&lt;td&gt;"+e.toString()+"&lt;/td&gt;&lt;/tr&gt;\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理39</td>
+<td>errorHtml+="&lt;tr&gt;&lt;td&gt;StackTrace&lt;/td&gt;&lt;td&gt;"+"\n"</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理40</td>
+<td>PrintWriter pw = res.getWriter()</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理41</td>
+<td>pw.println(errorHtml)</td>
+</tr>
+<tr>
+<td>errorControl</td>
+<td>処理42</td>
+<td>e.printStackTrace(pw)</td>
+</tr>
+<tr>
+<td>createConnection</td>
+<td>処理1</td>
+<td>conn = ds.getConnection()</td>
+</tr>
+<tr>
+<td>createConnection</td>
+<td>処理2</td>
+<td>DataSource ds = (DataSource) new InitialContext().lookup(databaseType)</td>
+</tr>
+<tr>
+<td>createConnection</td>
+<td>処理3</td>
+<td>Connection conn=null</td>
+</tr>
+<tr>
+<td>createConnection</td>
+<td>処理4</td>
+<td>Connection conn=null</td>
+</tr>
+<tr>
+<td>createConnection</td>
+<td>処理5</td>
+<td>DataSource ds = (DataSource) new InitialContext().lookup(databaseType)</td>
+</tr>
+<tr>
+<td>createConnection</td>
+<td>処理6</td>
+<td>conn = ds.getConnection()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>条件1</td>
+<td>!flg</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理2</td>
+<td>e1.printStackTrace()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理3</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理4</td>
+<td>e1.printStackTrace()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理5</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理6</td>
+<td>e1.printStackTrace()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理7</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理8</td>
+<td>e.printStackTrace()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>条件9</td>
+<td>rs.next()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理10</td>
+<td>flg = true</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理11</td>
+<td>rs = stmt.executeQuery(sb.toString())</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理12</td>
+<td>StringBuffer sb = new StringBuffer()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理13</td>
+<td>ResultSet rs = null</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理14</td>
+<td>stmt = con.createStatement()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理15</td>
+<td>con = ds.getConnection()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理16</td>
+<td>DataSource ds = (DataSource) new InitialContext().lookup("jdbc/Oracle_SP2NM")</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理17</td>
+<td>boolean flg = false</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理18</td>
+<td>Statement stmt = null</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理19</td>
+<td>Connection con = null</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理20</td>
+<td>Connection con = null</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理21</td>
+<td>Statement stmt = null</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理22</td>
+<td>boolean flg = false</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理23</td>
+<td>DataSource ds = (DataSource) new InitialContext().lookup("jdbc/Oracle_SP2NM")</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理24</td>
+<td>con = ds.getConnection()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理25</td>
+<td>stmt = con.createStatement()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理26</td>
+<td>ResultSet rs = null</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理27</td>
+<td>StringBuffer sb = new StringBuffer()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理28</td>
+<td>rs = stmt.executeQuery(sb.toString())</td>
+</tr>
+<tr>
+<td>check</td>
+<td>条件29</td>
+<td>rs.next()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理30</td>
+<td>flg = true</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理31</td>
+<td>e.printStackTrace()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理32</td>
+<td>con = null</td>
+</tr>
+<tr>
+<td>check</td>
+<td>処理33</td>
+<td>e1.printStackTrace()</td>
+</tr>
+<tr>
+<td>check</td>
+<td>条件34</td>
+<td>!flg</td>
+</tr>
+<tr>
+<td>check</td>
+<td>条件35</td>
+<td>!flg</td>
+</tr>
+<tr>
+<td>setServletName</td>
+<td>処理1</td>
+<td>this.servletName=servletName</td>
+</tr>
+<tr>
+<td>setServletName</td>
+<td>処理2</td>
+<td>this.servletName=servletName</td>
+</tr>
+<tr>
+<td>setDatabaseType</td>
+<td>処理1</td>
+<td>this.databaseType=databaseType</td>
+</tr>
+<tr>
+<td>setDatabaseType</td>
+<td>処理2</td>
+<td>this.databaseType=databaseType</td>
+</tr>
+<tr>
+<td>setOutputType</td>
+<td>処理1</td>
+<td>this.outputType=outputType</td>
+</tr>
+<tr>
+<td>setOutputType</td>
+<td>処理2</td>
+<td>this.outputType=outputType</td>
+</tr>
+<tr>
+<td>setInPutHtmlName</td>
+<td>処理1</td>
+<td>this.inPutHtmlName=inPutHtmlName</td>
+</tr>
+<tr>
+<td>setInPutHtmlName</td>
+<td>処理2</td>
+<td>this.inPutHtmlName=inPutHtmlName</td>
+</tr>
+<tr>
+<td>setOutPutHtmlName</td>
+<td>処理1</td>
+<td>this.outPutHtmlName=outPutHtmlName</td>
+</tr>
+<tr>
+<td>setOutPutHtmlName</td>
+<td>処理2</td>
+<td>this.outPutHtmlName=outPutHtmlName</td>
+</tr>
+<tr>
+<td>setOutPutHtmlName2</td>
+<td>処理1</td>
+<td>this.outPutHtmlName2=outPutHtmlName2</td>
+</tr>
+<tr>
+<td>setOutPutHtmlName2</td>
+<td>処理2</td>
+<td>this.outPutHtmlName2=outPutHtmlName2</td>
+</tr>
+<tr>
+<td>setPdfFileName</td>
+<td>処理1</td>
+<td>this.pdfFileName=pdfFileName</td>
+</tr>
+<tr>
+<td>setPdfFileName</td>
+<td>処理2</td>
+<td>this.pdfFileName=pdfFileName</td>
+</tr>
+<tr>
+<td>setOutPutListName</td>
+<td>処理1</td>
+<td>this.outPutListName=outPutListName</td>
+</tr>
+<tr>
+<td>setOutPutListName</td>
+<td>処理2</td>
+<td>this.outPutListName=outPutListName</td>
+</tr>
+<tr>
+<td>setErrorReturnClassName</td>
+<td>処理1</td>
+<td>this.errorReturnClassName=errorReturnClassName</td>
+</tr>
+<tr>
+<td>setErrorReturnClassName</td>
+<td>処理2</td>
+<td>this.errorReturnClassName=errorReturnClassName</td>
+</tr>
+<tr>
+<td>setErrorReturnHtmlName</td>
+<td>処理1</td>
+<td>this.errorReturnHtmlName=errorReturnHtmlName</td>
+</tr>
+<tr>
+<td>setErrorReturnHtmlName</td>
+<td>処理2</td>
+<td>this.errorReturnHtmlName=errorReturnHtmlName</td>
+</tr>
+<tr>
+<td>setNotUsed</td>
+<td>処理1</td>
+<td>this.notUsed=notUsed</td>
+</tr>
+<tr>
+<td>setNotUsed</td>
+<td>処理2</td>
+<td>this.notUsed=notUsed</td>
+</tr>
+</tbody>
+</table></div>
+</article><footer>Markdown原本から生成した閲覧用HTMLです。画面例は実システムを操作しません。</footer></main></div></body></html>

@@ -1,0 +1,3623 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; file:; img-src &#x27;self&#x27; data: file:; font-src &#x27;self&#x27; file:; connect-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;"><meta name="docsite-source-sha256" content="1b6b1ecfbd7549bb3fae98034dd1136d1180f915badc1ae99b7c4d1adc3093fa"><title>DB操作仕様書</title><style>:root{color-scheme:light;--ink:#203043;--muted:#5d6c7b;--line:#dde4eb;--accent:#196786;--paper:#fff;--background:#f3f6f8}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:80px}body{margin:0;font-family:system-ui,-apple-system,"Yu Gothic UI","Meiryo",sans-serif;background:var(--background);color:var(--ink);font-size:15px;line-height:1.85}.topbar{height:64px;position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:0 30px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.97)}.brand{font-size:14px;letter-spacing:.1em;font-weight:750;text-decoration:none;color:var(--ink)}.brand span{margin-left:14px;letter-spacing:0;color:var(--muted);font-weight:500}.topbar nav{display:flex;gap:22px;font-size:13px}.topbar a{color:var(--accent)}.page-shell{max-width:1660px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:28px;padding:30px}.toc{position:sticky;top:94px;align-self:start;max-height:calc(100vh - 118px);overflow:auto;font-size:12px;padding-right:12px}.toc-heading{font-weight:700;padding-bottom:12px;border-bottom:1px solid var(--line)}.toc ol{list-style:none;padding:0;margin:12px 0}.toc li{margin:8px 0}.toc .level-3{padding-left:12px;font-size:11px}.toc a{color:var(--muted);text-decoration:none}.toc a:hover{color:var(--accent)}.document{min-width:0;background:var(--paper);padding:36px 42px;border:1px solid var(--line);border-radius:10px}.doc-body{overflow-wrap:anywhere}.doc-body>h1{font-size:27px;line-height:1.5;margin:0 0 24px;letter-spacing:.01em}.doc-body>h2{font-size:22px;margin:48px 0 20px;padding-bottom:10px;border-bottom:2px solid var(--line)}.doc-body>h3{font-size:18px;margin:32px 0 16px}.doc-body h4{font-size:16px}.doc-body a{color:var(--accent);text-underline-offset:3px}.doc-body p{margin:14px 0}.doc-body li{margin:7px 0}.doc-body li>p{margin:5px 0}.doc-body blockquote{margin:20px 0;padding:12px 20px;border-left:4px solid #c59e4a;background:#fcf8ed;color:#5d523e}.doc-body blockquote p{margin:0}.doc-body :not(.screen-layout) code{font-family:ui-monospace,"Cascadia Code",Consolas,monospace;font-size:.88em}.doc-body :not(pre)>code{padding:2px 5px;background:#edf2f6;border-radius:3px}.doc-body pre{white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;padding:18px;background:#f4f7fa;border:1px solid var(--line);border-radius:6px;line-height:1.55}.table-scroll{width:100%;max-width:100%;overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:6px}.table-scroll table{border-collapse:collapse;width:100%;font-size:13px}.table-scroll th{background:#eef3f7;text-align:left;font-weight:650;white-space:normal}.table-scroll th,.table-scroll td{border-bottom:1px solid var(--line);padding:10px 12px;vertical-align:top;min-width:72px;max-width:600px}.table-scroll tbody tr:nth-child(even){background:#fafcfd}.table-scroll tr:last-child td{border-bottom:0}.diagram{margin:22px 0;padding:12px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow-x:auto;max-width:100%}.diagram .mermaid{display:block;background:#fff;border:0;padding:0;min-height:30px;margin:0}.diagram svg{height:auto;display:block;margin:0 auto;max-width:100%}.diagram-source{font-size:12px;color:var(--muted);margin-top:10px}.diagram-source pre{margin:8px 0}.diagram-error{color:#a52626;background:#fff2f2;padding:8px}.screen-layout{margin:24px 0;border:1px solid var(--line);border-radius:8px;max-width:100%;overflow:auto;isolation:isolate}.screen-layout .layout-root{max-width:100%;min-width:0}.screen-layout .field{min-width:0}.screen-layout input,.screen-layout select{max-width:100%}.screen-layout label{overflow-wrap:anywhere}.screen-layout small{overflow-wrap:anywhere}.doc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.doc-card{display:flex;flex-direction:column;gap:6px;padding:18px;border:1px solid var(--line);border-radius:6px;text-decoration:none}.doc-card:hover{background:#f5f9fb}.doc-card span{font-size:11px;color:var(--muted);font-weight:500}.doc-card strong{font-size:14px}.lead{color:var(--muted)}footer{margin-top:50px;border-top:1px solid var(--line);padding-top:16px;font-size:11px;color:var(--muted)}@media(max-width:1100px){.page-shell{grid-template-columns:190px minmax(0,1fr);gap:18px;padding:20px}.document{padding:28px}.screen-layout .fields{grid-template-columns:1fr}}@media(max-width:800px){.topbar{padding:0 16px}.brand span{display:none}.page-shell{display:block;padding:12px}.toc{position:static;max-height:220px;margin-bottom:16px;padding:12px;border:1px solid var(--line);border-radius:6px}.document{padding:22px 18px}.doc-body>h1{font-size:23px}.doc-grid{grid-template-columns:1fr}.screen-layout .field{grid-template-columns:1fr}.screen-layout small{grid-column:1}}@media print{body{background:white;font-size:10pt}.topbar,.toc,footer,.diagram-source{display:none}.page-shell{display:block;max-width:none;padding:0}.document{border:0;padding:0}.doc-body>h2{break-after:avoid}.table-scroll{overflow:visible}.diagram{break-inside:avoid}.screen-layout{break-inside:auto}a{color:inherit!important;text-decoration:none}}
+
+.page-shell.no-toc{display:block;max-width:1240px}
+
+.doc-body img{display:block;max-width:100%;height:auto;margin:12px 0}
+</style></head><body><header class="topbar"><a class="brand" href="../../index.html">CONTEXTBASE <span>仕様書</span></a><nav><a href="../../index.html">文書一覧</a><a href="../../../md/%E5%85%B1%E9%80%9A/DB%E4%BB%95%E6%A7%98%E6%9B%B8/DB%E6%93%8D%E4%BD%9C%E4%BB%95%E6%A7%98%E6%9B%B8.md">MD原本</a></nav></header><div class="page-shell"><aside class="toc"><div class="toc-heading">この文書の内容</div><ol><li class="level-2"><a href="#概要">概要</a></li><li class="level-2"><a href="#操作詳細">操作詳細</a></li></ol></aside><main class="document"><article class="doc-body"><h1 id="db操作仕様書">DB操作仕様書</h1>
+<h2 id="概要">概要</h2>
+<p>SQL原本を対象として、参照・挿入・更新・削除とパラメーター・対象条件・確定取消を記載する。</p>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>操作ID</th>
+<th>処理</th>
+<th>対象テーブル</th>
+<th>原本</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SQL-55B58633E466</td>
+<td>挿入</td>
+<td>DB2.Ｕカウンターシフト</td>
+<td>n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java</td>
+</tr>
+<tr>
+<td>SQL-F393DA844BF7</td>
+<td>参照</td>
+<td>DB2.ＵＷＥＢログイン情報表</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java</td>
+</tr>
+<tr>
+<td>SQL-418D30BDB59A</td>
+<td>参照</td>
+<td>DB2.ＵＷＥＢログイン情報表</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java</td>
+</tr>
+<tr>
+<td>SQL-691F64E50533</td>
+<td>参照</td>
+<td>DB2.Ｕ職員名簿表</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java</td>
+</tr>
+<tr>
+<td>SQL-8B483872EF3B</td>
+<td>参照</td>
+<td>DB2.Ｕ職員所属課係一覧表</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java</td>
+</tr>
+<tr>
+<td>SQL-01B370EBE516</td>
+<td>参照</td>
+<td>DB2.ＵＪＶ役職コード表</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java</td>
+</tr>
+<tr>
+<td>SQL-33C804326C53</td>
+<td>参照</td>
+<td>DB2.ＵＪ業種</td>
+<td>n2framework/WEB-INF/src/common/base/SelectCodeGyosyuBase.java</td>
+</tr>
+<tr>
+<td>SQL-91261B9FE7E9</td>
+<td>参照</td>
+<td>DB2.ＵＤＢ管理ＤＢ</td>
+<td>n2framework/WEB-INF/src/common/base/SelectDBKanriDBBase.java</td>
+</tr>
+<tr>
+<td>SQL-527AB7402065</td>
+<td>参照</td>
+<td>DB2.Ｕ代行可能職員名簿表</td>
+<td>n2framework/WEB-INF/src/common/base/SelectDaikoSyokuinBase.java</td>
+</tr>
+<tr>
+<td>SQL-ADBA2FF6D73F</td>
+<td>参照</td>
+<td>N2_DWH.Ｊ事業所コード表２</td>
+<td>n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java</td>
+</tr>
+<tr>
+<td>SQL-D79B5FD619BA</td>
+<td>参照</td>
+<td>DB2.Ｕ祭日</td>
+<td>n2framework/WEB-INF/src/common/base/SelectSaijitsuBase.java</td>
+</tr>
+<tr>
+<td>SQL-8BDBD39B9963</td>
+<td>参照</td>
+<td>DB2.ＵＪ店舗管理台帳</td>
+<td>n2framework/WEB-INF/src/common/base/SelectTenpoKanriDaichoBase.java</td>
+</tr>
+<tr>
+<td>SQL-56387246D482</td>
+<td>参照</td>
+<td>DB2.ＵＤＢ管理ＤＢ</td>
+<td>n2framework/WEB-INF/src/jhkcommon/OjiServlet.java</td>
+</tr>
+<tr>
+<td>SQL-B07128F6323E</td>
+<td>挿入</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+<td>n2framework/WEB-INF/src/webon/base/InsertPathMngStatBase.java</td>
+</tr>
+<tr>
+<td>SQL-E77CBB76DE57</td>
+<td>参照</td>
+<td>DB2.ＵＪ科目</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectDB2KamokuBase.java</td>
+</tr>
+<tr>
+<td>SQL-FE9A02F1592C</td>
+<td>参照</td>
+<td>DB2.ＵＪ科目</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectDB2KamokuBase.java</td>
+</tr>
+<tr>
+<td>SQL-D1BA242EB73F</td>
+<td>参照</td>
+<td>NAVI.ＵＭ機能マスタ</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectFunctionMasterBase.java</td>
+</tr>
+<tr>
+<td>SQL-BF61EBA506D0</td>
+<td>参照</td>
+<td>NAVI.ＵＪ機能マスタ</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectFunctionMasterBase.java</td>
+</tr>
+<tr>
+<td>SQL-0DCAE7BAC6A9</td>
+<td>参照</td>
+<td>NAVI.ＵＭオンラインＯＰマスタ</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectOnlineOperationMastBase.java</td>
+</tr>
+<tr>
+<td>SQL-694864CAA608</td>
+<td>参照</td>
+<td>NAVI.ＵＪ稼動店舗管理マスタ</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectOperationBranchMstBase.java</td>
+</tr>
+<tr>
+<td>SQL-9782CA7464D4</td>
+<td>参照</td>
+<td>NAVI.ＵＪ稼動店舗管理マスタ</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectOperationBranchMstBase.java</td>
+</tr>
+<tr>
+<td>SQL-35487658430A</td>
+<td>参照</td>
+<td>NAVI.ＵＪ稼動店舗管理マスタ</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectOperationBranchMstBase.java</td>
+</tr>
+<tr>
+<td>SQL-E2FA10A154DE</td>
+<td>参照</td>
+<td>NAVI.ＵＭパス管理マスタ</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectPathMngMstBase.java</td>
+</tr>
+<tr>
+<td>SQL-519634C3F762</td>
+<td>参照</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectPathMngStatBase.java</td>
+</tr>
+<tr>
+<td>SQL-D94B94F30EBB</td>
+<td>参照</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectPathMngStatBase.java</td>
+</tr>
+<tr>
+<td>SQL-F97C0AE27E69</td>
+<td>更新</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+<td>n2framework/WEB-INF/src/webon/base/UpdatePathMngStatBase.java</td>
+</tr>
+<tr>
+<td>SQL-8DA5C44CC841</td>
+<td>更新</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+<td>n2framework/WEB-INF/src/webon/base/UpdatePathMngStatBase.java</td>
+</tr>
+<tr>
+<td>SQL-26B9F21A0A7B</td>
+<td>参照</td>
+<td>N2_SIGHT.Ｂ顧客基本表</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-BE29DD398BAD</td>
+<td>参照</td>
+<td>年金1_LK</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-98675681E706</td>
+<td>参照</td>
+<td>店名テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-935A991E07F4</td>
+<td>参照</td>
+<td>性別テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-A0A469ECF2C0</td>
+<td>参照</td>
+<td>裁定請求テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-F2C97CD89E50</td>
+<td>参照</td>
+<td>受給有無テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-CD804AC01D11</td>
+<td>参照</td>
+<td>年金種類テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-1CC29D9EDFFF</td>
+<td>参照</td>
+<td>年金1_LK</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-28470D010AFF</td>
+<td>参照</td>
+<td>店名テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-0F5F7D3D4469</td>
+<td>参照</td>
+<td>性別テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-0E90141F3DE0</td>
+<td>参照</td>
+<td>裁定請求テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-6597FFB0C483</td>
+<td>参照</td>
+<td>受給有無テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-87035C2BB1E0</td>
+<td>参照</td>
+<td>年金種類テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-F9D3BB2927F4</td>
+<td>削除</td>
+<td>年金1_LK</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-749C63561641</td>
+<td>参照</td>
+<td>年金1_LK</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-0E9B648B03D3</td>
+<td>参照</td>
+<td>年金＿削除明細</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-4F7E42ED747E</td>
+<td>削除</td>
+<td>年金＿削除明細</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-22BD3A50DAE5</td>
+<td>参照</td>
+<td>店名テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-F5C825F11352</td>
+<td>参照</td>
+<td>年金種類テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-19BE5BBBA554</td>
+<td>参照</td>
+<td>年金1_LK</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-EC6FD30BE7CE</td>
+<td>参照</td>
+<td>年金1_LK</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-B8CFB512D81A</td>
+<td>参照</td>
+<td>店名テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-B3BD08EC9265</td>
+<td>参照</td>
+<td>性別テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-47BAF2E0D129</td>
+<td>参照</td>
+<td>裁定請求テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-C66BA4DBA955</td>
+<td>参照</td>
+<td>受給有無テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-E2E89DE2FC84</td>
+<td>参照</td>
+<td>年金種類テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-1A463E2BC06C</td>
+<td>挿入</td>
+<td>年金1_LK</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-CD4068C5AE3B</td>
+<td>更新</td>
+<td>年金1_LK</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-D7ADE1A915C2</td>
+<td>挿入</td>
+<td>年金＿削除明細</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java</td>
+</tr>
+<tr>
+<td>SQL-2CF7CA976867</td>
+<td>参照</td>
+<td>店名テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java</td>
+</tr>
+<tr>
+<td>SQL-D9F3500B923D</td>
+<td>参照</td>
+<td>DB2.Ｕ職員名簿表</td>
+<td>nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java</td>
+</tr>
+<tr>
+<td>SQL-E0FD738666D8</td>
+<td>参照</td>
+<td>店名テーブル</td>
+<td>nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java</td>
+</tr>
+<tr>
+<td>SQL-A8F5412DEF20</td>
+<td>挿入・更新（MERGE）</td>
+<td>DB2.ＵＷＥＢログイン情報表</td>
+<td>nenkin/WEB-INF/resources/db/data.sql</td>
+</tr>
+<tr>
+<td>SQL-5C89ADEB93BB</td>
+<td>挿入・更新（MERGE）</td>
+<td>DB2.Ｕ職員名簿表</td>
+<td>nenkin/WEB-INF/resources/db/data.sql</td>
+</tr>
+<tr>
+<td>SQL-04E9DB7527CB</td>
+<td>挿入・更新（MERGE）</td>
+<td>DB2.ＵＪＶ役職コード表</td>
+<td>nenkin/WEB-INF/resources/db/data.sql</td>
+</tr>
+<tr>
+<td>SQL-304A64D29ABA</td>
+<td>挿入・更新（MERGE）</td>
+<td>N2_DWH.Ｊ事業所コード表２</td>
+<td>nenkin/WEB-INF/resources/db/data.sql</td>
+</tr>
+<tr>
+<td>SQL-CB7B3D708782</td>
+<td>挿入・更新（MERGE）</td>
+<td>DB2.ＵＤＢ管理ＤＢ</td>
+<td>nenkin/WEB-INF/resources/db/data.sql</td>
+</tr>
+<tr>
+<td>SQL-6B0A53508CEA</td>
+<td>挿入・更新（MERGE）</td>
+<td>N2_SIGHT.Ｂ顧客基本表</td>
+<td>nenkin/WEB-INF/resources/db/data.sql</td>
+</tr>
+<tr>
+<td>SQL-AB72701F29DC</td>
+<td>挿入・更新（MERGE）</td>
+<td>性別テーブル</td>
+<td>nenkin/WEB-INF/resources/db/data.sql</td>
+</tr>
+<tr>
+<td>SQL-974CC766238C</td>
+<td>挿入・更新（MERGE）</td>
+<td>裁定請求テーブル</td>
+<td>nenkin/WEB-INF/resources/db/data.sql</td>
+</tr>
+<tr>
+<td>SQL-FDB588A8849B</td>
+<td>挿入・更新（MERGE）</td>
+<td>受給有無テーブル</td>
+<td>nenkin/WEB-INF/resources/db/data.sql</td>
+</tr>
+<tr>
+<td>SQL-456572D1B62D</td>
+<td>挿入・更新（MERGE）</td>
+<td>店名テーブル</td>
+<td>nenkin/WEB-INF/resources/db/data.sql</td>
+</tr>
+<tr>
+<td>SQL-85DBC611F1E0</td>
+<td>挿入・更新（MERGE）</td>
+<td>年金種類テーブル</td>
+<td>nenkin/WEB-INF/resources/db/data.sql</td>
+</tr>
+<tr>
+<td>SQL-0DE7BDCDCDFA</td>
+<td>挿入・更新（MERGE）</td>
+<td>年金1_LK</td>
+<td>nenkin/WEB-INF/resources/db/data.sql</td>
+</tr>
+<tr>
+<td>SQL-3E11A4E77CE8</td>
+<td>挿入・更新（MERGE）</td>
+<td>年金＿削除明細</td>
+<td>nenkin/WEB-INF/resources/db/data.sql</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="操作詳細">操作詳細</h2>
+<h4 id="db操作-sql-55b58633e466">DB操作 SQL-55B58633E466</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-55B58633E466</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.Ｕカウンターシフト</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のinsertで「DB2.Ｕカウンターシフト」を挿入する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>アクセス日付 ← 〈gSDFDate.format(date)〉／アクセス時刻 ← 〈gSDFTime.format(date)〉／機能ＩＤ ← 〈map.get(機能ＩＤ)：空値・NULLの条件付き設定〉／画面ＩＤ ← 〈map.get(画面ＩＤ)：空値・NULLの条件付き設定〉／コマンドＩＤ ← 〈map.get(コマンドＩＤ)：空値・NULLの条件付き設定〉／アクションＩＤ ← 〈map.get(アクションＩＤ)：空値・NULLの条件付き設定〉／ＪＳＰ名 ← 〈map.get(ＪＳＰ名)：空値・NULLの条件付き設定〉／ユーザーＩＤ ← '〈map.get("ユーザーＩＤ")〉'</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>新しい行を挿入する。重複や採番の扱いは呼出元および列制約に従う。</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java:34 / insert@34</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：insert into DB2.Ｕカウンターシフト (アクセス日付,アクセス時刻,機能ＩＤ,画面ＩＤ,コマンドＩＤ,アクションＩＤ,ＪＳＰ名,ユーザーＩＤ)  values (〈gSDFDate.format(date)〉,〈gSDFTime.format(date)〉,〈map.get(機能ＩＤ)：空値・NULLの条件付き設定〉,〈map.get(画面ＩＤ)：空値・NULLの条件付き設定〉,〈map.get(コマンドＩＤ)：空値・NULLの条件付き設定〉,〈map.get(アクションＩＤ)：空値・NULLの条件付き設定〉,〈map.get(ＪＳＰ名)：空値・NULLの条件付き設定〉,'〈map.get("ユーザーＩＤ")〉')</p>
+<h4 id="db操作-sql-f393da844bf7">DB操作 SQL-F393DA844BF7</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-F393DA844BF7</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＷＥＢログイン情報表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectＷＥＢログイン情報表で「DB2.ＵＷＥＢログイン情報表」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：アプリケーション名 = '〈applName〉' and ユーザーＩＤ = '〈userId〉' and パスワード = '〈password〉'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java:40 / selectＷＥＢログイン情報表@40</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：select * from DB2.ＵＷＥＢログイン情報表 where アプリケーション名 = '〈applName〉' and ユーザーＩＤ = '〈userId〉' and パスワード = '〈password〉'</p>
+<h4 id="db操作-sql-418d30bdb59a">DB操作 SQL-418D30BDB59A</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-418D30BDB59A</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＷＥＢログイン情報表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectＷＥＢログイン情報表で「DB2.ＵＷＥＢログイン情報表」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：アプリケーション名 = '〈applName〉' and ユーザーＩＤ = '〈userId〉'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java:75 / selectＷＥＢログイン情報表@75</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：select * from DB2.ＵＷＥＢログイン情報表 where アプリケーション名 = '〈applName〉' and ユーザーＩＤ = '〈userId〉'</p>
+<h4 id="db操作-sql-691f64e50533">DB操作 SQL-691F64E50533</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-691F64E50533</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.Ｕ職員名簿表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselect職員名簿表で「DB2.Ｕ職員名簿表」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：職員番号 = 〈shokuinNo〉</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java:107 / select職員名簿表@107</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：select * from DB2.Ｕ職員名簿表 where 職員番号 = 〈shokuinNo〉</p>
+<h4 id="db操作-sql-8b483872ef3b">DB操作 SQL-8B483872EF3B</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-8B483872EF3B</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.Ｕ職員所属課係一覧表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselect職員所属課係一覧表で「DB2.Ｕ職員所属課係一覧表」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：職員番号 = 〈shokuinNo〉</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java:137 / select職員所属課係一覧表@137</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：select * from DB2.Ｕ職員所属課係一覧表 where 職員番号 = 〈shokuinNo〉</p>
+<h4 id="db操作-sql-01b370ebe516">DB操作 SQL-01B370EBE516</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-01B370EBE516</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＪＶ役職コード表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselect役職コード表で「DB2.ＵＪＶ役職コード表」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：役職コード = 〈yakusyokucode〉</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java:167 / select役職コード表@167</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT 役職 FROM DB2.ＵＪＶ役職コード表 WHERE 役職コード = 〈yakusyokucode〉</p>
+<h4 id="db操作-sql-33c804326c53">DB操作 SQL-33C804326C53</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-33C804326C53</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＪ業種</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectで「DB2.ＵＪ業種」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>WHERE句による限定はこのSQL式にない。呼出条件・動的付加条件は原本を参照する。</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SelectCodeGyosyuBase.java:40 / select@35</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT コード,項目１ FROM DB2.ＵＪ業種 ORDER BY コード</p>
+<h4 id="db操作-sql-91261b9fe7e9">DB操作 SQL-91261B9FE7E9</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-91261B9FE7E9</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＤＢ管理ＤＢ</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectで「DB2.ＵＤＢ管理ＤＢ」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：ＤＢ名 = '〈dbName〉'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SelectDBKanriDBBase.java:39 / select@39</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：select 処理中ＦＬＧ from DB2.ＵＤＢ管理ＤＢ where ＤＢ名 = '〈dbName〉'</p>
+<h4 id="db操作-sql-527ab7402065">DB操作 SQL-527AB7402065</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-527AB7402065</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.Ｕ代行可能職員名簿表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectCredit代行で「DB2.Ｕ代行可能職員名簿表」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：職員番号 = 〈shokuinNo〉 and credit権限 = 1</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SelectDaikoSyokuinBase.java:40 / selectCredit代行@40</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：select * from DB2.Ｕ代行可能職員名簿表 where 職員番号 = 〈shokuinNo〉 and credit権限 = 1</p>
+<h4 id="db操作-sql-adba2ff6d73f">DB操作 SQL-ADBA2FF6D73F</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-ADBA2FF6D73F</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>N2_DWH.Ｊ事業所コード表２</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectで「N2_DWH.Ｊ事業所コード表２」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：店舗コード = 〈code〉 and 枝番 = 〈edaban〉</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java:39 / select@39</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：select 事業所名 from N2_DWH.Ｊ事業所コード表２ where 店舗コード = 〈code〉 and 枝番 = 〈edaban〉</p>
+<h4 id="db操作-sql-d79b5fd619ba">DB操作 SQL-D79B5FD619BA</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-D79B5FD619BA</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.Ｕ祭日</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectで「DB2.Ｕ祭日」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>WHERE句による限定はこのSQL式にない。呼出条件・動的付加条件は原本を参照する。</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SelectSaijitsuBase.java:33 / select@33</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：select 日付 from DB2.Ｕ祭日 order by 日付</p>
+<h4 id="db操作-sql-8bdbd39b9963">DB操作 SQL-8BDBD39B9963</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-8BDBD39B9963</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＪ店舗管理台帳</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectTenpoIchiranで「DB2.ＵＪ店舗管理台帳」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：副店番 = 0 AND 状態 = 0 AND 店番 &gt; 10</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/common/base/SelectTenpoKanriDaichoBase.java:39 / selectTenpoIchiran@39</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT 店番, TRIM('　' from 漢字店名) AS 漢字店名 FROM DB2.ＵＪ店舗管理台帳 WHERE 副店番 = 0 AND 状態 = 0 AND 店番 &gt; 10 ORDER BY 店番</p>
+<h4 id="db操作-sql-56387246d482">DB操作 SQL-56387246D482</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-56387246D482</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＤＢ管理ＤＢ</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のcheckで「DB2.ＵＤＢ管理ＤＢ」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：ＤＢ名 = 'Ｕ調査カード'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>当該メソッド内で自動コミット設定を行う。例外時の処理順は詳細仕様の分岐に従う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/jhkcommon/OjiServlet.java:244 / check@244</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：select 処理中ＦＬＧ from DB2.ＵＤＢ管理ＤＢ where ＤＢ名 = 'Ｕ調査カード'</p>
+<h4 id="db操作-sql-b07128f6323e">DB操作 SQL-B07128F6323E</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-B07128F6323E</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のinsertPathNoで「NAVI.ＵＳパス管理ステータス」を挿入する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>接続先 ← 〈ConvertUtil.dbMoldStr(ip, 15)〉／パス使用数 ← 〈ConvertUtil.dbMoldInt(DBVAL_INITPATHNUM, 3)〉／制限パス使用数 ← 〈ConvertUtil.dbMoldInt(DBVAL_INITPATHNUMLIM, 3)〉／作成日 ← 〈ConvertUtil.dbGetDate()〉／作成時刻 ← 〈ConvertUtil.dbGetTime()〉／更新日 ← 〈ConvertUtil.dbGetDate()〉／更新時刻 ← 〈ConvertUtil.dbGetTime()〉</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>新しい行を挿入する。重複や採番の扱いは呼出元および列制約に従う。</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/webon/base/InsertPathMngStatBase.java:42 / insertPathNo@42</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：INSERT INTO NAVI.ＵＳパス管理ステータス (接続先 ,パス使用数 ,制限パス使用数 ,作成日 ,作成時刻 ,更新日 ,更新時刻 ) VALUES(〈ConvertUtil.dbMoldStr(ip, 15)〉,〈ConvertUtil.dbMoldInt(DBVAL_INITPATHNUM, 3)〉,〈ConvertUtil.dbMoldInt(DBVAL_INITPATHNUMLIM, 3)〉,〈ConvertUtil.dbGetDate()〉,〈ConvertUtil.dbGetTime()〉,〈ConvertUtil.dbGetDate()〉,〈ConvertUtil.dbGetTime()〉)</p>
+<h4 id="db操作-sql-e77cbb76de57">DB操作 SQL-E77CBB76DE57</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-E77CBB76DE57</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＪ科目</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectKamokuNameByCodeで「DB2.ＵＪ科目」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：コード=〈ConvertUtil.dbMoldStr(code,2)〉</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectDB2KamokuBase.java:37 / selectKamokuNameByCode@37</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT * FROM DB2.ＵＪ科目 WHERE コード=〈ConvertUtil.dbMoldStr(code,2)〉</p>
+<h4 id="db操作-sql-fe9a02f1592c">DB操作 SQL-FE9A02F1592C</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-FE9A02F1592C</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＪ科目</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectCodeByKamokuNameで「DB2.ＵＪ科目」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：項目１='〈name〉'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectDB2KamokuBase.java:65 / selectCodeByKamokuName@65</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT * FROM DB2.ＵＪ科目 WHERE 項目１='〈name〉'</p>
+<h4 id="db操作-sql-d1ba242eb73f">DB操作 SQL-D1BA242EB73F</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-D1BA242EB73F</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>NAVI.ＵＭ機能マスタ</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectValueByFunctionIdAndKeyで「NAVI.ＵＭ機能マスタ」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：機能名='〈functionId〉'and キー名='〈key〉'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectFunctionMasterBase.java:39 / selectValueByFunctionIdAndKey@39</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：select 値 from NAVI.ＵＭ機能マスタ where 機能名='〈functionId〉'and キー名='〈key〉'</p>
+<h4 id="db操作-sql-bf61eba506d0">DB操作 SQL-BF61EBA506D0</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-BF61EBA506D0</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>NAVI.ＵＪ機能マスタ</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectByFunctionIdで「NAVI.ＵＪ機能マスタ」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：機能名='〈functionId〉'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectFunctionMasterBase.java:60 / selectByFunctionId@60</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：select * from NAVI.ＵＪ機能マスタ where 機能名='〈functionId〉'</p>
+<h4 id="db操作-sql-0dcae7bac6a9">DB操作 SQL-0DCAE7BAC6A9</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-0DCAE7BAC6A9</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>NAVI.ＵＭオンラインＯＰマスタ</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectByOperationIdで「NAVI.ＵＭオンラインＯＰマスタ」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：オペレーションＩＤ='〈operationId〉'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectOnlineOperationMastBase.java:41 / selectByOperationId@41</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT * FROM NAVI.ＵＭオンラインＯＰマスタ WHERE オペレーションＩＤ='〈operationId〉'</p>
+<h4 id="db操作-sql-694864caa608">DB操作 SQL-694864CAA608</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-694864CAA608</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>NAVI.ＵＪ稼動店舗管理マスタ</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectOperationBranchNoで「NAVI.ＵＪ稼動店舗管理マスタ」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>WHERE句による限定はこのSQL式にない。呼出条件・動的付加条件は原本を参照する。</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectOperationBranchMstBase.java:41 / selectOperationBranchNo@41</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT * FROM NAVI.ＵＪ稼動店舗管理マスタ ORDER BY 店番</p>
+<h4 id="db操作-sql-9782ca7464d4">DB操作 SQL-9782CA7464D4</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-9782CA7464D4</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>NAVI.ＵＪ稼動店舗管理マスタ</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectByBrnoで「NAVI.ＵＪ稼動店舗管理マスタ」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：店番=〈brno〉</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectOperationBranchMstBase.java:69 / selectByBrno@69</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT  店番,取引店舗コード,接続先,取引可能フラグ FROM NAVI.ＵＪ稼動店舗管理マスタ WHERE 店番=〈brno〉</p>
+<h4 id="db操作-sql-35487658430a">DB操作 SQL-35487658430A</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-35487658430A</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>NAVI.ＵＪ稼動店舗管理マスタ</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectNotActiveByBrnoで「NAVI.ＵＪ稼動店舗管理マスタ」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：店番=〈brno〉 AND 取引可能フラグ='1'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectOperationBranchMstBase.java:100 / selectNotActiveByBrno@100</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT  店番,取引店舗コード,接続先,取引可能フラグ FROM NAVI.ＵＪ稼動店舗管理マスタ WHERE 店番=〈brno〉 AND 取引可能フラグ='1'</p>
+<h4 id="db操作-sql-e2fa10a154de">DB操作 SQL-E2FA10A154DE</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-E2FA10A154DE</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>NAVI.ＵＭパス管理マスタ</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectPathMaxで「NAVI.ＵＭパス管理マスタ」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：接続先='〈ip〉'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectPathMngMstBase.java:35 / selectPathMax@35</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT * FROM NAVI.ＵＭパス管理マスタ WHERE 接続先='〈ip〉'</p>
+<h4 id="db操作-sql-519634c3f762">DB操作 SQL-519634C3F762</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-519634C3F762</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のselectPathNoForUpで「NAVI.ＵＳパス管理ステータス」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：接続先='〈ip〉' FOR UPDATE WAIT 10</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectPathMngStatBase.java:39 / selectPathNoForUp@39</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT パス使用数,制限パス使用数 FROM NAVI.ＵＳパス管理ステータス WHERE 接続先='〈ip〉' FOR UPDATE WAIT 10</p>
+<h4 id="db操作-sql-d94b94f30ebb">DB操作 SQL-D94B94F30EBB</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-D94B94F30EBB</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のcheckPathNoで「NAVI.ＵＳパス管理ステータス」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：接続先='〈ip〉'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/webon/base/SelectPathMngStatBase.java:69 / checkPathNo@69</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT パス使用数,制限パス使用数 FROM NAVI.ＵＳパス管理ステータス WHERE 接続先='〈ip〉'</p>
+<h4 id="db操作-sql-f97c0ae27e69">DB操作 SQL-F97C0AE27E69</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-F97C0AE27E69</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>更新</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のupdatePathNoで「NAVI.ＵＳパス管理ステータス」を更新する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>パス使用数 ← 〈pathNum〉／更新日 ← 〈ConvertUtil.dbGetDate()〉／更新時刻 ← 〈ConvertUtil.dbGetTime()〉</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：接続先='〈ip〉'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/webon/base/UpdatePathMngStatBase.java:41 / updatePathNo@41</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：UPDATE NAVI.ＵＳパス管理ステータス SET パス使用数=〈pathNum〉,更新日=〈ConvertUtil.dbGetDate()〉,更新時刻=〈ConvertUtil.dbGetTime()〉 WHERE 接続先='〈ip〉'</p>
+<h4 id="db操作-sql-8da5c44cc841">DB操作 SQL-8DA5C44CC841</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-8DA5C44CC841</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>NAVI.ＵＳパス管理ステータス</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>更新</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のupdatePathNoで「NAVI.ＵＳパス管理ステータス」を更新する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>パス使用数 ← 〈pathNum〉／制限パス使用数 ← 〈pathNumLim〉／更新日 ← 〈ConvertUtil.dbGetDate()〉／更新時刻 ← 〈ConvertUtil.dbGetTime()〉</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：接続先='〈ip〉'</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>n2framework/WEB-INF/src/webon/base/UpdatePathMngStatBase.java:70 / updatePathNo@70</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：UPDATE NAVI.ＵＳパス管理ステータス SET パス使用数=〈pathNum〉,制限パス使用数=〈pathNumLim〉,更新日=〈ConvertUtil.dbGetDate()〉,更新時刻=〈ConvertUtil.dbGetTime()〉 WHERE 接続先='〈ip〉'</p>
+<h4 id="db操作-sql-26b9f21a0a7b">DB操作 SQL-26B9F21A0A7B</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-26B9F21A0A7B</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>N2_SIGHT.Ｂ顧客基本表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindByCustomerで「N2_SIGHT.Ｂ顧客基本表」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：C.店舗コード = ? AND C.顧客番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:88 / findByCustomer@87</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT C.店舗コード AS BRANCH_NO, C.顧客番号 AS CUSTOMER_NO, C.担当者コード AS STAFF_CODE, C.漢字氏名 AS CUSTOMER_NAME, C.カナ氏名 AS KANA_NAME, C.性別コード AS GENDER_CODE, C.漢字住所 AS ADDRESS, C.電話番号 AS PHONE_NUMBER, C.生年月日 AS BIRTH_DATE FROM N2_SIGHT.Ｂ顧客基本表 C WHERE C.店舗コード = ? AND C.顧客番号 = ?</p>
+<h4 id="db操作-sql-be29dd398bad">DB操作 SQL-BE29DD398BAD</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-BE29DD398BAD</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金1_LK</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindByKanaAndPhoneで「年金1_LK」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.ふりがな = ? AND R.電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:150 / findByKanaAndPhone@144</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.ふりがな = ? AND R.電話番号 = ?</p>
+<h4 id="db操作-sql-98675681e706">DB操作 SQL-98675681E706</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-98675681E706</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>店名テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindByKanaAndPhoneで「店名テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.ふりがな = ? AND R.電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:150 / findByKanaAndPhone@144</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.ふりがな = ? AND R.電話番号 = ?</p>
+<h4 id="db操作-sql-935a991e07f4">DB操作 SQL-935A991E07F4</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-935A991E07F4</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>性別テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindByKanaAndPhoneで「性別テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.ふりがな = ? AND R.電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:150 / findByKanaAndPhone@144</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.ふりがな = ? AND R.電話番号 = ?</p>
+<h4 id="db操作-sql-a0a469ecf2c0">DB操作 SQL-A0A469ECF2C0</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-A0A469ECF2C0</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>裁定請求テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindByKanaAndPhoneで「裁定請求テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.ふりがな = ? AND R.電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:150 / findByKanaAndPhone@144</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.ふりがな = ? AND R.電話番号 = ?</p>
+<h4 id="db操作-sql-f2c97cd89e50">DB操作 SQL-F2C97CD89E50</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-F2C97CD89E50</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>受給有無テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindByKanaAndPhoneで「受給有無テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.ふりがな = ? AND R.電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:150 / findByKanaAndPhone@144</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.ふりがな = ? AND R.電話番号 = ?</p>
+<h4 id="db操作-sql-cd804ac01d11">DB操作 SQL-CD804AC01D11</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-CD804AC01D11</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金種類テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindByKanaAndPhoneで「年金種類テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.ふりがな = ? AND R.電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:150 / findByKanaAndPhone@144</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.ふりがな = ? AND R.電話番号 = ?</p>
+<h4 id="db操作-sql-1cc29d9edfff">DB操作 SQL-1CC29D9EDFFF</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-1CC29D9EDFFF</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金1_LK</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のlistByBranchで「年金1_LK」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.店番 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:224 / listByBranch@223</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.店番 = ? ORDER BY R.請求予定日 DESC, R.担当者コード, R.顧客番号</p>
+<h4 id="db操作-sql-28470d010aff">DB操作 SQL-28470D010AFF</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-28470D010AFF</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>店名テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のlistByBranchで「店名テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.店番 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:224 / listByBranch@223</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.店番 = ? ORDER BY R.請求予定日 DESC, R.担当者コード, R.顧客番号</p>
+<h4 id="db操作-sql-0f5f7d3d4469">DB操作 SQL-0F5F7D3D4469</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-0F5F7D3D4469</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>性別テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のlistByBranchで「性別テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.店番 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:224 / listByBranch@223</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.店番 = ? ORDER BY R.請求予定日 DESC, R.担当者コード, R.顧客番号</p>
+<h4 id="db操作-sql-0e90141f3de0">DB操作 SQL-0E90141F3DE0</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-0E90141F3DE0</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>裁定請求テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のlistByBranchで「裁定請求テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.店番 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:224 / listByBranch@223</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.店番 = ? ORDER BY R.請求予定日 DESC, R.担当者コード, R.顧客番号</p>
+<h4 id="db操作-sql-6597ffb0c483">DB操作 SQL-6597FFB0C483</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-6597FFB0C483</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>受給有無テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のlistByBranchで「受給有無テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.店番 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:224 / listByBranch@223</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.店番 = ? ORDER BY R.請求予定日 DESC, R.担当者コード, R.顧客番号</p>
+<h4 id="db操作-sql-87035c2bb1e0">DB操作 SQL-87035C2BB1E0</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-87035C2BB1E0</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金種類テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のlistByBranchで「年金種類テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.店番 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:224 / listByBranch@223</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.店番 = ? ORDER BY R.請求予定日 DESC, R.担当者コード, R.顧客番号</p>
+<h4 id="db操作-sql-f9d3bb2927f4">DB操作 SQL-F9D3BB2927F4</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-F9D3BB2927F4</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金1_LK</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>削除</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のdeleteで「年金1_LK」を削除する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：ふりがな = ? AND 電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>当該メソッド内で自動コミット設定・コミット・ロールバックを行う。例外時の処理順は詳細仕様の分岐に従う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:334 / delete@315</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：DELETE FROM 年金1_LK WHERE ふりがな = ? AND 電話番号 = ?</p>
+<h4 id="db操作-sql-749c63561641">DB操作 SQL-749C63561641</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-749C63561641</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金1_LK</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindLatestAuditTypeで「年金1_LK」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：ふりがな = ? AND 電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:427 / findLatestAuditType@416</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT 変更FLG FROM 年金1_LK WHERE ふりがな = ? AND 電話番号 = ?</p>
+<h4 id="db操作-sql-0e9b648b03d3">DB操作 SQL-0E9B648B03D3</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-0E9B648B03D3</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金＿削除明細</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindLatestAuditTypeで「年金＿削除明細」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：ふりがな = ? AND 電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:440 / findLatestAuditType@416</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT 1 FROM 年金＿削除明細 WHERE ふりがな = ? AND 電話番号 = ? ORDER BY データ更新日 DESC, 更新時間 DESC</p>
+<h4 id="db操作-sql-4f7e42ed747e">DB操作 SQL-4F7E42ED747E</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-4F7E42ED747E</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金＿削除明細</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>削除</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のpurgeDeletedAuditsThroughで「年金＿削除明細」を削除する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：データ更新日 &lt;= ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>当該メソッド内で自動コミット設定・コミットを行う。例外時の処理順は詳細仕様の分岐に従う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:468 / purgeDeletedAuditsThrough@458</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：DELETE FROM 年金＿削除明細 WHERE データ更新日 &lt;= ?</p>
+<h4 id="db操作-sql-22bd3a50dae5">DB操作 SQL-22BD3A50DAE5</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-22BD3A50DAE5</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>店名テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のresolveBranchNameで「店名テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：店舗ｺｰﾄﾞ = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:543 / resolveBranchName@535</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT 店名 FROM 店名テーブル WHERE 店舗ｺｰﾄﾞ = ?</p>
+<h4 id="db操作-sql-f5c825f11352">DB操作 SQL-F5C825F11352</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-F5C825F11352</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金種類テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のresolvePensionTypeCodeで「年金種類テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：種類ｺｰﾄﾞ = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:609 / resolvePensionTypeCode@596</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT 年金種類 FROM 年金種類テーブル WHERE 種類ｺｰﾄﾞ = ?</p>
+<h4 id="db操作-sql-19be5bbba554">DB操作 SQL-19BE5BBBA554</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-19BE5BBBA554</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金1_LK</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のexistsで「年金1_LK」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：ふりがな = ? AND 電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:628 / exists@623</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT 1 FROM 年金1_LK WHERE ふりがな = ? AND 電話番号 = ?</p>
+<h4 id="db操作-sql-ec6fd30be7ce">DB操作 SQL-EC6FD30BE7CE</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-EC6FD30BE7CE</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金1_LK</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindByKeyで「年金1_LK」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.ふりがな = ? AND R.電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:645 / findByKey@640</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.ふりがな = ? AND R.電話番号 = ?</p>
+<h4 id="db操作-sql-b8cfb512d81a">DB操作 SQL-B8CFB512D81A</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-B8CFB512D81A</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>店名テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindByKeyで「店名テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.ふりがな = ? AND R.電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:645 / findByKey@640</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.ふりがな = ? AND R.電話番号 = ?</p>
+<h4 id="db操作-sql-b3bd08ec9265">DB操作 SQL-B3BD08EC9265</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-B3BD08EC9265</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>性別テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindByKeyで「性別テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.ふりがな = ? AND R.電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:645 / findByKey@640</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.ふりがな = ? AND R.電話番号 = ?</p>
+<h4 id="db操作-sql-47baf2e0d129">DB操作 SQL-47BAF2E0D129</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-47BAF2E0D129</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>裁定請求テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindByKeyで「裁定請求テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.ふりがな = ? AND R.電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:645 / findByKey@640</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.ふりがな = ? AND R.電話番号 = ?</p>
+<h4 id="db操作-sql-c66ba4dba955">DB操作 SQL-C66BA4DBA955</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-C66BA4DBA955</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>受給有無テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindByKeyで「受給有無テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.ふりがな = ? AND R.電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:645 / findByKey@640</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.ふりがな = ? AND R.電話番号 = ?</p>
+<h4 id="db操作-sql-e2e89de2fc84">DB操作 SQL-E2E89DE2FC84</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-E2E89DE2FC84</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金種類テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のfindByKeyで「年金種類テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：R.ふりがな = ? AND R.電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:645 / findByKey@640</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT R.店番 AS BRANCH_NO, B.店名 AS BRANCH_NAME, R.顧客番号 AS CUSTOMER_NO, R.担当者コード AS STAFF_CODE, R.顧客氏名 AS CUSTOMER_NAME, R.ふりがな AS KANA_NAME, G.性別 AS GENDER, R.住所 AS ADDRESS, R.電話番号 AS PHONE_NUMBER, R.生年月日 AS BIRTH_DATE, C.裁定請求 AS CLAIM_STATUS, R.請求予定日 AS CLAIM_SCHEDULED_DATE, R.予定年齢 AS PLANNED_AGE, R.予約徴求日 AS RESERVATION_REQUEST_DATE, R.データ更新日 AS DATA_UPDATE_DATE, R.備考 AS NOTES, R.配偶者名 AS SPOUSE_NAME, H.受給有無 AS HAS_BENEFIT, R.配偶者生年月日 AS SPOUSE_BIRTH_DATE, P.年金種類 AS PENSION_TYPE, R."種類：国民年金" AS NATIONAL_PENSION, R."種類：厚生年金" AS EMPLOYEE_PENSION, R."種類：共済年金" AS MUTUAL_AID_PENSION, R."種類：厚生年金基金" AS EMPLOYEE_PENSION_FUND, R."種類：国民年金基金" AS NATIONAL_PENSION_FUND, R."６ヶ月先確認" AS SIX_MONTH_CHECK FROM 年金1_LK R LEFT JOIN 店名テーブル B ON R.店番 = B.店舗ｺｰﾄﾞ LEFT JOIN 性別テーブル G ON R.性別 = G.性別ｺｰﾄﾞ LEFT JOIN 裁定請求テーブル C ON R.裁定請求 = C.裁請ｺｰﾄﾞ LEFT JOIN 受給有無テーブル H ON R.受給有無 = H.受給ｺｰﾄﾞ LEFT JOIN 年金種類テーブル P ON R.年金種類 = P.種類ｺｰﾄﾞ WHERE R.ふりがな = ? AND R.電話番号 = ?</p>
+<h4 id="db操作-sql-1a463e2bc06c">DB操作 SQL-1A463E2BC06C</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-1A463E2BC06C</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金1_LK</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のinsertで「年金1_LK」を挿入する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>店番 ← バインド引数1（PreparedStatementまたは呼出側の設定順序）／顧客番号 ← バインド引数2（PreparedStatementまたは呼出側の設定順序）／担当者コード ← バインド引数3（PreparedStatementまたは呼出側の設定順序）／顧客氏名 ← バインド引数4（PreparedStatementまたは呼出側の設定順序）／ふりがな ← バインド引数5（PreparedStatementまたは呼出側の設定順序）／性別 ← バインド引数6（PreparedStatementまたは呼出側の設定順序）／住所 ← バインド引数7（PreparedStatementまたは呼出側の設定順序）／電話番号 ← バインド引数8（PreparedStatementまたは呼出側の設定順序）／生年月日 ← バインド引数9（PreparedStatementまたは呼出側の設定順序）／種類：国民年金 ← バインド引数10（PreparedStatementまたは呼出側の設定順序）／種類：厚生年金 ← バインド引数11（PreparedStatementまたは呼出側の設定順序）／種類：共済年金 ← バインド引数12（PreparedStatementまたは呼出側の設定順序）／種類：厚生年金基金 ← バインド引数13（PreparedStatementまたは呼出側の設定順序）／種類：国民年金基金 ← バインド引数14（PreparedStatementまたは呼出側の設定順序）／年金種類 ← バインド引数15（PreparedStatementまたは呼出側の設定順序）／裁定請求 ← バインド引数16（PreparedStatementまたは呼出側の設定順序）／請求予定日 ← バインド引数17（PreparedStatementまたは呼出側の設定順序）／予定年齢 ← バインド引数18（PreparedStatementまたは呼出側の設定順序）／配偶者名 ← バインド引数19（PreparedStatementまたは呼出側の設定順序）／配偶者生年月日 ← バインド引数20（PreparedStatementまたは呼出側の設定順序）／受給有無 ← バインド引数21（PreparedStatementまたは呼出側の設定順序）／予約徴求日 ← バインド引数22（PreparedStatementまたは呼出側の設定順序）／備考 ← バインド引数23（PreparedStatementまたは呼出側の設定順序）／データ更新日 ← バインド引数24（PreparedStatementまたは呼出側の設定順序）／更新時間 ← バインド引数25（PreparedStatementまたは呼出側の設定順序）／更新者 ← バインド引数26（PreparedStatementまたは呼出側の設定順序）／６ヶ月先確認 ← バインド引数27（PreparedStatementまたは呼出側の設定順序）／変更FLG ← バインド引数28（PreparedStatementまたは呼出側の設定順序）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>新しい行を挿入する。重複や採番の扱いは呼出元および列制約に従う。</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:661 / insert@657</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：INSERT INTO 年金1_LK (店番, 顧客番号, 担当者コード, 顧客氏名, ふりがな, 性別, 住所, 電話番号, 生年月日, "種類：国民年金", "種類：厚生年金", "種類：共済年金", "種類：厚生年金基金", "種類：国民年金基金", 年金種類, 裁定請求, 請求予定日, 予定年齢, 配偶者名, 配偶者生年月日, 受給有無, 予約徴求日, 備考, データ更新日, 更新時間, 更新者, "６ヶ月先確認", 変更FLG) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)</p>
+<h4 id="db操作-sql-cd4068c5ae3b">DB操作 SQL-CD4068C5AE3B</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-CD4068C5AE3B</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金1_LK</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>更新</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のupdateで「年金1_LK」を更新する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>店番 ← バインド引数1（PreparedStatementまたは呼出側の設定順序）／顧客番号 ← バインド引数2（PreparedStatementまたは呼出側の設定順序）／担当者コード ← バインド引数3（PreparedStatementまたは呼出側の設定順序）／顧客氏名 ← バインド引数4（PreparedStatementまたは呼出側の設定順序）／ふりがな ← バインド引数5（PreparedStatementまたは呼出側の設定順序）／性別 ← バインド引数6（PreparedStatementまたは呼出側の設定順序）／住所 ← バインド引数7（PreparedStatementまたは呼出側の設定順序）／電話番号 ← バインド引数8（PreparedStatementまたは呼出側の設定順序）／生年月日 ← バインド引数9（PreparedStatementまたは呼出側の設定順序）／種類：国民年金 ← バインド引数10（PreparedStatementまたは呼出側の設定順序）／種類：厚生年金 ← バインド引数11（PreparedStatementまたは呼出側の設定順序）／種類：共済年金 ← バインド引数12（PreparedStatementまたは呼出側の設定順序）／種類：厚生年金基金 ← バインド引数13（PreparedStatementまたは呼出側の設定順序）／種類：国民年金基金 ← バインド引数14（PreparedStatementまたは呼出側の設定順序）／年金種類 ← バインド引数15（PreparedStatementまたは呼出側の設定順序）／裁定請求 ← バインド引数16（PreparedStatementまたは呼出側の設定順序）／請求予定日 ← バインド引数17（PreparedStatementまたは呼出側の設定順序）／予定年齢 ← バインド引数18（PreparedStatementまたは呼出側の設定順序）／配偶者名 ← バインド引数19（PreparedStatementまたは呼出側の設定順序）／配偶者生年月日 ← バインド引数20（PreparedStatementまたは呼出側の設定順序）／受給有無 ← バインド引数21（PreparedStatementまたは呼出側の設定順序）／予約徴求日 ← バインド引数22（PreparedStatementまたは呼出側の設定順序）／備考 ← バインド引数23（PreparedStatementまたは呼出側の設定順序）／データ更新日 ← バインド引数24（PreparedStatementまたは呼出側の設定順序）／更新時間 ← バインド引数25（PreparedStatementまたは呼出側の設定順序）／更新者 ← バインド引数26（PreparedStatementまたは呼出側の設定順序）／６ヶ月先確認 ← バインド引数27（PreparedStatementまたは呼出側の設定順序）／変更FLG ← バインド引数28（PreparedStatementまたは呼出側の設定順序）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：ふりがな = ? AND 電話番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:676 / update@672</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：UPDATE 年金1_LK SET 店番 = ?, 顧客番号 = ?, 担当者コード = ?, 顧客氏名 = ?, ふりがな = ?, 性別 = ?, 住所 = ?, 電話番号 = ?, 生年月日 = ?, "種類：国民年金" = ?, "種類：厚生年金" = ?, "種類：共済年金" = ?, "種類：厚生年金基金" = ?, "種類：国民年金基金" = ?, 年金種類 = ?, 裁定請求 = ?, 請求予定日 = ?, 予定年齢 = ?, 配偶者名 = ?, 配偶者生年月日 = ?, 受給有無 = ?, 予約徴求日 = ?, 備考 = ?, データ更新日 = ?, 更新時間 = ?, 更新者 = ?, "６ヶ月先確認" = ?, 変更FLG = ? WHERE ふりがな = ? AND 電話番号 = ?</p>
+<h4 id="db操作-sql-d7ade1a915c2">DB操作 SQL-D7ADE1A915C2</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-D7ADE1A915C2</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金＿削除明細</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のinsertDeletedで「年金＿削除明細」を挿入する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>店番 ← バインド引数1（PreparedStatementまたは呼出側の設定順序）／顧客番号 ← バインド引数2（PreparedStatementまたは呼出側の設定順序）／担当者コード ← バインド引数3（PreparedStatementまたは呼出側の設定順序）／顧客氏名 ← バインド引数4（PreparedStatementまたは呼出側の設定順序）／ふりがな ← バインド引数5（PreparedStatementまたは呼出側の設定順序）／性別 ← バインド引数6（PreparedStatementまたは呼出側の設定順序）／住所 ← バインド引数7（PreparedStatementまたは呼出側の設定順序）／電話番号 ← バインド引数8（PreparedStatementまたは呼出側の設定順序）／生年月日 ← バインド引数9（PreparedStatementまたは呼出側の設定順序）／種類：国民年金 ← バインド引数10（PreparedStatementまたは呼出側の設定順序）／種類：厚生年金 ← バインド引数11（PreparedStatementまたは呼出側の設定順序）／種類：共済年金 ← バインド引数12（PreparedStatementまたは呼出側の設定順序）／種類：厚生年金基金 ← バインド引数13（PreparedStatementまたは呼出側の設定順序）／種類：国民年金基金 ← バインド引数14（PreparedStatementまたは呼出側の設定順序）／年金種類 ← バインド引数15（PreparedStatementまたは呼出側の設定順序）／裁定請求 ← バインド引数16（PreparedStatementまたは呼出側の設定順序）／請求予定日 ← バインド引数17（PreparedStatementまたは呼出側の設定順序）／予定年齢 ← バインド引数18（PreparedStatementまたは呼出側の設定順序）／配偶者名 ← バインド引数19（PreparedStatementまたは呼出側の設定順序）／配偶者生年月日 ← バインド引数20（PreparedStatementまたは呼出側の設定順序）／受給有無 ← バインド引数21（PreparedStatementまたは呼出側の設定順序）／予約徴求日 ← バインド引数22（PreparedStatementまたは呼出側の設定順序）／備考 ← バインド引数23（PreparedStatementまたは呼出側の設定順序）／データ更新日 ← バインド引数24（PreparedStatementまたは呼出側の設定順序）／更新時間 ← バインド引数25（PreparedStatementまたは呼出側の設定順序）／更新者 ← バインド引数26（PreparedStatementまたは呼出側の設定順序）／６ヶ月先確認 ← バインド引数27（PreparedStatementまたは呼出側の設定順序）／変更FLG ← バインド引数28（PreparedStatementまたは呼出側の設定順序）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>新しい行を挿入する。重複や採番の扱いは呼出元および列制約に従う。</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。 同じ原本に明示トランザクションの呼出元があり、経路別の確定・取消範囲は関連処理で確認する。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:694 / insertDeleted@690</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：INSERT INTO 年金＿削除明細 (店番, 顧客番号, 担当者コード, 顧客氏名, ふりがな, 性別, 住所, 電話番号, 生年月日, "種類：国民年金", "種類：厚生年金", "種類：共済年金", "種類：厚生年金基金", "種類：国民年金基金", 年金種類, 裁定請求, 請求予定日, 予定年齢, 配偶者名, 配偶者生年月日, 受給有無, 予約徴求日, 備考, データ更新日, 更新時間, 更新者, "６ヶ月先確認", 変更FLG) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)</p>
+<h4 id="db操作-sql-2cf7ca976867">DB操作 SQL-2CF7CA976867</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-2CF7CA976867</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>店名テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のgetBranchで「店名テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：店舗ｺｰﾄﾞ = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java:185 / getBranch@184</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT 店舗ｺｰﾄﾞ AS BRANCH_NO, 店名 AS BRANCH_NAME FROM 店名テーブル WHERE 店舗ｺｰﾄﾞ = ?</p>
+<h4 id="db操作-sql-d9f3500b923d">DB操作 SQL-D9F3500B923D</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-D9F3500B923D</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.Ｕ職員名簿表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のgetStaffで「DB2.Ｕ職員名簿表」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：S.職員番号 = ?</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java:207 / getStaff@206</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT S.職員番号 AS STAFF_NO, S.漢字氏名 AS STAFF_NAME, S.カナ氏名 AS STAFF_KANA_NAME, S.所属店番 AS BRANCH_NO, S.役職コード AS ROLE_CODE FROM DB2.Ｕ職員名簿表 S WHERE S.職員番号 = ?</p>
+<h4 id="db操作-sql-e0fd738666d8">DB操作 SQL-E0FD738666D8</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-E0FD738666D8</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>店名テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>参照</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>原本のloadBranchNamesで「店名テーブル」を参照する。条件と設定値は以下のSQL式・バインド順序に従う。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>当該SQL式の列指定・実行時引数を使用する。組立式と原本のパラメーター設定を参照。</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>WHERE句による限定はこのSQL式にない。呼出条件・動的付加条件は原本を参照する。</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>呼出側または接続の設定に従う。当該メソッド単独でのコミット・ロールバック指定はない。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java:291 / loadBranchNames@289</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：SELECT 店舗ｺｰﾄﾞ AS BRANCH_NO, 店名 AS BRANCH_NAME FROM 店名テーブル</p>
+<h4 id="db操作-sql-a8f5412def20">DB操作 SQL-A8F5412DEF20</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-A8F5412DEF20</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＷＥＢログイン情報表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入・更新（MERGE）</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>SQLファイルの初期化処理で「DB2.ＵＷＥＢログイン情報表」を挿入・更新（MERGE）する。実データ値は納品仕様書へ転載しない。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>アプリケーション名 ← 原本の初期データ値（値自体は非転載）／ユーザーＩＤ ← 原本の初期データ値（値自体は非転載）／パスワード ← 原本の初期データ値（値自体は非転載）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：KEY (アプリケーション名, ユーザーＩＤ)</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>配備・初期化時に実行するSQL。アプリケーションの更新トランザクションとは別に扱う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/resources/db/data.sql:1 / SQLファイル</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：初期データ定義のため値は原本参照。</p>
+<h4 id="db操作-sql-5c89adeb93bb">DB操作 SQL-5C89ADEB93BB</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-5C89ADEB93BB</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.Ｕ職員名簿表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入・更新（MERGE）</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>SQLファイルの初期化処理で「DB2.Ｕ職員名簿表」を挿入・更新（MERGE）する。実データ値は納品仕様書へ転載しない。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>職員番号 ← 原本の初期データ値（値自体は非転載）／所属店番 ← 原本の初期データ値（値自体は非転載）／漢字氏名 ← 原本の初期データ値（値自体は非転載）／カナ氏名 ← 原本の初期データ値（値自体は非転載）／身分コード ← 原本の初期データ値（値自体は非転載）／性別 ← 原本の初期データ値（値自体は非転載）／生年月日 ← 原本の初期データ値（値自体は非転載）／役職コード ← 原本の初期データ値（値自体は非転載）／作成日 ← 原本の初期データ値（値自体は非転載）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：KEY (職員番号)</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>配備・初期化時に実行するSQL。アプリケーションの更新トランザクションとは別に扱う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/resources/db/data.sql:4 / SQLファイル</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：初期データ定義のため値は原本参照。</p>
+<h4 id="db操作-sql-04e9db7527cb">DB操作 SQL-04E9DB7527CB</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-04E9DB7527CB</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＪＶ役職コード表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入・更新（MERGE）</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>SQLファイルの初期化処理で「DB2.ＵＪＶ役職コード表」を挿入・更新（MERGE）する。実データ値は納品仕様書へ転載しない。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>役職コード ← 原本の初期データ値（値自体は非転載）／役職 ← 原本の初期データ値（値自体は非転載）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：KEY (役職コード)</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>配備・初期化時に実行するSQL。アプリケーションの更新トランザクションとは別に扱う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/resources/db/data.sql:17 / SQLファイル</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：初期データ定義のため値は原本参照。</p>
+<h4 id="db操作-sql-304a64d29aba">DB操作 SQL-304A64D29ABA</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-304A64D29ABA</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>N2_DWH.Ｊ事業所コード表２</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入・更新（MERGE）</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>SQLファイルの初期化処理で「N2_DWH.Ｊ事業所コード表２」を挿入・更新（MERGE）する。実データ値は納品仕様書へ転載しない。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>店舗コード ← 原本の初期データ値（値自体は非転載）／枝番 ← 原本の初期データ値（値自体は非転載）／事業所名 ← 原本の初期データ値（値自体は非転載）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：KEY (店舗コード, 枝番)</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>配備・初期化時に実行するSQL。アプリケーションの更新トランザクションとは別に扱う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/resources/db/data.sql:22 / SQLファイル</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：初期データ定義のため値は原本参照。</p>
+<h4 id="db操作-sql-cb7b3d708782">DB操作 SQL-CB7B3D708782</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-CB7B3D708782</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>DB2.ＵＤＢ管理ＤＢ</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入・更新（MERGE）</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>SQLファイルの初期化処理で「DB2.ＵＤＢ管理ＤＢ」を挿入・更新（MERGE）する。実データ値は納品仕様書へ転載しない。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>ＤＢ名 ← 原本の初期データ値（値自体は非転載）／処理中ＦＬＧ ← 原本の初期データ値（値自体は非転載）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：KEY (ＤＢ名)</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>配備・初期化時に実行するSQL。アプリケーションの更新トランザクションとは別に扱う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/resources/db/data.sql:27 / SQLファイル</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：初期データ定義のため値は原本参照。</p>
+<h4 id="db操作-sql-6b0a53508cea">DB操作 SQL-6B0A53508CEA</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-6B0A53508CEA</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>N2_SIGHT.Ｂ顧客基本表</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入・更新（MERGE）</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>SQLファイルの初期化処理で「N2_SIGHT.Ｂ顧客基本表」を挿入・更新（MERGE）する。実データ値は納品仕様書へ転載しない。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>店舗コード ← 原本の初期データ値（値自体は非転載）／顧客番号 ← 原本の初期データ値（値自体は非転載）／カナ氏名 ← 原本の初期データ値（値自体は非転載）／漢字氏名 ← 原本の初期データ値（値自体は非転載）／担当者コード ← 原本の初期データ値（値自体は非転載）／電話番号 ← 原本の初期データ値（値自体は非転載）／漢字住所 ← 原本の初期データ値（値自体は非転載）／性別コード ← 原本の初期データ値（値自体は非転載）／生年月日 ← 原本の初期データ値（値自体は非転載）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：KEY (店舗コード, 顧客番号)</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>配備・初期化時に実行するSQL。アプリケーションの更新トランザクションとは別に扱う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/resources/db/data.sql:34 / SQLファイル</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：初期データ定義のため値は原本参照。</p>
+<h4 id="db操作-sql-ab72701f29dc">DB操作 SQL-AB72701F29DC</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-AB72701F29DC</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>性別テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入・更新（MERGE）</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>SQLファイルの初期化処理で「性別テーブル」を挿入・更新（MERGE）する。実データ値は納品仕様書へ転載しない。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>性別ｺｰﾄﾞ ← 原本の初期データ値（値自体は非転載）／性別 ← 原本の初期データ値（値自体は非転載）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：KEY (性別ｺｰﾄﾞ)</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>配備・初期化時に実行するSQL。アプリケーションの更新トランザクションとは別に扱う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/resources/db/data.sql:53 / SQLファイル</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：初期データ定義のため値は原本参照。</p>
+<h4 id="db操作-sql-974cc766238c">DB操作 SQL-974CC766238C</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-974CC766238C</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>裁定請求テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入・更新（MERGE）</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>SQLファイルの初期化処理で「裁定請求テーブル」を挿入・更新（MERGE）する。実データ値は納品仕様書へ転載しない。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>裁請ｺｰﾄﾞ ← 原本の初期データ値（値自体は非転載）／裁定請求 ← 原本の初期データ値（値自体は非転載）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：KEY (裁請ｺｰﾄﾞ)</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>配備・初期化時に実行するSQL。アプリケーションの更新トランザクションとは別に扱う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/resources/db/data.sql:56 / SQLファイル</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：初期データ定義のため値は原本参照。</p>
+<h4 id="db操作-sql-fdb588a8849b">DB操作 SQL-FDB588A8849B</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-FDB588A8849B</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>受給有無テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入・更新（MERGE）</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>SQLファイルの初期化処理で「受給有無テーブル」を挿入・更新（MERGE）する。実データ値は納品仕様書へ転載しない。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>受給ｺｰﾄﾞ ← 原本の初期データ値（値自体は非転載）／受給有無 ← 原本の初期データ値（値自体は非転載）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：KEY (受給ｺｰﾄﾞ)</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>配備・初期化時に実行するSQL。アプリケーションの更新トランザクションとは別に扱う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/resources/db/data.sql:58 / SQLファイル</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：初期データ定義のため値は原本参照。</p>
+<h4 id="db操作-sql-456572d1b62d">DB操作 SQL-456572D1B62D</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-456572D1B62D</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>店名テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入・更新（MERGE）</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>SQLファイルの初期化処理で「店名テーブル」を挿入・更新（MERGE）する。実データ値は納品仕様書へ転載しない。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>店舗ｺｰﾄﾞ ← 原本の初期データ値（値自体は非転載）／店名 ← 原本の初期データ値（値自体は非転載）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：KEY (店舗ｺｰﾄﾞ)</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>配備・初期化時に実行するSQL。アプリケーションの更新トランザクションとは別に扱う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/resources/db/data.sql:60 / SQLファイル</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：初期データ定義のため値は原本参照。</p>
+<h4 id="db操作-sql-85dbc611f1e0">DB操作 SQL-85DBC611F1E0</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-85DBC611F1E0</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金種類テーブル</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入・更新（MERGE）</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>SQLファイルの初期化処理で「年金種類テーブル」を挿入・更新（MERGE）する。実データ値は納品仕様書へ転載しない。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>種類ｺｰﾄﾞ ← 原本の初期データ値（値自体は非転載）／年金種類 ← 原本の初期データ値（値自体は非転載）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：KEY (種類ｺｰﾄﾞ)</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>配備・初期化時に実行するSQL。アプリケーションの更新トランザクションとは別に扱う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/resources/db/data.sql:62 / SQLファイル</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：初期データ定義のため値は原本参照。</p>
+<h4 id="db操作-sql-0de7bdcdcdfa">DB操作 SQL-0DE7BDCDCDFA</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-0DE7BDCDCDFA</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金1_LK</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入・更新（MERGE）</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>SQLファイルの初期化処理で「年金1_LK」を挿入・更新（MERGE）する。実データ値は納品仕様書へ転載しない。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>店番 ← 原本の初期データ値（値自体は非転載）／顧客番号 ← 原本の初期データ値（値自体は非転載）／担当者コード ← 原本の初期データ値（値自体は非転載）／顧客氏名 ← 原本の初期データ値（値自体は非転載）／ふりがな ← 原本の初期データ値（値自体は非転載）／性別 ← 原本の初期データ値（値自体は非転載）／住所 ← 原本の初期データ値（値自体は非転載）／電話番号 ← 原本の初期データ値（値自体は非転載）／生年月日 ← 原本の初期データ値（値自体は非転載）／種類：国民年金 ← 原本の初期データ値（値自体は非転載）／種類：厚生年金 ← 原本の初期データ値（値自体は非転載）／種類：共済年金 ← 原本の初期データ値（値自体は非転載）／種類：厚生年金基金 ← 原本の初期データ値（値自体は非転載）／種類：国民年金基金 ← 原本の初期データ値（値自体は非転載）／年金種類 ← 原本の初期データ値（値自体は非転載）／裁定請求 ← 原本の初期データ値（値自体は非転載）／請求予定日 ← 原本の初期データ値（値自体は非転載）／予定年齢 ← 原本の初期データ値（値自体は非転載）／配偶者名 ← 原本の初期データ値（値自体は非転載）／配偶者生年月日 ← 原本の初期データ値（値自体は非転載）／受給有無 ← 原本の初期データ値（値自体は非転載）／予約徴求日 ← 原本の初期データ値（値自体は非転載）／備考 ← 原本の初期データ値（値自体は非転載）／データ更新日 ← 原本の初期データ値（値自体は非転載）／更新時間 ← 原本の初期データ値（値自体は非転載）／更新者 ← 原本の初期データ値（値自体は非転載）／６ヶ月先確認 ← 原本の初期データ値（値自体は非転載）／変更FLG ← 原本の初期データ値（値自体は非転載）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：KEY (ふりがな, 電話番号)</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>配備・初期化時に実行するSQL。アプリケーションの更新トランザクションとは別に扱う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/resources/db/data.sql:94 / SQLファイル</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：初期データ定義のため値は原本参照。</p>
+<h4 id="db操作-sql-3e11a4e77ce8">DB操作 SQL-3E11A4E77CE8</h4>
+<div aria-label="仕様表（横スクロール可）" class="table-scroll" role="region" tabindex="0"><table>
+<thead>
+<tr>
+<th>情報</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作ID</td>
+<td>SQL-3E11A4E77CE8</td>
+</tr>
+<tr>
+<td>対象テーブル</td>
+<td>年金＿削除明細</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>挿入・更新（MERGE）</td>
+</tr>
+<tr>
+<td>処理説明</td>
+<td>SQLファイルの初期化処理で「年金＿削除明細」を挿入・更新（MERGE）する。実データ値は納品仕様書へ転載しない。</td>
+</tr>
+<tr>
+<td>設定項目</td>
+<td>店番 ← 原本の初期データ値（値自体は非転載）／顧客番号 ← 原本の初期データ値（値自体は非転載）／担当者コード ← 原本の初期データ値（値自体は非転載）／顧客氏名 ← 原本の初期データ値（値自体は非転載）／ふりがな ← 原本の初期データ値（値自体は非転載）／性別 ← 原本の初期データ値（値自体は非転載）／住所 ← 原本の初期データ値（値自体は非転載）／電話番号 ← 原本の初期データ値（値自体は非転載）／生年月日 ← 原本の初期データ値（値自体は非転載）／種類：国民年金 ← 原本の初期データ値（値自体は非転載）／種類：厚生年金 ← 原本の初期データ値（値自体は非転載）／種類：共済年金 ← 原本の初期データ値（値自体は非転載）／種類：厚生年金基金 ← 原本の初期データ値（値自体は非転載）／種類：国民年金基金 ← 原本の初期データ値（値自体は非転載）／年金種類 ← 原本の初期データ値（値自体は非転載）／裁定請求 ← 原本の初期データ値（値自体は非転載）／請求予定日 ← 原本の初期データ値（値自体は非転載）／予定年齢 ← 原本の初期データ値（値自体は非転載）／配偶者名 ← 原本の初期データ値（値自体は非転載）／配偶者生年月日 ← 原本の初期データ値（値自体は非転載）／受給有無 ← 原本の初期データ値（値自体は非転載）／予約徴求日 ← 原本の初期データ値（値自体は非転載）／備考 ← 原本の初期データ値（値自体は非転載）／データ更新日 ← 原本の初期データ値（値自体は非転載）／更新時間 ← 原本の初期データ値（値自体は非転載）／更新者 ← 原本の初期データ値（値自体は非転載）／６ヶ月先確認 ← 原本の初期データ値（値自体は非転載）／変更FLG ← 原本の初期データ値（値自体は非転載）</td>
+</tr>
+<tr>
+<td>対象条件</td>
+<td>抽出・更新対象条件：KEY (ふりがな, 電話番号, データ更新日)</td>
+</tr>
+<tr>
+<td>確定・取消</td>
+<td>配備・初期化時に実行するSQL。アプリケーションの更新トランザクションとは別に扱う。</td>
+</tr>
+<tr>
+<td>原本</td>
+<td>nenkin/WEB-INF/resources/db/data.sql:121 / SQLファイル</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQLの組立規則：初期データ定義のため値は原本参照。</p>
+</article><footer>Markdown原本から生成した閲覧用HTMLです。画面例は実システムを操作しません。</footer></main></div></body></html>

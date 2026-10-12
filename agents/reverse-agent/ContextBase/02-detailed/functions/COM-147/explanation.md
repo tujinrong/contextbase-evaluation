@@ -1,0 +1,1 @@
+Access StrConv(..., vbFromUnicode) 相当の Windows-31J バイト長検証の入力・表示・要求処理を行う。
