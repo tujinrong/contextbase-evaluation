@@ -1,0 +1,105 @@
+name: Normalize table specifications v7.1
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/table-v71-publish.yml']
+permissions:
+  contents: write
+concurrency:
+  group: table-v71-main
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify reviewed migration archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "fd66916bcaa5c58a7e50ab2dc6b661a18d494cb5"
+          mkdir -p /tmp/table-v71
+          python - <<'PY'
+          from pathlib import Path
+          import base64, hashlib, io, zipfile
+          paths=sorted(Path('_table_v71').glob('source.*.b64'))
+          assert len(paths)==6
+          pieces=[p.read_bytes() for p in paths]
+          # Correct identified transport transcription differences before validation.
+          repairs={2:[(b'9uLY3uQcr',b'9uLY3u3Qcr')],4:[(b'pvshVshV4',b'pvshV4'),(b'8ubhx8ufHgr',b'8ubhx8dHgr')]}
+          for i,changes in repairs.items():
+              for old,new in changes:
+                  assert pieces[i].count(old)==1
+                  pieces[i]=pieces[i].replace(old,new,1)
+          expected=['b8deedcadd3e12a623ec86d6f07fb51fb22fd632','38bd0cb197b1b13723292a84813335ff43618770','5aea5d93b231a29fb56ed00f4338f7804e36a3f3','756e4798cfe06948dc4cec51c8b03448aa81599d','bf0b285fe7e9f7d768af1a8dcf71d3778c2d09cd','d818e134c5c29cc466ab955226386564bd668813']
+          for data,sha in zip(pieces,expected):
+              actual=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+              assert actual==sha,(actual,sha)
+          data=base64.b64decode(b''.join(pieces),validate=True)
+          assert hashlib.sha256(data).hexdigest()=='556f2aaf9c515ee8f79d916c949738198e6332b76fe638d7d9ff4b9b6aa9f458'
+          z=zipfile.ZipFile(io.BytesIO(data))
+          allowed={'01_migrate.py','02_evaluation.py','03_finalize.py','04_validate.py','expected.json','excel-verification.json'}
+          assert set(z.namelist())==allowed
+          for name in allowed:
+              Path('/tmp/table-v71',name).write_bytes(z.read(name))
+          print('Reviewed archive verified')
+          PY
+      - name: Apply and verify table normalization
+        shell: bash
+        run: |
+          set -euo pipefail
+          python /tmp/table-v71/01_migrate.py
+          python /tmp/table-v71/02_evaluation.py
+          python /tmp/table-v71/03_finalize.py
+          python /tmp/table-v71/04_validate.py
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,json
+          expected=json.loads(Path('/tmp/table-v71/expected.json').read_text())
+          actual={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in Path('.').rglob('*.md')}
+          assert actual==expected,'Result differs from the locally reviewed specifications'
+          assert len(actual)==163
+          print('All 163 Markdown hashes match reviewed output')
+          PY
+      - name: Commit reviewed specifications to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -r -- _table_v71 .github/workflows/table-v71-publish.yml
+          git add -- docs test-project1
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+          git commit -m 'docs: normalize table specifications to one table per sheet with eight-column details'
+          git push origin HEAD:main
+          git rev-parse HEAD > /tmp/table-v71/published-commit.txt
+      - name: Package reviewed documentation and records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile,json,subprocess
+          root=Path('.'); out=Path('/tmp/table-v71')
+          tracked=subprocess.check_output(['git','ls-files','-z']).decode().split('\0')
+          with zipfile.ZipFile(out/'table-specs-v71.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for name in tracked:
+                  if name:
+                      z.write(root/name,name)
+          report={'baseCommit':'fd66916bcaa5c58a7e50ab2dc6b661a18d494cb5','publishedCommit':(out/'published-commit.txt').read_text().strip(),'version':'7.1','scope':'Markdown table normalization and evaluation references; no application or database execution'}
+          (out/'publication.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: table-specs-v71-delivery
+          retention-days: 7
+          path: |
+            /tmp/table-v71/table-specs-v71.zip
+            /tmp/table-v71/publication.json
+            /tmp/table-v71/v71-validation.json
+            /tmp/table-v71/expected.json
+            /tmp/table-v71/excel-verification.json
