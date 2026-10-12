@@ -1,9 +1,9 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-3197C1E06BB0","version":"7.3","path":"test-project1/docs/開発規約/VB.NET_WinForms.md","sheets":[{"heading":"状態・権限境界・配置","kind":"GRID","sheet":"01_状態・権限境界・配置"},{"heading":"共通規約の具体化","kind":"GRID","sheet":"02_共通規約の具体化"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-3197C1E06BB0","version":"7.4","path":"test-project1/docs/開発規約/VB.NET_WinForms.md","sheets":[{"heading":"状態・権限境界・配置","kind":"GRID","sheet":"01_状態・権限境界・配置"},{"heading":"共通規約の具体化","kind":"GRID","sheet":"02_共通規約の具体化"}]} -->
 # VB.NET／WinForms 開発規約
 
 | 項目 | 内容 |
 | --- | --- |
-| 版数・改訂日 | 7.3／2026-10-12 |
+| 版数・改訂日 | 7.4／2026-10-12 |
 | 対象方式 | VB.NET／WinForms |
 | 適用 | 設計上の実装契約。製品コードの実装・コンパイルは未実施 |
 
@@ -13,7 +13,7 @@
 
 評価時SearchContextはフォーム別メモリー、30分、利用者失効で破棄。DuplicateConfirmationは10分、利用者・セッション・対象・版・正規化全業務値・全候補ID/版を保存し、保存時の再検索と比較。フォーム内の確認済Booleanだけでは続行しない。
 
-ネイティブクライアント直結を選ぶため、本番では個別に認証したDB主体と実行専用のDB更新入口を組み合わせる。`student_api.prepare_save`は検査後に確認情報をサーバーに発行、`student_api.commit_save`は確認情報・理由を再検証し学生＋履歴を確定する契約とする。補助`t_confirmation`はtoken uniqueidentifier PK、principal nvarchar(128)、session_id uniqueidentifier、target_id L?、expected_version L?、payload_hash binary(32)、candidate_hash binary(32)、expires_at T、consumed Bを保持し、業務5表と別。直接DMLをREVOKE、共有パスワード埋込みを禁止。閲覧／編集／削除権限はDB更新入口でもDB主体から検査する。フォーム内評価サービスをそのまま改造可能なクライアントへ強いセキュリティ境界として配備しない。
+ネイティブクライアント直結を選ぶため、本番では個別に認証したDB主体と実行専用のDB更新入口を組み合わせる。`student_api.prepare_save`は検査後に確認情報をサーバーに発行、`student_api.persist_student`は確認情報・理由を再検証し学生＋履歴を保存する契約とする。保存手続内でCOMMITせず、呼出元UnitOfWorkが確定する。補助`t_confirmation`はtoken uniqueidentifier PK、principal nvarchar(128)、session_id uniqueidentifier、target_id L?、expected_version L?、payload_hash binary(32)、candidate_hash binary(32)、expires_at T、consumed Bを保持し、業務5表と別。直接DMLをREVOKE、共有パスワード埋込みを禁止。閲覧／編集／削除権限はDB更新入口でもDB主体から検査する。フォーム内評価サービスをそのまま改造可能なクライアントへ強いセキュリティ境界として配備しない。
 
 ビルドは.vbprojでTargetFramework=net10.0-windows、UseWindowsForms=true、OptionStrict=On。デザイナー生成.vbと業務処理を分ける。Microsoft.Data.SqlClientパッチ版を固定、設定は環境の秘密管理から取得。GUIはUIスレッドで更新し、I/O完了をAwaitして戻す。キャンセル時に保存の確定を取り消せたと断定しない。依存版・DB入口実装・認証結合・DPI・障害復旧を配備前に試験する。これらは仕様でありビルド済み成果物ではない。
 

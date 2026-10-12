@@ -1,9 +1,9 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-5AA4A3B1E208","version":"7.0","path":"test-project1/docs/開発規約/Access.md","sheets":[{"heading":"VBA型・NULL・Unicode","kind":"GRID","sheet":"01_VBA型・NULL・Unicode"},{"heading":"セキュリティ・配置・稼働条件","kind":"GRID","sheet":"02_セキュリティ・配置・稼働条件"},{"heading":"公式参照資料（2026-10-10確認（前版からの参照。今回全URLの再確認は未実施））","kind":"GRID","sheet":"03_公式参照資料（2026-10-10確認（前版からの参照。"},{"heading":"共通規約の具体化","kind":"GRID","sheet":"04_共通規約の具体化"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-5AA4A3B1E208","version":"7.4","path":"test-project1/docs/開発規約/Access.md","sheets":[{"heading":"VBA型・NULL・Unicode","kind":"GRID","sheet":"01_VBA型・NULL・Unicode"},{"heading":"セキュリティ・配置・稼働条件","kind":"GRID","sheet":"02_セキュリティ・配置・稼働条件"},{"heading":"公式参照資料（2026-10-10確認（前版からの参照。今回全URLの再確認は未実施））","kind":"GRID","sheet":"03_公式参照資料（2026-10-10確認（前版からの参照。"},{"heading":"共通規約の具体化","kind":"GRID","sheet":"04_共通規約の具体化"}]} -->
 # Access 開発規約
 
 | 項目 | 内容 |
 | --- | --- |
-| 版数・改訂日 | 7.0／2026-10-11 |
+| 版数・改訂日 | 7.4／2026-10-12 |
 | 対象方式 | Access |
 | 適用 | 設計上の実装契約。製品コードの実装・コンパイルは未実施 |
 
@@ -25,6 +25,10 @@
 modDateIsoは年・月・日を分割し、うるう年規則と月末日を検査して10文字へ組み立てる。DateSerialによる範囲外日の繰上げを受理しない。ISO日付の比較は固定10文字のバイナリー比較で可能。空の任意日はNull。日時と年月日を混同しない。
 
 modUnicodeはWindows NormalizeStringのNFKCを呼び、前後空白、カナ対応、英字大文字、scalar数を処理する。StringのLenだけを業務文字数としない。StrConv/UCaseだけで共通正規化が満たせたとみなさず、英字大小対応をカルチャー非依存に固定して共通ベクトルで検証する。NormalizeStringはUTF-16ポインターとコード単位長を渡し、出力バッファ不足時の再確保と異常戻りを処理する。[A-04]
+
+### 任意の複合参照
+
+続柄未選択は分類とコードを共にVariant Nullで扱う。両列のRequired=False、AllowZeroLength=Falseと行内ValidationRule、参照整合付きRelationを同時に定義する。[Access DB定義](../../spec/DB定義/Access/01_DB定義書.md)の生成手順・最小再検証を稼働条件とする。DAO3201を握りつぶす、FKを解除する、緊急連絡先を必須化する方法では解決しない。
 
 ## セキュリティ・配置・稼働条件
 

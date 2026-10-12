@@ -1,11 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.1","documentId":"BAS-STU-03-M_STUDENT","version":"7.2","path":"test-project1/spec/基本設計書/テーブル/01_m_student.md","layout":"TABLE","table":{"logicalName":"学生基本情報","physicalName":"m_student","profile":"論理","primaryKey":["student_id"],"fieldIds":{"student_id":"TBL-01-001","student_no":"TBL-01-002","student_name":"TBL-01-003","student_name_kana":"TBL-01-004","name_key":"TBL-01-005","kana_key":"TBL-01-006","birth_date":"TBL-01-007","gender_category":"TBL-01-008","gender_code":"TBL-01-009","postal_code":"TBL-01-010","prefecture_category":"TBL-01-011","prefecture_code":"TBL-01-012","address_line1":"TBL-01-013","address_line2":"TBL-01-014","phone_number":"TBL-01-015","email_address":"TBL-01-016","admission_date":"TBL-01-017","enrollment_category":"TBL-01-018","enrollment_status_code":"TBL-01-019","enrollment_end_date":"TBL-01-020","class_id":"TBL-01-021","emergency_contact_name":"TBL-01-022","relationship_category":"TBL-01-023","relationship_code":"TBL-01-024","emergency_phone_number":"TBL-01-025","remarks":"TBL-01-026","is_deleted":"TBL-01-027","deleted_at":"TBL-01-028","deleted_by":"TBL-01-029","delete_reason":"TBL-01-030","created_at":"TBL-01-031","created_by":"TBL-01-032","updated_at":"TBL-01-033","updated_by":"TBL-01-034","row_version":"TBL-01-035"}},"sheets":[{"sheet":"m_student","kind":"TABLE","sections":[{"heading":"テーブルヘッダー","kind":"HEADER"},{"heading":"項目詳細","kind":"LIST","key":["No"],"columns":["No","論理名","物理名","PK","NOT NULL","タイプ","長さ","初期値","説明"]}]}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.1","documentId":"BAS-STU-03-M_STUDENT","version":"7.4","path":"test-project1/spec/基本設計書/テーブル/01_m_student.md","layout":"TABLE","table":{"logicalName":"学生基本情報","physicalName":"m_student","profile":"論理","primaryKey":["student_id"],"fieldIds":{"student_id":"TBL-01-001","student_no":"TBL-01-002","student_name":"TBL-01-003","student_name_kana":"TBL-01-004","name_key":"TBL-01-005","kana_key":"TBL-01-006","birth_date":"TBL-01-007","gender_category":"TBL-01-008","gender_code":"TBL-01-009","postal_code":"TBL-01-010","prefecture_category":"TBL-01-011","prefecture_code":"TBL-01-012","address_line1":"TBL-01-013","address_line2":"TBL-01-014","phone_number":"TBL-01-015","email_address":"TBL-01-016","admission_date":"TBL-01-017","enrollment_category":"TBL-01-018","enrollment_status_code":"TBL-01-019","enrollment_end_date":"TBL-01-020","class_id":"TBL-01-021","emergency_contact_name":"TBL-01-022","relationship_category":"TBL-01-023","relationship_code":"TBL-01-024","emergency_phone_number":"TBL-01-025","remarks":"TBL-01-026","is_deleted":"TBL-01-027","deleted_at":"TBL-01-028","deleted_by":"TBL-01-029","delete_reason":"TBL-01-030","created_at":"TBL-01-031","created_by":"TBL-01-032","updated_at":"TBL-01-033","updated_by":"TBL-01-034","row_version":"TBL-01-035"}},"sheets":[{"sheet":"m_student","kind":"TABLE","sections":[{"heading":"テーブルヘッダー","kind":"HEADER"},{"heading":"項目詳細","kind":"LIST","key":["No"],"columns":["No","論理名","物理名","PK","NOT NULL","タイプ","長さ","初期値","説明"]}]}]} -->
 # 学生基本情報 テーブル仕様書
 
 ## テーブルヘッダー
 
 | 項目 | 内容 |
 | --- | --- |
-| 文書ID／版 | BAS-STU-03-M_STUDENT／7.2／2026-10-12 |
+| 文書ID／版 | BAS-STU-03-M_STUDENT／7.4／2026-10-12 |
 | 論理テーブル名 | 学生基本情報 |
 | 物理テーブル名 | m_student |
 | 対象／スキーマ | 論理／言語・DB製品非依存 |
@@ -43,8 +43,8 @@
 | 20 | 卒業・退学日 | enrollment_end_date |  |  | 日付 |  |  | 条件付き。卒業・退学なら必須。在学・休学なら空。 |
 | 21 | 現在・最終所属クラス | class_id |  |  | 数字 |  |  | 条件付き。在学・休学は必須。学生1人につき最大1件。桁上限は採用DB定義を参照。 |
 | 22 | 緊急連絡先氏名 | emergency_contact_name |  |  | 文字 | 8 |  | 一式指定時必須。続柄・電話と組で入力。 |
-| 23 | 続柄のコード分類 | relationship_category |  | 〇 | 文字 | 24 | RELATIONSHIP | 自動固定。続柄の値が空でも分類情報を保持。 |
-| 24 | 緊急連絡先続柄 | relationship_code |  |  | 文字 | 2 |  | 一式指定時必須。父・母・その他等。 |
+| 23 | 続柄のコード分類 | relationship_category |  |  | 文字 | 24 |  | 続柄未選択はNULL。選択時はRELATIONSHIPを処理設定し、続柄と同時更新。 |
+| 24 | 緊急連絡先続柄 | relationship_code |  |  | 文字 | 2 |  | 一式指定時必須。父・母・その他等。未選択時は分類もNULL。一部だけのNULLは不可。 |
 | 25 | 緊急連絡先電話 | emergency_phone_number |  |  | 文字 | 16 |  | 一式指定時必須。本人電話と同形式。 |
 | 26 | 備考 | remarks |  |  | 文字 | 120 |  | 改行可。成績の管理対象ではない。 |
 | 27 | 削除の状態 | is_deleted |  | 〇 | 真偽 |  | 未削除 | 自動。在籍区分と別に管理。 |
