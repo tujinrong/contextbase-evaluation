@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-MD-EXCEL","version":"7.1","path":"docs/MD構造・Excel変換規約.md","sheets":[{"heading":"章とシートの対応","kind":"GRID","sheet":"01_章とシートの対応"},{"heading":"LIST構文","kind":"GRID","sheet":"02_LIST構文"},{"heading":"LISTのExcel配置","kind":"GRID","sheet":"03_LISTのExcel配置"},{"heading":"GRIDのExcel配置","kind":"GRID","sheet":"04_GRIDのExcel配置"},{"heading":"メタ情報と復元","kind":"GRID","sheet":"05_メタ情報と復元"},{"heading":"検査と参照資料","kind":"GRID","sheet":"06_検査と参照資料"},{"heading":"描画可能な画面HTML・評価チェックリスト","kind":"GRID","sheet":"07_描画可能な画面HTML・評価チェックリスト"},{"heading":"テーブル文書の同一シート特例","kind":"GRID","sheet":"08_テーブル文書の同一シート特例"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-MD-EXCEL","version":"7.2","path":"docs/MD構造・Excel変換規約.md","sheets":[{"heading":"章とシートの対応","kind":"GRID","sheet":"01_章とシートの対応"},{"heading":"LIST構文","kind":"GRID","sheet":"02_LIST構文"},{"heading":"LISTのExcel配置","kind":"GRID","sheet":"03_LISTのExcel配置"},{"heading":"GRIDのExcel配置","kind":"GRID","sheet":"04_GRIDのExcel配置"},{"heading":"メタ情報と復元","kind":"GRID","sheet":"05_メタ情報と復元"},{"heading":"検査と参照資料","kind":"GRID","sheet":"06_検査と参照資料"},{"heading":"描画可能な画面HTML・評価チェックリスト","kind":"GRID","sheet":"07_描画可能な画面HTML・評価チェックリスト"},{"heading":"テーブル文書の同一シート特例","kind":"GRID","sheet":"08_テーブル文書の同一シート特例"}]} -->
 # MD構造・Excel変換規約
 
-版7.1／2026-10-12。仕様書の書式改訂。業務アプリ・実DBの実行試験は未実施。
+版7.2／2026-10-12。仕様書の書式改訂。業務アプリ・実DBの実行試験は未実施。
 
 ## 章とシートの対応
 
@@ -67,4 +67,6 @@ LIST章には引き続き表１つ以外を置かない。描画用HTML・CSS・
 
 ## テーブル文書の同一シート特例
 
-テーブル仕様書・DB定義書の分冊は[テーブル規約](テーブル仕様書記述規約.md)を適用する。schema=spec-md/1.1、layout=TABLEに限り、ヘッダー表と８列の項目詳細表を同一シートへ配置する。通常の１章１シート・別表紙・LIST見出し１行目の規則より優先する。項目詳細のLIST内に文章を混ぜる許可ではない。TABLEを未対応の変換器はGRIDに黙って変換せずエラーにする。
+テーブル仕様書・DB定義書の分冊は[テーブル規約](テーブル仕様書記述規約.md)を適用する。schema=spec-md/1.1、layout=TABLEに限り、ヘッダー表と９列の項目詳細表を同一シートへ配置する。通常の１章１シート・別表紙・LIST見出し１行目の規則より優先する。項目詳細のLIST内に文章を混ぜる許可ではない。TABLEを未対応の変換器はGRIDに黙って変換せずエラーにする。
+
+TABLE形式のPK・NOT NULL・初期値・長さの空欄規則はテーブル規約を優先する。一般LISTで未確定値の明記を求める規則を、TABLEの非該当セルへ埋草を入れる理由にしない。

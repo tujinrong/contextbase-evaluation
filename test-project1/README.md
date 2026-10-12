@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-README","version":"7.1","path":"test-project1/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入口一覧","kind":"LIST","sheet":"02_入口一覧","key":["区分"]},{"heading":"境界","kind":"GRID","sheet":"03_境界"},{"heading":"テーブル仕様の7.1改訂","kind":"GRID","sheet":"04_テーブル仕様の7.1改訂"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-README","version":"7.2","path":"test-project1/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入口一覧","kind":"LIST","sheet":"02_入口一覧","key":["区分"]},{"heading":"境界","kind":"GRID","sheet":"03_境界"},{"heading":"テーブル仕様の現行書式","kind":"GRID","sheet":"04_テーブル仕様の現行書式"}]} -->
 # test-project1 学生管理
 
-版7.1／2026-10-12。設計・評価基準。アプリ実装・実機試験・逆生成採点は未実施。
+版7.2／2026-10-12。設計・評価基準。アプリ実装・実機試験・逆生成採点は未実施。
 
 ## 概要
 
@@ -22,6 +22,8 @@
 
 Agent共通情報は[agents](../agents/README.md)、全体ルールは[docs](../docs/リポジトリ構成.md)。この題材の期待値を逆生成Agentの共通規約へ混入しない。
 
-## テーブル仕様の7.1改訂
+## テーブル仕様の現行書式
 
-[論理テーブル索引](spec/基本設計書/03_テーブル仕様書.md)と各DB定義を、１テーブル１ファイル・１シートの「テーブルヘッダー＋８列明細」へ分冊化した。従来の総合ファイル名は索引・共通制約への入口として維持する。詳細は[7.1レビュー](docs/テーブル仕様正規化レビュー_7.1.md)。画面と業務ルールの変更はない。
+[論理テーブル索引](spec/基本設計書/03_テーブル仕様書.md)と各DB定義を、１テーブル１ファイル・１シートの「テーブルヘッダー＋９列明細」へ分冊化した。従来の総合ファイル名は索引・共通制約への入口として維持する。詳細は[7.1レビュー](docs/テーブル仕様正規化レビュー_7.1.md)。画面と業務ルールの変更はない。
+
+7.2の表記変更は[NOT NULL・タイプ欄レビュー](docs/テーブル表記レビュー_7.2.md)を参照。

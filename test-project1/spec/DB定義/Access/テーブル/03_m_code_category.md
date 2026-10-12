@@ -1,33 +1,34 @@
-<!-- spec-meta: {"schema":"spec-md/1.1","documentId":"DBDEF-ACCESS-M_CODE_CATEGORY","version":"7.1","path":"test-project1/spec/DB定義/Access/テーブル/03_m_code_category.md","layout":"TABLE","table":{"logicalName":"コード種別マスタ","physicalName":"m_code_category","profile":"Access","primaryKey":["category_id"],"fieldIds":{"category_id":"DB-M_CODE_CATEGORY-CATEGORY_ID","category_name":"DB-M_CODE_CATEGORY-CATEGORY_NAME","code_length":"DB-M_CODE_CATEGORY-CODE_LENGTH","allow_add":"DB-M_CODE_CATEGORY-ALLOW_ADD","is_active":"DB-M_CODE_CATEGORY-IS_ACTIVE","remarks":"DB-M_CODE_CATEGORY-REMARKS","created_at":"DB-M_CODE_CATEGORY-CREATED_AT","created_by":"DB-M_CODE_CATEGORY-CREATED_BY","updated_at":"DB-M_CODE_CATEGORY-UPDATED_AT","updated_by":"DB-M_CODE_CATEGORY-UPDATED_BY","row_version":"DB-M_CODE_CATEGORY-ROW_VERSION"}},"sheets":[{"sheet":"m_code_category","kind":"TABLE","sections":[{"heading":"テーブルヘッダー","kind":"HEADER"},{"heading":"項目詳細","kind":"LIST","key":["No"],"columns":["No","論理名","物理名","PK","タイプ","長さ","初期値","説明"]}]}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.1","documentId":"DBDEF-ACCESS-M_CODE_CATEGORY","version":"7.2","path":"test-project1/spec/DB定義/Access/テーブル/03_m_code_category.md","layout":"TABLE","table":{"logicalName":"コード種別マスタ","physicalName":"m_code_category","profile":"Access","primaryKey":["category_id"],"fieldIds":{"category_id":"DB-M_CODE_CATEGORY-CATEGORY_ID","category_name":"DB-M_CODE_CATEGORY-CATEGORY_NAME","code_length":"DB-M_CODE_CATEGORY-CODE_LENGTH","allow_add":"DB-M_CODE_CATEGORY-ALLOW_ADD","is_active":"DB-M_CODE_CATEGORY-IS_ACTIVE","remarks":"DB-M_CODE_CATEGORY-REMARKS","created_at":"DB-M_CODE_CATEGORY-CREATED_AT","created_by":"DB-M_CODE_CATEGORY-CREATED_BY","updated_at":"DB-M_CODE_CATEGORY-UPDATED_AT","updated_by":"DB-M_CODE_CATEGORY-UPDATED_BY","row_version":"DB-M_CODE_CATEGORY-ROW_VERSION"}},"sheets":[{"sheet":"m_code_category","kind":"TABLE","sections":[{"heading":"テーブルヘッダー","kind":"HEADER"},{"heading":"項目詳細","kind":"LIST","key":["No"],"columns":["No","論理名","物理名","PK","NOT NULL","タイプ","長さ","初期値","説明"]}]}]} -->
 # コード種別マスタ DB定義書
 
 ## テーブルヘッダー
 
 | 項目 | 内容 |
 | --- | --- |
-| 文書ID／版 | DBDEF-ACCESS-M_CODE_CATEGORY／7.1／2026-10-12 |
+| 文書ID／版 | DBDEF-ACCESS-M_CODE_CATEGORY／7.2／2026-10-12 |
 | 論理テーブル名 | コード種別マスタ |
 | 物理テーブル名 | m_code_category |
 | 対象／スキーマ | Access／非適用（ACE） |
 | 用途／項目数 | コード分類１件の桁数・保守条件を管理。 11項目。 |
 | 主キー（順序） | category_id |
 | 共通規則・制約 | [総合仕様・制約](../01_DB定義書.md)／[記述・Excel配置規約](../../../../../docs/テーブル仕様書記述規約.md) |
-| 長さ／初期値の基準 | 長さは業務上限。数字は整数桁.小数桁。初期値はDB既定値。画面の初期値とは別。 |
+| 長さ／初期値の基準 | 長さは業務上限、タイプはDB型・容量。初期値はDB既定値。 |
 | 項目IDの対応 | 物理列に対応する既存DB項目IDを維持。メタ情報fieldIdsに対応を記録。 |
 | 基礎仕様 | [論理テーブル仕様](../../../基本設計書/03_テーブル仕様書.md)／[項目制約](../../../共通/09_項目制約定義.md) |
+| 記号 | PK・NOT NULL：〇が該当、空欄は非該当。初期値なし・長さ対象外は空欄。条件付き必須は説明参照。 |
 
 ## 項目詳細
 
-| No | 論理名 | 物理名 | PK | タイプ | 長さ | 初期値 | 説明 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | コード分類 | category_id | 〇 | 文字 | 24 | 指定なし | 必須。DB:TEXT(48)／NULL不可。分類の識別情報。登録後変更不可。 |
-| 2 | コード分類名 | category_name | － | 文字 | 12 | 指定なし | 必須。DB:TEXT(24)／NULL不可。性別・在籍区分等。 |
-| 3 | コード値の桁数 | code_length | － | 数字 | 2.0 | 指定なし | 必須。DB:LONG／NULL不可。分類内の値を固定桁で管理。 |
-| 4 | 値の追加可否 | allow_add | － | 真偽 | － | 指定なし | 必須。DB:YESNO／NULL不可。通常保守で新しい値を増やせるか。 |
-| 5 | 分類の利用可否 | is_active | － | 真偽 | － | True | 必須・利用可。DB:YESNO／NULL不可。本版の5分類は利用可を維持。 |
-| 6 | 備考 | remarks | － | 文字 | 120 | 指定なし | 任意。DB:TEXT(240)／NULL可。分類の用途・保守上の注意。 |
-| 7 | 作成日時 | created_at | － | 日時 | － | 指定なし | 自動。DB:DATETIME／NULL不可。最初の保存日時。変更不可。 |
-| 8 | 作成者 | created_by | － | 文字 | 64 | 指定なし | 自動。DB:TEXT(128)／NULL不可。認証された登録者。変更不可。 |
-| 9 | 更新日時 | updated_at | － | 日時 | － | 指定なし | 自動。DB:DATETIME／NULL不可。実変更の保存時点。 |
-| 10 | 更新者 | updated_by | － | 文字 | 64 | 指定なし | 自動。DB:TEXT(128)／NULL不可。認証された変更者。 |
-| 11 | 更新管理番号 | row_version | － | 数字 | 10.0 | 1 | 自動。DB:LONG／NULL不可。新規1、実変更ごとに1加算、上限で停止。2147483647到達後の加算を拒否。 |
+| No | 論理名 | 物理名 | PK | NOT NULL | タイプ | 長さ | 初期値 | 説明 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | コード分類 | category_id | 〇 | 〇 | TEXT(48) | 24 |  | 分類の識別情報。登録後変更不可。 |
+| 2 | コード分類名 | category_name |  | 〇 | TEXT(24) | 12 |  | 性別・在籍区分等。 |
+| 3 | コード値の桁数 | code_length |  | 〇 | LONG | 2.0 |  | 分類内の値を固定桁で管理。 |
+| 4 | 値の追加可否 | allow_add |  | 〇 | YESNO |  |  | 通常保守で新しい値を増やせるか。 |
+| 5 | 分類の利用可否 | is_active |  | 〇 | YESNO |  | True | 必須・利用可。本版の5分類は利用可を維持。 |
+| 6 | 備考 | remarks |  |  | TEXT(240) | 120 |  | 分類の用途・保守上の注意。 |
+| 7 | 作成日時 | created_at |  | 〇 | DATETIME |  |  | 自動。最初の保存日時。変更不可。 |
+| 8 | 作成者 | created_by |  | 〇 | TEXT(128) | 64 |  | 自動。認証された登録者。変更不可。 |
+| 9 | 更新日時 | updated_at |  | 〇 | DATETIME |  |  | 自動。実変更の保存時点。 |
+| 10 | 更新者 | updated_by |  | 〇 | TEXT(128) | 64 |  | 自動。認証された変更者。 |
+| 11 | 更新管理番号 | row_version |  | 〇 | LONG | 10.0 | 1 | 自動。新規1、実変更ごとに1加算、上限で停止。2147483647到達後の加算を拒否。 |
