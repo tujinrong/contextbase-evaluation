@@ -21,12 +21,24 @@ def main(argv=None):
     parser.add_argument('--output', type=Path)
     parser.add_argument('--document', type=Path)
     parser.add_argument('--revision-context', type=Path)
+    parser.add_argument('--analysis-job', type=Path,
+                        help='同じ封印snapshotとbound planで検証済みの解析checkpointを再利用し、新しいAI原稿だけ生成')
+    parser.add_argument('--recover-analysis-job', action='store_true',
+                        help='--analysis-jobの旧完了解析を原応答・provider・前後snapshotの検査後に明示的に遅延bind')
+    parser.add_argument('--reuse-analysis', action='store_true',
+                        help='iterateで同じ検証済み解析を明示的に再利用。既定は各稿で新規AI解析')
     parser.add_argument('--timeout', type=int, default=1800)
     parser.add_argument('--workers', type=int, default=2)
     parser.add_argument('--max-rounds', type=int, default=3)
     parser.add_argument('--deadline', help='UTC ISO8601の停止時刻。到達後に新しいAIジョブを開始しない')
     parser.add_argument('--without-independent-review', action='store_true', help='初期draftの測定用。レビュー合格とは報告しない')
     args = parser.parse_args(argv)
+    if (args.analysis_job is not None or args.recover_analysis_job) and args.command != 'document':
+        parser.error('--analysis-job and --recover-analysis-job are only valid for document')
+    if args.recover_analysis_job and args.analysis_job is None:
+        parser.error('--recover-analysis-job requires --analysis-job')
+    if args.reuse_analysis and args.command != 'iterate':
+        parser.error('--reuse-analysis is only valid for iterate')
     try:
         if args.command == 'snapshot':
             if not args.source:
@@ -47,7 +59,8 @@ def main(argv=None):
                 if not args.plan or not args.document_id or not args.output:
                     parser.error('--plan, --document-id and --output required')
                 result = run(args.snapshot, args.plan, args.document_id, args.job, args.output,
-                             max_rounds=args.max_rounds, timeout=args.timeout, deadline=args.deadline)
+                             max_rounds=args.max_rounds, timeout=args.timeout, deadline=args.deadline,
+                             reuse_analysis=args.reuse_analysis)
             elif args.command == 'batch':
                 from .batch import run
                 if not args.plan or not args.output:
@@ -64,9 +77,12 @@ def main(argv=None):
                     if not args.output:
                         parser.error('--output required')
                     revision = json.loads(args.revision_context.read_text(encoding='utf-8')) if args.revision_context else None
+                    if args.recover_analysis_job:
+                        workflow.recover_analysis_checkpoint(args.snapshot, definition, args.analysis_job)
+                    resume_options = {'analysis_job': args.analysis_job} if args.analysis_job is not None else {}
                     result = workflow.document(args.snapshot, definition, args.job, args.output,
                                                timeout=args.timeout, revision_context=revision,
-                                               deadline=args.deadline)
+                                               deadline=args.deadline, **resume_options)
                 else:
                     if not args.document:
                         parser.error('--document required')

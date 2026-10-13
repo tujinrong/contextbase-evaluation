@@ -1,0 +1,11 @@
+# 第5稿前のsafe feedback入力契約監査
+
+2026-10-13。第4稿から次稿へ渡すsafe JSONを対象とする。評価期待値・spec-eval・evaluator-only/frozen内のファイルを読んでいない。原仕様、原プログラムの実行、AI解析/執筆/描画の追加起動、source/MD/feedback/productionの変更はしていない。
+
+検索のsource-backed-writer-feedback/1は新classification=GENERATION_SAFE_SOURCE_BACKED_FEEDBACKである。現在driverの正確なclassification/identity AST節を安全なメモリstubで実行し、新aliasと旧2 aliasを受け入れ、未知分類と文書ID不一致は拒否する5ケースPASSを確認した。分類名だけが原因だった新aliasの拒否は修正されている。元feedbackのSHA `6b7d7dae3dfcb3dd9c54cf7ccfc3c91cfbe09adc0345b510e711b5c5e222336c` は変更していない。稼働済み第4稿runnerをこの現在driverと同じ版へ読み替えない。
+
+actual JSONのtop-level、finding/preserve、provenance/checks、原文/MD根拠を限定された構造として検査した。採点数値・原期待セル・評価表を渡す入力欄はなく、指摘はsourceBackedFindingsとexistingCorrectBehaviorsに分かれる。文書ID、4.0、選択project/profile/iteration、sourceInputRoot、current生成MDの正本path/SHAを一致確認した。source/reference47範囲とcurrentMD27範囲（計74）、source16pinsを独立検証した。原文根拠はcapsule manifestに列挙されたsources/または許可reference-designs/だけで、許可refの内容は意味読取りせずhash/range確認に留めた。
+
+check_feedback.pyのsearch-audit.jsonに実入力、driver alias集合、拒否ケース、範囲件数、20入力のfirst-observed/after SHA不変を保存した。元の生成MDはSHA `35defbc0495678f32ec140535d46e96bbfda0e66259aac13982a6cf28b0e41c0` のままである。capsuleはtraining-assistedのlegacy-v1 unsealedであり、sealed-v2とは主張しない。schema/hash/rangeの成功から、過去のbuilderが一度も別材料を読まなかったこと、意味採点やアプリ試験の合格を導かない。
+
+登録safe feedbackは初回検索監査時に未完成のため、出揃ってから独立のcombined-audit.jsonへ記録する。検索の初回完了を登録の検査結果として流用しない。正しい追加REVIEW、deadline前失敗null、draft保持は今回の分類alias検査の対象外であり、前工程focus-method-review-07で別に検証されている。外部jobは起動しない。

@@ -1,0 +1,261 @@
+{
+  "documents": [
+    {
+      "documentId": "SM-DET-STUDENT-EDITOR",
+      "draft": {
+        "documentId": "SM-DET-STUDENT-EDITOR",
+        "path": "spec/detail/student-editor.md",
+        "contentSha256": "657b3ff33fb8d07d37b7408245fc5c448020810efd77628e481e10d6edc70161",
+        "aiAuthored": true,
+        "semanticProseAssembledByPython": false,
+        "analysisFacts": 73,
+        "unresolved": [
+          "coverageNotes相当の解析範囲記録: manifestのmode=training-assisted、trainingReferenceAuthorizedByUser=true、referenceSpecificationIncluded=true、referenceFilesの列挙を確認し、指定の参考設計1ファイルを選択読取りした。manifestは権限・材料確認だけに使用した。読取りはカプセル内manifest、sources、当該許可参考設計に限定し、外部資料・ユーザー設定・秘密値を取得していない。入力プログラムの実行・ビルド・テスト・インストール、ネットワーク、プラグイン、委任、編集は行っていない。参考設計全文読了や実画面検証は主張しない。",
+          "MVC標準バインドによる空文字・空白のみ文字列・和暦部品のNULL化、数値・bool変換、ModelState試行値とTag Helper再描画の厳密な実行結果は未確認。関連: sources/Web/Controllers/StudentsController.cs:26-33、37-41、sources/Infrastructure/WebHostSetup.cs:16-18、sources/Web/Inputs/StudentSaveInput.cs:34-60。SM-COM-HTTP-SECURITYおよびSM-RPT-UNRESOLVEDへ引き継ぐ。",
+          "StudentDbの実接続先、DDL・seed・SNAPSHOT・権限の適用済み状態と実効権限は未確認。定義されたFK・CHECK・UNIQUEの実DB存在は断定しない。接続設定値・秘密値は取得していない。関連: sources/Infrastructure/WebHostSetup.cs:19-19、sources/Core/SqlServerStudentService.cs:39-63、sources/database/001_schema.sql:187-205、sources/database/003_web_permissions.sql:12-24。",
+          "本番認証連携、claimsの発行・失効、学校固有の利用者・クラス・候補データは未確定。関連: sources/Infrastructure/RequestIdentity.cs:7-16、sources/Infrastructure/WebHostSetup.cs:14-15。認証設定の宣言を本番連携の稼働証拠にしない。",
+          "競合、取消、Commit応答断絶、Rollback失敗、Unknown後の削除Loadによる404、応答開始後の例外は実行未確認。本文は静的に到達し得る分岐を記録したもので、障害試験の結果ではない。関連: sources/Core/SqlServerStudentService.cs:240-329、392-416、sources/Web/Controllers/StudentsController.cs:37-37、sources/Infrastructure/WebHostSetup.cs:23-23。",
+          "Context・Snapshot・Flash・Web確認辞書の複数プロセス共有、再起動復元、永続化運用は示されていない。t_runtime_stateの暗号化方式・状態種別・保存入口は未確定。関連: sources/Infrastructure/WebHostSetup.cs:13-19、sources/Infrastructure/SearchContextStore.cs:9-15、sources/Infrastructure/EditorSnapshotStore.cs:7-11、sources/Core/SqlServerStudentService.cs:19-29。SM-COM-RUNTIME-STATE、SM-DB-T-RUNTIME-STATEへ引き継ぐ。",
+          "共通Layout・CSSを含む実ブラウザー描画、Tag Helper生成後DOM、狭幅候補表のはみ出し、フォーカス挙動は未検証。静的投影にスクロール枠やモーダル保証を追加していない。関連: sources/Views/Shared/_Layout.cshtml:1-1、sources/Views/Students/Edit.cshtml:14-14、sources/wwwroot/css/site.css:1-1。",
+          "参考設計のリンク先共通仕様・共通UI・DB定義・開発規約・プレビュー資産は読んでいない。設計差の採用理由、変更承認、顧客承認、改修予定も未確定。提供されたapproved値や前稿批評を実行・承認証拠として使用していない。SM-RPT-DESIGN-IMPLEMENTATIONおよびSM-RPT-UNRESOLVEDへ引き継ぐ。"
+        ],
+        "factCorrections": [
+          "共通LayoutとCSSを原文で再確認し、前稿の静的投影へ共通header・mainとh1の24px指定を反映した。候補tableはwarning section直下とし、原本にないdiv.gridを除いた。根拠: sources/Views/Shared/_Layout.cshtml:1-1、sources/Views/Students/Edit.cshtml:3-17、sources/wwwroot/css/site.css:1-1。",
+          "通常新規の投影と、既存編集・Viewer参照・ConfirmationRequired・既存Administratorの差分を分離した。登録／更新等の合成表示をやめ、既存readonlyと参照fieldset disabled、確認取消autofocusを明示した。根拠: sources/Views/Students/Edit.cshtml:3-17、sources/Web/Models/StudentEditPageModel.cs:14-14。",
+          "ReturnContextIdはEntry.Id=Token()、SnapshotIdはEditorSnapshotStore.Createによる別のToken()呼出しとして記載した。同じ64桁hex形式でもentriesとsnapshotsは別辞書で、照合対象も異なる。根拠: sources/Infrastructure/SearchContextStore.cs:9-14、sources/Infrastructure/EditorSnapshotStore.cs:7-11。",
+          "コード保護フラグを候補可否から分離し、seed指定→CodeEntry.IsProtected→コード保守の停止・期間短縮拒否を追跡した。学生の入力・保存列へ追加しない。根拠: sources/database/002_seed.sql:15-69、78-91、sources/Core/SqlServerStudentService.cs:203-212、sources/Core/MasterMaintenanceService.cs:105-115。",
+          "コード名称は保守側raw12・Trim後12／nvarchar(24) NOT NULL、クラス名称はraw18・Trim後18／nvarchar(36) NOT NULLとして補強した。LEFT JOIN結果のnullableと物理名称列のNOT NULLを区別した。根拠: sources/Core/MasterMaintenanceService.cs:30-33、73-74、79-83、113-115、sources/database/001_schema.sql:68-81、115-128、sources/Core/Contracts.cs:50-64。",
+          "内部状態表にブラウザーaria-busy・押下以外のbutton.disabledを追加し、サーバー確認辞書Busyを独立行にした。UI再入拒否・要求連番・旧応答破棄は実装されていない。根拠: sources/wwwroot/js/site.js:2-5、sources/Core/SqlServerStudentService.cs:27-29、278-278、323-323。",
+          "復帰ResumeはAppliedなしの場合Revisionを増やさず、Use成功による期限延長だけを行うことを明示した。Appliedありの成功再検索ではLastResult更新・Revision加算を行う。根拠: sources/Infrastructure/WebStudentCoordinator.cs:14-14、sources/Infrastructure/SearchContextStore.cs:14-14。",
+          "HTTP原文、バインド後DTO、ModelState試行値、サービス引数を区別した。サービスraw上限や空文字分岐をHTTP入力の直接保証へ拡張しない。根拠: sources/Web/Controllers/StudentsController.cs:26-33、37-41、sources/Web/Inputs/StudentSaveInput.cs:34-60。",
+          "関連文書は供給計画の正確なID・pathへ対応付け、未生成と記載した。共通LookupはOP-LKへ集約し、検索全仕様はSM-DET-STUDENT-SEARCHの責務へ分離した。保存の投稿入力保持、削除失敗後Load、ResetとReload、NoChange・Commit・Unknownの境界は維持した。"
+        ],
+        "analysisExecutedInThisJob": true,
+        "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-02-attempt-02\\eebb51fa1eb2da8f",
+        "snapshot": {
+          "manifestSha256": "3a722dc206dbf2ce850b594aa1bee65117e472a8144531adb731d354fb9a5a24",
+          "capsuleSchema": "reverse-ai-source-capsule/1",
+          "mode": "training-assisted",
+          "modeDerivation": "explicit-manifest-mode",
+          "scope": "legacy-v1-raw-indexed-metadata-revalidated-unsealed-manifest"
+        },
+        "referenceMode": "training-assisted",
+        "structureFindings": [
+          {
+            "severity": "ERROR",
+            "code": "REFERENCE_PATH",
+            "detail": "An HTML reference uses an unsafe or protected target",
+            "location": "spec/detail/student-editor.md:57"
+          },
+          {
+            "severity": "ERROR",
+            "code": "REFERENCE_PATH",
+            "detail": "An HTML reference uses an unsafe or protected target",
+            "location": "spec/detail/student-editor.md:57"
+          },
+          {
+            "severity": "ERROR",
+            "code": "REFERENCE_PATH",
+            "detail": "An HTML reference uses an unsafe or protected target",
+            "location": "spec/detail/student-editor.md:57"
+          },
+          {
+            "severity": "ERROR",
+            "code": "REFERENCE_PATH",
+            "detail": "An HTML reference uses an unsafe or protected target",
+            "location": "spec/detail/student-editor.md:116"
+          }
+        ],
+        "status": "STRUCTURE_INVALID"
+      },
+      "review": {
+        "documentId": "SM-DET-STUDENT-EDITOR",
+        "approved": false,
+        "findings": [
+          {
+            "severity": "major",
+            "documentLocation": "概要／画面配置と静的投影（構造検査位置:57、116）",
+            "defect": "静的HTMLの登録・リセット・削除フォームのactionと検索復帰リンクのhrefに、提示されたREFERENCE_PATHエラー4件が残っている。実装のルートとの対応は確認できるが、成果物の参照先制約を満たしていない。",
+            "repairDirection": "DOM階層、項目、表示条件、CSSを保ちつつ、投影内の参照先を成果物で許可される非実行表現へ修正する。実際のHTTPルートは入口表・イベント仕様に残し、修正後の構造検査結果を確認する。",
+            "references": [
+              {
+                "path": "sources/Views/Students/Edit.cshtml",
+                "startLine": 5,
+                "endLine": 5
+              },
+              {
+                "path": "sources/Views/Students/Edit.cshtml",
+                "startLine": 16,
+                "endLine": 17
+              }
+            ]
+          },
+          {
+            "severity": "major",
+            "documentLocation": "項目移送仕様／TR-004・TR-012、EV-04／結果・例外時の扱い",
+            "defect": "バインド後の日付文字列がNULLになった場合の例外経路が欠落している。有効な元号と先行部品のもとで和暦年・月・日がNULLの場合、または入学日がNULLの場合、Normalize呼出しはNullReferenceExceptionとなる。この例外は個別正規化・SaveAsync・Controllerの該当catchで捕捉されず、応答未開始なら上位の共通503応答へ進む。入力不正の422再表示とは別経路である。",
+            "repairDirection": "サービス引数にNULLが到達した場合の条件付き動作を追記する。ブラウザーrequiredやC#の非nullable宣言をNULL排除の保証にせず、HTTPの省略・空文字・空白からMVCが生成する値については、確認できない変換境界を未解決事項へ記録する。",
+            "references": [
+              {
+                "path": "sources/Core/JapaneseDateService.cs",
+                "startLine": 19,
+                "endLine": 24
+              },
+              {
+                "path": "sources/Core/JapaneseDateService.cs",
+                "startLine": 52,
+                "endLine": 59
+              },
+              {
+                "path": "sources/Core/StudentNormalizer.cs",
+                "startLine": 123,
+                "endLine": 135
+              },
+              {
+                "path": "sources/Core/SqlServerStudentService.cs",
+                "startLine": 232,
+                "endLine": 239
+              },
+              {
+                "path": "sources/Web/Controllers/StudentsController.cs",
+                "startLine": 29,
+                "endLine": 33
+              },
+              {
+                "path": "sources/Infrastructure/WebHostSetup.cs",
+                "startLine": 16,
+                "endLine": 23
+              }
+            ]
+          }
+        ],
+        "unresolved": [
+          "unknown: MVCのバインダー・メタデータ処理の依存実装は収録されていない。日付項目の省略・空文字・空白が、DTOとModelStateへどう移されるかは確定していない。上記NULL例外経路はサービス引数についての条件付き解析である。",
+          "unknown: 投影のレンダリング画像を閲覧していないため、視覚的一致は承認できない。原ビュー、共有Layout、CSSセレクターとの静的照合のみ実施した。"
+        ]
+      },
+      "status": "REQUIRES_AI_REVISION",
+      "visualFidelityVerified": false,
+      "formalSemanticScore": null
+    },
+    {
+      "documentId": "SM-DET-STUDENT-SEARCH",
+      "draft": {
+        "documentId": "SM-DET-STUDENT-SEARCH",
+        "path": "spec/detail/student-search.md",
+        "contentSha256": "7750a80014ed98cd2408807798c30cead8f395e6e139a8b1cb4a610768f5634a",
+        "aiAuthored": true,
+        "semanticProseAssembledByPython": false,
+        "analysisFacts": 78,
+        "unresolved": [
+          "HTTPバインド境界: 空白のみのフォーム値の保持・null変換、int?・bool・配列への詳細変換、変換失敗値、ModelStateとTag Helperの再表示優先順位は、提示されたフレームワーク実装から確定できない。影響: SM-DET-STUDENT-SEARCH、SM-COM-HTTP-SECURITY、SM-RPT-UNRESOLVED。根拠: sources/Web/Controllers/StudentsController.cs:13-22、sources/Infrastructure/WebHostSetup.cs:16-16。",
+          "運用状態: StudentDbの実接続値、DB配備、SNAPSHOT設定、FK・CHECKの実効状態、権限、マスター件数、学校固有データは未確認。接続実値・資格情報は取得していない。DDLや接続診断の宣言を成功結果に読み替えない。",
+          "認証・保持領域: 本番claim発行、認証失効時の実挙動、プロセス再起動・複数ノード間の状態継続は未確定。接続された状態ストアはプロセスメモリであり、t_runtime_stateの永続化・暗号化・消費の接続は確認できない。",
+          "条件付き推論: SearchのPageSize=0での描画例外、Resumeの保持表示ページ超過、削除Unknown後の再読込み404はソース経路からの推論で、実行確認ではない。SQL取消、競合、後段候補障害、切断時の最終配信も静的解析だけでは確定しない。",
+          "参考設計の不足境界: 共通メニューの遷移URL、RangeFrom／RangeToの正確な算式、参考設計からリンクされる未収録共通資料は追加取得していない。設計上の名称・意図から現行の公開入口、値、処理を創作しない。",
+          "成果物状態: 関連文書のID・相対パスは供給計画と照合したが、各文書の生成・リンク先存在・顧客承認は未確認。本応答のcontentが改訂本文であり、ファイルや画面画像を作成したとは扱わない。",
+          "解析範囲・参照許可: manifestでmode=training-assisted、trainingReferenceAuthorizedByUser=true、referenceSpecificationIncluded=trueを確認した。referenceFilesに列挙された学生検索の基本設計・詳細仕様だけを参考意図の照合に読んだ。manifestは材料と権限の確認に限定し、業務・実装判断の根拠には用いていない。",
+          "解析範囲・手段: workspace内のmanifest.json、sources/、許可されたreference-designs/の必要範囲をrg --files・rg -nで確認した。長い出力の欠けた主要範囲は分割して再読した。原プログラム・SQL・ビルド・試験・CLIは実行せず、ファイル編集、ネットワーク、外部サービス、プラグイン、委任エージェント、モデル訓練、workspace外の資料・ユーザー設定の読取りは行っていない。",
+          "解析範囲・材料の位置付け: 提供facts、前稿、批評は再検証する材料として扱い、期待値・実行証拠・試験合格・顧客承認にはしていない。参考設計との相違は設計意図と観測実装として分け、改善採用は認定していない。"
+        ],
+        "factCorrections": [
+          "前稿の「空白のみは学籍番号で拒否、カナで空キー検索」という画面動作の断定を修正した。確定するのはサービスへ非空空白文字列が届いた場合の分岐であり、MVCバインドでnullになれば両条件は省略される。HTTP原入力、バインド後DTO、Normalizer引数を分離した。根拠: sources/Web/Controllers/StudentsController.cs:13-16、sources/Infrastructure/WebHostSetup.cs:16-16、sources/Core/SqlServerStudentService.cs:113-117。",
+          "学年・在籍・都道府県名称について、保守入力12スカラー値、DBのnvarchar(24)、NOT NULL、CHECK12、LEFT JOIN結果NULL可を追記した。クラス名称は18スカラー値・nvarchar(36)・CHECK18である。クラス保存の実パラメータは動的生成の@class_name、コード名称保存は@nameと区別した。根拠: sources/Core/MasterMaintenanceService.cs:33-33,73-74,82-82,113-115,127-128、sources/database/001_schema.sql:67-81,115-128。",
+          "削除非Saved後の最終応答を補完した。Controllerは結果エラー・HTTP状態の設定後にLoadを再実行し、詳細・候補・フォーム・復帰版・編集スナップショットを再作成する。Unknownでも実際に削除済みなら非削除取得から404へ進み得ることを条件付き推論として記載した。根拠: sources/Web/Controllers/StudentsController.cs:25-25,37-37、sources/Infrastructure/WebStudentCoordinator.cs:17-17、sources/Core/SqlServerStudentService.cs:176-179,409-416。",
+          "前稿の静的投影にあった独自のssラッパー・CSSを除き、共有Layoutのheader/mainと実際の要素・classセレクターへ合わせた。未検索Viewer図とfound・非Viewerの差分、0件・超過・局所失敗の分岐を別に示した。根拠: sources/Views/Shared/_Layout.cshtml:1-1、sources/Views/Students/Search.cshtml:3-8、sources/wwwroot/css/site.css:1-1。",
+          "参考設計の応答世代制御を候補だけの意図に限定せず、検索・ページ・候補の各最新要求確認とRequestSequenceを具体化した。現行のGate・RevisionはEntry更新の保護、通常HTML応答は画面応答世代の制御なしとして区別した。根拠: reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:147-147,210-212,258-262,307-309、sources/Infrastructure/SearchContextStore.cs:14-14、sources/wwwroot/js/site.js:2-9。",
+          "メニュー、件数・表示範囲、先頭・最後ページ、未所属・欠損・クラス状態の設計意図を操作条件・表示値・結果として説明し、現行ビューへ未実装制御を追加しない構成に改めた。正確な表示範囲算式や共通メニューURLは創作していない。根拠: reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:99-114,135-137,351-367、sources/Views/Students/Search.cshtml:3-8、sources/Infrastructure/WebStudentCoordinator.cs:21-21。",
+          "登録側の全保存列・重複確認・監査詳細の再掲を減らし、E09をSaved、303、復帰ID・版、Flash、再検索、非Saved後の最終応答へ整理した。関連文書は供給計画の正確なIDと相対パスで対応し、生成済みとは認定していない。"
+        ],
+        "analysisExecutedInThisJob": true,
+        "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-02-attempt-02\\488af9821732c8f6",
+        "snapshot": {
+          "manifestSha256": "3a722dc206dbf2ce850b594aa1bee65117e472a8144531adb731d354fb9a5a24",
+          "capsuleSchema": "reverse-ai-source-capsule/1",
+          "mode": "training-assisted",
+          "modeDerivation": "explicit-manifest-mode",
+          "scope": "legacy-v1-raw-indexed-metadata-revalidated-unsealed-manifest"
+        },
+        "referenceMode": "training-assisted",
+        "structureFindings": [
+          {
+            "severity": "ERROR",
+            "code": "REFERENCE_PATH",
+            "detail": "An HTML reference uses an unsafe or protected target",
+            "location": "spec/detail/student-search.md:65"
+          },
+          {
+            "severity": "ERROR",
+            "code": "REFERENCE_PATH",
+            "detail": "An HTML reference uses an unsafe or protected target",
+            "location": "spec/detail/student-search.md:65"
+          },
+          {
+            "severity": "ERROR",
+            "code": "REFERENCE_PATH",
+            "detail": "An HTML reference uses an unsafe or protected target",
+            "location": "spec/detail/student-search.md:65"
+          },
+          {
+            "severity": "ERROR",
+            "code": "REFERENCE_PATH",
+            "detail": "An HTML reference uses an unsafe or protected target",
+            "location": "spec/detail/student-search.md:113"
+          },
+          {
+            "severity": "ERROR",
+            "code": "REFERENCE_PATH",
+            "detail": "An HTML reference uses an unsafe or protected target",
+            "location": "spec/detail/student-search.md:113"
+          },
+          {
+            "severity": "ERROR",
+            "code": "REFERENCE_PATH",
+            "detail": "An HTML reference uses an unsafe or protected target",
+            "location": "spec/detail/student-search.md:113"
+          }
+        ],
+        "status": "STRUCTURE_INVALID"
+      },
+      "review": {
+        "documentId": "SM-DET-STUDENT-SEARCH",
+        "approved": false,
+        "findings": [
+          {
+            "severity": "major",
+            "documentLocation": "spec/detail/student-search.md:65、113／概要「画面設計と表示層」の静的HTML",
+            "defect": "静的投影のaction、formaction、hrefに実アプリケーションの送信先・遷移先が残り、提示された構造検査ではREFERENCE_PATHエラー6件が未解消である。URLは原ビューの実装と対応するが、文書の埋め込みHTMLとして許容された状態にはなっていない。",
+            "repairDirection": "原ルートは本文または非遷移のデータ属性に保持し、投影から実ルートへの送信・遷移を除く。DOM階層、項目配置、権限差、disabled条件は維持して構造検査を再確認する。",
+            "references": [
+              {
+                "path": "sources/Views/Students/Search.cshtml",
+                "startLine": 4,
+                "endLine": 8
+              },
+              {
+                "path": "sources/Web/Controllers/StudentsController.cs",
+                "startLine": 13,
+                "endLine": 24
+              }
+            ]
+          }
+        ],
+        "unresolved": [
+          "unknown: 静的HTML/CSSは原ビュー・共有レイアウト・CSSとテキスト照合したが、描画画像を閲覧していないため視覚的一致は未承認。",
+          "unknown: REFERENCE_PATH検査の許可規則は提示されておらず、修正後の適合性は再検査が必要。",
+          "unknown: MVCによる空白値変換とTagHelperが生成する最終DOMは、収録された宣言・登録だけでは完全に確認できない。原稿のバインド境界に関する留保を維持する。",
+          "unknown: DB配備、実効権限、競合・取消・障害時の実挙動、関連文書の生成状態は未確認。静的解析を実行結果や試験合格として扱わない。"
+        ]
+      },
+      "status": "REQUIRES_AI_REVISION",
+      "visualFidelityVerified": false,
+      "formalSemanticScore": null
+    }
+  ],
+  "formallyEvaluated": false,
+  "freshAnalysisInEachDocument": true,
+  "semanticProseAssembledByPython": false,
+  "runtimeFrozenAtLaunch": true,
+  "runtimeDrift": [],
+  "visualFidelityVerified": false
+}

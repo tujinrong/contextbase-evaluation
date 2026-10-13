@@ -1,0 +1,39 @@
+{
+  "schema": "reverse-ai-creation-method-finding/1",
+  "findingId": "METH-BOUND-DOCUMENT-IDENTITY-001",
+  "severity": "major",
+  "problem": "The previous structural validator required a nonempty spec-meta documentId but did not compare it with the source-derived bound document definition. A correct outer DRAFT response documentId/path could carry a different metadata documentId inside its unchanged Markdown; that body could then pass structural validation and receive an accepted AI approval.",
+  "generality": "Applies to any source-derived document ID or kind; no business names, field values, fixed expected IDs, or evaluator answers are embedded in production code.",
+  "repair": {
+    "validator": "validate_document(content, path, *, expected_document_id=None)",
+    "behavior": "When a bound identity is supplied, compare the real metadata documentId exactly and emit ERROR META_DOCUMENT_ID at the metadata line on mismatch.",
+    "compatibility": "Standalone two-argument callers and explicit None preserve the existing validation behavior; the validator never rewrites Markdown.",
+    "workflow": "Both workflow.document and workflow.review supply definition['id']; existing ReviewStructureConflict prevents AI approval from overriding the detected defect.",
+    "aiAuthorship": "AI continues to author analysis, prose, facts and revisions. Python validates identity correspondence and preserves artifacts only."
+  },
+  "validation": {
+    "meaningfulNegative": "Synthetic bound CART draft with correct outer CART identity/path but Markdown metadata OTHER is retained as STRUCTURE_INVALID; an independent approving AI review is rejected and no review-verified.json is written.",
+    "directCoverage": [
+      "Exact matching and None/two-argument compatibility",
+      "Wrong metadata ID with correct path",
+      "Expected ID present only in body or fenced example",
+      "Case/whitespace mismatch",
+      "Missing metadata ID",
+      "Malformed expected-identity caller arguments"
+    ],
+    "notMeasured": [
+      "Formal business semantic score",
+      "Live model prose quality",
+      "Input application execution"
+    ]
+  },
+  "codeFiles": [
+    "src/contextbase/ai/validation.py",
+    "src/contextbase/ai/workflow.py"
+  ],
+  "testFiles": [
+    "src/contextbase/tests/test_ai_validation.py",
+    "src/contextbase/tests/test_ai_provenance.py"
+  ],
+  "scope": "No evaluator expectations, original project specifications, or business-specific source were inputs to this generic change."
+}

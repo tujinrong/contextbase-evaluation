@@ -1,0 +1,79 @@
+{
+  "schema": "reverse-independent-source-native-review-preparation/1",
+  "round": 5,
+  "projectId": "test-project1",
+  "profile": "CSharp_ASPNET",
+  "status": "WAITING_FOR_COMPLETED_NEW_MD_AND_RENDERED_PNG",
+  "deadline": "2026-10-13T03:20:58Z",
+  "jobs": "agents/reverse-agent/.tmp/20261013-session-pilot-01/focus-round-05",
+  "output": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-05",
+  "referenceMode": "training-assisted",
+  "approved": null,
+  "visualFidelityVerified": false,
+  "allCurrentImagesActuallyViewed": false,
+  "plannedScope": "New source/current MD/all current static PNG review only; publish exact actual viewing list and each SHA once material completes.",
+  "sourceChecks": [
+    {
+      "topic": "Context省略と正常再取得の合流値",
+      "check": "null/空のContextだけReturnRevision=null。非空Get成功は現在RevisionのInvariantCulture文字列をモデル/Snapshotへ保持する。遅延失効409はSnapshot/Viewより前、元Statusを保持する。手順/図/結果で同じ値と拒否境界を確認する。",
+      "references": [
+        {"path":"sources/Web/Controllers/StudentsController.cs","startLine":25,"endLine":25},
+        {"path":"sources/Infrastructure/EditorSnapshotStore.cs","startLine":7,"endLine":9},
+        {"path":"sources/Infrastructure/SearchContextStore.cs","startLine":13,"endLine":14}
+      ]
+    },
+    {
+      "topic": "確認keyのNULLとlookup不在",
+      "check": "ConfirmationTokenがnullなら供給なし。非null（空文字を含む）が届く場合はlookup不成立でもnullへ読み替えない。候補0でも非nullで不成立ならRollback後新確認へ進む。HTTP省略/空からサービス引数へ届く値を、このソース条件だけで保証しない。",
+      "references": [
+        {"path":"sources/Core/SqlServerStudentService.cs","startLine":274,"endLine":290},
+        {"path":"sources/Web/Inputs/StudentSaveInput.cs","startLine":31,"endLine":42}
+      ]
+    },
+    {
+      "topic": "先行filterと局所catch対象範囲",
+      "check": "Authorize/CSRF等はaction本体の前。Save FormGuard/権限/Snapshot/初回復帰先検査は局所try外。Coordinator.Save再検査/ToRequestだけを含むWebFault catchと、Lookup/Viewの後段例外を分ける。Searchの最初Get/FormGuardもtry外。",
+      "references": [
+        {"path":"sources/Web/Controllers/StudentsController.cs","startLine":13,"endLine":16},
+        {"path":"sources/Web/Controllers/StudentsController.cs","startLine":28,"endLine":33},
+        {"path":"sources/Infrastructure/WebHostSetup.cs","startLine":14,"endLine":24}
+      ]
+    },
+    {
+      "topic": "Reset FormGuard400の保持",
+      "check": "action本体先頭のFormGuardが不正キー/重複/不正メタを400で拒否し、ID変換/Snapshot取得/ModelState.Clear/Original複製/Lookupへ進まない。先行filterをFormGuardの後へ移さない。",
+      "references": [
+        {"path":"sources/Web/Controllers/StudentsController.cs","startLine":35,"endLine":35},
+        {"path":"sources/Web/Controllers/StudentsController.cs","startLine":41,"endLine":41}
+      ]
+    },
+    {
+      "topic": "SQL前WaitAsync取消の保持",
+      "check": "Gate取得前の待機はtry/finally/operationより前。取消ならSQL、状態/期限更新、未取得GateのReleaseを行わない。WebFault限定catchを越えた非WebFaultは応答未開始時だけ共通503を試み、配信完了を保証しない。",
+      "references": [
+        {"path":"sources/Infrastructure/SearchContextStore.cs","startLine":14,"endLine":14},
+        {"path":"sources/Web/Controllers/StudentsController.cs","startLine":13,"endLine":16},
+        {"path":"sources/Infrastructure/WebHostSetup.cs","startLine":23,"endLine":23}
+      ]
+    },
+    {
+      "topic": "GRID表の条件と結果の実表示",
+      "check": "unknown=writeStarted && (commitAttempted OR !rolledBack)の全条件とUnknown/SystemErrorの真偽対応、双方503をraw MD/最終HTML/実PNGで確認する。表parserによるセル切捨てをstructure/drawing successだけで承認しない。",
+      "references": [
+        {"path":"sources/Core/SqlServerStudentService.cs","startLine":319,"endLine":329},
+        {"path":"sources/Core/SqlServerStudentService.cs","startLine":411,"endLine":416},
+        {"path":"sources/Infrastructure/WebPresentation.cs","startLine":23,"endLine":23}
+      ]
+    }
+  ],
+  "retainedLimits": [
+    "全現在画像をview_imageで実閲覧し、MD/draft-result/manifest.sourceSHAとPNG SHAを照合する。新稿未完成中は新稿承認しない。",
+    "現稿だけで共有Layout/CSS、DOM、静的URL/モード/ネイティブdate、処理図、SQL/JOIN/物理ERを照合する。実HTTP/binder/DB/commit/rollback/配信、狭幅と未描画の全mode組合せは未確認を残す。",
+    "許可reference-designを後で使う場合は設計意図の読取記録とsource-only観測評価を分ける。現準備ではその意味内容を読まない。",
+    "旧REVIEW/旧画像PASSを第5稿承認へ流用しない。評価期待値/spec-eval/evaluator-onlyの意味内容は読まない。保護対象179filesは依頼されたSHAのみ再検査する。"
+  ],
+  "sourceProgramExecuted": false,
+  "databaseExecuted": false,
+  "duplicateAiOrRenderingStarted": false,
+  "sourceOrMdOrProductionEdited": false
+}

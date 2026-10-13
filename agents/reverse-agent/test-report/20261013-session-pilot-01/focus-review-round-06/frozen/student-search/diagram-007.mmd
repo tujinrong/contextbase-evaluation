@@ -1,0 +1,28 @@
+flowchart TD
+  A[POST search] --> F[FormGuard・在籍キー補正]
+  F --> G[最初のGet・空一覧材料]
+  F -->|400 WebFault| X[共通例外経路]
+  G -->|認証・所有・期限等の拒否| X
+  G --> M{ModelState有効}
+  M -->|いいえ| V[422・今回input・空一覧]
+  M -->|はい| C[認証・ToCriteria・Page1]
+  C -->|WebFault| W[元e.Status・エラー・空一覧]
+  C --> U[Use・Gate待機・再Get・期待版]
+  U -->|WebFault 403または409等| W
+  U -->|取得前待機取消| X
+  U --> Q[SearchAsync・Q-E・Q-S・成功確認]
+  Q -->|検証結果からWebFault422| W
+  Q -->|SQL障害・検索中取消等| X
+  Q --> T{上限超過}
+  T -->|はい| O[commit済みtooMany・Items空]
+  T -->|いいえ| P[commit済みfoundまたはempty]
+  O --> S[Applied・LastResult・Revision更新]
+  P --> S
+  S --> E[期限延長・Gate解放]
+  S -->|移送等の一般例外| X
+  E --> L[別Q-L・JSON化・今回input・受信表示指定]
+  W --> L
+  V --> L
+  L -->|例外| X
+  L --> H[ViewResult・Razor描画]
+  H -->|描画例外| X

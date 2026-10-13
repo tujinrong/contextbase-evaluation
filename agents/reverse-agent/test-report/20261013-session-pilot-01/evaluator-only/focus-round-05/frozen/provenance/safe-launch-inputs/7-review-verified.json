@@ -1,0 +1,57 @@
+{
+  "documentId": "SM-DET-STUDENT-EDITOR",
+  "approved": false,
+  "findings": [
+    {
+      "severity": "major",
+      "documentLocation": "内部項目・一時情報 INT-SNAPSHOT／EV-04・EV-06・EV-07のSnapshot照合と例外説明",
+      "defect": "SnapshotIdがNULLのままストアへ届く場合の経路が欠落している。FormGuardは項目の存在を必須検査せず、Snapshot.GetはNULL検査なしでConcurrentDictionary.TryGetValueへ渡す。NULLの場合はArgumentNullExceptionとなり、キー不在・期限切れのWebFault409とは異なる。ControllerのWebFault catchでは捕捉されず、応答未開始なら共通503へ進む。",
+      "repairDirection": "キー不在・失効409、所有等の相違403、NULL引数による一般例外を本文と図で区別する。HTTP項目欠落・空値が実際に生成するバインド後値は未確認とし、「NULLがストアへ届いた場合」の分岐として記載する。",
+      "references": [
+        {
+          "path": "sources/Infrastructure/EditorSnapshotStore.cs",
+          "startLine": 10,
+          "endLine": 10
+        },
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 29,
+          "endLine": 37
+        },
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 41,
+          "endLine": 41
+        },
+        {
+          "path": "sources/Infrastructure/WebHostSetup.cs",
+          "startLine": 16,
+          "endLine": 23
+        }
+      ]
+    },
+    {
+      "severity": "minor",
+      "documentLocation": "補足説明／TX-01の末尾「Commit試行後の捕捉対象例外は、Rollbackが正常でもUnknownとなる」",
+      "defect": "Unknownへの分類をすべての捕捉対象例外へ一般化している。保存ではInputValidationException、SQL番号2601・2627、DBConcurrencyExceptionの先行catchがそれぞれ422・409を返し、commitAttemptedによるUnknown判定は後段の一般catchだけに適用される。直前の分類表と本文の適用範囲が一致しない。",
+      "repairDirection": "「一般catchに入ったSqlException・InvalidOperationException・OperationCanceledException」に限定し、保存の先行catchによる422・409を除外する。",
+      "references": [
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 316,
+          "endLine": 323
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 415,
+          "endLine": 416
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "unknown：SnapshotIdや日付部品の欠落・空値について、MVCの具体的なバインド後値は未確認。ストア・サービスへ特定値が届いた場合の分岐とHTTP要求への保証を区別する必要がある。",
+    "unknown：静的HTMLのDOM階層・項目・条件・CSSセレクターは原文と照合したが、レンダリング画像は閲覧していないため視覚的一致は承認していない。",
+    "unknown：実DBの配備状態、実効権限、競合・取消・障害時の実挙動は静的解析では確定できない。プログラム実行・試験は行っていない。"
+  ]
+}

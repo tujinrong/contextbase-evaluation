@@ -57,6 +57,49 @@ class StructuralTests(unittest.TestCase):
         text = document().replace("任意の責務を説明する。", "blorp")
         self.assertEqual(set(), self.codes(text))
 
+    def test_bound_document_identity_accepts_exact_match_without_rewriting(self):
+        text = document()
+        self.assertEqual([], validate_document(text, PATH, expected_document_id="DEMO-001"))
+        self.assertEqual(document(), text)
+        self.assertEqual([], validate_document(text, PATH))
+        self.assertEqual([], validate_document(text, PATH, expected_document_id=None))
+
+    def test_other_valid_metadata_identity_is_rejected_only_when_binding_is_supplied(self):
+        text = document(documentId="OTHER-001")
+        self.assertEqual([], validate_document(text, PATH))
+        findings = validate_document(text, PATH, expected_document_id="DEMO-001")
+        self.assertEqual(["META_DOCUMENT_ID"], [finding["code"] for finding in findings])
+        self.assertEqual("ERROR", findings[0]["severity"])
+        self.assertEqual(PATH + ":1", findings[0]["location"])
+        self.assertEqual(document(documentId="OTHER-001"), text)
+
+    def test_expected_identity_uses_real_metadata_not_body_or_fenced_example(self):
+        text = document(documentId="OTHER-001")
+        correct_meta = document().split("\n", 1)[0]
+        text += "\nDEMO-001\n\n```md\n" + correct_meta + "\n```\n"
+        findings = validate_document(text, PATH, expected_document_id="DEMO-001")
+        self.assertEqual(["META_DOCUMENT_ID"], [finding["code"] for finding in findings])
+
+    def test_identity_matching_is_exact_case_sensitive_and_does_not_trim(self):
+        for value in ("demo-001", " DEMO-001", "DEMO-001 "):
+            with self.subTest(value=value):
+                findings = validate_document(document(documentId=value), PATH, expected_document_id="DEMO-001")
+                self.assertIn("META_DOCUMENT_ID", {finding["code"] for finding in findings})
+        self.assertEqual([], validate_document(document(documentId="機能-01"), PATH, expected_document_id="機能-01"))
+
+    def test_missing_metadata_identity_is_not_accepted_by_expected_identity(self):
+        text = document().replace('"documentId": "DEMO-001", ', "")
+        findings = validate_document(text, PATH, expected_document_id="DEMO-001")
+        self.assertTrue({"META_FIELD", "META_DOCUMENT_ID"} <= {finding["code"] for finding in findings})
+
+    def test_invalid_expected_identity_arguments_do_not_create_a_false_valid_document(self):
+        for value in (True, 7, [], {}):
+            with self.subTest(value=value), self.assertRaises(TypeError):
+                validate_document(document(), PATH, expected_document_id=value)
+        for value in ("", " \t"):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                validate_document(document(), PATH, expected_document_id=value)
+
     def test_missing_meta_is_an_error(self):
         self.assertIn("META_COUNT", self.codes(document().split("\n", 1)[1]))
 
@@ -163,6 +206,24 @@ class StructuralTests(unittest.TestCase):
     def test_missing_declared_key_column_is_rejected(self):
         self.assertIn("LIST_KEY", self.codes(document().replace('"key": ["ID"]', '"key": ["missing"]')))
 
+    def test_grid_code_pipe_overflow_is_detected_without_rewriting(self):
+        text=document()+'\n| Trigger | Condition | Outcome |\n| --- | --- | --- |\n| T | `alpha || beta` | Result sentinel |\n'
+        before=text.encode('utf-8')
+        self.assertIn('TABLE_CELL_OVERFLOW',self.codes(text))
+        self.assertEqual(before,text.encode('utf-8'))
+
+    def test_escaped_grid_code_pipe_keeps_condition_and_result(self):
+        text=document()+'\n| Trigger | Condition | Outcome |\n| --- | --- | --- |\n'+r'| T | `alpha \|\| beta` | Result sentinel |'+'\n'
+        self.assertEqual(set(),self.codes(text))
+        from markdown_it import MarkdownIt
+        rendered=MarkdownIt('commonmark').enable('table').render(text)
+        self.assertIn('<code>alpha || beta</code>',rendered)
+        self.assertIn('<td>Result sentinel</td>',rendered)
+
+    def test_grid_padding_and_fenced_example_are_not_overflow(self):
+        text=document()+'\n| A | B |\n| --- | --- |\n| Value |\n\n```md\n| A | B |\n| --- | --- |\n| T | `alpha || beta` | extra |\n```\n'
+        self.assertNotIn('TABLE_CELL_OVERFLOW',self.codes(text))
+
     def test_duplicate_declared_key_columns_are_rejected(self):
         self.assertIn("LIST_KEY", self.codes(document().replace('"key": ["ID"]', '"key": ["ID", "ID"]')))
 
@@ -227,6 +288,30 @@ class StructuralTests(unittest.TestCase):
 
     def test_static_screen_html_is_valid_in_grid(self):
         self.assertEqual(set(), self.codes(document() + '\n<div data-item-id="I1"><label>項目<input readonly></label></div>\n'))
+
+    def test_submission_targets_are_active_even_when_the_url_is_a_valid_citation(self):
+        for markup in ('<form action="https://example.invalid/post"><button>操作</button></form>',
+                       '<button formaction="https://example.invalid/post">操作</button>',
+                       '<form action="#local"><input></form>'):
+            with self.subTest(markup=markup):
+                self.assertIn("HTML_ACTIVE", self.codes(document() + "\n" + markup + "\n"))
+
+    def test_button_override_submission_path_is_checked(self):
+        self.assertIn("REFERENCE_PATH", self.codes(document() + '\n<button formaction="/remote">操作</button>\n'))
+
+    def test_inert_source_route_annotation_retains_static_link_and_button_state(self):
+        markup = '<form data-source-action="/original" data-source-method="post"><button type="button">操作</button></form><a href="#local" data-source-route="/original">遷移</a>'
+        self.assertEqual(set(), self.codes(document() + "\n" + markup + "\n"))
+
+    def test_inert_utf8_and_viewport_metadata_are_valid(self):
+        self.assertEqual(set(), self.codes(document() + '\n<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">\n'))
+
+    def test_redirect_or_conflicting_metadata_is_active(self):
+        for markup in ('<meta http-equiv="refresh" content="0;url=https://example.invalid">',
+                       '<meta charset="utf-8" http-equiv="refresh" content="0;url=https://example.invalid">',
+                       '<meta charset="shift_jis" charset="utf-8">'):
+            with self.subTest(markup=markup):
+                self.assertIn("HTML_ACTIVE", self.codes(document() + "\n" + markup + "\n"))
 
     def test_inert_html_comment_url_example_is_not_a_reference(self):
         self.assertEqual(set(), self.codes(document() + '\n<!-- Example: url(../../secret.png) -->\n'))

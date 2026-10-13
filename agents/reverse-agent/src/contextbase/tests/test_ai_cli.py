@@ -58,7 +58,7 @@ class AiCliTests(unittest.TestCase):
     def test_iterate_forwards_rounds_timeout_and_deadline(self):
         with patch('contextbase.ai.iteration.run',return_value={}) as stage:
             self.assertEqual(0,self.execute(self.args('iterate')+['--plan',str(self.plan),'--document-id','DOC-UNIT','--output',str(self.output),'--max-rounds','2']))
-        stage.assert_called_once_with(self.snapshot,self.plan,'DOC-UNIT',self.job,self.output,max_rounds=2,timeout=901,deadline=self.deadline)
+        stage.assert_called_once_with(self.snapshot,self.plan,'DOC-UNIT',self.job,self.output,max_rounds=2,timeout=901,deadline=self.deadline,reuse_analysis=False)
 
     def test_iterate_defaults_to_three_rounds(self):
         with patch('contextbase.ai.iteration.run',return_value={}) as stage:

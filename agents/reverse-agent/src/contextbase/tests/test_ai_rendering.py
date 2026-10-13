@@ -45,6 +45,17 @@ class SafetyTests(unittest.TestCase):
         self.assertNotIn("action=", safe)
         self.assertTrue(removed)
 
+    def test_inert_encoding_and_viewport_metadata_are_retained(self):
+        safe, removed = _sanitize('<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">', self.root, self.root)
+        self.assertFalse(removed)
+        self.assertIn('charset="utf-8"', safe.lower())
+        self.assertIn('name="viewport"', safe)
+
+    def test_refresh_and_mixed_metadata_remain_removed(self):
+        safe, removed = _sanitize('<meta http-equiv="refresh" content="0;url=https://example.invalid"><meta charset="utf-8" http-equiv="refresh" content="0;url=https://example.invalid">', self.root, self.root)
+        self.assertNotIn("<meta", safe)
+        self.assertEqual(2, len(removed))
+
     def test_external_css_is_removed_but_inert_strings_are_preserved(self):
         raw = '<style>@import "https://example.invalid/a.css";.a{background:url(https://example.invalid/a.png);content:"url(https://example.invalid)"}</style>'
         safe, removed = _sanitize(raw, self.root, self.root)
@@ -57,6 +68,23 @@ class SafetyTests(unittest.TestCase):
         safe, removed = _sanitize('<img src="../../secret.png">', self.root, self.root)
         self.assertNotIn("src=", safe)
         self.assertTrue(removed)
+
+    def test_relative_related_document_citation_is_preserved_without_reading_it(self):
+        detail = self.root/'detail'; detail.mkdir()
+        value = '../共通/契約.md#入口'
+        safe, removed = _sanitize('<a href="'+value+'">関連契約</a>',detail,self.root)
+        self.assertFalse(removed)
+        self.assertIn(value,safe)
+        self.assertFalse((self.root/'共通/契約.md').exists())
+
+    def test_local_citation_cannot_escape_the_publication_root(self):
+        for target in ('../../secret.md','%2e%2e/%2e%2e/secret.md',
+                       'file:///C:/secret.md','//example.invalid/secret.md',
+                       'javascript:run()','../program.exe'):
+            with self.subTest(target=target):
+                safe, removed = _sanitize('<a href="'+target+'">参照</a>',self.root,self.root)
+                self.assertNotIn('href=',safe)
+                self.assertTrue(removed)
 
     def test_local_raster_is_verified_and_embedded(self):
         image = self.root / "picture.png"
@@ -165,6 +193,40 @@ erDiagram
         self.assertEqual(self.before, self.source.read_bytes())
         self.assertFalse(self.result["originalModified"])
 
+    def test_relative_document_citation_is_inert_in_real_browser(self):
+        detail = self.run_root/'detail'; detail.mkdir()
+        source = detail/'citation.md'
+        source.write_text(fixture('<a href="../共通/契約.md#入口">関連契約</a>',path='citation.md'),encoding='utf-8')
+        result = render_document(source,self.run_root/'relative-citation',
+                  chromium_executable=self.chromium,asset_root=self.run_root)
+        self.assertEqual('PASS',result['display']['status'],result['display'])
+        self.assertEqual([],result['display']['blockedRequests'])
+        self.assertEqual([],result['safety']['removed'])
+        self.assertIn('../共通/契約.md#入口',(self.run_root/'relative-citation/document.html').read_text(encoding='utf-8'))
+
+    def test_long_document_captures_every_strip_with_bounded_images(self):
+        source = self.run_root / 'long.md'
+        source.write_text(fixture(''.join('<p>人工文書の行 %d</p>\n' % i for i in range(700)),
+                                  path='long.md'), encoding='utf-8')
+        before = source.read_bytes()
+        result = render_document(source, self.run_root/'long', chromium_executable=self.chromium)
+        self.assertEqual('PASS', result['display']['status'], result['display'])
+        capture = result['display']['documentCapture']
+        self.assertTrue(capture['complete'])
+        self.assertGreater(capture['height'], 16000)
+        next_y = 0
+        for record in capture['pages']:
+            bounds = record['sourceRectangle']
+            self.assertEqual(next_y, bounds['y'])
+            self.assertEqual(capture['width'], bounds['width'])
+            self.assertLessEqual(record['png']['height'], 4000)
+            self.assertTrue(record['png']['decoded'])
+            image_file = self.run_root/'long'/record['path']
+            self.assertEqual(record['png']['sha256'], hashlib.sha256(image_file.read_bytes()).hexdigest())
+            next_y += bounds['height']
+        self.assertEqual(capture['height'], next_y)
+        self.assertEqual(before, source.read_bytes())
+
     def test_flow_sequence_and_er_are_rendered_with_original_sources(self):
         self.assertEqual(3, len(self.result["diagrams"]))
         for diagram in self.result["diagrams"]:
@@ -212,6 +274,40 @@ erDiagram
         result = render_document(source, self.run_root / "missing", chromium_executable=self.chromium)
         self.assertEqual("NOT_RENDERED", result["diagrams"][0]["status"])
         self.assertNotEqual("PASS", result["display"]["status"])
+
+    def test_standalone_header_metadata_is_display_pass_without_source_rewrite(self):
+        source = self.run_root / "metadata.md"
+        raw = fixture('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><form data-source-action="/original"><input value="fixture"><button type="button">操作</button></form><a href="#local" data-source-route="/original">遷移</a></body></html>', path="metadata.md")
+        source.write_bytes(raw.encode('utf-8'))
+        result = render_document(source, self.run_root / "metadata", chromium_executable=self.chromium)
+        self.assertEqual("PASS", result['structure']['status'])
+        self.assertEqual("PASS", result['display']['status'])
+        self.assertEqual([], result['safety']['removed'])
+        self.assertEqual([], result['display']['blockedRequests'])
+        self.assertEqual(raw.encode('utf-8'), source.read_bytes())
+        self.assertFalse(result['safety']['inputJavaScriptEnabled'])
+
+    def test_grid_pipe_overflow_is_reported_and_escaped_form_keeps_result(self):
+        header='| Trigger | Condition | Outcome |\n| --- | --- | --- |\n'
+        rows={'grid-overflow':'| T | `alpha || beta` | Result sentinel |\n',
+              'grid-escaped':r'| T | `alpha \|\| beta` | Result sentinel |'+'\n'}
+        for name,row in rows.items():
+            with self.subTest(name=name):
+                source=self.run_root/(name+'.md')
+                raw=fixture(header+row,path=name+'.md').encode('utf-8')
+                source.write_bytes(raw)
+                result=render_document(source,self.run_root/name,chromium_executable=self.chromium)
+                self.assertEqual('PASS',result['display']['status'])
+                rendered=(self.run_root/name/'document.html').read_text(encoding='utf-8')
+                if name=='grid-overflow':
+                    self.assertEqual('ERROR',result['structure']['status'])
+                    self.assertIn('TABLE_CELL_OVERFLOW',{item['code'] for item in result['structure']['findings']})
+                    self.assertNotIn('Result sentinel',rendered)
+                else:
+                    self.assertEqual('PASS',result['structure']['status'])
+                    self.assertIn('<code>alpha || beta</code>',rendered)
+                    self.assertIn('<td>Result sentinel</td>',rendered)
+                self.assertEqual(raw,source.read_bytes())
 
     def test_destination_reuse_is_rejected(self):
         with self.assertRaises(FileExistsError):

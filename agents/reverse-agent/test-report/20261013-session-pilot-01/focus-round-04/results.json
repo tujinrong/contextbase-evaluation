@@ -1,0 +1,183 @@
+{
+  "documents": [
+    {
+      "documentId": "SM-DET-STUDENT-SEARCH",
+      "draft": {
+        "documentId": "SM-DET-STUDENT-SEARCH",
+        "path": "spec/detail/student-search.md",
+        "contentSha256": "35defbc0495678f32ec140535d46e96bbfda0e66259aac13982a6cf28b0e41c0",
+        "aiAuthored": true,
+        "semanticProseAssembledByPython": false,
+        "analysisFacts": 79,
+        "unresolved": [
+          "coverageNotes／材料権限: manifest.jsonのmode=training-assisted、trainingReferenceAuthorizedByUser=true、referenceSpecificationIncluded=trueとreferenceFilesを確認した。今回の参考読取りは列挙された検索基本設計・検索詳細設計に限定した。manifestは材料・読取り権限の説明だけに用い、業務・実装factの根拠にしていない。",
+          "coverageNotes／実施範囲: 読取りはworkspace内のmanifest、sources、indexed、許可された検索参考設計と入力されたfacts・前稿・批評に限定した。ファイル編集、ネットワーク、プラグイン、委任、原本コード・SQL・スクリプト・ビルド・テストの実行、設定秘密値の取得は行っていない。",
+          "coverageNotes／原文確認: rg --files、rg -n、indexedの原行番号付き範囲を使用した。切れた出力は読了扱いせず必要部分を再取得した。PowerShellはlogin=falseとし、相対Get-Contentと変数経由の読取りが失敗した参考資料は直接rgの該当範囲へ切り替えた。本文・図はAIが執筆し、テンプレートによる本文差替えは行っていない。",
+          "解析制限報告: 今回の検査は静的原文解析と本文・図の分岐照合である。新稿のHTML描画画像、実機画像、全モード・全幅・フォーカス・disabled遷移は確認していない。前稿の画像レビューやrender PASSを版4.0の描画確認へ転用していない。",
+          "HTTP境界: 省略、空白だけの文字列、NULL、checkbox複数値、年度・bool・intの変換失敗からMVCの最終DTO・ModelStateになる挙動は未確認。サービスへ届いた値の分岐をHTTPの確定動作へ拡張しない。影響: sources/Infrastructure/WebHostSetup.cs:16-18、sources/Web/Controllers/StudentsController.cs:13-22。",
+          "配備・データ境界: 接続設定の実値、実DB、SNAPSHOT有効状態、DDL・FK・CHECKの配備状態、実効権限、学校固有のクラス・学生・候補データは未確認。設定名・SQL宣言・権限定義を稼働保証としない。影響: sources/Infrastructure/WebHostSetup.cs:19-19、sources/Core/SqlServerStudentService.cs:53-64、sources/database/001_schema.sql:189-203。",
+          "認証・運用境界: 本番認証連携、役割付与、再起動・複数プロセス・複数ノード間の状態保持構成は未確定。現在の検索・編集・通知はプロセスメモリ実装である。影響: sources/Infrastructure/RequestIdentity.cs:7-15、sources/Infrastructure/WebHostSetup.cs:13-19、sources/Infrastructure/SearchContextStore.cs:9-14。",
+          "取消・競合境界: 同一Revision要求、Optionsの非排他読取り、Gate待機取消、取得後再Get拒否、DB中取消、期限経過、SQL障害、commit・破棄・後段候補障害、応答開始後例外、切断後配信は再現していない。SQL前取消は静的に確認した独立分岐で、実行結果ではない。",
+          "将来の確認候補／入力移送: SRC-001～010について、raw上限と正規化後上限、補助文字、制御文字、LIKE特殊文字、空・NULL、学年00と未所属、在籍空配列と不正配列、マスター不存在をHTTP→DTO→正規化→型付きSQL→再表示の順で確認する。今回は未実施。",
+          "将来の確認候補／日付: SRC-011／012の片側・両端包含、逆転、1900年下限、業務日・未来日、NFKC、正規化前長、ネイティブdate表示とISO受信値の境界を確認する。独自yyyy/MM/dd表示を実装済みと仮定しない。今回は未実施。",
+          "将来の確認候補／拒否・後段失敗: E02・E04のFormGuard400、認証401、所有403、期限・旧版409、検証422を各発生位置で確認し、PageSize=0の条件付き描画例外、Gate取得前取消時のoperation未実行、状態更新後の候補・JSON化・描画失敗も分けて確認する。今回は未実施。",
+          "将来の確認候補／復帰・通知: E06の件数減少時SQLページと提示ページ、旧ReturnRevision、期限切れ、Flash Take前後の失敗、E09のSaved後303・復帰失敗とDB確定、削除Unknown後再Load404を確認する。今回は未実施。",
+          "不足資料: 参考設計からリンクされる共通UI・日付・方式別共通・DB定義・規約・試験対応資料とassetsの単独HTML・画像は今回読取り範囲に含めていない。その契約・成果物の実在・描画・検査状態を補完していない。",
+          "未接続・永続化: t_runtime_stateへの検索状態永続化、encrypted_payloadの暗号化方式・状態種別・消費は確認できない。OptionsRequest、Coordinator.Options、WebPresentation.Lookups、StrictJsonの宣言を本検索ルートの公開契約にしていない。",
+          "設計差の採否: 候補不足時検索禁止、自動候補連動・上位補完、応答世代、部分HTML／JSON、表示範囲、メニュー、先頭／最後、欠損注記、失敗時保持、期限切れ初期化の差は残る。改善の採否、業務要件としての優先順位、顧客承認は材料から確定できない。",
+          "検証証拠: Programの起動宣言やhealthのstatus=running、database=not-testedは業務入力・DB接続・配備・試験合格の証拠ではない。今回、アプリ／DB実行確認と顧客承認は未実施・未確認。根拠: sources/Program.cs:2-8、sources/Infrastructure/WebHostSetup.cs:28-28。",
+          "関連成果物: contentで返す本書以外は未生成の計画参照である。未解決・範囲報告はSM-RPT-UNRESOLVED（spec/reports/unresolved-and-analysis-limits.md）、全体差分はSM-RPT-DESIGN-IMPLEMENTATION（spec/reports/design-implementation-differences.md）へ対応するが、今回それらのファイルは生成していない。"
+        ],
+        "factCorrections": [
+          "前稿E02の図に欠けていたSQL前のGate待機取消を追加した。WaitAsync(ct)は取得後try・finallyとoperationより前にあるため、取得前取消ではSearchAsync・SQL・当該要求の状態／期限更新・Releaseへ進まない。根拠: sources/Infrastructure/SearchContextStore.cs:14-14、sources/Infrastructure/WebStudentCoordinator.cs:7-9、sources/Web/Controllers/StudentsController.cs:13-16。",
+          "取消の追加によって元原稿の配信境界を誤って広げないよう、共通経路は応答未開始時だけWebFaultの元状態または非WebFaultの503で返却を試み、配信完了を保証しないと維持した。根拠: sources/Infrastructure/WebHostSetup.cs:22-24。",
+          "前稿Index手順で省かれていたFlash Takeを明記した。初回表示もIndexの共通返却行でTakeを評価してからSearchModelへ渡す。根拠: sources/Web/Controllers/StudentsController.cs:11-11。",
+          "日付ParseIsoの10文字制約はNFKC後の.NET Lengthであり、正規化前の個別raw上限ではないことを項目表に明記した。根拠: sources/Core/JapaneseDateService.cs:52-59。",
+          "参考設計比較の短い主題説明を、対象・条件・担当層・操作・結果まで具体化した。表示範囲、メニュー、先頭／最後操作、一覧のクラス状態注記を現行実装へ追加していない。根拠: sources/Views/Students/Search.cshtml:6-8、sources/Infrastructure/WebStudentCoordinator.cs:21-21、sources/Core/SqlServerStudentService.cs:82-90。",
+          "提供factsのHTTPバインド未確認、Pageの可変e.Status、別SNAPSHOTによる一度の再検索、OptionsのGateなし読取り、Resumeのページ差、Savedと303の確定境界は、原文照合した範囲で維持した。以前のapproved・PASSは今回の検査結果として継承していない。"
+        ],
+        "analysisExecutedInThisJob": true,
+        "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-04\\488af9821732c8f6",
+        "snapshot": {
+          "manifestSha256": "3a722dc206dbf2ce850b594aa1bee65117e472a8144531adb731d354fb9a5a24",
+          "capsuleSchema": "reverse-ai-source-capsule/1",
+          "mode": "training-assisted",
+          "modeDerivation": "explicit-manifest-mode",
+          "scope": "legacy-v1-raw-indexed-metadata-revalidated-unsealed-manifest"
+        },
+        "referenceMode": "training-assisted",
+        "structureFindings": [],
+        "status": "AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED"
+      },
+      "review": {
+        "documentId": "SM-DET-STUDENT-SEARCH",
+        "approved": false,
+        "findings": [],
+        "unresolved": [
+          "unknown: 原稿の静的HTMLについて画像を閲覧していないため、視覚的一致の承認は留保する。原ビュー・共有レイアウト・CSSとの原文照合では、重大な矛盾は確認できなかった。",
+          "unknown: HTTP値の省略・空白・変換失敗に対するMVCの実際のバインド結果と、取消・競合・障害時の配信結果は実行未確認。原稿が示す層別の条件と静的推論を、動作確認済みの保証へ変更しないこと。"
+        ]
+      },
+      "status": "REQUIRES_AI_REVISION",
+      "reviewScope": "text-source-and-structure",
+      "visualFidelityVerified": false,
+      "formalSemanticScore": null
+    },
+    {
+      "documentId": "SM-DET-STUDENT-EDITOR",
+      "draft": {
+        "documentId": "SM-DET-STUDENT-EDITOR",
+        "path": "spec/detail/student-editor.md",
+        "contentSha256": "071001104d8ce7b1174dfbdccb848e04980de1d021ddc7bcf1a724780d83235c",
+        "aiAuthored": true,
+        "semanticProseAssembledByPython": false,
+        "analysisFacts": 78,
+        "unresolved": [
+          "coverageNotes: manifestのmode=training-assisted、trainingReferenceAuthorizedByUser=true、referenceSpecificationIncluded=trueと、referenceFiles内のreference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.mdを確認した。manifestは読取り権限・材料範囲の説明だけに使用し、業務・実装factの根拠にはしていない。",
+          "coverageNotes: 指定workspaceのmanifestとsources、許可された対象参考設計、および提示入力だけを分析材料とした。参考設計は項目、候補、主要イベント手順、移送・制御補足等の必要範囲を読み、全816行の読了は主張しない。切れた出力の必要範囲はrgで分割して再確認した。",
+          "coverageNotes: 静的読取りのみを行った。入力プログラム、SQL、スクリプト、ビルド、試験は実行せず、ファイル編集、ネットワーク、外部サービス、委任、モデル訓練も行っていない。本応答のcontentが版4.0の全文で、実ファイルは生成していない。",
+          "SM-RPT-UNRESOLVED向け: HTTPの欠落、空文字、空白、重複値、型変換失敗からMVCが作るDTO・ModelStateの具体的な組合せは未確認。サービス引数NULLの静的分岐、DTO初期値、非nullable注釈、requiredをHTTP受信全体への保証に拡張していない。",
+          "SM-RPT-UNRESOLVED向け: Authorize、Cookie認証、CSRF、モデルバインド、本文上限の実拒否応答とController本体への到達条件を示す実行証跡はない。FormGuardのWebFault400と先行filter拒否は別境界である。",
+          "SM-RPT-UNRESOLVED向け: StudentDbの実設定、稼働DB、配備済みDDL・初期コード・クラス、SNAPSHOT有効状態、実効DB権限、運用認証連携は未確認。設定値・秘密値を取得していない。",
+          "SM-RPT-UNRESOLVED向け: DB競合、ロック待機、取消、接続障害、Commit応答喪失、Rollback失敗、削除後再Loadの実挙動に実行証跡はない。ソースの分岐を試験合格や実際の確定結果として扱わない。Programの起動宣言やhealthの応答宣言もHTTP・DB試験完了を証明しない。",
+          "SM-RPT-UNRESOLVED向け: Contextが読取中に実際に失効する時刻、検索版競合、確認Busy競合、通知消費タイミングは未実行。文書の409等は条件成立時の静的到達経路である。",
+          "SM-RPT-UNRESOLVED向け: Razor・TagHelperの最終HTML、日付部品のブラウザー表示、全モード・全表示幅、候補0件、結合名称NULL、先頭ゼロ付きIDの実画面は未確認。静的HTML/CSSを視覚承認や実アプリ撮影として扱わない。",
+          "SM-RPT-UNRESOLVED向け: 参考設計が参照する共通仕様、SQL Server DB定義、方式別・共通開発規約、共通項目制約は対象manifestのreferenceFilesに列挙されていない。内容、正式承認、実装差の受容判断を確認していない。",
+          "SM-RPT-UNRESOLVED向け: Coordinator.Options、WebPresentation.Lookups/Save、StrictJson.Readは宣言されているが、確認した公開業務ルートから編集用JSON機能への接続はない。未収録入口や動的登録の存在は確定できない。",
+          "SM-RPT-UNRESOLVED向け: t_runtime_stateのencrypted_payloadの暗号化方式、state_kindの具体値、永続化・復元・消費入口は追跡できない。DDLから現在の編集状態処理を補っていない。",
+          "SM-RPT-UNRESOLVED向け: 同一人物確認の期限照合は要求開始nowを使い、DB読取後に現在時刻を取り直さない。この方式の期限要件適合性と、単一プロセスメモリ状態の再起動・複数ノード運用要件は未確定。",
+          "SM-RPT-UNRESOLVED向け: フォームValueLengthLimit=65536の設定は確認したが、未収録フレームワーク実装での数え方と拒否の組合せは未検証。本文バイト上限、業務スカラー上限、HTMLコード単位上限とは分けている。",
+          "coverageNotes: 関連文書のIDと相対pathは提示された計画に照合した。参照先は本応答では未生成であり、他の成果物の生成状態は確認していない。解析範囲・不足・実行証跡の状態は、このunresolvedをSM-RPT-UNRESOLVED向けの別成果物材料として分離した。"
+        ],
+        "factCorrections": [
+          "前稿EV-01・EV-02の読取後経路を訂正した。Controller.Loadはawait Coordinator.Edit後、非空Contextを再取得してRevisionを読み、成功後だけSnapshotを作る。不在・失効409、所有者・セッション相違403等のWebFaultは元Statusを保持し、非WebFaultだけを応答未開始時の503とした。根拠: sources/Web/Controllers/StudentsController.cs:25-25、sources/Infrastructure/SearchContextStore.cs:13-13、sources/Infrastructure/WebHostSetup.cs:23-23。",
+          "前稿EV-07の図にFormGuard400を追加した。Controller本体ではFormGuardがidentity.Read、ID変換、Snapshot照合より前にあり、不正フォームは復元へ進まない。Authorize・MVC CSRFの先行境界は別に保持した。根拠: sources/Web/Controllers/StudentsController.cs:5-6,35-35,41-41、sources/Infrastructure/WebHostSetup.cs:16-25。",
+          "再読込と削除非Saved後のLoadにも、初回・読取後のContext再確認を反映した。後段WebFaultは元の削除結果Statusに代わって表へ出得るため、Unknown後の画面応答を固定503にはしない。根拠: sources/Web/Controllers/StudentsController.cs:25-25,37-37。",
+          "ED-043の限定を維持し、30秒の明示SQLタイムアウトを共通Command helper利用SQLの契約とした。Openの診断はCreateCommandで作られ、同じ明示設定の根拠にはならない。根拠: sources/Core/SqlServerStudentService.cs:53-66。",
+          "削除の版上限はValidationFailed422、保存の実変更時版上限はConflict409として区別した。監査は同一トランザクションへのINSERTだが、監査INSERT件数1を別途検査する保証は付けなかった。根拠: sources/Core/SqlServerStudentService.cs:263-263,385-390,398-398。",
+          "参考設計のcommand.BirthDate、ParseBirthDate、FormatBirthDate等を実在名として採用せず、実ソースのBirthDateInput、Parse、ToInput、ToWareki、Values[birth_date]へ対応付けた。参考設計の候補再取得、初期警告、表示形式、学年存在確認、UI再入制御は設計意図と実装差として具体的に記載した。"
+        ],
+        "analysisExecutedInThisJob": true,
+        "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-04\\eebb51fa1eb2da8f",
+        "snapshot": {
+          "manifestSha256": "3a722dc206dbf2ce850b594aa1bee65117e472a8144531adb731d354fb9a5a24",
+          "capsuleSchema": "reverse-ai-source-capsule/1",
+          "mode": "training-assisted",
+          "modeDerivation": "explicit-manifest-mode",
+          "scope": "legacy-v1-raw-indexed-metadata-revalidated-unsealed-manifest"
+        },
+        "referenceMode": "training-assisted",
+        "structureFindings": [],
+        "status": "AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED"
+      },
+      "review": {
+        "documentId": "SM-DET-STUDENT-EDITOR",
+        "approved": false,
+        "findings": [
+          {
+            "severity": "major",
+            "documentLocation": "内部項目・一時情報 INT-SNAPSHOT／EV-04・EV-06・EV-07のSnapshot照合と例外説明",
+            "defect": "SnapshotIdがNULLのままストアへ届く場合の経路が欠落している。FormGuardは項目の存在を必須検査せず、Snapshot.GetはNULL検査なしでConcurrentDictionary.TryGetValueへ渡す。NULLの場合はArgumentNullExceptionとなり、キー不在・期限切れのWebFault409とは異なる。ControllerのWebFault catchでは捕捉されず、応答未開始なら共通503へ進む。",
+            "repairDirection": "キー不在・失効409、所有等の相違403、NULL引数による一般例外を本文と図で区別する。HTTP項目欠落・空値が実際に生成するバインド後値は未確認とし、「NULLがストアへ届いた場合」の分岐として記載する。",
+            "references": [
+              {
+                "path": "sources/Infrastructure/EditorSnapshotStore.cs",
+                "startLine": 10,
+                "endLine": 10
+              },
+              {
+                "path": "sources/Web/Controllers/StudentsController.cs",
+                "startLine": 29,
+                "endLine": 37
+              },
+              {
+                "path": "sources/Web/Controllers/StudentsController.cs",
+                "startLine": 41,
+                "endLine": 41
+              },
+              {
+                "path": "sources/Infrastructure/WebHostSetup.cs",
+                "startLine": 16,
+                "endLine": 23
+              }
+            ]
+          },
+          {
+            "severity": "minor",
+            "documentLocation": "補足説明／TX-01の末尾「Commit試行後の捕捉対象例外は、Rollbackが正常でもUnknownとなる」",
+            "defect": "Unknownへの分類をすべての捕捉対象例外へ一般化している。保存ではInputValidationException、SQL番号2601・2627、DBConcurrencyExceptionの先行catchがそれぞれ422・409を返し、commitAttemptedによるUnknown判定は後段の一般catchだけに適用される。直前の分類表と本文の適用範囲が一致しない。",
+            "repairDirection": "「一般catchに入ったSqlException・InvalidOperationException・OperationCanceledException」に限定し、保存の先行catchによる422・409を除外する。",
+            "references": [
+              {
+                "path": "sources/Core/SqlServerStudentService.cs",
+                "startLine": 316,
+                "endLine": 323
+              },
+              {
+                "path": "sources/Core/SqlServerStudentService.cs",
+                "startLine": 415,
+                "endLine": 416
+              }
+            ]
+          }
+        ],
+        "unresolved": [
+          "unknown：SnapshotIdや日付部品の欠落・空値について、MVCの具体的なバインド後値は未確認。ストア・サービスへ特定値が届いた場合の分岐とHTTP要求への保証を区別する必要がある。",
+          "unknown：静的HTMLのDOM階層・項目・条件・CSSセレクターは原文と照合したが、レンダリング画像は閲覧していないため視覚的一致は承認していない。",
+          "unknown：実DBの配備状態、実効権限、競合・取消・障害時の実挙動は静的解析では確定できない。プログラム実行・試験は行っていない。"
+        ]
+      },
+      "status": "REQUIRES_AI_REVISION",
+      "reviewScope": "text-source-and-structure",
+      "visualFidelityVerified": false,
+      "formalSemanticScore": null
+    }
+  ],
+  "inputDrift": [],
+  "runtimeDrift": [],
+  "runtimeFrozenAtLaunch": true,
+  "freshAnalysisInEachDocument": true,
+  "semanticProseAssembledByPython": false,
+  "formallyEvaluated": false,
+  "visualFidelityVerified": false
+}

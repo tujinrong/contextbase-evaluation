@@ -1,0 +1,21 @@
+flowchart TD
+ A[Reset操作] --> B{ブラウザー復元確認}
+ B -->|取消| K[画面保持]
+ B -->|続行| P[先行Authorize・CSRF境界]
+ P -->|拒否| FILTER[先行境界の応答・本体未到達]
+ P -->|本体到達| F[FormGuard]
+ F -->|不正| E400[400共通応答・復元停止]
+ F -->|正常| I[identity.Read]
+ I -->|認証不正| E401[401共通応答]
+ I -->|正常| ID[StudentId任意正整数変換]
+ ID -->|不正| E422[422共通応答]
+ ID -->|正常| S[Snapshot.Get]
+ S -->|非NULLキー不在・失効| E409[409共通応答]
+ S -->|所有・セッション・対象相違| E403[403共通応答]
+ S -->|NULLキーのArgumentNullException| EX[応答未開始なら共通503]
+ S -->|成立| R[ModelState.Clear・Original複製・同じ復帰版保持]
+ R --> L[人数付きLookup]
+ L -->|成功| V[同SnapshotのEdit View]
+ L -->|WebFault| WF[元Statusの共通応答]
+ L -->|非WebFault| EX
+ R -->|非WebFault| EX

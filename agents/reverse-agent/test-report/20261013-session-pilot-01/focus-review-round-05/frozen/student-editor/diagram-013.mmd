@@ -1,0 +1,11 @@
+flowchart LR
+ subgraph TX[ReadCommitted・共通書込ゲート]
+ R[dbo.m_student 現版SELECT] --> U[dbo.m_student 削除7列UPDATE]
+ U --> A[dbo.t_operation_log INSERT]
+ end
+ A --> CM[Commit]
+ NS[非Saved結果] --> L[別実行のLoad]
+ L --> S[dbo.m_student 最新値]
+ L --> K[OP-LK・コード分類・クラス・学年・人数]
+ L --> C[Context前後確認]
+ C --> M[新メモリSnapshot]

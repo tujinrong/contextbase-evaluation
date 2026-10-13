@@ -1,0 +1,61 @@
+{
+  "documentId": "SM-DET-STUDENT-EDITOR",
+  "approved": false,
+  "findings": [
+    {
+      "severity": "major",
+      "documentLocation": "EV-01・EV-02／条件付き処理フロー",
+      "defect": "読込後の復帰Context再確認による409経路が不足している。LoadはCoordinator.Edit完了後にもcontexts.Getを呼ぶため、入口確認を通過してもDB読取中にContextが失効すれば409となる。EV-02の「未捕捉例外→共通503」はこの経路を誤分類し、EV-01にも再確認失敗の分岐がない。",
+      "repairDirection": "候補取得後、復帰検索版取得前のContext再確認を図に追加する。WebFaultは元のHTTP状態を保持し、それ以外の未捕捉例外を応答未開始時の503へ分ける。",
+      "references": [
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 25,
+          "endLine": 25
+        },
+        {
+          "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+          "startLine": 17,
+          "endLine": 17
+        },
+        {
+          "path": "sources/Infrastructure/SearchContextStore.cs",
+          "startLine": 13,
+          "endLine": 13
+        },
+        {
+          "path": "sources/Infrastructure/WebHostSetup.cs",
+          "startLine": 23,
+          "endLine": 23
+        }
+      ]
+    },
+    {
+      "severity": "minor",
+      "documentLocation": "EV-07／条件付き処理フロー・結果／例外時の扱い",
+      "defect": "処理手順にあるFormGuardの拒否経路が図から抜け、エラー応答も401・422・403・409だけになっている。Resetでも許可外項目、同名複数値、不正な__Invariantは400となり、入力復元へ進まない。",
+      "repairDirection": "認証・ID・Snapshot確認の前にフォーム検査を置き、不正時の400共通応答を図と例外説明へ追加する。",
+      "references": [
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 35,
+          "endLine": 35
+        },
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 41,
+          "endLine": 41
+        },
+        {
+          "path": "sources/Infrastructure/WebHostSetup.cs",
+          "startLine": 23,
+          "endLine": 23
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "unknown: 静的HTMLは原ビュー・共有レイアウト・CSSと原文上で照合したが、描画画像を閲覧していないため視覚的一致は承認できない。",
+    "unknown: HTTP入力の欠落・空文字・変換失敗からMVCのDTO／ModelStateへ至る具体的な組合せは実行未確認。原稿にあるサービス引数のNULL分岐をHTTP入力への保証には拡張しない。"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "documentId": "SM-DET-STUDENT-SEARCH",
+  "approved": false,
+  "findings": [
+    {
+      "severity": "major",
+      "documentLocation": "spec/detail/student-search.md:541-565／補正renderのdiagram-009.png",
+      "defect": "PageフローはAppliedなし、GateのWebFault、Q-E/Q-Sの検証WebFault、補正再検索の検証WebFaultをすべて「409・空一覧用データ」へ集約している。原実装ではControllerがe.Statusをそのまま応答へ設定する。サービスのページ件数・ソート等の検証失敗はValidationFailedとなり、EnsureSearchとWebPresentation.Statusを経て422になる。所有者違い等の403も409へ固定されない。本文579行の「対応HTTP状態」は正しいが、実際に描画された図がその本文と原ソースに矛盾する。",
+      "repairDirection": "Appliedなし・期待版不一致の409と、入力検証の422、所有者等の403を根拠に沿って分ける。共通再表示領域へ集約する場合、固定409とせずe.Statusを保持することを示す。Applied由来入力、unsearched用データ、既存状態を消さない動作は保持する。図・手順・結果表を原入口から同時に再確認する。",
+      "references": [
+        {"path": "sources/Web/Controllers/StudentsController.cs", "startLine": 18, "endLine": 19},
+        {"path": "sources/Infrastructure/WebStudentCoordinator.cs", "startLine": 11, "endLine": 12},
+        {"path": "sources/Infrastructure/WebStudentCoordinator.cs", "startLine": 20, "endLine": 20},
+        {"path": "sources/Infrastructure/WebPresentation.cs", "startLine": 23, "endLine": 23},
+        {"path": "sources/Core/SqlServerStudentService.cs", "startLine": 107, "endLine": 108},
+        {"path": "sources/Core/SqlServerStudentService.cs", "startLine": 169, "endLine": 170},
+        {"path": "sources/Infrastructure/SearchContextStore.cs", "startLine": 13, "endLine": 14}
+      ]
+    },
+    {
+      "severity": "minor",
+      "documentLocation": "spec/detail/student-search.md:68-116／補正renderのlayout-002.png",
+      "defect": "原ビューと本文の新規登録・編集a要素はアプリケーションルートを持つが、補正renderでもaction/formaction/hrefは安全化で除去され、画像上の新規登録・編集が通常文字に近い表示となる。ルートの意味説明は正しく、業務条件の誤りではない。元のHTMLが構造検査でREFERENCE_PATH、派生表示がSANITIZEDとなるため、この画像を安全化による差分なしの出版物とは承認できない。初回META_PATHは呼出し側のcanonical path不足であり、補正後は消えている。",
+      "repairDirection": "source-backedのルートと操作種別は本文・data属性へ保持し、AIが送信・遷移を実行しない静的投影を新しく執筆する。ボタンとリンクの見た目・活性条件を保持し、断片href等の非実行表現でリンクを識別できるようにする。原稿をPythonで書換えず、次稿の構造・安全化・実画像を再確認する。",
+      "references": [
+        {"path": "sources/Views/Students/Search.cshtml", "startLine": 4, "endLine": 8},
+        {"path": "sources/Web/Controllers/StudentsController.cs", "startLine": 23, "endLine": 25}
+      ]
+    }
+  ],
+  "unresolved": []
+}

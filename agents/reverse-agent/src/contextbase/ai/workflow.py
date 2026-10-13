@@ -228,9 +228,163 @@ def _definition_state(snapshot, definition):
     return state
 
 
-def document(snapshot: Path, definition: dict, job_root: Path, output: Path,
-             *, timeout=1800, revision_context=None, deadline=None) -> dict:
+def _document_context(snapshot, definition):
+    """Give the AI related document identities from its own pinned plan."""
+    _definition_state(snapshot, definition)
+    plan_bytes = definition.plan_file.read_bytes()
+    if capsule.sha256(plan_bytes) != definition.handoff['planSha256']:
+        raise ValueError('Document plan changed before preparing AI context')
+    plan_value = json.loads(plan_bytes.decode('utf-8'))
+    index = [{'id': document['id'], 'path': document['path'],
+              'title': document['title'], 'kind': document['kind'],
+              'responsibilities': document['responsibilities']}
+             for document in plan_value['documents']]
+    return ('\n対象文書計画:\n' + json.dumps(definition, ensure_ascii=False, indent=2)
+            + '\n原文からAIが作成した全体文書計画（生成状態・採点期待値ではありません）:\n'
+            + json.dumps(index, ensure_ascii=False, indent=2)
+            + '\n関連文書のIDと相対pathはこの計画で照合してください。計画にあるだけで生成済みとは扱いません。')
+
+
+def _analysis_pin(snapshot, definition, analysis_job, provider_directory):
+    """Validate existing analysis evidence without claiming a new inference."""
+    from jsonschema import Draft202012Validator, ValidationError
+    snapshot = capsule.safe_path(snapshot)
+    analysis_job = capsule.safe_path(analysis_job)
+    if provider_directory not in {'analysis', 'analysis-repair'}:
+        raise ValueError('Unknown analysis provider directory')
     state = _definition_state(snapshot, definition)
+    verified = capsule.safe_path(analysis_job / 'analysis-verified.json')
+    analysis = capsule._load_json(verified)
+    provider_job = capsule.safe_path(analysis_job / provider_directory)
+    files = {name: capsule.safe_path(provider_job / name)
+             for name in ('answer.txt', 'result.json', 'schema.json', 'prompt.txt')}
+    answer = capsule._load_json(files['answer.txt'])
+    result = capsule._load_json(files['result.json'])
+    if not isinstance(result, dict) or not isinstance(result.get('metadata'), dict):
+        raise ValueError('Analysis provider result must contain metadata')
+    metadata = result.get('metadata', {})
+    if (result.get('exit_code') != 0 or metadata.get('status') != 'passed' or
+            metadata.get('schema_supplied') is not True or
+            metadata.get('workspace') != str(snapshot) or
+            metadata.get('reference_mode') != capsule.reference_mode(capsule.verify(snapshot)) or
+            metadata.get('training_reference_authorized') is not (state['mode'] == 'training-assisted') or
+            metadata.get('error_events') != [] or metadata.get('invalid_event_lines') != []):
+        raise ValueError('Completed successful analysis provider evidence is required')
+    if (metadata.get('answer_sha256') != capsule.sha256(files['answer.txt'].read_bytes()) or
+            metadata.get('prompt_sha256') != capsule.sha256(files['prompt.txt'].read_bytes()) or
+            capsule._load_json(files['schema.json']) != schemas.ANALYSIS or
+            result.get('answer') != answer or answer != analysis):
+        raise ValueError('Analysis differs from its preserved provider response/schema')
+    # Legacy recovery binds the current definition only when the preserved
+    # original analysis prompt actually carried that same document plan.
+    prompt = files['prompt.txt'].read_text(encoding='utf-8')
+    marker = '\n対象文書計画:\n'
+    if marker not in prompt:
+        raise ValueError('Analysis prompt lacks its original document definition')
+    try:
+        original_definition, _ = json.JSONDecoder().raw_decode(prompt.split(marker, 1)[1])
+    except ValueError as exc:
+        raise ValueError('Analysis prompt has an invalid original document definition') from exc
+    if original_definition != dict(definition):
+        raise ValueError('Analysis was created for a different document definition')
+    try:
+        Draft202012Validator(schemas.ANALYSIS).validate(analysis)
+    except ValidationError as exc:
+        raise ValueError('Invalid completed analysis schema') from exc
+    if analysis['documentId'] != definition['id']:
+        raise ValueError('Completed analysis document identity mismatch')
+    references_valid(analysis, capsule.verify(snapshot))
+    before = capsule._load_json(capsule.safe_path(analysis_job / (provider_directory + '-snapshot-before.json')))
+    after = capsule._load_json(capsule.safe_path(analysis_job / (provider_directory + '-snapshot-after.json')))
+    if (before != state or after.get('status') != 'UNCHANGED' or
+            after.get('before') != state or after.get('after') != state):
+        raise ValueError('Completed analysis lacks matching before/after snapshot evidence')
+    _definition_state(snapshot, definition)
+    return analysis, {
+        'snapshot': state, 'referenceMode': capsule.reference_mode(capsule.verify(snapshot)),
+        'planFile': str(definition.plan_file),
+        'planSha256': capsule.sha256(definition.plan_file.read_bytes()),
+        'planHandoffSha256': definition.handoff_sha, 'document': dict(definition),
+        'analysisJob': str(analysis_job), 'analysisFile': verified.name,
+        'analysisSha256': capsule.sha256(verified.read_bytes()),
+        'providerDirectory': provider_directory,
+        'providerArtifactsSha256': {name: capsule.sha256(path.read_bytes()) for name, path in files.items()},
+        'snapshotEvidenceSha256': {
+            name: capsule.sha256((analysis_job / name).read_bytes())
+            for name in (provider_directory + '-snapshot-before.json', provider_directory + '-snapshot-after.json')},
+    }
+
+
+def _checkpoint_analysis(snapshot, definition, analysis_job, provider_directory, origin):
+    _, pin = _analysis_pin(snapshot, definition, analysis_job, provider_directory)
+    checkpoint = {
+        'schema': 'reverse-ai-analysis-handoff/1', **pin, 'origin': origin,
+        'bindingCreatedAt': datetime.now(timezone.utc).isoformat(),
+        'aiResponseBytesModified': False,
+        'planBindingScope': ('current-bound-plan-and-original-prompt-document-correspondence'
+                             if origin.startswith('deferred-bind:') else
+                             'same-job-analysis-and-current-bound-plan'),
+        'scope': 'verified-analysis-reuse-for-the-same-bound-plan-and-revalidated-capsule',
+        'capsuleIntegrityScope': pin['snapshot']['scope'],
+    }
+    capsule.write_json(capsule.safe_path(analysis_job) / 'analysis-handoff.json', checkpoint)
+    return checkpoint
+
+
+def recover_analysis_checkpoint(snapshot: Path, definition: dict, analysis_job: Path) -> dict:
+    """Explicitly bind completed legacy evidence; never rerun or edit the answer."""
+    analysis_job = capsule.safe_path(analysis_job)
+    if (analysis_job / 'analysis-handoff.json').exists():
+        raise FileExistsError('An analysis checkpoint already exists')
+    failures = []
+    for directory in ('analysis-repair', 'analysis'):
+        if not (analysis_job / directory).is_dir():
+            continue
+        try:
+            _analysis_pin(snapshot, definition, analysis_job, directory)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            failures.append(type(exc).__name__)
+            continue
+        return _checkpoint_analysis(snapshot, definition, analysis_job, directory,
+                                    'deferred-bind:legacy-provider-and-before-after-evidence-verified')
+    raise ValueError('No recoverable completed analysis provider evidence: ' + ','.join(failures))
+
+
+def _resume_analysis(snapshot, definition, analysis_job):
+    analysis_job = capsule.safe_path(analysis_job)
+    checkpoint_file = capsule.safe_path(analysis_job / 'analysis-handoff.json')
+    checkpoint_bytes = checkpoint_file.read_bytes()
+    checkpoint = capsule._load_json(checkpoint_file)
+    if (checkpoint.get('schema') != 'reverse-ai-analysis-handoff/1' or
+            checkpoint.get('aiResponseBytesModified') is not False or
+            checkpoint.get('origin') not in {
+                'same-job:analysis-verified-before-draft',
+                'deferred-bind:legacy-provider-and-before-after-evidence-verified'}):
+        raise ValueError('Unrecognized completed analysis checkpoint')
+    analysis, pin = _analysis_pin(snapshot, definition, analysis_job, checkpoint.get('providerDirectory'))
+    if any(checkpoint.get(key) != value for key, value in pin.items()):
+        raise ValueError('Analysis checkpoint differs from the current bound plan or preserved artifacts')
+    if ('capsuleIntegrityScope' in checkpoint and
+            checkpoint['capsuleIntegrityScope'] != pin['snapshot']['scope']):
+        raise ValueError('Analysis checkpoint overstates or changes its capsule integrity scope')
+    if checkpoint_file.read_bytes() != checkpoint_bytes:
+        raise ValueError('Analysis checkpoint changed during verification')
+    return analysis, checkpoint, capsule.sha256(checkpoint_bytes)
+
+
+def document(snapshot: Path, definition: dict, job_root: Path, output: Path,
+             *, timeout=1800, revision_context=None, deadline=None, analysis_job=None) -> dict:
+    state = _definition_state(snapshot, definition)
+    job_root = capsule.safe_path(job_root)
+    if job_root.exists():
+        raise FileExistsError('Use a fresh document job root')
+    safe_snapshot = capsule.safe_path(snapshot)
+    if safe_snapshot == job_root or safe_snapshot in job_root.parents:
+        raise ValueError('Document job must be outside the immutable source capsule')
+    if analysis_job is not None:
+        safe_analysis = capsule.safe_path(analysis_job)
+        if safe_analysis == job_root or safe_analysis in job_root.parents:
+            raise ValueError('Resumed draft job must be outside the completed analysis job')
     output = capsule.safe_path(output)
     planned_target = capsule.safe_path(output / relative_path(definition['path']))
     if output not in planned_target.parents:
@@ -238,31 +392,54 @@ def document(snapshot: Path, definition: dict, job_root: Path, output: Path,
     if planned_target.exists():
         raise FileExistsError('Immutable document output already exists')
     manifest = capsule.verify(snapshot)
-    context = '\n対象文書計画:\n' + json.dumps(definition, ensure_ascii=False, indent=2)
+    context = _document_context(snapshot, definition)
     if revision_context is not None:
         context += '\n前の原稿への原文根拠付き批評（正解期待値ではありません）:\n' + json.dumps(revision_context, ensure_ascii=False, indent=2)
-    analysis = _bound_job(snapshot, job_root / 'analysis', prompts.ANALYZE + context,
-                          schemas.ANALYSIS, timeout, state, deadline)
-    if analysis['documentId'] != definition['id']:
-        raise ValueError('Analysis document identity mismatch')
-    try:
-        references_valid(analysis, manifest)
-    except ValueError as exc:
-        # Preserve the original answer and ask the AI to correct its own evidence.
-        # This retry handles generic validation, never application-specific answers.
-        correction = {'validationError': str(exc), 'previousAiAnalysis': analysis}
-        capsule.write_json(job_root / 'analysis-validation-failure.json', correction)
-        repair_context = context + '\n根拠検査で受理されなかったAI解析を訂正してください:\n' + json.dumps(correction, ensure_ascii=False, indent=2)
-        analysis = _bound_job(snapshot, job_root / 'analysis-repair', prompts.ANALYZE + repair_context,
+    resumed_checkpoint = None
+    if analysis_job is not None:
+        analysis, resumed_checkpoint, resumed_sha = _resume_analysis(snapshot, definition, analysis_job)
+        capsule.write_json(job_root / 'analysis-resume.json', {
+            'schema': 'reverse-ai-analysis-resume/1', 'checkpoint': resumed_checkpoint,
+            'checkpointSha256': resumed_sha, 'analysisExecutedInThisJob': False,
+            'revisionContextSupplied': revision_context is not None,
+        })
+    else:
+        provider_directory = 'analysis'
+        analysis = _bound_job(snapshot, job_root / provider_directory, prompts.ANALYZE + context,
                               schemas.ANALYSIS, timeout, state, deadline)
         if analysis['documentId'] != definition['id']:
-            raise ValueError('Corrected analysis document identity mismatch')
-        references_valid(analysis, manifest)
-    capsule.write_json(job_root / 'analysis-verified.json', analysis)
+            raise ValueError('Analysis document identity mismatch')
+        try:
+            references_valid(analysis, manifest)
+        except ValueError as exc:
+            correction = {'validationError': str(exc), 'previousAiAnalysis': analysis}
+            capsule.write_json(job_root / 'analysis-validation-failure.json', correction)
+            repair_context = context + '\n根拠検査で受理されなかったAI解析を訂正してください:\n' + json.dumps(correction, ensure_ascii=False, indent=2)
+            provider_directory = 'analysis-repair'
+            analysis = _bound_job(snapshot, job_root / provider_directory, prompts.ANALYZE + repair_context,
+                                  schemas.ANALYSIS, timeout, state, deadline)
+            if analysis['documentId'] != definition['id']:
+                raise ValueError('Corrected analysis document identity mismatch')
+            references_valid(analysis, manifest)
+        capsule.write_json(job_root / 'analysis-verified.json', analysis)
+        # Custom/test providers without raw artifacts can draft, but cannot
+        # establish a resumable checkpoint or be recovered as verified evidence.
+        artifact_names = ('answer.txt', 'result.json', 'schema.json', 'prompt.txt')
+        if any((job_root / provider_directory / name).exists() for name in artifact_names):
+            _checkpoint_analysis(snapshot, definition, job_root, provider_directory,
+                                 'same-job:analysis-verified-before-draft')
+        else:
+            capsule.write_json(job_root / 'analysis-checkpoint-unavailable.json', {
+                'status': 'NOT_RESUMABLE', 'reason': 'provider_raw_artifacts_unavailable',
+            })
     writer_context = context + '\nAIによる解析素材:\n' + json.dumps(analysis, ensure_ascii=False, indent=2)
     _definition_state(snapshot, definition)
     draft = _bound_job(snapshot, job_root / 'draft', prompts.WRITE + writer_context,
                        schemas.DRAFT, timeout, state, deadline)
+    if resumed_checkpoint is not None:
+        _, current_checkpoint, current_sha = _resume_analysis(snapshot, definition, analysis_job)
+        if current_checkpoint != resumed_checkpoint or current_sha != resumed_sha:
+            raise ValueError('Resumed analysis changed during drafting')
     if draft['documentId'] != definition['id'] or draft['path'] != definition['path']:
         raise ValueError('Draft identity/path differs from approved source-derived plan')
     if not isinstance(draft['content'], str) or not draft['content'].strip():
@@ -274,7 +451,7 @@ def document(snapshot: Path, definition: dict, job_root: Path, output: Path,
     with target.open('x', encoding='utf-8', newline='\n') as handle:
         handle.write(draft['content'])
     from .validation import validate_document
-    structural_findings = validate_document(draft['content'], draft['path'])
+    structural_findings = validate_document(draft['content'], draft['path'], expected_document_id=definition['id'])
     capsule.write_json(job_root / 'document-structure.json', {
         'documentId': definition['id'], 'contentSha256': capsule.sha256(draft['content'].encode('utf-8')),
         'status': 'STRUCTURE_INVALID' if structural_findings else 'STRUCTURE_VALID',
@@ -285,6 +462,9 @@ def document(snapshot: Path, definition: dict, job_root: Path, output: Path,
               'contentSha256': capsule.sha256(draft['content'].encode('utf-8')),
               'aiAuthored': True, 'semanticProseAssembledByPython': False,
               'analysisFacts': len(analysis['facts']), 'unresolved': draft['unresolved'],
+              'factCorrections': draft['factCorrections'],
+              'analysisExecutedInThisJob': analysis_job is None,
+              'analysisJob': str(capsule.safe_path(analysis_job)) if analysis_job is not None else str(job_root),
               'snapshot': state, 'referenceMode': capsule.reference_mode(manifest),
               'structureFindings': structural_findings,
               'status': 'STRUCTURE_INVALID' if structural_findings else 'AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED'}
@@ -297,14 +477,14 @@ def review(snapshot: Path, document_file: Path, definition: dict, job: Path,
            *, timeout=1800, deadline=None) -> dict:
     state = _definition_state(snapshot, definition)
     manifest = capsule.verify(snapshot)
-    context = '\n文書計画:\n' + json.dumps(definition, ensure_ascii=False)
+    context = _document_context(snapshot, definition)
     document_file = capsule.safe_path(document_file)
     document_bytes = document_file.read_bytes()
     if not document_bytes.strip():
         raise ValueError('An empty document cannot be reviewed as complete')
     document_sha = capsule.sha256(document_bytes)
     from .validation import validate_document
-    structural_findings = validate_document(document_bytes.decode('utf-8'), definition['path'])
+    structural_findings = validate_document(document_bytes.decode('utf-8'), definition['path'], expected_document_id=definition['id'])
     context += '\n原稿本文:\n' + document_bytes.decode('utf-8')
     context += '\n構造検査の指摘（意味の正確さを採点した結果ではありません）:\n' + json.dumps(structural_findings, ensure_ascii=False)
     answer = _bound_job(snapshot, job, prompts.REVIEW + context, schemas.REVIEW, timeout, state, deadline)
@@ -329,5 +509,8 @@ def review(snapshot: Path, document_file: Path, definition: dict, job: Path,
         'documentFile': str(document_file), 'documentSha256': document_sha,
         'reviewSha256': capsule.sha256((job / 'review-verified.json').read_bytes()),
         'referenceMode': capsule.reference_mode(manifest), 'approved': answer['approved'],
+        'reviewScope': 'text-source-and-structure', 'visualFidelityVerified': False,
+        'formallyEvaluatedByOriginalRubric': False,
+        'unassessedScopes': ['visual-fidelity', 'application-runtime', 'formal-semantic-scoring'],
     })
     return answer

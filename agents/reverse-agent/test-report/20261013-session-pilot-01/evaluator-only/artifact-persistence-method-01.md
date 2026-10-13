@@ -1,0 +1,13 @@
+# 評価成果物の保存方法
+
+EVALUATOR ONLY。生成入力・productionの規則を変更しない。
+
+新規の採点JSON、確認JSON、合算JSON/MDはartifact_store.pyのexclusive_json／exclusive_bytesで排他的に作成する。既存ファイルへの書込みは拒否する。第4稿検索保存・検索context確認・合算の機械スクリプトもこの方法へ変更した。既に固定済みの第4稿最終JSONの内容とSHAは変更していない。
+
+訂正時は旧ファイルを上書きせず、corrected_jsonに旧ファイル、新版の別パス、遷移記録の別パスと変更理由を渡す。旧ファイルの完全byteをSHA名のhistoryへ保持し、新版とtransitionを新規作成する。新版が既存、パスが重複、保存先がevaluator-onlyの外の場合は拒否する。ファイル群の完全なトランザクション性は主張せず、途中失敗は未完了として扱う。
+
+新しい採点担当は新版ごとに理由・根拠・原行文脈を確認し、その最終report SHAへreviewを結び直す。historyやtransitionは採点値を継承するための入力ではない。期待値・業務条件・操作名ごとのルールを保存helperへ埋め込まない。
+
+artifact-store-synthetic-01/validation.jsonでは、合成文字列だけで既存書込み拒否、完全byte保持、別versionとtransition、既存新版拒否、重複パス拒否、評価領域外拒否を5検査で確認した。アプリ・DB・生成器の実行や意味採点は行っていない。
+
+第4稿編集の暫定JSONと初期reviewは上書き前の完全byteが未保存である。既知SHA・ツール出力・残存初期MDを旧JSONの復元とは扱わない。editor-evaluation-transition.jsonにその限界を記録した。現在の最終JSON/reviewはfinal-component-manifest-01.jsonから別の完全byte snapshotへ固定した。この保存方法の修正を、失われた過去byteの保存済み証明へ遡及させない。

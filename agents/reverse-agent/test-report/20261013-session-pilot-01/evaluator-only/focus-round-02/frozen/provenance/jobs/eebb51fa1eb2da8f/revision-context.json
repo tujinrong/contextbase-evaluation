@@ -1,0 +1,643 @@
+{
+  "previousDraft": "<!-- spec-meta: {\"schema\":\"spec-md/1.0\",\"documentId\":\"SM-DET-STUDENT-EDITOR\",\"version\":\"1.0\",\"path\":\"spec/detail/student-editor.md\",\"sheets\":[{\"heading\":\"概要\",\"kind\":\"GRID\",\"sheet\":\"01_概要\"},{\"heading\":\"項目一覧\",\"kind\":\"LIST\",\"sheet\":\"02_項目一覧\",\"key\":[\"項目ID\"]},{\"heading\":\"項目移送仕様\",\"kind\":\"LIST\",\"sheet\":\"03_項目移送仕様\",\"key\":[\"移送ID\"]},{\"heading\":\"項目更新仕様\",\"kind\":\"LIST\",\"sheet\":\"04_項目更新仕様\",\"key\":[\"更新ID\"]},{\"heading\":\"選択候補一覧\",\"kind\":\"LIST\",\"sheet\":\"05_選択候補一覧\",\"key\":[\"候補ID\"]},{\"heading\":\"内部項目・一時情報\",\"kind\":\"LIST\",\"sheet\":\"06_内部項目\",\"key\":[\"内部ID\"]},{\"heading\":\"イベント仕様\",\"kind\":\"GRID\",\"sheet\":\"07_イベント仕様\"},{\"heading\":\"補足説明\",\"kind\":\"GRID\",\"sheet\":\"08_補足説明\"}]} -->\n# 学生登録・編集・参照画面 詳細仕様書\n\n| 文書属性 | 内容 |\n| --- | --- |\n| 文書ID | SM-DET-STUDENT-EDITOR |\n| 正本パス | spec/detail/student-editor.md |\n| 版 | 1.0 |\n| 対象責務 | 学生1件の入力・表示、登録・更新、同一人物確認、論理削除、入力復元、最新再読込、検索復帰 |\n| 記述基準 | 現行ソースで観測した動作。参考設計の意図と相違は補足説明で区別する |\n| 読者 | 業務システムのIT担当者、実装経験5年程度の開発者 |\n\n## 概要\n\n### 画面と処理の責務\n\n本画面は学生の基本情報、住所、連絡手段、在籍状態、所属クラス、緊急連絡先を登録・編集・参照する。学生管理番号は内部識別用のIDであり、利用者が入力する学籍番号とは別の値である。論理削除は専用フォームで実行し、編集中の業務入力を保存しない。根拠: `sources/Views/Students/Edit.cshtml:4-17`、`sources/Core/Contracts.cs:59-70`。\n\nHTML要求は `StudentsController` から `WebStudentCoordinator` を経由して `IStudentService` に到達する。Controllerはフォーム項目、読込時Snapshot、表示モデル、HTTP応答を扱う。Coordinatorは権限・検索復帰先を確認し、Web入力を保存要求へ変換する。登録された `SqlServerStudentService` は正規化、DB再確認、排他、学生書込み、監査追加、確定結果の分類を担当する。Web登録では `webTokens=true` を指定する。根拠: `sources/Program.cs:3-7`、`sources/Infrastructure/WebHostSetup.cs:13-19`、`sources/Web/Controllers/StudentsController.cs:23-38`、`sources/Infrastructure/WebStudentCoordinator.cs:17-19`。\n\n`StudentSaveInput` は原入力と制御情報を保持するWeb用DTOである。業務19項目は `StudentDraft` へ移し、正規化後の値は `NormalizedStudent.Values` の物理列名キーへ設定する。年度・学年、期待版、確認キー、理由は `SaveRequest` の独立した属性である。復帰先とSnapshot識別子は学生保存値に含めない。`StudentEditPageModel` はInput、読込Detail、候補、利用者、処理結果、一時情報をViewへ渡す表示モデルである。根拠: `sources/Web/Inputs/StudentSaveInput.cs:9-43`、`sources/Core/Contracts.cs:9-29`、`sources/Core/Contracts.cs:66-70`、`sources/Core/StudentNormalizer.cs:11-15`、`sources/Web/Models/StudentEditPageModel.cs:3-14`。\n\n### モードと公開入口\n\n対象IDなしは「学生登録／新規」、既存IDありは編集権限に応じて「学生登録／編集」または「学生登録／参照」となる。RoleがViewerの場合は基本情報fieldsetをdisabledにし、新規表示と保存もサーバーで拒否する。既存の学籍番号はreadonlyとなる。論理削除フォームは既存学生かつAdministratorの場合だけ表示し、削除入口とサービスでも管理者条件を確認する。根拠: `sources/Views/Students/Edit.cshtml:3-6`、`sources/Views/Students/Edit.cshtml:17-17`、`sources/Web/Models/StudentEditPageModel.cs:14-14`、`sources/Infrastructure/RequestIdentity.cs:13-16`、`sources/Core/SqlServerStudentService.cs:229-230`、`sources/Core/SqlServerStudentService.cs:394-395`。\n\n| 操作 | 入口 | 入力・対象 | 主な正常応答 |\n| --- | --- | --- | --- |\n| 新規表示 | GET `/students/new` | 任意のreturnContextId | 初期Inputと新規Snapshotを持つEdit View |\n| 既存表示 | GET `/students/{id:long}` | 対象ID、任意のreturnContextId | 取得値から復元したEdit View |\n| 登録 | POST `/students/create` | `Input.*`、SnapshotId | Commit成功後303 |\n| 更新 | POST `/students/{id:long}/update` | ルートID、`Input.*`、SnapshotId | Commit成功後303、変更なしは同画面200 |\n| 入力クリア・編集取消 | POST `/students/reset` | SnapshotId、StudentId | 読込時Inputへ復元したEdit View |\n| 論理削除 | POST `/students/{id:long}/delete` | ルートID、削除DTO、SnapshotId | Commit成功後303 |\n| 最新再読込 | 既存表示と同じGET | 対象ID、復帰先 | 最新取得値と新規Snapshot |\n| 検索復帰 | GET `/students` | contextId、contextRevision | 未検索状態または適用済み条件の再検索結果 |\n\n根拠: `sources/Web/Controllers/StudentsController.cs:8-11`、`sources/Web/Controllers/StudentsController.cs:23-38`。編集画面はHTMLのGET・フォームPOSTを使用する。編集用の候補JSON通信は接続されていない。\n\n### 表の読取り方\n\n項目一覧は実コントロールと表示状態を示し、項目移送仕様は要求DTOから保存列・SQLパラメータまでを示す。移送表の業務項目は、フォームの `Input.プロパティ名` → `StudentSaveInput.プロパティ名` → `StudentDraft.プロパティ名` の順に移す。両DTOの型が異なるクラスIDと、業務値に含めない制御情報は個別に記載する。根拠: `sources/Web/Inputs/StudentSaveInput.cs:9-43`、`sources/Core/Contracts.cs:11-29`。\n\nHTMLのmaxlengthはブラウザー側のUTF-16コード単位による入力制限である。サービスの文字上限はUnicodeスカラー値で数える。DBの `nvarchar(n)` のnはUTF-16格納容量、`varchar(n)` のnはバイト容量であり、本画面のvarchar保存値はASCII形式へ検査する。DTOのnullable、業務上の必須条件、DDLのNULL可否は別々に示す。SQLパラメータは `Columns` の型・Sizeを使用し、DateOnlyを午前0時のDateTimeへ変換してDate型へ渡す。NULLはDBNull、Size=0はサイズ未指定となる。根拠: `sources/Core/StudentNormalizer.cs:37-57`、`sources/Core/SqlServerStudentService.cs:30-37`、`sources/Core/SqlServerStudentService.cs:67-72`、`sources/database/001_schema.sql:9-33`。\n\nREG-001～034は論理項目番号として使用する。REG-001・019・025・027～034と同名のDOM idはない。実要素はp、small、button、a、確認section等で識別する。根拠: `reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:87-120`、`sources/Views/Students/Edit.cshtml:4-17`。\n\n### 画面配置\n\n入力は原本順の2列配置で、備考と確認・変更理由は全幅、生年月日は元号・年・月・日の横並びとなる。760px以下では入力を1列にする。エラーは先頭の共通メッセージ領域に集約し、項目横の個別validation spanは設けていない。確認領域は `role=dialog` のsectionだが、適用クラスはwarningであり、宣言されている固定位置dialogスタイルは適用されていない。根拠: `sources/Views/Students/Edit.cshtml:3-15`、`sources/Views/Shared/_MessagePanel.cshtml:1-3`、`sources/wwwroot/css/site.css:1-1`。\n\n以下は配置確認用の静的HTML/CSSであり、実画面撮影ではない。新規を基準とし、確認結果時と既存管理者時の追加領域を併記する。DB候補の名称は配置用の表記である。既存モードでは学籍番号をreadonly、参照モードでは基本情報fieldsetをdisabledにする。\n\n<style>\n.student-editor-spec{font-family:Meiryo,'Yu Gothic UI',sans-serif;color:#243448;background:white;padding:24px;max-width:1440px;margin:auto;font-size:14px}.student-editor-spec *{box-sizing:border-box}.student-editor-spec fieldset{border:1px solid #c8d1dc;padding:18px;margin:12px 0}.student-editor-spec legend{font-weight:bold}.student-editor-spec .fields{display:grid;grid-template-columns:1fr 1fr;gap:14px 28px}.student-editor-spec label{display:flex;flex-direction:column;gap:5px}.student-editor-spec .full{grid-column:1/-1}.student-editor-spec input,.student-editor-spec select,.student-editor-spec textarea,.student-editor-spec button{font:inherit;padding:8px;border:1px solid #afbece;border-radius:3px}.student-editor-spec input,.student-editor-spec select,.student-editor-spec textarea{width:100%;max-width:100%}.student-editor-spec textarea{min-height:90px}.student-editor-spec .wareki{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.student-editor-spec .wareki input{width:65px}.student-editor-spec .wareki select{width:100px}.student-editor-spec .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0}.student-editor-spec .primary{background:#1c5985;color:white}.student-editor-spec .danger{color:#ae2534;border-color:#b44d59}.student-editor-spec .warning{background:#fff8eb;padding:12px}.student-editor-spec table{border-collapse:collapse;width:100%;min-width:1050px}.student-editor-spec th,.student-editor-spec td{border:1px solid #d4dee8;padding:8px}.student-editor-spec .grid{overflow-x:auto}.student-editor-spec small{color:#5f7183}@media(max-width:760px){.student-editor-spec{padding:15px}.student-editor-spec .fields{grid-template-columns:1fr}}\n</style>\n<div class=\"student-editor-spec\">\n<h3>学生登録／新規</h3><div aria-live=\"polite\">共通メッセージ・入力エラー</div>\n<p>学生管理番号 新規　更新日時 －　更新者 －</p>\n<form><input type=\"hidden\" name=\"SnapshotId\"><input type=\"hidden\" name=\"Input.ExpectedVersion\"><input type=\"hidden\" name=\"Input.ReturnContextId\"><input type=\"hidden\" name=\"Input.DuplicateToken\">\n<fieldset><legend>学生基本情報</legend><div class=\"fields\">\n<label>学籍番号 ※必須<input id=\"REG-002\" name=\"Input.StudentNo\" maxlength=\"30\" required></label>\n<label>氏名 ※必須<input id=\"REG-003\" name=\"Input.StudentName\" maxlength=\"16\" required><small>8文字以内</small></label>\n<label>氏名カナ ※必須<input id=\"REG-004\" name=\"Input.StudentNameKana\" maxlength=\"72\" required><small>原入力36、正規化後18文字</small></label>\n<fieldset id=\"REG-005\" class=\"wareki\"><legend>生年月日 ※必須</legend><select name=\"Input.BirthDateInput.Era\" aria-label=\"元号\" required><option value=\"\">元号</option><option value=\"REIWA\">令和</option><option value=\"HEISEI\">平成</option><option value=\"SHOWA\">昭和</option><option value=\"TAISHO\">大正</option><option value=\"MEIJI\">明治</option></select><input name=\"Input.BirthDateInput.Year\" aria-label=\"元号年\" maxlength=\"4\" required><span>年</span><input name=\"Input.BirthDateInput.Month\" aria-label=\"月\" maxlength=\"2\" required><span>月</span><input name=\"Input.BirthDateInput.Day\" aria-label=\"日\" maxlength=\"2\" required><span>日</span></fieldset>\n<label>性別 ※必須<select id=\"REG-006\" name=\"Input.GenderCode\" required><option value=\"0\">コード名称（初期入力値0）</option></select></label>\n<label>郵便番号 ※必須<input id=\"REG-007\" name=\"Input.PostalCode\" maxlength=\"20\" required></label>\n<label>都道府県 ※必須<select id=\"REG-008\" name=\"Input.PrefectureCode\" required><option value=\"\">未選択</option></select></label>\n<label>住所1 ※必須<input id=\"REG-009\" name=\"Input.AddressLine1\" maxlength=\"90\" required><small>45文字以内</small></label>\n<label>住所2<input id=\"REG-010\" name=\"Input.AddressLine2\" maxlength=\"90\"></label>\n<label>本人電話<input id=\"REG-011\" name=\"Input.PhoneNumber\" maxlength=\"40\"><small>原入力20、正規化後16文字</small></label>\n<label>本人メール<input id=\"REG-012\" name=\"Input.EmailAddress\" maxlength=\"120\"></label>\n<label>入学日 ※必須<input id=\"REG-013\" name=\"Input.AdmissionDate\" type=\"date\" required></label>\n<label>在籍区分 ※必須<select id=\"REG-014\" name=\"Input.EnrollmentStatusCode\" required><option value=\"01\">コード名称（初期入力値01）</option></select></label>\n<label>卒業・退学日<input id=\"REG-015\" name=\"Input.EnrollmentEndDate\" type=\"date\"></label>\n<label>年度<select id=\"REG-016\" name=\"Input.SchoolYear\"><option value=\"\">未指定</option><option selected>当学校年度</option></select></label>\n<label>学年<select id=\"REG-017\" name=\"Input.GradeCode\"><option value=\"\">すべて</option></select></label>\n<label>クラス<select id=\"REG-018\" name=\"Input.ClassId\"><option value=\"\">未所属</option></select><small>人数 －／定員 制限なし（参考）</small></label>\n<label>緊急連絡先氏名<input id=\"REG-020\" name=\"Input.EmergencyContactName\" maxlength=\"16\"></label>\n<label>緊急連絡先続柄<select id=\"REG-021\" name=\"Input.RelationshipCode\"><option value=\"\">未選択</option></select></label>\n<label>緊急連絡先電話<input id=\"REG-022\" name=\"Input.EmergencyPhoneNumber\" maxlength=\"40\"></label>\n<label class=\"full\">備考<textarea id=\"REG-023\" name=\"Input.Remarks\" maxlength=\"240\"></textarea></label>\n<label class=\"full\">確認・変更理由<textarea id=\"REG-024\" name=\"Input.OperationReason\" maxlength=\"120\"></textarea></label>\n</div><p>本人電話・メール・緊急電話のいずれか1つ以上。緊急連絡先は3項目すべて入力してください。</p>\n<section role=\"dialog\" aria-labelledby=\"duplicate-title\" class=\"warning\"><h3 id=\"duplicate-title\">同一人物候補の確認（ConfirmationRequired時）</h3><p>全候補件数、最大20件表示</p><div class=\"grid\"><table><thead><tr><th>学籍番号</th><th>氏名</th><th>和暦生年月日</th><th>クラス</th></tr></thead><tbody></tbody></table></div><p>別人と確認した場合は、確認理由を入力して続行してください。</p><button type=\"button\" autofocus>確認取消</button><button type=\"button\">別人と確認して続行</button></section>\n<div class=\"actions\"><button type=\"button\" class=\"primary\">登録／更新</button></div></fieldset></form>\n<div class=\"actions\"><form><button type=\"button\">入力クリア／編集取消</button></form><span>最新情報を再読込（既存時）</span><span>検索へ戻る</span></div>\n<form><p>既存Administrator時の追加領域</p><label>削除理由 ※必須<textarea id=\"REG-026\" name=\"Reason\" maxlength=\"120\" required></textarea></label><button type=\"button\" class=\"danger\">対象を確認して論理削除</button><p>編集中の業務値は保存されません。</p></form>\n</div>\n\n## 項目一覧\n\n| 項目ID | 論理項目名 | 実コントロール・識別 | 新規初期値・必須条件 | HTML属性・表示状態 | 根拠 |\n| --- | --- | --- | --- | --- | --- |\n| REG-001 | 学生管理番号 | 先頭p内の`StudentId` | 対象IDなし | 新規は「新規」、既存はID。入力欄・同名DOM idなし | `sources/Views/Students/Edit.cshtml:4-4` |\n| REG-002 | 学籍番号 | `input#REG-002` | 空文字、必須 | `required`、`maxlength=30`。既存はreadonly | `sources/Views/Students/Edit.cshtml:6-6` |\n| REG-003 | 氏名 | `input#REG-003` | 空文字、必須 | `required`、`maxlength=16`、8文字以内の説明 | `sources/Views/Students/Edit.cshtml:6-6` |\n| REG-004 | 氏名カナ | `input#REG-004` | 空文字、必須 | `required`、`maxlength=72`、原入力36・正規化後18の説明 | `sources/Views/Students/Edit.cshtml:6-6` |\n| REG-005 | 生年月日 | `fieldset#REG-005`内の元号select、年・月・日input | 4値とも空文字、全部品必須 | 全部品`required`、年`maxlength=4`、月日各2 | `sources/Views/Students/Edit.cshtml:7-7` |\n| REG-006 | 性別 | `select#REG-006` | 入力値`0`、必須 | `required`、空optionなし | `sources/Views/Students/Edit.cshtml:8-8`、`sources/Web/Inputs/StudentSaveInput.cs:13-13` |\n| REG-007 | 郵便番号 | `input#REG-007` | 空文字、必須 | `required`、`maxlength=20` | `sources/Views/Students/Edit.cshtml:9-9` |\n| REG-008 | 都道府県 | `select#REG-008` | 空文字、必須 | `required`、空option「未選択」 | `sources/Views/Students/Edit.cshtml:9-9` |\n| REG-009 | 住所1 | `input#REG-009` | 空文字、必須 | `required`、`maxlength=90`、45文字以内の説明 | `sources/Views/Students/Edit.cshtml:10-10` |\n| REG-010 | 住所2 | `input#REG-010` | NULL、任意 | `maxlength=90` | `sources/Views/Students/Edit.cshtml:10-10`、`sources/Web/Inputs/StudentSaveInput.cs:17-17` |\n| REG-011 | 本人電話 | `input#REG-011` | NULL。連絡手段最低1件条件の対象 | `maxlength=40`、原入力20・正規化後16の説明 | `sources/Views/Students/Edit.cshtml:10-10`、`sources/Core/StudentNormalizer.cs:155-155` |\n| REG-012 | 本人メール | `input#REG-012` | NULL。連絡手段最低1件条件の対象 | `maxlength=120` | `sources/Views/Students/Edit.cshtml:10-10`、`sources/Core/StudentNormalizer.cs:155-155` |\n| REG-013 | 入学日 | `input#REG-013` | 空文字、必須 | `type=date`、`required`。maxlength指定なし | `sources/Views/Students/Edit.cshtml:11-11` |\n| REG-014 | 在籍区分 | `select#REG-014` | 入力値`01`、必須 | `required`、空optionなし | `sources/Views/Students/Edit.cshtml:11-11`、`sources/Web/Inputs/StudentSaveInput.cs:21-21` |\n| REG-015 | 卒業・退学日 | `input#REG-015` | NULL。03・04は必須、01・02は未設定 | `type=date`。required・maxlength指定なし | `sources/Views/Students/Edit.cshtml:11-11`、`sources/Core/StudentNormalizer.cs:153-153` |\n| REG-016 | 年度 | `select#REG-016` | 当学校年度、任意 | 空option「未指定」。学生保存列なし | `sources/Views/Students/Edit.cshtml:12-12`、`sources/Web/Inputs/StudentSaveInput.cs:53-53` |\n| REG-017 | 学年 | `select#REG-017` | NULL、任意 | 空option「すべて」。学生保存列なし | `sources/Views/Students/Edit.cshtml:12-12`、`sources/Web/Inputs/StudentSaveInput.cs:53-53` |\n| REG-018 | クラス | `select#REG-018` | NULL。01・02は必須、03・04は任意 | 空option「未所属」。表示名と選択IDを分離 | `sources/Views/Students/Edit.cshtml:12-12`、`sources/Core/StudentNormalizer.cs:154-154` |\n| REG-019 | 所属人数・定員 | クラス欄内small | 人数「－」、定員「制限なし」 | 参考値。同名DOM idなし | `sources/Views/Students/Edit.cshtml:2-2`、`sources/Views/Students/Edit.cshtml:12-12` |\n| REG-020 | 緊急連絡先氏名 | `input#REG-020` | NULL。緊急3項目は全未設定または全設定 | `maxlength=16` | `sources/Views/Students/Edit.cshtml:13-13`、`sources/Core/StudentNormalizer.cs:156-157` |\n| REG-021 | 緊急連絡先続柄 | `select#REG-021` | NULL。緊急一式条件の対象 | 空option「未選択」 | `sources/Views/Students/Edit.cshtml:13-13`、`sources/Core/StudentNormalizer.cs:156-157` |\n| REG-022 | 緊急連絡先電話 | `input#REG-022` | NULL。緊急一式と最低1連絡手段条件の対象 | `maxlength=40` | `sources/Views/Students/Edit.cshtml:13-13`、`sources/Core/StudentNormalizer.cs:155-157` |\n| REG-023 | 備考 | `textarea#REG-023` | NULL、任意 | `maxlength=240`、全幅 | `sources/Views/Students/Edit.cshtml:13-13` |\n| REG-024 | 確認・変更理由 | `textarea#REG-024` | NULL。同一人物確認続行、既存終了区分から別区分への変更で必須 | `maxlength=120`、全幅。監査用 | `sources/Views/Students/Edit.cshtml:13-13`、`sources/Core/SqlServerStudentService.cs:255-257`、`sources/Core/SqlServerStudentService.cs:286-286` |\n| REG-025 | 更新日時・更新者 | 先頭p内の`Detail.UpdatedAt`・`UpdatedBy` | 両方「－」 | 時点は日本時間表示。同名DOM idなし | `sources/Views/Students/Edit.cshtml:4-4`、`sources/Infrastructure/WebPresentation.cs:7-7` |\n| REG-026 | 削除理由 | 別フォームの`textarea#REG-026`、`name=Reason` | 空欄、削除時必須 | `required`、`maxlength=120` | `sources/Views/Students/Edit.cshtml:17-17` |\n| REG-027 | 登録・更新 | 保存フォーム内submit button | Viewer以外 | モード別に「登録」「更新」。同名DOM idなし | `sources/Views/Students/Edit.cshtml:5-5`、`sources/Views/Students/Edit.cshtml:15-15` |\n| REG-028 | 入力クリア・編集取消 | reset用別フォームのbutton | 有効なSnapshotが必要 | モード別文言、送信前確認。同名DOM idなし | `sources/Views/Students/Edit.cshtml:16-16` |\n| REG-029 | 最新情報を再読込 | `data-dirty-link`付きa | 既存時に表示 | 編集操作ありなら破棄確認。同名DOM idなし | `sources/Views/Students/Edit.cshtml:16-16`、`sources/wwwroot/js/site.js:5-5` |\n| REG-030 | 検索へ戻る | `data-dirty-link`付きa | 復帰Contextと読込時検索版を使用 | 編集操作ありなら破棄確認。同名DOM idなし | `sources/Views/Students/Edit.cshtml:16-16` |\n| REG-031 | 論理削除 | 削除用別フォームのbutton | 既存Administrator | 対象・理由の確認後送信。同名DOM idなし | `sources/Views/Students/Edit.cshtml:17-17` |\n| REG-032 | 同一人物候補一覧 | 確認section内table | ConfirmationRequired時だけ表示 | 全件数と最大20件。番号・氏名・和暦生年月日・クラス | `sources/Views/Students/Edit.cshtml:14-14` |\n| REG-033 | 別人と確認して続行 | 確認section内submit button | 有効確認と理由が必要 | `data-confirm`付き。同じ保存フォームを送信 | `sources/Views/Students/Edit.cshtml:14-14` |\n| REG-034 | 確認取消 | `data-cancel-duplicate`付きbutton | 確認領域表示時 | `type=button`、`autofocus`。サーバー要求なし | `sources/Views/Students/Edit.cshtml:14-14`、`sources/wwwroot/js/site.js:6-6` |\n\n## 項目移送仕様\n\n| 移送ID | 項目・フォーム名 | 要求DTOから内部値への移送 | 正規化・用途 | 保存先の実DB型・NULL | SQLパラメータ・型・Size | 根拠 |\n| --- | --- | --- | --- | --- | --- | --- |\n| TR-001 | REG-002、`Input.StudentNo` | `StudentSaveInput.StudentNo:string` → `StudentDraft.StudentNo:string` → `Values[student_no]:string` | 原入力15以内。Trim・NFKC・大文字化後15以内、先頭ASCII英数字、以降英数字・ハイフン。新規保存、更新では不変確認 | `dbo.m_student.student_no varchar(15) NOT NULL` | INSERTの`@student_no VarChar(15)`。番号一意検査は`@no VarChar(15)` | `sources/Core/StudentNormalizer.cs:59-64`、`sources/Core/StudentNormalizer.cs:124-124`、`sources/Core/SqlServerStudentService.cs:31-31`、`sources/database/001_schema.sql:9-9` |\n| TR-002 | REG-003、`Input.StudentName` | `StudentSaveInput.StudentName:string` → `StudentDraft.StudentName:string` → `Values[student_name]:string` | 原入力8、Trim後8以内。保存氏名へのNFKCなし。検索・同一人物照合はTR-025の別キー | `dbo.m_student.student_name nvarchar(16) NOT NULL` | `@student_name NVarChar(16)` | `sources/Core/StudentNormalizer.cs:125-125`、`sources/Core/SqlServerStudentService.cs:31-31`、`sources/database/001_schema.sql:10-10` |\n| TR-003 | REG-004、`Input.StudentNameKana` | `StudentSaveInput.StudentNameKana:string` → `StudentDraft.StudentNameKana:string` → `Values[student_name_kana]:string` | 原入力36以内。NFKC、ひらがな・反復記号をカタカナへ変換、内部空白を半角1個へ整理。最終18以内 | `dbo.m_student.student_name_kana nvarchar(36) NOT NULL` | `@student_name_kana NVarChar(36)` | `sources/Core/StudentNormalizer.cs:72-85`、`sources/Core/StudentNormalizer.cs:126-126`、`sources/Core/SqlServerStudentService.cs:31-31`、`sources/database/001_schema.sql:11-11` |\n| TR-004 | REG-005、`Input.BirthDateInput.Era/Year/Month/Day` | 両DTOの`BirthDateInput`は4つの`string`。`JapaneseDateService.Parse` → `Values[birth_date]:DateOnly` | 固定元号ID、年「元」または正整数、月日正整数を厳密変換。元号境界・実在日・業務日以下を確認。元号別保存列なし | `dbo.m_student.birth_date date NOT NULL` | `@birth_date Date`、Size未指定 | `sources/Core/Contracts.cs:8-8`、`sources/Core/JapaneseDateService.cs:17-39`、`sources/Core/StudentNormalizer.cs:127-127`、`sources/Core/SqlServerStudentService.cs:32-32`、`sources/database/001_schema.sql:14-14` |\n| TR-005 | REG-006、`Input.GenderCode` | 両DTOの`GenderCode:string` → `Values[gender_code]:string` | 原入力1以内、Trim・NFKC後ASCII数字1桁。GENDER分類で存在・利用可否検査 | `dbo.m_student.gender_code varchar(1) NOT NULL` | `@gender_code VarChar(1)` | `sources/Core/StudentNormalizer.cs:113-117`、`sources/Core/StudentNormalizer.cs:128-128`、`sources/Core/SqlServerStudentService.cs:33-33`、`sources/database/001_schema.sql:16-16` |\n| TR-006 | REG-007、`Input.PostalCode` | 両DTOの`PostalCode:string` → `Values[postal_code]:string` | 原入力10以内。Trim・NFKC、空白・指定ハイフン除去後ASCII数字7桁。既存復元は保存7桁のまま | `dbo.m_student.postal_code varchar(7) NOT NULL` | `@postal_code VarChar(7)` | `sources/Core/StudentNormalizer.cs:95-100`、`sources/Core/StudentNormalizer.cs:129-129`、`sources/Core/SqlServerStudentService.cs:189-189`、`sources/database/001_schema.sql:17-17` |\n| TR-007 | REG-008、`Input.PrefectureCode` | 両DTOの`PrefectureCode:string` → `Values[prefecture_code]:string` | 原入力2以内、Trim・NFKC後ASCII数字2桁。PREFECTURE分類で検査 | `dbo.m_student.prefecture_code varchar(2) NOT NULL` | `@prefecture_code VarChar(2)` | `sources/Core/StudentNormalizer.cs:130-130`、`sources/Core/SqlServerStudentService.cs:33-33`、`sources/database/001_schema.sql:19-19` |\n| TR-008 | REG-009、`Input.AddressLine1` | 両DTOの`AddressLine1:string` → `Values[address_line1]:string` | 単一行Text、原入力・Trim後各45以内、必須。表示住所の構成列 | `dbo.m_student.address_line1 nvarchar(90) NOT NULL` | `@address_line1 NVarChar(90)` | `sources/Core/StudentNormalizer.cs:131-131`、`sources/Core/SqlServerStudentService.cs:34-34`、`sources/database/001_schema.sql:20-20` |\n| TR-009 | REG-010、`Input.AddressLine2` | 両DTOの`AddressLine2:string?` → `Values[address_line2]:stringまたはNULL` | 単一行Text、原入力・Trim後各45以内。空はNULL。一覧・候補DTOの住所連結には含めない | `dbo.m_student.address_line2 nvarchar(90) NULL` | `@address_line2 NVarChar(90)` | `sources/Core/StudentNormalizer.cs:132-132`、`sources/Core/SqlServerStudentService.cs:34-34`、`sources/Core/SqlServerStudentService.cs:77-85`、`sources/database/001_schema.sql:21-21` |\n| TR-010 | REG-011、`Input.PhoneNumber` | 両DTOの`PhoneNumber:string?` → `Values[phone_number]:stringまたはNULL` | Textの原入力・整形前上限20。空はNULL。NFKC、空白・指定ハイフン・丸括弧除去後、国内10～11桁または国際形式最大16文字 | `dbo.m_student.phone_number varchar(16) NULL` | `@phone_number VarChar(16)` | `sources/Core/StudentNormalizer.cs:87-93`、`sources/Core/StudentNormalizer.cs:133-133`、`sources/Core/SqlServerStudentService.cs:34-34`、`sources/database/001_schema.sql:22-22` |\n| TR-011 | REG-012、`Input.EmailAddress` | 両DTOの`EmailAddress:string?` → `Values[email_address]:stringまたはNULL` | 原入力・Trim後各60以内。NFKCなし。ASCII形式を検査し、ローカル部の大小を保持、ドメインのみ小文字化 | `dbo.m_student.email_address varchar(60) NULL` | `@email_address VarChar(60)` | `sources/Core/StudentNormalizer.cs:102-111`、`sources/Core/StudentNormalizer.cs:134-134`、`sources/Core/SqlServerStudentService.cs:35-35`、`sources/database/001_schema.sql:23-23` |\n| TR-012 | REG-013、`Input.AdmissionDate` | 両DTOの`AdmissionDate:string` → `ParseIso` → `Values[admission_date]:DateOnly` | NFKC後の`yyyy-MM-dd`10文字を厳密解析。1900-01-01以上、業務日以下、生年月日以上 | `dbo.m_student.admission_date date NOT NULL` | `@admission_date Date`、Size未指定 | `sources/Core/JapaneseDateService.cs:52-59`、`sources/Core/StudentNormalizer.cs:135-135`、`sources/Core/StudentNormalizer.cs:151-151`、`sources/database/001_schema.sql:24-24` |\n| TR-013 | REG-014、`Input.EnrollmentStatusCode` | 両DTOの`EnrollmentStatusCode:string` → `Values[enrollment_status_code]:string` | 原入力2以内、Trim・NFKC後ASCII数字2桁、許容値01～04。ENROLLMENT_STATUS分類で検査 | `dbo.m_student.enrollment_status_code varchar(2) NOT NULL` | `@enrollment_status_code VarChar(2)` | `sources/Core/StudentNormalizer.cs:136-136`、`sources/Core/StudentNormalizer.cs:152-154`、`sources/Core/SqlServerStudentService.cs:35-35`、`sources/database/001_schema.sql:26-26` |\n| TR-014 | REG-015、`Input.EnrollmentEndDate` | 両DTOの`EnrollmentEndDate:string?` → `Values[enrollment_end_date]:DateOnlyまたはNULL` | NULL・空文字は未設定、それ以外はParseIso。空白だけを未設定へ変える分岐なし。03・04は入学日以上の終了日必須、01・02はNULL | `dbo.m_student.enrollment_end_date date NULL` | `@enrollment_end_date Date`、Size未指定 | `sources/Core/StudentNormalizer.cs:137-137`、`sources/Core/StudentNormalizer.cs:153-153`、`sources/Core/SqlServerStudentService.cs:36-36`、`sources/database/001_schema.sql:27-27` |\n| TR-015 | REG-018、`Input.ClassId` | `StudentSaveInput.ClassId:string?` → `IdParser.Optional` → `StudentDraft.ClassId:long?` → `Values[class_id]:longまたはNULL` | NULL・空文字はNULL。非空は19コード単位以内のASCII数字、正のInt64。空白・ゼロは不正、先頭ゼロは禁止しない。クラス名称は保存しない | `dbo.m_student.class_id bigint NULL` | `@class_id BigInt`、Size未指定 | `sources/Web/Inputs/StudentSaveInput.cs:40-40`、`sources/Web/Inputs/StudentSaveInput.cs:57-60`、`sources/Core/StudentNormalizer.cs:138-138`、`sources/database/001_schema.sql:28-28` |\n| TR-016 | REG-020、`Input.EmergencyContactName` | 両DTOの`EmergencyContactName:string?` → `Values[emergency_contact_name]:stringまたはNULL` | 単一行Text、原入力・Trim後各8以内。緊急一式の氏名 | `dbo.m_student.emergency_contact_name nvarchar(16) NULL` | `@emergency_contact_name NVarChar(16)` | `sources/Core/StudentNormalizer.cs:139-139`、`sources/Core/SqlServerStudentService.cs:36-36`、`sources/database/001_schema.sql:29-29` |\n| TR-017 | REG-021、`Input.RelationshipCode` | 両DTOの`RelationshipCode:string?` → `Values[relationship_code]:stringまたはNULL` | 原入力2以内、Trim・NFKC後ASCII数字2桁またはNULL。RELATIONSHIP分類の選択値。分類列はTR-027で生成 | `dbo.m_student.relationship_code varchar(2) NULL` | `@relationship_code VarChar(2)` | `sources/Core/StudentNormalizer.cs:140-147`、`sources/Core/SqlServerStudentService.cs:37-37`、`sources/database/001_schema.sql:31-31` |\n| TR-018 | REG-022、`Input.EmergencyPhoneNumber` | 両DTOの`EmergencyPhoneNumber:string?` → `Values[emergency_phone_number]:stringまたはNULL` | TR-010と同じPhone正規化。緊急一式と最低1連絡手段条件に使用 | `dbo.m_student.emergency_phone_number varchar(16) NULL` | `@emergency_phone_number VarChar(16)` | `sources/Core/StudentNormalizer.cs:141-141`、`sources/Core/StudentNormalizer.cs:155-157`、`sources/Core/SqlServerStudentService.cs:37-37`、`sources/database/001_schema.sql:32-32` |\n| TR-019 | REG-023、`Input.Remarks` | 両DTOの`Remarks:string?` → `Values[remarks]:stringまたはNULL` | 複数行Text、原入力・Trim後各120以内。改行をLFへ統一、空はNULL | `dbo.m_student.remarks nvarchar(240) NULL` | `@remarks NVarChar(240)` | `sources/Core/StudentNormalizer.cs:47-57`、`sources/Core/StudentNormalizer.cs:142-142`、`sources/Core/SqlServerStudentService.cs:37-37`、`sources/database/001_schema.sql:33-33` |\n| TR-020 | REG-016、`Input.SchoolYear` | `StudentSaveInput.SchoolYear:int?` → `SaveRequest.SchoolYear:int?` | 1900～9998。指定クラスの実年度と比較。StudentDraft・Valuesには含めない | 比較先`dbo.m_class.school_year smallint NOT NULL`。学生保存列なし | 年度保存パラメータなし。クラス読取は`@id BigInt` | `sources/Web/Inputs/StudentSaveInput.cs:28-28`、`sources/Web/Inputs/StudentSaveInput.cs:42-42`、`sources/Core/SqlServerStudentService.cs:236-236`、`sources/Core/SqlServerStudentService.cs:363-371`、`sources/database/001_schema.sql:64-64` |\n| TR-021 | REG-017、`Input.GradeCode` | `StudentSaveInput.GradeCode:string?` → `SaveRequest.GradeCode:string?` | 原入力2以内からASCII数字2桁またはNULL。指定クラスの実学年と比較。保存では独立したGRADE存在・有効性検査なし | 比較先`dbo.m_class.grade_code varchar(2) NOT NULL`。学生保存列なし | 学年保存パラメータなし。クラス読取は`@id BigInt` | `sources/Web/Inputs/StudentSaveInput.cs:29-29`、`sources/Core/SqlServerStudentService.cs:237-237`、`sources/Core/SqlServerStudentService.cs:344-383`、`sources/database/001_schema.sql:66-66` |\n| TR-022 | REG-024、`Input.OperationReason` | `StudentSaveInput.OperationReason:string?` → `SaveRequest.Reason:string?` | 複数行Text、原入力・保存各60以内。学生業務値・Payloadには含めない。変更なしでは監査を作らない | `dbo.t_operation_log.operation_reason nvarchar(120) NULL` | 監査の`@reason NVarChar(120)` | `sources/Web/Inputs/StudentSaveInput.cs:32-42`、`sources/Core/SqlServerStudentService.cs:234-234`、`sources/Core/SqlServerStudentService.cs:262-262`、`sources/Core/SqlServerStudentService.cs:385-390`、`sources/database/001_schema.sql:148-148` |\n| TR-023 | REG-026、`Reason` | `StudentDeleteInput.Reason:string` → `DeleteAsync`の`reason:string` | 必須の複数行Text、原入力・保存各60以内。保存フォームの理由とは別入力 | `dbo.m_student.delete_reason nvarchar(120) NULL`と監査の同型NULL列 | 削除・監査の`@reason NVarChar(120)` | `sources/Web/Inputs/StudentDeleteInput.cs:4-4`、`sources/Infrastructure/WebStudentCoordinator.cs:19-19`、`sources/Core/SqlServerStudentService.cs:396-413`、`sources/database/001_schema.sql:37-37`、`sources/database/001_schema.sql:148-148` |\n| TR-024 | 隠し項目、`Input.ExpectedVersion` | `string?` → 更新時`IdParser.Required` → `SaveRequest.ExpectedVersion:long?` | 正数必須。新規で非空なら400。Snapshotの版へ自動差替えせずDB現版と比較 | 条件列`dbo.m_student.row_version bigint NOT NULL` | 更新WHEREの`@version BigInt`、Size未指定 | `sources/Web/Inputs/StudentSaveInput.cs:30-43`、`sources/Core/SqlServerStudentService.cs:252-252`、`sources/Core/SqlServerStudentService.cs:297-301`、`sources/database/001_schema.sql:42-42` |\n| TR-025 | 氏名から生成、フォーム入力なし | 保存氏名 → `NameKey` → `Values[name_key]:string` | NFKC・大文字化・全空白除去、160スカラー値以内。氏名検索・同一人物判定に使用 | `dbo.m_student.name_key nvarchar(320) NOT NULL` | `@name_key NVarChar(320)`。候補照合は`@name NVarChar(320)` | `sources/Core/StudentNormalizer.cs:66-70`、`sources/Core/StudentNormalizer.cs:144-144`、`sources/Core/SqlServerStudentService.cs:32-32`、`sources/database/001_schema.sql:12-12` |\n| TR-026 | 保存カナから生成、フォーム入力なし | 正規化カナ → 半角空白除去 → `Values[kana_key]:string` | カナ検索・同一人物判定用の照合値 | `dbo.m_student.kana_key nvarchar(36) NOT NULL` | `@kana_key NVarChar(36)`。候補照合は`@kana NVarChar(36)` | `sources/Core/StudentNormalizer.cs:145-145`、`sources/Core/SqlServerStudentService.cs:32-32`、`sources/database/001_schema.sql:13-13` |\n| TR-027 | 続柄から生成、フォーム入力なし | `relationship_code` → `Values[relationship_category]:stringまたはNULL` | コードNULLならNULL、それ以外は固定値RELATIONSHIP。緊急一式消去では氏名・分類・コード・電話を同時NULL化 | `dbo.m_student.relationship_category varchar(24) NULL` | `@relationship_category VarChar(24)` | `sources/Core/StudentNormalizer.cs:139-157`、`sources/Core/SqlServerStudentService.cs:37-37`、`sources/database/001_schema.sql:30-30` |\n| TR-028 | REG-001、表示のみ | ルートID・`StudentEditPageModel.StudentId:long?`。登録後IDはDB採番 | 内部学生識別子。新規表示時は未採番 | `dbo.m_student.student_id bigint IDENTITY(1,1) NOT NULL`、PK | 読取・更新条件の`@id BigInt`。INSERT値パラメータなし | `sources/Web/Models/StudentEditPageModel.cs:5-5`、`sources/Core/SqlServerStudentService.cs:176-177`、`sources/Core/SqlServerStudentService.cs:296-304`、`sources/database/001_schema.sql:8-8` |\n| TR-029 | REG-019、表示のみ | `SchoolClass.Occupied:int`、`Capacity:int?` → small | 人数は非削除01・02の集計、定員はクラス値。Input.ClassIdとの文字列一致で表示対象を探す | 人数は算出値。`dbo.m_class.capacity int NULL` | Lookupに入力パラメータなし。保存時人数確認は`@class`・`@id BigInt` | `sources/Views/Students/Edit.cshtml:2-2`、`sources/Core/Contracts.cs:63-64`、`sources/Core/SqlServerStudentService.cs:201-214`、`sources/Core/SqlServerStudentService.cs:377-380`、`sources/database/001_schema.sql:71-71` |\n| TR-030 | REG-025、表示のみ | `StudentDetail.UpdatedAt:DateTimeOffset`、`UpdatedBy:string` → p | 更新時点を日本時間`yyyy/MM/dd HH:mm:ss`で表示。更新主体は認証情報から設定 | `dbo.m_student.updated_at datetimeoffset(7) NOT NULL`、`updated_by nvarchar(128) NOT NULL` | 書込の`@now DateTimeOffset`、`@actor NVarChar(128)` | `sources/Core/Contracts.cs:59-60`、`sources/Infrastructure/WebPresentation.cs:7-7`、`sources/Core/SqlServerStudentService.cs:300-300`、`sources/database/001_schema.sql:40-41` |\n\n## 項目更新仕様\n\n| 更新ID | 操作・対象 | 設定範囲・生成値 | 条件・取得結果 | 保持値・NULL・確定境界 | 根拠 |\n| --- | --- | --- | --- | --- | --- |\n| UP-001 | 新規学生INSERT | TR-001～019の業務19列とTR-025～027の生成3列 | 全保存検査通過後。`OUTPUT INSERTED.student_id INTO @changed`後にIDをSELECTし、スカラー取得 | 正規化した任意空値はNULL。学生書込みだけでは成功応答しない | `sources/Core/SqlServerStudentService.cs:292-307` |\n| UP-002 | 新規の固定分類 | `gender_category='GENDER'`、`prefecture_category='PREFECTURE'`、`enrollment_category='ENROLLMENT_STATUS'` | SQLリテラル設定。フォームから受理しない | 各`varchar(24) NOT NULL`。通常更新では保持 | `sources/Core/SqlServerStudentService.cs:296-297`、`sources/database/001_schema.sql:15-26` |\n| UP-003 | 新規管理値 | IDENTITY採番、`is_deleted=0`、`created_at/by`・`updated_at/by`、`row_version=1` | 時点は保存開始UTC時点、主体は認証主体 | DDLのDEFAULTは削除フラグ0・版1。処理も明示設定。削除時点・削除者・削除理由はINSERT指定なしでNULL | `sources/Core/SqlServerStudentService.cs:229-229`、`sources/Core/SqlServerStudentService.cs:296-300`、`sources/database/001_schema.sql:8-8`、`sources/database/001_schema.sql:34-42` |\n| UP-004 | 通常UPDATEの業務値 | TR-002～019の18列と生成3列を全設定 | `student_id=@id AND row_version=@version AND is_deleted=0`。OUTPUTでID取得、NULL・DBNullなら競合 | 部分更新ではなく、任意空値もNULLで上書き。学籍番号・固定3分類・作成情報・削除属性を保持 | `sources/Core/SqlServerStudentService.cs:254-254`、`sources/Core/SqlServerStudentService.cs:294-305` |\n| UP-005 | 通常UPDATEの管理値 | `updated_at=@now`、`updated_by=@actor`、`row_version=row_version+1` | 実変更ありの場合。現版Int64最大値は競合 | 投稿期待版を新しい版として保存しない | `sources/Core/SqlServerStudentService.cs:261-263`、`sources/Core/SqlServerStudentService.cs:297-301` |\n| UP-006 | 変更なし | 学生・監査とも書込みなし | 正規化22値と書込単位内の最新DB値に差分なし。明示RollbackしてNoChange | 版・更新時点・監査を増やさない。理由、年度、学年は差分対象外 | `sources/Core/SqlServerStudentService.cs:260-262`、`sources/Core/SqlServerStudentService.cs:325-327` |\n| UP-007 | 論理削除 | `is_deleted=1`、`deleted_at/by`、`delete_reason`、`updated_at/by`、版+1 | ID・期待版・非削除条件のUPDATE。更新件数1を要求 | 業務列、学籍番号、class_id、作成情報を保持。物理DELETEなし | `sources/Core/SqlServerStudentService.cs:404-414` |\n| UP-008 | CREATE・UPDATE監査 | 対象、操作、前後版、物理変更列JSON、主体、開始時点、受付番号、理由、同一人物確認有無 | 学生書込みと同じトランザクション内で1回INSERT | 新規前版NULL。更新は実差分列と管理3列。個人情報の前後値は複写しない | `sources/Core/SqlServerStudentService.cs:306-307`、`sources/Core/SqlServerStudentService.cs:385-390` |\n| UP-009 | DELETE監査 | 削除属性・更新管理値の7列、操作DELETE、前版と版+1、削除理由、確認有無false | 削除UPDATEと同じトランザクション | 監査追加後のCommit正常終了でSaved | `sources/Core/SqlServerStudentService.cs:413-414` |\n| UP-010 | 確認情報 | Web確認辞書のBusyを0→1。Commit成功後に供給キー削除 | 所有・対象・版・期限・ハッシュ一致と使用中でないこと | 既知未完了ではBusyを戻す。Unknownでは供給キー削除 | `sources/Core/SqlServerStudentService.cs:274-290`、`sources/Core/SqlServerStudentService.cs:313-335` |\n| UP-011 | 成功通知 | Flashメモリへ保存・削除成功文言を設定 | Commit成功後、303の直前。検索GETのTakeで削除 | DBへ保存しない。同一利用者・セッション・Contextの通知を置換、期限10分 | `sources/Web/Controllers/StudentsController.cs:31-38`、`sources/Infrastructure/FlashMessageStore.cs:6-9` |\n\n## 選択候補一覧\n\n| 候補ID | 対象・取得元 | キーと表示値 | 抽出・選択条件 | 順序 | 初期・保持・連動 | 根拠 |\n| --- | --- | --- | --- | --- | --- | --- |\n| OPT-ERA | REG-005元号、View固定optionと日付サービス固定定義 | REIWA/HEISEI/SHOWA/TAISHO/MEIJI、令和/平成/昭和/大正/明治 | 空optionを含む。保存時に境界・実在日・未来日を検査 | 新しい元号順 | 新規未選択。元号変更直後の即時再検証なし | `sources/Views/Students/Edit.cshtml:7-7`、`sources/Core/JapaneseDateService.cs:9-39`、`sources/wwwroot/js/site.js:2-9` |\n| OPT-GENDER | REG-006、Lookup.CodesのGENDER | `CodeValue:string`、`CodeName:string` | 全取得値を列挙。有効・期間内またはDetailの既存同値だけ選択可 | `display_order`、`code_value` | 入力初期値0、空optionなし。選択不可値に停止・期間外注記 | `sources/Views/Students/Edit.cshtml:8-8`、`sources/Core/SqlServerStudentService.cs:203-205` |\n| OPT-PREFECTURE | REG-008、Lookup.CodesのPREFECTURE | CodeValue、CodeName | 有効・期間内またはDetailの既存同値だけ選択可 | `display_order`、`code_value` | 空option「未選択」。選択不可値に停止・期間外注記 | `sources/Views/Students/Edit.cshtml:9-9`、`sources/Core/SqlServerStudentService.cs:203-205` |\n| OPT-STATUS | REG-014、Lookup.CodesのENROLLMENT_STATUS | CodeValue、CodeName | 有効・期間内またはDetailの既存同値だけ選択可 | `display_order`、`code_value` | 入力初期値01、空optionなし。選択不可値への専用注記なし | `sources/Views/Students/Edit.cshtml:11-11`、`sources/Web/Inputs/StudentSaveInput.cs:21-21` |\n| OPT-YEAR | REG-016、全クラス年度に現在Input.SchoolYearを追加 | `SchoolYear:int`、年度数値 | 重複除去。停止・過去クラスの年度も含む | 降順 | 空option「未指定」。新規は日本時間・4月始まりの当学校年度、既存は所属クラス年度。クラス選択で同期 | `sources/Views/Students/Edit.cshtml:12-12`、`sources/Web/Inputs/StudentSaveInput.cs:46-54`、`sources/Infrastructure/WebPresentation.cs:5-6` |\n| OPT-GRADE | REG-017、Lookup.CodesのGRADE | CodeValue、CodeName | 分類内全値。有効性・期間でoptionを無効化しない | `display_order`、`code_value` | 空option「すべて」、新規NULL、既存は所属クラス学年。00=学年なしと未所属NULLは別 | `sources/Views/Students/Edit.cshtml:12-12`、`sources/Web/Inputs/StudentSaveInput.cs:53-53`、`sources/database/002_seed.sql:78-78` |\n| OPT-CLASS | REG-018、Lookup.Classes | `ClassId:long`、年度・学年コード・クラスコード・クラス名 | 全クラスを列挙し年度・学年で絞らない。Detailの既存ClassIdは保持可。それ以外は原入力03・04なら在籍期間との重なり、その他は有効・業務日がクラス期間内 | 年度降順、学年表示順、クラス表示順、クラスコード、ClassId | 空option「未所属」。選択時に年度・学年同期。上位変更で不一致の選択を解除。人数表示の即時更新なし | `sources/Views/Students/Edit.cshtml:12-12`、`sources/Core/SqlServerStudentService.cs:206-214`、`sources/wwwroot/js/site.js:8-8` |\n| OPT-RELATIONSHIP | REG-021、Lookup.CodesのRELATIONSHIP | CodeValue、CodeName | 有効・期間内またはDetailの既存同値だけ選択可 | `display_order`、`code_value` | 空option「未選択」。選択不可値への専用注記なし。NULL選択は保存時に分類もNULL | `sources/Views/Students/Edit.cshtml:13-13`、`sources/Core/StudentNormalizer.cs:140-147` |\n\n## 内部項目・一時情報\n\n| 内部ID | 論理名・要求上の名称 | 型・実保持領域 | 内容・用途 | 期限・照合・更新範囲 | 根拠 |\n| --- | --- | --- | --- | --- | --- |\n| INT-TARGET | 対象ID | ルート`long`、表示モデル`long?` | 新規NULL、既存ルートID。保存用Inputから対象IDを受けない。Resetは別引数StudentIdを任意正整数変換 | Snapshotと同じ対象IDを要求 | `sources/Web/Controllers/StudentsController.cs:23-35`、`sources/Core/Contracts.cs:66-67` |\n| INT-VERSION | 期待版、`Input.ExpectedVersion`、削除`ExpectedVersion` | 保存DTO`string?`、削除DTO`string` → `long` | DBの正のbigint比較版。更新・削除のWHERE条件。学生IDと組で検査 | DB現版と比較。Snapshotの読込版へ自動差替え・一致検査を追加しない | `sources/Web/Inputs/StudentSaveInput.cs:42-60`、`sources/Web/Inputs/StudentDeleteInput.cs:4-4`、`sources/Core/SqlServerStudentService.cs:252-252`、`sources/Core/SqlServerStudentService.cs:407-410` |\n| INT-SNAPSHOT | 読込時状態、`SnapshotId` | Singleton `EditorSnapshotStore`の`ConcurrentDictionary` | Owner、Session、StudentId、Detail、Original、Expires、ReturnRevision。Originalは入力DTOのJSON複製。新規にも作成 | 32バイト乱数から64桁小文字hex。作成から30分。不在・期限超過409、所有・セッション・対象相違403。Getで延長せず、保存・Resetで消費しない | `sources/Infrastructure/EditorSnapshotStore.cs:7-11`、`sources/Infrastructure/SearchContextStore.cs:11-11`、`sources/Infrastructure/WebHostSetup.cs:13-13` |\n| INT-CONTEXT | 検索復帰先、`Input.ReturnContextId`・削除`ReturnContextId` | DTO`string?`、Singleton `SearchContextStore` | ID、Owner、Session、Tab、Expires、Revision、Applied条件、LastResult、SemaphoreSlim。学生保存値なし | 初期30分、Revision=1。所有・セッション・期限検査。非空Tabを渡した場合だけTabも比較。Use成功で期限延長 | `sources/Web/Inputs/StudentSaveInput.cs:33-42`、`sources/Infrastructure/SearchContextStore.cs:9-15` |\n| INT-RETURN-REV | 読込時検索版、`ReturnRevision` | モデル・Snapshotの`string?` | Load時のContext.Revisionを保持し、検索復帰URLと成功303に使用 | Resumeで現在Context版との文字列一致を要求。学生期待版とは別 | `sources/Web/Controllers/StudentsController.cs:25-25`、`sources/Web/Controllers/StudentsController.cs:38-38`、`sources/Views/Students/Edit.cshtml:16-16` |\n| INT-CONFIRM | 同一人物確認、`Input.DuplicateToken` | DTO`string?` → `SaveRequest.ConfirmationToken`、static Web確認辞書 | Owner、対象ID、期待版、業務Payloadハッシュ、全候補ハッシュ、Expires、Busy | 保存開始時点+10分。所有・セッション・対象・版・期限・ハッシュ・Busyを照合。Commit成功後消費。DB確認表を使わない | `sources/Core/SqlServerStudentService.cs:19-29`、`sources/Core/SqlServerStudentService.cs:224-225`、`sources/Core/SqlServerStudentService.cs:274-335`、`sources/Infrastructure/WebHostSetup.cs:19-19` |\n| INT-DELETE-CONFIRM | 削除確認、`Confirmed` | `StudentDeleteInput.Confirmed:bool` | 削除フォームでtrueを送信。Coordinatorはtrueを要求。業務列なし | falseは422。ブラウザー確認とサーバーのbool確認を分ける | `sources/Views/Students/Edit.cshtml:17-17`、`sources/Web/Inputs/StudentDeleteInput.cs:4-4`、`sources/Infrastructure/WebStudentCoordinator.cs:19-19` |\n| INT-FLASH | 一度限りの成功通知 | Singleton `FlashMessageStore`のメモリ辞書 | Principal・SessionId・Contextを区切り文字付きで結合したキーと通知。Putは同じキーを置換 | 10分。Takeで先に辞書から削除し、期限内なら文言、失効・不在なら空文字 | `sources/Infrastructure/FlashMessageStore.cs:6-9` |\n| INT-DIRTY | 入力操作あり | ブラウザー内`bool` | 編集フォームのinputイベントでtrue。元値との差分比較なし。削除理由フォームは対象外 | ページ内だけ。元値へ戻してもfalseにしない | `sources/wwwroot/js/site.js:2-3`、`sources/Views/Students/Edit.cshtml:5-17` |\n| INT-LEAVING | 遷移・送信続行 | ブラウザー内`bool` | 確認通過後の送信・リンク遷移でtrue。beforeunload抑止に使用 | 同時送信を拒否する条件には使わない | `sources/wwwroot/js/site.js:2-5` |\n| INT-RESULT | 処理結果・受付番号 | 要求単位の`SaveResult`、GUID文字列 | Outcome、対象ID、版、FieldError、確認キー、全件数、表示候補、RequestId | 保存・削除開始ごとに受付番号生成。画面応答用で学生業務値ではない | `sources/Core/Contracts.cs:68-70`、`sources/Core/SqlServerStudentService.cs:229-229`、`sources/Core/SqlServerStudentService.cs:394-394` |\n\n## イベント仕様\n\n### EV-01 新規画面を開く\n\n#### 処理概要\n\n作成可能な利用者の `GET /students/new` に対し、候補と初期入力を準備し、対象IDなしの読込時Snapshotを作る。学生本体の1件取得は行わないが、クラス参考人数の集計では学生表を参照する。根拠: `sources/Web/Controllers/StudentsController.cs:23-25`、`sources/Infrastructure/WebStudentCoordinator.cs:17-17`、`sources/Core/SqlServerStudentService.cs:201-201`。\n\n#### 処理手順\n\n1. 認証済み利用者を確認する。returnContextIdが非空なら所有者・認証セッション・期限を確認する。\n2. 作成・更新権限を確認し、Viewerを拒否する。\n3. 共通契約C-01のLookupを取得する。\n4. `StudentSaveInput.From(null, contextId, lookups)` で初期入力を作る。必須文字入力と和暦4値は空、性別0、在籍01、年度は当学校年度、その他の任意業務値・期待版・確認キー・理由は未設定となる。\n5. 復帰Contextの現在Revisionを取得し、Detailなし・対象IDなしのSnapshotを作る。\n6. 初期Input、Lookups、User、SnapshotId、ReturnRevisionを持つEdit Viewを返す。\n\n根拠: `sources/Infrastructure/WebStudentCoordinator.cs:6-6`、`sources/Infrastructure/WebStudentCoordinator.cs:17-17`、`sources/Web/Inputs/StudentSaveInput.cs:44-54`、`sources/Core/Contracts.cs:8-29`、`sources/Web/Controllers/StudentsController.cs:25-25`。\n\n#### 条件付き処理フロー\n\n```mermaid\nflowchart TD\n  A[新規GET] --> B{認証と任意Contextが有効}\n  B -->|いいえ| X[共通エラー応答]\n  B -->|はい| C{Viewer以外}\n  C -->|いいえ| Y[403]\n  C -->|はい| D[Lookup取得]\n  D --> E[初期Input作成]\n  E --> F[復帰版取得と新規Snapshot作成]\n  F --> G[Edit View]\n  D -->|DB失敗・取消| X\n```\n\n#### SQL・テーブル関連／DB操作の詳細\n\n```mermaid\nflowchart LR\n  L[Lookup SNAPSHOT] --> C[dbo.m_code]\n  C -->|INNER JOIN category_id| K[dbo.m_code_category]\n  L --> CL[dbo.m_class]\n  CL -->|LEFT JOIN 学年分類と値| G[dbo.m_code 学年]\n  CL -->|非削除01・02 COUNT| S[dbo.m_student]\n  I[初期Input] --> M[メモリSnapshot]\n```\n\n図は検索関連でありFK図ではない。コード・クラスの全取得、順序、2結果集合、人数条件、CommitはC-01に従う。Lookupに入力パラメータ・ページングはない。学生INSERT、監査INSERTは行わず、Snapshotはメモリへ保持する。根拠: `sources/Core/SqlServerStudentService.cs:196-216`、`sources/Infrastructure/EditorSnapshotStore.cs:7-11`。\n\n#### 結果・例外時の扱い\n\n認証不正は401、作成権限なし・Context所有相違は403、Context失効は409となる。Loadには初期コード0・01の存在確認や、クラス0件専用警告の設定がない。候補不足時の最終保存可否は保存検査で決まる。Lookup失敗・取消は上位の共通例外応答へ進む。根拠: `sources/Infrastructure/RequestIdentity.cs:7-14`、`sources/Infrastructure/SearchContextStore.cs:13-13`、`sources/Infrastructure/WebStudentCoordinator.cs:17-17`、`sources/Infrastructure/WebHostSetup.cs:23-23`。\n\n### EV-02 既存学生を編集・参照する\n\n#### 処理概要\n\n`GET /students/{id}` は非削除学生の保存値を取得してInputを復元し、新しいSnapshotを作る。Viewerも参照できるが、業務入力と保存ボタンを囲むfieldsetは無効となる。根拠: `sources/Web/Controllers/StudentsController.cs:24-25`、`sources/Infrastructure/WebStudentCoordinator.cs:17-17`、`sources/Views/Students/Edit.cshtml:3-6`。\n\n#### 処理手順\n\n1. 認証と任意の復帰Contextを確認する。\n2. `GetAsync(id, ct)` で非削除の対象学生を取得する。対象なしは404へ変換する。\n3. 保存22値と版・更新時点・更新主体からStudentDetailとStudentDraftを作る。生年月日はToInputで和暦4値、入学日・終了日は `yyyy-MM-dd` に戻す。\n4. 別取得のLookupから所属クラスを探し、年度・学年を復元する。期待版は取得したRowVersionの文字列とする。\n5. 復帰Revisionと、Detail・復元Inputを持つ新Snapshotを設定する。\n6. Roleに応じた編集または参照Viewを返す。\n\n根拠: `sources/Core/SqlServerStudentService.cs:172-216`、`sources/Web/Inputs/StudentSaveInput.cs:44-54`、`sources/Web/Controllers/StudentsController.cs:25-25`。\n\n#### 条件付き処理フロー\n\n```mermaid\nflowchart TD\n  A[既存GET] --> B{認証とContextが有効}\n  B -->|いいえ| X[共通エラー応答]\n  B -->|はい| C[非削除学生取得]\n  C --> D{対象あり}\n  D -->|いいえ| N[404 E-STU-103]\n  D -->|はい| E[Lookupと入力復元]\n  E --> F[新Snapshot]\n  F --> R{Viewer}\n  R -->|はい| V[参照画面]\n  R -->|いいえ| U[編集画面]\n```\n\n#### SQL・テーブル関連／DB操作の詳細\n\n```mermaid\nflowchart LR\n  GET[GetAsync 単独SELECT] --> S[dbo.m_student]\n  L[別取得Lookup] --> C[dbo.m_code]\n  C --> K[dbo.m_code_category]\n  L --> CL[dbo.m_class]\n  CL --> G[dbo.m_code 学年]\n  CL --> O[dbo.m_student 人数集計]\n  S --> D[Detailと復元Input]\n  D --> M[メモリSnapshot]\n```\n\n対象SQLは `SELECT * FROM dbo.m_student WHERE student_id=@id AND is_deleted=0`、@idはBigInt・Size未指定である。JOIN、ページング、明示トランザクションはなく、最初の行をStudentDetailへ変換する。主キー定義に従うDBでは最大1行、0件はNULLとなる。正でないIDは接続前にNULLを返す。対象取得自体は単表のためER図を省略し、図では別取得Lookupとの境界を示す。根拠: `sources/Core/SqlServerStudentService.cs:172-194`、`sources/database/001_schema.sql:43-43`。\n\nLookupはC-01に従う。対象SELECTとLookupは同一トランザクションではなく、同じ瞬間の一括読取ではない。\n\n#### 結果・例外時の扱い\n\n対象不在・削除済み・正でないIDは404・E-STU-103となる。既存停止値は候補集合に存在すればViewで保持できるが、欠落したコードを追加optionで補う処理はない。DB一般失敗・取消は共通例外応答へ伝播する。根拠: `sources/Infrastructure/WebStudentCoordinator.cs:17-17`、`sources/Views/Students/Edit.cshtml:8-13`、`sources/Infrastructure/WebHostSetup.cs:23-23`。\n\n### EV-03 入力補助・入力変更・送信確認\n\n#### 処理概要\n\nページ内JavaScriptがクラスと年度・学年を同期し、上位条件に合わない選択を解除する。入力操作を記録して離脱確認に使用し、同一人物確認キーを解除する。処理はDOMとブラウザー内状態で完結する。根拠: `sources/wwwroot/js/site.js:2-8`。\n\n#### 処理手順\n\n1. クラスchange時、選択optionにdata-yearがあれば年度と学年をdata-year・data-gradeに合わせる。未所属optionでは上位値を消去しない。\n2. 年度・学年change時、選択済みクラスと非空の上位値を比較する。不一致ならクラスを空にし、解除した旨のalertを出す。一致または上位値が空なら保持する。\n3. 編集フォーム内のinputイベントでdirty=trueとし、Input.DuplicateTokenを空文字にする。元値に戻したかどうかは比較しない。\n4. dirtyかつleaving=falseの場合、beforeunload確認を要求する。再読込・検索復帰リンクはdirty時だけ破棄確認を行う。\n5. 全フォームのsubmitでは、押したボタンのdata-confirmを優先し、なければフォームのdata-confirmを使用する。取消なら送信を止める。\n6. 続行時はleaving=true、押したボタン以外の同フォームbuttonをdisabled、フォームをaria-busy=trueにする。\n\n根拠: `sources/wwwroot/js/site.js:2-8`、`sources/Views/Students/Edit.cshtml:12-17`。\n\n#### 条件付き処理フロー\n\n```mermaid\nflowchart TD\n  A[クラスchange] --> B{data-yearあり}\n  B -->|はい| C[年度・学年同期]\n  B -->|いいえ| D[上位値保持]\n  E[年度・学年change] --> F{選択クラスと非空上位値が不一致}\n  F -->|はい| G[クラス解除とalert]\n  F -->|いいえ| H[選択保持]\n  I[編集フォームinput] --> J[dirty=true・確認キー空]\n  K[submitまたは離脱リンク] --> L{確認が必要}\n  L -->|いいえ| N[続行状態設定]\n  L -->|はい| M{確認続行}\n  M -->|いいえ| X[送信・遷移取消]\n  M -->|はい| N\n```\n\n#### SQL・保持領域関連／DB操作の詳細\n\n```mermaid\nflowchart LR\n  CL[dbo.m_classから描画済みのoption] -. 属性の由来 .-> O[DOM data-year・data-grade]\n  O --> J[change処理]\n  J --> V[DOM選択値]\n  I[inputイベント] --> B[ブラウザーdirtyと確認キー]\n```\n\nイベント時のDB読取・書込み、サーバーメモリ更新、候補API通信はないためER図は設けない。年度・学年による候補再絞込み、区分・日付変更によるクラス可否再計算、人数の即時更新、和暦の即時検証も行わない。根拠: `sources/wwwroot/js/site.js:2-9`、`sources/Views/Students/Edit.cshtml:7-12`。\n\n#### 結果・例外時の扱い\n\n確認取消は要求を発生させない。削除理由は別フォームなのでdirty監視外である。押した送信ボタン自身は有効のままで、leavingを使った再送拒否もない。サーバー側の期待版・書込ゲート・確認Busyが同時要求を検査する。根拠: `sources/wwwroot/js/site.js:2-5`、`sources/Core/SqlServerStudentService.cs:244-252`、`sources/Core/SqlServerStudentService.cs:278-278`。\n\n### EV-04 登録・更新する\n\n#### 処理概要\n\n登録・更新は同じ保存処理を通る。原入力を表示用に保持したまま正規化値を作り、書込ゲート内で最新DB状態と業務条件を再確認する。学生書込みと監査のCommitが正常終了した場合だけSavedを返す。根拠: `sources/Web/Controllers/StudentsController.cs:26-33`、`sources/Core/SqlServerStudentService.cs:227-323`。\n\n#### 処理手順\n\n1. ControllerがFormGuardで項目名・重複・書式メタ情報を検査する。許可対象は保存DTOのInput.*、和暦4部品、SnapshotId、CSRF情報、許可された__Invariantである。\n2. 作成・更新権限、Snapshotの所有者・セッション・対象ID・期限を確認する。復帰Contextを確認し、投稿ReturnContextIdが読込時復帰先と一致することを要求する。\n3. ModelState不正ならサービスを呼ばず422とする。有効ならCoordinatorが権限・復帰先を再確認してToRequestを呼ぶ。\n4. ClassIdを任意正のlongへ変換する。更新は期待版を正のlongへ変換し、新規の非空期待版は400で拒否する。\n5. サービスが受付番号、利用者、保存開始UTC時点now、日本時間の業務日dayを決める。業務値・理由を正規化し、IDと版の正数・同時設定、年度範囲、学年形式を検査する。\n6. 接続を開きREAD COMMITTEDトランザクションを開始し、C-03の共通書込ゲートを取得する。\n7. 更新は非削除の最新学生を再取得する。対象存在、期待版一致、学籍番号不変を順に確認する。既存区分03・04から別区分へ変更する場合はAdministratorと理由を要求する。\n8. 性別・都道府県・在籍区分・続柄コード、クラス存在、年度・学年整合、所属期間、席増加時の定員を確認する。\n9. 正規化22値と最新DB値を比較する。差分なしはRollbackしてNoChangeとする。実変更ありで現版がInt64最大値ならConflictとする。\n10. 削除済みを含む全行で学籍番号一意性を確認する。\n11. 同一人物候補を全件取得し、EV-05の確認情報を照合する。未確認・不一致ならRollbackして確認キーを発行する。有効確認の続行には理由を要求する。\n12. UP-001～005のINSERTまたはUPDATEを実行し、OUTPUTからIDを取得する。NULL・DBNullは競合とする。\n13. 同じトランザクションで監査を追加し、Commitを試行する。正常終了後に確認キーを消費してSavedを返す。\n14. ControllerはSavedならFlashを設定して303とする。それ以外は投稿Input、読込時Detail・Snapshot・復帰版、新しいLookupで同画面を返す。\n\n根拠: `sources/Web/Controllers/StudentsController.cs:28-33`、`sources/Web/Controllers/StudentsController.cs:41-41`、`sources/Web/Inputs/StudentSaveInput.cs:34-60`、`sources/Core/SqlServerStudentService.cs:227-323`、`sources/Core/SqlServerStudentService.cs:344-390`。\n\n#### 条件付き処理フロー\n\n```mermaid\nflowchart TD\n  A[保存POST] --> B{フォーム・権限・Snapshot・復帰先が有効}\n  B -->|いいえ| X[共通エラー応答]\n  B -->|はい| C{ModelState・入力変換・正規化が有効}\n  C -->|いいえ| R[結果別に原入力で再表示]\n  C -->|はい| D[接続・READ COMMITTED・Gate]\n  D --> E{対象・版・番号不変・終了区分訂正条件が有効}\n  E -->|いいえ| R\n  E -->|はい| F{コード・所属・期間・定員が有効}\n  F -->|いいえ| RB[Rollback試行]\n  F -->|はい| G{差分あり}\n  G -->|いいえ| NC[Rollback・NoChange 200]\n  G -->|はい| H{版上限未到達・全行番号一意}\n  H -->|いいえ| R\n  H -->|はい| I[全同一人物候補取得]\n  I --> J{確認不要 または有効確認と理由あり}\n  J -->|確認不成立| CF[Rollback・確認発行 409]\n  J -->|理由不足| R\n  J -->|はい| W[学生書込みと監査]\n  W --> CM{Commit正常終了}\n  CM -->|はい| S[確認消費・Saved・Flash・303]\n  CM -->|例外| ER[C-03により確定状態分類]\n  ER --> R\n  RB --> R\n  NC --> L[新Lookup取得・Edit View]\n  CF --> L\n  R --> L\n  D -->|Open・Begin失敗| X\n```\n\n対象不在等の早期returnはCommitせずトランザクション破棄へ進む。明示Rollbackは変更なし、確認再発行、例外捕捉等の経路で行う。Open・BeginTransactionは結果分類用tryの外側にある。根拠: `sources/Core/SqlServerStudentService.cs:240-266`、`sources/Core/SqlServerStudentService.cs:287-323`。\n\n#### SQL・テーブル関連\n\n```mermaid\nflowchart LR\n  I[投稿Input] --> N[正規化Values]\n  SN[メモリSnapshot] --> EN[入口検査・失敗表示]\n  subgraph TX[READ COMMITTED・共通書込ゲート]\n    S[dbo.m_student 対象・番号・候補・人数]\n    C[dbo.m_code] -->|INNER JOIN 分類| K[dbo.m_code_category]\n    CL[dbo.m_class 所属条件]\n    N --> W[dbo.m_student INSERT・UPDATE]\n    W --> A[dbo.t_operation_log INSERT]\n  end\n  S -->|候補の名称LEFT JOIN| CL\n  CL --> G[dbo.m_code 学年]\n  S --> EC[dbo.m_code 在籍・都道府県]\n  S --> H[全候補ハッシュ]\n  H --> M[Web確認メモリ]\n  N --> M\n  A --> CM[Commit]\n  CM --> F[Flashメモリ・303]\n```\n\n図は処理上の検索・書込み関連であり、監査対象キーから学生へのFKを表さない。DDLのFKはC-04に分けて示す。根拠: `sources/Core/SqlServerStudentService.cs:82-91`、`sources/Core/SqlServerStudentService.cs:246-315`、`sources/database/001_schema.sql:137-153`。\n\n#### DB操作の詳細\n\n更新対象の再確認は `SELECT * FROM dbo.m_student WHERE student_id=@id AND is_deleted=0`、@idはBigIntである。取得した現版を期待版と比較し、変更なし判定もこのDB値を使用する。Snapshot.Originalは変更なし判定に使わない。根拠: `sources/Core/SqlServerStudentService.cs:246-262`。\n\nコード検査は性別、都道府県、在籍区分、続柄の順に `m_code c JOIN m_code_category k ON k.category_id=c.category_id WHERE c.category_id=@category AND c.code_value=@value` を照会する。@categoryはVarChar(24)、@valueはVarChar(10)。NULLの続柄は照会しない。不存在は既存同値でも拒否する。新規・変更値はコード・分類双方が有効で、`valid_from<=day`、`valid_to IS NULL`または`day<=valid_to`を要求する。既存同値は存在検査を残し、有効性・期間検査だけ免除する。根拠: `sources/Core/SqlServerStudentService.cs:347-356`。\n\nクラス検査は `SELECT school_year,grade_code,valid_from,valid_to,is_active,capacity FROM dbo.m_class WHERE class_id=@id`、@idはBigInt。指定年度・学年を実値と比較する。席が増える場合の人数は `class_id=@class AND is_deleted=0 AND enrollment_status_code IN ('01','02') AND (@id IS NULL OR student_id<>@id)` のCOUNT_BIGで、@class・@idはBigInt、新規本人IDはDBNullとなる。人数+1が定員を超えればE-STU-102となる。状態別の期間・定員条件はC-02に示す。根拠: `sources/Core/SqlServerStudentService.cs:357-383`。\n\n番号一意検査は `SELECT COUNT_BIG(*) FROM dbo.m_student WHERE student_no=@no AND (@id IS NULL OR student_id<>@id)`、@noはVarChar(15)、@idはBigIntまたはDBNull。is_deleted条件がないため削除済み番号も再利用できない。DDLのuq_student_noも全行UNIQUEである。根拠: `sources/Core/SqlServerStudentService.cs:264-266`、`sources/database/001_schema.sql:187-187`。\n\nINSERTは移送表の業務19列と生成3列、固定分類3列、削除フラグ、作成・更新情報、初版1を設定する。通常UPDATEは学籍番号以外の業務18列と生成3列を全設定し、更新時点・更新主体・版+1を設定する。WHEREは `student_id=@id AND row_version=@version AND is_deleted=0`、ID・版はBigInt。両操作ともOUTPUTを表変数へ入れ、そこから学生IDをスカラー取得する。別の件数SELECTはなく、主キーに従うDBでは対象は最大1行となる。各保存パラメータは移送表、管理値は@now DateTimeOffsetと@actor NVarChar(128)に従う。根拠: `sources/Core/SqlServerStudentService.cs:292-305`、`sources/database/001_schema.sql:43-43`。\n\n監査はC-04の契約で同じトランザクション内に追加する。新規のchanged_columnsは保存22列と固定分類・管理9列、更新は実際に差があった保存列とupdated_at・updated_by・row_versionである。全設定するUPDATE列と監査差分列は別の集合である。duplicate_confirmedは今回の候補件数>0で決める。根拠: `sources/Core/SqlServerStudentService.cs:306-307`。\n\n#### 結果・例外時の扱い\n\n| 結果 | HTTP | 表示・確定状態 |\n| --- | --- | --- |\n| Saved | 303 | Commit正常終了後、成功Flashを設定し検索へ復帰 |\n| NoChange | 200 | 同画面で「変更はありません。」。版・更新時点・監査を増やさない |\n| ValidationFailed | 422 | 原入力と項目・全体エラーを同画面表示 |\n| Forbidden | 403 | サービス結果は同画面、入口例外は共通応答 |\n| NotFound | 404 | 保存結果なら原入力を残した同画面 |\n| Conflict | 409 | 自動上書きせず、変更・版上限を通知 |\n| ConfirmationRequired | 409 | 同画面に候補確認領域と新しい確認キー |\n| SystemError | 503 | 失敗結果を表示 |\n| Unknown | 503 | 確定を断定せず、再保存前に検索で確認する案内 |\n\n根拠: `sources/Web/Controllers/StudentsController.cs:30-38`、`sources/Infrastructure/WebPresentation.cs:23-23`、`sources/Core/SqlServerStudentService.cs:320-322`。\n\nFormGuard・Snapshot・復帰先等の入口例外は保存呼出し用catchの外にある。Coordinator呼出し中のWebFaultはControllerが捕捉し同画面に登録する。SaveResultがある場合は確認キーを結果値へ置換し、NULLの場合も含め `Input.DuplicateToken` のModelStateだけ除去する。他のModelStateはClearせず、Inputは投稿原入力、Detailと復帰版は読込時Snapshot、Lookupは再取得値を使う。再表示Lookupが失敗すれば共通例外応答となる。根拠: `sources/Web/Controllers/StudentsController.cs:29-33`。\n\n書込み例外のRollback・Unknown分類はC-03に従う。競合時にも期待版を自動更新しない。\n\n### EV-05 同一人物候補を確認する\n\n#### 処理概要\n\n実変更の保存で番号一意性を通過した後、生年月日が一致し、氏名照合値またはカナ照合値が一致する別の非削除学生を候補とする。表示は最大20件だが、確認情報は全候補のID・版と正規化業務値を拘束する。続行は同じ保存入口を再実行する。根拠: `sources/Core/SqlServerStudentService.cs:224-225`、`sources/Core/SqlServerStudentService.cs:264-290`。\n\n#### 処理手順\n\n1. 本人を除く候補を学生ID昇順で全件取得する。\n2. Columns順の業務19値を列名付きJSONにし、UTF-8のSHA-256でPayloadを作る。生成3列、年度・学年、理由、復帰先、SnapshotIdは含めない。\n3. 取得順の全候補StudentId・RowVersionをJSON化し、SHA-256で候補ハッシュを作る。表示されない21件目以降も含む。\n4. 確認キーが非NULLなら、所有者・セッション・対象ID・期待版・期限・両ハッシュを照合する。ハッシュは固定時間比較、Busyは0→1の原子的変更に成功することを要求する。\n5. 有効確認で理由がNULLならE-STU-107を返す。候補あり、または非NULLキーありで照合不成立ならRollbackして新キーを発行しConfirmationRequiredを返す。\n6. Viewは全件数と先頭最大20件の番号・氏名・和暦生年月日・クラス名を表示する。\n7. 確認取消はキーを空文字にして確認sectionを除去する。続行は同じ保存フォームをPOSTし、全保存検査を最初から行う。\n8. Commit成功後は供給キーを削除する。取得後の既知未完了ではBusyを戻し、Unknownでは供給キーを削除する。\n\n根拠: `sources/Core/SqlServerStudentService.cs:224-225`、`sources/Core/SqlServerStudentService.cs:274-290`、`sources/Core/SqlServerStudentService.cs:313-335`、`sources/Views/Students/Edit.cshtml:14-14`、`sources/wwwroot/js/site.js:3-6`。\n\n#### 条件付き処理フロー\n\n```mermaid\nflowchart TD\n  A[全候補・Payloadを再取得] --> B{候補あり またはキー非NULL}\n  B -->|いいえ| W[保存書込みへ]\n  B -->|はい| C{所有・対象・版・期限・ハッシュ・Busy一致}\n  C -->|いいえ| R[Rollback・新キー発行 409]\n  C -->|はい| D{理由あり}\n  D -->|いいえ| V[422 E-STU-107]\n  D -->|はい| W\n  R --> UI[候補確認領域]\n  UI -->|取消| X[キー空・領域除去・要求なし]\n  UI -->|inputイベント| Y[キー空・領域保持]\n  UI -->|続行| P[同じ保存POST]\n  Y --> P\n  W --> CM{確定結果}\n  CM -->|Commit成功| CO[キー消費]\n  CM -->|既知未完了| BF[Busy解除]\n  CM -->|Unknown| DE[供給キー削除]\n```\n\n対象版競合と変更なしは確認照合より前に判定する。消費済みキーの再POSTでも、対象版が変わっていれば再確認より先にConflictとなり得る。根拠: `sources/Core/SqlServerStudentService.cs:252-278`。\n\n#### SQL・テーブル関連／DB操作の詳細\n\n```mermaid\nflowchart LR\n  S[dbo.m_student 候補] -->|LEFT JOIN class_id| C[dbo.m_class]\n  C -->|LEFT JOIN 学年分類と値| G[dbo.m_code 学年]\n  S -->|LEFT JOIN 在籍分類と値| E[dbo.m_code 在籍]\n  S -->|LEFT JOIN 都道府県分類と値| P[dbo.m_code 都道府県]\n  S --> H[全候補ID・版ハッシュ]\n  V[正規化業務19値] --> PH[Payloadハッシュ]\n  H --> M[Web確認メモリ]\n  PH --> M\n```\n\n候補SQLはRowSelectに `WHERE s.is_deleted=0 AND (@id IS NULL OR s.student_id<>@id) AND s.birth_date=@birth AND (s.name_key=@name OR s.kana_key=@kana) ORDER BY s.student_id` を追加する。@idはBigIntまたはDBNull、@birthはDate、@nameはNVarChar(320)、@kanaはNVarChar(36)。TOP・OFFSET・FETCH、在籍区分やマスタ有効性による除外はない。JOINの全条件はC-05のRowSelect契約に従う。根拠: `sources/Core/SqlServerStudentService.cs:82-91`、`sources/Core/SqlServerStudentService.cs:269-272`。\n\n取得結果はStudentRowであり、ID・番号・氏名・カナ・生年月日、所属年度・学年名称・クラスコード・名称、在籍名称、住所表示、本人電話、入学日、更新時点、版を持つ。Viewは4表示項目だけを使用し、クラス名NULLを「未所属」へ置換しない。根拠: `sources/Core/Contracts.cs:50-55`、`sources/Core/SqlServerStudentService.cs:77-91`、`sources/Views/Students/Edit.cshtml:14-14`。\n\nWeb確認はメモリ辞書へ発行する。キーは32バイト乱数から64桁小文字hex、期限は発行完了時点ではなく保存開始now+10分である。発行時に期限切れ要素を掃除するが、同じ編集状態の旧キーを一括撤回しない。本経路はt_confirmationを読書きしない。根拠: `sources/Infrastructure/WebHostSetup.cs:19-19`、`sources/Core/SqlServerStudentService.cs:330-335`。\n\n#### 結果・例外時の扱い\n\n業務内容、全候補の件数・ID・版、所有者、セッション、対象、期待版、期限、使用中状態の相違は再確認になる。候補0件へ変わった場合でも、非NULLの旧キーが不正ならConfirmationRequiredとなる。サービスは空文字も非NULLとして判定する。根拠: `sources/Core/SqlServerStudentService.cs:276-290`。\n\nJavaScriptは理由入力を含む編集フォーム全体のinputイベントでキーを空にする。そのため、確認取得後に理由を入力するとキーが解除される。候補が残る場合は、理由を入力した保存で新確認を取得し、その後入力を変えずに続行する経路となる。入力変更だけでは確認sectionを除去しない。根拠: `sources/wwwroot/js/site.js:3-6`、`sources/Core/SqlServerStudentService.cs:286-290`。\n\n### EV-06 論理削除する\n\n#### 処理概要\n\n既存Administratorが削除理由を入力し、対象・理由のブラウザー確認後に専用フォームを送信する。業務19入力は送信せず、DBの業務値を保持したまま削除属性と更新管理値を変更する。根拠: `sources/Views/Students/Edit.cshtml:17-17`、`sources/Core/SqlServerStudentService.cs:409-413`。\n\n#### 処理手順\n\n1. SnapshotId、ExpectedVersion、ReturnContextId、Confirmed=true、Reason、CSRF情報を送信する。\n2. ControllerがFormGuard、認証、Snapshotの所有・セッション・対象・期限、投稿復帰先と読込時復帰先の一致を確認する。\n3. CoordinatorがAdministrator、復帰Context、Confirmed=true、正の期待版を確認してDeleteAsyncを呼ぶ。削除入口には保存入口のModelState.IsValid分岐はない。\n4. サービスが受付番号・利用者・開始UTC時点を決め、Administrator、必須理由、正のID・版を確認する。版がInt64最大値の場合も入力不正とする。\n5. READ COMMITTEDと共通書込ゲート内で非削除対象の現版を取得し、対象存在・期待版一致を確認する。\n6. 削除属性と更新管理値をUPDATEし、更新件数1を要求する。\n7. 同じトランザクションでDELETE監査を追加し、Commit正常終了後にSavedと版+1を返す。\n8. ControllerはSavedならFlashと303を返す。結果型の失敗ならエラー・HTTP状態を設定して通常Loadを再実行する。\n\n根拠: `sources/Web/Controllers/StudentsController.cs:37-41`、`sources/Infrastructure/WebStudentCoordinator.cs:19-19`、`sources/Core/SqlServerStudentService.cs:392-416`。\n\n#### 条件付き処理フロー\n\n```mermaid\nflowchart TD\n  A[削除フォームsubmit] --> B{ブラウザー確認続行}\n  B -->|いいえ| X[要求なし]\n  B -->|はい| C{入口のSnapshot・復帰先・管理者・確認・版が有効}\n  C -->|いいえ| CE[共通エラー応答]\n  C -->|はい| D{理由・ID・版が有効}\n  D -->|いいえ| R[サービス失敗結果]\n  D -->|はい| E[READ COMMITTED・Gate]\n  E --> F{非削除対象あり・版一致}\n  F -->|いいえ| R\n  F -->|はい| U[削除属性UPDATE・件数1]\n  U --> H[DELETE監査]\n  H --> CM{Commit正常終了}\n  CM -->|はい| S[Saved・Flash・303]\n  CM -->|例外| ER[Conflict・SystemError・Unknown分類]\n  ER --> R\n  R --> L[エラー設定後Load]\n  L --> M{対象取得成功}\n  M -->|はい| N[最新Input・期待版・Lookup・新Snapshot]\n  M -->|いいえ| NF[共通404等]\n```\n\n#### SQL・テーブル関連／DB操作の詳細\n\n```mermaid\nflowchart LR\n  subgraph TX[削除トランザクション]\n    R[dbo.m_student 現版SELECT] --> U[dbo.m_student 削除属性UPDATE]\n    U --> A[dbo.t_operation_log DELETE監査INSERT]\n  end\n  A --> C[Commit]\n  F[結果型の失敗] --> L[別経路Load]\n  L --> S[dbo.m_student 最新値]\n  L --> LK[Lookup コード・分類・クラス・人数]\n  L --> M[新メモリSnapshot]\n```\n\n現版SELECTは `SELECT row_version FROM dbo.m_student WHERE student_id=@id AND is_deleted=0`、@idはBigInt。スカラー値NULLならNotFound、取得版が期待版と異なればConflictとなる。根拠: `sources/Core/SqlServerStudentService.cs:404-407`。\n\nUPDATEは `is_deleted=1, deleted_at=@now, deleted_by=@actor, delete_reason=@reason, updated_at=@now, updated_by=@actor, row_version=row_version+1` の7列を設定する。WHEREは `student_id=@id AND row_version=@version AND is_deleted=0`。ID・版はBigInt、時点はDateTimeOffset、主体はNVarChar(128)、理由はNVarChar(120)。ExecuteNonQueryの件数1を要求し、業務列・class_id・作成情報はSETに含めない。DELETE監査は同じ7列、前版・版+1、理由、duplicate_confirmed=falseを記録する。根拠: `sources/Core/SqlServerStudentService.cs:409-414`。\n\n#### 結果・例外時の扱い\n\nDBConcurrencyExceptionはRollbackを試みてConflictとする。その他のSQL・InvalidOperation・取消例外はC-03のUnknown条件で分類する。接続・トランザクション開始は分類用tryの外側にある。理由のInputValidationExceptionは結果へ変換するが、不正サロゲートでScalarCountが投げるArgumentExceptionはこの理由検査のcatch対象ではなく上位へ伝播する。根拠: `sources/Core/StudentNormalizer.cs:37-50`、`sources/Core/SqlServerStudentService.cs:396-416`。\n\n結果型の失敗後にLoadが成功すると、最新学生値・期待版・候補・新Snapshotを持つ画面になる。編集中業務入力と投稿削除理由は復元しない。対象が削除済みならLoadが404を投げ、元のUnknown等に代わる共通404応答となり得る。入口例外はこの再読込分岐に入らない。根拠: `sources/Web/Controllers/StudentsController.cs:25-25`、`sources/Web/Controllers/StudentsController.cs:37-37`、`sources/Infrastructure/WebStudentCoordinator.cs:17-19`、`sources/Views/Students/Edit.cshtml:17-17`。\n\n### EV-07 入力クリア・編集取消\n\n#### 処理概要\n\n新規の入力クリアと既存の編集取消は、メモリSnapshotの読込時Inputへ戻す。既存学生のDB最新値を取得する操作ではない。根拠: `sources/Web/Controllers/StudentsController.cs:35-35`、`sources/Infrastructure/EditorSnapshotStore.cs:7-11`。\n\n#### 処理手順\n\n1. 読込時値へ戻す確認後、SnapshotIdとStudentIdをPOSTする。\n2. FormGuardと認証を確認し、StudentIdを任意正のlongへ変換する。\n3. Snapshotの対象・所有者・セッション・期限を確認する。\n4. ModelStateをClearし、OriginalのJSON複製をInputへ設定する。Detail、SnapshotId、ReturnRevisionは同じSnapshotの値を保持する。\n5. C-01のLookupを再取得する。\n6. 「入力を読込時の値へ戻しました。」を表示してEdit Viewを返す。\n\n根拠: `sources/Views/Students/Edit.cshtml:16-16`、`sources/Web/Controllers/StudentsController.cs:35-35`。\n\n#### 条件付き処理フロー\n\n```mermaid\nflowchart TD\n  A[クリア・取消submit] --> B{確認続行}\n  B -->|いいえ| X[要求なし]\n  B -->|はい| C{認証・ID・Snapshotが有効}\n  C -->|いいえ| E[共通エラー応答]\n  C -->|はい| D[ModelState Clear・Original複製]\n  D --> L[Lookup再取得]\n  L --> V[読込時InputでEdit View]\n```\n\n#### SQL・保持領域関連／DB操作の詳細\n\n```mermaid\nflowchart LR\n  M[メモリSnapshot Original・Detail] --> I[復元Input・読込時期待版]\n  L[Lookup SNAPSHOT] --> C[dbo.m_code]\n  C --> K[dbo.m_code_category]\n  L --> CL[dbo.m_class]\n  CL --> G[dbo.m_code 学年]\n  CL --> S[dbo.m_student 人数集計]\n  I --> V[Edit View]\n  L --> V\n```\n\n学生GetAsync、学生書込み、監査追加は行わない。DB操作はC-01のLookupのみで、候補と参考人数を更新する。根拠: `sources/Web/Controllers/StudentsController.cs:35-35`、`sources/Core/SqlServerStudentService.cs:196-216`。\n\n#### 結果・例外時の扱い\n\n新規クリアは性別0・在籍01・当年度等を含む初期値へ戻すため、全項目を空にする操作ではない。既存取消は読込時期待版を維持し、その間のDB更新は次回保存で競合となる。Snapshot不在・期限超過409、所有・セッション・対象相違403。Reset自身は復帰Contextを再検査しない。Lookup失敗は共通例外応答となる。根拠: `sources/Web/Inputs/StudentSaveInput.cs:44-54`、`sources/Infrastructure/EditorSnapshotStore.cs:10-10`、`sources/Web/Controllers/StudentsController.cs:35-35`。\n\n### EV-08 最新情報を再読込\n\n#### 処理概要\n\n既存時に表示する再読込リンクから、通常の既存GETを再実行する。学生業務値、期待版、更新情報、候補、Snapshotを取得し直す。根拠: `sources/Views/Students/Edit.cshtml:16-16`、`sources/Web/Controllers/StudentsController.cs:24-25`。\n\n#### 処理手順\n\n1. dirtyの場合だけ編集破棄確認を行う。取消なら画面に留まる。\n2. 続行またはdirty=falseなら、対象IDとreturnContextIdで既存GETへ進む。\n3. EV-02の認証・Context確認、非削除学生取得、Lookup、入力復元を実行する。\n4. 最新値と最新期待版を持つ新SnapshotでEdit Viewを返す。\n\n根拠: `sources/wwwroot/js/site.js:5-5`、`sources/Infrastructure/WebStudentCoordinator.cs:17-17`、`sources/Web/Controllers/StudentsController.cs:25-25`。\n\n#### 条件付き処理フロー\n\n```mermaid\nflowchart TD\n  A[最新再読込リンク] --> B{dirty}\n  B -->|はい| C{破棄確認続行}\n  C -->|いいえ| X[画面保持]\n  C -->|はい| G[既存GET]\n  B -->|いいえ| G\n  G --> D{Context有効・対象あり}\n  D -->|いいえ| E[共通エラー応答]\n  D -->|はい| N[最新Detail・Lookup・Input・新Snapshot]\n  N --> V[Edit View]\n```\n\n#### SQL・テーブル関連／DB操作の詳細\n\n```mermaid\nflowchart LR\n  G[既存GET] --> S[dbo.m_student 単表SELECT]\n  G --> L[別取得Lookup]\n  L --> C[dbo.m_codeとdbo.m_code_category]\n  L --> CL[dbo.m_classと学年コード]\n  CL --> O[dbo.m_student 人数]\n  S --> I[最新Detail・Input]\n  I --> M[新メモリSnapshot]\n```\n\n対象SQLのID・非削除条件とBigIntパラメータはEV-02、LookupはC-01に従う。期待版だけを差し替えるSQLや学生書込みはない。旧Snapshotを明示削除しない。根拠: `sources/Core/SqlServerStudentService.cs:172-216`、`sources/Infrastructure/EditorSnapshotStore.cs:9-11`。\n\n#### 結果・例外時の扱い\n\nContext失効は学生取得前のエラー、対象削除済みは404となる。成功時は編集中入力を継承せず、取得した学生値で作り直す。DB失敗・取消は共通例外応答へ進む。\n\n### EV-09 検索へ戻る・確定成功後の復帰\n\n#### 処理概要\n\n手動復帰は読込時ContextId・ContextRevisionで検索画面を開く。保存・削除確定成功も固定内部パスへ303で復帰する。適用済み検索条件はURLではなくContextメモリから読み、最新結果を再検索する。根拠: `sources/Views/Students/Edit.cshtml:16-16`、`sources/Web/Controllers/StudentsController.cs:8-11`、`sources/Web/Controllers/StudentsController.cs:38-40`。\n\n#### 処理手順\n\n1. 手動リンクではdirtyの場合だけ未保存破棄を確認する。\n2. Saved後は復帰Context未設定なら新規未検索Contextを作り、成功文言をFlashへ設定する。\n3. URIエスケープした識別値を付けた `/students?contextId=…&contextRevision=…` をLocationとし303を返す。任意URLを復帰先にしない。\n4. Indexは認証を確認し、Context未指定なら新規未検索状態、指定ありならResumeへ進む。\n5. ResumeはContextのSemaphoreSlim内で所有・期限を再確認し、要求検索版の文字列一致と版上限未到達を確認する。\n6. Applied条件なしは未検索状態を返す。条件ありはC-05のSearchAsyncを実行し、LastResultを更新してRevisionを1増やす。Use成功で期限を30分延長する。\n7. Resume後にFlash.Takeで通知を取得・消費し、人数なしLookupを取得してSearch Viewを返す。\n\n根拠: `sources/Web/Controllers/StudentsController.cs:8-11`、`sources/Web/Controllers/StudentsController.cs:38-39`、`sources/Infrastructure/WebStudentCoordinator.cs:14-14`、`sources/Infrastructure/SearchContextStore.cs:13-14`、`sources/Infrastructure/FlashMessageStore.cs:6-9`。\n\n#### 条件付き処理フロー\n\n```mermaid\nflowchart TD\n  A[手動復帰] --> B{dirtyなら破棄確認続行}\n  B -->|いいえ| X[画面保持]\n  B -->|はい| G[検索GET]\n  S[保存・削除Saved] --> F[Flash設定・固定Locationで303]\n  F --> G\n  G --> C{Context指定あり}\n  C -->|いいえ| N[新規未検索Context]\n  C -->|はい| V{所有・期限・検索版が有効}\n  V -->|いいえ| E[共通403・409等]\n  V -->|はい| Q{Applied条件あり}\n  Q -->|いいえ| U[未検索]\n  Q -->|はい| R[再検索・LastResult更新・版加算]\n  N --> T[Flash.Take・人数なしLookup]\n  U --> T\n  R --> T\n  T --> H[Search View]\n```\n\n#### SQL・テーブル関連／DB操作の詳細\n\n```mermaid\nflowchart LR\n  M[Context Applied条件] --> Q[Search SNAPSHOT]\n  Q --> S[dbo.m_student]\n  S -->|件数・一覧LEFT JOIN| C[dbo.m_class]\n  C -->|一覧LEFT JOIN| G[dbo.m_code 学年]\n  S -->|一覧LEFT JOIN| K[dbo.m_code 在籍・都道府県]\n  Q --> R[Context LastResult・Revision]\n  F[Flashメモリ] --> V[Search View]\n  L[人数なしLookup] --> V\n```\n\n再検索の全述語・パラメータ・ページング・結果形はC-05に従う。適用条件なしの場合は学生検索SQLを実行せず、表示候補のLookupだけを取得する。検索用LookupはincludeOccupancy=falseであり、人数をCONVERT(int,0)で返して人数集計を省く。根拠: `sources/Infrastructure/WebStudentCoordinator.cs:14-14`、`sources/Web/Controllers/StudentsController.cs:39-39`、`sources/Core/SqlServerStudentService.cs:201-208`。\n\n#### 結果・例外時の扱い\n\nContext期限切れ・版相違は409、所有・セッション相違は403となる。編集時のCheckReturnはTab・期待検索版を渡さないため、学生保存が確定しても303後のResumeが版相違で失敗する場合がある。保存確定と検索復帰表示の成功は別の境界である。根拠: `sources/Infrastructure/WebStudentCoordinator.cs:6-6`、`sources/Infrastructure/WebStudentCoordinator.cs:14-14`、`sources/Infrastructure/SearchContextStore.cs:13-14`。\n\nFlashはResume成功後、検索画面Lookup前に消費する。Resume失敗なら未消費、Lookup失敗なら消費済みとなる。Resumeはサービスが補正した取得ページをApplied.Pageへ書き戻さず、削除等でページ数が縮むと一覧の取得ページと提示pageが異なる場合がある。根拠: `sources/Web/Controllers/StudentsController.cs:8-11`、`sources/Infrastructure/WebStudentCoordinator.cs:14-14`、`sources/Infrastructure/WebStudentCoordinator.cs:21-21`、`sources/Core/SqlServerStudentService.cs:160-164`。\n\n## 補足説明\n\n### C-01 候補取得・表示の共通契約\n\nLookupはSNAPSHOTトランザクションで2結果集合を取得する。コード集合は `m_code c JOIN m_code_category k ON k.category_id=c.category_id`、順序は `c.category_id,c.display_order,c.code_value`。コードと分類のis_activeがともに1の場合だけCodeEntry.IsActiveをtrueにする。有効性・期間をWHEREで除外せず、全行を取得する。根拠: `sources/Core/SqlServerStudentService.cs:196-205`。\n\nクラス集合は `m_class c LEFT JOIN m_code g ON g.category_id=c.grade_category AND g.code_value=c.grade_code`、順序は `c.school_year DESC,g.display_order,c.display_order,c.class_code,c.class_id`。編集用人数は `s.class_id=c.class_id AND s.is_deleted=0 AND s.enrollment_status_code IN ('01','02')` のCOUNT(*)である。入力パラメータ、TOP、OFFSET/FETCHはなく、全件をCodeEntry・SchoolClassへ読み、Commit後にLookupSetを返す。根拠: `sources/Core/SqlServerStudentService.cs:201-216`、`sources/Core/Contracts.cs:61-65`。\n\nマスタ列は選択と検査の材料であり、本画面から更新しない。クラスのclass_idはbigint選択キー、school_yearはsmallint、grade_codeはvarchar(2)の整合値、class_code varchar(9)とclass_name nvarchar(36)は表示値で、いずれもNOT NULL。valid_from・valid_toはdate NOT NULLの期間、is_activeはbit NOT NULLの利用可否、capacityはint NULLの定員、display_orderはint NOT NULLの順序値である。コードのcategory_id varchar(24)とcode_value varchar(10)は複合キー、code_name nvarchar(24)は表示名称、display_orderは順序、is_activeとvalid_from・valid_toは利用可否であり、valid_toだけはNULL可能となる。分類のis_activeも可否に含める。根拠: `sources/database/001_schema.sql:62-80`、`sources/database/001_schema.sql:90-102`、`sources/database/001_schema.sql:112-127`、`sources/Core/SqlServerStudentService.cs:203-214`。\n\nViewのクラス可否は描画時の原入力とDetailで決める。03・04の期間重なりはDateOnly.TryParseで原入力日付を読むため、保存サービスのNFKC後厳密解析とは別の判定である。既存ClassIdの保持を優先し、停止・期間外注記は選択可否と同じ条件ではない。人数表示もInput.ClassIdとの文字列一致によるため、正整数変換できる先頭ゼロ付きIDと標準表記が表示上一致するとは限らない。根拠: `sources/Views/Students/Edit.cshtml:2-2`、`sources/Views/Students/Edit.cshtml:12-12`、`sources/Web/Inputs/StudentSaveInput.cs:60-60`。\n\n### C-02 正規化・日付・所属の保存契約\n\nTextはNULLを空文字へ置換し、Trimや改行統一より前に原入力のスカラー値数を確認する。サロゲート対は1と数え、不正な対はArgumentExceptionとする。単一行では制御文字を拒否し、複数行ではCRLF・CRをLFへ統一してLF以外の制御文字を拒否する。Trim後の空は必須ならエラー、任意ならNULL、非空は保存長を再確認する。空白を除けば短くなる入力でも、raw上限超過は先に拒否する。根拠: `sources/Core/StudentNormalizer.cs:37-57`。\n\nカナはNFKC後、ひらがなU+3041～U+3096と反復記号を対応カタカナへ変換する。許可する文字はU+30A1～U+30FA、長音、中点、カタカナ反復記号である。内部空白は半角1個へまとめ、末尾空白は追加しない。郵便・電話から除くハイフン類はASCIIハイフン、U+2010、U+2011、U+2212で、電話は丸括弧も除く。電話の最終形式は0で始まる10～11桁、または+の後に非ゼロ数字で始まる7～15桁であり、記号だけの入力をNULLへ置換しない。根拠: `sources/Core/StudentNormalizer.cs:72-100`。\n\nメールは@が1個、非空のASCIIローカル部、先頭・末尾の点と連続点の禁止、2個以上のドメインラベル、各ラベル1～63文字と英数字・内部ハイフン形式を検査する。NFKCは行わない。コードはraw幅をTextで検査してからNFKCし、指定幅のASCII数字へ限定する。根拠: `sources/Core/StudentNormalizer.cs:102-117`。\n\n和暦は次の固定境界を使用する。元号IDは完全一致、年・月・日だけNFKCを適用する。元年「元」は1、その他は正のASCII整数で年4桁、月日2桁以内とし、実在日・元号境界・業務日以下・逆変換の元号と年の一致を確認する。Textと同じ正規化前raw長検査はない。根拠: `sources/Core/JapaneseDateService.cs:9-39`。\n\n| 元号ID | 表示 | 開始日 | 終了日 | 西暦年への加算値 |\n| --- | --- | --- | --- | --- |\n| REIWA | 令和 | 2019-05-01 | DateOnly.MaxValue。ただし保存は業務日以下 | 2018 |\n| HEISEI | 平成 | 1989-01-08 | 2019-04-30 | 1988 |\n| SHOWA | 昭和 | 1926-12-25 | 1989-01-07 | 1925 |\n| TAISHO | 大正 | 1912-07-30 | 1926-12-24 | 1911 |\n| MEIJI | 明治 | 1900-01-01 | 1912-07-29 | 1867 |\n\nToInputは元年を「1」、月日を2桁で戻し、ToWarekiは元年を「元」として表示する。ISO日付はNFKC後のyyyy-MM-dd・10文字を厳密解析し、1900-01-01以上かつ業務日以下を要求する。date値には時差変換を行わず、更新時点のDateTimeOffsetだけを日本時間表示へ変換する。根拠: `sources/Core/JapaneseDateService.cs:41-59`、`sources/Infrastructure/WebPresentation.cs:7-7`。\n\n個別業務19値のInputValidationException・ArgumentExceptionを収集し、個別エラーがあれば生成値・関連検査へ進まない。成功後は生年月日≦入学日、01・02の終了日NULL・クラス必須、03・04の終了日必須・入学日以上を要求する。本人電話・メール・緊急電話の最低1つ、緊急氏名・続柄・電話の全未設定または全設定も確認する。初期データSQLの名称定義は01=在学、02=休学、03=卒業、04=退学である。根拠: `sources/Core/StudentNormalizer.cs:119-159`、`sources/database/002_seed.sql:19-22`。\n\n| 保存前後の状態 | 所属・期間の検査 | 定員の検査 |\n| --- | --- | --- |\n| 新規01・02、席なしから01・02、別クラスへの移動 | クラス存在、指定年度・学年一致、有効、業務日が利用期間内 | 本人除外の非削除01・02人数+1が定員以下 |\n| 同じクラスで01・02の席を保持 | 存在・補助値整合を検査。有効性・現期間内条件を再適用しない | 加算検査なし。既存超過だけでは拒否しない |\n| 新規03・04でクラス指定 | 存在・補助値整合、学生在籍期間とクラス期間の重なり | 席を増やさない |\n| 03・04でクラス・区分・入学日・終了日を変更 | 指定クラスとの期間重なりを再確認。停止自体は拒否条件にしない | 席を増やさない |\n| 03・04で所属・区分・在籍日付を保持し住所等だけ変更 | 存在・補助値整合を検査。既存の期間重なりを再検査しない | 席を増やさない |\n| 03・04でクラス未指定 | 年度範囲・学年形式だけを確認。独立した年度候補・GRADE存在検査なし | 非適用 |\n| 論理削除 | 元のclass_idを保持 | 非削除人数から除外 |\n\n根拠: `sources/Core/SqlServerStudentService.cs:235-237`、`sources/Core/SqlServerStudentService.cs:357-383`、`sources/Core/SqlServerStudentService.cs:409-413`。\n\n期間重なりは端点を含み、入学日≦クラス終了日かつ学生終了日≧クラス開始日で成立する。休学も1席と数える。定員NULLは無制限、DDLの非NULL定員は1～9999であり、0を無制限には扱わない。終了区分から01・02へ戻す操作は同じClassIdでも新しい席を得るため、有効性・期間・定員検査の対象になる。画面の参考人数は席の予約ではない。根拠: `sources/Core/SqlServerStudentService.cs:360-380`、`sources/database/001_schema.sql:201-201`。\n\n### C-03 認証・要求・排他・取消・確定結果\n\nControllerはAuthorizeを持ち、RequestIdentityは認証主体、login_session、Role claimを読む。主体は空白だけでなく64スカラー値以内、セッションは空白だけでなく64コード単位以内、RoleはEnum.TryParse可能であることを要求する。作成更新はViewerを拒否、削除はAdministrator一致を要求する。状態変更フォームにはCSRF情報を持たせ、MVC全体にAutoValidateAntiforgeryTokenを登録する。根拠: `sources/Web/Controllers/StudentsController.cs:5-6`、`sources/Infrastructure/RequestIdentity.cs:7-16`、`sources/Infrastructure/WebHostSetup.cs:14-16`。\n\nFormGuardは許可外項目、不正な__Invariant、許容例外以外の同名複数値を400で拒否する。非nullable参照型への暗黙requiredは抑止され、業務必須条件はサービスで検査する。要求本文・Multipart本文上限は65,536バイト、フォームValueLengthLimitは65,536、ValueCountLimitは128、モデル検証エラー上限は100であり、各項目の業務長とは別の制約である。根拠: `sources/Web/Controllers/StudentsController.cs:41-41`、`sources/Infrastructure/WebHostSetup.cs:16-18`。\n\nSQL Server接続はEncrypt=Mandatory、TrustServerCertificate=falseとする。接続後、現在DBのsnapshot_isolation_state=1を要求する。Command helperのタイムアウトは30秒。保存・削除はREAD COMMITTED内でSET XACT_ABORT ONを設定し、sp_getapplockを資源名test-project1:student-write、Exclusive、Transaction所有、待機5000ms、DbPrincipal=publicで呼び、戻り値負数ならTHROWする。クラス・コード保守も同じGateを呼ぶ。根拠: `sources/Core/SqlServerStudentService.cs:39-72`、`sources/Core/SqlServerStudentService.cs:92-101`、`sources/Core/MasterMaintenanceService.cs:42-42`、`sources/Core/MasterMaintenanceService.cs:90-90`。\n\nCancellationTokenは接続、トランザクション開始、ゲート、照会、書込み、Commitへ渡す。Rollback helperはCancellationToken.Noneで試行し、SQL・InvalidOperation例外ならfalseを返す。書込み直前にwriteStarted、Commit呼出し直前にcommitAttemptedをtrueにし、Commit正常終了後だけSavedを返す。根拠: `sources/Core/SqlServerStudentService.cs:241-244`、`sources/Core/SqlServerStudentService.cs:302-329`、`sources/Core/SqlServerStudentService.cs:399-416`。\n\n保存のInputValidationException、SQL例外2601・2627、DBConcurrencyExceptionはRollbackを試み、それぞれ検証失敗または競合へ変換する。この3分岐はRollback成否を分類へ反映しない。2601・2627は制約名を調べず学籍番号使用済みへ変換する。削除のDBConcurrencyExceptionもRollback成否を分類へ反映しない。その他のSQL・InvalidOperation・取消例外は `writeStarted && (commitAttempted || !rolledBack)` をUnknown条件とする。Commit試行後の例外は後続Rollbackが正常終了してもUnknownとなる。根拠: `sources/Core/SqlServerStudentService.cs:316-329`、`sources/Core/SqlServerStudentService.cs:415-416`。\n\nOpen・BeginTransactionの失敗、GET・Lookupの一般DB失敗、入口例外は上位へ伝播する。応答未開始なら共通例外処理がWebFaultの状態または503を設定し、HTMLではエスケープした文言と検索画面へのリンクを返す。画面のFieldErrorは共通validation-summary=Allに表示する。エラーキーはDTOプロパティ名、REG識別値、空キー等が混在し、入力横への個別表示を保証しない。根拠: `sources/Infrastructure/WebHostSetup.cs:23-23`、`sources/Core/StudentNormalizer.cs:29-34`、`sources/Web/Inputs/StudentSaveInput.cs:59-60`、`sources/Web/Controllers/StudentsController.cs:30-37`、`sources/Views/Shared/_MessagePanel.cshtml:1-3`。\n\n### C-04 監査とDDL上の関連\n\n監査は学生変更と同じトランザクションでt_operation_logへ追加する。物理列名のJSON配列を記録し、変更前後の個人情報値は保持しない。log_idはbigint IDENTITY主キーであり、監査対象キーから学生へのFKは定義されていない。根拠: `sources/Core/SqlServerStudentService.cs:385-390`、`sources/database/001_schema.sql:137-153`。\n\n| 監査列 | 業務上の意味・設定値 | DB型・NULL | SQLパラメータ |\n| --- | --- | --- | --- |\n| target_table | 対象表、固定値m_student | varchar(21) NOT NULL | SQLリテラル |\n| target_key | 学生IDの10進文字列 | varchar(35) NOT NULL | @id VarChar(35) |\n| operation_type | CREATE・UPDATE・DELETE | varchar(11) NOT NULL | @op VarChar(11) |\n| before_version | 更新・削除の前版、新規はNULL | bigint NULL | @before BigInt |\n| after_version | 書込予定の後版 | bigint NOT NULL | @after BigInt |\n| changed_columns | 変更物理列のJSON配列 | nvarchar(max) NOT NULL | @changed NVarChar、Size=-1 |\n| executed_by | 認証主体 | nvarchar(128) NOT NULL | @actor NVarChar(128) |\n| executed_at | 保存・削除開始UTC時点 | datetimeoffset(7) NOT NULL | @now DateTimeOffset |\n| correlation_id | 要求受付GUID | uniqueidentifier NOT NULL | @request UniqueIdentifier |\n| operation_reason | 正規化した確認・変更・削除理由 | nvarchar(120) NULL | @reason NVarChar(120) |\n| duplicate_confirmed | 保存時候補件数>0、削除はfalse | bit NOT NULL、DEFAULT 0 | @confirmed Bit |\n\n根拠: `sources/Core/SqlServerStudentService.cs:306-307`、`sources/Core/SqlServerStudentService.cs:385-390`、`sources/Core/SqlServerStudentService.cs:413-413`、`sources/database/001_schema.sql:139-153`。Size未記載の固定型パラメータはサイズ未指定である。\n\n次図はDDLのPK・FK・NULL可否から読める制約関連であり、イベントの検索JOIN図とは区別する。\n\n```mermaid\nerDiagram\n  m_code_category ||--o{ m_code : category_id\n  m_code ||--o{ m_class : GRADE分類と値\n  m_class o|--o{ m_student : class_id_NULL可\n  m_code ||--o{ m_student : GENDER分類と値\n  m_code ||--o{ m_student : PREFECTURE分類と値\n  m_code ||--o{ m_student : ENROLLMENT_STATUS分類と値\n  m_code o|--o{ m_student : RELATIONSHIP分類と値_NULL可\n```\n\nm_codeはcategory_id＋code_value、m_classはclass_id、m_studentはstudent_idを主キーとする。必須3分類とクラスGRADEは固定値CHECKを持ち、所属と続柄組はNULL可能である。学生は所属クラスを未設定または1件参照し、同じクラスを複数学生が参照できる。根拠: `sources/database/001_schema.sql:28-43`、`sources/database/001_schema.sql:80-80`、`sources/database/001_schema.sql:127-127`、`sources/database/001_schema.sql:189-199`。\n\n学生DDLは日本語列・照合キーのスカラー値上限、正のbigint版、UTC時点、日付・在籍・所属関係、最低1連絡手段、緊急一式、非削除時の削除属性全NULL・削除時全設定をCHECKする。現時点のコード可否、席増加時の定員、同一人物確認、更新時の番号不変はサービス検査である。row_versionはSQL Serverのrowversion型ではなく、アプリケーションが増分するbigintである。根拠: `sources/database/001_schema.sql:44-59`、`sources/database/001_schema.sql:198-205`、`sources/Core/SqlServerStudentService.cs:254-254`、`sources/Core/SqlServerStudentService.cs:274-290`、`sources/Core/SqlServerStudentService.cs:344-383`。\n\n### C-05 検索復帰で使用する再検索契約\n\nResumeはメモリのApplied条件をSearchAsyncへ渡す。サービスはページ1以上、サイズ20・50・100、方向asc・desc、並びキーstudentNo・name・admissionDate・updatedAtを検査する。年度・クラスの正数・範囲、未所属と年度・学年・クラスの同時指定禁止、区分01～04の重複なし最大4値も確認する。検索文字を正規化し、日付下限≦上限を要求する。根拠: `sources/Infrastructure/WebStudentCoordinator.cs:14-14`、`sources/Core/SqlServerStudentService.cs:103-122`。\n\nSNAPSHOT内でGRADE・PREFECTUREの指定値について `m_code WHERE category_id=@category AND code_value=@value` のCOUNT_BIGが1であることを確認する。@categoryはVarChar(24)、@valueはVarChar(10)。年度は `m_class WHERE school_year=@year`、@year SmallIntの件数が1件以上、クラスは `class_id=@id`、@id BigIntで実年度・学年との一致を確認する。これらの存在検査では停止値を除外しない。根拠: `sources/Core/SqlServerStudentService.cs:123-135`、`sources/Core/SqlServerStudentService.cs:218-222`。\n\n必須述語は `s.is_deleted=0`。指定値がある場合だけ次の述語をANDで追加し、未指定条件はNULL比較ではなく述語自体を省く。空の在籍区分配列は区分述語なしとなる。\n\n| 条件 | 追加述語・加工 | パラメータ・型・Size |\n| --- | --- | --- |\n| 学籍番号 | `s.student_no LIKE @no ESCAPE '!'`。正規化・エスケープ後に末尾% | @no VarChar(31) |\n| 氏名 | `s.name_key LIKE @name ESCAPE '!'`。氏名照合値の前後に% | @name NVarChar(642) |\n| カナ | `s.kana_key LIKE @kana ESCAPE '!'`。正規化カナの空白除去後、前後に% | @kana NVarChar(74) |\n| 年度 | `c.school_year=@year` | @year SmallInt |\n| 学年 | `c.grade_code=@grade` | @grade VarChar(2) |\n| クラス | `s.class_id=@class` | @class BigInt |\n| 未所属のみ | `s.class_id IS NULL` | なし |\n| 都道府県 | `s.prefecture_code=@prefecture` | @prefecture VarChar(2) |\n| 電話 | `(s.phone_number=@phone OR s.emergency_phone_number=@phone)`。Phone正規化値 | @phone VarChar(16) |\n| 入学日下限 | `s.admission_date>=@from` | @from Date |\n| 入学日上限 | `s.admission_date<=@to` | @to Date |\n| 在籍区分 | `s.enrollment_status_code IN (@status0,…)` | 各@statusN VarChar(2) |\n\n根拠: `sources/Core/SqlServerStudentService.cs:137-155`。LIKEは!、%、_、[を順にエスケープする。検索入力を保存列へ書き込む処理ではない。根拠: `sources/Core/StudentNormalizer.cs:161-161`。\n\n件数は学生とクラスをclass_idでLEFT JOINし、同じWHEREに対する `SELECT TOP (10001) s.student_id` の派生表をCOUNT_BIGする。10,000件超はCount=10001、LimitExceeded=true、一覧空を返し、表示用totalCountはNULLとなる。10001は実際の総件数を確定した値ではない。根拠: `sources/Core/SqlServerStudentService.cs:156-159`、`sources/Infrastructure/WebStudentCoordinator.cs:21-21`。\n\n一覧のRowSelectは学生→クラスをclass_id、クラス→学年コードをgrade_category＋grade_code、学生→在籍コードをenrollment_category＋enrollment_status_code、学生→都道府県コードをprefecture_category＋prefecture_codeでLEFT JOINする。結果形はStudentRowである。住所は都道府県名称と住所1の連結で、名称NULLは「[不整合]」、住所2は含めない。根拠: `sources/Core/SqlServerStudentService.cs:77-91`、`sources/Core/Contracts.cs:50-55`。\n\n並びキーはstudentNo→s.student_no、name→s.name_key、admissionDate→s.admission_date、updatedAt→s.updated_atとし、指定方向の後にs.student_id ASCを加える。OFFSET @offsetとFETCH NEXT @sizeはInt型。0件でも最終ページは1、取得ページは要求ページと最終ページの小さい方に補正する。件数と一覧を同じSNAPSHOTで取得してCommitする。根拠: `sources/Core/SqlServerStudentService.cs:107-108`、`sources/Core/SqlServerStudentService.cs:160-168`。\n\n検索画面は未検索、0件、10,000件超、通常結果を区別する。ResumeはApplied.Pageを補正値へ書き戻さないため、取得結果と表示pageの差はEV-09のとおりである。根拠: `sources/Views/Students/Search.cshtml:7-7`、`sources/Infrastructure/WebStudentCoordinator.cs:14-14`、`sources/Infrastructure/WebStudentCoordinator.cs:21-21`。\n\n### 接続された処理と別用途の宣言\n\nWebStudentCoordinator.Options、WebPresentation.Lookups・Save、StrictJson.Readの宣言から編集用JSON APIを導かない。POST /students/optionsは検索フォームのHTML再表示であり、Edit Viewとsite.jsから呼ばない。WebPresentation.SaveのクラスNULL→「未所属」というJSON整形も、編集Viewの候補表示契約には適用しない。根拠: `sources/Program.cs:3-7`、`sources/Web/Controllers/StudentsController.cs:22-38`、`sources/Infrastructure/WebStudentCoordinator.cs:16-19`、`sources/Infrastructure/WebPresentation.cs:30-30`、`sources/Infrastructure/StrictJson.cs:7-14`、`sources/wwwroot/js/site.js:2-9`。\n\nwebTokens=falseにはt_confirmationの照合・発行・consumed更新が実装されているが、当該Webはtrueで登録される。Context・Snapshot・FlashはSingletonメモリ、Web確認はstatic辞書である。t_runtime_stateとencrypted_payloadのDDL宣言を本画面の永続化・暗号化・消費処理として扱わない。根拠: `sources/Infrastructure/WebHostSetup.cs:13-19`、`sources/Core/SqlServerStudentService.cs:279-283`、`sources/Core/SqlServerStudentService.cs:308-342`、`sources/database/001_schema.sql:156-183`。\n\n権限SQLはstudent_staffへ学生INSERT・UPDATEと監査INSERTを許可し、学生物理DELETEと監査UPDATE・DELETEを禁止する。通常更新と論理削除はいずれも学生UPDATEであり、論理削除の管理者限定はアプリケーション認可で行う。マスタ保守は共通ゲートを使う別責務である。根拠: `sources/database/003_web_permissions.sql:12-24`、`sources/Infrastructure/WebStudentCoordinator.cs:19-19`、`sources/Core/SqlServerStudentService.cs:395-411`。\n\n### 参考設計の意図と現行実装の差\n\n| 主題 | 参考設計で定義された意図 | 現行ソースで観測した動作 | 根拠 |\n| --- | --- | --- | --- |\n| 初期候補不足 | 初期コード存在確認、必須コード不足時保存不可、クラス0件W-STU-108 | Loadは初期Inputと候補を作るが専用警告を設定しない。保存で業務コード・クラスを検査 | `reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:169-173`、`sources/Infrastructure/WebStudentCoordinator.cs:17-17`、`sources/Core/SqlServerStudentService.cs:344-383` |\n| 学年候補・検査 | 新規選択は有効値、既存値は別枠保持、補助値のコード存在確認 | 学年optionは全列挙。保存は形式・クラス実学年との一致を検査し、GRADEの独立した存在・有効性検査なし | `reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:103-103`、`reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:126-133`、`sources/Views/Students/Edit.cshtml:12-12`、`sources/Core/SqlServerStudentService.cs:237-237`、`sources/Core/SqlServerStudentService.cs:344-383` |\n| 入力補助 | 上位・区分変更に応じたクラス候補再取得、元号変更時の再検証 | 描画済みoptionから上位同期・不一致解除。候補通信、即時人数更新、和暦即時検証なし | `reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:133-133`、`reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:266-271`、`sources/wwwroot/js/site.js:2-9` |\n| 再確認・既存席警告 | 内容相違時W-STU-102、同一クラスの既存席保持時見直し警告 | 確認再発行・既存席保持の条件はあるが、専用警告を設定しない | `reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:374-376`、`reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:658-667`、`sources/Core/SqlServerStudentService.cs:287-290`、`sources/Core/SqlServerStudentService.cs:357-383` |\n| Snapshot用途 | 既存編集だけのOriginalSnapshotを取消・変更なし判定に使用 | 新規にも作成。取消はOriginal、変更なしは書込単位内の最新DB値と比較 | `reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:154-154`、`sources/Web/Controllers/StudentsController.cs:25-35`、`sources/Core/SqlServerStudentService.cs:260-262` |\n| 日付内部名 | command.BirthDate、ParseBirthDate・FormatBirthDate | StudentDraft.BirthDateInput、Parse・ToInput・ToWareki、Values[birth_date] | `reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:765-787`、`sources/Core/StudentNormalizer.cs:127-127`、`sources/Core/JapaneseDateService.cs:17-50` |\n| 郵便番号の既存表示 | 3桁－4桁の表示 | 保存済み7桁を入力へ戻し、ハイフン挿入なし | `reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:93-93`、`sources/Core/SqlServerStudentService.cs:189-189`、`sources/Views/Students/Edit.cshtml:9-9` |\n\n以上は設計意図と実装観測の対応であり、差異の採用理由、変更承認、改修予定を示すものではない。\n",
+  "previousDraftSha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+  "previousSourceBackedFeedback": {
+    "schema": "source-backed-writer-feedback/1",
+    "classification": "WRITER_SAFE_SOURCE_ONLY",
+    "reviewDocumentId": "SM-DET-STUDENT-EDITOR",
+    "projectId": "test-project1",
+    "profile": "CSharp_ASPNET",
+    "iteration": "20261013-focus-round-01",
+    "createdAt": "2026-10-12T22:16:01.295811+00:00",
+    "provenance": {
+      "generatedPath": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+      "generatedSha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+      "sourceRoot": "agents/reverse-agent/.tmp/20261013-tuning-01/capsules/CSharp_ASPNET-assisted/sources",
+      "sourceExecutionPerformed": false,
+      "criteriaOrOriginalExpectedCellsUsedAsFeedback": false
+    },
+    "sourceBackedFindings": [
+      {
+        "findingId": "RETURN-KEY",
+        "title": "復帰キーと編集Snapshotキーの発行経路を個別に記載する",
+        "description": "Snapshotには32バイト乱数/64桁小文字hexの説明があるが、ReturnContextIdは期限/所有/状態項目だけで発行経路を記していない。SearchContextStore.Entry.Id=Token()とTokenの32byte乱数→小文字hex、および編集Snapshotが同じToken helperを使うことを、それぞれの独立した辞書キーへ対応付ける。キーの同じ形式を辞書や照合対象の同一性に読み替えない。",
+        "generatedEvidence": [
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 198,
+            "endLine": 205
+          }
+        ],
+        "sourceEvidence": [
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "sha256": "7cc7e82c9a6bda7bf33ee374cad02348c1be2f40a6728aefe9b761dac0463bd2",
+            "startLine": 9,
+            "endLine": 12
+          },
+          {
+            "path": "sources/Infrastructure/EditorSnapshotStore.cs",
+            "sha256": "887e02443c77d43d175105a3411e46676c54e64d4a44e6cf07f133bb5da3a027",
+            "startLine": 7,
+            "endLine": 11
+          }
+        ]
+      },
+      {
+        "findingId": "CODE-PROTECTION",
+        "title": "候補可否と保護フラグの役割を分けて説明する",
+        "description": "コード候補は有効性/期間/既存保持を説明しているがis_protectedの役割がない。seedの保護指定、LookupのIsProtected移送、マスタ保守の保護値に対する停止/期間短縮拒否を追跡し、学生画面の選択可否とは別責務であることを明確にする。保護フラグを学生画面の新規業務入力や学生保存列として追加しない。",
+        "generatedEvidence": [
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 185,
+            "endLine": 192
+          },
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 788,
+            "endLine": 796
+          }
+        ],
+        "sourceEvidence": [
+          {
+            "path": "sources/database/002_seed.sql",
+            "sha256": "b4b6745e5c6e7d1ed3a22b07b2bb4607b5a6bf173ad08ba5bf32f0e4bb2322ee",
+            "startLine": 15,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560",
+            "startLine": 203,
+            "endLine": 212
+          },
+          {
+            "path": "sources/Core/MasterMaintenanceService.cs",
+            "sha256": "271674d65ae5d3d1d8b5537e0d243b01ce730f7d5cba033c69cdf24b6c06d4ef",
+            "startLine": 105,
+            "endLine": 113
+          }
+        ]
+      },
+      {
+        "findingId": "UI-INTERNAL-BOUNDARY",
+        "title": "処理中UIと確認辞書Busyを同じ内部状態にしない",
+        "description": "dirty/leaving/aria-busyと押下ボタン以外のdisabledはブラウザー内の補助制御である。押下ボタン再入拒否や要求連番による旧応答破棄はない。Web確認辞書のBusyはサーバーでトークン利用を排他する別項目である。本文の正しい実装限界を内部状態表にも対応させ、UI再入保証や応答世代を推定しない。参考設計にある追加保証は設計意図と明示して分ける。",
+        "generatedEvidence": [
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 194,
+            "endLine": 208
+          },
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 325,
+            "endLine": 330
+          },
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 362,
+            "endLine": 370
+          }
+        ],
+        "sourceEvidence": [
+          {
+            "path": "sources/wwwroot/js/site.js",
+            "sha256": "74729845c175ed285ddf0b19140d8216e7a1df6141a8e2e11d3a39f87f5d27bd",
+            "startLine": 2,
+            "endLine": 9
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560",
+            "startLine": 19,
+            "endLine": 29
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560",
+            "startLine": 274,
+            "endLine": 283
+          }
+        ]
+      },
+      {
+        "findingId": "MASTER-NAME-LENGTHS",
+        "title": "候補名称にも業務長と物理容量を揃えて書く",
+        "description": "C-01のマスタ型説明はcode_name:nvarchar(24)とclass_name:nvarchar(36)を記している。DDLは別途12/18スカラー相当のCHECKを持つ。学生入力項目で確立したraw/正規化/業務長/物理領域/NULLの区別を候補名称にも適用し、LEFT JOIN欠損と物理列NOT NULLを区別する。",
+        "generatedEvidence": [
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 788,
+            "endLine": 796
+          }
+        ],
+        "sourceEvidence": [
+          {
+            "path": "sources/database/001_schema.sql",
+            "sha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a",
+            "startLine": 63,
+            "endLine": 81
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "sha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a",
+            "startLine": 113,
+            "endLine": 128
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560",
+            "startLine": 203,
+            "endLine": 214
+          }
+        ]
+      },
+      {
+        "findingId": "COMMON-PLAN",
+        "title": "実装契約の分冊参照を計画全体と対応させる",
+        "description": "登録文書が説明する検索復帰/共通状態/DDL/配備の責務を、次工程で受け取る計画全体のID/path/roleへ対応させる。実在するソースの登録関係と生成文書の参照責務を区別し、未知のパスや生成済み状態は補完しない。UIモック、MDの検査、実行試験は別の根拠として扱い、試験未実施を消さない。",
+        "generatedEvidence": [
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 834,
+            "endLine": 858
+          },
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 918,
+            "endLine": 924
+          }
+        ],
+        "sourceEvidence": [
+          {
+            "path": "sources/Infrastructure/WebHostSetup.cs",
+            "sha256": "1a873e7427fcbc16d3593d2eaaed5c4180e79625bff8819ce979eada8e3f0649",
+            "startLine": 13,
+            "endLine": 24
+          },
+          {
+            "path": "sources/database/003_web_permissions.sql",
+            "sha256": "782df16a150e377da3d087264f6ba649d7c587f97af058530340a0eff89fc0b7",
+            "startLine": 12,
+            "endLine": 24
+          }
+        ]
+      }
+    ],
+    "existingCorrectBehaviors": [
+      {
+        "behaviorId": "FIELD-CHAIN",
+        "description": "今回追加したUI/DTO→正規化命令→実DB列/型/NULL→typed parameter/Sizeの対応を維持する。DTO nullableやSizeを保存列のNULL/容量と置換しない。",
+        "generatedEvidence": [
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 97,
+            "endLine": 179
+          }
+        ],
+        "sourceEvidence": [
+          {
+            "path": "sources/Web/Inputs/StudentSaveInput.cs",
+            "sha256": "607b30560672b7b548a6ece29f6f4a47a2cadf68786d1fe8d265a0452d03fbb8",
+            "startLine": 7,
+            "endLine": 60
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "sha256": "e2cad5e8b23fbbbe44ca03933432b371b4b3fe824432220b183cc922f838b71d",
+            "startLine": 119,
+            "endLine": 149
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560",
+            "startLine": 30,
+            "endLine": 37
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "sha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a",
+            "startLine": 8,
+            "endLine": 59
+          }
+        ]
+      },
+      {
+        "behaviorId": "SAVE-VS-DELETE",
+        "description": "Saveの非Saved応答は投稿Inputと旧Snapshotを使う。Deleteの非Saved結果はLoadでDB最新値/新Snapshotへ戻り、編集中入力と投稿理由を復元しない。削除済み等でLoadが404なら元結果より共通404が表に出る場合がある。この分岐を一律の失敗時入力保持へ変えない。",
+        "generatedEvidence": [
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 487,
+            "endLine": 491
+          },
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 619,
+            "endLine": 623
+          }
+        ],
+        "sourceEvidence": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "sha256": "cbbf397456a0c95cd5a7e33a2faabb06826451e5f24ac48d571283c88e8e3e31",
+            "startLine": 29,
+            "endLine": 38
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "sha256": "358bc13a486d43b4e30404f12f32845060ea4e98d3979c64a03ed8cc11a7c962",
+            "startLine": 17,
+            "endLine": 19
+          },
+          {
+            "path": "sources/Views/Students/Edit.cshtml",
+            "sha256": "8a9f8ee01b5241be778f8f1b03819a62ab00502abba0b02e5e87a8035abf5b67",
+            "startLine": 17,
+            "endLine": 17
+          }
+        ]
+      },
+      {
+        "behaviorId": "CONFIRM-TOKEN",
+        "description": "接続WebはwebTokens=trueの確認辞書を使う。主体/セッション/対象/期待版/期限/業務Payload/全候補ID版/Busyを確認し、入力変更/cancelのクライアントキー消去とサーバーレコード消費を区別する。Snapshot/Context/Tabは確認レコード自体の照合項目ではない。",
+        "generatedEvidence": [
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 203,
+            "endLine": 203
+          },
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 490,
+            "endLine": 565
+          },
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 918,
+            "endLine": 922
+          }
+        ],
+        "sourceEvidence": [
+          {
+            "path": "sources/Infrastructure/WebHostSetup.cs",
+            "sha256": "1a873e7427fcbc16d3593d2eaaed5c4180e79625bff8819ce979eada8e3f0649",
+            "startLine": 19,
+            "endLine": 19
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560",
+            "startLine": 19,
+            "endLine": 29
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560",
+            "startLine": 224,
+            "endLine": 225
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560",
+            "startLine": 274,
+            "endLine": 342
+          },
+          {
+            "path": "sources/wwwroot/js/site.js",
+            "sha256": "74729845c175ed285ddf0b19140d8216e7a1df6141a8e2e11d3a39f87f5d27bd",
+            "startLine": 3,
+            "endLine": 3
+          }
+        ]
+      },
+      {
+        "behaviorId": "NOCHANGE-COMMIT",
+        "description": "同内容保存NoChangeはROLLBACKしDML/監査/版加算しない。Commit正常だけSavedと成功303。UnknownはwriteStartedとcommitAttempted/rollback成否の条件で分類し、Open/Beginの外側例外を含めてSavedと偽装しない。",
+        "generatedEvidence": [
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 440,
+            "endLine": 491
+          },
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 619,
+            "endLine": 623
+          },
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 842,
+            "endLine": 858
+          }
+        ],
+        "sourceEvidence": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560",
+            "startLine": 227,
+            "endLine": 323
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560",
+            "startLine": 392,
+            "endLine": 416
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "sha256": "cbbf397456a0c95cd5a7e33a2faabb06826451e5f24ac48d571283c88e8e3e31",
+            "startLine": 38,
+            "endLine": 38
+          }
+        ]
+      },
+      {
+        "behaviorId": "RESET-RELOAD",
+        "description": "ResetはSnapshot.Originalへ戻し、DB最新再取得のReload/Loadと区別する。SnapshotはGetで延長/消費しない。",
+        "generatedEvidence": [
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 629,
+            "endLine": 666
+          }
+        ],
+        "sourceEvidence": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "sha256": "cbbf397456a0c95cd5a7e33a2faabb06826451e5f24ac48d571283c88e8e3e31",
+            "startLine": 25,
+            "endLine": 35
+          },
+          {
+            "path": "sources/Infrastructure/EditorSnapshotStore.cs",
+            "sha256": "887e02443c77d43d175105a3411e46676c54e64d4a44e6cf07f133bb5da3a027",
+            "startLine": 7,
+            "endLine": 11
+          }
+        ]
+      },
+      {
+        "behaviorId": "SEATS",
+        "description": "席は非削除01/02だけ、容量NULL無制限で0は無制限にしない。新しい席を得る操作、既存席保持、03/04の最終所属と変更時期間重なりを分け、画面人数を予約としない。",
+        "generatedEvidence": [
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 798,
+            "endLine": 832
+          }
+        ],
+        "sourceEvidence": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560",
+            "startLine": 235,
+            "endLine": 237
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560",
+            "startLine": 357,
+            "endLine": 383
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "sha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a",
+            "startLine": 201,
+            "endLine": 201
+          }
+        ]
+      },
+      {
+        "behaviorId": "DATES-POSTAL",
+        "description": "和暦入力のNumberはNFKC後4/2/2桁でありHTML maxlengthやrawスカラー制限から別に扱う。郵便番号はraw10→正規化7で保存し、設計上の表示形式を現行formatterの存在へ読み替えない。",
+        "generatedEvidence": [
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 103,
+            "endLine": 124
+          },
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 798,
+            "endLine": 811
+          }
+        ],
+        "sourceEvidence": [
+          {
+            "path": "sources/Core/JapaneseDateService.cs",
+            "sha256": "fe3ba2094f911da09b2fb0d5b2694006f347f2a2eb2e4944ac8f251cd265f847",
+            "startLine": 17,
+            "endLine": 59
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "sha256": "e2cad5e8b23fbbbe44ca03933432b371b4b3fe824432220b183cc922f838b71d",
+            "startLine": 94,
+            "endLine": 98
+          },
+          {
+            "path": "sources/Views/Students/Edit.cshtml",
+            "sha256": "8a9f8ee01b5241be778f8f1b03819a62ab00502abba0b02e5e87a8035abf5b67",
+            "startLine": 7,
+            "endLine": 9
+          }
+        ]
+      },
+      {
+        "behaviorId": "RETURN-PAGE",
+        "description": "SavedのDB確定と検索復帰表示は別。戻り版は読込時版で最新補完しない。Resumeは元Applied条件で再検索するがSQL用ページだけ補正し、Applied.Pageを更新しない。FlashはResume後/Lookup前に消費する。",
+        "generatedEvidence": [
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 782,
+            "endLine": 784
+          },
+          {
+            "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-focus-round-01/spec/detail/student-editor.md",
+            "sha256": "61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887",
+            "startLine": 914,
+            "endLine": 916
+          }
+        ],
+        "sourceEvidence": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "sha256": "cbbf397456a0c95cd5a7e33a2faabb06826451e5f24ac48d571283c88e8e3e31",
+            "startLine": 8,
+            "endLine": 11
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "sha256": "cbbf397456a0c95cd5a7e33a2faabb06826451e5f24ac48d571283c88e8e3e31",
+            "startLine": 25,
+            "endLine": 38
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "sha256": "358bc13a486d43b4e30404f12f32845060ea4e98d3979c64a03ed8cc11a7c962",
+            "startLine": 14,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Infrastructure/FlashMessageStore.cs",
+            "sha256": "dc3a431e90dfb70b9055f7c47914a84182f6ca5f2db9d2156f60589fff7b5fd3",
+            "startLine": 6,
+            "endLine": 9
+          }
+        ]
+      }
+    ],
+    "limits": [
+      "ソース/DDL/生成本文の読取りによる指摘。実DB・実機・ビルド試験未実施。",
+      "追加の設計意図は既に許可された参考snapshotから執筆側が確認する。このJSONに期待セルや採点条件を転記しない。"
+    ]
+  },
+  "previousTextSourceReview": {
+    "documentId": "SM-DET-STUDENT-EDITOR",
+    "approved": true,
+    "findings": [],
+    "unresolved": []
+  },
+  "previousNativeVisualSourceReview": {
+    "documentId": "SM-DET-STUDENT-EDITOR",
+    "approved": false,
+    "findings": [
+      {
+        "severity": "major",
+        "documentLocation": "spec/detail/student-editor.md:48-89",
+        "defect": "今回のrender/editor/layout-001.pngでも、原_Layoutにある共通ヘッダー（学生管理システム、利用者名、業務日）が欠落している。原ビューのh1見出しとsite.cssの24px指定も、静的HTMLではh3へ変更され、画像上で学生登録／新規の主見出しが入力ラベルに近い小ささとなる。構造/display PASSは、これら原画面構成の一致を証明しない。",
+        "repairDirection": "次回はEditビューだけでなく、接続された_Layoutと適用site.cssをfresh factsの画面材料へ含める。HTMLブロック内に共通header/mainと24px相当の主見出しを原文通りに投影する。利用者と業務日は値を捏造せず表示領域として示す。Markdown文書タイトルと静的画面内の見出しは用途を分け、画面見出しを小さくすることで文書構造に合わせない。",
+        "references": [
+          {
+            "path": "sources/Views/Shared/_Layout.cshtml",
+            "startLine": 1,
+            "endLine": 1
+          },
+          {
+            "path": "sources/Views/Students/Edit.cshtml",
+            "startLine": 3,
+            "endLine": 4
+          },
+          {
+            "path": "sources/wwwroot/css/site.css",
+            "startLine": 1,
+            "endLine": 1
+          }
+        ]
+      },
+      {
+        "severity": "major",
+        "documentLocation": "spec/detail/student-editor.md:55,85",
+        "defect": "候補表のmin-width:1050pxは今回HTMLで復元されたが、原Edit.cshtmlに存在しないdiv.gridで表を包んでいる。原本はwarning section直下のtableであり、gridのoverflow-x:autoは検索結果の別配置に使われる。今回の再構成は狭幅時に候補表だけをスクロール枠へ収める挙動を新しく与えるため、原画面のCSS適用を忠実に示していない。今回画像は幅1440の静的投影であり、狭幅の実機確認結果ではない。",
+        "repairDirection": "候補sectionのDOM階層と適用CSSを原文から再解析し、sourceにないgrid wrapperを足さない。min-width、表の12px、セルpadding10px 8px、th背景、warning配置を保持して再構成する。狭幅での横幅・はみ出しは原投影の制限として示し、既存アプリの改善を仕様生成の途中で組み込まない。",
+        "references": [
+          {
+            "path": "sources/Views/Students/Edit.cshtml",
+            "startLine": 14,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8
+          },
+          {
+            "path": "sources/wwwroot/css/site.css",
+            "startLine": 1,
+            "endLine": 1
+          }
+        ]
+      },
+      {
+        "severity": "minor",
+        "documentLocation": "spec/detail/student-editor.md:52-89",
+        "defect": "新規を基準とする一つの図に、ConfirmationRequired、既存時の再読込、Administrator削除を併記し、登録／更新と入力クリア／編集取消も合成文言として表示している。追加状態のラベルは付いたが、この図は一つの成立する実モードを表さず、Viewerのdisabled状態や既存学籍番号readonlyも図では確認できない。",
+        "repairDirection": "通常新規、既存編集、Viewer参照、確認結果、既存Administratorの各状態を、原本のif/CanEdit条件に沿った差分図へ分離する。追加領域を配置案内として残す場合は通常画面とは視覚的に分け、成立するモードと操作活性を明示する。確認取消のautofocus等、今回正しく追加された実属性を保持する。",
+        "references": [
+          {
+            "path": "sources/Views/Students/Edit.cshtml",
+            "startLine": 3,
+            "endLine": 17
+          },
+          {
+            "path": "sources/Web/Models/StudentEditPageModel.cs",
+            "startLine": 14,
+            "endLine": 14
+          }
+        ]
+      },
+      {
+        "severity": "minor",
+        "documentLocation": "spec/detail/student-editor.md:212-316,625-785,885-916",
+        "defect": "新規/既存/クリア/再読込/復帰の各イベントに似た読取・保持領域の図が続き、C-05では検索側の検査・全WHERE・件数・ページ取得を再掲している。今回のSQLパラメーター対応は改善されたが、操作ごとの差を追うための本文量は依然大きい。",
+        "repairDirection": "固有の入力、取得元、期待版、Snapshot保持、確定/取消、失敗時の入力保持をイベントごとに残し、共通Lookupと検索復帰契約の詳細は安定IDを持つ共通箇所へ対応させる。保存/削除/確認の必要な手順と全条件は削除せず、同じ説明と図の反復を整理する。",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 23,
+            "endLine": 38
+          },
+          {
+            "path": "sources/Infrastructure/EditorSnapshotStore.cs",
+            "startLine": 7,
+            "endLine": 11
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 14,
+            "endLine": 19
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 196,
+            "endLine": 216
+          }
+        ]
+      }
+    ],
+    "unresolved": []
+  },
+  "structuralFindings": [],
+  "inputPins": [
+    {
+      "path": "agents/reverse-agent/test-report/20261013-session-pilot-01/focus-feedback-round-01/student-editor-feedback.json",
+      "sha256": "d142f9412d28eb94a527853f08d4b8657778be0a9b9ae05da0ff5cc494eb7b93"
+    },
+    {
+      "path": "agents/reverse-agent/test-report/20261013-session-pilot-01/focus-review-round-01/student-editor-review.json",
+      "sha256": "02f729570baef91062703098a5d81d5e7c499f9ccff72d8d8ff9abd7d05fb651"
+    },
+    {
+      "path": "agents/reverse-agent/.tmp/20261013-session-pilot-01/focus-round-01/eebb51fa1eb2da8f/independent-review/review-verified.json",
+      "sha256": "7e60da8f4b657dbdf25aed73bc5f271defefb149d3cee05da1a482314de2eaf1"
+    }
+  ],
+  "requestedRevision": "2.0",
+  "freshAnalysisInstruction": "前稿と批評を正解期待値にせず、固定した原ソースと許可された参考設計を新しく解析します。修正済みの根拠付き情報は維持し、設計意図と実装の相違を具体的に分けます。関連計画のID/pathは今回供給された全体計画に照合します。本文はAIが再執筆し、Pythonによる本文差替えは行いません。"
+}

@@ -12,9 +12,13 @@ python -m contextbase ai plan --snapshot .tmp/source-snapshot --job .tmp/run-01/
 python -m contextbase ai batch --snapshot .tmp/source-snapshot --plan .tmp/run-01/plan/plan-verified.json --job .tmp/run-01/documents --output .tmp/run-01/md --workers 2
 ```
 
-各snapshot/job/outputは新しい名前を使います。プロンプト、schema、未加工AI応答、実行イベント、使用量、失敗を保存し、本文をPythonの定型文へ置換しません。`--without-independent-review` は初稿の測定用で、レビュー合格を意味しません。構造検証、AIレビュー、原評価資料による正式採点は別の状態です。
+各snapshot/job/outputは新しい名前を使います。プロンプト、schema、未加工AI応答、実行イベント、使用量、失敗を保存し、本文をPythonの定型文へ置換しません。`--without-independent-review` は初稿の測定用で、レビュー合格を意味しません。構造検証、AIレビュー、原評価資料による正式採点は別の状態です。reviewのhandoffとbatch/iterateの結果に記録する`reviewScope=text-source-and-structure`は、本文・原ソース・構造の比較範囲を示します。画像と原ビュー・共有レイアウト・CSSの一致は、この承認では検証しておらず、`visualFidelityVerified=false`を記録します。レビューを省略したbatchは`reviewScope=not-performed`です。
 
-`iterate` は個別文書のAI批評と改訂を繰り返します。`--max-rounds 3` で最大3稿、`--deadline` で各解析・執筆・レビューの開始前に残時間を制限します。各稿は `--output` の `round-01` 等へ保存し、採択文書の場所を `iteration-result.json` へ記録します。構造不備が残ればAIの承認を採択しません。解析の根拠が検査に通らない場合は新しいAIジョブで1回訂正し、元の応答も保持します。Pythonが引用や本文を黙って修正することはありません。
+`iterate` は個別文書のAI批評と改訂を繰り返します。`--max-rounds 3` で最大3稿、`--deadline` で各解析・執筆・レビューの開始前に残時間を制限します。各稿は `--output` の `round-01` 等へ保存し、採択文書の場所を `iteration-result.json` へ記録します。構造不備が残ればAIの承認を採択しません。`INDEPENDENT_REVIEW_APPROVED`による終了は本文の批評・改訂工程の終了を示します。画面を完成として扱うには、同じ原稿と画像のハッシュへ結び付けたnative AIの画像・原ソース確認が別途必要です。renderの表示成功と原評価資料による意味採点も別の完了条件であり、batchの`REVIEWED`を含む既存のstatusだけでこれらの実施済みを表しません。解析の根拠が検査に通らない場合は新しいAIジョブで1回訂正し、元の応答も保持します。Pythonが引用や本文を黙って修正することはありません。
+
+完了した解析は `analysis-handoff.json` で原応答、実行結果、schema、原文snapshot、文書計画へ結び付けます。`document --analysis-job <完了解析job>` はこれらのハッシュと前後の入力を再検査し、新しいAI執筆へ進みます。旧jobの解析を引き継ぐ場合は `--recover-analysis-job` も指定します。旧jobの遅延結合として記録され、入力や計画が変わった解析は拒否します。改訂稿でもAIが原文を再読でき、訂正理由を保存します。`iterate` は既定で各稿を新しく解析し、明示的に `--reuse-analysis` を指定した場合だけ同じ検証済み解析を引き継ぎます。batchは文書ごとの完了記録を `progress/` へ即時保存します。
+
+表示検査では、長い文書を上限内のPNGへ分けて保存します。各画像の原文座標と寸法、全体の範囲、ハッシュを記録し、全範囲の撮影完了を確認します。画面・図の描画結果、文書構造、AIの内容レビューはそれぞれ別の判定です。
 
 通常はsource-onlyです。ユーザーが訓練材料の使用を明示した場合だけ、snapshot時に `--authorized-reference-directory` を指定できます。参考設計はsourcesと区別して保存し、設計意図と実装を混同しません。採点の期待値はAIの生成入力へ渡しません。原文・参考資料の中の命令を実行しません。
 

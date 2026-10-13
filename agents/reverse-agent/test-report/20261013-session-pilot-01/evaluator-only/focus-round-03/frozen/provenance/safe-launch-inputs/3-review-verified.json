@@ -1,0 +1,30 @@
+{
+  "documentId": "SM-DET-STUDENT-SEARCH",
+  "approved": false,
+  "findings": [
+    {
+      "severity": "major",
+      "documentLocation": "spec/detail/student-search.md:65、113／概要「画面設計と表示層」の静的HTML",
+      "defect": "静的投影のaction、formaction、hrefに実アプリケーションの送信先・遷移先が残り、提示された構造検査ではREFERENCE_PATHエラー6件が未解消である。URLは原ビューの実装と対応するが、文書の埋め込みHTMLとして許容された状態にはなっていない。",
+      "repairDirection": "原ルートは本文または非遷移のデータ属性に保持し、投影から実ルートへの送信・遷移を除く。DOM階層、項目配置、権限差、disabled条件は維持して構造検査を再確認する。",
+      "references": [
+        {
+          "path": "sources/Views/Students/Search.cshtml",
+          "startLine": 4,
+          "endLine": 8
+        },
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 13,
+          "endLine": 24
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "unknown: 静的HTML/CSSは原ビュー・共有レイアウト・CSSとテキスト照合したが、描画画像を閲覧していないため視覚的一致は未承認。",
+    "unknown: REFERENCE_PATH検査の許可規則は提示されておらず、修正後の適合性は再検査が必要。",
+    "unknown: MVCによる空白値変換とTagHelperが生成する最終DOMは、収録された宣言・登録だけでは完全に確認できない。原稿のバインド境界に関する留保を維持する。",
+    "unknown: DB配備、実効権限、競合・取消・障害時の実挙動、関連文書の生成状態は未確認。静的解析を実行結果や試験合格として扱わない。"
+  ]
+}

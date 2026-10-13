@@ -139,6 +139,22 @@ def _unsafe_reference(value: str, document_path: str) -> bool:
     return any(part.casefold() == "spec-eval" or RESERVED.fullmatch(part) for part in PurePosixPath(resolved).parts)
 
 
+def _inert_header_metadata(attrs) -> bool:
+    """Only encoding/viewport metadata may remain in a static HTML projection."""
+    pairs = attrs.items() if isinstance(attrs, dict) else attrs
+    normalized = {}
+    for name, value in pairs:
+        name = name.lower()
+        if name in normalized or not isinstance(value, str):
+            return False
+        normalized[name] = value.strip()
+    if set(normalized) == {"charset"}:
+        return normalized["charset"].lower() in {"utf-8", "utf8"}
+    return (set(normalized) == {"name", "content"}
+            and normalized["name"].lower() == "viewport"
+            and len(normalized["content"]) <= 1024)
+
+
 class _HtmlReferences(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True)
@@ -152,10 +168,14 @@ class _HtmlReferences(HTMLParser):
             self.in_style = True
         if tag.lower() in {"script", "iframe", "object", "embed"}:
             self.active_content = True
+        if tag.lower() == "meta" and not _inert_header_metadata(attrs):
+            self.active_content = True
         for key, value in attrs:
             if key.lower().startswith("on"):
                 self.active_content = True
-            if value is not None and key.lower() in {"src", "href", "action", "poster", "xlink:href"}:
+            if key.lower() in {"action", "formaction"}:
+                self.active_content = True
+            if value is not None and key.lower() in {"src", "href", "action", "formaction", "poster", "xlink:href"}:
                 self.references.append(value)
             if value is not None and key.lower() == "srcset":
                 self.references.extend(part.strip().split()[0] for part in value.split(",") if part.strip())
@@ -173,10 +193,15 @@ class _HtmlReferences(HTMLParser):
     handle_startendtag = handle_starttag
 
 
-def validate_document(content: str, path: str) -> list[dict]:
+def validate_document(content: str, path: str, *, expected_document_id: str | None = None) -> list[dict]:
     """Return severity/code/detail/location findings; never edit the input text."""
     if not isinstance(content, str):
         raise TypeError("content must be a string")
+    if expected_document_id is not None:
+        if not isinstance(expected_document_id, str):
+            raise TypeError("expected_document_id must be a string or None")
+        if not expected_document_id.strip():
+            raise ValueError("expected_document_id must be nonempty")
     path = str(path)
     findings = []
 
@@ -193,6 +218,19 @@ def validate_document(content: str, path: str) -> list[dict]:
     md.validateLink = lambda _target: True
     tokens = md.parse(content)
     lines = content.splitlines()
+    # A successful table parse can silently discard extra cells, including
+    # unescaped pipes inside code spans. Check original top-level rows in both
+    # GRID and LIST chapters; do not rewrite the content or forbid padding.
+    for table in tokens:
+        if table.type != 'table_open' or table.level != 0 or table.map is None:
+            continue
+        start, end = table.map
+        width = len(_cells(lines[start]))
+        for offset, line in enumerate(lines[start + 2:end], start + 3):
+            if len(_cells(line)) > width:
+                add('TABLE_CELL_OVERFLOW',
+                    'Original Markdown row has more cells than its header; the renderer discards excess data. Escape literal pipes, including code-span pipes.',
+                    offset)
     comments = []
     for token in tokens:
         fragments = [token] if token.type in {"html_block", "html_inline"} else [child for child in token.children or [] if child.type == "html_inline"]
@@ -227,6 +265,8 @@ def validate_document(content: str, path: str) -> list[dict]:
         for field in ("schema", "documentId", "version", "path"):
             if not isinstance(meta.get(field), str) or not meta[field].strip():
                 add("META_FIELD", "Nonempty metadata string is required: " + field)
+        if expected_document_id is not None and meta.get("documentId") != expected_document_id:
+            add("META_DOCUMENT_ID", "Metadata documentId must equal the source-derived bound document identity", meta_line)
         if not isinstance(meta.get("schema"), str) or meta["schema"] not in {"spec-md/1.0", "spec-md/1.1"}:
             add("META_SCHEMA", "Unsupported spec-meta schema")
         if meta.get("path") != path or not isinstance(meta.get("path"), str) or not _canonical_document_path(meta.get("path", "")):
@@ -339,7 +379,7 @@ def validate_document(content: str, path: str) -> list[dict]:
             parser = _HtmlReferences()
             parser.feed(fragment)
             if parser.active_content:
-                add("HTML_ACTIVE", "Published screen markup must be static, without scripts or active handlers", line)
+                add("HTML_ACTIVE", "Published screen markup must be static, without scripts, active handlers or submission targets", line)
             for value in parser.references:
                 if _unsafe_reference(value, path):
                     add("REFERENCE_PATH", "An HTML reference uses an unsafe or protected target", line)

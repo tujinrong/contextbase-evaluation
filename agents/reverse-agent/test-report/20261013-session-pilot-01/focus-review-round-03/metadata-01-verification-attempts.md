@@ -1,0 +1,5 @@
+# 追記検査の修正記録
+
+最初のmetadata検査は20入力のSHAを確認して終了コード0。親render reportとmanifestの対応を強める際、JSON全体の完全一致を要求した追加assertが終了コード1となった。親reportは同じmanifestフィールドにdocumentId、凍結runtimeの13pin、非実行フラグ等を追加しているため、全体一致は過剰な条件だった。
+
+assertを全manifestフィールドの一致、documentId・非実行・correctionLabelの確認、凍結runtimeの13実ファイルSHA確認へ修正した。画像・MD・sourceには変更なし。最終結果はmetadata-01-manifest.jsonであり、最初の20入力の検査を最終33入力の結果へ流用していない。

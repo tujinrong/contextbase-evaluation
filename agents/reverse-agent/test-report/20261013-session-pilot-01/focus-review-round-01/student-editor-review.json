@@ -1,0 +1,99 @@
+{
+  "documentId": "SM-DET-STUDENT-EDITOR",
+  "approved": false,
+  "findings": [
+    {
+      "severity": "major",
+      "documentLocation": "spec/detail/student-editor.md:48-89",
+      "defect": "今回のrender/editor/layout-001.pngでも、原_Layoutにある共通ヘッダー（学生管理システム、利用者名、業務日）が欠落している。原ビューのh1見出しとsite.cssの24px指定も、静的HTMLではh3へ変更され、画像上で学生登録／新規の主見出しが入力ラベルに近い小ささとなる。構造/display PASSは、これら原画面構成の一致を証明しない。",
+      "repairDirection": "次回はEditビューだけでなく、接続された_Layoutと適用site.cssをfresh factsの画面材料へ含める。HTMLブロック内に共通header/mainと24px相当の主見出しを原文通りに投影する。利用者と業務日は値を捏造せず表示領域として示す。Markdown文書タイトルと静的画面内の見出しは用途を分け、画面見出しを小さくすることで文書構造に合わせない。",
+      "references": [
+        {
+          "path": "sources/Views/Shared/_Layout.cshtml",
+          "startLine": 1,
+          "endLine": 1
+        },
+        {
+          "path": "sources/Views/Students/Edit.cshtml",
+          "startLine": 3,
+          "endLine": 4
+        },
+        {
+          "path": "sources/wwwroot/css/site.css",
+          "startLine": 1,
+          "endLine": 1
+        }
+      ]
+    },
+    {
+      "severity": "major",
+      "documentLocation": "spec/detail/student-editor.md:55,85",
+      "defect": "候補表のmin-width:1050pxは今回HTMLで復元されたが、原Edit.cshtmlに存在しないdiv.gridで表を包んでいる。原本はwarning section直下のtableであり、gridのoverflow-x:autoは検索結果の別配置に使われる。今回の再構成は狭幅時に候補表だけをスクロール枠へ収める挙動を新しく与えるため、原画面のCSS適用を忠実に示していない。今回画像は幅1440の静的投影であり、狭幅の実機確認結果ではない。",
+      "repairDirection": "候補sectionのDOM階層と適用CSSを原文から再解析し、sourceにないgrid wrapperを足さない。min-width、表の12px、セルpadding10px 8px、th背景、warning配置を保持して再構成する。狭幅での横幅・はみ出しは原投影の制限として示し、既存アプリの改善を仕様生成の途中で組み込まない。",
+      "references": [
+        {
+          "path": "sources/Views/Students/Edit.cshtml",
+          "startLine": 14,
+          "endLine": 14
+        },
+        {
+          "path": "sources/Views/Students/Search.cshtml",
+          "startLine": 8,
+          "endLine": 8
+        },
+        {
+          "path": "sources/wwwroot/css/site.css",
+          "startLine": 1,
+          "endLine": 1
+        }
+      ]
+    },
+    {
+      "severity": "minor",
+      "documentLocation": "spec/detail/student-editor.md:52-89",
+      "defect": "新規を基準とする一つの図に、ConfirmationRequired、既存時の再読込、Administrator削除を併記し、登録／更新と入力クリア／編集取消も合成文言として表示している。追加状態のラベルは付いたが、この図は一つの成立する実モードを表さず、Viewerのdisabled状態や既存学籍番号readonlyも図では確認できない。",
+      "repairDirection": "通常新規、既存編集、Viewer参照、確認結果、既存Administratorの各状態を、原本のif/CanEdit条件に沿った差分図へ分離する。追加領域を配置案内として残す場合は通常画面とは視覚的に分け、成立するモードと操作活性を明示する。確認取消のautofocus等、今回正しく追加された実属性を保持する。",
+      "references": [
+        {
+          "path": "sources/Views/Students/Edit.cshtml",
+          "startLine": 3,
+          "endLine": 17
+        },
+        {
+          "path": "sources/Web/Models/StudentEditPageModel.cs",
+          "startLine": 14,
+          "endLine": 14
+        }
+      ]
+    },
+    {
+      "severity": "minor",
+      "documentLocation": "spec/detail/student-editor.md:212-316,625-785,885-916",
+      "defect": "新規/既存/クリア/再読込/復帰の各イベントに似た読取・保持領域の図が続き、C-05では検索側の検査・全WHERE・件数・ページ取得を再掲している。今回のSQLパラメーター対応は改善されたが、操作ごとの差を追うための本文量は依然大きい。",
+      "repairDirection": "固有の入力、取得元、期待版、Snapshot保持、確定/取消、失敗時の入力保持をイベントごとに残し、共通Lookupと検索復帰契約の詳細は安定IDを持つ共通箇所へ対応させる。保存/削除/確認の必要な手順と全条件は削除せず、同じ説明と図の反復を整理する。",
+      "references": [
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 23,
+          "endLine": 38
+        },
+        {
+          "path": "sources/Infrastructure/EditorSnapshotStore.cs",
+          "startLine": 7,
+          "endLine": 11
+        },
+        {
+          "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+          "startLine": 14,
+          "endLine": 19
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 196,
+          "endLine": 216
+        }
+      ]
+    }
+  ],
+  "unresolved": []
+}

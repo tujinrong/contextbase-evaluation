@@ -1,0 +1,589 @@
+{
+  "systemSummary": "学生の基本情報、在籍状態、現在・最終所属クラスを管理する ASP.NET Core MVC アプリケーションである。学生検索画面と学生登録・編集・参照画面が、StudentsController、WebStudentCoordinator、SqlServerStudentService を介して SQL Server のデータ操作につながる。管理者向けマスター保守は別の CLI にあり、クラス保守とコード保守を提供する。DDLには7表が定義されているが、現在の Web 実装は検索条件、編集スナップショット、重複確認情報、通知をプロセスメモリに保持する。根拠は sources/Web/Controllers/StudentsController.cs:5-42、sources/Core/SqlServerStudentService.cs:103-418、sources/maintenance/Program.cs:4-17、sources/database/001_schema.sql:7-218。manifest は訓練設計資料の参照条件を満たすため、列挙された reference-designs の資料を設計意図として参照した。以下は文書計画であり、ファイル作成、プログラム実行、実DB確認、試験は行っていない。sourcePaths はカプセル内の相対入力パス、path は予定する相対出力パスである。",
+  "documents": [
+    {
+      "id": "SM-BAS-SYSTEM",
+      "path": "spec/basic/system-overview.md",
+      "title": "学生管理システム 基本設計書",
+      "kind": "basic-design",
+      "sourcePaths": [
+        "manifest.json",
+        "sources/Program.cs",
+        "sources/StudentManagement.Web.csproj",
+        "sources/Core/Contracts.cs",
+        "sources/Web/Controllers/StudentsController.cs",
+        "sources/maintenance/Program.cs",
+        "sources/database/001_schema.sql"
+      ],
+      "responsibilities": [
+        "学生検索、学生情報の登録・編集・参照・論理削除、クラス保守、コード保守の業務境界と入口を説明する。画面、CLI、サービス、DB、一時保持領域を区別する。根拠: sources/Web/Controllers/StudentsController.cs:8-38、sources/maintenance/Program.cs:4-17。",
+        "閲覧者、担当者、管理者が操作できる範囲と、学生1人の変更を監査履歴とまとめて保存する単位を示す。根拠: sources/Core/Contracts.cs:4-6、sources/Core/SqlServerStudentService.cs:227-323、392-416。",
+        "全成果物の文書規則を定める。Markdown先頭の spec-meta は schema=spec-md/1.0、documentId=本計画のID、version、path、sheets を持たせ、タイトル直下に文書属性を置く。機能文書は「概要」「項目一覧」「イベント仕様」「補足説明」を主章とする。",
+        "LIST章は一意キーを持つ矩形表1つとし、文章・図はGRID章へ置く。イベントには処理概要、番号付き手順、条件付きフロー、SQL・関連図、DB操作、結果・例外を記載し、重要判断には原本の開始行・終了行を付ける。設計意図、観測した実装、未確定事項、改善案の記述を区別する。"
+      ]
+    },
+    {
+      "id": "SM-BAS-STUDENT-SEARCH",
+      "path": "spec/basic/student-search.md",
+      "title": "学生検索画面 基本設計書",
+      "kind": "basic-design",
+      "sourcePaths": [
+        "sources/Views/Students/Search.cshtml",
+        "sources/Views/Shared/_Layout.cshtml",
+        "sources/wwwroot/css/site.css",
+        "sources/wwwroot/js/site.js",
+        "sources/Web/Controllers/StudentsController.cs",
+        "sources/Infrastructure/WebStudentCoordinator.cs",
+        "sources/Core/SqlServerStudentService.cs",
+        "reference-designs/基本設計書/01_学生検索画面.md"
+      ],
+      "responsibilities": [
+        "検索条件と一覧項目を論理名で説明し、条件入力、候補更新、検索実行、ページ移動、新規・編集・参照への遷移を結び付ける。概要内の静的HTML/CSSは原本の項目と配置を反映し、実画面撮影と区別する。根拠: sources/Views/Students/Search.cshtml:3-8、sources/wwwroot/css/site.css:1-1。",
+        "初期選択の在学・休学、未検索、0件、10,000件超過、条件変更未反映、入力不正、クリア、登録画面からの復帰を状態別に説明する。根拠: sources/Web/Controllers/StudentsController.cs:8-22、sources/Infrastructure/WebStudentCoordinator.cs:7-21。",
+        "検索では停止・期間外の候補も扱うこと、未所属のみと年度・学年・クラスの排他、電話が本人電話または緊急電話へ一致すること、表示住所に住所2を含めないことを説明する。根拠: sources/Core/SqlServerStudentService.cs:77-90、109-150、197-216。",
+        "訓練資料の業務目的・状態定義を設計意図として照合し、実装の表示文言や失敗時の処理との差は差分報告へ送る。意図の根拠: reference-designs/基本設計書/01_学生検索画面.md:14-25、58-72。"
+      ]
+    },
+    {
+      "id": "SM-DET-STUDENT-SEARCH",
+      "path": "spec/detail/student-search.md",
+      "title": "学生検索画面 詳細仕様書",
+      "kind": "detailed-specification",
+      "sourcePaths": [
+        "sources/Views/Students/Search.cshtml",
+        "sources/Web/Inputs/StudentSearchInput.cs",
+        "sources/Web/Models/StudentSearchPageModel.cs",
+        "sources/Web/Controllers/StudentsController.cs",
+        "sources/Infrastructure/WebStudentCoordinator.cs",
+        "sources/Infrastructure/SearchContextStore.cs",
+        "sources/Infrastructure/WebPresentation.cs",
+        "sources/Core/StudentNormalizer.cs",
+        "sources/Core/SqlServerStudentService.cs",
+        "sources/wwwroot/js/site.js",
+        "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md"
+      ],
+      "responsibilities": [
+        "SRCコントロール、Criteria.* のフォーム名、StudentSearchInput、SearchCriteria、SQL列、StudentRow、一覧表示の移送を対応付ける。入力中の条件と最後に成功した検索条件を分離する。根拠: sources/Views/Students/Search.cshtml:4-8、sources/Web/Inputs/StudentSearchInput.cs:7-31、sources/Infrastructure/WebStudentCoordinator.cs:7-21。",
+        "Index、Search、Options、Page、Clear、Resumeについて、フォーム検査から状態取得、サービス呼出し、状態版更新、HTML応答まで追跡する。候補更新が検索を実行しない経路と、成功した検索だけがAppliedを更新する条件を説明する。根拠: sources/Web/Controllers/StudentsController.cs:8-22、39-41、sources/Infrastructure/WebStudentCoordinator.cs:7-15。",
+        "全WHERE述語、LIKEのエスケープ、在籍区分配列、日付両端、マスター存在・上位条件の確認、LEFT JOIN、型付きパラメータを説明する。根拠: sources/Core/SqlServerStudentService.cs:82-90、103-155。",
+        "SNAPSHOT内のTOP(10001)件数確認、超過時の一覧空、20・50・100件、許可された4ソート、学生IDによる同順位順序、OFFSET/FETCHと最終ページ補正を説明する。根拠: sources/Core/SqlServerStudentService.cs:107-108、156-170、sources/Infrastructure/WebStudentCoordinator.cs:11-14。",
+        "入力不正、旧状態版、期限切れ、SQL障害、取消の戻り先と表示への影響を区別する。検索・候補取得の関連図はFKと検索JOINを区別して作成する。根拠: sources/Infrastructure/SearchContextStore.cs:13-14、sources/Web/Controllers/StudentsController.cs:15-19、sources/Infrastructure/WebHostSetup.cs:22-23。"
+      ]
+    },
+    {
+      "id": "SM-BAS-STUDENT-EDITOR",
+      "path": "spec/basic/student-editor.md",
+      "title": "学生登録・編集・参照画面 基本設計書",
+      "kind": "basic-design",
+      "sourcePaths": [
+        "sources/Views/Students/Edit.cshtml",
+        "sources/Views/Shared/_Layout.cshtml",
+        "sources/wwwroot/css/site.css",
+        "sources/wwwroot/js/site.js",
+        "sources/Web/Models/StudentEditPageModel.cs",
+        "sources/Web/Controllers/StudentsController.cs",
+        "sources/Core/StudentNormalizer.cs",
+        "sources/Core/SqlServerStudentService.cs",
+        "reference-designs/基本設計書/02_学生登録画面.md"
+      ],
+      "responsibilities": [
+        "新規・編集・参照を同じ画面で扱う目的、学生基本情報・住所・連絡先・在籍・所属・操作理由の意味を説明する。静的HTML/CSSは原本の2列配置、和暦4入力、候補確認領域、管理者削除フォームを反映する。根拠: sources/Views/Students/Edit.cshtml:3-17、sources/wwwroot/css/site.css:1-1。",
+        "新規初期値、既存学籍番号の変更不可、閲覧者の参照モード、管理者だけの削除と終了区分訂正、停止・期間外の既存値保持を説明する。根拠: sources/Web/Inputs/StudentSaveInput.cs:44-54、sources/Views/Students/Edit.cshtml:5-17、sources/Core/SqlServerStudentService.cs:246-258、347-380。",
+        "保存、変更なし、同一人物候補の確認・取消、入力クリア・編集取消、最新再読込、検索復帰、論理削除を業務状態として説明する。根拠: sources/Web/Controllers/StudentsController.cs:23-38、sources/wwwroot/js/site.js:2-8。",
+        "学生と監査履歴の一括確定、保存結果不明時の検索確認、論理削除後も学籍番号を再利用できない規則を説明する。根拠: sources/Core/SqlServerStudentService.cs:264-266、292-323、392-416。訓練資料は意図として扱う: reference-designs/基本設計書/02_学生登録画面.md:14-25。"
+      ]
+    },
+    {
+      "id": "SM-DET-STUDENT-EDITOR",
+      "path": "spec/detail/student-editor.md",
+      "title": "学生登録・編集・参照画面 詳細仕様書",
+      "kind": "detailed-specification",
+      "sourcePaths": [
+        "sources/Views/Students/Edit.cshtml",
+        "sources/Web/Inputs/StudentSaveInput.cs",
+        "sources/Web/Inputs/StudentDeleteInput.cs",
+        "sources/Web/Models/StudentEditPageModel.cs",
+        "sources/Web/Controllers/StudentsController.cs",
+        "sources/Infrastructure/WebStudentCoordinator.cs",
+        "sources/Infrastructure/EditorSnapshotStore.cs",
+        "sources/Infrastructure/FlashMessageStore.cs",
+        "sources/Core/Contracts.cs",
+        "sources/Core/StudentNormalizer.cs",
+        "sources/Core/JapaneseDateService.cs",
+        "sources/Core/SqlServerStudentService.cs",
+        "sources/wwwroot/js/site.js",
+        "reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md"
+      ],
+      "responsibilities": [
+        "REGコントロール、Input.*、StudentSaveInput、StudentDraft、NormalizedStudent.Values、DB列の対応を項目移送・更新章に示す。年度・学年は整合確認、理由は監査、期待版は更新条件、復帰先と確認情報は一時制御として分ける。根拠: sources/Views/Students/Edit.cshtml:5-17、sources/Web/Inputs/StudentSaveInput.cs:9-54、sources/Core/StudentNormalizer.cs:119-159。",
+        "新規・既存読込、スナップショット作成、保存、リセット、再読込、検索復帰を入口から応答まで説明する。保存成功は303と一度限りの通知、変更なしは同じ編集画面、検証失敗は原入力を使った再表示になる経路を示す。根拠: sources/Web/Controllers/StudentsController.cs:23-38、sources/Infrastructure/WebStudentCoordinator.cs:17-19。",
+        "保存時の正規化、書込ゲート、対象存在・期待版・学籍番号不変、終了区分訂正権限、コード有効性、在籍期間、クラス定員、変更なし、全行の学籍番号一意確認を順に説明する。根拠: sources/Core/SqlServerStudentService.cs:227-266、344-383。",
+        "同一人物候補は非削除・本人除外・生年月日一致・氏名照合値またはカナ照合値一致で取得する。全候補の件数・版を確認に用い、表示は最大20件とし、入力変更、候補変更、期限、所有者、使用中・消費状態による再確認を説明する。根拠: sources/Core/SqlServerStudentService.cs:224-225、268-290、308-342、sources/wwwroot/js/site.js:3-6。",
+        "INSERT、UPDATE、論理削除の対象列、生成分類、NULL、WHEREのID・期待版・非削除条件、取得件数、監査追加、commit・rollback、確定応答不明を記載する。論理削除は編集中の業務値を保存しない。根拠: sources/Core/SqlServerStudentService.cs:292-323、385-416、sources/Views/Students/Edit.cshtml:17-17。",
+        "各イベントに条件付きフローと実表に基づく関連図を置く。取消・リセットはメモリの読込時値を使い、最新再読込はDB参照を行う違いと、削除失敗後にLoadが再実行される動作を説明する。根拠: sources/Web/Controllers/StudentsController.cs:25-37、sources/Infrastructure/EditorSnapshotStore.cs:7-11。"
+      ]
+    },
+    {
+      "id": "SM-BAS-CLASS-MAINTENANCE",
+      "path": "spec/basic/class-maintenance.md",
+      "title": "クラスマスター保守 基本設計書",
+      "kind": "basic-design",
+      "sourcePaths": [
+        "sources/maintenance/Program.cs",
+        "sources/Core/MasterMaintenanceService.cs",
+        "sources/Core/AuditOperation.cs",
+        "sources/database/001_schema.sql",
+        "reference-designs/基本設計書/03_テーブル仕様書.md",
+        "reference-designs/基本設計書/テーブル/02_m_class.md"
+      ],
+      "responsibilities": [
+        "保守用CLIのclass操作を入口とし、年度内のクラス、学年、名称、利用期間、定員、表示順、利用状態を管理する意味を説明する。保守画面を創作しない。根拠: sources/maintenance/Program.cs:4-13、sources/Core/MasterMaintenanceService.cs:9-9、30-37。",
+        "年度・クラスコード不変、削除済みを含む参照学生がいる場合の学年変更禁止、現在人数による停止・期間・定員の制限、同年度同学年の同名警告を説明する。根拠: sources/Core/MasterMaintenanceService.cs:44-76。",
+        "変更なし、競合、不在、検証失敗、保存・停止・再開と監査の関係を説明する。設計資料にある初期学年・年度期間は意図として示し、CLIが自動設定する値と混同しない。根拠: sources/Core/MasterMaintenanceService.cs:48-77、sources/Core/AuditOperation.cs:6-7。意図: reference-designs/基本設計書/テーブル/02_m_class.md:24-34。"
+      ]
+    },
+    {
+      "id": "SM-DET-CLASS-MAINTENANCE",
+      "path": "spec/detail/class-maintenance.md",
+      "title": "クラスマスター保守 詳細仕様書",
+      "kind": "detailed-specification",
+      "sourcePaths": [
+        "sources/maintenance/Program.cs",
+        "sources/Core/MasterMaintenanceService.cs",
+        "sources/Core/StudentNormalizer.cs",
+        "sources/Core/JapaneseDateService.cs",
+        "sources/Core/SqlServerStudentService.cs",
+        "sources/Core/AuditOperation.cs",
+        "sources/database/001_schema.sql"
+      ],
+      "responsibilities": [
+        "入力JSONからClassChangeへ移す契約、64KiB上限、未知・重複項目検査、DB接続の管理者判定、実行者取得、CLI出力と終了コードを追跡する。入力ファイル名を承認証拠にしない。根拠: sources/maintenance/Program.cs:4-17、sources/Core/MasterMaintenanceService.cs:17-38。",
+        "ID・期待版、年度、定員、表示順、コード、名称、年度内利用期間を検証し、ゲート取得後に既存版、参照人数、現員、学年有効性、同名クラスを確認する順序を示す。根拠: sources/Core/MasterMaintenanceService.cs:30-71。",
+        "m_classのINSERT・UPDATE、型付きパラメータ、OUTPUT結果、期待版WHERE、監査とcommit・rollbackを説明する。m_student・m_code・m_code_categoryとの読取関係と、監査の記録関係を別に図示する。根拠: sources/Core/MasterMaintenanceService.cs:73-77、123-135、sources/Core/SqlServerStudentService.cs:92-101。"
+      ]
+    },
+    {
+      "id": "SM-BAS-CODE-MAINTENANCE",
+      "path": "spec/basic/code-maintenance.md",
+      "title": "業務コード保守 基本設計書",
+      "kind": "basic-design",
+      "sourcePaths": [
+        "sources/maintenance/Program.cs",
+        "sources/Core/MasterMaintenanceService.cs",
+        "sources/database/002_seed.sql",
+        "sources/database/003_web_permissions.sql",
+        "reference-designs/基本設計書/04_コード設計書.md"
+      ],
+      "responsibilities": [
+        "性別、在籍区分、都道府県、緊急連絡先続柄、学年の5分類について、コード値と表示名称、未設定、性別0、学年00の意味を区別する。初期70コードと追加可否・保護対象を原本から説明する。根拠: sources/database/002_seed.sql:8-84。",
+        "管理者が名称・表示順・利用状態・期間・備考を保守し、分類・値・保護設定を通常入力で変更しない範囲を説明する。停止値の実体を残すことと、既存値の参照・保持を結び付ける。根拠: sources/Core/MasterMaintenanceService.cs:79-120、sources/database/003_web_permissions.sql:18-22。",
+        "保護値の停止・期間短縮禁止、分類による追加許可、変更なし・競合・不在、停止・再開の履歴を説明する。意味変更禁止は設計意図とし、名称の意味をプログラムが判定できるとは記載しない。根拠: sources/Core/MasterMaintenanceService.cs:91-120。意図: reference-designs/基本設計書/04_コード設計書.md:102-119。"
+      ]
+    },
+    {
+      "id": "SM-DET-CODE-MAINTENANCE",
+      "path": "spec/detail/code-maintenance.md",
+      "title": "業務コード保守 詳細仕様書",
+      "kind": "detailed-specification",
+      "sourcePaths": [
+        "sources/maintenance/Program.cs",
+        "sources/Core/MasterMaintenanceService.cs",
+        "sources/Core/AuditOperation.cs",
+        "sources/Core/StudentNormalizer.cs",
+        "sources/database/001_schema.sql",
+        "sources/database/002_seed.sql"
+      ],
+      "responsibilities": [
+        "code操作のJSON入力、CodeChange、分類許可リスト、コード桁数、名称・備考・期間、DB管理者判定からMaintenanceResult・終了コードまで説明する。根拠: sources/maintenance/Program.cs:4-17、sources/Core/MasterMaintenanceService.cs:10-11、17-28、79-96。",
+        "分類のcode_length・allow_add取得、分類と値による既存取得、期待版比較、追加可否、保護値の期間比較、変更なしの順序を説明する。根拠: sources/Core/MasterMaintenanceService.cs:90-112。",
+        "複合キー・期待版をWHEREに持つUPDATEと新規INSERT、実パラメータ型、更新件数1件、監査操作の判定、commit・rollbackを記載する。m_code_categoryの読取とm_code・t_operation_logの更新関係を図示する。根拠: sources/Core/MasterMaintenanceService.cs:113-121、132-135、sources/Core/AuditOperation.cs:3-7。"
+      ]
+    },
+    {
+      "id": "SM-COM-HTTP-SECURITY",
+      "path": "spec/common/http-security-contract.md",
+      "title": "HTTP入口・認証・応答 共通契約",
+      "kind": "api-contract",
+      "sourcePaths": [
+        "sources/Program.cs",
+        "sources/Web/Controllers/StudentsController.cs",
+        "sources/Infrastructure/WebHostSetup.cs",
+        "sources/Infrastructure/RequestIdentity.cs",
+        "sources/Infrastructure/StrictJson.cs",
+        "sources/Infrastructure/AntiforgeryResultFilter.cs",
+        "sources/Infrastructure/WebPresentation.cs",
+        "sources/Web/Inputs/StudentSaveInput.cs"
+      ],
+      "responsibilities": [
+        "実在するGET・POSTのパス、フォーム項目、認証・権限、CSRF、入力上限、HTML・リダイレクト・JSON応答を一覧化する。ルート転送、health、評価用セッション入口を業務画面の入口と分ける。根拠: sources/Program.cs:6-7、sources/Web/Controllers/StudentsController.cs:5-38、sources/Infrastructure/WebHostSetup.cs:27-28。",
+        "Cookieの有効期間・属性、claimsからの利用者・セッション・役割取得、操作権限、セキュリティヘッダー、例外応答を説明する。設定名だけを扱い、秘密値は取得・記載しない。根拠: sources/Infrastructure/WebHostSetup.cs:13-27、sources/Infrastructure/RequestIdentity.cs:7-18。",
+        "フォームの許可項目・重複項目検査、64KiBのバイト上限、JSONの深さ・大小文字・未知項目・同名項目検査、ID・版の正の64bit整数文字列契約を説明する。根拠: sources/Web/Controllers/StudentsController.cs:41-41、sources/Infrastructure/StrictJson.cs:6-14、sources/Web/Inputs/StudentSaveInput.cs:57-60。",
+        "OutcomeからHTTP状態・メッセージ・項目エラー・受付番号への変換を定義する。StrictJsonやJSON保存応答用部品については、公開業務ルートからの接続が確認できない状態を明示する。根拠: sources/Infrastructure/WebPresentation.cs:20-30、sources/Infrastructure/AntiforgeryResultFilter.cs:5-8、sources/Web/Controllers/StudentsController.cs:8-42。"
+      ]
+    },
+    {
+      "id": "SM-COM-NORMALIZATION-DATE",
+      "path": "spec/common/normalization-date.md",
+      "title": "入力正規化・項目検査・日付 共通仕様",
+      "kind": "common-contract",
+      "sourcePaths": [
+        "sources/Core/StudentNormalizer.cs",
+        "sources/Core/JapaneseDateService.cs",
+        "sources/Views/Students/Edit.cshtml",
+        "sources/Views/Students/Search.cshtml",
+        "sources/Infrastructure/WebPresentation.cs",
+        "sources/database/001_schema.sql"
+      ],
+      "responsibilities": [
+        "raw上限を正規化前に検査する順序、Unicodeスカラー値、HTML maxlengthのコード単位、nvarchar容量を区別する。空白、NULL、制御文字、改行、NFKC、識別子、氏名照合値、カナ、郵便、電話、メール、コードの変換を具体化する。根拠: sources/Core/StudentNormalizer.cs:37-117、sources/Views/Students/Edit.cshtml:6-13。",
+        "氏名8、カナraw36・正規化後18、住所45、電話raw20・形式上最大16、備考120、理由60などの制約を、画面の物理上限とDB型容量へ対応付ける。項目間の在籍・日付・所属・連絡先一式検査を定義する。根拠: sources/Core/StudentNormalizer.cs:119-158、sources/Core/SqlServerStudentService.cs:234-234、396-398、sources/database/001_schema.sql:9-58。",
+        "元号境界、元年、月日、1900年下限、未来日、ISO日付、和暦への逆変換、4月始まりの年度、UTC保存と日本時間表示を区別する。根拠: sources/Core/JapaneseDateService.cs:9-61、sources/Infrastructure/WebPresentation.cs:5-7。",
+        "検査結果のFieldError化、LIKE特殊文字のエスケープ、派生するname_key・kana_key・relationship_categoryを定義し、変換失敗をNULLやゼロへ置き換えない。根拠: sources/Core/StudentNormalizer.cs:123-147、161-168。"
+      ]
+    },
+    {
+      "id": "SM-COM-LOOKUPS",
+      "path": "spec/common/lookup-contract.md",
+      "title": "選択候補・既存値保持 共通仕様",
+      "kind": "common-contract",
+      "sourcePaths": [
+        "sources/Core/Contracts.cs",
+        "sources/Core/SqlServerStudentService.cs",
+        "sources/Infrastructure/WebPresentation.cs",
+        "sources/Infrastructure/WebStudentCoordinator.cs",
+        "sources/Views/Students/Search.cshtml",
+        "sources/Views/Students/Edit.cshtml",
+        "sources/wwwroot/js/site.js",
+        "sources/database/002_seed.sql",
+        "reference-designs/基本設計書/04_コード設計書.md"
+      ],
+      "responsibilities": [
+        "コード・分類JOIN、クラス・学年JOIN、コード表示順、年度降順・学年表示順・クラス表示順など、取得元と完全な順序を示す。キー・名称・状態・期間・人数・定員を対応付ける。根拠: sources/Core/SqlServerStudentService.cs:197-216。",
+        "検索候補、新規選択可能値、停止・期間外の既存保存値、卒業・退学時の在籍期間重複、現員表示の用途差を区別する。画面の判定とWebPresentation.Lookupsの判定を個別に説明する。根拠: sources/Views/Students/Edit.cshtml:8-13、sources/Infrastructure/WebPresentation.cs:8-18。",
+        "年度・学年によるクラス抽出、上位変更による選択解除、クラス選択による年度・学年設定、未所属のみの解除動作を説明する。保存時は最新DB値で有効性と定員を再検証する。根拠: sources/Web/Controllers/StudentsController.cs:22-22、sources/wwwroot/js/site.js:7-8、sources/Core/SqlServerStudentService.cs:344-383。",
+        "性別0・在籍01・検索01/02などの初期値と、選択なし・候補なしを分ける。検索用途で人数取得を省略する場合のOccupied=0を実人数ゼロと解釈しない。根拠: sources/Core/Contracts.cs:15-23、40-48、sources/Core/SqlServerStudentService.cs:201-214。"
+      ]
+    },
+    {
+      "id": "SM-COM-RUNTIME-STATE",
+      "path": "spec/common/runtime-state.md",
+      "title": "検索状態・編集状態・確認情報 共通仕様",
+      "kind": "common-contract",
+      "sourcePaths": [
+        "sources/Infrastructure/SearchContextStore.cs",
+        "sources/Infrastructure/EditorSnapshotStore.cs",
+        "sources/Infrastructure/FlashMessageStore.cs",
+        "sources/Infrastructure/WebStudentCoordinator.cs",
+        "sources/Web/Controllers/StudentsController.cs",
+        "sources/Core/SqlServerStudentService.cs",
+        "sources/wwwroot/js/site.js",
+        "sources/database/003_web_permissions.sql"
+      ],
+      "responsibilities": [
+        "検索状態の所有者・認証セッション・タブ・30分期限・Revision・Applied・LastResult・排他を定義する。学生の期待版との違い、状態利用成功時の期限延長、期限切れ掃除の契機を説明する。根拠: sources/Infrastructure/SearchContextStore.cs:9-15。",
+        "編集状態の30分スナップショット、原入力の複製、対象IDと所有者確認、リセットと再読込の違い、復帰先状態版を説明する。通知は10分の保持と一度限りの取得として分ける。根拠: sources/Infrastructure/EditorSnapshotStore.cs:7-11、sources/Infrastructure/FlashMessageStore.cs:6-9、sources/Web/Controllers/StudentsController.cs:25-38。",
+        "Webの重複確認情報は静的辞書に10分保持し、対象・期待版・入力ハッシュ・全候補ハッシュ・使用中状態を照合する。非Web分岐のt_confirmationによる保持・消費とは別に説明する。根拠: sources/Core/SqlServerStudentService.cs:19-29、274-342。",
+        "ブラウザーのdirty・leaving・確認取消とサーバー状態を区別する。DBを使わないイベントには実際のメモリ領域とSQLが不要な理由を記載し、t_runtime_stateに保存されるとは記載しない。根拠: sources/wwwroot/js/site.js:2-6、sources/database/003_web_permissions.sql:23-24。"
+      ]
+    },
+    {
+      "id": "SM-COM-TRANSACTION-AUDIT",
+      "path": "spec/common/transaction-audit.md",
+      "title": "DB接続・排他・確定・監査 共通仕様",
+      "kind": "common-contract",
+      "sourcePaths": [
+        "sources/Core/SqlServerStudentService.cs",
+        "sources/Core/MasterMaintenanceService.cs",
+        "sources/Core/AuditOperation.cs",
+        "sources/database/001_schema.sql",
+        "sources/database/003_web_permissions.sql"
+      ],
+      "responsibilities": [
+        "暗号化必須・証明書検証、SNAPSHOT有効化確認、30秒のSQLタイムアウト、SqlDbType・長さ・DateOnly・DBNullのパラメータ契約を説明する。根拠: sources/Core/SqlServerStudentService.cs:39-72。",
+        "読取SNAPSHOTと書込ReadCommittedを分け、学生・マスターが共通のトランザクション所有アプリケーションロックを使うこと、5秒の待機と負戻り値拒否、期待版比較とSQL更新条件を説明する。根拠: sources/Core/SqlServerStudentService.cs:92-101、123-167、241-252、297-313、sources/Core/MasterMaintenanceService.cs:39-49。",
+        "学生保存・削除ではwriteStarted、commitAttempted、rollback結果から失敗と確定結果不明を分ける。接続・トランザクション開始が捕捉区間外にある場合と、CLIが例外を再送出する境界も記載する。根拠: sources/Core/SqlServerStudentService.cs:240-323、399-416、sources/Core/MasterMaintenanceService.cs:76-77、120-121。",
+        "変更した列名、前後版、実行者、UTC日時、受付番号、理由、重複確認有無を監査へ追記する。変更なしでは履歴を作らず、マスターの停止・再開と停止済み名称変更を区別する。根拠: sources/Core/SqlServerStudentService.cs:261-262、306-307、385-390、sources/Core/MasterMaintenanceService.cs:132-135、sources/Core/AuditOperation.cs:3-7。"
+      ]
+    },
+    {
+      "id": "SM-DATA-LOGICAL-CONTRACTS",
+      "path": "spec/data/logical-contracts.md",
+      "title": "論理データ・DTO・項目移送仕様",
+      "kind": "logical-data-specification",
+      "sourcePaths": [
+        "sources/Core/Contracts.cs",
+        "sources/Core/MasterMaintenanceService.cs",
+        "sources/Core/StudentNormalizer.cs",
+        "sources/Web/Inputs/StudentSearchInput.cs",
+        "sources/Web/Inputs/StudentSaveInput.cs",
+        "sources/Web/Inputs/StudentDeleteInput.cs",
+        "sources/Web/Models/StudentSearchPageModel.cs",
+        "sources/Web/Models/StudentEditPageModel.cs",
+        "sources/Infrastructure/WebPresentation.cs"
+      ],
+      "responsibilities": [
+        "StudentDraft、SearchCriteria、StudentRow、StudentDetail、LookupSet、SaveRequest・Result、ClassChange・CodeChangeの1件の意味と実型・NULL可否を定義する。業務情報と認証・版・復帰・確認・エラー情報を分ける。根拠: sources/Core/Contracts.cs:6-79、sources/Core/MasterMaintenanceService.cs:9-11。",
+        "rawフォーム、検証後の値、DB保存値、照合値、一覧表示値、候補値、選択済み値の移送方向を示す。内部Int64とWebの10進文字列、DateOnlyと日本時間表示文字列を対応付ける。根拠: sources/Web/Inputs/StudentSaveInput.cs:34-60、sources/Web/Inputs/StudentSearchInput.cs:19-31、sources/Infrastructure/WebPresentation.cs:20-30。",
+        "年度・学年・名称・人数を学生へ重複保存しない実装上の対応と、検索結果・保存結果の各状態、件数未表示・0件・上限超過・NULLの違いを説明する。根拠: sources/Core/Contracts.cs:25-25、50-70、sources/Infrastructure/WebStudentCoordinator.cs:21-21、sources/Core/StudentNormalizer.cs:144-147。"
+      ]
+    },
+    {
+      "id": "SM-DB-INDEX",
+      "path": "spec/database/index.md",
+      "title": "DB定義索引・関連・共通規則",
+      "kind": "database-index",
+      "sourcePaths": [
+        "sources/database/001_schema.sql",
+        "sources/database/002_seed.sql",
+        "sources/database/003_web_permissions.sql",
+        "sources/database/004_verify_deployment.sql",
+        "sources/Core/SqlServerStudentService.cs",
+        "sources/Core/MasterMaintenanceService.cs",
+        "reference-designs/基本設計書/03_テーブル仕様書.md"
+      ],
+      "responsibilities": [
+        "DDLで定義された7表の論理用途、dbo物理名、項目数、PK、個別文書へのリンクを一意キーの表で示す。業務・監査5表と技術状態2表を区別する。根拠: sources/database/001_schema.sql:7-184、sources/database/004_verify_deployment.sql:7-17。",
+        "7つのFK、複合コード参照、クラス参照のNULL可否をMermaid ER図に示す。検索JOIN、監査の対象キー、確認情報の対象IDは、物理FKとは別の関連図で示す。根拠: sources/database/001_schema.sql:187-195、sources/Core/SqlServerStudentService.cs:82-90、280-281、387-389。",
+        "照合順序、varcharのバイト容量、nvarcharのUTF-16容量、スカラー値CHECK、UTC日時、bigintの手動版管理、UNIQUE・CHECK・索引とアプリ側検査の分担を説明する。根拠: sources/database/001_schema.sql:9-59、187-212。",
+        "参考設計の5表索引を実DDLの全表数として使用せず、論理設計と物理定義の対応を説明する。意図の根拠: reference-designs/基本設計書/03_テーブル仕様書.md:6-59。"
+      ]
+    },
+    {
+      "id": "SM-DB-M-STUDENT",
+      "path": "spec/database/tables/m_student.md",
+      "title": "学生基本情報 dbo.m_student テーブル定義",
+      "kind": "database-table",
+      "sourcePaths": [
+        "sources/database/001_schema.sql",
+        "sources/Core/SqlServerStudentService.cs",
+        "sources/Core/StudentNormalizer.cs",
+        "reference-designs/基本設計書/テーブル/01_m_student.md"
+      ],
+      "responsibilities": [
+        "35列を1表1ファイルで定義し、論理名、物理名、PK、実DB型、長さ・単位、NOT NULL、DB既定値、処理設定値、根拠を示す。IDENTITYとbigintのrow_versionを区別する。根拠: sources/database/001_schema.sql:7-59。",
+        "学籍番号の全行一意、クラスと4分類のFK、日付・連絡先一式・論理削除整合、文字上限・UTCのCHECK、非削除行の検索索引を説明する。根拠: sources/database/001_schema.sql:187-200、206-211。",
+        "照合値、分類、管理情報、削除情報の生成元と更新範囲を示す。参考設計の業務長や初期値を実DB型・DEFAULTと混同しない。根拠: sources/Core/StudentNormalizer.cs:124-158、sources/Core/SqlServerStudentService.cs:294-307、409-413。"
+      ]
+    },
+    {
+      "id": "SM-DB-M-CLASS",
+      "path": "spec/database/tables/m_class.md",
+      "title": "クラスマスター dbo.m_class テーブル定義",
+      "kind": "database-table",
+      "sourcePaths": [
+        "sources/database/001_schema.sql",
+        "sources/Core/MasterMaintenanceService.cs",
+        "sources/Core/SqlServerStudentService.cs",
+        "reference-designs/基本設計書/テーブル/02_m_class.md"
+      ],
+      "responsibilities": [
+        "17列の実型、長さ・単位、NULL、IDENTITY、PK、表示順・利用状態・版のDEFAULTを定義する。定員NULLは制限なし、0は許可されないことを説明する。根拠: sources/database/001_schema.sql:62-87、201-201。",
+        "年度とクラスコードのUNIQUE、学年複合FK、固定分類、年度内利用期間・定員・表示順CHECKを説明する。現員は列ではなく学生集計値であることを示す。根拠: sources/database/001_schema.sql:188-190、197-201、sources/Core/SqlServerStudentService.cs:201-208。",
+        "年度・クラスコード不変や参照学生・現員による変更制限はサービス側の規則として分ける。根拠: sources/Core/MasterMaintenanceService.cs:44-64。"
+      ]
+    },
+    {
+      "id": "SM-DB-M-CODE-CATEGORY",
+      "path": "spec/database/tables/m_code_category.md",
+      "title": "コード種別マスター dbo.m_code_category テーブル定義",
+      "kind": "database-table",
+      "sourcePaths": [
+        "sources/database/001_schema.sql",
+        "sources/database/002_seed.sql",
+        "sources/database/003_web_permissions.sql",
+        "sources/Core/MasterMaintenanceService.cs",
+        "reference-designs/基本設計書/テーブル/03_m_code_category.md"
+      ],
+      "responsibilities": [
+        "11列の実DB型、PK、長さ、NOT NULL、既定値、コード長1～10のCHECK、UTC・スカラー値制約を示す。根拠: sources/database/001_schema.sql:90-109、202-202。",
+        "5分類のcode_length・allow_add初期投入値、コードの親としての用途、候補有効性と追加可否への参照を説明する。根拠: sources/database/002_seed.sql:8-13、88-91、sources/Core/MasterMaintenanceService.cs:91-96。",
+        "通常保守から分類表を変更する入口がなく、管理者ロールにもINSERT・UPDATE・DELETEが拒否される定義を示す。根拠: sources/database/003_web_permissions.sql:22-22、sources/Core/MasterMaintenanceService.cs:79-120。"
+      ]
+    },
+    {
+      "id": "SM-DB-M-CODE",
+      "path": "spec/database/tables/m_code.md",
+      "title": "コード管理マスター dbo.m_code テーブル定義",
+      "kind": "database-table",
+      "sourcePaths": [
+        "sources/database/001_schema.sql",
+        "sources/database/002_seed.sql",
+        "sources/Core/MasterMaintenanceService.cs",
+        "sources/Core/SqlServerStudentService.cs",
+        "reference-designs/基本設計書/テーブル/04_m_code.md"
+      ],
+      "responsibilities": [
+        "14列、category_id・code_value順の複合PK、分類FK、実型・容量・NULL・DEFAULT、数字コード・期間・表示順CHECKを定義する。根拠: sources/database/001_schema.sql:112-134、189-189、203-203。",
+        "70初期値の名称・順序・保護状態、終了日NULLの期限なし、分類と値による識別を説明する。固定桁と保護値の変更制限はサービス側の検査として分ける。根拠: sources/database/002_seed.sql:14-91、sources/Core/MasterMaintenanceService.cs:91-107。",
+        "候補取得と学生保存で分類の状態も確認する一方、検索名称JOINは停止・期限を絞らない違いを説明する。根拠: sources/Core/SqlServerStudentService.cs:82-90、203-205、347-355。"
+      ]
+    },
+    {
+      "id": "SM-DB-T-OPERATION-LOG",
+      "path": "spec/database/tables/t_operation_log.md",
+      "title": "操作履歴 dbo.t_operation_log テーブル定義",
+      "kind": "database-table",
+      "sourcePaths": [
+        "sources/database/001_schema.sql",
+        "sources/database/003_web_permissions.sql",
+        "sources/Core/SqlServerStudentService.cs",
+        "sources/Core/MasterMaintenanceService.cs",
+        "reference-designs/基本設計書/テーブル/05_t_operation_log.md"
+      ],
+      "responsibilities": [
+        "12列のIDENTITY PK、実型、NULL、既定値、changed_columnsのJSON配列CHECK、操作種別CHECK、対象検索索引を定義する。根拠: sources/database/001_schema.sql:137-153、204-205、212-212。",
+        "対象表・対象キー・前後版・列名配列・実行者・時点・受付番号・理由・確認有無を生成する経路を説明する。個人情報の変更前後値や復元履歴を保持するとは記載しない。根拠: sources/Core/SqlServerStudentService.cs:306-307、385-390、sources/Core/MasterMaintenanceService.cs:132-135。",
+        "業務表と同じトランザクションで追記し、履歴更新・削除を拒否する権限を示す。target_table・target_keyは汎用記録であり、対象表へのFKは定義されていない。根拠: sources/database/001_schema.sql:137-153、189-195、sources/database/003_web_permissions.sql:15-17。"
+      ]
+    },
+    {
+      "id": "SM-DB-T-CONFIRMATION",
+      "path": "spec/database/tables/t_confirmation.md",
+      "title": "重複確認情報 dbo.t_confirmation テーブル定義",
+      "kind": "database-table",
+      "sourcePaths": [
+        "sources/database/001_schema.sql",
+        "sources/database/003_web_permissions.sql",
+        "sources/Core/SqlServerStudentService.cs"
+      ],
+      "responsibilities": [
+        "9列のuniqueidentifier PK、所有者・セッション、対象ID・期待版のNULL、binary(32)ハッシュ、期限、消費状態、UTC制約を定義する。対象IDにFKがあるとは記載しない。根拠: sources/database/001_schema.sql:156-168、189-195。",
+        "非Web分岐の発行、UPDLOCKによる照合、未消費条件、学生保存と同時の消費を説明する。現在のWeb起動はwebTokens=trueでメモリを使い、この表のDML権限を必要としない。根拠: sources/Core/SqlServerStudentService.cs:276-284、308-342、sources/Infrastructure/WebHostSetup.cs:19-19、sources/database/003_web_permissions.sql:23-23。",
+        "実際の確認情報・セッション識別子は掲載せず、列と処理契約だけを記載する。"
+      ]
+    },
+    {
+      "id": "SM-DB-T-RUNTIME-STATE",
+      "path": "spec/database/tables/t_runtime_state.md",
+      "title": "実行時状態 dbo.t_runtime_state テーブル定義",
+      "kind": "database-table",
+      "sourcePaths": [
+        "sources/database/001_schema.sql",
+        "sources/database/003_web_permissions.sql",
+        "sources/database/004_verify_deployment.sql",
+        "sources/Infrastructure/SearchContextStore.cs",
+        "sources/Infrastructure/EditorSnapshotStore.cs",
+        "sources/Infrastructure/FlashMessageStore.cs"
+      ],
+      "responsibilities": [
+        "8列のstate_id PK、所有者・認証セッション・状態種別、varbinary(max)のpayload、期限、正の版、消費状態の実型・NULL・制約を定義する。根拠: sources/database/001_schema.sql:171-183。",
+        "DDLと配備確認に含まれる表である一方、現在の状態ストアはConcurrentDictionaryを使うことを説明する。payloadの暗号化方式、状態種別の値、永続化処理は列名から創作せず未解決事項へ送る。根拠: sources/database/004_verify_deployment.sql:7-17、sources/database/003_web_permissions.sql:23-23、sources/Infrastructure/SearchContextStore.cs:9-14、sources/Infrastructure/EditorSnapshotStore.cs:7-10。"
+      ]
+    },
+    {
+      "id": "SM-OPS-DATABASE-DEPLOYMENT",
+      "path": "spec/operations/database-deployment.md",
+      "title": "DB配備・初期投入・権限設定 仕様書",
+      "kind": "operations-specification",
+      "sourcePaths": [
+        "sources/database/Deploy-Database.ps1",
+        "sources/database/001_schema.sql",
+        "sources/database/002_seed.sql",
+        "sources/database/003_web_permissions.sql",
+        "sources/database/004_verify_deployment.sql",
+        "sources/maintenance/Program.cs"
+      ],
+      "responsibilities": [
+        "Install、Verify、BindPrincipal、PlanOnlyを静的に追跡し、入力、ローカルSQLファイル、固定DB名、Express major17・ローカルWindows統合認証の判定を説明する。スクリプトを実行した結果として記載しない。根拠: sources/database/Deploy-Database.ps1:1-25、62-95。",
+        "sqlcmdのメタデータ・PE判定と選択順、SQL呼出引数、暗号化・証明書検証、終了コード処理を説明する。PlanOnlyでも実行ファイル選択やファイルハッシュ取得があることを区別する。根拠: sources/database/Deploy-Database.ps1:26-82。",
+        "空DB確認、schema・seed・permissionsの順序、配備マーカー・入力ハッシュ、既存Windows主体の検査、DBロール継承・GRANT・DENYを説明する。各SQL呼出し間を全体一括トランザクションとして扱わない。根拠: sources/database/Deploy-Database.ps1:90-149、sources/database/003_web_permissions.sql:4-25。",
+        "5分類70コードだけを初期投入し、既存差分は上書きせず拒否すること、学生・クラスを投入しないこと、配備確認の対象と実効権限確認の限界を説明する。根拠: sources/database/002_seed.sql:85-92、sources/database/Deploy-Database.ps1:150-157、sources/database/004_verify_deployment.sql:97-134。"
+      ]
+    },
+    {
+      "id": "SM-DEP-PROCESS",
+      "path": "spec/dependencies/process-dependencies.md",
+      "title": "処理依存・呼出し・保持領域 関連図",
+      "kind": "dependency-map",
+      "sourcePaths": [
+        "sources/Program.cs",
+        "sources/StudentManagement.Web.csproj",
+        "sources/Core/StudentManagement.Core.csproj",
+        "sources/packages.lock.json",
+        "sources/maintenance/StudentMaintenance.csproj",
+        "sources/Web/Controllers/StudentsController.cs",
+        "sources/Infrastructure/WebHostSetup.cs",
+        "sources/Infrastructure/WebStudentCoordinator.cs",
+        "sources/Core/Contracts.cs",
+        "sources/Core/SqlServerStudentService.cs",
+        "sources/Core/MasterMaintenanceService.cs"
+      ],
+      "responsibilities": [
+        "検索・候補・登録・更新・削除・復帰・CLI保守について、利用者の操作からView、Controller、Coordinator、Service、SQL、結果表示までの依存をMermaidで示す。根拠: sources/Web/Controllers/StudentsController.cs:8-41、sources/Infrastructure/WebStudentCoordinator.cs:7-21、sources/Core/Contracts.cs:71-79。",
+        "Scopedの利用者・サービスとSingletonの状態ストア、静的確認辞書、ブラウザー状態、DB表の寿命・所有を分ける。根拠: sources/Infrastructure/WebHostSetup.cs:13-19、sources/Core/SqlServerStudentService.cs:19-29。",
+        "WebとCLIのCore参照、net10.0、Microsoft.Data.SqlClient 6.1.3の宣言とロック情報を示す。DBスクリプトは配備入力、CSS・JavaScriptは表示補助として分け、未接続のJSON部品や非Web確認分岐を稼働経路と区別する。根拠: sources/StudentManagement.Web.csproj:2-5、sources/Core/StudentManagement.Core.csproj:3-8、sources/packages.lock.json:35-49、sources/maintenance/StudentMaintenance.csproj:2-3。"
+      ]
+    },
+    {
+      "id": "SM-RPT-DESIGN-IMPLEMENTATION",
+      "path": "spec/reports/design-implementation-differences.md",
+      "title": "訓練設計意図・実装対応と差分報告",
+      "kind": "analysis-report",
+      "sourcePaths": [
+        "manifest.json",
+        "reference-designs/基本設計書/01_学生検索画面.md",
+        "reference-designs/基本設計書/02_学生登録画面.md",
+        "reference-designs/基本設計書/03_テーブル仕様書.md",
+        "reference-designs/基本設計書/04_コード設計書.md",
+        "reference-designs/基本設計書/テーブル/01_m_student.md",
+        "reference-designs/基本設計書/テーブル/02_m_class.md",
+        "reference-designs/基本設計書/テーブル/03_m_code_category.md",
+        "reference-designs/基本設計書/テーブル/04_m_code.md",
+        "reference-designs/基本設計書/テーブル/05_t_operation_log.md",
+        "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+        "reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md",
+        "sources/Web/Controllers/StudentsController.cs",
+        "sources/Infrastructure/WebHostSetup.cs",
+        "sources/Infrastructure/WebPresentation.cs",
+        "sources/Core/JapaneseDateService.cs",
+        "sources/Core/MasterMaintenanceService.cs",
+        "sources/database/001_schema.sql"
+      ],
+      "responsibilities": [
+        "manifestの参照許可条件と列挙範囲を記録し、設計意図・実装根拠・一致／差分／判断不能・確認事項を分けた対応表を作る。参考設計を実行証拠、試験結果、顧客承認として扱わない。",
+        "参考設計の5表とDDLの7表、業務初期値とDEFAULT、設計上の変数・メソッド名と実在する名前を照合する。根拠: reference-designs/基本設計書/03_テーブル仕様書.md:8-18、reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:757-776、sources/Core/JapaneseDateService.cs:17-59、sources/database/001_schema.sql:7-184。",
+        "検索失敗時の入力保持、候補連動・既存値保持、取消・再読込、成功後復帰、CLIの初期値・承認扱いなど、具体的な内容をソース経路で照合する。見出しや図の存在だけで充足判定しない。意図: reference-designs/基本設計書/01_学生検索画面.md:58-72、reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:635-635。実装: sources/Web/Controllers/StudentsController.cs:15-38、sources/Infrastructure/WebHostSetup.cs:22-23。"
+      ]
+    },
+    {
+      "id": "SM-RPT-UNRESOLVED",
+      "path": "spec/reports/unresolved-and-analysis-limits.md",
+      "title": "未解決事項・不足資料・解析範囲 報告",
+      "kind": "analysis-report",
+      "sourcePaths": [
+        "manifest.json",
+        "sources/Infrastructure/WebHostSetup.cs",
+        "sources/Infrastructure/RequestIdentity.cs",
+        "sources/Infrastructure/WebStudentCoordinator.cs",
+        "sources/Web/Controllers/StudentsController.cs",
+        "sources/Core/SqlServerStudentService.cs",
+        "sources/maintenance/Program.cs",
+        "sources/database/001_schema.sql",
+        "sources/database/004_verify_deployment.sql",
+        "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+        "reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md"
+      ],
+      "responsibilities": [
+        "資料不足、ソース上の接続不明、運用上の未確定、設計との差、改善候補を区分し、各事項に影響する文書と根拠位置を付ける。未解決を機能なしや正常動作に置き換えない。",
+        "manifestで除外された試験・ビルド・運用説明と、参考設計からリンクされる未収録の共通・DB・規約資料を記録する。権限外の資料を追加読取りしない。",
+        "静的解析だけでは確定しない配備状態、実効権限、認証連携、競合・取消・障害時の実挙動、学校固有データ、承認の有無を記録する。PASS文字列やhealth応答を実DB確認・試験合格の証拠にしない。根拠: sources/Infrastructure/WebHostSetup.cs:28-28、sources/database/004_verify_deployment.sql:128-134。"
+      ]
+    }
+  ],
+  "unresolved": [
+    "参考設計が参照する方式別共通仕様、共通日付・項目制約・チェック仕様、SQL Server製品別DB定義、開発規約はreferenceFilesに含まれていない。対応する契約の全意図は確認できず、リンク先は読んでいない。根拠: reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:542-548、587-591、reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:789-795。",
+    "本番のログイン・ログアウト、外部認証との接続、claimsの発行元・役割管理は収録ソースから確定できない。確認できるセッション発行入口はDevelopment限定の評価用処理である。根拠: sources/Infrastructure/WebHostSetup.cs:14-15、25-27、sources/Infrastructure/RequestIdentity.cs:7-10。",
+    "Enum.TryParseによる役割取得にはEnum.IsDefinedによる定義済値確認が見当たらない。数値文字列を含むclaimsの許容範囲と発行元側の検証を確認する必要がある。根拠: sources/Infrastructure/RequestIdentity.cs:9-16、sources/Infrastructure/WebHostSetup.cs:27-27。",
+    "業務用JSON APIの公開予定は不明。StrictJson、OptionsRequest、WebStudentCoordinator.Options、WebPresentation.Saveなどの部品はあるが、収録された公開ルートからの接続を確認できない。根拠: sources/Infrastructure/StrictJson.cs:4-14、sources/Infrastructure/WebStudentCoordinator.cs:16-16、sources/Infrastructure/WebPresentation.cs:30-30、sources/Web/Controllers/StudentsController.cs:5-42。",
+    "候補用途による判定はRazor画面とWebPresentation.Lookupsの両方にあり、コードの既存値保持や登録クラスの上位条件抽出の扱いが異なる。どの経路を正式な候補契約とするかは要確認。根拠: sources/Views/Students/Edit.cshtml:8-13、sources/Infrastructure/WebPresentation.cs:12-16、sources/wwwroot/js/site.js:8-8。",
+    "検索の検証エラーは同じ画面で入力を保持するが、SQL障害など捕捉されない例外は共通エラーHTMLへ移る。設計意図の「システムエラーでも入力値保持」との対応は未確定。根拠: sources/Web/Controllers/StudentsController.cs:15-19、sources/Infrastructure/WebHostSetup.cs:22-23、reference-designs/基本設計書/01_学生検索画面.md:58-69。",
+    "Resumeは保存済みページで再検索するが、件数減少によりサービス内部が最終ページへ補正しても、Applied.Pageを補正する処理は確認できない。復帰時の表示ページと取得行の整合は要確認。根拠: sources/Infrastructure/WebStudentCoordinator.cs:12-14、21-21、sources/Core/SqlServerStudentService.cs:160-168。",
+    "編集開始後に復帰先検索状態のRevisionが変わると、保存自体が成功しても、303の復帰先へ渡す読込時Revisionが旧版となる経路がある。成功通知と復帰競合を利用者へどう示すかは要確認。根拠: sources/Web/Controllers/StudentsController.cs:25-38、sources/Infrastructure/WebStudentCoordinator.cs:6-6、sources/Infrastructure/SearchContextStore.cs:14-14。",
+    "t_runtime_stateの状態種別、payload形式・暗号化方式、永続化入口、移行方針は確認できない。Webの状態はプロセスメモリであり、再起動や複数ノードでの継続性を保証する実装は収録されていない。根拠: sources/database/001_schema.sql:171-183、sources/database/003_web_permissions.sql:23-23、sources/Infrastructure/SearchContextStore.cs:9-14、sources/Core/SqlServerStudentService.cs:29-29。",
+    "非Web確認分岐を利用する具体的なアプリケーション入口と、t_confirmationに必要なDB権限・期限切れ削除運用は不明。現在のWeb権限SQLはこの表のDMLを付与しない。根拠: sources/Core/SqlServerStudentService.cs:279-284、308-342、sources/database/003_web_permissions.sql:8-24。",
+    "学校名、実際の年度・クラス・学年体系・定員、初回保守入力、保存データと監査の保管・物理消去方針は未指定。seedは学生・クラスを投入しないため、在学・休学の登録前に実クラスの整備が必要となる。根拠: sources/database/002_seed.sql:8-91、sources/Core/StudentNormalizer.cs:154-154、reference-designs/基本設計書/03_テーブル仕様書.md:61-63。",
+    "CLIのUsageにあるapproved-input.jsonという名称は承認検証ではない。業務承認者、承認記録、コード名称変更が意味変更に当たらないことの確認手順は収録資料から確定できない。根拠: sources/maintenance/Program.cs:4-13、sources/Core/MasterMaintenanceService.cs:79-120、reference-designs/基本設計書/04_コード設計書.md:112-118。",
+    "接続先や実環境設定値は確認していない。秘密情報に触れないためappsettings.json等の値は読まず、設定参照箇所から契約だけを分析した。実DBの7表、権限、証明書、SNAPSHOT状態、配備済みSQLとの一致は未検証。根拠: manifest.jsonのfiles、sources/Infrastructure/WebHostSetup.cs:19-19、sources/Core/SqlServerStudentService.cs:39-63。",
+    "manifestでtests、build、bin、obj等が除外されており、実行・試験は本ジョブの対象外である。Unicode境界、元号境界、最後の席の競合、旧版、監査失敗、commit応答不明、取消、削除失敗後再表示について、成功試験や実運用上の挙動は確認していない。"
+  ]
+}

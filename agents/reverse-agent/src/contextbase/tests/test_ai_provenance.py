@@ -198,6 +198,50 @@ class ProvenanceTests(unittest.TestCase):
         handoff=json.loads((self.root/'review/review-handoff.json').read_text())
         self.assertEqual(capsule.sha256((out/self.doc['path']).read_bytes()),handoff['documentSha256'])
 
+    def test_text_approval_does_not_claim_visual_fidelity_for_a_mismatched_projection(self):
+        # This fixture intentionally differs from its source. A text-approved
+        # answer must remain text-approved without inventing image acceptance.
+        (self.source/'view.html').write_text('<header>System</header><h1>Entry</h1>\n',encoding='utf-8')
+        self.snapshot=self.root/'ui-snapshot'
+        capsule.create(self.source,self.snapshot,project_id='synthetic-ui')
+        self.started=capsule.verification_state(self.snapshot)['manifestSha256']
+        self.doc['sourcePaths']=['sources/view.html']
+        self.plan_file.write_text(json.dumps(self.plan,ensure_ascii=False),encoding='utf-8')
+        definition=self.definition()
+        document=self.root/'draft.md'
+        content=self.valid_content+'\n<section><h3>Entry</h3><input id="entry" name="Entry"></section>\n'
+        document.write_text(content,encoding='utf-8')
+        approved={'documentId':'CART','approved':True,'findings':[],'unresolved':[]}
+        with patch.object(workflow,'run_job',side_effect=self.fake):
+            answer=workflow.review(self.snapshot,document,definition,self.root/'review')
+        self.assertEqual(approved,answer)
+        self.assertEqual(approved,json.loads((self.root/'review/review-verified.json').read_text()))
+        handoff=json.loads((self.root/'review/review-handoff.json').read_text())
+        self.assertTrue(handoff['approved'])
+        self.assertEqual('text-source-and-structure',handoff['reviewScope'])
+        self.assertFalse(handoff['visualFidelityVerified'])
+        self.assertFalse(handoff['formallyEvaluatedByOriginalRubric'])
+        self.assertEqual(['visual-fidelity','application-runtime','formal-semantic-scoring'],
+                         handoff['unassessedScopes'])
+        self.assertEqual(capsule.sha256(document.read_bytes()),handoff['documentSha256'])
+        self.assertIn('<header>',(self.snapshot/'sources/view.html').read_text())
+        self.assertNotIn('<header>',document.read_text())
+        self.assertFalse(list((self.root/'review').glob('*.png')))
+
+    def test_unresolved_text_evidence_cannot_be_approved(self):
+        definition=self.definition();document=self.root/'draft.md'
+        document.write_text(self.valid_content,encoding='utf-8')
+        def unresolved(*args):
+            result=self.fake(*args)
+            if args[3]==schemas.REVIEW:
+                result['answer']['unresolved']=['Artificial unresolved source/text boundary']
+            return result
+        with patch.object(workflow,'run_job',side_effect=unresolved):
+            with self.assertRaisesRegex(ValueError,'cannot approve unresolved'):
+                workflow.review(self.snapshot,document,definition,self.root/'review')
+        self.assertFalse((self.root/'review/review-verified.json').exists())
+        self.assertFalse((self.root/'review/review-handoff.json').exists())
+
     def test_document_change_during_review_cannot_be_approved(self):
         definition=self.definition();file=self.root/'draft.md';file.write_text('# Initial\n')
         def changed(*args):
@@ -231,6 +275,29 @@ class ProvenanceTests(unittest.TestCase):
         with patch.object(workflow,'run_job',side_effect=empty):
             with self.assertRaises(ValueError):workflow.document(self.snapshot,definition,self.root/'jobs',self.root/'out')
         self.assertFalse((self.root/'out'/self.doc['path']).exists())
+
+    def test_correct_outer_draft_identity_cannot_hide_wrong_markdown_metadata_identity(self):
+        definition=self.definition();output=self.root/'output';job=self.root/'jobs'
+        wrong=self.valid_content.replace('"documentId": "CART"', '"documentId": "OTHER"')
+        def mismatched(*args):
+            result=self.fake(*args)
+            if args[3]==schemas.DRAFT:
+                result['answer']['content']=wrong
+                self.assertEqual('CART',result['answer']['documentId'])
+                self.assertEqual(self.doc['path'],result['answer']['path'])
+            return result
+        with patch.object(workflow,'run_job',side_effect=mismatched):
+            draft=workflow.document(self.snapshot,definition,job,output)
+            self.assertEqual('STRUCTURE_INVALID',draft['status'])
+            self.assertEqual(['META_DOCUMENT_ID'],[finding['code'] for finding in draft['structureFindings']])
+            # A separate AI review approving the prose cannot override the
+            # source-derived metadata identity or rewrite the retained draft.
+            with self.assertRaises(workflow.ReviewStructureConflict):
+                workflow.review(self.snapshot,output/self.doc['path'],definition,self.root/'review')
+        self.assertEqual(wrong,(output/self.doc['path']).read_text(encoding='utf-8'))
+        conflict=json.loads((self.root/'review/structure-approval-conflict.json').read_text(encoding='utf-8'))
+        self.assertEqual(['META_DOCUMENT_ID'],[finding['code'] for finding in conflict['findings']])
+        self.assertFalse((self.root/'review/review-verified.json').exists())
 
     def test_output_symlink_is_rejected_without_writing_to_target(self):
         definition=self.definition();outside=self.root/'outside';outside.mkdir();link=self.root/'output'

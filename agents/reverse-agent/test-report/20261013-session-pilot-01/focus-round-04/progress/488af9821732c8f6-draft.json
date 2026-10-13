@@ -1,0 +1,47 @@
+{
+  "documentId": "SM-DET-STUDENT-SEARCH",
+  "path": "spec/detail/student-search.md",
+  "contentSha256": "35defbc0495678f32ec140535d46e96bbfda0e66259aac13982a6cf28b0e41c0",
+  "aiAuthored": true,
+  "semanticProseAssembledByPython": false,
+  "analysisFacts": 79,
+  "unresolved": [
+    "coverageNotes／材料権限: manifest.jsonのmode=training-assisted、trainingReferenceAuthorizedByUser=true、referenceSpecificationIncluded=trueとreferenceFilesを確認した。今回の参考読取りは列挙された検索基本設計・検索詳細設計に限定した。manifestは材料・読取り権限の説明だけに用い、業務・実装factの根拠にしていない。",
+    "coverageNotes／実施範囲: 読取りはworkspace内のmanifest、sources、indexed、許可された検索参考設計と入力されたfacts・前稿・批評に限定した。ファイル編集、ネットワーク、プラグイン、委任、原本コード・SQL・スクリプト・ビルド・テストの実行、設定秘密値の取得は行っていない。",
+    "coverageNotes／原文確認: rg --files、rg -n、indexedの原行番号付き範囲を使用した。切れた出力は読了扱いせず必要部分を再取得した。PowerShellはlogin=falseとし、相対Get-Contentと変数経由の読取りが失敗した参考資料は直接rgの該当範囲へ切り替えた。本文・図はAIが執筆し、テンプレートによる本文差替えは行っていない。",
+    "解析制限報告: 今回の検査は静的原文解析と本文・図の分岐照合である。新稿のHTML描画画像、実機画像、全モード・全幅・フォーカス・disabled遷移は確認していない。前稿の画像レビューやrender PASSを版4.0の描画確認へ転用していない。",
+    "HTTP境界: 省略、空白だけの文字列、NULL、checkbox複数値、年度・bool・intの変換失敗からMVCの最終DTO・ModelStateになる挙動は未確認。サービスへ届いた値の分岐をHTTPの確定動作へ拡張しない。影響: sources/Infrastructure/WebHostSetup.cs:16-18、sources/Web/Controllers/StudentsController.cs:13-22。",
+    "配備・データ境界: 接続設定の実値、実DB、SNAPSHOT有効状態、DDL・FK・CHECKの配備状態、実効権限、学校固有のクラス・学生・候補データは未確認。設定名・SQL宣言・権限定義を稼働保証としない。影響: sources/Infrastructure/WebHostSetup.cs:19-19、sources/Core/SqlServerStudentService.cs:53-64、sources/database/001_schema.sql:189-203。",
+    "認証・運用境界: 本番認証連携、役割付与、再起動・複数プロセス・複数ノード間の状態保持構成は未確定。現在の検索・編集・通知はプロセスメモリ実装である。影響: sources/Infrastructure/RequestIdentity.cs:7-15、sources/Infrastructure/WebHostSetup.cs:13-19、sources/Infrastructure/SearchContextStore.cs:9-14。",
+    "取消・競合境界: 同一Revision要求、Optionsの非排他読取り、Gate待機取消、取得後再Get拒否、DB中取消、期限経過、SQL障害、commit・破棄・後段候補障害、応答開始後例外、切断後配信は再現していない。SQL前取消は静的に確認した独立分岐で、実行結果ではない。",
+    "将来の確認候補／入力移送: SRC-001～010について、raw上限と正規化後上限、補助文字、制御文字、LIKE特殊文字、空・NULL、学年00と未所属、在籍空配列と不正配列、マスター不存在をHTTP→DTO→正規化→型付きSQL→再表示の順で確認する。今回は未実施。",
+    "将来の確認候補／日付: SRC-011／012の片側・両端包含、逆転、1900年下限、業務日・未来日、NFKC、正規化前長、ネイティブdate表示とISO受信値の境界を確認する。独自yyyy/MM/dd表示を実装済みと仮定しない。今回は未実施。",
+    "将来の確認候補／拒否・後段失敗: E02・E04のFormGuard400、認証401、所有403、期限・旧版409、検証422を各発生位置で確認し、PageSize=0の条件付き描画例外、Gate取得前取消時のoperation未実行、状態更新後の候補・JSON化・描画失敗も分けて確認する。今回は未実施。",
+    "将来の確認候補／復帰・通知: E06の件数減少時SQLページと提示ページ、旧ReturnRevision、期限切れ、Flash Take前後の失敗、E09のSaved後303・復帰失敗とDB確定、削除Unknown後再Load404を確認する。今回は未実施。",
+    "不足資料: 参考設計からリンクされる共通UI・日付・方式別共通・DB定義・規約・試験対応資料とassetsの単独HTML・画像は今回読取り範囲に含めていない。その契約・成果物の実在・描画・検査状態を補完していない。",
+    "未接続・永続化: t_runtime_stateへの検索状態永続化、encrypted_payloadの暗号化方式・状態種別・消費は確認できない。OptionsRequest、Coordinator.Options、WebPresentation.Lookups、StrictJsonの宣言を本検索ルートの公開契約にしていない。",
+    "設計差の採否: 候補不足時検索禁止、自動候補連動・上位補完、応答世代、部分HTML／JSON、表示範囲、メニュー、先頭／最後、欠損注記、失敗時保持、期限切れ初期化の差は残る。改善の採否、業務要件としての優先順位、顧客承認は材料から確定できない。",
+    "検証証拠: Programの起動宣言やhealthのstatus=running、database=not-testedは業務入力・DB接続・配備・試験合格の証拠ではない。今回、アプリ／DB実行確認と顧客承認は未実施・未確認。根拠: sources/Program.cs:2-8、sources/Infrastructure/WebHostSetup.cs:28-28。",
+    "関連成果物: contentで返す本書以外は未生成の計画参照である。未解決・範囲報告はSM-RPT-UNRESOLVED（spec/reports/unresolved-and-analysis-limits.md）、全体差分はSM-RPT-DESIGN-IMPLEMENTATION（spec/reports/design-implementation-differences.md）へ対応するが、今回それらのファイルは生成していない。"
+  ],
+  "factCorrections": [
+    "前稿E02の図に欠けていたSQL前のGate待機取消を追加した。WaitAsync(ct)は取得後try・finallyとoperationより前にあるため、取得前取消ではSearchAsync・SQL・当該要求の状態／期限更新・Releaseへ進まない。根拠: sources/Infrastructure/SearchContextStore.cs:14-14、sources/Infrastructure/WebStudentCoordinator.cs:7-9、sources/Web/Controllers/StudentsController.cs:13-16。",
+    "取消の追加によって元原稿の配信境界を誤って広げないよう、共通経路は応答未開始時だけWebFaultの元状態または非WebFaultの503で返却を試み、配信完了を保証しないと維持した。根拠: sources/Infrastructure/WebHostSetup.cs:22-24。",
+    "前稿Index手順で省かれていたFlash Takeを明記した。初回表示もIndexの共通返却行でTakeを評価してからSearchModelへ渡す。根拠: sources/Web/Controllers/StudentsController.cs:11-11。",
+    "日付ParseIsoの10文字制約はNFKC後の.NET Lengthであり、正規化前の個別raw上限ではないことを項目表に明記した。根拠: sources/Core/JapaneseDateService.cs:52-59。",
+    "参考設計比較の短い主題説明を、対象・条件・担当層・操作・結果まで具体化した。表示範囲、メニュー、先頭／最後操作、一覧のクラス状態注記を現行実装へ追加していない。根拠: sources/Views/Students/Search.cshtml:6-8、sources/Infrastructure/WebStudentCoordinator.cs:21-21、sources/Core/SqlServerStudentService.cs:82-90。",
+    "提供factsのHTTPバインド未確認、Pageの可変e.Status、別SNAPSHOTによる一度の再検索、OptionsのGateなし読取り、Resumeのページ差、Savedと303の確定境界は、原文照合した範囲で維持した。以前のapproved・PASSは今回の検査結果として継承していない。"
+  ],
+  "analysisExecutedInThisJob": true,
+  "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-04\\488af9821732c8f6",
+  "snapshot": {
+    "manifestSha256": "3a722dc206dbf2ce850b594aa1bee65117e472a8144531adb731d354fb9a5a24",
+    "capsuleSchema": "reverse-ai-source-capsule/1",
+    "mode": "training-assisted",
+    "modeDerivation": "explicit-manifest-mode",
+    "scope": "legacy-v1-raw-indexed-metadata-revalidated-unsealed-manifest"
+  },
+  "referenceMode": "training-assisted",
+  "structureFindings": [],
+  "status": "AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED"
+}

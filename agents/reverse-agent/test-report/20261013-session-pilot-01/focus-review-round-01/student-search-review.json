@@ -1,0 +1,53 @@
+{
+  "documentId": "SM-DET-STUDENT-SEARCH",
+  "approved": true,
+  "findings": [
+    {
+      "severity": "minor",
+      "documentLocation": "spec/detail/student-search.md:49-90,832-844",
+      "defect": "現在のrender/search/layout-001.pngは未検索Viewer状態だけを示す。本文の状態表はfound/empty/tooMany/局所失敗を正しく区別しているが、結果ありの行操作、検索日時、件数、ページ活性、および非Viewerの新規登録位置を静的図で確認できない。",
+      "repairDirection": "検索入力・DB/SQL対応の改善を維持し、実データ・実行結果を創作せず、主要な結果状態と権限差を小さな静的差分図または独立した状態枠へ示す。未検索図を実行済み画面へ読み替えない。適用条件、行操作文言、前後ページの活性を原ビューの分岐と対応させる。",
+      "references": [
+        {
+          "path": "sources/Views/Students/Search.cshtml",
+          "startLine": 6,
+          "endLine": 8
+        },
+        {
+          "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+          "startLine": 21,
+          "endLine": 21
+        }
+      ]
+    },
+    {
+      "severity": "minor",
+      "documentLocation": "spec/detail/student-search.md:605-674,675-819",
+      "defect": "E09の保存・削除確定後の復帰説明と共通DB操作が長く、検索画面の責務を理解するために登録側の書込・監査概要と複数の関連図まで読む構成が残る。検索入力のfield chainが完成した一方、画面間契約の主題が埋もれやすい。",
+      "repairDirection": "E09は303の発行条件、contextId/contextRevision、Flash、復帰時再検索、復帰失敗でも書込を戻さない境界へ絞る。登録側の保存列・確認・監査詳細は計画に存在する登録文書ID/pathへ対応付け、検索固有の入力、SQL条件、ページ補正、メモリ確定と応答失敗の説明を省略しない。関連文書が計画にあることを生成済み保証にしない。",
+      "references": [
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 8,
+          "endLine": 11
+        },
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 31,
+          "endLine": 38
+        },
+        {
+          "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+          "startLine": 14,
+          "endLine": 14
+        },
+        {
+          "path": "sources/Infrastructure/FlashMessageStore.cs",
+          "startLine": 6,
+          "endLine": 9
+        }
+      ]
+    }
+  ],
+  "unresolved": []
+}

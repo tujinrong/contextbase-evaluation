@@ -1,0 +1,32 @@
+flowchart TD
+  A[POST page] --> F[FormGuard]
+  F --> G[最初のGet]
+  F -->|400| X[共通例外経路]
+  G -->|認証・所有・期限等の拒否| X
+  G --> U[認証・Use・Gate待機・再Get・期待版]
+  U -->|WebFault・所有403・状態409等| W[元e.Statusとエラーを保持]
+  U -->|取得前の待機取消| X
+  U --> C{Appliedあり}
+  C -->|なし409| W
+  C -->|あり| D[条件複製・表示指定変更ならPage1]
+  D --> Q[第1検索・成功確認]
+  D -->|複製等の一般例外| X
+  Q -->|検証422| W
+  Q -->|SQL障害・取消等| X
+  Q --> B{超過なし・保持Pageが最終ページ外}
+  B -->|はい| N[保持Page補正・第2検索・成功確認]
+  N -->|検証422| W
+  N -->|SQL障害・取消等| X
+  B -->|いいえ| S[Applied・LastResult・Revision更新]
+  N -->|成功| S
+  S --> E[Use正常終了・期限延長・Gate解放]
+  S -->|一般例外| X
+  E --> L[Applied由来input・別Q-L・モデル]
+  L -->|WebFault| W
+  L -->|その他の例外| X
+  W --> R[元HTTP状態・Applied由来input・空一覧・Q-L]
+  R -->|再構築例外| X
+  L -->|成功| H[Search ViewResult]
+  R -->|成功| H
+  H --> V[Razor描画]
+  V -->|描画例外| X

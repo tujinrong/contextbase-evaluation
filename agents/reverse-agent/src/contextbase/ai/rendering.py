@@ -11,6 +11,7 @@ import hashlib
 import html
 import io
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -23,7 +24,7 @@ from markdown_it import MarkdownIt
 from PIL import Image
 import tinycss2
 
-from .validation import validate_document
+from .validation import validate_document, _inert_header_metadata
 
 
 SECURE_KEYS = ["secure", "securityLevel", "startOnLoad", "maxTextSize", "suppressErrorRendering", "maxEdges",
@@ -162,6 +163,8 @@ def _sanitize(fragment, base, asset_root):
     removed = []
     for tag in list(soup.find_all(["script", "iframe", "object", "embed", "base", "link", "meta",
                                   "animate", "animatemotion", "animatetransform", "set"])):
+        if tag.name == "meta" and _inert_header_metadata(tag.attrs):
+            continue
         removed.append({"kind": "element", "name": tag.name})
         tag.decompose()
     for tag in soup.find_all(True):
@@ -184,6 +187,10 @@ def _sanitize(fragment, base, asset_root):
             elif tag.name == "a" and attr == "href" and urlsplit(value).scheme.lower() in {"http", "https", "mailto"}:
                 # An inert citation is not an automatic external dependency.
                 continue
+            elif tag.name == 'a' and attr == 'href' and _local_document_citation(value, base, asset_root):
+                # Preserve related-document citations just like external ones.
+                # No linked file is read, fetched, or declared already published.
+                continue
             else:
                 removed.append({"kind": "resource", "name": attr})
             del tag[attr]
@@ -196,6 +203,23 @@ def _sanitize(fragment, base, asset_root):
                 if tag.has_attr(attr):
                     tag[attr] = _safe_css(str(tag[attr]), base, asset_root, removed)
     return str(soup), removed
+
+
+def _local_document_citation(value, base, asset_root):
+    parsed = urlsplit(value)
+    if parsed.scheme or parsed.netloc:
+        return False
+    relative = unquote(parsed.path)
+    if not relative or relative.startswith(('/', '\\')) or '\\' in relative or ':' in relative:
+        return False
+    if Path(relative).suffix.lower() not in {'.md', '.html', '.pdf', '.xlsx'}:
+        return False
+    try:
+        target = _path(Path(base) / relative)
+        permitted_root = _path(Path(asset_root))
+    except (OSError, ValueError):
+        return False
+    return permitted_root in target.parents
 
 
 def _svg_css_check(css):
@@ -264,6 +288,38 @@ def _capture(page, locator=None):
     if width <= 0 or height <= 0 or width > 16000 or height > 16000 or width * height > 40_000_000:
         raise ValueError("Artifact exceeds bounded capture dimensions; it is not cropped or declared passed")
     return locator.screenshot(animations="disabled") if locator is not None else page.screenshot(full_page=True, animations="disabled")
+
+
+def _capture_document(page, destination, display):
+    """Keep bounded PNGs while recording the full extent of long documents."""
+    width, height = [math.ceil(value) for value in page.evaluate(
+        "[document.documentElement.scrollWidth,document.documentElement.scrollHeight]")]
+    if width <= 0 or height <= 0 or width > 16000 or height > 500000 or width * height > 250_000_000:
+        raise ValueError("Document exceeds complete tiled capture bounds")
+    if height <= 16000 and width * height <= 40_000_000:
+        data = _capture(page)
+        display['documentPng'] = _png_info(data)
+        _write(destination / 'document.png', data)
+        if not display['documentPng']['nonblank']:
+            raise ValueError('Blank document capture')
+        return
+    tile_height = min(4000, 40_000_000 // width)
+    pages = []
+    # A page may contain blank spacing; the complete document must contain text
+    # or image variation. Every strip is preserved and included in coverage.
+    for y in range(0, height, tile_height):
+        clip = {'x': 0, 'y': y, 'width': width, 'height': min(tile_height, height-y)}
+        data = page.screenshot(clip=clip, full_page=True, animations='disabled')
+        info = _png_info(data)
+        if (info['width'], info['height']) != (clip['width'], clip['height']):
+            raise ValueError('Document strip does not cover its recorded rectangle')
+        name = f'document-{len(pages)+1:03d}.png'
+        _write(destination / name, data)
+        pages.append({'path': name, 'sourceRectangle': clip, 'png': info})
+    display['documentCapture'] = {'mode': 'complete-vertical-tiles', 'width': width,
+        'height': height, 'complete': True, 'pages': pages}
+    if not any(record['png']['nonblank'] for record in pages):
+        raise ValueError('Blank document capture')
 
 
 def render_document(source: Path, destination: Path, *, mermaid_package: Path | None = None,
@@ -403,17 +459,13 @@ def render_document(source: Path, destination: Path, *, mermaid_package: Path | 
                 page = static.new_page()
                 try:
                     page.set_content(viewer, wait_until="load")
-                    data = _capture(page)
-                    result["display"]["documentPng"] = _png_info(data)
-                    _write(destination / "document.png", data)
+                    _capture_document(page, destination, result['display'])
                     result["display"]["browserUserAgent"] = page.evaluate("navigator.userAgent")
                     session = static.new_cdp_session(page)
                     try:
                         result["display"]["browserVersion"] = session.send("Browser.getVersion")["product"]
                     finally:
                         session.detach()
-                    if not result["display"]["documentPng"]["nonblank"]:
-                        raise ValueError("Blank document capture")
                 finally:
                     page.close()
                 result["display"]["status"] = "PASS"

@@ -1,0 +1,64 @@
+{
+  "schema": "reverse-ai-analysis-handoff/1",
+  "snapshot": {
+    "manifestSha256": "3a722dc206dbf2ce850b594aa1bee65117e472a8144531adb731d354fb9a5a24",
+    "capsuleSchema": "reverse-ai-source-capsule/1",
+    "mode": "training-assisted",
+    "modeDerivation": "explicit-manifest-mode",
+    "scope": "legacy-v1-raw-indexed-metadata-revalidated-unsealed-manifest"
+  },
+  "referenceMode": "training-assisted",
+  "planFile": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-tuning-01\\pilot-v2\\plan\\plan-verified.json",
+  "planSha256": "232c3f10288f4d6363ac6995dd7f6780bf703d07e35872cfb43ea0d5e4df25bd",
+  "planHandoffSha256": "3de5da89677430ff0ed235868bcd0fcfa9d2e62ea47a56c6dd8f7301ee075284",
+  "document": {
+    "id": "SM-DET-STUDENT-EDITOR",
+    "path": "spec/detail/student-editor.md",
+    "title": "学生登録・編集・参照画面 詳細仕様書",
+    "kind": "detailed-specification",
+    "sourcePaths": [
+      "sources/Views/Students/Edit.cshtml",
+      "sources/Web/Inputs/StudentSaveInput.cs",
+      "sources/Web/Inputs/StudentDeleteInput.cs",
+      "sources/Web/Models/StudentEditPageModel.cs",
+      "sources/Web/Controllers/StudentsController.cs",
+      "sources/Infrastructure/WebStudentCoordinator.cs",
+      "sources/Infrastructure/EditorSnapshotStore.cs",
+      "sources/Infrastructure/FlashMessageStore.cs",
+      "sources/Core/Contracts.cs",
+      "sources/Core/StudentNormalizer.cs",
+      "sources/Core/JapaneseDateService.cs",
+      "sources/Core/SqlServerStudentService.cs",
+      "sources/wwwroot/js/site.js",
+      "reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md"
+    ],
+    "responsibilities": [
+      "REGコントロール、Input.*、StudentSaveInput、StudentDraft、NormalizedStudent.Values、DB列の対応を項目移送・更新章に示す。年度・学年は整合確認、理由は監査、期待版は更新条件、復帰先と確認情報は一時制御として分ける。根拠: sources/Views/Students/Edit.cshtml:5-17、sources/Web/Inputs/StudentSaveInput.cs:9-54、sources/Core/StudentNormalizer.cs:119-159。",
+      "新規・既存読込、スナップショット作成、保存、リセット、再読込、検索復帰を入口から応答まで説明する。保存成功は303と一度限りの通知、変更なしは同じ編集画面、検証失敗は原入力を使った再表示になる経路を示す。根拠: sources/Web/Controllers/StudentsController.cs:23-38、sources/Infrastructure/WebStudentCoordinator.cs:17-19。",
+      "保存時の正規化、書込ゲート、対象存在・期待版・学籍番号不変、終了区分訂正権限、コード有効性、在籍期間、クラス定員、変更なし、全行の学籍番号一意確認を順に説明する。根拠: sources/Core/SqlServerStudentService.cs:227-266、344-383。",
+      "同一人物候補は非削除・本人除外・生年月日一致・氏名照合値またはカナ照合値一致で取得する。全候補の件数・版を確認に用い、表示は最大20件とし、入力変更、候補変更、期限、所有者、使用中・消費状態による再確認を説明する。根拠: sources/Core/SqlServerStudentService.cs:224-225、268-290、308-342、sources/wwwroot/js/site.js:3-6。",
+      "INSERT、UPDATE、論理削除の対象列、生成分類、NULL、WHEREのID・期待版・非削除条件、取得件数、監査追加、commit・rollback、確定応答不明を記載する。論理削除は編集中の業務値を保存しない。根拠: sources/Core/SqlServerStudentService.cs:292-323、385-416、sources/Views/Students/Edit.cshtml:17-17。",
+      "各イベントに条件付きフローと実表に基づく関連図を置く。取消・リセットはメモリの読込時値を使い、最新再読込はDB参照を行う違いと、削除失敗後にLoadが再実行される動作を説明する。根拠: sources/Web/Controllers/StudentsController.cs:25-37、sources/Infrastructure/EditorSnapshotStore.cs:7-11。"
+    ]
+  },
+  "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-04\\eebb51fa1eb2da8f",
+  "analysisFile": "analysis-verified.json",
+  "analysisSha256": "4b4be3d52cadcd763d88122ca77238845aeeebecf44e299d3085892d374709de",
+  "providerDirectory": "analysis",
+  "providerArtifactsSha256": {
+    "answer.txt": "0683fe8fab24c06d4f71181b21ed3fc651b274ec64fa567544def6e16020db21",
+    "result.json": "f92fbf48f12214f15c2fef88c1ed0285a729f9754a0d4817fde1295da892bc93",
+    "schema.json": "c96407dc6d4422f7e4d11abb928553859b3feac7e20d309cacfa2c13ef4bc7ca",
+    "prompt.txt": "29b7614f39e4585f37656543be1e86a63f3895adf802a095ab923ac2c8eb4636"
+  },
+  "snapshotEvidenceSha256": {
+    "analysis-snapshot-before.json": "9b111ab4d7965a591c0138473175e7e1b427411b793e5122f21d4c9c46a221fc",
+    "analysis-snapshot-after.json": "e9b4bbaf63004c103a1a7e745e361c20d8cd0fa4e2970830599852e83af58b9f"
+  },
+  "origin": "same-job:analysis-verified-before-draft",
+  "bindingCreatedAt": "2026-10-13T00:11:22.830485+00:00",
+  "aiResponseBytesModified": false,
+  "planBindingScope": "same-job-analysis-and-current-bound-plan",
+  "scope": "verified-analysis-reuse-for-the-same-bound-plan-and-revalidated-capsule",
+  "capsuleIntegrityScope": "legacy-v1-raw-indexed-metadata-revalidated-unsealed-manifest"
+}

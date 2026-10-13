@@ -1,0 +1,11 @@
+# metadata-01 別描画の追記
+
+同じ版3.0のMDを、汎用rendererの安全なUTF-8 charset／viewport対応後に別の凍結runtimeで再描画した結果を記録する。元のREVIEW JSON、review-manifest.json、31画像の閲覧記録は保持する。新しいAI解析・本文生成、元MDの書換え、元アプリの実行は行っていない。
+
+新しいrender-metadata-01の全6layoutと、検索Page図008・登録Save図007の計8PNGを別パスから実際に閲覧した。新manifest・PNG・寸法とMD/draft SHAを照合し、両structure/display PASS、全35diagramと6layout PASS、除去・blocked requests 0件を確認した。旧画像の閲覧だけで新画像を受容したとはしていない。新画像の一覧とSHA、旧レビューの不変性、structure/display/safetyの新しい結果はmetadata-01-manifest.jsonにある。
+
+検索Pageの403/409/422保持、登録Saveの通常422と日付NULL等の共通503境界、共有header/h1とリンク外観・非実行ルートはこの追加閲覧範囲に含む。元の全モード、narrow、MVC/DB実行、正式原仕様採点の未確認境界は引き続き維持する。追加閲覧していないdiagramやdocument tileのpixel一致・視覚承認は主張しない。
+
+対応render結果は同じsessionのfocus-round-03/student-search-render-metadata-01.jsonとstudent-editor-render-metadata-01.json。元renderのSANITIZED記録は保存し、新renderの安全なmeta保持と除去なしを別の結果として扱う。元REVIEWのpublication-methodは元renderに対する記録であり、追記の新結果と混同しない。
+
+今回の追加provenance検査は終了コード0、旧67入力と新33入力のSHA不変を確認した。新33入力には別凍結render runtimeの13ファイルを含む。同じ原稿の静的出版display gateはPASSとなったが、全体画面モードや実行・正式採点の承認には拡張しない。

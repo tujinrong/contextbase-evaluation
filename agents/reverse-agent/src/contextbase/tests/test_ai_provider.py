@@ -1,10 +1,14 @@
-"""Provider boundary regressions; all model processes are substituted fixtures."""
+"""Provider regressions; model calls are fixtures, plus local synthetic children."""
 import copy
+import hashlib
 import json
 import os
 from pathlib import Path
+import stat
 import subprocess
+import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -30,6 +34,7 @@ class ProviderTests(unittest.TestCase):
         self.addCleanup(self.resolve_patch.stop)
         self.addCleanup(self.temp.cleanup)
         self.seen = []
+        self.stdin_payloads = []
 
     def fake(self, *, answer='{"text":"日本語"}', exit_code=0, events=None, stderr=b"", timeout=False, error=None):
         if events is None:
@@ -37,6 +42,7 @@ class ProviderTests(unittest.TestCase):
 
         def execute(command, **kwargs):
             self.seen.append((command, kwargs))
+            self.stdin_payloads.append(kwargs["stdin"].read())
             if error is not None:
                 raise error
             for event in events:
@@ -82,7 +88,7 @@ class ProviderTests(unittest.TestCase):
 
     def test_utf8_input_preserves_prompt_and_includes_common_boundary(self):
         self.run_fake()
-        payload = self.seen[0][1]["input"]
+        payload = self.stdin_payloads[0]
         self.assertIsInstance(payload, bytes)
         self.assertFalse(payload.startswith(b"\xef\xbb\xbf"))
         decoded = payload.decode("utf-8")
@@ -93,9 +99,79 @@ class ProviderTests(unittest.TestCase):
         self.assertIn("Do not download model weights", decoded)
         self.assertEqual(payload, (self.job / "prompt.txt").read_bytes())
 
+    def test_saved_prompt_is_regular_binary_stdin_without_parent_pipe_write(self):
+        substitute = self.fake()
+
+        def inspect_input(command, **kwargs):
+            self.assertNotIn("input", kwargs)
+            stream = kwargs["stdin"]
+            self.assertNotEqual(subprocess.PIPE, stream)
+            self.assertEqual("rb", stream.mode)
+            self.assertEqual(0, stream.tell())
+            self.assertTrue(stat.S_ISREG(os.fstat(stream.fileno()).st_mode))
+            self.assertEqual(self.job / "prompt.txt", Path(stream.name))
+            return substitute(command, **kwargs)
+
+        self.run_fake(inspect_input)
+        self.assertEqual((self.job / "prompt.txt").read_bytes(), self.stdin_payloads[0])
+        self.assertTrue(self.seen[0][1]["stdin"].closed)
+
+    def test_real_process_reads_saved_utf8_prompt_without_translation(self):
+        # Substitute only the CLI command, retaining the real subprocess and
+        # provider stdin/stdout/stderr/timeout handling. No input app is run.
+        real_run = subprocess.run
+        child = (
+            "import hashlib,json,pathlib,sys; "
+            "raw=sys.stdin.buffer.read(); "
+            "pathlib.Path(sys.argv[1]).write_text(json.dumps({'sha256':hashlib.sha256(raw).hexdigest(),"
+            "'bytes':len(raw)}),encoding='utf-8'); "
+            "print(json.dumps({'type':'turn.completed','usage':{'input_tokens':1,'output_tokens':1}}))"
+        )
+
+        def synthetic_cli(command, **kwargs):
+            self.assertNotIn("input", kwargs)
+            answer = command[command.index("--output-last-message") + 1]
+            return real_run([sys.executable, "-c", child, answer], **kwargs)
+
+        with patch.object(provider.subprocess, "run", side_effect=synthetic_cli):
+            result = provider.run_job(self.workspace, self.job, "入力保持\r\n日本語\t🙂\n", timeout_seconds=5)
+        saved = (self.job / "prompt.txt").read_bytes()
+        self.assertEqual("passed", result["metadata"]["status"])
+        self.assertEqual({"sha256": hashlib.sha256(saved).hexdigest(), "bytes": len(saved)}, result["answer"])
+        self.assertEqual(self.original, (self.workspace / "snippet.txt").read_bytes())
+
+    def test_real_process_that_never_reads_stdin_times_out_with_partial_artifacts(self):
+        real_run = subprocess.run
+        child = (
+            "import json,sys,time; "
+            "print(json.dumps({'type':'item.started'}),flush=True); "
+            "sys.stderr.write('synthetic child awaiting stop\\n'); sys.stderr.flush(); "
+            "time.sleep(10)"
+        )
+
+        def synthetic_cli(command, **kwargs):
+            self.assertNotIn("input", kwargs)
+            self.assertTrue(stat.S_ISREG(os.fstat(kwargs["stdin"].fileno()).st_mode))
+            return real_run([sys.executable, "-c", child], **kwargs)
+
+        start = time.monotonic()
+        with patch.object(provider.subprocess, "run", side_effect=synthetic_cli):
+            result = provider.run_job(self.workspace, self.job, "入力保持\r\n" * 65536, timeout_seconds=1)
+        elapsed = time.monotonic() - start
+        self.assertLess(elapsed, 5, "stdin delivery must not wait for the child's 10-second sleep")
+        self.assertGreater((self.job / "prompt.txt").stat().st_size, 512 * 1024)
+        self.assertEqual("timeout", result["metadata"]["status"])
+        self.assertEqual({"item.started": 1}, result["metadata"]["event_types"])
+        self.assertIsNone(result["exit_code"])
+        self.assertIsNone(result["answer"])
+        self.assertEqual(b"synthetic child awaiting stop" + os.linesep.encode("ascii"),
+                         (self.job / "stderr.log").read_bytes())
+        self.assertEqual(result, json.loads((self.job / "result.json").read_text(encoding="utf-8")))
+        self.assertEqual(self.original, (self.workspace / "snippet.txt").read_bytes())
+
     def test_reference_design_policy_keeps_source_only_and_assisted_distinct(self):
         self.run_fake()
-        policy = self.seen[0][1]["input"].decode("utf-8")
+        policy = self.stdin_payloads[0].decode("utf-8")
         self.assertIn("In source-only jobs do not read reference specifications", policy)
         self.assertIn("current capsule manifest", policy)
         self.assertIn("trainingReferenceAuthorizedByUser=true", policy)
@@ -218,6 +294,73 @@ class ProviderTests(unittest.TestCase):
         self.assertEqual(b"partial stderr", (self.job / "stderr.log").read_bytes())
         self.assertEqual(12, result["usage"]["input_tokens"])
         self.assertEqual(0.25, self.seen[0][1]["timeout"])
+
+    def test_keyboard_interrupt_is_recorded_before_propagation_without_fake_completion(self):
+        with patch.object(provider.subprocess, "run", side_effect=self.fake(error=KeyboardInterrupt)):
+            with self.assertRaises(KeyboardInterrupt):
+                provider.run_job(self.workspace, self.job, "synthetic interrupted task")
+        recorded = json.loads((self.job / "result.json").read_text(encoding="utf-8"))
+        self.assertEqual("interrupted", recorded["metadata"]["status"])
+        self.assertEqual("interrupted", recorded["metadata"]["error_code"])
+        self.assertEqual("KeyboardInterrupt", recorded["metadata"]["interruption_type"])
+        self.assertIsNone(recorded["exit_code"])
+        self.assertIsNone(recorded["answer"])
+        self.assertIsNone(recorded["usage"])
+        self.assertFalse(recorded["metadata"]["usage_reported"])
+        self.assertEqual(b"", (self.job / "events.jsonl").read_bytes())
+        self.assertEqual(self.original, (self.workspace / "snippet.txt").read_bytes())
+        self.assertEqual(1, len(self.seen))
+
+    def test_keyboard_interrupt_preserves_partial_usage_errors_and_raw_answer_without_acceptance(self):
+        raw_answer = ' { "text" : "保持する人工応答" } \n'
+        events = [{"type": "turn.completed", "usage": {"input_tokens": 5, "output_tokens": 2}},
+                  {"type": "turn.failed", "error": {"message": "synthetic prior failure"}},
+                  b'{"type":"item.started"']
+        write_partial = self.fake(answer=raw_answer, events=events, stderr=b"partial stderr")
+        def interrupted(command, **kwargs):
+            write_partial(command, **kwargs)
+            raise KeyboardInterrupt
+        with patch.object(provider.subprocess, "run", side_effect=interrupted):
+            with self.assertRaises(KeyboardInterrupt):
+                provider.run_job(self.workspace, self.job, "synthetic task", schema={"type": "object"})
+        recorded = json.loads((self.job / "result.json").read_text(encoding="utf-8"))
+        self.assertEqual("interrupted", recorded["metadata"]["status"])
+        self.assertEqual({"input_tokens": 5, "output_tokens": 2}, recorded["usage"])
+        self.assertEqual([{"line": 2, "type": "turn.failed"}], recorded["metadata"]["error_events"])
+        self.assertEqual([3], recorded["metadata"]["invalid_event_lines"])
+        self.assertIsNone(recorded["answer"])
+        self.assertIsNone(recorded["exit_code"])
+        self.assertNotIn("answer_sha256", recorded["metadata"])
+        self.assertEqual(raw_answer.encode("utf-8"), (self.job / "answer.txt").read_bytes())
+        expected_events = b"".join((value if isinstance(value, bytes) else json.dumps(value, ensure_ascii=False).encode("utf-8")) + b"\n" for value in events)
+        self.assertEqual(expected_events, (self.job / "events.jsonl").read_bytes())
+        self.assertEqual(b"partial stderr", (self.job / "stderr.log").read_bytes())
+        self.assertEqual(self.original, (self.workspace / "snippet.txt").read_bytes())
+
+    def test_keyboard_interrupt_keeps_multiple_reported_usages_without_guessing_total(self):
+        events = [{"type": "turn.completed", "usage": {"input_tokens": 5}},
+                  {"type": "turn.completed", "usage": {"input_tokens": 7}}]
+        write_partial = self.fake(answer=None, events=events)
+        def interrupted(command, **kwargs):
+            write_partial(command, **kwargs)
+            raise KeyboardInterrupt
+        with patch.object(provider.subprocess, "run", side_effect=interrupted), self.assertRaises(KeyboardInterrupt):
+            provider.run_job(self.workspace, self.job, "synthetic task")
+        recorded = json.loads((self.job / "result.json").read_text(encoding="utf-8"))
+        self.assertEqual("interrupted", recorded["metadata"]["status"])
+        self.assertEqual({"turns": [{"input_tokens": 5}, {"input_tokens": 7}]}, recorded["usage"])
+
+    def test_unavailable_partial_event_summary_still_records_and_propagates_interruption(self):
+        with patch.object(provider.subprocess, "run", side_effect=self.fake(error=KeyboardInterrupt)), \
+             patch.object(provider, "_events", side_effect=PermissionError("synthetic unavailable summary")), \
+             self.assertRaises(KeyboardInterrupt):
+            provider.run_job(self.workspace, self.job, "synthetic task")
+        recorded = json.loads((self.job / "result.json").read_text(encoding="utf-8"))
+        self.assertEqual("interrupted", recorded["metadata"]["status"])
+        self.assertFalse(recorded["metadata"]["event_summary_available"])
+        self.assertEqual("PermissionError", recorded["metadata"]["event_summary_error_type"])
+        self.assertIsNone(recorded["usage"])
+        self.assertIsNone(recorded["answer"])
 
     def test_nonzero_exit_is_failure_even_with_valid_answer(self):
         result = self.run_fake(self.fake(exit_code=2, stderr=b"unsupported flag"))

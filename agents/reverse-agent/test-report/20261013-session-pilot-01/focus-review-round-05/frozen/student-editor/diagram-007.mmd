@@ -1,0 +1,25 @@
+flowchart TD
+ A[先行filter通過後の保存本体] --> F[FormGuard]
+ F -->|不正| E400[400共通応答]
+ F -->|正常| P[作成更新権限]
+ P -->|拒否| WF[元Statusの共通応答]
+ P -->|成立| SN[Snapshot.Get]
+ SN -->|非NULLキー不在・失効409、所有等相違403| WF
+ SN -->|NULLキーのArgumentNullException| EX[応答未開始なら共通503]
+ SN -->|成立| C[CheckReturn・Snapshot原復帰先との一致]
+ C -->|WebFault| WF
+ C -->|成立| M{ModelState有効}
+ M -->|いいえ| V422[422]
+ M -->|はい| CO[Coordinator再検査・ToRequest・SaveAsync]
+ CO -->|WebFault| RV[元Status]
+ CO -->|非WebFault伝播| EX
+ CO -->|SaveResult| O{Outcome}
+ O -->|Saved| RET[Flash・303作成]
+ RET -->|例外| CE[WebFaultは元Status、非WebFaultは共通503]
+ O -->|非Saved| RS[OutcomeのStatusを保持・結果確認キーへ置換]
+ RS --> L[投稿Input・旧Snapshot・新Lookup]
+ RV --> L
+ V422 --> L
+ L -->|成功| VIEW[Edit View]
+ L -->|WebFault| WF
+ L -->|非WebFault| EX

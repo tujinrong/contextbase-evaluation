@@ -1,0 +1,25 @@
+flowchart TD
+ A[保存本体] --> F[FormGuard]
+ F -->|不正| E400[400共通応答]
+ F -->|成功| P[作成更新権限・Snapshot.Get]
+ P -->|WebFault| WF[元Statusの共通応答]
+ P -->|NULLキー等の非WebFault| EX[応答未開始なら503]
+ P -->|成功| C[CheckReturn・原復帰先一致]
+ C -->|WebFault| WF
+ C -->|成功| M{ModelState有効}
+ M -->|いいえ| V422[422]
+ M -->|はい| CO[Coordinator再検査・ToRequest・SaveAsync]
+ CO -->|WebFault| RV[元Status・項目エラー]
+ CO -->|非WebFault伝播| EX
+ CO -->|結果型| O{Outcome}
+ O -->|Saved| RET[Flash・303]
+ RET -->|後段例外| CE[WebFaultは元Status・その他は共通503]
+ O -->|非Saved| RS[結果Status保持・結果確認キーへ置換]
+ RS --> L[投稿Input・旧Snapshot・新Lookup]
+ RV --> L
+ V422 --> L
+ L -->|成功| VIEW[Edit View]
+ L -->|WebFault| WF
+ L -->|非WebFault| EX
+ F -->|非WebFault| EX
+ C -->|非WebFault| EX

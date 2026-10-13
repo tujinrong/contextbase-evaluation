@@ -1,0 +1,17 @@
+flowchart TD
+ E[保存try内例外] --> IV{InputValidationException}
+ IV -->|はい| V[Rollback試行・422]
+ IV -->|いいえ| SQ{SqlException番号2601又は2627}
+ SQ -->|はい| U[Rollback試行・E-STU-101・422]
+ SQ -->|いいえ| DC{DBConcurrencyException}
+ DC -->|はい| C[Rollback試行・409]
+ DC -->|いいえ| G{一般catchの3型}
+ G -->|いいえ| P[上位伝播]
+ G -->|はい| R[Rollback結果取得]
+ R --> W{writeStarted}
+ W -->|false| SE[SystemError503]
+ W -->|true| CM{commitAttempted}
+ CM -->|true| UN[Unknown503]
+ CM -->|false| RB{Rollback成功}
+ RB -->|true| SE
+ RB -->|false| UN

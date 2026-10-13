@@ -1,0 +1,7 @@
+# 次回用の範囲分離修正の独立確認
+
+元のREADME/result.jsonと第4稿REVIEWを維持した上で、現在の次回用prompts.pyとworkflow.pyを再確認した。raw REVIEW schemaは既存jobのschema.jsonと同一である。promptはunresolvedを本文・原文根拠・構造の疑問だけへ限定し、範囲外未実施を混ぜない。workflowの重要指摘・text unresolvedによる承認拒否は残り、handoffだけにunassessedScopes（visual-fidelity / application-runtime / formal-semantic-scoring）を保存する。視覚/正式採点falseも維持する。これで承認対象と未実施の記録が両立する。
+
+check_scope_fix.pyは正確な現在のASTを安全なメモリ入力で確認した。本文疑問なしのテキスト承認、未解決textの偽承認拒否、majorの偽承認拒否、raw schema不変と3つの別未実施状態の計4ケースPASS。fix-confirmation.jsonに8入力SHAと不変、実節の行番号を保存した。provider・原アプリ・DBは実行していない。親の全294件検査を本独立検査の結果へ流用していない。
+
+現在の第4稿は旧frozen runtime/旧promptで既に稼働しており、この修正を適用した扱いにしない。既存approved=falseを承認へ書き換えていない。次回の別AIが本文根拠・構造の範囲を判断する。生成済みMD・source・productionを本監査では変更していない。

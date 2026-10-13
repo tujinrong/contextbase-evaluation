@@ -1,0 +1,15 @@
+flowchart LR
+  H[HTTPフォーム値] --> B[MVCバインドとModelState]
+  B --> I[StudentSearchInput]
+  I -->|Search・ToCriteria| C[SearchCriteria]
+  C --> N[サービス内の正規化ローカル]
+  N --> D[SQL Server参照]
+  D --> R[SearchResultとStudentRow]
+  C -->|成功確認後の深い複製| A[メモリApplied]
+  R -->|成功確認後| L[メモリLastResult]
+  A -->|Page・Resume| N
+  I -->|Options| O[今回条件と候補]
+  L -->|Optionsの一覧材料| O
+  R --> P[行表示objectと内部JsonElement]
+  O --> V[Search HTML]
+  P --> V

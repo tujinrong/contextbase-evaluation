@@ -75,7 +75,14 @@ def run(snapshot: Path, plan_file: Path, job_root: Path, output: Path,
         futures = {executor.submit(task, item): item for item in sorted(chosen)}
         for future in as_completed(futures):
             result = future.result()
+            result['reviewScope'] = 'text-source-and-structure' if 'independentReview' in result else 'not-performed'
+            result['visualFidelityVerified'] = False
+            result['formallyEvaluatedByOriginalRubric'] = False
             records.append(result)
+            # Persist each completed job immediately. A disconnected caller can
+            # discover finished drafts without waiting for the whole batch.
+            folder = capsule.sha256(result['documentId'].encode('utf-8'))[:16]
+            capsule.write_json(job_root / 'progress' / (folder + '.json'), result)
             print(json.dumps({'documentId': result['documentId'], 'status': result['status']}, ensure_ascii=False), flush=True)
     capsule.verify(snapshot)
     result = {'schema': 'reverse-ai-batch/1', 'createdAt': datetime.now(timezone.utc).isoformat(),
@@ -84,6 +91,8 @@ def run(snapshot: Path, plan_file: Path, job_root: Path, output: Path,
               'notSelected': sorted(available - chosen), 'documents': records,
               'analysisReportsExcludedFromPublication': sorted(analysis_reports),
               'semanticAnalysisByAI': True, 'semanticProseAssembledByPython': False,
+              'reviewScope': 'text-source-and-structure' if independent_review else 'not-performed',
+              'visualFidelityVerified': False,
               'formallyEvaluatedByOriginalRubric': False,
               'status': 'REVIEWED' if all(r['status'] == 'INDEPENDENT_REVIEW_APPROVED' for r in records) else 'INCOMPLETE'}
     capsule.write_json(job_root / 'batch-result.json', result)

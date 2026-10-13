@@ -65,6 +65,54 @@ class IterationTests(unittest.TestCase):
         self.assertEqual(result['status'], 'REQUIRES_AI_REVISION')
         self.assertIsNone(result['selectedDocument'])
 
+    def test_text_approval_ends_iteration_without_claiming_image_or_formal_acceptance(self):
+        answer={'approved':True,'findings':[],'unresolved':[]}
+        result=self.invoke([answer])
+        self.assertEqual('INDEPENDENT_REVIEW_APPROVED',result['status'])
+        self.assertEqual(1,len(result['rounds']))
+        self.assertTrue(Path(result['selectedDocument']).is_file())
+        self.assertEqual('text-source-and-structure',result['reviewScope'])
+        self.assertFalse(result['visualFidelityVerified'])
+        self.assertFalse(result['formallyEvaluatedByOriginalRubric'])
+        record=result['rounds'][0]
+        self.assertTrue(record['approvalAccepted'])
+        self.assertEqual(answer,record['review'])
+        self.assertEqual('text-source-and-structure',record['reviewScope'])
+        self.assertFalse(record['visualFidelityVerified'])
+        self.assertFalse(record['formallyEvaluatedByOriginalRubric'])
+        self.assertEqual(result,json.loads((self.root/'jobs/iteration-result.json').read_text()))
+
+    def test_revisions_reuse_completed_analysis_but_keep_the_critique(self):
+        original = self.draft
+        used = []
+        def checkpointed(snapshot, definition, job, output, **options):
+            used.append(options.get('analysis_job'))
+            answer = original(snapshot, definition, job, output, **options)
+            if len(used) == 1:
+                capsule.write_json(job/'analysis-handoff.json', {'fixture': 'workflow validates this checkpoint'})
+            return answer
+        self.draft = checkpointed
+        review = {'approved': False, 'findings': [{'defect': 'fixture issue'}], 'unresolved': []}
+        result = self.invoke([review, {'approved': True, 'findings': [], 'unresolved': []}], reuse_analysis=True)
+        self.assertIsNone(used[0])
+        self.assertEqual(self.root/'jobs/round-01', used[1])
+        self.assertEqual(review, self.contexts[1]['previousIndependentReview'])
+        self.assertEqual('INDEPENDENT_REVIEW_APPROVED', result['status'])
+
+    def test_quality_iterations_reanalyze_even_when_a_checkpoint_exists(self):
+        original = self.draft
+        used = []
+        def checkpointed(snapshot, definition, job, output, **options):
+            used.append(options.get('analysis_job'))
+            answer = original(snapshot, definition, job, output, **options)
+            capsule.write_json(job/'analysis-handoff.json', {'fixture': 'not reused by default'})
+            return answer
+        self.draft = checkpointed
+        result = self.invoke([{'approved': False, 'findings': [], 'unresolved': ['fixture']},
+                              {'approved': True, 'findings': [], 'unresolved': []}])
+        self.assertEqual([None,None], used)
+        self.assertTrue(result['freshAnalysisEachRound'])
+
     def test_structure_conflict_is_revised_without_falsifying_ai_review(self):
         approved = {'approved': True, 'findings': [], 'unresolved': []}
         issue = {'code': 'SYNTHETIC_STRUCTURE', 'severity': 'ERROR'}

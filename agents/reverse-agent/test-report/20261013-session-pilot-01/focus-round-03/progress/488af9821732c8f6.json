@@ -1,0 +1,81 @@
+{
+  "documentId": "SM-DET-STUDENT-SEARCH",
+  "draft": {
+    "documentId": "SM-DET-STUDENT-SEARCH",
+    "path": "spec/detail/student-search.md",
+    "contentSha256": "370fcc8b85803fe167d0b7148e5e612e657ee6a8c9fcefca77d63a89af6c6777",
+    "aiAuthored": true,
+    "semanticProseAssembledByPython": false,
+    "analysisFacts": 70,
+    "unresolved": [
+      "coverageNotes: manifestのmode=training-assisted、trainingReferenceAuthorizedByUser=true、referenceSpecificationIncluded=trueを確認した。読んだ参考設計はreferenceFilesに列挙された学生検索の基本・詳細設計2ファイルだけである。manifestは権限と材料一覧の確認に用い、業務・実装判断の根拠には用いていない。",
+      "coverageNotes: 読取りは指定カプセル内のmanifest、sources、indexed、許可済みreference-designsと入力データに限定した。メモリ、親・兄弟、評価期待値、他案件、ユーザー設定、実接続設定値・秘密値は読んでいない。入力プログラムの実行・import・ビルド・試験、ネットワーク、プラグイン、委任、ファイル書込みは行っていない。",
+      "coverageNotes: rg --filesとrg -nで位置を確認し、必要箇所を範囲読みした。PowerShellはlogin=falseで使用した。相対パス読取りやパイプ処理の一部が失敗したため、同じ許可済みカプセル内の参考設計だけ絶対パス指定で範囲読みした。切れた出力箇所は分割して再確認し、本文の根拠表記はPOSIX相対パスと原文行番号で統一した。",
+      "不足資料: MVCの空白文字列のNULL変換、欠落・型変換失敗時の最終バインド値、TagHelper生成後の最終DOMは、収録されたアプリ側宣言だけでは完全に確定しない。非nullable注釈、ブラウザー部品、サービス単体分岐を受信値保証へ拡張していない。",
+      "表示境界: type=dateの人向け表示、ロケール、入力UI、無効値処理は未確認。現行コードから参考設計のyyyy/MM/dd表示保証を確定できない。",
+      "運用未確定: 実接続先、DB配備、SNAPSHOT有効化、DDL制約の適用・有効状態、実効権限、認証連携、学校固有の学生・マスター値は未確認。起動登録やhealthのdatabase=not-testedはDB確認・試験合格の証拠ではない。",
+      "保持領域: プロセス再起動時の復旧、複数プロセス共有、負荷分散運用は未確認。t_runtime_stateの宣言から検索状態の永続化・暗号化・消費を推測していない。",
+      "条件付き推論: SearchのpageSize=0再描画、サービス引数のNULL在籍配列、Resumeの表示ページずれ、Pageの2回目検索中の件数再減少、削除Unknown後の404は静的な経路推論であり、実行再現していない。",
+      "障害境界: SQL障害、Gate待機・SQL・描画中の取消、同時更新、状態更新後の候補障害、Flash消費後の描画失敗、応答開始後の例外と切断時配信の実挙動は未確認。",
+      "文書検証: 版3.0のMarkdownと静的HTML/CSSを本応答で作成した。構造検査・安全化検査・レンダリング・画像閲覧を実施していないため、修正後適合、リンク外観、視覚的一致、承認を主張しない。",
+      "関連成果物: 関連文書のID・相対パスは供給された計画と照合した。他文書本文は本応答では生成しておらず、既存の生成・検証状態も確認していない。",
+      "不足資料: 参考設計からリンクされる方式別共通仕様、SQL Server DB定義、開発規約、共通日付仕様は追加読取りしていない。",
+      "確認候補: Unicodeのraw・正規化後長、日付両端と業務日、バインド失敗・NULL、旧Revisionと所有者・Tab、10,000／10,001件、候補0件・候補障害、Page補正とResume、確定後303と通知消費は将来の確認対象であり、今回の試験結果・合格ではない。"
+    ],
+    "factCorrections": [
+      "前稿のPage図で失敗を固定409へ合流させた記述を訂正した。StudentsController.cs:19はe.Statusを維持する。Applied未設定・旧版等は409、所有者等は403、サービスValidationFailedはEnsureSearchとWebPresentation.Statusを経て422となる。図・手順・結果表を同じ対応にそろえた。",
+      "入学日について、type=dateの表示部品、バインド後string?、SearchCriteriaのstring?、ParseIso後DateOnly?、SqlDbType.Date、再表示文字列を層別に記述した。参考設計のyyyy/MM/dd表示を現行ブラウザーの表示保証や独自フォーマッターとして追加していない。",
+      "前稿の静的HTMLに残った実action・formaction・アプリルートhrefを除いた。原ルートとHTTP methodは本文・data属性に保持し、全ボタンをtype=button、リンクを文書内fragmentとした。原ビューのa要素、配置、権限差、disabled条件は維持した。",
+      "正常ルートのHTML返却と、局所catch外の拒否・障害・描画例外を区別した。特にSearchのSearchModelは局所try外、Pageの成功時SearchModelはtry内、Pageのcatch内再構築と後続Razor描画は同じcatchで再捕捉されない。",
+      "解析素材の未解決事項にあった『文書3.0本文と静的投影は生成していない』は、本応答で本文と非実行投影を作成した状態へ更新した。ファイル保存、構造検査の再実行、画像生成・視覚確認、承認は行っていない。"
+    ],
+    "analysisExecutedInThisJob": true,
+    "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-03\\488af9821732c8f6",
+    "snapshot": {
+      "manifestSha256": "3a722dc206dbf2ce850b594aa1bee65117e472a8144531adb731d354fb9a5a24",
+      "capsuleSchema": "reverse-ai-source-capsule/1",
+      "mode": "training-assisted",
+      "modeDerivation": "explicit-manifest-mode",
+      "scope": "legacy-v1-raw-indexed-metadata-revalidated-unsealed-manifest"
+    },
+    "referenceMode": "training-assisted",
+    "structureFindings": [],
+    "status": "AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED"
+  },
+  "review": {
+    "documentId": "SM-DET-STUDENT-SEARCH",
+    "approved": false,
+    "findings": [
+      {
+        "severity": "minor",
+        "documentLocation": "イベント仕様／E02 検索／条件付き処理フローのUノード",
+        "defect": "Useからの例外経路がWebFaultだけで、Gate待機中の取消経路が図から欠落している。待機取消は検索SQL実行前にも発生し、ControllerのWebFault限定catchを越える。",
+        "repairDirection": "Uから共通エラー経路へGate待機取消の分岐を追加する。局所再表示と区別し、応答未開始時のmiddlewareは503を設定するが、エラーHTMLの配信完了は保証しないことを本文と対応させる。",
+        "references": [
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 14,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 13,
+            "endLine": 16
+          },
+          {
+            "path": "sources/Infrastructure/WebHostSetup.cs",
+            "startLine": 22,
+            "endLine": 24
+          }
+        ]
+      }
+    ],
+    "unresolved": [
+      "unknown: 静的HTMLの描画画像を閲覧していないため、幅・折返し・モード別表示の視覚的一致は未承認。原ビュー・共有レイアウト・CSSとの原文照合に限る。"
+    ]
+  },
+  "status": "REQUIRES_AI_REVISION",
+  "reviewScope": "text-source-and-structure",
+  "visualFidelityVerified": false,
+  "formalSemanticScore": null
+}

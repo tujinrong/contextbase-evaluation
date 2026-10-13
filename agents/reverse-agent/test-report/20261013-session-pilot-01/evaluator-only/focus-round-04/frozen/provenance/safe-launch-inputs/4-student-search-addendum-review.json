@@ -1,0 +1,23 @@
+{
+  "documentId": "SM-DET-STUDENT-SEARCH",
+  "approved": false,
+  "findings": [
+    {
+      "severity": "minor",
+      "documentLocation": "spec/detail/student-search.md:438-465／E02 SearchのU節点／metadata-01 diagram-006.png",
+      "defect": "CONFIRMED（局所図の欠落）: Useは最初のGetの後、tryとoperationの前でGate.WaitAsync(ct)をawaitする。ここで待機取消が起きればSearchAsyncもSQLも呼ばれず、ControllerのWebFault限定catchを越えて共通例外経路へ進む。しかしE02図のUにはWebFault403/409と正常なSearchAsyncへの矢印しかなく、取消の矢印はQのSQL実行や後段Q-Lにだけある。共通214はct付きGate待機、479は取消のcatch外伝播、949は条件付き503と配信未保証を既に説明しているため、取消規則や配信境界が文書全体から欠落しているとの広い解釈は反証される。SQL前のこの独立分岐は図に不足している。",
+      "repairDirection": "AIがUから既存の共通エラー経路XへGate待機取消の矢印を追加し、SQL前にoperationへ進まない経路として短く説明する。WebFaultの局所再表示、サービス入力検証422、検索中SQL取消と区別する。Gate未取得でWaitAsyncが失敗した要求について、取得後finallyのReleaseや期限・Applied・LastResult・Revisionの更新を実施したと書かない。応答未開始ならmiddlewareが非WebFaultを503としてエラーHTML返却を試みるが、切断や応答開始後の配信完了を保証しないという現行949の正しい境界は保持する。",
+      "references": [
+        {"path":"sources/Infrastructure/SearchContextStore.cs","startLine":14,"endLine":14},
+        {"path":"sources/Infrastructure/WebStudentCoordinator.cs","startLine":7,"endLine":9},
+        {"path":"sources/Web/Controllers/StudentsController.cs","startLine":13,"endLine":16},
+        {"path":"sources/Infrastructure/WebHostSetup.cs","startLine":22,"endLine":24}
+      ]
+    }
+  ],
+  "unresolved": [
+    "scope: 今回はCLIが挙げたSearch UseのSQL前Gate待機取消だけを原文・現行v3 MD・新たに実閲覧したmetadata-01 diagram-006で再照合した。先の限定レビューではこの欠落を検出していなかったため、本追記approved=falseを現行searchへの修正要求とし、以前のREVIEW・31画像manifest・metadata追記を履歴として変更しない。",
+    "refuted-overstatement: 現行MD949はエラーHTMLを返そうとすること、応答開始後・切断後の配信完了を保証しないことを既に明記する。今回の指摘から元原稿が503 HTML配信を保証していたとは判定しない。",
+    "unknown: 実HTTPで取消tokenが発火するタイミング、同時要求でGate待機に至る状態、middleware catchや書込みの実際の配信を再現していない。元アプリ・DB・browserを実行せず、正式原仕様採点もしていない。既に確認したUI、field chain、PageのHTTP状態保持等の正しい記述は維持する。"
+  ]
+}

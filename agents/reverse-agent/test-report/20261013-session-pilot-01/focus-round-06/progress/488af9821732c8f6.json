@@ -1,0 +1,59 @@
+{
+  "documentId": "SM-DET-STUDENT-SEARCH",
+  "draft": {
+    "documentId": "SM-DET-STUDENT-SEARCH",
+    "path": "spec/detail/student-search.md",
+    "contentSha256": "4a0fe4056d701e3a51ab58e693212de094f1d781d38a6258bbc332d4e99d07cc",
+    "aiAuthored": true,
+    "semanticProseAssembledByPython": false,
+    "analysisFacts": 80,
+    "unresolved": [
+      "HTTP原値からMVCのDTO・Action引数・ModelStateへの実バインドは未確認。Criteria全体、年度、bool、在籍配列、表示指定、ContextId・Revision・Tabの欠落・空・NULL・不正変換について、型注釈や初期化子だけで到達値を確定していない。",
+      "DIによる依存実装選択は原文で確認した。実効接続設定、実DBのDDL適用、SNAPSHOT有効性、実効権限、学校データ、認証基盤のclaims契約は未確認。接続設定ファイルや秘密値は読んでいない。",
+      "取消、同版並行要求、DB await後の期限経過、状態更新後の候補障害、JSON化・Razor例外、応答開始後例外、要求切断・HTML配信は静的解析のみ。DB結果・候補・Entry・描画全体の一貫したスナップショットは現在のGate範囲から保証できない。",
+      "参考設計のRangeFrom／RangeToの具体.NET型、1件以上の算式、全失敗枝のリセット、RequestSequenceの具体型・上限、IsBusyの全終了枝は収録資料で確定しない。",
+      "参考設計がリンクする共通仕様、DB定義、開発規約、適合試験一覧、HTML／PNG assetsは許可一覧にないため未読。リンク先の契約・試験結果・顧客承認は補作していない。",
+      "t_runtime_stateのpayload内容、暗号化方式、state_kind、永続化・消費の接続は未確認。現在の検索状態ストアはメモリ辞書であり、DDLから運用方式を推定していない。",
+      "coverageNotes: manifestのmode=training-assisted、trainingReferenceAuthorizedByUser=true、referenceSpecificationIncluded=trueとreferenceFiles列挙を確認した。参考設計の読取りは列挙されたreference-designs/配下の学生検索詳細・基本設計に限定し、manifestは権限・材料説明にのみ使用した。",
+      "coverageNotes: 読取りは指定capsule内のmanifest.json、sources/、indexed/と許可参考設計に限定した。実行環境の相対cwd指定では資料に到達できなかったため、capsule内へ絶対アンカーを付け、配下のPOSIX相対パスを維持して読んだ。親・兄弟・原プロジェクト・評価資料・ユーザー設定を追加読取りしていない。",
+      "coverageNotes: rgによる位置確認と原文の範囲読取りを使用した。切れた出力は読了扱いにせず必要範囲を再取得した。ネットワーク、プラグイン、外部サービス、委譲、ファイル編集、入力プログラムの実行・ビルド・テスト・DB操作・モデル訓練は行っていない。",
+      "coverageNotes: 本応答は版6.0のMarkdown本文をcontentとして返すもので、本文ファイルやHTML／図の描画成果物は作成していない。前稿の本文・視覚レビュー承認を今回の実施結果や顧客承認へ流用していない。関連文書のID・pathは提供計画と照合し、他文書は未生成の計画参照として記載した。"
+    ],
+    "factCorrections": [
+      "F039の「年度・学年・コードのNOT NULL参照は1親」という表現を限定した。年度はm_class.school_yearの属性であり、年度を参照するFKはない。1親となるのはNOT NULLの複合コード参照である。根拠: sources/database/001_schema.sql:64-66、189-197。",
+      "F042の共有候補境界を具体化した。検索MVCはSearchModel→LookupAsync(false,ct)→Controller/Razor、登録MVCはCoordinator.Edit等→LookupAsync(ct)→Editビューを使う。未接続Lookupsの登録コード判定にはEditビューの既存同値保持がないため、両者を共通の選択保証として扱わない。根拠: sources/Web/Controllers/StudentsController.cs:22-25、33-39、sources/Infrastructure/WebPresentation.cs:8-18、sources/Views/Students/Edit.cshtml:8-13。",
+      "R003の配置説明を、現行投影から独立した参考設計HTML投影として本文へ具体化した。ribbon、表示範囲、メニュー、先頭・最後、faux combobox、badge、行操作buttonは参考設計の出自を保持し、現行実装へ追加していない。根拠: reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:29-45、sources/Views/Students/Search.cshtml:3-8。",
+      "参考見本の氏名「保存・正規化160文字以内」という文言は見本として保持し、現行の保存表記student_nameは8スカラー値、name_keyは160スカラー値であることを本文で区別した。根拠: reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:40-40、sources/Core/StudentNormalizer.cs:125-145。"
+    ],
+    "analysisExecutedInThisJob": true,
+    "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-06\\488af9821732c8f6",
+    "snapshot": {
+      "manifestSha256": "3a722dc206dbf2ce850b594aa1bee65117e472a8144531adb731d354fb9a5a24",
+      "capsuleSchema": "reverse-ai-source-capsule/1",
+      "mode": "training-assisted",
+      "modeDerivation": "explicit-manifest-mode",
+      "scope": "legacy-v1-raw-indexed-metadata-revalidated-unsealed-manifest"
+    },
+    "referenceMode": "training-assisted",
+    "structureFindings": [],
+    "status": "AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED"
+  },
+  "review": {
+    "documentId": "SM-DET-STUDENT-SEARCH",
+    "approved": true,
+    "findings": [],
+    "unresolved": []
+  },
+  "status": "TEXT_SOURCE_REVIEW_APPROVED_AWAITING_VISUAL_AND_GRADING",
+  "reviewScope": "text-source-and-structure",
+  "visualFidelityVerified": false,
+  "formalSemanticScore": null,
+  "analysisExecution": {
+    "requestedFreshAnalysis": true,
+    "completed": true,
+    "state": "VERIFIED_SAME_JOB_ANALYSIS",
+    "checkpointPath": "agents/reverse-agent/.tmp/20261013-session-pilot-01/focus-round-06/488af9821732c8f6/analysis-handoff.json",
+    "checkpointSha256": "7ec2c32a2359c205094b629eb21944c09670acc7f467b89a7f0fa322762fc2c8",
+    "analysisSha256": "6d044ceadfec78e3b0b3a2d7e54775133748c33f2361b57d66b69076405e2733"
+  }
+}

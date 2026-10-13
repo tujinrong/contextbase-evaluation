@@ -1,0 +1,113 @@
+{
+  "documentId": "SM-DET-STUDENT-SEARCH",
+  "draft": {
+    "documentId": "SM-DET-STUDENT-SEARCH",
+    "path": "spec/detail/student-search.md",
+    "contentSha256": "7750a80014ed98cd2408807798c30cead8f395e6e139a8b1cb4a610768f5634a",
+    "aiAuthored": true,
+    "semanticProseAssembledByPython": false,
+    "analysisFacts": 78,
+    "unresolved": [
+      "HTTPバインド境界: 空白のみのフォーム値の保持・null変換、int?・bool・配列への詳細変換、変換失敗値、ModelStateとTag Helperの再表示優先順位は、提示されたフレームワーク実装から確定できない。影響: SM-DET-STUDENT-SEARCH、SM-COM-HTTP-SECURITY、SM-RPT-UNRESOLVED。根拠: sources/Web/Controllers/StudentsController.cs:13-22、sources/Infrastructure/WebHostSetup.cs:16-16。",
+      "運用状態: StudentDbの実接続値、DB配備、SNAPSHOT設定、FK・CHECKの実効状態、権限、マスター件数、学校固有データは未確認。接続実値・資格情報は取得していない。DDLや接続診断の宣言を成功結果に読み替えない。",
+      "認証・保持領域: 本番claim発行、認証失効時の実挙動、プロセス再起動・複数ノード間の状態継続は未確定。接続された状態ストアはプロセスメモリであり、t_runtime_stateの永続化・暗号化・消費の接続は確認できない。",
+      "条件付き推論: SearchのPageSize=0での描画例外、Resumeの保持表示ページ超過、削除Unknown後の再読込み404はソース経路からの推論で、実行確認ではない。SQL取消、競合、後段候補障害、切断時の最終配信も静的解析だけでは確定しない。",
+      "参考設計の不足境界: 共通メニューの遷移URL、RangeFrom／RangeToの正確な算式、参考設計からリンクされる未収録共通資料は追加取得していない。設計上の名称・意図から現行の公開入口、値、処理を創作しない。",
+      "成果物状態: 関連文書のID・相対パスは供給計画と照合したが、各文書の生成・リンク先存在・顧客承認は未確認。本応答のcontentが改訂本文であり、ファイルや画面画像を作成したとは扱わない。",
+      "解析範囲・参照許可: manifestでmode=training-assisted、trainingReferenceAuthorizedByUser=true、referenceSpecificationIncluded=trueを確認した。referenceFilesに列挙された学生検索の基本設計・詳細仕様だけを参考意図の照合に読んだ。manifestは材料と権限の確認に限定し、業務・実装判断の根拠には用いていない。",
+      "解析範囲・手段: workspace内のmanifest.json、sources/、許可されたreference-designs/の必要範囲をrg --files・rg -nで確認した。長い出力の欠けた主要範囲は分割して再読した。原プログラム・SQL・ビルド・試験・CLIは実行せず、ファイル編集、ネットワーク、外部サービス、プラグイン、委任エージェント、モデル訓練、workspace外の資料・ユーザー設定の読取りは行っていない。",
+      "解析範囲・材料の位置付け: 提供facts、前稿、批評は再検証する材料として扱い、期待値・実行証拠・試験合格・顧客承認にはしていない。参考設計との相違は設計意図と観測実装として分け、改善採用は認定していない。"
+    ],
+    "factCorrections": [
+      "前稿の「空白のみは学籍番号で拒否、カナで空キー検索」という画面動作の断定を修正した。確定するのはサービスへ非空空白文字列が届いた場合の分岐であり、MVCバインドでnullになれば両条件は省略される。HTTP原入力、バインド後DTO、Normalizer引数を分離した。根拠: sources/Web/Controllers/StudentsController.cs:13-16、sources/Infrastructure/WebHostSetup.cs:16-16、sources/Core/SqlServerStudentService.cs:113-117。",
+      "学年・在籍・都道府県名称について、保守入力12スカラー値、DBのnvarchar(24)、NOT NULL、CHECK12、LEFT JOIN結果NULL可を追記した。クラス名称は18スカラー値・nvarchar(36)・CHECK18である。クラス保存の実パラメータは動的生成の@class_name、コード名称保存は@nameと区別した。根拠: sources/Core/MasterMaintenanceService.cs:33-33,73-74,82-82,113-115,127-128、sources/database/001_schema.sql:67-81,115-128。",
+      "削除非Saved後の最終応答を補完した。Controllerは結果エラー・HTTP状態の設定後にLoadを再実行し、詳細・候補・フォーム・復帰版・編集スナップショットを再作成する。Unknownでも実際に削除済みなら非削除取得から404へ進み得ることを条件付き推論として記載した。根拠: sources/Web/Controllers/StudentsController.cs:25-25,37-37、sources/Infrastructure/WebStudentCoordinator.cs:17-17、sources/Core/SqlServerStudentService.cs:176-179,409-416。",
+      "前稿の静的投影にあった独自のssラッパー・CSSを除き、共有Layoutのheader/mainと実際の要素・classセレクターへ合わせた。未検索Viewer図とfound・非Viewerの差分、0件・超過・局所失敗の分岐を別に示した。根拠: sources/Views/Shared/_Layout.cshtml:1-1、sources/Views/Students/Search.cshtml:3-8、sources/wwwroot/css/site.css:1-1。",
+      "参考設計の応答世代制御を候補だけの意図に限定せず、検索・ページ・候補の各最新要求確認とRequestSequenceを具体化した。現行のGate・RevisionはEntry更新の保護、通常HTML応答は画面応答世代の制御なしとして区別した。根拠: reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:147-147,210-212,258-262,307-309、sources/Infrastructure/SearchContextStore.cs:14-14、sources/wwwroot/js/site.js:2-9。",
+      "メニュー、件数・表示範囲、先頭・最後ページ、未所属・欠損・クラス状態の設計意図を操作条件・表示値・結果として説明し、現行ビューへ未実装制御を追加しない構成に改めた。正確な表示範囲算式や共通メニューURLは創作していない。根拠: reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:99-114,135-137,351-367、sources/Views/Students/Search.cshtml:3-8、sources/Infrastructure/WebStudentCoordinator.cs:21-21。",
+      "登録側の全保存列・重複確認・監査詳細の再掲を減らし、E09をSaved、303、復帰ID・版、Flash、再検索、非Saved後の最終応答へ整理した。関連文書は供給計画の正確なIDと相対パスで対応し、生成済みとは認定していない。"
+    ],
+    "analysisExecutedInThisJob": true,
+    "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-02-attempt-02\\488af9821732c8f6",
+    "snapshot": {
+      "manifestSha256": "3a722dc206dbf2ce850b594aa1bee65117e472a8144531adb731d354fb9a5a24",
+      "capsuleSchema": "reverse-ai-source-capsule/1",
+      "mode": "training-assisted",
+      "modeDerivation": "explicit-manifest-mode",
+      "scope": "legacy-v1-raw-indexed-metadata-revalidated-unsealed-manifest"
+    },
+    "referenceMode": "training-assisted",
+    "structureFindings": [
+      {
+        "severity": "ERROR",
+        "code": "REFERENCE_PATH",
+        "detail": "An HTML reference uses an unsafe or protected target",
+        "location": "spec/detail/student-search.md:65"
+      },
+      {
+        "severity": "ERROR",
+        "code": "REFERENCE_PATH",
+        "detail": "An HTML reference uses an unsafe or protected target",
+        "location": "spec/detail/student-search.md:65"
+      },
+      {
+        "severity": "ERROR",
+        "code": "REFERENCE_PATH",
+        "detail": "An HTML reference uses an unsafe or protected target",
+        "location": "spec/detail/student-search.md:65"
+      },
+      {
+        "severity": "ERROR",
+        "code": "REFERENCE_PATH",
+        "detail": "An HTML reference uses an unsafe or protected target",
+        "location": "spec/detail/student-search.md:113"
+      },
+      {
+        "severity": "ERROR",
+        "code": "REFERENCE_PATH",
+        "detail": "An HTML reference uses an unsafe or protected target",
+        "location": "spec/detail/student-search.md:113"
+      },
+      {
+        "severity": "ERROR",
+        "code": "REFERENCE_PATH",
+        "detail": "An HTML reference uses an unsafe or protected target",
+        "location": "spec/detail/student-search.md:113"
+      }
+    ],
+    "status": "STRUCTURE_INVALID"
+  },
+  "review": {
+    "documentId": "SM-DET-STUDENT-SEARCH",
+    "approved": false,
+    "findings": [
+      {
+        "severity": "major",
+        "documentLocation": "spec/detail/student-search.md:65、113／概要「画面設計と表示層」の静的HTML",
+        "defect": "静的投影のaction、formaction、hrefに実アプリケーションの送信先・遷移先が残り、提示された構造検査ではREFERENCE_PATHエラー6件が未解消である。URLは原ビューの実装と対応するが、文書の埋め込みHTMLとして許容された状態にはなっていない。",
+        "repairDirection": "原ルートは本文または非遷移のデータ属性に保持し、投影から実ルートへの送信・遷移を除く。DOM階層、項目配置、権限差、disabled条件は維持して構造検査を再確認する。",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 4,
+            "endLine": 8
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 13,
+            "endLine": 24
+          }
+        ]
+      }
+    ],
+    "unresolved": [
+      "unknown: 静的HTML/CSSは原ビュー・共有レイアウト・CSSとテキスト照合したが、描画画像を閲覧していないため視覚的一致は未承認。",
+      "unknown: REFERENCE_PATH検査の許可規則は提示されておらず、修正後の適合性は再検査が必要。",
+      "unknown: MVCによる空白値変換とTagHelperが生成する最終DOMは、収録された宣言・登録だけでは完全に確認できない。原稿のバインド境界に関する留保を維持する。",
+      "unknown: DB配備、実効権限、競合・取消・障害時の実挙動、関連文書の生成状態は未確認。静的解析を実行結果や試験合格として扱わない。"
+    ]
+  },
+  "status": "REQUIRES_AI_REVISION",
+  "visualFidelityVerified": false,
+  "formalSemanticScore": null
+}

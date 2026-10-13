@@ -42,6 +42,28 @@ class BatchTests(unittest.TestCase):
         self.assertEqual(1,result['selected'])
         self.assertEqual(2,result['planned'])
         self.assertEqual('INCOMPLETE',result['status'])
+        self.assertEqual('not-performed',result['reviewScope'])
+        self.assertEqual('not-performed',result['documents'][0]['reviewScope'])
+        self.assertFalse(result['visualFidelityVerified'])
+
+    def test_approved_text_batch_retains_unverified_visual_scope_in_checkpoint(self):
+        answer={'documentId':'D','approved':True,'findings':[],'unresolved':[]}
+        with patch.object(workflow,'document',return_value={'documentId':'D','structureFindings':[]}), \
+             patch.object(workflow,'review',return_value=answer):
+            result=self.invoke()
+        self.assertEqual('REVIEWED',result['status'])
+        self.assertEqual('text-source-and-structure',result['reviewScope'])
+        self.assertFalse(result['visualFidelityVerified'])
+        self.assertFalse(result['formallyEvaluatedByOriginalRubric'])
+        document=result['documents'][0]
+        self.assertEqual('INDEPENDENT_REVIEW_APPROVED',document['status'])
+        self.assertEqual(answer,document['independentReview'])
+        self.assertEqual('text-source-and-structure',document['reviewScope'])
+        self.assertFalse(document['visualFidelityVerified'])
+        self.assertFalse(document['formallyEvaluatedByOriginalRubric'])
+        folder=capsule.sha256(b'D')[:16]
+        checkpoint=json.loads((self.root/'jobs/progress'/(folder+'.json')).read_text())
+        self.assertEqual(document,checkpoint)
 
     def test_explicit_analysis_report_needs_a_separate_report_job(self):
         with patch.object(workflow,'document') as ai,self.assertRaises(ValueError):
@@ -73,6 +95,35 @@ class BatchTests(unittest.TestCase):
         folder=capsule.sha256(b'D')[:16]
         self.assertTrue((self.root/'jobs'/folder/'batch-failure.json').exists())
         self.assertFalse(result['formallyEvaluatedByOriginalRubric'])
+
+    def test_completed_job_is_checkpointed_before_another_job_finishes(self):
+        value = json.loads(self.plan.read_text(encoding='utf-8'))
+        value['documents'].append(dict(value['documents'][0], id='Z', path='spec/other.md'))
+        second_plan = self.root / 'second-plan'
+        second_plan.mkdir()
+        raw = second_plan / 'answer.txt'
+        raw.write_text(json.dumps(value), encoding='utf-8')
+        bound = workflow.bind_existing_plan(self.snapshot, raw,
+                     capsule.verification_state(self.snapshot)['manifestSha256'])
+        self.plan = Path(bound['planFile'])
+        import threading
+        first_finished = threading.Event()
+        def document(snapshot, definition, *args, **kwargs):
+            if definition['id'] == 'D':
+                return {'documentId': 'D', 'status': 'AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED'}
+            checkpoint = self.root/'jobs'/'progress'/(capsule.sha256(b'D')[:16]+'.json')
+            for _ in range(100):
+                if checkpoint.exists():
+                    first_finished.set()
+                    break
+                first_finished.wait(0.01)
+            self.assertTrue(checkpoint.exists(), 'Completed D must be durable while Z is running')
+            self.assertEqual('D', json.loads(checkpoint.read_text(encoding='utf-8'))['documentId'])
+            return {'documentId': 'Z', 'status': 'AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED'}
+        with patch.object(workflow, 'document', side_effect=document):
+            result = self.invoke(workers=2, independent_review=False)
+        self.assertTrue(first_finished.is_set())
+        self.assertEqual(2, len(result['documents']))
 
     def test_timezone_free_deadline_starts_no_ai_job(self):
         with patch.object(workflow,'document') as ai,self.assertRaises(ValueError):

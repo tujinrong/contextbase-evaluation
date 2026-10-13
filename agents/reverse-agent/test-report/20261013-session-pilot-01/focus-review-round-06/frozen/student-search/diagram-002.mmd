@@ -1,0 +1,15 @@
+flowchart TD
+  A[Use入口] --> G[Get・状態と所有等確認]
+  G -->|403または409| X[呼出元へ例外]
+  G --> W[Gate.WaitAsync ct]
+  W -->|取得前取消| C[operation・SQL・状態更新・期限延長・Releaseなし]
+  C --> X
+  W -->|取得| R[取得後Get]
+  R -->|拒否| F[取得済みGateをfinallyで解放]
+  R --> V[期待Revision・版上限検査]
+  V -->|409| F
+  V -->|通過| O[operation await]
+  O -->|例外| F
+  O -->|正常終了| E[期限をUTC現在から30分延長]
+  E --> H[結果返却・finallyで解放]
+  F --> X

@@ -1,0 +1,14 @@
+flowchart TD
+  A[POST clear] --> F[FormGuard・認証]
+  F --> U[Use・Gate待機・再検査・期待版]
+  U --> S[Applied・LastResult消去・Revision更新]
+  S --> E[期限延長・Gate解放]
+  E --> G[ModelState消去・再Get・初期input]
+  G --> L[Q-L・モデル・ViewResult]
+  L --> H[Razor描画]
+  F -->|拒否| X[共通例外経路]
+  U -->|拒否・取得前待機取消| X
+  S -->|例外| X
+  G -->|再Get拒否等| X
+  L -->|障害・取消・変換例外| X
+  H -->|描画例外| X

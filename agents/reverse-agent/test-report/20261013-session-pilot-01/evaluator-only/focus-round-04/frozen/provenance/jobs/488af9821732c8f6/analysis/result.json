@@ -1,0 +1,2419 @@
+{
+  "answer": {
+    "documentId": "SM-DET-STUDENT-SEARCH",
+    "sourcePathsRead": [
+      "manifest.json",
+      "sources/Program.cs",
+      "sources/StudentManagement.Web.csproj",
+      "sources/Core/StudentManagement.Core.csproj",
+      "sources/Core/Contracts.cs",
+      "sources/Core/SqlServerStudentService.cs",
+      "sources/Core/StudentNormalizer.cs",
+      "sources/Core/JapaneseDateService.cs",
+      "sources/Core/MasterMaintenanceService.cs",
+      "sources/Web/Controllers/StudentsController.cs",
+      "sources/Web/Inputs/StudentSearchInput.cs",
+      "sources/Web/Inputs/StudentSaveInput.cs",
+      "sources/Web/Inputs/StudentDeleteInput.cs",
+      "sources/Web/Models/StudentSearchPageModel.cs",
+      "sources/Web/Models/StudentEditPageModel.cs",
+      "sources/Infrastructure/WebStudentCoordinator.cs",
+      "sources/Infrastructure/SearchContextStore.cs",
+      "sources/Infrastructure/WebPresentation.cs",
+      "sources/Infrastructure/WebHostSetup.cs",
+      "sources/Infrastructure/RequestIdentity.cs",
+      "sources/Infrastructure/AntiforgeryResultFilter.cs",
+      "sources/Infrastructure/EditorSnapshotStore.cs",
+      "sources/Infrastructure/FlashMessageStore.cs",
+      "sources/Infrastructure/StrictJson.cs",
+      "sources/Views/Students/Search.cshtml",
+      "sources/Views/Students/Edit.cshtml",
+      "sources/Views/Shared/_Layout.cshtml",
+      "sources/Views/Shared/_MessagePanel.cshtml",
+      "sources/Views/_ViewImports.cshtml",
+      "sources/Views/_ViewStart.cshtml",
+      "sources/wwwroot/js/site.js",
+      "sources/wwwroot/css/site.css",
+      "sources/database/001_schema.sql",
+      "sources/database/002_seed.sql",
+      "sources/database/003_web_permissions.sql",
+      "sources/database/004_verify_deployment.sql",
+      "sources/database/Deploy-Database.ps1",
+      "sources/maintenance/Program.cs",
+      "indexed/Core/SqlServerStudentService.cs.txt",
+      "indexed/database/001_schema.sql.txt",
+      "indexed/database/002_seed.sql.txt",
+      "indexed/Infrastructure/WebStudentCoordinator.cs.txt",
+      "indexed/Infrastructure/StrictJson.cs.txt",
+      "reference-designs/基本設計書/01_学生検索画面.md",
+      "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md"
+    ],
+    "facts": [
+      {
+        "id": "OBS-001",
+        "topic": "概要・実装接続",
+        "statement": "接続された検索経路はSearch.cshtml→StudentsController→WebStudentCoordinator→IStudentService.SearchAsync→SqlServerStudentServiceである。ProgramがControllerを登録し、GET /を/studentsへ転送する。検索・ページ取得は学生とマスターを参照し、検索条件・結果は別のメモリ状態へ保持する。検索画面から学生の登録値を直接変更する処理はない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Program.cs",
+            "startLine": 2,
+            "endLine": 7
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 8,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 7,
+            "endLine": 15
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 103,
+            "endLine": 170
+          }
+        ]
+      },
+      {
+        "id": "OBS-002",
+        "topic": "依存実装・寿命・接続設定",
+        "statement": "RequestIdentity、WebStudentCoordinator、IStudentServiceはScoped、検索・編集・通知ストアはSingletonとして登録される。IStudentServiceは設定名StudentDbの接続文字列からSqlServerStudentServiceをwebTokens=trueで生成する。設定が空なら503のWebFaultを送出する。実接続先や設定値の有効性はこの登録コードだけでは確定しない。WebとCoreはnet10.0、CoreはMicrosoft.Data.SqlClient 6.1.3を宣言する。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Infrastructure/WebHostSetup.cs",
+            "startLine": 13,
+            "endLine": 19
+          },
+          {
+            "path": "sources/StudentManagement.Web.csproj",
+            "startLine": 2,
+            "endLine": 3
+          },
+          {
+            "path": "sources/Core/StudentManagement.Core.csproj",
+            "startLine": 3,
+            "endLine": 8
+          }
+        ]
+      },
+      {
+        "id": "OBS-003",
+        "topic": "画面構成・表示部品",
+        "statement": "画面は見出し・メッセージ、検索条件、検索／候補更新、クリア／新規登録、検索結果状態、表示指定、一覧、前後ページの順に配置する。共有Layoutは利用者名・業務日、CSS、defer付きsite.jsを組み込む。条件欄は2列、760px以下は1列。一覧は横スクロール可能で表の最小幅は1050px。エラーはvalidation-summary All、通知は別のmessage info領域に表示し、双方にaria-live=politeがある。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 3,
+            "endLine": 8
+          },
+          {
+            "path": "sources/Views/Shared/_Layout.cshtml",
+            "startLine": 1,
+            "endLine": 1
+          },
+          {
+            "path": "sources/Views/Shared/_MessagePanel.cshtml",
+            "startLine": 2,
+            "endLine": 3
+          },
+          {
+            "path": "sources/Views/_ViewStart.cshtml",
+            "startLine": 1,
+            "endLine": 1
+          },
+          {
+            "path": "sources/wwwroot/css/site.css",
+            "startLine": 1,
+            "endLine": 1
+          }
+        ]
+      },
+      {
+        "id": "OBS-004",
+        "topic": "HTTP入口・フォーム分離",
+        "statement": "初期表示と復帰はGET /students、検索はPOST /students/search、候補更新はPOST /students/options、ページ操作はPOST /students/page、クリアはPOST /students/clearである。Resume専用ルートはなく、contextId付きIndexが呼ぶ。検索と候補更新は同じ条件フォームを使い、ページ操作とクリアは別フォームを使う。各POSTフォームはContextId、ContextRevision、TabIdと偽造防止情報を送る。検索フォームのPageSize・SortKey・SortDirectionはhidden、ページフォーム側は選択部品であり、条件欄Criteria.*はページフォームに含まれない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 4,
+            "endLine": 8
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 8,
+            "endLine": 22
+          }
+        ]
+      },
+      {
+        "id": "OBS-005",
+        "topic": "認証・フォーム受付",
+        "statement": "ControllerはAuthorizeを要求し、起動設定はPOSTの自動偽造防止検査を登録する。RequestIdentityは認証済み状態、主体、login_session、Roleの解析を確認し、主体の空白・64スカラー値超、セッションの空白・64コード単位超などを401のWebFaultにする。検索にStaff限定検査はない。FormGuardは許可項目名を大小文字非区別で照合し、未知項目、不正な__Invariant参照先、許可されない複数値を400にする。複数値を許すのは__Invariant、末尾StatusCodes、末尾UnassignedOnlyであり、値の型・必須性を保証する検査ではない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 5,
+            "endLine": 6
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 41,
+            "endLine": 41
+          },
+          {
+            "path": "sources/Infrastructure/RequestIdentity.cs",
+            "startLine": 7,
+            "endLine": 15
+          },
+          {
+            "path": "sources/Infrastructure/WebHostSetup.cs",
+            "startLine": 15,
+            "endLine": 18
+          }
+        ]
+      },
+      {
+        "id": "OBS-006",
+        "topic": "受信・バインド・NULL境界",
+        "statement": "SearchとOptionsはMVCがCriteria接頭辞でStudentSearchInputへバインドした値を受け取る。非nullable参照型の暗黙Requiredは抑制されており、string・string[]の注釈や初期化子を受信NULL排除の実行保証にはできない。SearchはModelState不正ならCoordinatorを呼ばず422にするが、OptionsとPageには同じ停止判定がない。HTTP原文字列を別領域へ完全保存する処理はなく、再表示材料はinputとModelStateである。本文上限65536バイト、フォーム設定のMultipartBodyLengthLimit・ValueLengthLimit=65536、ValueCountLimit=128は項目の業務長とは別の受付設定である。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 13,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Infrastructure/WebHostSetup.cs",
+            "startLine": 16,
+            "endLine": 18
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 7,
+            "endLine": 22
+          }
+        ]
+      },
+      {
+        "id": "OBS-007",
+        "topic": "長さ単位・共通文字検査",
+        "statement": "Normalizerのrawは、その関数へ実際に渡った文字列である。TextはNULLを空文字へ置き換え、rawのUnicodeスカラー値上限、制御文字、Trim、空値・必須性、Trim後上限の順に確認する。ScalarCountはサロゲート対を1と数え、単独サロゲートをArgumentExceptionで拒否する。HTML maxlengthと.NET LengthはUTF-16コード単位、業務長はスカラー値、nvarchar容量はUTF-16コード単位、varchar容量はバイト、SQL Sizeはパラメータ領域として区別する。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 37,
+            "endLine": 57
+          },
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 9,
+            "endLine": 22
+          }
+        ]
+      },
+      {
+        "id": "FIELD-001",
+        "topic": "fields・SRC-001 学籍番号",
+        "statement": "input id=SRC-001、フォーム名Criteria.StudentNo、maxlength=30はStudentSearchInput.StudentNo:stringからSearchCriteria.StudentNo:string?へ移す。サービス引数がNULL・空文字なら条件を省略し、それ以外はIdentifierでraw・Trim後・NFKC大文字化後を15スカラー値以内、先頭英数字・以降英数字またはハイフンに限定する。検索はs.student_no LIKE @no ESCAPE '!'の前方一致、@noはVarChar(31)。保存列はm_student.student_no:varchar(15) NOT NULLで、登録側もIdentifierを使い@student_no:VarChar(15)で保存する。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 7,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 59,
+            "endLine": 64
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 124,
+            "endLine": 124
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 113,
+            "endLine": 113
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 140,
+            "endLine": 140
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 294,
+            "endLine": 301
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 9,
+            "endLine": 9
+          }
+        ]
+      },
+      {
+        "id": "FIELD-002",
+        "topic": "fields・SRC-002 氏名",
+        "statement": "input id=SRC-002、Criteria.Name、maxlength=16はName:stringからStudentName:string?へ移す。任意Textでraw・Trim後8スカラー値を検査し、非NULLならNFKC・大文字化・Unicode空白除去によるNameKeyを生成して160スカラー値を検査する。検索はs.name_key LIKE @name ESCAPE '!'の部分一致、@name:NVarChar(642)。保存表記student_name:nvarchar(16) NOT NULLと検索用name_key:nvarchar(320) NOT NULLは別列で、DDLのスカラー値CHECKは8と160。保存側は表記を必須Textで検査し、キーを再生成してNVarChar(16)・NVarChar(320)で送る。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 8,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 66,
+            "endLine": 70
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 125,
+            "endLine": 145
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 31,
+            "endLine": 32
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 114,
+            "endLine": 115
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 141,
+            "endLine": 141
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 10,
+            "endLine": 12
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 44,
+            "endLine": 46
+          }
+        ]
+      },
+      {
+        "id": "FIELD-003",
+        "topic": "fields・SRC-003 氏名カナ",
+        "statement": "input id=SRC-003、Criteria.Kana、maxlength=72はKana:stringからStudentNameKana:string?へ移す。サービス引数NULL・空文字は省略する。非空はraw・Trim後36スカラー値以内、NFKC、ひらがなのカタカナ化、空白統合、許可カナの確認を行い、正規化後18以内とする。検索キーでは半角空白を除去し、s.kana_keyへの部分LIKE、@kana:NVarChar(74)を使う。保存表記student_name_kanaと照合値kana_keyは双方nvarchar(36) NOT NULL、CHECK18で、保存側はカナ必須、双方の保存パラメータはNVarChar(36)である。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 9,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 72,
+            "endLine": 85
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 126,
+            "endLine": 145
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 31,
+            "endLine": 32
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 116,
+            "endLine": 116
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 142,
+            "endLine": 142
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 11,
+            "endLine": 13
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 45,
+            "endLine": 47
+          }
+        ]
+      },
+      {
+        "id": "FIELD-004",
+        "topic": "fields・SRC-004 年度",
+        "statement": "select id=SRC-004、Criteria.SchoolYearはDTOとSearchCriteriaのint?に対応する。初期値は未指定の「すべて」。指定値は1900～9998とクラス年度の存在を確認し、c.school_year=@year、@year:SmallInt、Size指定なしで検索する。参照列m_class.school_yearはsmallint NOT NULLで、学生表に年度列はない。保守側ClassChange.SchoolYear:intも同じ範囲を検査し、@school_year:SmallIntで保存する。未所属ONのRazor再描画ではdisabledにする。0を未指定へ読み替えない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 10,
+            "endLine": 20
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 109,
+            "endLine": 109
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 126,
+            "endLine": 129
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 143,
+            "endLine": 143
+          },
+          {
+            "path": "sources/Core/MasterMaintenanceService.cs",
+            "startLine": 9,
+            "endLine": 9
+          },
+          {
+            "path": "sources/Core/MasterMaintenanceService.cs",
+            "startLine": 32,
+            "endLine": 32
+          },
+          {
+            "path": "sources/Core/MasterMaintenanceService.cs",
+            "startLine": 73,
+            "endLine": 74
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 64,
+            "endLine": 64
+          }
+        ]
+      },
+      {
+        "id": "FIELD-005",
+        "topic": "fields・SRC-005 学年",
+        "statement": "select id=SRC-005、Criteria.GradeCodeはDTO・条件双方のstring?に対応する。任意Code検査でraw・Trim後2スカラー値以内、NFKC後ASCII数字2桁に限定し、空はNULLにする。GRADE分類の存在を確認した値でc.grade_code=@grade、@grade:VarChar(2)を追加する。保存元m_class.grade_code:varchar(2) NOT NULLとgrade_category:varchar(24) NOT NULLを使い、学生へ学年を重複保存しない。保守保存は学年必須で@grade_code:VarChar(2)。seedの00は「学年なし」という実コードであり、未所属NULLとは別である。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 11,
+            "endLine": 20
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 113,
+            "endLine": 117
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 118,
+            "endLine": 125
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 144,
+            "endLine": 144
+          },
+          {
+            "path": "sources/Core/MasterMaintenanceService.cs",
+            "startLine": 34,
+            "endLine": 34
+          },
+          {
+            "path": "sources/Core/MasterMaintenanceService.cs",
+            "startLine": 73,
+            "endLine": 74
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 65,
+            "endLine": 66
+          },
+          {
+            "path": "sources/database/002_seed.sql",
+            "startLine": 78,
+            "endLine": 78
+          }
+        ]
+      },
+      {
+        "id": "FIELD-006",
+        "topic": "fields・SRC-006 クラス",
+        "statement": "select id=SRC-006、Criteria.ClassIdはDTOのstring?からIdParser.OptionalでSearchCriteria.ClassId:long?へ変換する。NULL・空文字は未指定、非空は19コード単位以内、ASCII数字、正のInt64とし、Trim・NFKCは行わない。存在と指定年度・正規化学年の一致を確認後、s.class_id=@class、@class:BigInt、Size指定なしを使う。保存先m_student.class_id:bigint NULL、参照先m_class.class_id:bigint IDENTITY NOT NULL・PKで、保存パラメータは@class_id:BigInt。ID0は未所属を表さない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 12,
+            "endLine": 20
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 57,
+            "endLine": 60
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 36,
+            "endLine": 36
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 131,
+            "endLine": 145
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 28,
+            "endLine": 28
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 63,
+            "endLine": 80
+          }
+        ]
+      },
+      {
+        "id": "FIELD-007",
+        "topic": "fields・SRC-007 未所属のみ",
+        "statement": "checkbox id=SRC-007、Criteria.UnassignedOnlyはDTO・条件双方のbool、初期falseである。trueならs.class_id IS NULLを追加し、専用の保存列・SQLパラメータはない。SearchAsyncは学年正規化前に年度・非NULL学年・クラスとの併指定を拒否するため、非NULLの空学年文字列もその検査に含まれる。Searchは所属値を自動解除せず、Optionsは所属3値と対応ModelStateを解除する。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 13,
+            "endLine": 20
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 22,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 110,
+            "endLine": 110
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 146,
+            "endLine": 146
+          }
+        ]
+      },
+      {
+        "id": "FIELD-008",
+        "topic": "fields・在籍区分チェック群",
+        "statement": "在籍区分はCriteria.StatusCodesを同名で送るcheckbox群で、SRC-008というDOM idはない。DTOのStatusCodes:string[]からEnrollmentStatusCodes:string[]へ移し、初期01・02、フォームキー省略時はControllerが空配列へ補正する。サービスは最大4件、Ordinal重複なし、01・02・03・04だけを許し、正規化や在籍マスター存在照会は行わない。非空配列はs.enrollment_status_code IN (@status0,...)、各VarChar(2)。空配列は在籍述語を省略する。保存列enrollment_status_code:varchar(2) NOT NULL、enrollment_category:varchar(24) NOT NULLを使う。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 14,
+            "endLine": 21
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 14,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 22,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 111,
+            "endLine": 112
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 151,
+            "endLine": 154
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 25,
+            "endLine": 26
+          }
+        ]
+      },
+      {
+        "id": "FIELD-009",
+        "topic": "fields・SRC-009 都道府県",
+        "statement": "select id=SRC-009、Criteria.PrefectureCodeはDTO・条件双方のstring?に対応する。任意Code検査でraw・Trim後2スカラー値以内、NFKC後ASCII数字2桁、空はNULLとし、PREFECTURE分類の存在を確認する。検索はs.prefecture_code=@prefecture、@prefecture:VarChar(2)であり、表示住所の文字列を検索する処理ではない。保存列prefecture_code:varchar(2) NOT NULL、分類列prefecture_category:varchar(24) NOT NULLを使い、保存側は都道府県必須、@prefecture_code:VarChar(2)である。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 15,
+            "endLine": 21
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 113,
+            "endLine": 117
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 130,
+            "endLine": 130
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 33,
+            "endLine": 33
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 119,
+            "endLine": 125
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 147,
+            "endLine": 147
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 18,
+            "endLine": 19
+          }
+        ]
+      },
+      {
+        "id": "FIELD-010",
+        "topic": "fields・SRC-010 電話番号",
+        "statement": "input id=SRC-010、Criteria.PhoneNumber、maxlength=40はDTOのstringから条件のstring?へ移す。Phoneはraw・Trim後20スカラー値以内、任意空をNULLとし、NFKC後にUnicode空白、半角ハイフン、U+2010・U+2011・U+2212、丸括弧を除去する。国内は0始まり10～11桁、国際は+と非ゼロ始まり7～15桁で、形式上最大16文字。検索は(s.phone_number=@phone OR s.emergency_phone_number=@phone)、@phone:VarChar(16)。双方の保存列はvarchar(16) NULLで、保存も同じPhoneとVarChar(16)を使う。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 16,
+            "endLine": 21
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 87,
+            "endLine": 93
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 133,
+            "endLine": 141
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 34,
+            "endLine": 37
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 148,
+            "endLine": 148
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 22,
+            "endLine": 32
+          }
+        ]
+      },
+      {
+        "id": "FIELD-011",
+        "topic": "fields・SRC-011／012 入学日両端",
+        "statement": "SRC-011／012はtype=dateのinput、Criteria.AdmissionFrom／AdmissionToで、maxlengthや独自表示整形の宣言はない。DTOとSearchCriteriaではstring?のまま渡し、サービス内でDateOnly?へ変換する。NULL・空文字は片端省略、非空はTrimせずNFKC後Length=10とInvariantCultureのyyyy-MM-dd厳密解析を要求し、1900-01-01～検索入口の日本時間業務日を許す。ParseIsoに正規化前の個別長上限はない。開始>終了はE-STU-006。検索はs.admission_date>=@fromと<=@toの両端包含、各Date・Size指定なし。保存列admission_date:date NOT NULLの必須性は任意検索条件と別である。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 17,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Core/JapaneseDateService.cs",
+            "startLine": 52,
+            "endLine": 59
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 105,
+            "endLine": 105
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 120,
+            "endLine": 122
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 149,
+            "endLine": 150
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 24,
+            "endLine": 24
+          }
+        ]
+      },
+      {
+        "id": "FIELD-012",
+        "topic": "fields・表示指定とページ操作",
+        "statement": "表示件数PageSize:intは20・50・100、SortKey:stringはstudentNo・name・admissionDate・updatedAt、SortDirection:stringは小文字asc・descに限定し、初期20・studentNo・ascとする。PageRequest.Page:intは既定1、ページフォームの反映ボタンはPage=1、前後ボタンは提示page±1を送る。found以外はページ操作を非活性にし、foundでも前へはpage>1、次へはpage×PageSize<countの場合だけ活性にする。これらは保存列を持たない制御値である。ページ側selectの変更を検索フォームのhiddenへ同期するJavaScriptはない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 4,
+            "endLine": 8
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 25,
+            "endLine": 29
+          },
+          {
+            "path": "sources/Core/Contracts.cs",
+            "startLine": 45,
+            "endLine": 48
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 107,
+            "endLine": 108
+          },
+          {
+            "path": "sources/wwwroot/js/site.js",
+            "startLine": 2,
+            "endLine": 9
+          }
+        ]
+      },
+      {
+        "id": "OBS-008",
+        "topic": "空文字・空白・配列NULLの分岐",
+        "statement": "サービスへ空白だけの非空文字列が残って届いた場合、番号は必須Identifierで拒否、氏名・電話は任意空として条件省略、カナは任意Kanaから空キーを作ってLIKE '%%'相当となる。バインド後NULLの番号・カナは入口で省略される。この違いをHTTP空白入力の確定動作へ拡張しない。EnrollmentStatusCodesがサービス引数としてNULLならLength参照でNullReferenceExceptionとなり、検証例外catchには入らない。フォームキー省略時の空配列補正とは別の境界である。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 111,
+            "endLine": 117
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 140,
+            "endLine": 142
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 169,
+            "endLine": 170
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 47,
+            "endLine": 93
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 14,
+            "endLine": 14
+          }
+        ]
+      },
+      {
+        "id": "LOOKUP-001",
+        "topic": "候補取得SQL・結果形",
+        "statement": "SearchModelは毎回LookupAsync(false,ct)を呼ぶ。別接続のSNAPSHOT内で、m_code c INNER JOIN m_code_category kをcategory_idで結び、分類・値・名称・表示順・コードと分類の利用状態AND・コード期間・保護状態を取得する。第2結果はm_class c LEFT JOIN m_code gを学年分類＋値で結び、c.*とCONVERT(int,0) occupiedを取得する。両SQLにWHERE、受信条件パラメータ、ページングはない。ReaderをNextResultAsyncで切り替え、CodeEntryとSchoolClassの全取得結果をcommit後LookupSetで返す。Occupied=0は人数集計省略値である。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 39,
+            "endLine": 39
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 197,
+            "endLine": 216
+          },
+          {
+            "path": "sources/Core/Contracts.cs",
+            "startLine": 61,
+            "endLine": 65
+          }
+        ]
+      },
+      {
+        "id": "LOOKUP-002",
+        "topic": "候補・抽出・完全な順序",
+        "statement": "コード取得順はcategory_id、display_order、code_value。画面はGRADE、ENROLLMENT_STATUS、PREFECTUREを分類で抽出し、その分類内順序を使う。年度候補は全ClassesのSchoolYearを重複排除して降順。クラス取得順はschool_year DESC、学年コードdisplay_order、クラスdisplay_order、class_code、class_idで、画面が今回年度・学年の指定条件で抽出する。クラスの選択値はClassId、表示は年度・ClassCode・ClassNameと停止注記であり、学年名称や人数はクラス選択肢に表示しない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 203,
+            "endLine": 214
+          },
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          }
+        ]
+      },
+      {
+        "id": "LOOKUP-003",
+        "topic": "候補・初期・停止・候補なし",
+        "statement": "年度・学年・クラス・都道府県には空値「すべて」があり、候補0件でもその選択肢を置く。在籍は候補に存在する01・02を初期checkedにし、候補0件ならcheckbox自体がない。検索画面はコードやクラスの停止・期間外を選択禁止にせず、クラス停止だけを（停止）と注記する。候補不足で検索ボタンを禁止する分岐はない。検索可能な候補を新規保存可能値と同一視せず、保存側は最新DBの存在・状態・期間・所属整合・定員を別に再検査する。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 10,
+            "endLine": 15
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 347,
+            "endLine": 383
+          }
+        ]
+      },
+      {
+        "id": "LOOKUP-004",
+        "topic": "表示名称の保存側属性",
+        "statement": "クラス候補・一覧のClassCodeとClassNameはCLI class入力からClassChange:stringへ入り、Identifierのraw・正規化後9以内と必須Textのraw・Trim後18スカラー値で検査する。保存列はm_class.class_code:varchar(9) NOT NULL、class_name:nvarchar(36) NOT NULL・CHECK18、パラメータはVarChar(9)とNVarChar(36)。学年・在籍・都道府県のCodeNameはCLI code入力から必須Textのraw・Trim後12スカラー値を検査し、m_code.code_name:nvarchar(24) NOT NULL・CHECK12へ@name:NVarChar(24)で保存する。表示DTOだけから名称上限やNULL可否を決めない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/maintenance/Program.cs",
+            "startLine": 10,
+            "endLine": 13
+          },
+          {
+            "path": "sources/Core/MasterMaintenanceService.cs",
+            "startLine": 9,
+            "endLine": 10
+          },
+          {
+            "path": "sources/Core/MasterMaintenanceService.cs",
+            "startLine": 33,
+            "endLine": 33
+          },
+          {
+            "path": "sources/Core/MasterMaintenanceService.cs",
+            "startLine": 73,
+            "endLine": 74
+          },
+          {
+            "path": "sources/Core/MasterMaintenanceService.cs",
+            "startLine": 82,
+            "endLine": 82
+          },
+          {
+            "path": "sources/Core/MasterMaintenanceService.cs",
+            "startLine": 113,
+            "endLine": 115
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 67,
+            "endLine": 81
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 115,
+            "endLine": 128
+          }
+        ]
+      },
+      {
+        "id": "ROW-001",
+        "topic": "StudentRow・一覧移送",
+        "statement": "一覧SQLは16列を取得し、StudentRowのStudentId:long、StudentNo／StudentName／StudentNameKana:string、BirthDate:DateOnly、SchoolYear:int?、GradeName／ClassCode／ClassName／EnrollmentStatusName:string?、Address:string、PhoneNumber:string?、AdmissionDate:DateOnly、UpdatedAt:DateTimeOffset、RowVersion:longへ移す。WebPresentation.RowはIDをInvariantCulture十進文字列にし、在籍名をenrollmentName、住所をaddressDisplayへ移す。AdmissionDate、RowVersion、内部BirthDateは一覧用オブジェクトへ出さず、生年月日はBirthDateWarekiを出す。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/Contracts.cs",
+            "startLine": 50,
+            "endLine": 58
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 77,
+            "endLine": 90
+          },
+          {
+            "path": "sources/Infrastructure/WebPresentation.cs",
+            "startLine": 20,
+            "endLine": 20
+          },
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8
+          }
+        ]
+      },
+      {
+        "id": "ROW-002",
+        "topic": "一覧表示値・DB列・欠損",
+        "statement": "一覧の学籍番号・氏名・カナは保存表記を表示し、name_key・kana_keyを表示しない。年度・学年名・クラスコード・クラス名は所属クラスと学年コードJOINから得るため、基表のNOT NULLとは別に結合結果がNULLとなり得る。学年名・在籍名・クラス名へ一律の－や不整合補完はない。住所は都道府県名称とaddress_line1を区切りなしで連結し、都道府県名称がSQL NULLなら[不整合]を使う。address_line1は必須Text45、nvarchar(90) NOT NULL・CHECK45、@address_line1:NVarChar(90)。保存可能なaddress_line2:nvarchar(90) NULLは一覧SELECT・住所算出に含めない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 77,
+            "endLine": 90
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 131,
+            "endLine": 132
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 34,
+            "endLine": 34
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 20,
+            "endLine": 21
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 48,
+            "endLine": 49
+          },
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8
+          }
+        ]
+      },
+      {
+        "id": "ROW-003",
+        "topic": "一覧・日付・電話・比較版",
+        "statement": "生年月日birth_date:date NOT NULLは保存側の和暦入力検査からDateへ保存し、一覧ではDateOnlyから元号・元年・2桁月日へ変換する。日付値に時差は加えない。本人電話はNULLの場合だけ－と表示し、検索が緊急電話へ一致しても一覧に緊急電話は表示しない。updated_at:datetimeoffset(7) NOT NULLは保存処理がUTCを設定し、表示では+09:00のyyyy/MM/dd HH:mm:ssへ変換する。row_versionは正のbigint・DEFAULT1で、更新時に加算する比較版であり、SQL Serverのrowversion型や検索状態Revisionではない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 127,
+            "endLine": 127
+          },
+          {
+            "path": "sources/Core/JapaneseDateService.cs",
+            "startLine": 9,
+            "endLine": 16
+          },
+          {
+            "path": "sources/Core/JapaneseDateService.cs",
+            "startLine": 41,
+            "endLine": 50
+          },
+          {
+            "path": "sources/Infrastructure/WebPresentation.cs",
+            "startLine": 7,
+            "endLine": 20
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 296,
+            "endLine": 301
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 14,
+            "endLine": 14
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 40,
+            "endLine": 59
+          },
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8
+          }
+        ]
+      },
+      {
+        "id": "ROW-004",
+        "topic": "結果状態・画面モデル",
+        "statement": "Presentは結果NULLをunsearched、LimitExceededをtooMany、Count=0をempty、それ以外をfoundにする。未検索と超過のtotalCountはNULL、正常0件は0である。検索日時は結果があれば日本時間文字列を設定するが、ビューで件数・日時を本文表示するのはfoundの場合だけ。未検索は「未検索」、0件は「該当する学生はありません。」、超過は10,000件超の絞込み警告を表示する。DataはWeb既定JSON設定でJsonElement化したHTML描画材料であり、公開JSON応答ではない。提示page・表示指定はAppliedまたは既定値に由来する。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 21,
+            "endLine": 21
+          },
+          {
+            "path": "sources/Web/Models/StudentSearchPageModel.cs",
+            "startLine": 6,
+            "endLine": 15
+          },
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 2,
+            "endLine": 8
+          }
+        ]
+      },
+      {
+        "id": "STATE-001",
+        "topic": "入力中条件・Applied・LastResult",
+        "statement": "入力中条件はブラウザー、要求StudentSearchInput、応答モデルCriteriaにあり、Entryに入力途中条件専用領域はない。Applied:SearchCriteria?は最後に成功した検索条件、LastResult:SearchResult?は成功結果を保持する。SearchとPageはEnsureSearch成功後、JSON往復による深い複製をAppliedへ置く。SQL用の正規化ローカル変数でApplied文字列を置換しない。Optionsは今回inputとLastResultを表示し、PageはAppliedを複製、Resumeは元Appliedを使う。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 9,
+            "endLine": 15
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 7,
+            "endLine": 15
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 22,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 113,
+            "endLine": 150
+          }
+        ]
+      },
+      {
+        "id": "STATE-002",
+        "topic": "状態所有・寿命・初期値",
+        "statement": "検索EntryはConcurrentDictionaryに保持し、所有主体、認証セッション、Tab、UTC期限、Revision、Applied、LastResult、SemaphoreSlimを持つ。初期Revision=1、期限は現在+30分、条件と結果はNULL、Gateは1枠。状態IDと未指定時Tabは32バイト乱数の64桁小文字hexとして生成する。Create時に期限切れEntryを掃除する。検索条件をCookie・URL・t_runtime_stateへ保存する実装はこのストアにない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 9,
+            "endLine": 12
+          },
+          {
+            "path": "sources/database/003_web_permissions.sql",
+            "startLine": 23,
+            "endLine": 23
+          }
+        ]
+      },
+      {
+        "id": "STATE-003",
+        "topic": "状態取得・再検査・期待Revision",
+        "statement": "GetはID未設定・未存在・期限切れをW-SRC-002付き409、主体・セッション不一致と非空指定時Tab不一致を403にする。Useは最初のGet、ct付きGate待機、取得後のGet再確認、期待Revisionの十進文字列との完全一致、long.MaxValue拒否の順に進む。省略・先頭ゼロ付き版を最新版へ補完しない。operation正常終了後にだけ期限を30分延長し、取得後のtryから出るとfinallyでGateを解放する。DB await後に所有・期限・Revisionを再度Getする処理はない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 13,
+            "endLine": 14
+          }
+        ]
+      },
+      {
+        "id": "STATE-004",
+        "topic": "SQL前のGate待機取消",
+        "statement": "UseのGate.WaitAsync(ct)は、Gate取得後のtry・finallyおよびoperation呼出しより前にある。取得前にこのawaitが取消で失敗した要求はSearchAsyncやSQLへ進まず、この要求によるApplied・LastResult・Revision・期限更新も取得後finallyのReleaseも行わない。Search／PageのWebFault限定catchを越え、応答未開始なら共通middlewareが非WebFaultとして503を設定しエラーHTML返却を試みる。切断後や応答開始後の配信完了は保証されない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 14,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 7,
+            "endLine": 12
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 13,
+            "endLine": 19
+          },
+          {
+            "path": "sources/Infrastructure/WebHostSetup.cs",
+            "startLine": 22,
+            "endLine": 24
+          }
+        ]
+      },
+      {
+        "id": "EVENT-INDEX",
+        "topic": "events・Index",
+        "statement": "GET /studentsはidentity.Read後、contextIdがNULL・空文字ならEntryを作り、未検索表示材料と初期StudentSearchInputを用意する。初期条件は文字条件空、所属・都道府県・日付未指定、未所属false、在籍01・02、表示20件・studentNo・ascである。Flash Take、LookupAsync(false)、JsonElement化を経てSearchのViewResultを返す。学生検索は行わない。候補・変換・描画失敗を局所捕捉せず、作成したEntryを取り消す処理もない。contextIdありの場合はEVENT-RESUMEへ進む。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 8,
+            "endLine": 11
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 39,
+            "endLine": 39
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 7,
+            "endLine": 18
+          },
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 9,
+            "endLine": 12
+          }
+        ]
+      },
+      {
+        "id": "EVENT-SEARCH",
+        "topic": "events・Search",
+        "statement": "POST searchはFormGuard、在籍キー省略補正、最初の状態Get、未検索用表示材料の作成を局所try外で行う。ModelState不正は422、正常時はCoordinatorが認証、ToCriteria・クラスID解析・Page=1設定を行ってUseへ進む。SearchAsyncとEnsureSearchが成功した後にApplied深い複製、LastResult、Revision+1を設定し、Use正常終了で期限を延長する。0件と上限超過もサービスがNoChangeを返す成功経路である。その後、今回inputと別候補取得でモデルを作り、送信された表示指定をモデルへ設定してSearch HTMLを返す。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 13,
+            "endLine": 16
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 19,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 7,
+            "endLine": 9
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 20,
+            "endLine": 21
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 159,
+            "endLine": 170
+          }
+        ]
+      },
+      {
+        "id": "EVENT-SEARCH-FAILURE",
+        "topic": "events・Searchの拒否・再表示境界",
+        "statement": "Searchの局所try内WebFaultはそのe.Statusとメッセージを保持して、今回input・ModelStateと未検索用空一覧で再表示する。ToCriteriaのID不正やサービス検証は422、Useの所有等は403、期限・旧版・版上限は409となり、既存Applied・LastResultは消さない。EnsureSearchは先頭FieldErrorだけをWebFaultへ移し、FieldをCriteria.*へ一律変換しない。最初のFormGuard・Get、後段SearchModel、ViewResult返却後のRazor描画はこのcatchの外である。SQL障害・取消もWebFaultへ変換されなければ局所再表示を通らない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 14,
+            "endLine": 16
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 20,
+            "endLine": 20
+          },
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 13,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Infrastructure/WebPresentation.cs",
+            "startLine": 23,
+            "endLine": 23
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 169,
+            "endLine": 170
+          }
+        ]
+      },
+      {
+        "id": "FLOW-SEARCH",
+        "topic": "図材料・Searchの条件付きフロー",
+        "statement": "flowchart TD\n A[POST searchのAction入口] --> F[FormGuard・在籍キー補正]\n F --> G[最初のGet・未検索用データ]\n F -->|400 WebFault| X[共通例外経路]\n G -->|401・403・409 WebFault| X\n G --> M{ModelState有効}\n M -->|いいえ| V[422・今回input・空一覧]\n M -->|はい| C[認証・ToCriteria・Page1]\n C -->|WebFault| W[e.Statusとエラーを保持・今回input・空一覧]\n C --> U[UseのGet・Gate待機・取得後再Get・版照合]\n U -->|WebFault 401・403・409等| W\n U -->|取得前のGate待機取消・operation未実行| X\n U --> Q[SearchAsync・成功確認]\n Q -->|検証結果からWebFault 422| W\n Q -->|SQL障害・取消等| X\n Q --> S[0件・通常・超過それぞれの結果でApplied・LastResult・Revision更新]\n S --> E[Use正常終了・期限延長・取得済みGate解放]\n E --> L[別候補取得・JsonElement化・モデル作成]\n W --> L\n V --> L\n L -->|例外| X\n L --> H[Search ViewResult・Razor描画]\n H -->|描画例外| X\n X --> T{応答未開始}\n T -->|はい| R[WebFaultは元の状態・他の例外は503・エラーHTML返却を試行]\n T -->|いいえ| P[このmiddlewareのcatch対象外]\n取得済みGateを持つUse内の失敗はfinallyで解放するが、Gate取得前取消の経路にはReleaseを追加しない。共通経路からHTML配信完了を保証する矢印は置かない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 13,
+            "endLine": 16
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 7,
+            "endLine": 9
+          },
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 14,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Infrastructure/WebHostSetup.cs",
+            "startLine": 22,
+            "endLine": 24
+          }
+        ]
+      },
+      {
+        "id": "EVENT-OPTIONS",
+        "topic": "events・Options",
+        "statement": "POST optionsは検索と同じFormGuard・在籍補正・状態Getを行う。未所属trueなら所属3値と対応ModelStateを解除し、今回input、Present(entry,LastResult)、全候補を使ってSearchモデルを作る。条件未反映通知を設定し、非空ClassIdが候補ID文字列・今回年度・今回学年に適合しなければClassIdとModelStateを解除して解除通知へ置き換える。学生検索、ToCriteria、期待Revision照合、Gate取得、Applied・LastResult・Revision更新、期限延長は行わない。受信表示指定も明示反映せず、Appliedまたは既定値をモデルに使う。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 22,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 39,
+            "endLine": 39
+          }
+        ]
+      },
+      {
+        "id": "EVENT-OPTIONS-BOUNDARY",
+        "topic": "events・候補更新の比較・失敗境界",
+        "statement": "OptionsはModelState.IsValidで停止せず、学年正規化やIdParserを使わず比較する。例えばClassId文字列01はSearchで数値1として解析できても、Optionsの候補文字列1には一致せず解除され得る。候補取得の年度・学年抽出はSQL後のController・Razor処理である。状態とLastResultはGateなしで読むため、一括保護された状態スナップショットではない。Search・Page局所失敗で保持済みLastResultが残った場合、後続Optionsがそれを再表示し得るが、今回条件の検索結果ではない。拒否・障害の入力保持用局所catchはない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 14,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 60,
+            "endLine": 60
+          },
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 9,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5
+          }
+        ]
+      },
+      {
+        "id": "FLOW-OPTIONS",
+        "topic": "図材料・Optionsの条件付きフロー",
+        "statement": "flowchart TD\n A[POST options] --> F[FormGuard・在籍補正・Get]\n F -->|拒否| X[共通例外経路・元WebFault状態を保持]\n F --> U{未所属true}\n U -->|はい| C[所属3値・対応ModelState解除]\n U -->|いいえ| L[今回input・LastResult・別候補取得]\n C --> L\n L -->|障害・取消| X\n L --> K{非空クラスが候補・上位条件に不適合}\n K -->|はい| R[クラス解除・解除通知]\n K -->|いいえ| M[条件変更未反映通知]\n R --> H[Search ViewResult・Razor描画]\n M --> H\n H -->|例外| X\nこの図に学生件数確認・一覧SQL・状態版更新・Gateを追加しない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 22,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 39,
+            "endLine": 39
+          },
+          {
+            "path": "sources/Infrastructure/WebHostSetup.cs",
+            "startLine": 23,
+            "endLine": 24
+          }
+        ]
+      },
+      {
+        "id": "EVENT-PAGE",
+        "topic": "events・Page",
+        "statement": "POST pageはFormGuardと最初のGetをtry外で行い、Coordinatorが認証・Useを通る。Appliedなしは409。Appliedを深く複製し、件数・ソートキー・方向のいずれかが変わればPage1、同じなら要求Pageを設定する。検索成功後、上限超過でなく保持予定Pageが返却件数の最終ページを超える場合、一度だけ保持Pageを補正してSearchAsyncを再実行する。再成功後にApplied・LastResult・Revisionを更新し、期限延長後、From(Applied)、別候補取得からSearch HTMLを返す。未実行の条件フォーム値を検索へ混ぜない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 18,
+            "endLine": 19
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 39,
+            "endLine": 40
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 11,
+            "endLine": 12
+          }
+        ]
+      },
+      {
+        "id": "EVENT-PAGE-FAILURE",
+        "topic": "events・PageのHTTP状態・再検索境界",
+        "statement": "Pageのtry内WebFaultはe.Statusを保ち、Applied由来inputと未検索用空一覧で再構築する。所有等403、期限・旧版・未検索409、サービス検証422を一つの状態へ固定しない。成功側SearchModelもtry内なので、状態更新後のWebFaultを捕捉し得るが状態を復元しない。catch内の再構築例外と返却後Razor例外は同じcatchで再捕捉しない。最終ページ補正の2回のSearchAsyncは別接続・別SNAPSHOTであり、2回目の件数がさらに減っても保持Page補正を反復しない。PageはModelState不正で停止せず、表示指定変更時の要求Pageはサービス検査前に1へ置換する。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 19,
+            "endLine": 19
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 12,
+            "endLine": 12
+          },
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 13,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 123,
+            "endLine": 124
+          },
+          {
+            "path": "sources/Infrastructure/WebPresentation.cs",
+            "startLine": 23,
+            "endLine": 23
+          }
+        ]
+      },
+      {
+        "id": "FLOW-PAGE",
+        "topic": "図材料・Pageの条件付きフロー",
+        "statement": "flowchart TD\n A[POST page] --> F[FormGuard]\n F --> G[最初のGet]\n F -->|400| X[共通例外経路]\n G -->|401・403・409等| X\n G --> U[認証・Use・Gate待機・再Get・期待版]\n U -->|WebFault 401・403・409等| W[e.Statusとエラーを保持]\n U -->|Gate待機取消| X\n U --> C{Appliedあり}\n C -->|なし 409| W\n C -->|あり| D[条件複製・表示指定変更ならPage1]\n D --> Q[第1検索・成功確認]\n Q -->|検証422| W\n Q -->|SQL障害・取消等| X\n Q --> B{超過なし・保持Pageが最終ページ外}\n B -->|はい| N[保持Page補正・第2検索・成功確認]\n N -->|検証422| W\n N -->|SQL障害・取消等| X\n B -->|いいえ| S[Applied・LastResult・Revision更新]\n N -->|成功| S\n S --> E[Use正常終了・期限延長・Gate解放]\n E --> L[Applied由来input・別候補取得・モデル]\n L -->|WebFault| W\n L -->|その他の例外| X\n W --> R[元HTTP状態・Applied由来input・空一覧・候補で再構築]\n R -->|例外| X\n L -->|成功| H[ViewResult・Razor描画]\n R -->|成功| H\n H -->|描画例外| X\nXの最終状態は応答未開始時のWebFaultなら元の状態、その他なら503であり、HTML配信完了は保証しない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 18,
+            "endLine": 19
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 11,
+            "endLine": 12
+          },
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 14,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Infrastructure/WebHostSetup.cs",
+            "startLine": 23,
+            "endLine": 24
+          }
+        ]
+      },
+      {
+        "id": "EVENT-CLEAR",
+        "topic": "events・Clear",
+        "statement": "POST clearはFormGuard、認証、Useの所有・期限・期待版検査を経て、AppliedとLastResultをNULL、Revisionを+1にする。Use正常終了後に期限を延長し、ControllerがModelStateを全消去してEntryを再Getし、初期input・既定表示指定・候補取得で未検索HTMLを返す。状態ID・所有者・Tabは維持する。クリア自体はメモリ操作で、学生検索・DB DELETE・t_runtime_state DELETEはない。局所catchや後段候補障害時の状態復元はないため、クリア確定とHTML到達は別である。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 21,
+            "endLine": 21
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 39,
+            "endLine": 39
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 15,
+            "endLine": 15
+          },
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 14,
+            "endLine": 14
+          }
+        ]
+      },
+      {
+        "id": "FLOW-INDEX-CLEAR",
+        "topic": "図材料・初期表示とクリア",
+        "statement": "flowchart TD\n A[GET students] --> I[identity.Read]\n I --> C{contextIdあり}\n C -->|なし| N[新Entry・初期input・未検索]\n C -->|あり| R[Resume]\n N --> L[Flash Take・候補取得・モデル・Search描画]\n B[POST clear] --> F[FormGuard・認証]\n F --> U[UseのGet・Gate待機・再検査・期待版]\n U --> S[Applied・LastResult消去・Revision更新]\n S --> E[期限延長・Gate解放]\n E --> G[ModelState消去・再Get・初期input]\n G --> K[候補取得・モデル・Search描画]\n I -->|拒否| X[共通例外経路]\n F -->|拒否| X\n U -->|拒否・Gate待機取消| X\n G -->|再Get拒否| X\n L -->|候補・変換・描画の例外| X\n K -->|候補・変換・描画の例外| X\n初期表示の候補取得失敗で新Entryを削除する辺、クリア後失敗で旧状態へ戻す辺は存在しない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 8,
+            "endLine": 11
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 21,
+            "endLine": 21
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 15,
+            "endLine": 15
+          },
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 14,
+            "endLine": 14
+          }
+        ]
+      },
+      {
+        "id": "EVENT-RESUME",
+        "topic": "events・Resume",
+        "statement": "contextId付きIndexは認証とGetを行い、queryのcontextRevisionをContextRequestへ移す。省略時は空文字で、Tabは渡さない。ResumeはUseで期待版等を検査し、Appliedなしなら未検索を返してRevisionを維持するが、正常終了による期限延長は行う。Appliedありなら元条件でSearchAsyncを再実行し、成功時にLastResultとRevisionだけを更新する。Appliedから条件を復元し、Flash Take後、別候補取得・モデル・ViewResultを経てHTMLを返す。期限切れは409で自動初期化せず、保存行が条件外でも条件を変えたり特別追加したりしない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 8,
+            "endLine": 11
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 40,
+            "endLine": 40
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 14,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 13,
+            "endLine": 14
+          }
+        ]
+      },
+      {
+        "id": "EVENT-RESUME-PAGE",
+        "topic": "復帰時のSQLページと提示ページ",
+        "statement": "条件付きソース推論として、Resume時に件数が減るとSQL取得ページと提示ページがずれ得る。SearchAsyncはローカルpageを最終有効ページ以内へ補正するが、SearchCriteria.Pageを書き換えない。ResumeはAppliedを維持し、PresentはApplied.Pageを出すため、取得行は最終ページでも表示pageが総ページ数を超え得る。Pageイベントの保持Page補正とは異なる。未検索用空一覧や局所失敗もApplied由来pageを使うため、常に1/1表示になる保証はない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 160,
+            "endLine": 164
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 12,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 21,
+            "endLine": 21
+          },
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8
+          }
+        ]
+      },
+      {
+        "id": "FLOW-RESUME",
+        "topic": "図材料・Resumeと通知消費",
+        "statement": "flowchart TD\n A[contextId付きGET] --> G[認証・最初のGet]\n G --> U[Use・Gate待機・再Get・期待版]\n G -->|拒否| X[共通例外経路]\n U -->|拒否・待機取消| X\n U --> C{Appliedあり}\n C -->|なし| N[未検索・Revision維持]\n C -->|あり| Q[元Appliedで再検索・成功確認]\n Q -->|検証拒否・SQL障害・取消| X\n Q --> S[LastResult・Revision更新・Applied維持]\n N --> E[期限延長・Gate解放]\n S --> E\n E --> F[条件復元・Flash Take]\n F --> L[別候補取得・モデル・Search描画]\n L -->|例外| X\n所有・期限・旧版拒否はFlash Take前に起こる。Take後の候補取得・変換・描画・配信失敗は、通知を消費していても画面表示へ到達しない場合がある。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 8,
+            "endLine": 11
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 14,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Infrastructure/FlashMessageStore.cs",
+            "startLine": 6,
+            "endLine": 9
+          },
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 14,
+            "endLine": 14
+          }
+        ]
+      },
+      {
+        "id": "SQL-001",
+        "topic": "dataOperations・接続・型付きパラメータ",
+        "statement": "SqlServerStudentServiceはEncrypt=Mandatory、TrustServerCertificate=falseを設定し、接続後に現在DBのsnapshot_isolation_state=1を要求する。不成立時は接続を破棄して例外を再送出する。Command helperのSQLタイムアウトは30秒。ParamはSqlDbTypeを明示し、Sizeが0以外の場合だけSizeを設定し、DateOnlyを当日0時のDateTime、NULLをDBNullへ変換する。接続診断はhelperと別のCreateCommand経路である。接続・SQL・Reader・commitに取消tokenを渡す宣言を、実際に取消を再現した証拠にはしない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 39,
+            "endLine": 72
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 123,
+            "endLine": 167
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 199,
+            "endLine": 216
+          }
+        ]
+      },
+      {
+        "id": "SQL-002",
+        "topic": "dataOperations・検索検査順序",
+        "statement": "SearchAsyncはUser確認、入口now、+09:00の業務日をtry前に取得する。try内はページ・件数・方向、ソートキー、年度・クラス範囲、未所属との排他、在籍配列、番号、氏名、カナ、電話、学年、都道府県、日付両端・逆転の順に検査する。その後接続してSNAPSHOTを開始し、指定マスター確認、件数確認、必要な一覧取得へ進む。入口User内の例外を検索検証結果へ変換した保証はない。検索のSearchedAtは入口nowであり、完了時刻ではない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 44,
+            "endLine": 51
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 103,
+            "endLine": 124
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 159,
+            "endLine": 170
+          }
+        ]
+      },
+      {
+        "id": "SQL-003",
+        "topic": "dataOperations・マスター存在と上位整合",
+        "statement": "検索SNAPSHOT内で、正規化した学年・都道府県はm_codeのcategory_id=@category AND code_value=@valueによるCOUNT_BIG(*)=1を確認する。@category:VarChar(24)、@value:VarChar(10)、分類はGRADE／PREFECTUREであり、分類表JOIN・状態・期間条件はない。年度はm_classのschool_year=@year、@year:SmallIntによるCOUNT_BIG(*)>0。クラスはclass_id=@id、@id:BigIntでschool_year・grade_codeを最大1行取得し、行なしまたは指定上位条件不一致をE-STU-014にする。未指定条件は照会せず、学籍番号の完全一致存在・重複確認も検索では行わない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 125,
+            "endLine": 135
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 218,
+            "endLine": 222
+          }
+        ]
+      },
+      {
+        "id": "SQL-004",
+        "topic": "dataOperations・WHERE全体・LIKE",
+        "statement": "WHEREの必須述語はs.is_deleted=0。任意条件はFIELD-001～011に記載した番号LIKE、氏名キーLIKE、カナキーLIKE、年度、学年、クラス、未所属IS NULL、都道府県、本人または緊急電話、入学日下端・上端、在籍INの順にANDで追加する。電話だけ括弧内OR、在籍は配列のいずれか一致である。NULL任意値では述語とパラメータを省略し、NULL列だけの検索へ置換しない。LIKE値は!→!!、%→!%、_→!_、[→![の順でエスケープし、番号は末尾%、氏名・カナは前後%を加える。検索パターンSize31・642・74は保存上限を拡張しない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 137,
+            "endLine": 155
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 161,
+            "endLine": 161
+          }
+        ]
+      },
+      {
+        "id": "SQL-005",
+        "topic": "dataOperations・件数上限・SNAPSHOT",
+        "statement": "指定マスター確認、件数、一覧は1回のSearchAsyncの同一SNAPSHOT内で行う。件数SQLはm_student s LEFT JOIN m_class c ON c.class_id=s.class_idに同じWHEREを適用し、TOP(10001)のstudent_id集合をCOUNT_BIG(*)する。TOPにORDER BYはない。10,000以下は実件数、10001は超過検出値で全件数ではない。超過時は一覧SQLを実行せずcommitし、NoChange・Count=10001・Items空・LimitExceeded=trueを返す。通常と0件は一覧読取後commitし、NoChange・実件数・取得行・LimitExceeded=falseを返す。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 123,
+            "endLine": 124
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 155,
+            "endLine": 168
+          }
+        ]
+      },
+      {
+        "id": "SQL-006",
+        "topic": "dataOperations・一覧ソート・ページング",
+        "statement": "一覧主ソートはstudentNo→s.student_no、name→s.name_key、admissionDate→s.admission_date、updatedAt→s.updated_atの許可4列で、検査済みasc／descに続けて常にs.student_id ASCを加える。番号を数値化せず、氏名は表示表記ではなく照合キーで並べる。lastPage=max(1,(count+PageSize-1)/PageSize)、SQL用page=min(要求Page,lastPage)、@offset:Int=checked((page-1)×PageSize)、@size:Int=PageSize、両者Size指定なしでOFFSET/FETCHする。0件でもSQL用page=1、最大PageSize行を返す。件数SQLと一覧SQLは検索パラメータの型・値・Sizeを同じ集合から設定する。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 107,
+            "endLine": 108
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 157,
+            "endLine": 166
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 9,
+            "endLine": 13
+          }
+        ]
+      },
+      {
+        "id": "SQL-007",
+        "topic": "dataOperations・検証例外・SQL障害・取消",
+        "statement": "SearchAsyncのInputValidationExceptionは元Errorsを、ArgumentExceptionはArgumentError(\"Search\",e)を持つValidationFailed・Count0・Items空へ変換する。ArgumentErrorは規定形式のエラーコードを引き継ぎ、それ以外はE-STU-002にする。SqlException、OperationCanceledException、NullReferenceExceptionをこのcatchでValidationFailedや取消成功へ変換する処理はない。検索・候補の接続とトランザクションはawait usingで破棄するが、検索に明示RollbackAsyncの成否から返却結果を分類する処理はない。保存のUnknown判定を検索へ流用しない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 123,
+            "endLine": 170
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 197,
+            "endLine": 216
+          },
+          {
+            "path": "sources/Core/StudentNormalizer.cs",
+            "startLine": 162,
+            "endLine": 168
+          }
+        ]
+      },
+      {
+        "id": "REL-SEARCH",
+        "topic": "図材料・検索JOIN",
+        "statement": "検索読取関連図は次の辺で構成する。\nflowchart LR\n S[学生 dbo.m_student s] -->|LEFT JOIN class_id| C[クラス dbo.m_class c]\n C -->|LEFT JOIN grade_categoryとgrade_code| G[学年名 dbo.m_code g]\n S -->|LEFT JOIN enrollment_categoryとenrollment_status_code| E[在籍名 dbo.m_code e]\n S -->|LEFT JOIN prefecture_categoryとprefecture_code| P[都道府県名 dbo.m_code p]\ng・e・pは同じ物理表の用途別aliasである。件数SQLはS→Cだけを使い、一覧SQLは全辺を使う。名称JOINに状態・期間条件はなく、名称欠落だけでは学生行を落とさない。ただし年度・学年のWHEREを指定すると、所属クラス値のない学生はその条件に一致しない。この図はFKや更新・削除連動を定義する図ではない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 82,
+            "endLine": 90
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 143,
+            "endLine": 146
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 156,
+            "endLine": 162
+          }
+        ]
+      },
+      {
+        "id": "REL-LOOKUP",
+        "topic": "図材料・候補取得JOIN",
+        "statement": "検索候補の読取関連図は次の辺で構成する。\nflowchart LR\n CO[コード dbo.m_code c] -->|INNER JOIN category_id| CA[分類 dbo.m_code_category k]\n CL[クラス dbo.m_class c] -->|LEFT JOIN 学年分類と値| GR[学年表示順 dbo.m_code g]\n CO --> LC[LookupSet.Codes]\n CL --> LL[LookupSet.Classes]\n LC --> V[Controller・Razorで分類と上位条件を抽出]\n LL --> V\nLookupAsync(false)の図に学生人数集計の辺は置かない。登録入口のLookupAsync既定呼出しは別用途で、非削除かつ在籍01・02の学生をclass_idごとに集計する。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 196,
+            "endLine": 214
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 22,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 39,
+            "endLine": 39
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 17,
+            "endLine": 17
+          }
+        ]
+      },
+      {
+        "id": "REL-FK",
+        "topic": "図材料・DDLの検索関連FK",
+        "statement": "DDLの検索関連FKは、m_code.category_id→m_code_category.category_id、m_class.(grade_category,grade_code)→m_code.(category_id,code_value)、m_student.class_id→m_class.class_id、m_studentの都道府県・在籍分類と値→m_codeの複合PKである。学生class_idはNULL可なので学生からクラスは0または1、非NULLの分類＋値参照は1親を要求し、親から子は0件以上となる。性別と続柄のFKもあるが検索一覧の名称JOINでは使用しない。これらは検索JOINとは別の物理制約で、監査対象キーへのFKや削除連動を追加しない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 15,
+            "endLine": 31
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 65,
+            "endLine": 66
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 113,
+            "endLine": 127
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 189,
+            "endLine": 197
+          }
+        ]
+      },
+      {
+        "id": "UI-001",
+        "topic": "ブラウザーイベント・未所属・送信中",
+        "statement": "site.jsは初期読込みとSRC-007 changeで未所属ONならSRC-004・005・006の値を空にする。OFFでも元値を復元せず、disabledは変更しない。所属3selectの非活性はRazor再描画時のUnassignedOnlyで決まる。年度・学年変更やSRCクラス選択に自動POST・上位補完は接続されず、候補更新ボタンで再描画する。submit補助は送信button以外の同フォーム内buttonをdisabledにしaria-busy=trueにするが、送信button自身や別フォームを禁止しない。検索にdirty確認、fetch、AbortController、応答要求連番は接続されていない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/wwwroot/js/site.js",
+            "startLine": 2,
+            "endLine": 9
+          },
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 4,
+            "endLine": 8
+          }
+        ]
+      },
+      {
+        "id": "UI-002",
+        "topic": "条件付き推論・初期在籍と未所属",
+        "statement": "未所属ONでも在籍選択01・02は解除しない。提示DDLのck_student_datesが実DBで適用・有効なら、01・02の学生はclass_id非NULLを要求するため、初期在籍01・02と未所属IS NULLの同時条件に一致する行はない。これはDDL適用を条件とするソース推論であり、実DBで検索0件を確認した結果ではない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 13,
+            "endLine": 14
+          },
+          {
+            "path": "sources/wwwroot/js/site.js",
+            "startLine": 7,
+            "endLine": 7
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 146,
+            "endLine": 154
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 198,
+            "endLine": 198
+          }
+        ]
+      },
+      {
+        "id": "NAV-001",
+        "topic": "新規・編集・参照への移送",
+        "statement": "新規リンクはViewer以外へ表示し、GET /students/new?returnContextId=状態IDへ進む。行リンクはStudentRow.StudentIdの十進文字列でGET /students/{id}?returnContextId=状態IDへ進み、Viewerは参照、他は編集と表示する。Coordinator.Editは認証と復帰状態の所有・期限を確認し、新規だけ作成権限を検査する。既存はstudent_id=@id AND is_deleted=0、@id:BigIntで最新詳細を再取得し、不在なら404。検索行の表示値や未実行検索条件を登録値へ転記しない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 6,
+            "endLine": 8
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 23,
+            "endLine": 25
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 6,
+            "endLine": 6
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 17,
+            "endLine": 17
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 172,
+            "endLine": 194
+          }
+        ]
+      },
+      {
+        "id": "NAV-002",
+        "topic": "編集開始・検索復帰版・取消",
+        "statement": "Loadは詳細と登録候補からStudentSaveInputを作り、学生RowVersionをExpectedVersionへ、現在の検索RevisionをReturnRevisionへ移す。編集スナップショットは主体・セッション・対象ID・詳細・原入力の深い複製・復帰版を30分メモリ保持する。検索へ戻るリンクはcontextIdと編集開始時ReturnRevisionを使う。入力クリア／編集取消はスナップショット原入力へ戻って編集画面に留まり、最新再読込は既存GETでDBを再取得する。学生期待版と検索復帰版は別の比較情報である。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 25,
+            "endLine": 25
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 35,
+            "endLine": 35
+          },
+          {
+            "path": "sources/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 44,
+            "endLine": 54
+          },
+          {
+            "path": "sources/Infrastructure/EditorSnapshotStore.cs",
+            "startLine": 7,
+            "endLine": 11
+          },
+          {
+            "path": "sources/Views/Students/Edit.cshtml",
+            "startLine": 16,
+            "endLine": 16
+          }
+        ]
+      },
+      {
+        "id": "NAV-003",
+        "topic": "保存・削除成功からの検索復帰",
+        "statement": "登録側がSavedを返した場合だけReturnAfterSaveへ進む。復帰IDありならスナップショットのReturnRevisionを使い、復帰IDなしなら新しい未検索Entryと初期版を作る。主体・認証セッション・状態IDをキーにFlashへ成功通知を保持し、303とcontextId・contextRevision付き/studentsのLocationを設定してEmptyResultを返す。続くGETは元条件で再検索または未検索復元する。NoChange・ConfirmationRequired・Conflict・UnknownをSavedへ読み替えて通知・303を発行する処理はない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 29,
+            "endLine": 38
+          },
+          {
+            "path": "sources/Infrastructure/FlashMessageStore.cs",
+            "startLine": 6,
+            "endLine": 9
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 14,
+            "endLine": 14
+          }
+        ]
+      },
+      {
+        "id": "NAV-004",
+        "topic": "復帰通知の確定根拠・DB確定境界",
+        "statement": "保存・論理削除のSavedは、ReadCommitted、共通トランザクション所有書込ゲート、対象・学生期待版確認、学生書込、監査追記、commit正常終了後に返る。既存更新・削除のWHEREはstudent_id・row_version・is_deleted=0で、検索状態Revisionは学生の更新条件ではない。削除は業務入力を保存せず、削除・更新管理列と版を変更する。303はDB確定後の復帰指示であり、復帰検索・通知表示・HTML配信の成功までは保証しない。後続復帰失敗で確定済み書込みを戻す処理はない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 92,
+            "endLine": 101
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 241,
+            "endLine": 262
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 294,
+            "endLine": 315
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 403,
+            "endLine": 414
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 38,
+            "endLine": 38
+          },
+          {
+            "path": "sources/Views/Students/Edit.cshtml",
+            "startLine": 17,
+            "endLine": 17
+          }
+        ]
+      },
+      {
+        "id": "NAV-005",
+        "topic": "保存結果不明・非成功の戻り先",
+        "statement": "対象catch内のSQL障害・InvalidOperationException・取消ではCancellationToken.Noneでrollbackを試み、writeStarted && (commitAttempted || !rolledBack)をUnknown、それ以外をSystemErrorとする。OpenとBeginTransactionはこのcatch外なので全障害がSaveResultになるわけではない。保存非Savedは今回inputと既存snapshotからEditを再表示する。削除非Savedはエラー・HTTP状態設定後Loadを再実行し、最新非削除詳細・候補・新snapshotを作る。削除理由は明示復元せず、Unknownで実際には削除済みなら再Loadが404となり、元の結果不明案内を持つEditに必ず戻る保証はない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 240,
+            "endLine": 243
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 319,
+            "endLine": 329
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 399,
+            "endLine": 416
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 30,
+            "endLine": 37
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 17,
+            "endLine": 17
+          },
+          {
+            "path": "sources/Views/Students/Edit.cshtml",
+            "startLine": 17,
+            "endLine": 17
+          }
+        ]
+      },
+      {
+        "id": "STATE-005",
+        "topic": "通知・保持領域の分離",
+        "statement": "FlashMessageStoreは検索Entryや編集snapshotとは別のConcurrentDictionaryで、主体・認証セッション・状態IDをキーに通知を10分保持する。TakeはTryRemoveで一度だけ取り出し、期限切れでも取り除いて空文字を返す。現在の検索・編集ストアはメモリ実装である。DDLのt_runtime_state.encrypted_payloadという列宣言から、検索状態のDB永続化・暗号化方式・消費・プロセス間共有を実装済みと推定しない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Infrastructure/FlashMessageStore.cs",
+            "startLine": 6,
+            "endLine": 9
+          },
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 9,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Infrastructure/EditorSnapshotStore.cs",
+            "startLine": 7,
+            "endLine": 10
+          },
+          {
+            "path": "sources/database/001_schema.sql",
+            "startLine": 171,
+            "endLine": 183
+          },
+          {
+            "path": "sources/database/003_web_permissions.sql",
+            "startLine": 23,
+            "endLine": 23
+          }
+        ]
+      },
+      {
+        "id": "OBS-009",
+        "topic": "状態更新・描画・配信の境界",
+        "statement": "Search・Page・検索済みResume・Clearの状態更新は、後続候補取得、JsonElement化、Razor描画、HTML配信より前に行う。後段失敗に状態復元の補償はない。PresentのitemsはSelectによる移送で、実際の列挙・生年月日の和暦変換などは後段JSON化で起こり得る。operationの途中で例外ならUseは期限を延長しないが、既に変更した値を自動rollbackする機能はない。状態更新成功、期限更新、DB参照commit、最終HTML到達を同一の成功境界にまとめない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 9,
+            "endLine": 15
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 21,
+            "endLine": 21
+          },
+          {
+            "path": "sources/Infrastructure/SearchContextStore.cs",
+            "startLine": 14,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 11,
+            "endLine": 22
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 39,
+            "endLine": 39
+          },
+          {
+            "path": "sources/Infrastructure/WebPresentation.cs",
+            "startLine": 20,
+            "endLine": 20
+          }
+        ]
+      },
+      {
+        "id": "HTTP-001",
+        "topic": "最終応答・共通例外経路",
+        "statement": "共通middlewareはResponse.HasStarted=falseの例外だけを捕捉し、WebFaultならそのStatus、その他なら503を設定する。非APIルートにはメッセージと/studentsリンクのエラーHTMLを書こうとする。応答開始後の例外、切断後の書込み・配信完了はこのcatchで保証されない。Cookie認証の失効・アクセス拒否は401／403を設定し、HTMLルートをログインURLへ転送しない。AntiforgeryResultFilterのJSON400変換は/apiだけなので、本検索HTMLルートのCSRF拒否へ適用したJSON契約ではない。検索画面に取消専用ボタン・ルートはない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Infrastructure/WebHostSetup.cs",
+            "startLine": 14,
+            "endLine": 16
+          },
+          {
+            "path": "sources/Infrastructure/WebHostSetup.cs",
+            "startLine": 22,
+            "endLine": 25
+          },
+          {
+            "path": "sources/Infrastructure/AntiforgeryResultFilter.cs",
+            "startLine": 7,
+            "endLine": 8
+          },
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 4,
+            "endLine": 8
+          }
+        ]
+      },
+      {
+        "id": "OBS-010",
+        "topic": "条件付き推論・入力不正後の描画例外",
+        "statement": "バインド後pageSize=0がSearchへ渡る場合、サービスは不正ページ指定として拒否するが、Controllerは再表示モデルのPageSizeにも送信値0を設定する。ビューの総ページ計算はModel.PageSizeで除算するため、再表示時のゼロ除算になり得る。したがって全入力不正が422の条件保持HTMLで完結する保証はない。この記述は受信値→最終バインド値を未確認とした条件付きソース推論であり、HTTPで再現した結果ではない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 13,
+            "endLine": 16
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 107,
+            "endLine": 107
+          },
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8
+          }
+        ]
+      },
+      {
+        "id": "OBS-011",
+        "topic": "宣言済みhelperと公開入口の区別",
+        "statement": "OptionsRequest、WebStudentCoordinator.Options、WebPresentation.Lookupsは宣言され、候補オブジェクトを返す処理を持つが、接続されたPOST /students/optionsはこれらを呼ばず、SearchModelとRazorで画面全体HTMLを返す。StrictJsonも宣言されるが収録Controllerからの呼出しはない。これらを公開候補JSON APIや本フォームのJSON検査として説明しない。RequestIdentity.TabIdのヘッダー／query取得も本検索Actionでは使わず、POSTは引数tabId、Index／ResumeはTab未指定で状態を取得する。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 31,
+            "endLine": 31
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 16,
+            "endLine": 16
+          },
+          {
+            "path": "sources/Infrastructure/WebPresentation.cs",
+            "startLine": 8,
+            "endLine": 18
+          },
+          {
+            "path": "sources/Infrastructure/StrictJson.cs",
+            "startLine": 4,
+            "endLine": 14
+          },
+          {
+            "path": "sources/Infrastructure/RequestIdentity.cs",
+            "startLine": 12,
+            "endLine": 12
+          },
+          {
+            "path": "sources/Web/Controllers/StudentsController.cs",
+            "startLine": 8,
+            "endLine": 22
+          }
+        ]
+      },
+      {
+        "id": "OBS-012",
+        "topic": "現行画面内の追加表示・遷移責務",
+        "statement": "現行画面は件数と検索日時をfound時に表示するが、表示範囲のRangeFrom／RangeToを算出・移送する項目はない。ページ操作は表示指定反映・前へ・次へとpage／総ページ数で、先頭・最後ボタンはない。検索画面に専用「メニューへ」操作やその遷移URLはない。一覧のクラス表示はコードと名称だけで、停止・期間外の注記はクラス候補の停止注記と同じ機能ではない。これらの現行責務は本画面内で説明でき、未生成関連文書を参照するだけで省略しない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Views/Students/Search.cshtml",
+            "startLine": 6,
+            "endLine": 8
+          },
+          {
+            "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 21,
+            "endLine": 21
+          },
+          {
+            "path": "sources/Core/SqlServerStudentService.cs",
+            "startLine": 82,
+            "endLine": 90
+          }
+        ]
+      },
+      {
+        "id": "OBS-013",
+        "topic": "確認実施状態を推定しない根拠",
+        "statement": "Programには起動・Controller登録のコードがあるが、業務入力・DTO・SQL・再表示の往復確認結果は含まれない。healthはstatus=running、database=not-testedという固定応答を宣言するため、DB接続・配備・制約・検索試験の成功証拠にはならない。ソースの分岐や図材料を、描画確認・アプリ実行・DB試験・顧客承認へ拡張しない。",
+        "basis": "observed-source",
+        "references": [
+          {
+            "path": "sources/Program.cs",
+            "startLine": 2,
+            "endLine": 8
+          },
+          {
+            "path": "sources/Infrastructure/WebHostSetup.cs",
+            "startLine": 28,
+            "endLine": 28
+          }
+        ]
+      },
+      {
+        "id": "DESIGN-001",
+        "topic": "設計意図・業務境界",
+        "statement": "参考基本設計は単一校の学生基本情報を検索して新規・編集・参照へ進む目的を定義する。年度・学年は現在または最終所属クラスの属性で、過去年度別所属履歴検索ではない。成績、帳票、一覧直接編集、一括更新、削除済み学生照会を対象外とする。この意図は検索ソースの実行証拠ではなく、OBS-001、REL-SEARCH、NAV-001の観測内容と照合する材料である。",
+        "basis": "reference-design",
+        "references": [
+          {
+            "path": "reference-designs/基本設計書/01_学生検索画面.md",
+            "startLine": 14,
+            "endLine": 24
+          }
+        ]
+      },
+      {
+        "id": "DESIGN-002",
+        "topic": "設計意図・配置と成果物出自",
+        "statement": "参考詳細設計の埋め込みHTMLは架空値による静的設計モックであり、実機画面ではないと記載する。モックにはメニュー、件数と表示範囲、検索日時と最終条件、先頭・前・次・最後などを配置している。リンクされた単独HTML・画像は設計上の参照先であり、このジョブで実在・描画・外観を確認した成果物ではない。現行ソース投影を作る場合はOBS-003・OBS-012の配置を用い、設計モックと出自を分ける。",
+        "basis": "reference-design",
+        "references": [
+          {
+            "path": "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+            "startLine": 27,
+            "endLine": 45
+          }
+        ]
+      },
+      {
+        "id": "DESIGN-003",
+        "topic": "設計意図・初期候補不足・結果状態",
+        "statement": "参考詳細設計は初期01・02、20件、学籍番号昇順、未検索を設定し、必須マスター不足なら検索不可とする意図を定義する。基本設計の初回・クリア文言は「条件を指定して検索してください」で、検索中は二重検索を抑止する。現行の候補不足時制御、未検索文言、同フォームだけの送信補助はLOOKUP-003、ROW-004、UI-001の観測内容で判断し、この意図を実装済み制御として追加しない。",
+        "basis": "reference-design",
+        "references": [
+          {
+            "path": "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+            "startLine": 155,
+            "endLine": 165
+          },
+          {
+            "path": "reference-designs/基本設計書/01_学生検索画面.md",
+            "startLine": 58,
+            "endLine": 68
+          }
+        ]
+      },
+      {
+        "id": "DESIGN-004",
+        "topic": "設計意図・候補連動・応答世代",
+        "statement": "参考詳細設計は未所属ONで所属解除・非活性、OFFで元値を戻さないこと、年度・学年を渡したクラス候補再取得、不適合クラス解除、クラス先行選択時の上位補完を定義する。非同期要求のRequestSequenceは初期0、旧応答破棄、桁あふれ時採番停止を意図する。候補応答は部分HTMLまたはJSONとしている。現行はEVENT-OPTIONSとUI-001に記載した全候補後抽出・明示POST・画面全体HTMLであり、SRCの上位補完や要求世代管理を観測済み動作へ加えない。",
+        "basis": "reference-design",
+        "references": [
+          {
+            "path": "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+            "startLine": 147,
+            "endLine": 147
+          },
+          {
+            "path": "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+            "startLine": 252,
+            "endLine": 262
+          },
+          {
+            "path": "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+            "startLine": 500,
+            "endLine": 506
+          }
+        ]
+      },
+      {
+        "id": "DESIGN-005",
+        "topic": "設計意図・入力と一覧表示の追加契約",
+        "statement": "参考詳細設計は日付の西暦yyyy/MM/dd表示とyyyy-MM-dd入力を区別し、件数・RangeFrom・RangeTo、0件の範囲0～0、未所属の年度・学年の－、クラス停止・期間外の区別、名称欠損・不整合表示を定義する。また専用メニューと先頭・最後ページ操作を設計する。これらはFIELD-011、ROW-002～004、OBS-012の現行ソースと個別に比較する対象である。参考設計から表示範囲の未記載算式やメニュー遷移URLを創作しない。",
+        "basis": "reference-design",
+        "references": [
+          {
+            "path": "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+            "startLine": 94,
+            "endLine": 114
+          },
+          {
+            "path": "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+            "startLine": 135,
+            "endLine": 141
+          }
+        ]
+      },
+      {
+        "id": "DESIGN-006",
+        "topic": "設計意図・失敗時保持と条件未反映",
+        "statement": "参考基本設計は入力エラーで原入力と項目別エラーを保持し前回結果を消去、システムエラーでも入力を保持し前回結果を最新結果として残さず受付番号を案内する意図を持つ。条件変更・未実行では最後の実行結果と未反映通知を表示し、ページ操作は最後の条件を使う。現行Search・Pageの局所WebFault再表示、共通エラーへ進むSQL等、LastResult保持と後続Options再提示はEVENT-SEARCH-FAILURE、EVENT-PAGE-FAILURE、EVENT-OPTIONS-BOUNDARY、HTTP-001で分けて照合する。",
+        "basis": "reference-design",
+        "references": [
+          {
+            "path": "reference-designs/基本設計書/01_学生検索画面.md",
+            "startLine": 64,
+            "endLine": 69
+          },
+          {
+            "path": "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+            "startLine": 504,
+            "endLine": 506
+          }
+        ]
+      },
+      {
+        "id": "DESIGN-007",
+        "topic": "設計意図・復帰・状態版",
+        "statement": "参考詳細設計は復帰時に所有者・認証・画面・期限を確認し、他者状態拒否、期限切れ初期化、未検索復元または元条件再検索、確定通知だけの表示、条件外保存学生の特別追加なしを定義する。既発行状態の検索・ページ・クリア・復帰は受領Revisionを渡し、排他内照合・省略補完禁止・旧版拒否を求める。現行の期限切れ409、Tab非空時だけの照合、Index／ResumeのTab未指定、Optionsの版未使用、復帰版とFlash消費位置はSTATE-003、EVENT-OPTIONS、EVENT-RESUME、NAV-002で照合する。",
+        "basis": "reference-design",
+        "references": [
+          {
+            "path": "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+            "startLine": 386,
+            "endLine": 392
+          },
+          {
+            "path": "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+            "startLine": 604,
+            "endLine": 610
+          }
+        ]
+      },
+      {
+        "id": "DESIGN-008",
+        "topic": "設計意図・将来の確認責務",
+        "statement": "参考詳細設計は文書検査と実装試験合格を区別し、入力→処理値→DB→再表示の往復確認、Unicode最大長、日付境界、停止候補、旧版、保存結果不明などを将来の実装工程の試験観点として記載する。設計上の内部名はソース実在の主張ではないとも明記する。これらの試験観点・リンク・設計状態を、このジョブの試験実施・合格・顧客承認として扱わない。",
+        "basis": "reference-design",
+        "references": [
+          {
+            "path": "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+            "startLine": 546,
+            "endLine": 550
+          },
+          {
+            "path": "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+            "startLine": 586,
+            "endLine": 592
+          }
+        ]
+      }
+    ],
+    "unresolved": [
+      "HTTP原値からMVCの最終DTO・ModelStateになる境界は未確認。省略、空白だけの文字列、複数checkbox値、NULL、年度・bool・int変換失敗、PageSize=0などを、非nullable注釈やサービス単体分岐だけでHTTPの確定動作へ拡張できない。影響箇所: sources/Infrastructure/WebHostSetup.cs:16-18、sources/Web/Controllers/StudentsController.cs:13-22。",
+      "接続設定の実値、実DB、SNAPSHOT有効状態、DDL・FK・CHECKの配備状態、実効DB権限、学校固有のクラス・学生・候補データは確認していない。設定名StudentDb、SQL宣言、権限定義を稼働保証として扱えない。影響箇所: sources/Infrastructure/WebHostSetup.cs:19、sources/Core/SqlServerStudentService.cs:53-64、sources/database/001_schema.sql:189-203。",
+      "通常の認証連携と運用構成は未確定。評価用セッション入口の宣言から本番の利用者・役割付与方式を決められない。検索状態はプロセスメモリなので、再起動、複数プロセス・複数ノード間の保持・復帰を保証する構成資料も不足している。",
+      "同一Revisionの並行要求、OptionsのGateなし読取り、待機中またはDB実行中の取消、期限経過、Gate取得後再Get拒否、SQL障害、commit・破棄・後段候補障害、応答開始後例外と切断後配信は実行確認していない。FLOW-SEARCHのSQL前取消は静的に確認した独立経路であり、再現試験結果ではない。",
+      "将来のアプリ／DB確認候補は、FIELD-001～011のraw上限・正規化後上限・補助文字・LIKE特殊文字・日付片側と両端・マスター不存在、EVENT-SEARCH／PAGEの拒否HTTP状態と後段描画例外、EVENT-RESUMEの件数減少時ページ表示、NAV-003の旧復帰版・Flash消費前後の失敗へ対応付ける。今回は実施していない。",
+      "静的ソース投影、参考設計モック、描画画像、実機画像の確認状態は別である。このジョブでは新たなHTML・画像を生成せず、描画画像も閲覧していない。全状態・権限差・狭い表示幅・フォーカス・disabled遷移の視覚的一致は未確認。",
+      "参考設計がリンクする共通UI、共通日付、方式別共通仕様、SQLServer DB定義、規約、試験対応資料、assetsの単独HTML・画像は許可referenceFilesに含まれないため読んでいない。これらの契約や成果物の実在・検査状態を補完できない。",
+      "t_runtime_stateのDDLは存在するが、現行検索ストアからの永続化接続、encrypted_payloadの暗号化方式、状態種別、消費処理は確認できない。OptionsRequest・Coordinator.Options・WebPresentation.Lookups・StrictJsonも接続された検索ルートの稼働契約にはできない。",
+      "設計意図と観測した実装の差は、候補不足時の検索禁止、候補連動・上位補完、応答世代、部分HTML／JSON、表示範囲・専用メニュー・先頭／最後操作、欠損注記、失敗時入力保持、期限切れ初期化などに残る。差を修正すべき業務要件・顧客承認・実装改善の採否は、この材料からは確定できない。"
+    ],
+    "coverageNotes": [
+      "manifestのmode=training-assisted、trainingReferenceAuthorizedByUser=true、referenceSpecificationIncluded=trueを確認し、referenceFilesに列挙されたreference-designs配下の検索基本設計・検索詳細設計だけを設計意図の材料として使用した。manifestは権限と材料範囲の説明にだけ使用し、業務・実装factの根拠にしていない。",
+      "対象はSM-DET-STUDENT-SEARCH、計画パスspec/detail/student-search.md、要求改訂4.0の材料となるファクトJSONである。ファイル編集や仕様書Markdown生成は行っていない。前稿・批評は照合観点として扱い、factの原文根拠を新しく確認した。以前のapprovedやPASSを今回の検査結果として継承していない。",
+      "読取りはカプセル内のmanifest、sources、indexed、および許可された2つの参考設計に限定した。ネットワーク、外部サービス、プラグイン、委任エージェント、原本プログラム・SQL・スクリプト・ビルド・テストの実行、秘密値取得、ファイル書込みは行っていない。",
+      "rg --filesとrg -nで位置を確認し、長いソースはindexedの原行番号付き範囲、参考詳細設計は分割した範囲表示で確認した。出力が切れた一括結果は読了扱いせず、必要範囲を再取得した。PowerShellはlogin=falseで使用し、ファイル表示に失敗した相対Get-Contentとパイプ付き読取りはrgの直接読取りへ切り替えた。",
+      "sourcePathsReadは実際に内容を参照した材料を列挙する。SQLサービスは宣言から検索・候補・詳細取得および検索復帰に関係する保存結果まで追跡した。DB定義、seed、保守サービスは画面項目・表示名称・候補・FKに関係する範囲を中心に確認した。Deploy-Database.ps1と004_verify_deployment.sqlは関連名を探したrgの該当断片のみで、配備工程全体を本書へ収録していない。参考基本設計は主に業務境界と状態定義、参考詳細設計は全611行を分割確認した。",
+      "関連計画の対応: SM-BAS-STUDENT-SEARCH=spec/basic/student-search.mdは論理項目・業務状態、SM-DET-STUDENT-EDITOR=spec/detail/student-editor.mdは登録全項目・保存・重複確認・削除、SM-COM-HTTP-SECURITY=spec/common/http-security-contract.mdは認証・CSRF・フォーム・応答、SM-COM-NORMALIZATION-DATE=spec/common/normalization-date.mdは正規化・長さ・日付、SM-COM-LOOKUPS=spec/common/lookup-contract.mdは候補用途差、SM-COM-RUNTIME-STATE=spec/common/runtime-state.mdは状態・所有・期限・版、SM-COM-TRANSACTION-AUDIT=spec/common/transaction-audit.mdはDB確定・監査、SM-DATA-LOGICAL-CONTRACTS=spec/data/logical-contracts.mdはDTO・移送へ対応する。いずれも計画上の参照であり、本応答で生成済みとは扱わない。",
+      "関連計画のデータ側対応: SM-DET-CLASS-MAINTENANCE=spec/detail/class-maintenance.mdとSM-DET-CODE-MAINTENANCE=spec/detail/code-maintenance.mdは表示名称の保存側制約、SM-DB-INDEX=spec/database/index.mdはFK・DB全体、SM-DB-M-STUDENT=spec/database/tables/m_student.md、SM-DB-M-CLASS=spec/database/tables/m_class.md、SM-DB-M-CODE=spec/database/tables/m_code.md、SM-DB-M-CODE-CATEGORY=spec/database/tables/m_code_category.mdは物理属性へ対応する。SM-DEP-PROCESS=spec/dependencies/process-dependencies.md、SM-RPT-DESIGN-IMPLEMENTATION=spec/reports/design-implementation-differences.md、SM-RPT-UNRESOLVED=spec/reports/unresolved-and-analysis-limits.mdは依存・差分・不足へ対応する。これらのリンクも未生成の計画参照である。",
+      "本書内で必要な設計意図と現行責務の比較はDESIGN-001～008と対応する観測factで具体化した。関連文書の未生成を理由に、検索画面内の表示・操作・拒否・取消・復帰の説明を省略していない。",
+      "検査実施状態は静的ソース解析と本文・図材料の条件照合に限る。描画確認、アプリ／DB実行確認、配備確認、試験合格、顧客承認は未実施・未確認であり、healthの固定応答や設計文書の試験観点から成功を推定しない。"
+    ]
+  },
+  "exit_code": 0,
+  "usage": {
+    "input_tokens": 2039026,
+    "cached_input_tokens": 1851648,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 37755,
+    "reasoning_output_tokens": 6427
+  },
+  "metadata": {
+    "status": "passed",
+    "workspace": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-tuning-01\\capsules\\CSharp_ASPNET-assisted",
+    "job_dir": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-04\\488af9821732c8f6\\analysis",
+    "timeout_seconds": 1800,
+    "model_selection": "user_configured_default",
+    "sandbox": "read-only",
+    "ephemeral": true,
+    "input_execution_policy": "forbidden",
+    "model_weight_training_policy": "forbidden",
+    "model_tool_actions_audited": false,
+    "read_isolation": "caller_owned_source_capsule_and_host_boundary",
+    "schema_supplied": true,
+    "events_path": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-04\\488af9821732c8f6\\analysis\\events.jsonl",
+    "stderr_path": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-04\\488af9821732c8f6\\analysis\\stderr.log",
+    "answer_path": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-04\\488af9821732c8f6\\analysis\\answer.txt",
+    "reference_mode": "training-assisted",
+    "training_reference_authorized": true,
+    "prompt_sha256": "70c0438e6c2f7e23c0f4b3b14f3d465bf3f3f6774688dd7d0efa112e27ca4855",
+    "command": [
+      "C:\\Users\\tujin\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe",
+      "exec",
+      "--ephemeral",
+      "--sandbox",
+      "read-only",
+      "--color",
+      "never",
+      "--json",
+      "-c",
+      "approval_policy=\"never\"",
+      "-c",
+      "project_doc_max_bytes=0",
+      "--output-last-message",
+      "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-04\\488af9821732c8f6\\analysis\\answer.txt",
+      "--output-schema",
+      "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-session-pilot-01\\focus-round-04\\488af9821732c8f6\\analysis\\schema.json",
+      "-"
+    ],
+    "cli_path": "C:\\Users\\tujin\\AppData\\Local\\OpenAI\\Codex\\bin\\2e5e00daee91c61d\\codex.exe",
+    "cli_sha256": "d13914ced6c7af174d8d638db938284231227312104b06a25e9608c632a7daec",
+    "event_types": {
+      "thread.started": 1,
+      "turn.started": 1,
+      "item.completed": 39,
+      "item.started": 34,
+      "turn.completed": 1
+    },
+    "error_events": [],
+    "invalid_event_lines": [],
+    "usage_reported": true,
+    "answer_sha256": "1d9b9417be394b1dfe316a71098b6674836ce0d384bf4bac8df347573a0c7033",
+    "seconds": 748.290461
+  }
+}

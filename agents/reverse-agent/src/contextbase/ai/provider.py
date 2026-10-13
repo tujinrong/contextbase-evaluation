@@ -289,15 +289,33 @@ def run_job(
     metadata["cli_sha256"] = hashlib.sha256(cli.read_bytes()).hexdigest()
     status = None
     try:
-        with (job_dir / "events.jsonl").open("ab") as stdout, (job_dir / "stderr.log").open("ab") as stderr:
+        # A file stdin preserves the saved UTF-8 prompt verbatim. On Windows,
+        # communicate(input=...) writes synchronously to a pipe before its
+        # timeout wait; a child that never reads stdin can block that write.
+        with (job_dir / "prompt.txt").open("rb") as stdin, \
+                (job_dir / "events.jsonl").open("ab") as stdout, \
+                (job_dir / "stderr.log").open("ab") as stderr:
             options = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
             proc = subprocess.run(
-                command, cwd=workspace, input=prompt_bytes, stdout=stdout, stderr=stderr,
+                command, cwd=workspace, stdin=stdin, stdout=stdout, stderr=stderr,
                 timeout=timeout_seconds, shell=False, check=False, **options,
             )
             result["exit_code"] = proc.returncode
             if proc.returncode != 0:
                 status = "cli_failed"
+    except KeyboardInterrupt:
+        # Preserve the terminal interruption before propagating it to the
+        # caller. Partial events/usage are evidence, never an accepted answer.
+        metadata["error_code"] = "interrupted"
+        metadata["interruption_type"] = "KeyboardInterrupt"
+        try:
+            result["usage"], event_metadata = _events(job_dir / "events.jsonl")
+            metadata.update(event_metadata)
+        except OSError as exc:
+            metadata["event_summary_available"] = False
+            metadata["event_summary_error_type"] = type(exc).__name__
+        finish("interrupted")
+        raise
     except subprocess.TimeoutExpired:
         metadata["error_code"] = "timeout"
         status = "timeout"

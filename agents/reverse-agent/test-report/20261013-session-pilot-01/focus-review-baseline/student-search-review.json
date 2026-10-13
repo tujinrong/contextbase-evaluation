@@ -1,0 +1,81 @@
+{
+  "documentId": "SM-DET-STUDENT-SEARCH",
+  "approved": false,
+  "findings": [
+    {
+      "severity": "major",
+      "documentLocation": "spec/detail/student-search.md:100-126,159-180,659-679",
+      "defect": "検索条件の項目契約が入力表・一覧移送表・WHERE表に分散し、SRC-004年度、SRC-005学年、在籍区分群、SRC-009都道府県、SRC-010電話、SRC-011/012入学日について、UI項目をキーにした受信型から実DB型・DB NULL可否・SQLバインドまでの対応が完結していない。たとえばPhoneNumber:stringの任意入力は2つのvarchar(16) NULL列を同じ@phoneで比較し、年度int?はm_class.school_year smallint NOT NULLを任意条件として比較する。入力未指定、物理列NULL、LEFT JOIN由来NULLは別の契約である。氏名のNameKey160・nvarchar(320)・@name NVarChar(642)の各数値は既に別箇所へ正しく記載されているため、欠落や誤値として扱わない。",
+      "repairDirection": "次の新規AI解析では検索用UI項目ごとに、フォーム名→StudentSearchInput→SearchCriteria→正規化ローカル値→実列のDDL型/長さ/NULL→述語とパラメーター名/SqlDbType/Size→未指定時の述語省略をfactに固定する。SRC-010は本人/緊急電話の2列、SRC-007はclass_id IS NULLでパラメーターなし、入学日2項目は同じNOT NULL date列の下限/上限であることを明記する。本文は既存の正しい値を保持して項目キーで直接参照できる契約表へ再編する。",
+      "references": [
+        {
+          "path": "sources/Web/Inputs/StudentSearchInput.cs",
+          "startLine": 7,
+          "endLine": 22
+        },
+        {
+          "path": "sources/Core/Contracts.cs",
+          "startLine": 31,
+          "endLine": 44
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 113,
+          "endLine": 154
+        },
+        {
+          "path": "sources/database/001_schema.sql",
+          "startLine": 9,
+          "endLine": 32
+        },
+        {
+          "path": "sources/database/001_schema.sql",
+          "startLine": 63,
+          "endLine": 66
+        }
+      ]
+    },
+    {
+      "severity": "minor",
+      "documentLocation": "spec/detail/student-search.md:24-47,138-157,232-295,343-397,439-483,800-830",
+      "defect": "Applied/LastResult、版照合、局所失敗後の空一覧、候補再取得障害後のメモリ確定という同じ境界が、概要・内部項目・複数イベント・補足で繰り返される。一方、読者はSearch/Page/Options/Resume/Clearの差を離れた章から比較する必要がある。",
+      "repairDirection": "各イベントに処理概要・番号付き手順・分岐フロー・DB操作・結果を残しつつ、共通状態契約を一箇所へまとめる。イベントごとに『入力欄の取得元、結果の取得元、版照合、版更新、期限延長、失敗時一覧』を比較する表を置き、例外は当該イベント固有の差だけを説明する。ソース上のOptionsのGate不使用やResumeのApplied.Page未補正を削除しない。",
+      "references": [
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 8,
+          "endLine": 22
+        },
+        {
+          "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+          "startLine": 7,
+          "endLine": 15
+        },
+        {
+          "path": "sources/Infrastructure/SearchContextStore.cs",
+          "startLine": 9,
+          "endLine": 15
+        }
+      ]
+    },
+    {
+      "severity": "minor",
+      "documentLocation": "spec/detail/student-search.md:49-98,800-814",
+      "defect": "静的画面設計は未検索Viewerの空一覧だけを実図へ示し、found/empty/tooMany/局所失敗およびStaff/Administratorの操作差は文章と表で説明するに留まる。初期図は適切に例示と明記されているが、主要結果状態と権限の配置差を図だけで確認できない。",
+      "repairDirection": "架空の実データや実行結果を加えず、静的再構成の状態例を分ける。共通条件領域を1図とし、結果状態領域を未検索/0件/上限超過/取得ありの小さな図または明示的な状態枠で示す。非Viewer時の新規登録と編集、Viewer時の参照の位置と活性を対応させる。実機撮影とは表記しない。",
+      "references": [
+        {
+          "path": "sources/Views/Students/Search.cshtml",
+          "startLine": 3,
+          "endLine": 8
+        },
+        {
+          "path": "sources/wwwroot/css/site.css",
+          "startLine": 1,
+          "endLine": 1
+        }
+      ]
+    }
+  ],
+  "unresolved": []
+}

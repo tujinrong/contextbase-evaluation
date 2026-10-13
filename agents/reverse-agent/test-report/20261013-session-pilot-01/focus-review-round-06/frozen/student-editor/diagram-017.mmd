@@ -1,0 +1,22 @@
+flowchart TD
+ A[再読込リンク] --> B{dirty}
+ B -->|はい| C{破棄確認}
+ C -->|取消| X[画面保持]
+ C -->|続行| G[既存GET・認証・初回Context確認]
+ B -->|いいえ| G
+ G -->|WebFault| WF[元Statusの共通応答]
+ G -->|成功| D[非削除学生取得・Lookup・Input復元]
+ D -->|対象NULL| NF[404 E-STU-103]
+ D -->|成功| Q{Context非空}
+ Q -->|いいえ| N[復帰版NULL]
+ Q -->|はい| R[読取後Context.Get]
+ R -->|成功| RV[採取復帰版保持]
+ R -->|WebFault| WF
+ N --> S[決定済み復帰版で新Snapshot]
+ RV --> S
+ S --> V[最新値・期待版のView]
+ D -->|WebFault| WF
+ S -->|認証情報のWebFault| WF
+ G -->|非WebFault| EX[応答未開始なら503]
+ D -->|非WebFault| EX
+ S -->|非WebFault| EX

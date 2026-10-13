@@ -1,0 +1,21 @@
+# AI-first作成方法の限定監査03
+
+今回の完了条件には、本文レビューと別に画像・原ソースを照合するnative AI gateが必要である。現在のrunにprovider画像APIを新設する必要はなく、rootの独立nativeレビューと、同一原稿・画像・原ソースへのハッシュ結合で対応できる。業務名・期待値をプログラムへ埋め込む変更は提案していない。
+
+読取対象は全体規則、reverse-agent契約、現行AI経路、二つのfocus-round-01原稿、その原応答・入力・render記録、許可されたassisted capsule内の原ビュー・共有レイアウト・CSS。spec-eval/evaluator-onlyは読んでいない。原本・原稿・原応答・productionコードは変更していない。
+
+編集画面のtext reviewは原稿SHA `61b38815a90a10abe5348af6a3e3eb5093c99f2fb1c23fca8fa6c5affe31f887`に対してapproved=true、findings=[]であった。現行原稿は原h1をh3へ変え、共有headerを省き、原Editにはないgrid wrapperを候補表へ追加している。text resultの更新は2026-10-12T21:59:32Z、画像生成は22:01:40Zである。review入力に画像の結合はなく、rendererのsemanticApprovalはNOT_ASSESSEDである。内部の判断動機は断定しない。これらは別の新稿レビューに記録された欠陥と同じ原稿を、今回新しく原入力・コード経路・保存順序から再確認した結果であり、過去テストのPASSを流用していない。
+
+二画面のanalysis/draft/review計六promptは記録済みSHAと一致し、全体文書計画のcontextを含まなかった。現行workflowのhelperは正確な全体計画mapを作る。現行ソースの修正とhelper単体の成功を既存プロセスの適用結果として扱うことが問題だった。rootが次回runに用意した凍結runtime、新プロセス、段階ごとの実prompt検査で解消できる。今回の監査はRound2の未実行入力を合格とは判定していない。
+
+`audit_checks.py`を現在のruntimeで一回実行し、新規の読取検査8件PASS、exit0。規則・productionコード・元provider材料・原稿・原ソース・画像等49ファイルの前後SHAはすべて一致した。これは輸送・判定範囲の証拠検査であり、production回帰テスト・業務採点・実アプリ試験ではない。raw log、inputs-before/after、audit-check-resultsに正確な版と結果を保存した。詳細なgeneric修正案と負例/正常例はfindings.jsonにある。
+
+source capsuleは`reverse-ai-source-capsule/1`、training-assisted、legacy-v1-raw-indexed-metadata-revalidated-unsealed-manifestであり、新v2封印として扱わない。manifest SHAは`3a722dc206dbf2ce850b594aa1bee65117e472a8144531adb731d354fb9a5a24`。既存画面画像はwidth1440の静的投影で、狭幅・全モード・実機の確認は行っていない。新しいAI CLIジョブの起動も行っていない。
+
+上記は読取監査時点の記録である。その後rootの明示指示で、productionのreview handoff、batch結果と個別progress、iteration結果と各review済roundに検査範囲を追加した。`reviewScope=text-source-and-structure`、`visualFidelityVerified=false`、`formallyEvaluatedByOriginalRubric=false`を記録する。batchでレビューを実施していない個別記録とレビュー省略runのscopeは`not-performed`。既存status、REVIEW応答schema、AI回答の内容は維持した。production READMEにも本文のiterate終了とrender/native visual/正式意味採点の別完了条件を記載した。
+
+合成fixtureの原ビューにheader/h1があり、本文投影がheaderを欠きh3へ変えている場合でも、mockされた本文レビューのapproved=trueを変更せず、handoffが視覚忠実性を未検証と記録する新負例を加えた。batchのREVIEWEDと個別progress、iterateの承認終了でも同じ未検証範囲が保たれる正常互換例を加えた。これらはAIの意味検出力や画像承認を模擬して合格にした試験ではない。
+
+修正後のprovenance29、batch8、iteration12、resume24、plan-context3、CLI11の計87試験を一回実行し、18.722秒、exit0、OK。試験前後の依存・コード・README・試験ファイル16件のSHAは一致した。scope-change-before.jsonは変更前、scope-tests-before/after.jsonとscope-tests.raw.logはこの改訂を固定した結果である。最初の監査49pin/8checks、rootの過去PASS、Round1/Round2の実AIジョブをこの87試験へ算入していない。
+
+rootからRound2は既に凍結runtimeで起動済みと報告されている。この後発scope追加を既存Round2 runtimeや保存済みRound1 reviewへ適用済みとは記録しない。今回追加したのは将来の新規実行の範囲表示であり、画像API、原アプリ、正式採点、画面のvisual acceptanceは追加していない。

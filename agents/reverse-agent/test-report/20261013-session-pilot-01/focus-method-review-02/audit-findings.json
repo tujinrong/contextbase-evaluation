@@ -1,0 +1,49 @@
+{
+  "schema": "reverse-ai-creation-method-audit/1",
+  "scope": "Read-only production audit with synthetic reproductions; no evaluator expectations, source program execution, external CLI jobs, or production source changes.",
+  "findings": [
+    {
+      "id": "METH-RELATIVE-CITATION-002",
+      "severity": "major",
+      "codeLocations": [
+        "src/contextbase/ai/rendering.py:161",
+        "src/contextbase/ai/rendering.py:185",
+        "src/contextbase/ai/rendering.py:460",
+        "src/contextbase/ai/validation.py:112",
+        "src/contextbase/ai/workflow.py:230"
+      ],
+      "trigger": "A legal same-publication related Markdown citation, for example ../共通/契約.md#入口 in 基本設計書/機能.md.",
+      "observed": "validate_document reports no structural findings. _sanitize preserves visible citation text but removes its relative href and records {kind:resource,name:href}; same-document # fragments and external https citations remain. render_document uses any removed item to mark SANITIZED_ORIGINAL_REQUIRES_REVISION, even though this citation was allowed by the structural contract.",
+      "currentAffectedScope": "Existing two assisted baseline MDs have zero <a href> anchors, so this did not affect those baselines. At inspection both focus-round1 draft jobs had no completed answer/Markdown. The current _document_context now supplies actual pinned related ID/path mappings, making legitimate planned relative citation a supported authoring route that reproduces this mismatch.",
+      "proposedFix": "Preserve inert relative a/href citations after validating canonical URL/path and publication-relative scope, without loading target contents or initiating requests. Distinguish approved navigation citations from active resource dependencies; continue rejecting traversal, encoded outside-root paths, file/absolute/evaluator paths and active URI schemes. Use the logical document_path/publication root rather than incorrectly limiting sibling documents to the image asset folder. Keep generated-state assertions separate: a planned link alone must not prove its target was published.",
+      "nonGoals": "Do not rewrite AI prose, mechanically invent related contract contents, copy expected specifications, or automatically read related document targets."
+    },
+    {
+      "id": "METH-INTERRUPTION-003",
+      "severity": "major",
+      "codeLocations": [
+        "src/contextbase/ai/provider.py:232",
+        "src/contextbase/ai/provider.py:294",
+        "src/contextbase/ai/provider.py:301",
+        "src/contextbase/ai/__main__.py:101"
+      ],
+      "trigger": "KeyboardInterrupt during the subprocess inference wait.",
+      "observed": "A synthetic mock raising KeyboardInterrupt at subprocess.run propagates out of run_job and leaves events.jsonl, prompt.txt and stderr.log but no result.json and no terminal interruption classification. The provider handles TimeoutExpired/OSError only, and CLI Exception handlers do not catch KeyboardInterrupt.",
+      "currentAffectedScope": "This reproduction started zero external CLI processes. Current live focus-round1 draft jobs lacking result.json must remain classified as live/pending, not interrupted; absence alone cannot distinguish those states.",
+      "proposedFix": "Record an immutable terminal INTERRUPTED provider result before propagating or returning a deliberate nonzero interruption status. Preserve partial raw output and avoid accepting an unfinished answer as successful. If adding process cleanup, retain a managed child handle and record cleanup outcome; do not claim descendant termination without verifying it. Add an initial immutable job-start record with invocation identity/PID and a separate terminal result rather than inferring interruption from file absence.",
+      "nonGoals": "The audit did not reproduce orphaned descendants or assert that current writers were interrupted."
+    }
+  ],
+  "verifiedNonFindings": [
+    "Analysis, writing and review prompts delegate facts and prose to AI; workflow preserves returned content and validates/hashes/transports it rather than assembling business sentences.",
+    "Current _document_context uses the bound AI plan map, pins snapshot/plan identity and explicitly separates planned identities from generated-state and evaluation expectations.",
+    "Current workflow supplies the bound ID to both metadata validation points; the prior document ID gap is fixed and separately tested.",
+    "Capsule before/after and provider/hash checkpoints prevent accepted reuse across changed sealed materials; legacy deferred binding is labelled separately.",
+    "No production business-specific condition dictionary or fixed expected business answer was found in the inspected AI path."
+  ],
+  "limitations": [
+    "Read-only sandbox is not a proven arbitrary-host read barrier; provider already reports caller-owned isolation and model_tool_actions_audited=false. This audit does not relabel it as complete read isolation.",
+    "No full new-screen Markdown or rendered bundle existed at inspection; no current round semantic score is claimed.",
+    "External original project spec/evaluator-only/spec-eval were not consulted."
+  ]
+}

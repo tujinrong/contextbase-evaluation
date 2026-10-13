@@ -1,0 +1,779 @@
+{
+  "schema": "source-backed-writer-feedback/1",
+  "classification": "GENERATOR_SAFE_SOURCE_FEEDBACK",
+  "reviewDocumentId": "SM-DET-STUDENT-EDITOR",
+  "createdAt": "2026-10-12T21:49:06.601349+00:00",
+  "reviewer": "/root/evaluation_inventory",
+  "projectId": "test-project1",
+  "profile": "CSharp_ASPNET",
+  "mode": "training-assisted",
+  "scope": "student-search-and-student-editor-only",
+  "sourceBackedOnly": true,
+  "provenance": {
+    "sourceCapsuleManifestPath": "agents/reverse-agent/.tmp/20261013-tuning-01/capsules/CSharp_ASPNET-assisted/manifest.json",
+    "sourceCapsuleManifestSha256": "3a722dc206dbf2ce850b594aa1bee65117e472a8144531adb731d354fb9a5a24",
+    "generatedDocumentPath": "test-project1/spec-analysis/CSharp_ASPNET/20261013-pilot-v2-r2/spec/detail/student-editor.md",
+    "generatedDocumentSha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d",
+    "generatedDocumentVersion": "1.0",
+    "generatedComponent": "20261013-pilot-v2-r2",
+    "sourceFiles": [
+      {
+        "path": "sources/Core/JapaneseDateService.cs",
+        "sha256": "fe3ba2094f911da09b2fb0d5b2694006f347f2a2eb2e4944ac8f251cd265f847",
+        "bytes": 3633
+      },
+      {
+        "path": "sources/Core/SqlServerStudentService.cs",
+        "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560",
+        "bytes": 42497
+      },
+      {
+        "path": "sources/Core/StudentNormalizer.cs",
+        "sha256": "e2cad5e8b23fbbbe44ca03933432b371b4b3fe824432220b183cc922f838b71d",
+        "bytes": 12978
+      },
+      {
+        "path": "sources/Infrastructure/EditorSnapshotStore.cs",
+        "sha256": "887e02443c77d43d175105a3411e46676c54e64d4a44e6cf07f133bb5da3a027",
+        "bytes": 1379
+      },
+      {
+        "path": "sources/Infrastructure/WebHostSetup.cs",
+        "sha256": "1a873e7427fcbc16d3593d2eaaed5c4180e79625bff8819ce979eada8e3f0649",
+        "bytes": 5766
+      },
+      {
+        "path": "sources/Infrastructure/WebPresentation.cs",
+        "sha256": "3a78f67fca52749e10924cea48054055612404ae687f3dfac0817b6741ac7c26",
+        "bytes": 4955
+      },
+      {
+        "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+        "sha256": "358bc13a486d43b4e30404f12f32845060ea4e98d3979c64a03ed8cc11a7c962",
+        "bytes": 5680
+      },
+      {
+        "path": "sources/Views/Shared/_Layout.cshtml",
+        "sha256": "1912307f7472cbd3e3e0ac7001218bee3f2c0da620b8cb3950564cc88f6a1c42",
+        "bytes": 458
+      },
+      {
+        "path": "sources/Views/Students/Edit.cshtml",
+        "sha256": "8a9f8ee01b5241be778f8f1b03819a62ab00502abba0b02e5e87a8035abf5b67",
+        "bytes": 9060
+      },
+      {
+        "path": "sources/Web/Controllers/StudentsController.cs",
+        "sha256": "cbbf397456a0c95cd5a7e33a2faabb06826451e5f24ac48d571283c88e8e3e31",
+        "bytes": 11129
+      },
+      {
+        "path": "sources/Web/Inputs/StudentSaveInput.cs",
+        "sha256": "607b30560672b7b548a6ece29f6f4a47a2cadf68786d1fe8d265a0452d03fbb8",
+        "bytes": 4366
+      },
+      {
+        "path": "sources/Web/Models/StudentEditPageModel.cs",
+        "sha256": "eaeb347d9c36a52e700427f2280c5814fca708c03b111b81d2753094af4088d9",
+        "bytes": 559
+      },
+      {
+        "path": "sources/database/001_schema.sql",
+        "sha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a",
+        "bytes": 17532
+      },
+      {
+        "path": "sources/wwwroot/css/site.css",
+        "sha256": "bdef23cccdcd2bef040291cf6e689e3597f8bb448734ad50e2b5117f360f1b4a",
+        "bytes": 2018
+      },
+      {
+        "path": "sources/wwwroot/js/site.js",
+        "sha256": "74729845c175ed285ddf0b19140d8216e7a1df6141a8e2e11d3a39f87f5d27bd",
+        "bytes": 2262
+      }
+    ]
+  },
+  "sourceBackedFindings": [
+    {
+      "id": "EDITOR-FIELD-BIND",
+      "severity": "major",
+      "title": "各業務入力・派生値・制御値の保存経路",
+      "sourceBackedIssue": "主要19入力の移送/物理型は既に詳述されるが、Columnsに従う総括と別表を往復し、UIから実パラメーター名/SqlDbType/Size/NULLへの直接対応を追いにくい。",
+      "revisionDirection": "19入力と派生name_key/kana_key/relationship_categoryを項目キーでColumns/Paramへつなぐ。@列名、実SqlDbType/Size、DateOnly→午前0時DateTime→Date、null→DBNullを示す。年度/学年は学生保存列を作らずクラス整合照合に使う。OperationReasonは監査@reason、削除Reasonはdelete_reasonと監査理由であり、同じ保存項目と扱わない。",
+      "sourceReferences": [
+        {
+          "path": "sources/Web/Inputs/StudentSaveInput.cs",
+          "startLine": 9,
+          "endLine": 42,
+          "sha256": "607b30560672b7b548a6ece29f6f4a47a2cadf68786d1fe8d265a0452d03fbb8"
+        },
+        {
+          "path": "sources/Core/StudentNormalizer.cs",
+          "startLine": 124,
+          "endLine": 147,
+          "sha256": "e2cad5e8b23fbbbe44ca03933432b371b4b3fe824432220b183cc922f838b71d"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 30,
+          "endLine": 37,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 67,
+          "endLine": 72,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 294,
+          "endLine": 307,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 385,
+          "endLine": 410,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        }
+      ],
+      "generatedLocations": [
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 90,
+          "endLine": 123,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 138,
+          "endLine": 186,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 476,
+          "endLine": 484,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        }
+      ]
+    },
+    {
+      "id": "EDITOR-DATE-UNITS",
+      "severity": "major",
+      "title": "元号入力と正規化後の桁数・日付バインド",
+      "sourceBackedIssue": "元号原入力、HTML maxlength、FormKC後のNumber検査、内部DateOnlyと物理dateの各層を分けて一巡できる説明が不足する。氏名の原表記と照合キー生成の上限も別層である。",
+      "revisionDirection": "生年月日のEraはID完全一致、Year/Month/DayはFormKC後にNumberが4/2/2コード単位以内のASCII正数を検査し、Yearの元を1として扱う。HTMLのmaxlength4/2/2と同じ検査時点だと決め付けない。元号境界・業務日・逆変換一致、dateの非時点性とDateバインドをつなぐ。氏名の8スカラー原表記とNameKey160スカラー/nvarchar320を区別する。",
+      "sourceReferences": [
+        {
+          "path": "sources/Views/Students/Edit.cshtml",
+          "startLine": 6,
+          "endLine": 7,
+          "sha256": "8a9f8ee01b5241be778f8f1b03819a62ab00502abba0b02e5e87a8035abf5b67"
+        },
+        {
+          "path": "sources/Core/JapaneseDateService.cs",
+          "startLine": 17,
+          "endLine": 39,
+          "sha256": "fe3ba2094f911da09b2fb0d5b2694006f347f2a2eb2e4944ac8f251cd265f847"
+        },
+        {
+          "path": "sources/Core/StudentNormalizer.cs",
+          "startLine": 37,
+          "endLine": 70,
+          "sha256": "e2cad5e8b23fbbbe44ca03933432b371b4b3fe824432220b183cc922f838b71d"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 67,
+          "endLine": 76,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/database/001_schema.sql",
+          "startLine": 10,
+          "endLine": 14,
+          "sha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a"
+        }
+      ],
+      "generatedLocations": [
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 92,
+          "endLine": 94,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 142,
+          "endLine": 145,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 856,
+          "endLine": 860,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        }
+      ]
+    },
+    {
+      "id": "EDITOR-MANAGEMENT-FIELDS",
+      "severity": "major",
+      "title": "候補・管理表示を実列と算出値へ対応付ける",
+      "sourceBackedIssue": "学生ID/更新表示、年度/学年/定員/参考人数の元列属性と、DTO nullable/表示未設定/算出値を同じ表で区別しにくい。",
+      "revisionDirection": "学生ID bigint IDENTITY、更新日時datetimeoffset(7)、更新者nvarchar128/CHECK64、クラス年度smallint NOT NULL、学年varchar2 NOT NULL、定員int NULLと実値取得を明示する。Occupiedは非削除かつ01/02学生数の副問合せでm_classの保存列ではない。NULL定員の上限比較省略と表示文字列、LEFT JOIN由来NULLを分ける。",
+      "sourceReferences": [
+        {
+          "path": "sources/database/001_schema.sql",
+          "startLine": 8,
+          "endLine": 8,
+          "sha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a"
+        },
+        {
+          "path": "sources/database/001_schema.sql",
+          "startLine": 40,
+          "endLine": 41,
+          "sha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a"
+        },
+        {
+          "path": "sources/database/001_schema.sql",
+          "startLine": 64,
+          "endLine": 84,
+          "sha256": "e6872d042fed6e1d795fde72e29adef5cecda6a0887348444ea905661de1178a"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 196,
+          "endLine": 214,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 357,
+          "endLine": 383,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Views/Students/Edit.cshtml",
+          "startLine": 4,
+          "endLine": 12,
+          "sha256": "8a9f8ee01b5241be778f8f1b03819a62ab00502abba0b02e5e87a8035abf5b67"
+        }
+      ],
+      "generatedLocations": [
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 90,
+          "endLine": 115,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 257,
+          "endLine": 257,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 470,
+          "endLine": 484,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        }
+      ]
+    },
+    {
+      "id": "EDITOR-STATIC-LAYOUT",
+      "severity": "major",
+      "title": "共通ヘッダー・適用CSS・単一成立モード",
+      "sourceBackedIssue": "静的再構成は_Layoutのヘッダーを落とし、新規基準図に既存再読込/管理者削除/確認を合成する。候補表の実CSSによる最小幅が再現されず、狭幅で収まるように見える。",
+      "revisionDirection": "共通_Layoutを含め、標準図を成立する1モードに限定し他モードを独立例にする。候補sectionはrole=dialogかつclass=warningであり、CSSの.dialog classとは別なので.dialog tableの規則を勝手に適用しない。実tableのmin-width1050px・padding・font-size・背景を保持し、ソースにないモーダル/スクロール枠で補修しない。静的素材と実画面撮影を区別する。",
+      "sourceReferences": [
+        {
+          "path": "sources/Views/Shared/_Layout.cshtml",
+          "startLine": 1,
+          "endLine": 1,
+          "sha256": "1912307f7472cbd3e3e0ac7001218bee3f2c0da620b8cb3950564cc88f6a1c42"
+        },
+        {
+          "path": "sources/Views/Students/Edit.cshtml",
+          "startLine": 3,
+          "endLine": 17,
+          "sha256": "8a9f8ee01b5241be778f8f1b03819a62ab00502abba0b02e5e87a8035abf5b67"
+        },
+        {
+          "path": "sources/Web/Models/StudentEditPageModel.cs",
+          "startLine": 5,
+          "endLine": 14,
+          "sha256": "eaeb347d9c36a52e700427f2280c5814fca708c03b111b81d2753094af4088d9"
+        },
+        {
+          "path": "sources/wwwroot/css/site.css",
+          "startLine": 1,
+          "endLine": 1,
+          "sha256": "bdef23cccdcd2bef040291cf6e689e3597f8bb448734ad50e2b5117f360f1b4a"
+        }
+      ],
+      "generatedLocations": [
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 41,
+          "endLine": 84,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        }
+      ]
+    },
+    {
+      "id": "EDITOR-OPERATION-COMPARISON",
+      "severity": "minor",
+      "title": "共通Lookupとイベント固有の確定/保持",
+      "sourceBackedIssue": "読込/取消/再読込/検索復帰ごとの共通Lookup図が反復され、保存/削除/確認の固有分岐を追いにくい。",
+      "revisionDirection": "共通Lookup・保持領域・受付/エラーを一箇所へ整理し、各イベントに対象/入力取得元/版/SQL全述語/確定取消/失敗時保持の固有差を残す。NoChange、確認待ち、Saved、Unknownを同じ成功としてまとめない。試験観点はソース分岐から提示し、実行結果や未接続意図の実装達成を創作しない。",
+      "sourceReferences": [
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 23,
+          "endLine": 38,
+          "sha256": "cbbf397456a0c95cd5a7e33a2faabb06826451e5f24ac48d571283c88e8e3e31"
+        },
+        {
+          "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+          "startLine": 17,
+          "endLine": 19,
+          "sha256": "358bc13a486d43b4e30404f12f32845060ea4e98d3979c64a03ed8cc11a7c962"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 196,
+          "endLine": 216,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 227,
+          "endLine": 323,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 392,
+          "endLine": 416,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        }
+      ],
+      "generatedLocations": [
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 205,
+          "endLine": 322,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 658,
+          "endLine": 849,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        }
+      ]
+    }
+  ],
+  "existingCorrectBehaviors": [
+    {
+      "id": "EDITOR-SAVE-DELETE-FAILURE",
+      "title": "保存失敗のInput保持と削除失敗のLoadを分ける",
+      "observedBehavior": "保存結果がSaved以外なら投稿Inputを再表示し、Snapshot.Detail/元Snapshot/復帰版を使ってLookupを再取得する。削除結果がSaved以外なら通常Loadへ戻り、最新Detail/新Snapshotを作る。削除Reasonは空textareaで、投稿理由や編集中Inputを復元しない。Loadが対象なしになれば共通404へ変わり得る。",
+      "revisionInstruction": "この分岐・範囲・条件を新稿にも保持する。現行実装と異なる意図を扱う場合は、現行動作と明確に分ける。",
+      "sourceReferences": [
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 25,
+          "endLine": 37,
+          "sha256": "cbbf397456a0c95cd5a7e33a2faabb06826451e5f24ac48d571283c88e8e3e31"
+        },
+        {
+          "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+          "startLine": 17,
+          "endLine": 19,
+          "sha256": "358bc13a486d43b4e30404f12f32845060ea4e98d3979c64a03ed8cc11a7c962"
+        },
+        {
+          "path": "sources/Views/Students/Edit.cshtml",
+          "startLine": 17,
+          "endLine": 17,
+          "sha256": "8a9f8ee01b5241be778f8f1b03819a62ab00502abba0b02e5e87a8035abf5b67"
+        }
+      ],
+      "generatedLocations": [
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 488,
+          "endLine": 508,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 652,
+          "endLine": 656,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        }
+      ]
+    },
+    {
+      "id": "EDITOR-TOKEN-RECONFIRM",
+      "title": "確認照合・再発行・候補全体",
+      "observedBehavior": "稼働Web登録はwebTokens:true。確認は主体/セッション/対象ID/期待版/期限/19業務入力ハッシュ/全候補ID版ハッシュ/Busyの獲得で照合する。現在対象の版競合とNoChangeは確認照合より前に返り得る。無効確認で候補あり又は非NULLキーなら学生Txをrollbackして再発行し、候補全件数と最大20件表示を分ける。",
+      "revisionInstruction": "この分岐・範囲・条件を新稿にも保持する。現行実装と異なる意図を扱う場合は、現行動作と明確に分ける。",
+      "sourceReferences": [
+        {
+          "path": "sources/Infrastructure/WebHostSetup.cs",
+          "startLine": 19,
+          "endLine": 19,
+          "sha256": "1a873e7427fcbc16d3593d2eaaed5c4180e79625bff8819ce979eada8e3f0649"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 19,
+          "endLine": 29,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 224,
+          "endLine": 225,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 252,
+          "endLine": 290,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        }
+      ],
+      "generatedLocations": [
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 516,
+          "endLine": 581,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        }
+      ]
+    },
+    {
+      "id": "EDITOR-TOKEN-LIFECYCLE",
+      "title": "ブラウザー取消・サーバーキー・確定後処理",
+      "observedBehavior": "編集inputと確認取消はブラウザーのDuplicateTokenを消すが、サーバー辞書の古いキーをその場で削除しない。Webキーは32バイト乱数hex・入口時点+10分、Saved/Unknownで除去し、確定/結果不明以外の失敗でclaimed Busyを解放する。DB確認表分岐は別で、消費UPDATEは学生保存と同一Txで行う。万能な再送冪等性を保証しない。",
+      "revisionInstruction": "この分岐・範囲・条件を新稿にも保持する。現行実装と異なる意図を扱う場合は、現行動作と明確に分ける。",
+      "sourceReferences": [
+        {
+          "path": "sources/wwwroot/js/site.js",
+          "startLine": 3,
+          "endLine": 6,
+          "sha256": "74729845c175ed285ddf0b19140d8216e7a1df6141a8e2e11d3a39f87f5d27bd"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 308,
+          "endLine": 342,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        }
+      ],
+      "generatedLocations": [
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 516,
+          "endLine": 581,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 937,
+          "endLine": 937,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        }
+      ]
+    },
+    {
+      "id": "EDITOR-CONFIRM-SCOPE",
+      "title": "確認とSnapshot/検索復帰の識別を分ける",
+      "observedBehavior": "Confirmation自体の保持要素にSnapshotId/検索Context/Tabはない。編集Snapshotと送信復帰先はControllerで別途照合する。周辺照合を確認キー自体の全識別結合と同じ保証にしない。",
+      "revisionInstruction": "この分岐・範囲・条件を新稿にも保持する。現行実装と異なる意図を扱う場合は、現行動作と明確に分ける。",
+      "sourceReferences": [
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 19,
+          "endLine": 29,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 278,
+          "endLine": 283,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 29,
+          "endLine": 29,
+          "sha256": "cbbf397456a0c95cd5a7e33a2faabb06826451e5f24ac48d571283c88e8e3e31"
+        },
+        {
+          "path": "sources/Infrastructure/EditorSnapshotStore.cs",
+          "startLine": 7,
+          "endLine": 10,
+          "sha256": "887e02443c77d43d175105a3411e46676c54e64d4a44e6cf07f133bb5da3a027"
+        }
+      ],
+      "generatedLocations": [
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 516,
+          "endLine": 581,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 937,
+          "endLine": 937,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        }
+      ]
+    },
+    {
+      "id": "EDITOR-COMMIT-UNKNOWN",
+      "title": "確定単位と結果不明を保持する",
+      "observedBehavior": "保存/論理削除は比較版付き学生更新と監査を同じTxで確定し、正常Commit後だけSavedとなる。NoChangeはrollbackしてDML/監査/管理値増加を行わない。捕捉対象例外ではwriteStarted&&(commitAttempted||!rolledBack)がUnknownで、Commit試行後の例外を後続rollback成功で取消確定にしない。Open/Beginは分類tryの外にある。",
+      "revisionInstruction": "この分岐・範囲・条件を新稿にも保持する。現行実装と異なる意図を扱う場合は、現行動作と明確に分ける。",
+      "sourceReferences": [
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 240,
+          "endLine": 263,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 294,
+          "endLine": 323,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 392,
+          "endLine": 416,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        }
+      ],
+      "generatedLocations": [
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 488,
+          "endLine": 508,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 646,
+          "endLine": 656,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        }
+      ]
+    },
+    {
+      "id": "EDITOR-SNAPSHOT-RELOAD",
+      "title": "取消と最新再読込の取得元",
+      "observedBehavior": "ResetはSnapshot.OriginalのJSON複製へ戻す。全項目空でもDB最新でもなく、読込時の期待版を保持する。最新再読込はLoad/GetAsyncで新しいDetail/期待版/Snapshotを取得する。Snapshotはプロセス内辞書、所有者/セッション/対象/30分期限を確認する。",
+      "revisionInstruction": "この分岐・範囲・条件を新稿にも保持する。現行実装と異なる意図を扱う場合は、現行動作と明確に分ける。",
+      "sourceReferences": [
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 25,
+          "endLine": 35,
+          "sha256": "cbbf397456a0c95cd5a7e33a2faabb06826451e5f24ac48d571283c88e8e3e31"
+        },
+        {
+          "path": "sources/Infrastructure/EditorSnapshotStore.cs",
+          "startLine": 7,
+          "endLine": 11,
+          "sha256": "887e02443c77d43d175105a3411e46676c54e64d4a44e6cf07f133bb5da3a027"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 172,
+          "endLine": 194,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Web/Inputs/StudentSaveInput.cs",
+          "startLine": 44,
+          "endLine": 54,
+          "sha256": "607b30560672b7b548a6ece29f6f4a47a2cadf68786d1fe8d265a0452d03fbb8"
+        }
+      ],
+      "generatedLocations": [
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 658,
+          "endLine": 768,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        }
+      ]
+    },
+    {
+      "id": "EDITOR-POSTAL-RAW",
+      "title": "郵便保存と読込表示の実動作",
+      "observedBehavior": "Postalは原入力10スカラー、FormKC/指定空白ハイフン除去後ASCII7桁で保存する。DetailとStudentSaveInput.Fromは保存済み文字列をそのまま復元し、現在のinputに3桁-4桁表示整形はない。表示整形を新しい実装動作として創作しない。",
+      "revisionInstruction": "この分岐・範囲・条件を新稿にも保持する。現行実装と異なる意図を扱う場合は、現行動作と明確に分ける。",
+      "sourceReferences": [
+        {
+          "path": "sources/Core/StudentNormalizer.cs",
+          "startLine": 95,
+          "endLine": 100,
+          "sha256": "e2cad5e8b23fbbbe44ca03933432b371b4b3fe824432220b183cc922f838b71d"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 185,
+          "endLine": 190,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Web/Inputs/StudentSaveInput.cs",
+          "startLine": 49,
+          "endLine": 49,
+          "sha256": "607b30560672b7b548a6ece29f6f4a47a2cadf68786d1fe8d265a0452d03fbb8"
+        },
+        {
+          "path": "sources/Views/Students/Edit.cshtml",
+          "startLine": 9,
+          "endLine": 9,
+          "sha256": "8a9f8ee01b5241be778f8f1b03819a62ab00502abba0b02e5e87a8035abf5b67"
+        }
+      ],
+      "generatedLocations": [
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 96,
+          "endLine": 96,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 147,
+          "endLine": 147,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        }
+      ]
+    },
+    {
+      "id": "EDITOR-OUTPUT-AND-INPUT",
+      "title": "学生19業務値と管理/理由/候補を分ける",
+      "observedBehavior": "管理ID/版/認証者/時点は任意の通常入力ではなく、版は正ASCII Int64として検査する。年度/学年は保存列を増やさずクラス整合に使用する。OperationReasonと削除Reasonは別フォーム/要求で、論理削除は編集中の19業務値を保存しない。",
+      "revisionInstruction": "この分岐・範囲・条件を新稿にも保持する。現行実装と異なる意図を扱う場合は、現行動作と明確に分ける。",
+      "sourceReferences": [
+        {
+          "path": "sources/Web/Inputs/StudentSaveInput.cs",
+          "startLine": 28,
+          "endLine": 60,
+          "sha256": "607b30560672b7b548a6ece29f6f4a47a2cadf68786d1fe8d265a0452d03fbb8"
+        },
+        {
+          "path": "sources/Infrastructure/WebStudentCoordinator.cs",
+          "startLine": 18,
+          "endLine": 19,
+          "sha256": "358bc13a486d43b4e30404f12f32845060ea4e98d3979c64a03ed8cc11a7c962"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 234,
+          "endLine": 237,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 409,
+          "endLine": 413,
+          "sha256": "ae235c4a91ef2e1b7ed5fafb13b4f898e12cb38333e01b027c27b12d999b7560"
+        },
+        {
+          "path": "sources/Views/Students/Edit.cshtml",
+          "startLine": 17,
+          "endLine": 17,
+          "sha256": "8a9f8ee01b5241be778f8f1b03819a62ab00502abba0b02e5e87a8035abf5b67"
+        }
+      ],
+      "generatedLocations": [
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 175,
+          "endLine": 186,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 387,
+          "endLine": 402,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 648,
+          "endLine": 656,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        }
+      ]
+    },
+    {
+      "id": "EDITOR-REAL-ENTRYPOINT",
+      "title": "MVC入口と表示helperを混同しない",
+      "observedBehavior": "保存/削除はMVCフォーム経路で、Savedは303 Locationへ進む。WebPresentation.Saveの宣言を実際の公開JSON保存応答としない。ブラウザーsubmitの他ボタン無効化やDirty警告をサーバー冪等処理と扱わない。",
+      "revisionInstruction": "この分岐・範囲・条件を新稿にも保持する。現行実装と異なる意図を扱う場合は、現行動作と明確に分ける。",
+      "sourceReferences": [
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 26,
+          "endLine": 38,
+          "sha256": "cbbf397456a0c95cd5a7e33a2faabb06826451e5f24ac48d571283c88e8e3e31"
+        },
+        {
+          "path": "sources/Infrastructure/WebPresentation.cs",
+          "startLine": 30,
+          "endLine": 30,
+          "sha256": "3a78f67fca52749e10924cea48054055612404ae687f3dfac0817b6741ac7c26"
+        },
+        {
+          "path": "sources/wwwroot/js/site.js",
+          "startLine": 2,
+          "endLine": 6,
+          "sha256": "74729845c175ed285ddf0b19140d8216e7a1df6141a8e2e11d3a39f87f5d27bd"
+        }
+      ],
+      "generatedLocations": [
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 387,
+          "endLine": 508,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        },
+        {
+          "path": "spec/detail/student-editor.md",
+          "startLine": 935,
+          "endLine": 937,
+          "sha256": "1a6bacdaaccced64295e119c43c3a1b1c603beb5e775c34c692ff5de2b48e22d"
+        }
+      ]
+    }
+  ],
+  "revisionBoundary": [
+    "新稿は新しいAI解析・執筆・独立レビューで作る。既存本文の機械置換を新しいAI執筆と扱わない。",
+    "現行ソースで確認した事実と利用者が許可した設計意図を区別する。未実装方針・実行成功・追加機能を創作しない。",
+    "実使用経路を閉包で追い、宣言だけのhelperを稼働入口と扱わない。",
+    "ここにない欠落を全て補完済と解釈しない。今回の指摘はソースに根拠を持つ書き直し材料。"
+  ],
+  "notPerformed": [
+    "Application startup",
+    "SQL Server execution",
+    "Concurrency execution tests"
+  ]
+}

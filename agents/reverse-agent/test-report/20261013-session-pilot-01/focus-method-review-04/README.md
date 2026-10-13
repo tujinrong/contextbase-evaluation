@@ -1,0 +1,13 @@
+# カプセル検証範囲の記録修正
+
+2026-10-13。対象は汎用AI作成手順。仕様本文・業務ソース・原仕様・採点表は修正していない。
+
+analysis-handoffのscope文字列が入力の版に関わらずsealed-capsuleとなっていた。今回の入力はlegacy-v1の原文・索引・メタデータを再検査したもので、manifest封印済みのv2ではない。新しいcheckpointの表現をrevalidated-capsuleへ改め、capsuleIntegrityScopeに実際のsnapshot検査範囲を記録する。指定された検証範囲が実snapshotと異なるcheckpointは、AI呼出しの前に拒否する。
+
+追加属性のない過去のcheckpointは、従来通り原応答・入力・計画・前後ハッシュを再検証した場合に限って引き継げる。過去の記録を手書きで修正したり、再利用を新規解析に数えたりしない。
+
+この修正後にresume、provenance、plan context、iteration、batchの関連78試験を実行し、失敗0・エラー0で成功した。実効範囲の改ざんをAI前に拒否する負例と、追加ラベルのない旧記録の検証済み互換性を含む。試験は合成入力による手順検査であり、業務アプリ・実DBの実行試験や意味採点ではない。
+
+直前の全体283試験は[method-integration-03](../method-integration-03/results.json)で前後pinを固定して成功している。今回の追加修正はその全体検査の後で、全体283件を今回の追加に対する再検査として扱わない。起動時に凍結された第2稿のruntimeにも今回の追加は入っていない。
+
+また、全体Agent一覧の参照先AGENT.mdが本配置に存在しなかったため、選択reverse-agentの役割定義入口を追加した。既存AGENTS.md、PROMPT.md、全体規則へ接続し、AI執筆、再解析、評価隔離、原本不変、検査範囲の分離を明記した。新しい役割定義はspec-metaと章の構造検査に通っており、業務仕様の採点結果ではない。

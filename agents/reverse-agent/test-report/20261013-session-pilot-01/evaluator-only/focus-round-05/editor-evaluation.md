@@ -1,0 +1,28 @@
+# 第5稿 学生登録・編集画面 独立評価
+
+評価者 `/root/evaluation_inventory/grade_details`。training-assisted。生成5.0／原仕様8.0／採点表7.4。新稿全文1233行と161原行の意味を新規に読み、過去の得点・一致・理由を使用していない。
+
+確定149/169点。一致145行、欠落14行/17点、保留2行/3点。生成矛盾0、重要矛盾0。0点診断82行を保持する。未裁定が残るため完了得点・達成率は未確定。
+
+欠落は概要のIO/文書責務全体、原画面配置、和暦元号のraw上限意図、郵便/在籍日付の具体設計表示、学年のコード存在確認意図、UI処理中/応答世代の具体契約、戻る・終了時の取消既定、補足の開発入力/試験実施責務である。現在実装の忠実な説明と、意図を具体的に再現した記述を分けた。否定文に同じ形式文字列が出ることだけで表示契約の一致を推論していない。候補確認の取消autofocusを、検索戻り/終了の取消既定の根拠へ転用していない。
+
+新規・既存・再読込の図は、省略ContextのNULLと二度目Get成功の採取Revisionを別枝で設定し、決定値を保持してSnapshotへ合流する。保存/削除のcatch順序と一般catchのUnknown条件は表と図で具体化され、通常422/409を一般503へまとめない。これらは今回の本文とソースから独立に確認した。
+
+削除失敗の原入力保持保証は適用/原仕様品質が未裁定で、2行をnullで保持した。新稿1200は一般設計意図と実装の非SavedLoad差をともに明記するため、意図再現の存在と実装忠実性を別軸で記録した。これを現在実装の保持成功保証に読み替えて加点していない。
+
+全161最終理由と根拠を原stable ID/criterion/論理項目・操作と再照合した。row_context_guardの汎用context・理由/根拠ハッシュ処理で結合を検査し、editor-context-verification.jsonに排他的保存した。機械検査は意味や承認を推論しない。3つのeditor-reviewed-decisions JSONは今回人手で書いた判定材料であり、旧結果ではない。
+
+固定入力88pins/候補20pins/union128pinsのSHA、完了draftと公開/凍結MDの一致、全行の生成/source/reference/checklistの番号範囲とSHA、原169重みと82診断を検査した。source43/許可設計11/runtime13/safe launch8を固定し、使用したソース範囲を新規再読した。保存runner SHA c63aca7300a44fa17c542d82a98dc0523c3853206fb8b8a6d3ebe0fc62a9f591を使用し、後続driver変更を今回入力へ遡及しない。
+
+アプリ/DB/HTTPバインド実行、native画像検証、描画承認、Excel/PDF往復、全1408採点は本評価者未実施。legacy-v1のunsealed結合範囲でありsealed v2の完了を主張しない。JSON/MDはartifact_storeのexclusive作成で保存し、今回の最終JSON/reviewは上書きしていない。
+
+SHA:
+
+- report: 73ba5a8314efb0447ab6ade0570c5f99af400f3d4f3305290d7f867097ef1821
+- context review: 5b3883007020098f51f49b0367363de12ab6319c0bd52760c7942163666e36b8
+- context verification: 00bd7fc13be9147cc69c81b00fd5f6c8be3dfdb2f6ac042de1abcdc5c76ae42e
+- generated: 5cec039f58141cbac0318ca8b937336fcc9234179b066f72a77083b71e6d81a7
+- selected rows: 7479a93ff875884eaea36c3613549fe6b8906f2baca9c09ff85e51db8bdbb025
+- input manifest: 1b5241743acca1a40b4ca7dabc58f9c7a1dc00707cc163fdcb68e0af044379ff
+- candidate snapshot: 8325c5f71f4c62ee85c9e55cbb2486a4a4fcfaace80de4a5d2a42d44d3c705ed
+- union manifest: c71a17168bd13df73a22c61373d14992f3d7728297c454a9c6773fa7b92632c2
