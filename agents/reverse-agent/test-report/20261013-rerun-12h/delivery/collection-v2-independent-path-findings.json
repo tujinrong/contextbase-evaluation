@@ -1,0 +1,29 @@
+{
+  "schema": "reverse-agent-independent-collection-boundary-finding/1",
+  "createdUtc": "2026-10-13T13:29:55.178334+00:00",
+  "status": "CHANGES_REQUIRED_PATH_READ_BOUNDARY",
+  "helper": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-rerun-12h\\training-assisted\\collect_reviewed_v2.py",
+  "helperSha256": "c63b5bd6bb7fd5222b157113a43bfbe7750a47df433311187ae22e1372b7ead6",
+  "providerCalls": 0,
+  "wholeHelperExecuted": false,
+  "productionDataRead": false,
+  "syntheticFunctionsOnly": true,
+  "findings": [
+    {
+      "function": "pin",
+      "line": 43,
+      "reproduction": "Synthetic linked file with matching bytes is resolved and read without capsule.safe_path. safe_path spy0, file read1.",
+      "repair": "Check nonresolved original path with capsule.safe_path before resolve/read, and recheck on each final hash."
+    },
+    {
+      "function": "runtime_inventory",
+      "line": 53,
+      "reproduction": "Synthetic linked runtime module with expected bytes yields the expected complete inventory; safe_path spy0, linked read1.",
+      "repair": "Use capsule.safe_path(directory) and capsule.safe_path(each file) before every read, including after-copy inventory and assert_unchanged."
+    }
+  ],
+  "limits": [
+    "This isolates two read-boundary gaps; the full eleven-document metadata/copy workflow has not been audited or executed.",
+    "Adding assisted06 receipt to a fresh version alone does not address these existing guards."
+  ]
+}

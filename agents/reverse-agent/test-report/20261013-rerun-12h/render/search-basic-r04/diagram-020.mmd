@@ -1,0 +1,14 @@
+flowchart TD
+  A["DL-A：3.9-1から"] --> B
+  subgraph TX["トランザクション内：対象の再確認"]
+    B["学生書込ロック取得"] --> C["ID・is_deleted=0でrow_version読取"]
+    C --> D{"非削除対象あり"}
+    D -->|いいえ| N["NotFound・E-STU-103<br/>UPDATEなし"]
+    D -->|はい| E{"取得版と比較版が一致"}
+    E -->|いいえ| K["Conflict・E-STU-105<br/>UPDATEなし"]
+    E -->|はい| F["対象と比較版の確認を通過"]
+  end
+  N --> R["DL-R → 3.9-5<br/>各枝のSaveResultを保持"]
+  K --> R
+  F --> Q["DL-B → 3.9-3<br/>ID・比較版・理由・tx・ロック"]
+  TX -->|枠内で生じた例外| X["DL-X → 3.9-4<br/>元の例外・tx・発生時点のフラグ"]

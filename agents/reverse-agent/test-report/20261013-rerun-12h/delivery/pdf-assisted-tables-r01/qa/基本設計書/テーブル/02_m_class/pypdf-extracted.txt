@@ -1,0 +1,399 @@
+ク ラ ス マ ス タ （ d b o . m _ c l a s s ） テ ー ブ ル 仕 様 書
+文書ID：CSHARP_ASPNET-BAS-STU-03-M_CLASS
+文書種別：table-definition／基本設計書
+版：1.1
+正本パス：基本設計書/テーブル/02_m_class.md
+テ ー ブ ル ヘ ッ ダ ー
+項 目 内 容
+論理名・物理名・データ単位 クラスマスタ／dbo.m_class。学校年度内のクラス1件を管理する17列の表。学生はclass_idで現在所属または最終所属を参照し、年度・学
+年・クラス名を学生へ重複保存しない。現在人数の保存列はない。学年00のクラスへの所属と、学生の所属NULLは別の状態である。実装根
+拠：sources/database/001_schema.sql:24-28,62-88、sources/Core/Contracts.cs:25-25,63-67、
+sources/Core/SqlServerStudentService.cs:201-214、sources/database/002_seed.sql:78-84。
+用途と処理への接続 学生画面から候補取得・所属条件検索・所属ID保存へ接続される。クラス自身の書込みはMasterMaintenanceService.SaveClassAsyncに宣
+言されているが、確認したWeb登録・学生ルートからの呼出しはない。本書の保守規則は同サービスの契約であり、公開保守画面・HTTP
+API・稼働CLIの仕様とは確定しない。実装根拠：sources/Program.cs:3-7、sources/Infrastructure/WebHostSetup.cs:13-19、
+sources/Web/Controllers/StudentsController.cs:5-42、sources/Infrastructure/WebStudentCoordinator.cs:7-19、
+sources/Core/MasterMaintenanceService.cs:9-15,30-77。
+主キーと採番 pk_m_class(class_id)。bigint IDENTITY(1,1)で採番する。新規保守のOUTPUTで取得した番号は監査の対象キーへ渡す。
+MaintenanceResultにクラスIDを返す項目はない。実装根拠：sources/database/001_schema.sql:63-63,80-80、
+sources/Core/MasterMaintenanceService.cs:11-11,74-76,124-130。
+年度内一意 uq_class_year_code(school_year,class_code)。同年度では学年が異なっても同じコードを登録できない。停止・期間外の行も対象で、名
+称は一意キーではない。実装根拠：sources/database/001_schema.sql:188-188。
+1 / 15
+項 目 内 容
+学年・学生との参照関係 fk_class_gradeは本表の(grade_category,grade_code)からm_code(category_id,code_value)への複合FK。分類はck_class_categoryで
+GRADEに固定する。コードはfk_code_categoryで分類マスタを参照する。クラス1行は学年コード1件を参照し、同じ学年コードを複数クラ
+スが利用できる。実装根拠：sources/database/001_schema.sql:189-190,197-197。
+fk_student_classはNULL可のm_student.class_idから本表の主キーへのFK。学生1行の所属は最大1件で、クラスに複数学生を所属させられ
+る。削除連動の指定はない。学生側のck_student_datesは在学01・休学02で所属必須、卒業03・退学04で終了日必須・所属任意とする。実
+装根拠：sources/database/001_schema.sql:28-28,191-191,198-198。
+検索JOINと監査の関係 学生一覧・同一人物候補は学生→クラス→学年コードをLEFT JOINして名称を取得する。これは名称取得のSQLであり、FKの定義とは分け
+る。未所属では年度・コード・名称・学年名称の表示結果がNULLになるが、本表の保存列class_nameはNOT NULLである。保守は
+t_operation_logへ追記するが、履歴対象キーから本表へのFKは宣言されていない。実装根拠：
+sources/Core/SqlServerStudentService.cs:77-90、sources/Core/Contracts.cs:50-53、sources/database/001_schema.sql:68-68,137-
+154,187-205、sources/Core/MasterMaintenanceService.cs:132-135。
+年度・期間・数値のCHECK ck_class_limitsは年度1900～9998、開始日≦終了日、開始日≧年度4月1日、終了日≦翌年3月31日、定員NULLまたは1～9999、表示順0以上
+を要求する。NULL定員は制限なしであり、0人定員は保存できない。参照学生数・現在人数を使う変更制限はサービス側の検査である。実
+装根拠：sources/database/001_schema.sql:201-201、sources/Core/MasterMaintenanceService.cs:32-37,53-57。
+文字列・管理列のCHECK ck_m_class_class_name_scalarは名称18、ck_m_class_remarks_scalarは備考120、ck_m_class_created_by_scalar・
+ck_m_class_updated_by_scalarは者64のスカラー相当上限を検査する。SC照合順序のLENに末尾記号を加える式で、末尾空白も長さに含め
+る。ck_m_class_created_at_utc・ck_m_class_updated_at_utcはUTCオフセット0、ck_m_class_row_versionは正の版を要求する。必須性は
+各列のNOT NULLで定義する。実装根拠：sources/database/001_schema.sql:81-87。
+2 / 15
+項 目 内 容
+照合順序と長さの単位 分類・学年・クラスコードはLatin1_General_100_BIN2、名称・備考・作成者・更新者はLatin1_General_100_CS_AS_SC。サービスは不正な
+サロゲートを拒否しUnicodeスカラー数で業務長を検査する。varchar(n)の容量はバイト、nvarchar(n)の容量はUTF-16コード単位である。
+名称18スカラーとDB36コード単位を同一の上限と扱わない。実装根拠：sources/database/001_schema.sql:65-78、
+sources/Core/StudentNormalizer.cs:37-64。
+DEFAULT・設計初期値・処理設定 DDLのDEFAULTは表示順0・利用可否1・比較版1の3列だけである。新規保守は分類GRADE・版1・管理情報を明示設定し、表示順と利用可否も
+要求値を保存する。参考設計は学年00、開始日を年度開始日、終了日を年度終了日とするが、サービスはこれらを自動補完しない。明細の
+初期値欄はDB採番、DDL DEFAULT、明示処理設定の出所を示す。設計意図：reference-designs/基本設計書/テーブル/02_m_class.md:24-
+40。実装根拠：sources/database/001_schema.sql:62-79、sources/Core/MasterMaintenanceService.cs:9-9,32-37,65-74,127-129。
+学年なしと初期投入 seedはGRADEの00「学年なし」と01～06を定義し、不足コードを追加する。クラスをINSERTする処理はない。参考設計の01～06は学校種別
+未指定の候補例であり、学校種別・実クラス・初期クラス値を確定しない。参考設計では担任の人事管理を本表の対象外とする。設計意
+図：reference-designs/基本設計書/04_コード設計書.md:100-100,157-159、reference-designs/基本設計書/テーブル/02_m_class.md:35-
+35。実装根拠：sources/database/002_seed.sql:78-92、sources/database/001_schema.sql:62-88。
+索引 本表は主キーと年度・クラスコードの一意制約を持ち、別のCREATE INDEXはない。人数集計元には
+ix_student_class_status(class_id,enrollment_status_code) WHERE is_deleted=0がある。学年変更検査の全参照件数は削除済みも数え
+るため、非削除条件だけに限定しない。実装根拠：sources/database/001_schema.sql:80-80,188-188,206-212、
+sources/Core/MasterMaintenanceService.cs:53-55。
+3 / 15
+項 目 内 容
+保守要求・候補・戻り値 ClassChangeのID・期待版はlong?、年度・表示順はint、定員はint?、利用可否はbool、学年・コード・名称・両日付はstring、備考は
+string?。IDと期待版がともにNULLなら新規、ともに正数なら更新。候補SchoolClassにはID・年度・学年・コード・名称・期間・定員・人
+数・利用可否を移し、備考・比較版・管理列は移さない。MaintenanceResultはOutcome・long?のRowVersion・Message・SameNameWarning
+を返す。実装根拠：sources/Core/MasterMaintenanceService.cs:9-11,32-32、sources/Core/Contracts.cs:63-65。
+保守手順1：原値検査と正規化 DB認証より前に年度・定員・表示順とID・期待版の組を検査する。続いてコード→名称→学年→備考→開始日・終了日の順で加工し、年度
+内期間を確認する。TextはNULLを空へ置き換え、必須なら入力検証例外、任意ならNULLとする。要求オブジェクト自体にはNULL検査がな
+く、日付文字列のNULLもParseIsoのNormalize呼出し前に排除しない。非nullable宣言を受信保証へ拡張しない。この段階の例外は保存ト
+ランザクション内catchの外である。実装根拠：sources/Core/MasterMaintenanceService.cs:30-41、
+sources/Core/StudentNormalizer.cs:47-64,113-117,168-168、sources/Core/JapaneseDateService.cs:52-59。
+保守手順2：DB管理者確認と排他 接続は暗号化必須・サーバー証明書信頼無効で開き、ORIGINAL_LOGIN()とIS_ROLEMEMBER('student_admin')でDB管理者を確認する。読取り
+不能、ロール結果NULL・1以外はUnauthorizedAccessExceptionとなり接続を破棄する。ReadCommitted開始後にUTCのnowと日本時間のdayを
+取得し、学生保存・削除と共通のtest-project1:student-writeをExclusive・Transaction所有で取得する。待機上限5000ms、負戻り値は
+SQL例外51001。now・dayをゲート待機後に取り直す処理はない。実装根拠：sources/Core/MasterMaintenanceService.cs:17-42、
+sources/Core/SqlServerStudentService.cs:92-102,243-244,400-403。
+保守手順3：最新対象と比較版 更新はゲート取得後にclass_id=@id、@id:BigIntで全列を読込み、停止行も対象とする。不在はNotFound・版NULL・警告false・「対象ク
+ラスが存在しません。」、読込版不一致はConflict・版NULL・警告false・「他の操作でクラスが変更されています。」を返す。この2枝は
+書込み・監査・commitへ進まず、明示rollbackも呼ばずトランザクションの破棄へ進む。実装根拠：
+sources/Core/MasterMaintenanceService.cs:39-50。
+4 / 15
+項 目 内 容
+保守手順4：識別情報と全参照学生 最新行と比べ年度または正規化済みコードが変わればE-MST-003のArgumentExceptionで拒否する。次に同じclass_idの学生をCOUNT_BIGす
+る。削除済み・卒業・退学を含む全参照件数が1件以上で学年が変わる場合もE-MST-003で拒否する。名称・備考の変更とは異なる検査であ
+る。実装根拠：sources/Core/MasterMaintenanceService.cs:52-55。
+保守手順5：現在人数と要求状態 全参照件数と同じSQLで、非削除かつ在籍区分01・02だけをbigintで集計する。現在人数が正数なら利用停止、またはdayを含まない要求期
+間を拒否する。定員非NULLで現在人数より小さい要求も拒否する。拒否はE-MST-004のArgumentException。現在人数0なら停止・現時点を
+含まない年度内期間を許容し、定員NULLなら人数による上限制限を適用しない。実装根拠：
+sources/Core/MasterMaintenanceService.cs:53-57。
+保守手順6：学年再確認 GRADEと要求学年を条件にm_codeとm_code_categoryをINNER JOINし、存在・両利用可否・コード期間を読取る。不在はE-STU-009の
+ArgumentException。新規または学年変更では両方利用可、開始日≦day、終了日NULLまたはday≦終了日を要求し、不適合はE-STU-011の
+ArgumentException。学年を保持する更新も存在確認は行うが、停止・期間外だけでは拒否しない。実装根拠：
+sources/Core/MasterMaintenanceService.cs:59-64。
+保守手順7：変更比較・版上限・同名警告 年度・学年・コード・名称・両期間・定員・表示順・利用可否・備考の10列を比較する。比較はDateOnlyとDBのDateTime、intとsmallint
+を対応させる。差分なしなら明示rollback後、NoChange・期待版・「変更内容がありません。」・警告falseを返し、管理列・履歴を更新
+しない。差分があり期待版がlong.MaxValueなら例外。次に同年度・同学年・同名かつ自分以外をCOUNT_BIGする。年度SmallInt、学年
+VarChar(2)、名称NVarChar(36)、任意ID BigIntを使い、停止・期間外を除外しない。同名は保存拒否せず、検査結果をSavedの警告へ引き
+継ぐ。実装根拠：sources/Core/MasterMaintenanceService.cs:65-73,123-123。
+5 / 15
+項 目 内 容
+保守手順8：INSERTとUPDATE 新規は10業務列、分類GRADE、作成・更新日時と者、版1をINSERTして採番IDをOUTPUTする。更新は10業務列全部、更新日時・者、版の1加
+算を設定する。年度・コードも不変検査済みの同じ値を再設定する。WHEREはclass_id=@id AND row_version=@versionで停止除外なし。分
+類と作成管理列は保持する。OUTPUT不取得はDBConcurrencyExceptionを送出し、通常の後版は新規1・更新期待版＋1となる。実装根拠：
+sources/Core/MasterMaintenanceService.cs:65-74,124-130。
+SQLパラメータの共通移送 列ごとの型・サイズは明細に示す。共通ParamはDateOnlyを午前0時のDateTimeへ、NULLをDBNull.Valueへ移す。Sizeは0以外の場合だけ設
+定する。共通Commandは30秒設定で、読取・書込・commitへ取消トークンを渡す。業務文字数とパラメータサイズを別の制約として扱う。
+実装根拠：sources/Core/SqlServerStudentService.cs:65-72、sources/Core/MasterMaintenanceService.cs:73-76,128-135。
+保守手順9：監査とcommit クラス保存に続き同一トランザクションでt_operation_logへ追記し、完了後にcommitする。対象表m_class、対象キーは保存IDの10進文字
+列。前版は新規NULL・更新期待版、後版は新規1・更新加算版。変更列名は10業務列の差分をJSON配列化し、業務値の前後コピーは保存し
+ない。理由NULL、重複確認0、新規UUIDを設定する。操作は新規CREATE、利用可否不変UPDATE、false→trueはENABLE、true→falseは
+DISABLE。停止中の名称変更もUPDATEとなる。commit完了後にSaved・保存後版・「クラスを保存しました。」・同名検査結果を返す。実装
+根拠：sources/Core/MasterMaintenanceService.cs:65-76,132-135、sources/Core/AuditOperation.cs:6-7。
+保守の例外経路と確定境界 トランザクション内は単一catchであり、検証例外、一意違反、保存時競合、取消、監査失敗、commit失敗をrollback試行へ進める。
+Rollbackは取消トークンNoneを使い、SqlException・InvalidOperationExceptionならfalseを返す。保守はこの戻り値で結果分類せず、補
+助が戻れば元例外を再送出する。補助の未捕捉例外が生じればその例外が伝播する。DB一意違反をValidationFailed、OUTPUT不取得を
+Conflict、commit失敗をUnknownという保守戻り値へ置換しない。前処理・接続認証・トランザクション開始はこのcatchの外。commit・
+rollback失敗後の確定状態と利用者向け最終応答は、未確認の保守入口で確定する必要がある。実装根拠：
+sources/Core/MasterMaintenanceService.cs:32-41,77-77,130-130、sources/Core/SqlServerStudentService.cs:329-329。
+6 / 15
+項 目 内 容
+DB権限と物理削除 権限SQLはviewerへSELECT、adminへ本表のINSERT・UPDATEを許可し、adminのDELETEを拒否する。staff・adminはロール所属によって
+SELECTを継承する。これはDB権限定義でありWebの入力活性判定とは別である。SaveClassAsyncに削除処理はなく、利用停止は行と学生参
+照を保持する。実装根拠：sources/database/003_web_permissions.sql:8-20、sources/Core/MasterMaintenanceService.cs:30-77。
+候補取得と順序 LookupAsyncはユーザー確認後、SNAPSHOT内でコードとクラスの2結果セットを取得する。クラスはc.*と算出occupied、学年コードへの
+LEFT JOINから取得し、年度DESC→学年表示順ASC→クラス表示順ASC→クラスコードASC→ID ASCで並べる。クラス側にWHERE・TOP・ページ
+ングはなく、停止・期間外を含む全件をSchoolClassへ移す。学年の表示名称はm_code.code_nameで、本表の列ではない。保存元は
+nvarchar(24) NOT NULL、保守上限12スカラー、保存パラメータNVarChar(24)であり、本表名称18スカラーと区別する。実装根拠：
+sources/Core/SqlServerStudentService.cs:196-216、sources/Core/Contracts.cs:63-65、sources/database/001_schema.sql:115-
+115,128-128、sources/Core/MasterMaintenanceService.cs:82-82,113-115。
+現在人数と集計省略値 人数取得ありは同じclass_idの非削除01・02をCOUNT(*)し、SchoolClass.Occupied:intへ移す。検索用LookupAsync(false)は集計せず
+CONVERT(int,0)を返すため、その0は実測人数ではない。保守と学生保存の定員検査はCOUNT_BIG系で再計算する。学生の論理削除は
+class_idを保持し、人数から除外する。実装根拠：sources/Core/SqlServerStudentService.cs:201-214,378-380,409-414、
+sources/Core/MasterMaintenanceService.cs:53-57。
+学生検索での利用 SRC-004年度・SRC-005学年・SRC-006クラスはそれぞれStudentSearchInput.SchoolYear:int?、GradeCode:string?、ClassId:string?から
+検索条件へ移す。IDはIdParserでlong?に明示変換し、学年は正規化する。指定年度にクラスがあること、GRADEコード存在、指定クラスの
+存在と年度・学年一致を確認する。述語はc.school_year=@yearのSmallInt、c.grade_code=@gradeのVarChar(2)、s.class_id=@classの
+BigInt。未所属はclass_id IS NULLで、年度・学年・クラスとの同時指定を拒否する。検索候補は停止・期間外も扱い、上位条件不一致な
+らクラスを解除し、未所属指定なら年度・学年・クラスを解除する。クリアでは所属条件を未設定へ戻す。実装根拠：
+sources/Views/Students/Search.cshtml:5-5、sources/Web/Inputs/StudentSearchInput.cs:10-22,27-31、
+sources/Core/SqlServerStudentService.cs:109-146,218-222、sources/Web/Controllers/StudentsController.cs:21-22,39-40。
+7 / 15
+項 目 内 容
+学生登録の入力・保存値・再表示 年度select REG-016はInput.SchoolYear:int?、学年select REG-017はInput.GradeCode:string?、クラスselect REG-018は
+Input.ClassId:string?へ対応する。IDはNULL・空なら未設定、その他はASCII数字19文字以内の正のlongへ明示変換する。年度・学年は
+SaveRequestの選択補助で、保存する所属値はStudentDraft→正規化値→m_student.class_idのBigInt。本表は更新しない。既存学生は所
+属候補から年度・学年を復元し、新規は日本時間の当年度・学年未指定・未所属とする。フォームはInput接頭辞、FormGuard・権限・スナ
+ップショット・復帰先・ModelStateの検査後にサービスへ進む。これはClassChangeの受信口ではない。非nullable参照型の暗黙required
+は抑制され、実受信値とフレームワーク変換後の値、明示ID変換後のサービス引数を区別する。実装根拠：
+sources/Views/Students/Edit.cshtml:12-12、sources/Web/Inputs/StudentSaveInput.cs:23-29,34-60、
+sources/Web/Controllers/StudentsController.cs:26-33,41-41、sources/Infrastructure/WebHostSetup.cs:16-16、
+sources/Core/SqlServerStudentService.cs:30-37,294-301。
+登録候補の状態と参考表示 登録ビューは全クラスを年度・学年コード・クラスコード・名称で表示する。既存所属は停止・期間外でも選択可能に保ち、それ以外は在
+学・休学で利用可かつ当日期間内、卒業・退学で在籍期間との重なりにより活性を決める。クラス選択は年度・学年へ反映し、上位変更で
+不一致ならクラスだけ解除する。人数・定員は描画時の選択候補を参考表示し、JavaScriptは再描画しない。未選択・候補不一致の人数は
+「－」、定員は定員NULLと同じ「制限なし」。人数は席の予約ではない。閲覧者は入力fieldset非活性となる。実装根拠：
+sources/Views/Students/Edit.cshtml:2-5,12-12、sources/wwwroot/js/site.js:8-8、sources/Web/Models/StudentEditPageModel.cs:14-
+14。
+登録候補に関する設計意図と実装差 参考設計は学年名称を表示し、新規学年選択を有効値に限定して既存値を別枠保持する。また、既存不適合所属の見直し警告とクラス0件
+のW-STU-108を意図する。現行学年selectはGRADE全件を列挙し、学年の停止・期間外をdisabledにする条件はない。クラス表示は名称に加
+えて学年コードを使う。候補加工helperは宣言されているが、接続済みのPOST optionsはController内でモデルを作り、そのhelperを呼ば
+ない。上記警告を現行ルートの動作へ補わない。設計意図：reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:126-
+128,173-173,661-661。実装根拠：sources/Views/Students/Edit.cshtml:12-12、sources/Infrastructure/WebStudentCoordinator.cs:16-
+16、sources/Infrastructure/WebPresentation.cs:8-18、sources/Web/Controllers/StudentsController.cs:22-22。
+学生保存時の最新クラス検査 学生保存は共有ゲート、最新学生と版の確認後にクラスをBigIntのIDで再読込みする。存在と、指定された年度・学年との一致を確認す
+る。新規・区分復帰・異動で01・02の席が増える場合だけ、利用可かつ保存処理の業務日が期間内であることを要求し、定員設定時は自分
+を除く非削除01・02人数＋1≦定員を検査する。同じ01・02所属の保持は停止・期間外・既存超過だけでは拒否しない。不適合は
+InputValidationExceptionとなり、学生保存の先行catchでValidationFailedになる。これはクラス保守の例外再送出とは別の契約であ
+る。実装根拠：sources/Core/SqlServerStudentService.cs:243-260,316-318,357-383。
+8 / 15
+項 目 内 容
+最終所属の保存条件 卒業03・退学04の最終所属は任意で、席を消費しない。新規または所属・在籍区分・入学日・終了日が変わる場合、入学日≦クラス終了日
+かつ終了日≧クラス開始日を要求する。これらを変えない通常項目の修正では重なり検査を省略する。学生保存の学年補助は正規化と選択
+クラスとの一致に使うが、GRADEの存在・利用可否を独立に再検査する処理はない。参考設計の学年補助の存在確認意図と区別する。実装
+根拠：sources/Core/StudentNormalizer.cs:150-154、sources/Core/SqlServerStudentService.cs:232-237,344-383。設計意図：
+reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:103-104。
+実装工程とIT担当者の確認対象 参考設計の入力→処理値→DB→再表示の確認責務は、本表ではコード正規化、名称18スカラーと36コード単位、年度・期間境界、定員NULL
+と0、停止所属保持、最後の1席、比較版、履歴失敗へ対応する。候補取得・OUTPUTとcommitを別段階として確認し、保守入口は原入力保
+持、型変換失敗、例外の最終応答、確定応答不明を扱う必要がある。IT担当者は年度・学年の選択補助、所属ID保存、参考人数と再計算、
+保守権限と確定境界を確認する。これは担当責務であり承認記録ではない。設計意図：reference-designs/基本設計書/02_学生登録画
+面.md:685-689、reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:751-751,791-793,805-809。実装対応：
+sources/Core/MasterMaintenanceService.cs:32-77、sources/Core/SqlServerStudentService.cs:357-383。
+未確定の契約 ClassChangeを作る保守入口、原入力保持・バインド・初期設定、例外の最終応答への変換、commit・rollback失敗時の通知契約、日付切
+替をまたぐ処理の運用要件、実学校の初期クラス値は未確定。CLIというコメントを入口実装や運用実績と解釈しない。実装根拠：
+sources/Core/MasterMaintenanceService.cs:9-15,30-77。
+関連文書：全体関連・コード 以下は提示計画上の対応で、リンク先の生成状態は未確認（未生成扱い）。CSHARP_ASPNET-BAS-STU-03／table-index／基本設計書/03_テ
+ーブル仕様書.md：全体関連と共通保存規則。
+CSHARP_ASPNET-BAS-STU-04／code-design／基本設計書/04_コード設計書.md：GRADE値と識別子・コード保守。
+9 / 15
+項 目 内 容
+関連文書：所属・学年の保存元 CSHARP_ASPNET-BAS-STU-03-M_STUDENT／table-definition／基本設計書/テーブル/01_m_student.md：所属と人数算入条件。
+CSHARP_ASPNET-BAS-STU-03-M_CODE_CATEGORY／table-definition／基本設計書/テーブル/03_m_code_category.md：GRADE分類・利用可否。
+CSHARP_ASPNET-BAS-STU-03-M_CODE／table-definition／基本設計書/テーブル/04_m_code.md：学年名称・表示順・期間。各リンクは生成
+状態未確認（未生成扱い）。
+関連文書：監査 CSHARP_ASPNET-BAS-STU-03-T_OPERATION_LOG／table-definition／基本設計書/テーブル/05_t_operation_log.md：保守対象キー・前後
+版・変更列・操作種別の追記先。生成状態未確認（未生成扱い）。
+関連文書：画面基本設計 CSHARP_ASPNET-BAS-STU-01／basic-design／基本設計書/01_学生検索画面.md：所属検索と名称表示。
+CSHARP_ASPNET-BAS-STU-02／basic-design／基本設計書/02_学生登録画面.md：現在・最終所属と参考人数。各リンクは生成状態未確認
+（未生成扱い）。
+関連文書：画面詳細仕様 CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001／detailed-specification／詳細仕様書/CSharp_ASPNET/01_学生検索画面.md：入力変換・
+検索SQL・候補取得。
+CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-002／detailed-specification／詳細仕様書/CSharp_ASPNET/02_学生登録画面.md：所属ID移
+送・最新クラスと定員の検査・学生保存の確定境界。各リンクは生成状態未確認（未生成扱い）。
+10 / 15
+項 目 詳 細
+N o 論 理 名 物 理 名 P K N O T  N U L L タ イ プ 長 さ 初 期 値 説 明
+1 クラス管理
+番号
+class_id 〇 〇 bigint DB採番：
+IDENTITY(1,
+1)
+候補・学生所属・保守対象を結び付ける内部ID。SchoolClass.ClassId
+はlong、ClassChange.ClassIdはlong?。新規はDB採番、更新はWHEREの
+@id:BigInt、監査には10進文字列を渡す。実装根拠：
+sources/database/001_schema.sql:63-63,80-80、
+sources/Core/Contracts.cs:63-64、
+sources/Core/MasterMaintenanceService.cs:124-135。
+2 学校年度 school_year 〇 smallint ClassChange・SchoolClassではint。1900～9998。年度の4月1日～翌年3
+月31日へ期間を制限し、登録後は変更不可。検索完全一致・候補年度降
+順に使用。保存@school_year:SmallInt、DEFAULTなし。実装根拠：
+sources/database/001_schema.sql:64-64,201-201、
+sources/Core/MasterMaintenanceService.cs:32-37,52-52,73-73、
+sources/Core/SqlServerStudentService.cs:143-143,208-208。
+3 学年のコー
+ド分類
+grade_categ
+ory
+〇 varchar(24) DB：24バイ
+ト
+新規処理設
+定：GRADE
+学年コードを分類付きで参照する値。ClassChangeの入力ではなく
+INSERTで'GRADE'を設定し、CHECKも固定値を要求する。UPDATEは保持。
+学年名称・表示順のJOINにgrade_codeと組で使う。DEFAULTなし。実装
+根拠：sources/database/001_schema.sql:65-65,190-190,197-197、
+sources/Core/MasterMaintenanceService.cs:127-127、
+sources/Core/SqlServerStudentService.cs:88-88,207-208。
+4 学年 grade_code 〇 varchar(2) DB：2バイト
+業務：ASCII
+数字2桁
+ClassChange.GradeCode:string。原入力2スカラー以内・必須を検査
+し、Trim・FormKC後にASCII数字2桁を要求する。
+@grade_code:VarChar(2)。GRADEの存在と新規選択可否を検査し、全参
+照学生があれば変更不可。検索・所属一致に用い、名称はm_codeから取
+得。設計初期値00は自動補完せずDEFAULTもない。実装根拠：
+sources/database/001_schema.sql:66-66,190-190、
+sources/Core/StudentNormalizer.cs:47-57,113-117、
+sources/Core/MasterMaintenanceService.cs:34-34,55-63,73-73。
+11 / 15
+N o 論 理 名 物 理 名 P K N O T  N U L L タ イ プ 長 さ 初 期 値 説 明
+5 クラスコー
+ド
+class_code 〇 varchar(9) DB：9バイト
+原入力・正
+規化後：各9
+スカラー以
+内
+ClassChange.ClassCode:string。必須・制御文字・原入力長を検査して
+Trimし、FormKC・大文字化後に先頭英数字、以後英数字またはハイフン
+を要求する。結果はASCII。@class_code:VarChar(9)。年度内一意、登
+録後変更不可、候補の表示と副順序に使用。この書式を直接検査する
+DDL CHECKはない。実装根拠：sources/database/001_schema.sql:67-
+67,188-201、sources/Core/StudentNormalizer.cs:59-64、
+sources/Core/MasterMaintenanceService.cs:33-33,52-52,73-73。
+6 クラス名 class_name 〇 nvarchar(36
+)
+DB：36 UTF-
+16コード単
+位
+原入力・保
+存値：各18
+スカラー以
+内
+ClassChange.ClassName:string。制御文字を拒否しTrim後必須とする。
+FormKCや照合キー生成は行わない。@class_name:NVarChar(36)。候補・
+学生一覧・同一人物候補の表示名で、同年度・同学年の同名警告に使
+用。LEFT JOINの結果NULLと本列NOT NULLは別。実装根拠：
+sources/database/001_schema.sql:68-68,81-81、
+sources/Core/StudentNormalizer.cs:47-57、
+sources/Core/MasterMaintenanceService.cs:33-33,70-73、
+sources/Core/SqlServerStudentService.cs:82-88。
+7 利用開始日 valid_from 〇 date ClassChange.ValidFrom:stringをFormKC後yyyy-MM-ddの実在日・1900年
+以降で検査しDateOnlyへ変換。未来日可、年度4月1日以上かつ終了日以
+下。@valid_from:Date。新席の当日判定と最終所属の期間重なりに使用
+し、開始日を含む。設計の年度開始日は補完せずDEFAULTなし。実装根
+拠：sources/database/001_schema.sql:69-69,201-201、
+sources/Core/JapaneseDateService.cs:52-59、
+sources/Core/MasterMaintenanceService.cs:36-37,73-73、
+sources/Core/SqlServerStudentService.cs:369-374。
+8 利用終了日 valid_to 〇 date ClassChange.ValidTo:stringを開始日と同様にDateOnlyへ変換。開始日
+以上かつ翌年3月31日以下。期限なしのNULLは保存しない。
+@valid_to:Date。新席判定は終了日当日を含み、最終所属では入学日≦
+本列を確認する。設計の年度終了日は補完せずDEFAULTなし。実装根
+拠：sources/database/001_schema.sql:70-70,201-201、
+sources/Core/MasterMaintenanceService.cs:36-37,73-73、
+sources/Core/SqlServerStudentService.cs:369-374。
+12 / 15
+N o 論 理 名 物 理 名 P K N O T  N U L L タ イ プ 長 さ 初 期 値 説 明
+9 定員 capacity int ClassChange.Capacity・SchoolClass.Capacityはint?。NULLは制限な
+し、指定時1～9999で0不可。@capacity:Int、NULLはDBNull.Value。参
+考表示、現在人数未満への変更拒否、新席追加の人数＋1検査に使う。
+現在人数の保存先ではない。DEFAULTなし。実装根拠：
+sources/database/001_schema.sql:71-71,201-201、
+sources/Core/MasterMaintenanceService.cs:32-32,57-57,73-73、
+sources/Core/SqlServerStudentService.cs:67-72,377-380。
+10 表示順 display_ord
+er
+〇 int DDL
+DEFAULT：0
+ClassChange.DisplayOrder:int。負数を拒否し@display_order:Intで要
+求値を明示保存。候補順は年度降順・学年表示順の次に本列を使用す
+る。SchoolClassの項目には移さずSQL取得順に反映する。実装根拠：
+sources/database/001_schema.sql:72-72,201-201、
+sources/Core/MasterMaintenanceService.cs:9-9,32-32,73-73、
+sources/Core/SqlServerStudentService.cs:208-214。
+11 利用可否 is_active 〇 bit DDL
+DEFAULT：1
+ClassChange.IsActive・SchoolClass.IsActiveはbool。@is_active:Bit
+で要求値を明示保存。停止しても行・既存所属・検索候補を保持する。
+新席可否と停止注記に用い、現在人数が正数なら停止要求を拒否。状態
+変更はENABLE・DISABLE監査を決める。実装根拠：
+sources/database/001_schema.sql:73-73、
+sources/Core/MasterMaintenanceService.cs:53-57,73-75、
+sources/Core/AuditOperation.cs:6-7、
+sources/Views/Students/Edit.cshtml:12-12。
+12 備考 remarks nvarchar(24
+0)
+DB：240
+UTF-16コー
+ド単位
+原入力・保
+存値：各120
+スカラー以
+内
+ClassChange.Remarks:string?。原入力検査後にCRLF・CRをLFへ統一
+し、LF以外の制御文字を拒否してTrim。空ならNULL。
+@remarks:NVarChar(240)。クラス説明の保存・変更比較に使用し、学生
+備考とは別。SchoolClassには移さず、DEFAULTなし。実装根拠：
+sources/database/001_schema.sql:74-74,82-82、
+sources/Core/StudentNormalizer.cs:47-57、
+sources/Core/MasterMaintenanceService.cs:35-35,65-73、
+sources/Core/Contracts.cs:63-64。
+13 / 15
+N o 論 理 名 物 理 名 P K N O T  N U L L タ イ プ 長 さ 初 期 値 説 明
+13 作成日時 created_at 〇 datetimeoff
+set(7)
+UTCオフセット0。新規でトランザクション開始後・ゲート待機前の
+DateTimeOffset.UtcNowを@now:DateTimeOffsetで設定。commit時刻その
+ものではない。UPDATEは保持し、DEFAULTなし。実装根拠：
+sources/database/001_schema.sql:75-75,83-83、
+sources/Core/MasterMaintenanceService.cs:39-40,127-128。
+14 作成者 created_by 〇 nvarchar(12
+8)
+DB：128
+UTF-16コー
+ド単位
+原値・保存
+値：各64ス
+カラー以内
+ORIGINAL_LOGIN()を必須Text検査・Trimへ通したactor。利用者が
+ClassChangeで指定する項目ではない。新規@actor:NVarChar(128)で設
+定し、UPDATEは保持。DEFAULTなし。実装根拠：
+sources/database/001_schema.sql:76-76,84-84、
+sources/Core/MasterMaintenanceService.cs:23-27,127-128。
+15 更新日時 updated_at 〇 datetimeoff
+set(7)
+UTCオフセット0。新規は作成日時と同じnow、実変更のUPDATEもゲート
+待機前のnowを@now:DateTimeOffsetで設定。変更なしでは保持。
+DEFAULTなし。実装根拠：sources/database/001_schema.sql:77-77,85-
+85、sources/Core/MasterMaintenanceService.cs:39-40,67-67,127-
+128。
+16 更新者 updated_by 〇 nvarchar(12
+8)
+DB：128
+UTF-16コー
+ド単位
+原値・保存
+値：各64ス
+カラー以内
+DB認証で得て検査したactorを、新規・実変更UPDATEの
+@actor:NVarChar(128)で設定。変更なしでは保持。候補には移さず、学
+生画面の更新者はm_student側の値。DEFAULTなし。実装根拠：
+sources/database/001_schema.sql:78-78,86-86、
+sources/Core/MasterMaintenanceService.cs:23-27,67-67,127-128、
+sources/Core/Contracts.cs:59-64。
+14 / 15
+N o 論 理 名 物 理 名 P K N O T  N U L L タ イ プ 長 さ 初 期 値 説 明
+17 更新管理番
+号
+row_version 〇 bigint DDL
+DEFAULT・新
+規処理設
+定：1
+SQL Serverのrowversion型ではなく正の数値比較版。
+ExpectedVersion:long?を読込版と比較し、WHEREの@version:BigIntに
+使用。実変更で1加算し、変更なしなら維持。実変更時の期待版
+long.MaxValueは書込み前に例外となるが、差分なしなら先にNoChange
+を返せる。SchoolClassには移さずMaintenanceResultで結果に応じた版
+を返す。実装根拠：sources/database/001_schema.sql:79-79,87-87、
+sources/Core/MasterMaintenanceService.cs:44-49,67-68,127-130。
+15 / 15

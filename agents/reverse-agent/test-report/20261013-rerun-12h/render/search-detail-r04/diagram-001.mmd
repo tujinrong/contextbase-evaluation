@@ -1,0 +1,12 @@
+flowchart TD
+ A["GET /students：共通入口①"] -->|通過| B["identity.Read"]
+ A -->|認証401・認可403| Q["前段拒否で終了"]
+ A -->|例外| E["共通入口②：元の例外"]
+ B --> C{"contextIdはNULL・空か"}
+ C -->|非空| R["R-入口：検索復帰①へ"]
+ C -->|はい| N["Entry作成：版1・期限30分<br/>AppliedとLastResult未設定"]
+ N --> P["Present entry,null・初期入力DTO"]
+ P --> D["I-表示：②へ<br/>Entry・未検索data・初期入力"]
+ B -->|例外| E
+ N -->|例外| E
+ P -->|例外| E

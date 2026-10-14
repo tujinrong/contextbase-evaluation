@@ -1,0 +1,15 @@
+flowchart TD
+  A{"3．学籍番号が使用済みか"}
+  A -->|"はい"| V["ValidationFailed／E-STU-101"]
+  A -->|"いいえ"| B["全候補取得・入力と候補のハッシュ作成"]
+  B --> C["送信された確認の所有者・版・期限・ハッシュ・Busy照合"]
+  C --> D{"有効確認かつ理由なし"}
+  D -->|"はい"| R["ValidationFailed／E-STU-107"]
+  D -->|"いいえ"| E{"候補あり又は確認送信あり／かつ確認無効"}
+  E -->|"はい"| F["rollback・確認発行"]
+  F --> G["ConfirmationRequired／要求ID・取得版・全件数・最大20件"]
+  E -->|"いいえ"| H["学生INSERT又は比較版付きUPDATE／writeStarted=true"]
+  H -->|"OUTPUTがNULL又はDBNull"| X["DBConcurrencyException／4へ"]
+  H -->|"保存ID取得"| I["保存後版＝取得版又は0に1加算／履歴INSERT"]
+  I --> J["commitAttempted=true・commit試行"]
+  J -->|"成功"| K["Saved／保存ID・保存後版／Webは通知・303"]

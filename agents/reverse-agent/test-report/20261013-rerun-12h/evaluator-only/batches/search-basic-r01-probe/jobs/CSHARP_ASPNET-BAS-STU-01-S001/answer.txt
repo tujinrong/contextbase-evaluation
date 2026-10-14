@@ -1,0 +1,2829 @@
+{
+  "schema": "independent-semantic-grades/1",
+  "documentId": "CSHARP_ASPNET-BAS-STU-01",
+  "shardId": "CSHARP_ASPNET-BAS-STU-01-S001",
+  "rows": [
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-A5E444BDA5",
+      "judgement": "粒度不足",
+      "actualDeduction": -2,
+      "defectId": "STU01-IDENTIFIER-MAPPING",
+      "reason": "文書ID・今回版・必要章相当の内容はあるが、STATUS・ROW整理キーとイベント名に原項目ID・イベントIDとの対応がない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 139,
+          "endLine": 139,
+          "quote": "STATUSは文書整理キーで、原ビューに個別DOM IDはない。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 170,
+          "endLine": 178,
+          "quote": "| イベント | HTTP入口 | 主な受渡し |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "対象外",
+        "reason": "原仕様IDとの対応と読者別構成は文書規約であり、アプリの観測事実ではない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-190C7B4F3B",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "観測実装とDDL宣言を区別し、DB永続化・運用承認・実機試験成功を追加保証していない。対象外の説明不足は該当行で扱う。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 13,
+          "endLine": 13,
+          "quote": "コメントの意図、DDLの宣言、初期投入SQLの定義は、それぞれ区別して記載する。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 625,
+          "endLine": 625,
+          "quote": "列名から暗号化保存、DB永続化、消費更新を追加しない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "運用承認や実機試験成功は静的ソースから確認できず、生成文書も保証していない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-FA961A1D64",
+      "judgement": "粒度不足",
+      "actualDeduction": -2,
+      "defectId": "STU01-SEARCH-DOMAIN-BOUNDARY",
+      "reason": "条件検索・登録往復・検索の参照責務はあるが、単一校、成績対象外、現在／最終所属と年度別履歴検索の境界が不足する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 21,
+          "endLine": 21,
+          "quote": "学生検索画面は、論理削除されていない学生を条件で絞り込み、氏名、生年月日、所属、在籍区分、住所、本人電話、更新日時を一覧で確認する画面である。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 292,
+          "endLine": 292,
+          "quote": "検索自体はDBを更新せず、検索成功後の更新先はメモリの検索状態である。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "非削除検索と所属年度の照合は観測できるが、単一校・現在／最終所属という業務意図はソースから確定できない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 137,
+            "endLine": 137,
+            "quote": "var predicates = new List<string>{ \"s.is_deleted=0\" };"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 143,
+            "endLine": 143,
+            "quote": "Where(\"c.school_year=@year\",\"@year\",SqlDbType.SmallInt,criteria.SchoolYear);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-9905C3E0DC",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-MENU-ENTRY",
+      "reason": "全体を確認したが、GET初期表示・登録復帰だけで、共通メニューからの起動が記載されない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 172,
+          "endLine": 172,
+          "quote": "| 初期表示・検索復帰 | GET `/students` | contextId、contextRevision。状態IDなしは初期表示、非空は復帰。 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "GET起動と登録復帰はあるが、共通メニューの起動元はソースにもない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Program.cs",
+            "startLine": 7,
+            "endLine": 7,
+            "quote": "app.MapGet(\"/\",()=>Results.Redirect(\"/students\"));"
+          },
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 16,
+            "endLine": 16,
+            "quote": "href=\"/students?contextId=@input.ReturnContextId&amp;contextRevision=@Model.ReturnRevision\">検索へ戻る</a>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-181DC60187",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-UNDEFINED-ROLE-AUTHORIZATION",
+      "reason": "三役割は列挙するが、定義済みRoleへ限定せずViewer以外を登録・編集許可とする説明は、共有権限表の担当者・管理者限定と矛盾する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 631,
+          "endLine": 631,
+          "quote": "Role変換後に定義済み値へ限定するEnum.IsDefined検査はなく、画面と権限の比較条件はViewer等との一致・不一致である。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 23,
+          "endLine": 23,
+          "quote": "Viewer の一覧リンクは「参照」、その他の役割では「編集」となる。"
+        }
+      ],
+      "critical": true,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "定義済み値の検査欠如とViewerだけを拒否する認可は実装どおり。既存ソースの認可不備を記録する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/RequestIdentity.cs",
+            "startLine": 10,
+            "endLine": 10,
+            "quote": "!Enum.TryParse<Role>(role,out var r)"
+          },
+          {
+            "path": "source/Infrastructure/RequestIdentity.cs",
+            "startLine": 14,
+            "endLine": 14,
+            "quote": "if(CurrentUser.Role==Role.Viewer) throw new WebFault(403,\"この操作を実行する権限がありません。\");"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-4FE256AA09",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学生とクラス・コード・コード分類の参照を、取得責務と表の意味で特定できる。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 234,
+          "endLine": 234,
+          "quote": "m_code・m_code_category・m_classをSnapshotトランザクションで参照し、学生の件数判定・一覧取得は行わない。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 576,
+          "endLine": 576,
+          "quote": "m_studentとm_classのLEFT JOINに全検索述語を適用し"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "候補のコード分類結合、クラス取得、学生検索の参照先が一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 205,
+            "endLine": 205,
+            "quote": "FROM dbo.m_code c JOIN dbo.m_code_category k ON k.category_id=c.category_id"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 206,
+            "endLine": 207,
+            "quote": "SELECT c.*, {occupied} occupied\n              FROM dbo.m_class c LEFT JOIN dbo.m_code g ON g.category_id=c.grade_category AND g.code_value=c.grade_code"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 86,
+            "endLine": 87,
+            "quote": "FROM dbo.m_student s\n          LEFT JOIN dbo.m_class c ON c.class_id=s.class_id"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-2369B64473",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "新規・編集・参照の遷移先を学生登録画面として説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 435,
+          "endLine": 437,
+          "quote": "新規登録リンクと一覧操作リンクは、検索状態IDをreturnContextIdとして渡す。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "新規・既存学生の入口はいずれも登録画面のLoadへ接続する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 23,
+            "endLine": 24,
+            "quote": "[HttpGet(\"new\")] public Task<IActionResult> New(string? returnContextId,CancellationToken ct)=>Load(null,returnContextId,ct);\n    [HttpGet(\"{id:long}\")] public Task<IActionResult> Edit(long id,string? returnContextId,CancellationToken ct)=>Load(id,returnContextId,ct);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-67C0E40867",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-EXCLUDED-FUNCTIONS",
+      "reason": "削除済み除外は明記するが、成績・帳票・一覧直接編集・一括更新の対象外宣言が全体にない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 21,
+          "endLine": 21,
+          "quote": "検索SQLには常に `s.is_deleted=0` が含まれる。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "削除済み除外は実装にあるが、その他の業務対象外方針をソースの機能不在だけから観測済みとはしない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 137,
+            "endLine": 137,
+            "quote": "var predicates = new List<string>{ \"s.is_deleted=0\" };"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-2E126C4EDF",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "投影を未検索状態と明示し、差込み値を実データとせず、未検索・0件・通常結果を区別する。例示状態の変更で初回結果を誤認させない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 35,
+          "endLine": 35,
+          "quote": "角括弧の値は動的値の差込み位置であり、候補や利用者の実データを示すものではない。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 117,
+          "endLine": 117,
+          "quote": "未検索、0件、通常結果、上限超過は異なる状態である。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "実ビューも未検索・0件・通常結果を別分岐として表示する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 7,
+            "endLine": 7,
+            "quote": "else if(outcome==\"empty\"){<p>該当する学生はありません。</p>}else if(outcome==\"unsearched\"){<p>未検索</p>}else{<p>検索結果 @count 件　@data.GetProperty(\"searchedAt\").GetString()</p>}"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-79DEFAD4B7",
+      "judgement": "内容誤り",
+      "actualDeduction": -3,
+      "defectId": "STU01-SCREEN-NAVIGATION",
+      "reason": "HTMLと全体説明に「メニューへ」・先頭・最後の操作、検索結果の表示範囲がない。部品・状態のテキスト比較であり、配置の視覚承認は行わない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 85,
+          "endLine": 96,
+          "quote": "<nav class=\"pager\"><button type=\"button\" name=\"Page\" value=\"0\" disabled>前へ</button><span>1 / 1</span><button type=\"button\" name=\"Page\" value=\"2\" disabled>次へ</button></nav>"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": true,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "前後だけのページ操作は実ビューどおり。メニュー・先頭・最後・表示範囲の欠落は既存ソースにもある。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8,
+            "quote": "<nav class=\"pager\"><button name=\"Page\" value=\"@(page-1)\" disabled=\"@(outcome!=\"found\"||page<=1)\">前へ</button><span>@(page) / @Math.Max(1,(count+Model.PageSize-1)/Model.PageSize)</span><button name=\"Page\" value=\"@(page+1)\" disabled=\"@(outcome!=\"found\"||page*Model.PageSize>=count)\">次へ</button></nav>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-00DD91D32E",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "初回とクリアで在籍01・02、20件、学籍番号昇順、ページ1へ戻る。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 399,
+          "endLine": 399,
+          "quote": "初期在籍区分01・02、20件、学籍番号昇順、ページ1へ戻る。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "初期入力の在籍区分と検索条件の既定値、クリア後の新規入力生成に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 14,
+            "endLine": 14,
+            "quote": "public string[] StatusCodes { get; set; } = [\"01\",\"02\"];"
+          },
+          {
+            "path": "source/Core/Contracts.cs",
+            "startLine": 45,
+            "endLine": 48,
+            "quote": "public int Page { get; set; } = 1;\n    public int PageSize { get; set; } = 20;\n    public string SortKey { get; set; } = \"studentNo\";\n    public string SortDirection { get; set; } = \"asc\";"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 21,
+            "endLine": 21,
+            "quote": "SearchModel(entry,data,new(),\"\",ct)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-66DE0414F8",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-UNSEARCHED-GUIDANCE",
+      "reason": "件数・日時なしは一致するが、「未検索」だけで条件指定と検索を促す案内がない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 121,
+          "endLine": 121,
+          "quote": "| unsearched | totalCount=NULL、items空、searchedAt=NULL | 未検索 | 無効 | 両方無効 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "「未検索」だけの表示は実ビューどおりで、案内不足は既存ソース由来。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 7,
+            "endLine": 7,
+            "quote": "else if(outcome==\"unsearched\"){<p>未検索</p>}"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-A55C029D01",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "未検索では一覧反映・前後ページ操作を無効とする。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 121,
+          "endLine": 121,
+          "quote": "| unsearched | totalCount=NULL、items空、searchedAt=NULL | 未検索 | 無効 | 両方無効 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "found以外では反映・ページボタンを無効化する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8,
+            "quote": "<button name=\"Page\" value=\"1\" disabled=\"@(outcome!=\"found\")\">並び順・件数を反映</button>"
+          },
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8,
+            "quote": "disabled=\"@(outcome!=\"found\"||page<=1)\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-D8B2A17B85",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-SEARCHING-INPUT-RETENTION",
+      "reason": "全体を確認したが、検索中の条件欄の入力保持を定義しない。送信時のボタン制御だけでは代替できない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "送信処理に入力消去はないが、検索中の入力保持状態を明示する処理は観測できない。",
+        "sourceEvidence": [
+          {
+            "path": "source/wwwroot/js/site.js",
+            "startLine": 4,
+            "endLine": 4,
+            "quote": "form.setAttribute('aria-busy','true');"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-41165D602B",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-SEARCHING-RESULT-DISPLAY",
+      "reason": "結果欄の処理中表示がない。フォームのaria-busy属性は結果欄の表示状態とは別である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 637,
+          "endLine": 637,
+          "quote": "フォームへaria-busy=trueを付ける。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "原ソースもフォーム属性を設定するだけで、結果欄の処理中表示はない。",
+        "sourceEvidence": [
+          {
+            "path": "source/wwwroot/js/site.js",
+            "startLine": 4,
+            "endLine": 4,
+            "quote": "form.setAttribute('aria-busy','true');"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-FDAB8A7BD9",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-DOUBLE-SEARCH-SUBMISSION",
+      "reason": "押した検索ボタンは無効化せず、同フォームの他ボタンだけを抑止する。状態版による拒否は二重送信自体の抑止ではない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 637,
+          "endLine": 637,
+          "quote": "送信時は押したボタン以外の同フォーム内ボタンをdisabledにし"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "押下ボタンを残す抑止範囲は実装どおりで、二重送信抑止不足は既存ソース由来。",
+        "sourceEvidence": [
+          {
+            "path": "source/wwwroot/js/site.js",
+            "startLine": 4,
+            "endLine": 4,
+            "quote": "for(const action of form.querySelectorAll('button')){if(action!==button)action.disabled=true;}"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-7804974776",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "入力を残し、Field・Messageを保持して検証サマリーへ表示する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 275,
+          "endLine": 275,
+          "quote": "W --> W1[そのStatus・Field・Messageを保持し未検索再表示]"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 290,
+          "endLine": 290,
+          "quote": "入力条件を残して未検索表示にする"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "Field付きModelStateエラーと受信inputによる再表示に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 15,
+            "endLine": 15,
+            "quote": "ModelState.AddModelError(e.Field??\"\",e.Message);Response.StatusCode=e.Status;"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 16,
+            "endLine": 16,
+            "quote": "var model=await SearchModel(entry,data,input,\"\",ct);"
+          },
+          {
+            "path": "source/Views/Shared/_MessagePanel.cshtml",
+            "startLine": 2,
+            "endLine": 2,
+            "quote": "asp-validation-summary=\"All\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-51BEC4C98F",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "入力エラー時の画面は未検索・items空になる。保持済み状態の存続と画面上の一覧消去を区別している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 290,
+          "endLine": 290,
+          "quote": "ModelState不正または個別catchのWebFaultでは、入力条件を残して未検索表示にするが、過去のApplied・LastResultを消さない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "検索前にPresent(entry,null)を作り、検証失敗時はその未検索データを表示する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 14,
+            "endLine": 14,
+            "quote": "object data=WebStudentCoordinator.Present(entry,null);"
+          },
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 21,
+            "endLine": 21,
+            "quote": "items=(result?.Items??[]).Select(WebPresentation.Row)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-5141C16943",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "検証失敗で入力を残し、修正した検索要求が有効ならサービス検索へ進む分岐がある。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 242,
+          "endLine": 243,
+          "quote": "ModelStateを確認する。不正なら422とし、サービス検索へ進まない。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 290,
+          "endLine": 290,
+          "quote": "入力条件を残して未検索表示にする"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ModelStateが有効な再要求で検索し、不正なら422で入力を再表示する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 15,
+            "endLine": 15,
+            "quote": "if(ModelState.IsValid) { try {data=await coordinator.Search(new SearchRequest"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 15,
+            "endLine": 15,
+            "quote": "else Response.StatusCode=422;"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-1184F19A0F",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "0件も成功結果として入力由来条件を保持し、受信条件で再表示する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 248,
+          "endLine": 249,
+          "quote": "成功は通常結果・0件・上限超過を含む。成功後に入力由来条件のコピーをApplied、結果をLastResultへ設定し、版を1加算する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "成功後に条件をコピーし、画面モデルには受信inputを渡す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 9,
+            "endLine": 9,
+            "quote": "EnsureSearch(result); entry.Applied=SearchContextStore.Copy(criteria);entry.LastResult=result;"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 16,
+            "endLine": 16,
+            "quote": "SearchModel(entry,data,input,\"\",ct)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-CA12C2ED6F",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "「該当する学生はありません」は原文と同じ0件案内である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 122,
+          "endLine": 122,
+          "quote": "該当する学生はありません。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "0件分岐の表示文言に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 7,
+            "endLine": 7,
+            "quote": "else if(outcome==\"empty\"){<p>該当する学生はありません。</p>}"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-26E3B1DB8C",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "0件では反映・前後ページ操作を無効とする。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 122,
+          "endLine": 122,
+          "quote": "| empty | totalCount=0、items空、searchedAtあり | 該当する学生はありません。 | 無効 | 両方無効 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "emptyはfoundでないためページボタンが無効になる。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8,
+            "quote": "disabled=\"@(outcome!=\"found\"||page<=1)\""
+          },
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8,
+            "quote": "disabled=\"@(outcome!=\"found\"||page*Model.PageSize>=count)\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-E8D1CE0E08",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "上限超過も実行済み条件を保持し、条件欄を残す。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 248,
+          "endLine": 249,
+          "quote": "成功は通常結果・0件・上限超過を含む。成功後に入力由来条件のコピーをApplied、結果をLastResultへ設定し、版を1加算する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "上限超過はNoChange成功として返り、Coordinatorが条件を保持する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 159,
+            "endLine": 159,
+            "quote": "if(count>10000) { await tx.CommitAsync(ct); return new(Outcome.NoChange,count,[],now,true,[]); }"
+          },
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 9,
+            "endLine": 9,
+            "quote": "entry.Applied=SearchContextStore.Copy(criteria);entry.LastResult=result;"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-D727DD5144",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "10,000件超過で条件追加を促し、tbodyを空にして部分一覧を表示しない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 110,
+          "endLine": 110,
+          "quote": "10,000件を超えました。条件を追加してください。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 110,
+          "endLine": 110,
+          "quote": "tbodyは空。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "上限超過は一覧SQLへ進まず空Itemsを返し、ビューが条件追加を案内する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 159,
+            "endLine": 159,
+            "quote": "return new(Outcome.NoChange,count,[],now,true,[]);"
+          },
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 7,
+            "endLine": 7,
+            "quote": "10,000件を超えました。条件を追加してください。"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-42EAF417CA",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "条件追加の案内と検索操作により、絞り込んで再検索する経路を説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 110,
+          "endLine": 110,
+          "quote": "条件を追加してください。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 238,
+          "endLine": 238,
+          "quote": "検索は、入力中の条件を検査して先頭ページを取得し、その条件と結果を適用済み状態へ反映する操作である。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "警告表示後も条件入力と検索フォームが残る。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 7,
+            "endLine": 7,
+            "quote": "10,000件を超えました。条件を追加してください。"
+          },
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5,
+            "quote": "<button type=\"submit\" class=\"primary\">検索</button>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-A045DDE407",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "正常検索では実行した入力由来条件をAppliedへ保持し、受信条件を表示する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 248,
+          "endLine": 249,
+          "quote": "成功後に入力由来条件のコピーをApplied、結果をLastResultへ設定し、版を1加算する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "条件コピーと受信inputによるSearchModel作成に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 9,
+            "endLine": 9,
+            "quote": "entry.Applied=SearchContextStore.Copy(criteria);"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 16,
+            "endLine": 16,
+            "quote": "SearchModel(entry,data,input,\"\",ct)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-B8E8CD2DC5",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "通常結果に件数・検索日時と取得ページの行を表示する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 108,
+          "endLine": 108,
+          "quote": "結果位置を「検索結果 ［件数］ 件　［検索日時］」へ置換し、tbodyに取得したページ分の行を表示する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ビューの件数・searchedAt表示とitemsの行展開に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 7,
+            "endLine": 7,
+            "quote": "<p>検索結果 @count 件　@data.GetProperty(\"searchedAt\").GetString()</p>"
+          },
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8,
+            "quote": "@foreach(var row in items.EnumerateArray())"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-6330B70C43",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "通常結果だけを操作可能とし、前後ページを境界条件で切り替える。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 123,
+          "endLine": 123,
+          "quote": "前へはpage>1、次へはpage×表示件数<検索件数の場合に有効"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "前後ボタンのfound・ページ境界判定に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8,
+            "quote": "disabled=\"@(outcome!=\"found\"||page<=1)\""
+          },
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8,
+            "quote": "disabled=\"@(outcome!=\"found\"||page*Model.PageSize>=count)\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-3CD4FD3094",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "候補更新で入力中条件を再表示し、必要な所属条件解除だけを例外として特定する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 31,
+          "endLine": 31,
+          "quote": "候補更新は入力中の条件と候補を再表示する操作で、適用済み条件と直近結果を更新しない。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 300,
+          "endLine": 303,
+          "quote": "未所属trueなら年度・学年・クラスをNULLへ変え、対応するModelState値も解除する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "候補更新は受信inputをSearchModelへ渡し、未所属時の所属3値だけを解除する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 22,
+            "endLine": 22,
+            "quote": "if(input.UnassignedOnly){input.SchoolYear=null;input.GradeCode=null;input.ClassId=null;"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 22,
+            "endLine": 22,
+            "quote": "SearchModel(entry,WebStudentCoordinator.Present(entry,entry.LastResult),input,"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-561BE69A5C",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-PENDING-CHANGE-NOTIFICATION",
+      "reason": "前回結果は保持するが、未反映通知は候補更新時だけ。入力欄を変更しただけの状態への通知がない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 303,
+          "endLine": 303,
+          "quote": "通常は「条件を変更しました。検索を押すと一覧に反映します。」、クラス解除時は「上位条件に合わないクラスを解除しました。」を表示する。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "通知を返すのはoptions入口であり、検索入力変更への通知不足は既存ソースにもある。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 22,
+            "endLine": 22,
+            "quote": "条件を変更しました。検索を押すと一覧に反映します。"
+          },
+          {
+            "path": "source/wwwroot/js/site.js",
+            "startLine": 7,
+            "endLine": 7,
+            "quote": "unassigned?.addEventListener('change',clearAssigned);clearAssigned();"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-11CD4C6DD0",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "ページ操作はAppliedを使い、未適用の条件欄を混ぜない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 331,
+          "endLine": 331,
+          "quote": "ページ操作は適用済み条件で再検索する。検索条件フォームの未適用入力は、この操作の検索条件へ移送しない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ページ処理は保持済み条件をコピーして検索する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "var criteria=SearchContextStore.Copy(entry.Applied);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-D8E9707D0A",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-SYSTEM-ERROR-INPUT-RETENTION",
+      "reason": "一般例外を入力フォームのない外側エラーHTMLへ返すため、システムエラー時の条件欄保持と矛盾する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 209,
+          "endLine": 209,
+          "quote": "それ以外なら503と「処理結果を確認できません。検索で確認してください。」をHTMLで返す。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "外側middlewareの独立エラーHTMLは実装どおり。入力フォームを保持しない不足は既存ソース由来。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/WebHostSetup.cs",
+            "startLine": 23,
+            "endLine": 23,
+            "quote": "\"<!doctype html><html lang=ja><meta charset=utf-8><title>学生管理 エラー</title><p>\"+System.Net.WebUtility.HtmlEncode(fault?.Message??\"処理結果を確認できません。検索で確認してください。\")+\"</p><a href=/students>検索画面を開く</a></html>\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-E2E0F0C407",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "未捕捉システム例外では独立エラーHTMLとなり、前回一覧を最新結果として表示しない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 209,
+          "endLine": 209,
+          "quote": "それ以外なら503と「処理結果を確認できません。検索で確認してください。」をHTMLで返す。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "一般例外時のHTML応答に検索一覧は含まれない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/WebHostSetup.cs",
+            "startLine": 23,
+            "endLine": 23,
+            "quote": "\"<!doctype html><html lang=ja><meta charset=utf-8><title>学生管理 エラー</title><p>\"+System.Net.WebUtility.HtmlEncode(fault?.Message??\"処理結果を確認できません。検索で確認してください。\")+\"</p><a href=/students>検索画面を開く</a></html>\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-948EFBBCB4",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-SEARCH-ERROR-RECEIPT",
+      "reason": "全体を確認したが、検索システムエラーの受付番号案内がない。監査の受付識別情報は利用者への障害案内ではない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 209,
+          "endLine": 209,
+          "quote": "処理結果を確認できません。検索で確認してください。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": true,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "検索の外側例外HTMLに受付番号はない。保存サービスの受付番号付き結果とは区別する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/WebHostSetup.cs",
+            "startLine": 23,
+            "endLine": 23,
+            "quote": "fault?.Message??\"処理結果を確認できません。検索で確認してください。\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-032A7DC52D",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "生年月日の和暦、入学日期間・年度の西暦、更新日時の日本時間西暦書式、例示値の非実データ性を説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 151,
+          "endLine": 151,
+          "quote": "生年月日を和暦で確認する。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 157,
+          "endLine": 157,
+          "quote": "UTCオフセット+9へ変換し `yyyy/MM/dd HH:mm:ss`。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 142,
+          "endLine": 142,
+          "quote": "1900-01-01以上かつ日本時間の業務日以下。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "和暦変換、西暦ISO解析、日時の+9変換と書式が一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/JapaneseDateService.cs",
+            "startLine": 50,
+            "endLine": 50,
+            "quote": "return $\"{Eras.Single(era => era.Id == input.Era).Name}{(input.Year == \"1\" ? \"元\" : input.Year)}年{input.Month}月{input.Day}日\";"
+          },
+          {
+            "path": "source/Core/JapaneseDateService.cs",
+            "startLine": 55,
+            "endLine": 55,
+            "quote": "DateOnly.TryParseExact(text, \"yyyy-MM-dd\", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)"
+          },
+          {
+            "path": "source/Infrastructure/WebPresentation.cs",
+            "startLine": 7,
+            "endLine": 7,
+            "quote": "value.ToOffset(TimeSpan.FromHours(9)).ToString(\"yyyy/MM/dd HH:mm:ss\",System.Globalization.CultureInfo.InvariantCulture)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-38CB76816D",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "フォーム入力、サービスのSQL読取り、Razor出力とメモリ状態更新を区別し、検索のDB書込みを否定する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 29,
+          "endLine": 29,
+          "quote": "ブラウザーからはフォーム値を送る。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 292,
+          "endLine": 292,
+          "quote": "検索自体はDBを更新せず、検索成功後の更新先はメモリの検索状態である。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "POST入力、SELECTによる検索、メモリApplied更新、View応答の方向に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "[HttpPost(\"search\")]"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 83,
+            "endLine": 83,
+            "quote": "SELECT s.student_id,s.student_no,s.student_name,s.student_name_kana,s.birth_date,"
+          },
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 9,
+            "endLine": 9,
+            "quote": "entry.Applied=SearchContextStore.Copy(criteria);entry.LastResult=result;"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 16,
+            "endLine": 16,
+            "quote": "return View(\"Search\",model);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-C224B60ADF",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "検索入力をブラウザーのフォーム値として分類できる。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 29,
+          "endLine": 29,
+          "quote": "ブラウザーからはフォーム値を送る。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "検索画面のPOSTフォームに一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 4,
+            "endLine": 4,
+            "quote": "<form method=\"post\" action=\"/students/search\" data-search-form>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-C69A4237E7",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "入力条件と検索操作の受渡しを入口表と項目一覧で特定する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 173,
+          "endLine": 173,
+          "quote": "| 検索 | POST `/students/search` | Criteria配下の条件、ContextId、ContextRevision、TabId、PageSize、SortKey、SortDirection |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "検索アクションの条件DTOと制御引数に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "Search([Bind(Prefix=\"Criteria\")]StudentSearchInput input,string contextId,string contextRevision,string tabId,int pageSize=20,string sortKey=\"studentNo\",string sortDirection=\"asc\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-AAC303EE35",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "フォーム条件をコントローラーへ送る入力方向が明確である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 29,
+          "endLine": 29,
+          "quote": "MVCがバインド・変換した入力をコントローラーが受け"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "CriteriaをバインドするPOST入口に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "[Bind(Prefix=\"Criteria\")]StudentSearchInput input"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-B9CEADA1F3",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "入力項目一覧が検索条件・ページ・並び順・制御値を受渡し先まで説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 130,
+          "endLine": 163,
+          "quote": "| 項目ID | 論理項目・業務上の用途 | 実コントロール／内部値 | 条件・正規化・初期値 | 検索・保存・DBとの対応 | 根拠 |"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 173,
+          "endLine": 173,
+          "quote": "Criteria配下の条件、ContextId、ContextRevision、TabId、PageSize、SortKey、SortDirection"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "検索入力DTOの条件移送と、検索要求の表示指定・制御値に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 19,
+            "endLine": 22,
+            "quote": "SchoolYear=SchoolYear,GradeCode=GradeCode,ClassId=IdParser.Optional(ClassId,\"SRC-006\"),UnassignedOnly=UnassignedOnly,\n        EnrollmentStatusCodes=StatusCodes,PrefectureCode=PrefectureCode,PhoneNumber=PhoneNumber,AdmissionFrom=AdmissionFrom,AdmissionTo=AdmissionTo,\n        Page=1,PageSize=size,SortKey=key,SortDirection=direction"
+          },
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 25,
+            "endLine": 25,
+            "quote": "public class ContextRequest { public string ContextId {get;set;}=\"\"; public string ContextRevision {get;set;}=\"\"; }"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-C6A8293F0F",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "Useへ進む前に受信DTOから検索引数へ値を移送する順序を説明し、成功後の保持コピーと区別できる。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 243,
+          "endLine": 245,
+          "quote": "Coordinatorが認証を再確認し、入力DTOをSearchCriteriaへ移送する。クラスIDの正整数変換はここで行い、Useより前に失敗し得る。検索ページは1にする。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "Use前のToCriteria呼出しと、新規SearchCriteriaへの値移送に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 8,
+            "endLine": 9,
+            "quote": "var criteria=request.Criteria.ToCriteria(request.PageSize,request.SortKey,request.SortDirection);"
+          },
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 19,
+            "endLine": 19,
+            "quote": "public SearchCriteria ToCriteria(int size,string key,string direction) => new() { StudentNo=StudentNo,StudentName=Name,StudentNameKana=Kana,"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-EBED49A8C8",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学生基本情報をSQL Serverの保存表として、一時メモリとは区別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 601,
+          "endLine": 601,
+          "quote": "| m_student | 学生IDは `bigint IDENTITY NOT NULL` のPK。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "学生表のDDL宣言と一致する。実DBへの配備成功は含めない。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 7,
+            "endLine": 8,
+            "quote": "CREATE TABLE dbo.m_student (\n  student_id bigint IDENTITY(1,1) NOT NULL,"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-6F9DDD986E",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "参照対象を学生の基本情報として説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 21,
+          "endLine": 21,
+          "quote": "氏名、生年月日、所属、在籍区分、住所、本人電話、更新日時を一覧で確認する画面である。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "学生表示列をm_studentから読むSQLに一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 83,
+            "endLine": 86,
+            "quote": "SELECT s.student_id,s.student_no,s.student_name,s.student_name_kana,s.birth_date,"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 86,
+            "endLine": 86,
+            "quote": "FROM dbo.m_student s"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-F42B0CF596",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学生表は検索で読取り、更新しないという参照入力の意味が明確である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 292,
+          "endLine": 292,
+          "quote": "検索自体はDBを更新せず"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 579,
+          "endLine": 579,
+          "quote": "一覧結果"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "検索のページSELECTと読取commitに一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 162,
+            "endLine": 162,
+            "quote": "Command(connection,tx,RowSelect+where+\" ORDER BY \"+order+\" \"+criteria.SortDirection"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 166,
+            "endLine": 167,
+            "quote": "while(await reader.ReadAsync(ct)) rows.Add(Row(reader));\n            await tx.CommitAsync(ct);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-C3EB01881F",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学生表示情報と行版の取得を明記し、行版を画面非表示・検索状態版とは別とする。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 158,
+          "endLine": 158,
+          "quote": "検索行の `RowVersion:long` は画面に表示せず、編集読込みで比較版を取得する。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 579,
+          "endLine": 579,
+          "quote": "入学日、更新日時、行版を取得する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "一覧SQLはrow_versionを取得するが、表示用Rowでは出力しない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 85,
+            "endLine": 85,
+            "quote": "s.admission_date,s.updated_at,s.row_version"
+          },
+          {
+            "path": "source/Infrastructure/WebPresentation.cs",
+            "startLine": 20,
+            "endLine": 20,
+            "quote": "addressDisplay=r.Address,r.PhoneNumber,updatedAt=Time(r.UpdatedAt)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-9C5A4D9352",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "検索はDB更新なしで、成功後にメモリの検索状態だけを更新する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 292,
+          "endLine": 292,
+          "quote": "検索自体はDBを更新せず、検索成功後の更新先はメモリの検索状態である。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "SearchAsyncは参照SQLで、後続更新先はEntryのApplied・LastResultである。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 156,
+            "endLine": 156,
+            "quote": "SELECT COUNT_BIG(*) FROM (SELECT TOP (10001) s.student_id FROM dbo.m_student s"
+          },
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 9,
+            "endLine": 9,
+            "quote": "entry.Applied=SearchContextStore.Copy(criteria);entry.LastResult=result; entry.Revision++;"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-C21119ACED",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "クラスをDB保存表として、型・キー・保存属性付きで説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 602,
+          "endLine": 602,
+          "quote": "| m_class | class_idは `bigint IDENTITY NOT NULL` のPK。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "クラス表のDDL宣言に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 62,
+            "endLine": 63,
+            "quote": "CREATE TABLE dbo.m_class (\n  class_id bigint IDENTITY(1,1) NOT NULL,"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-08085AE2D8",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "候補と所属年度・名称の参照先をクラス表として特定する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 543,
+          "endLine": 543,
+          "quote": "| クラス | m_class。class_id／年度・class_code・class_name |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "候補SQLのm_class読取りに一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 206,
+            "endLine": 207,
+            "quote": "SELECT c.*, {occupied} occupied\n              FROM dbo.m_class c LEFT JOIN dbo.m_code g ON g.category_id=c.grade_category AND g.code_value=c.grade_code"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-83909DEF73",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "クラス候補をSnapshot参照として取得する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 234,
+          "endLine": 234,
+          "quote": "m_code・m_code_category・m_classをSnapshotトランザクションで参照し"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "LookupAsyncのSnapshot開始とクラスSELECTに一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 200,
+            "endLine": 200,
+            "quote": "connection.BeginTransactionAsync(IsolationLevel.Snapshot,ct)"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 207,
+            "endLine": 207,
+            "quote": "FROM dbo.m_class c LEFT JOIN dbo.m_code g"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-742D631647",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "年度・学年・名称・期間・定員をクラス候補の取得項目として列挙する。REF-001に従い検索で人数集計を要求しない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 547,
+          "endLine": 547,
+          "quote": "クラス候補はID、年度、学年コード、クラスコード・名称、期間、定員、人数、有効状態を返す。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 545,
+          "endLine": 545,
+          "quote": "集計SQLを使わず0を設定する。実人数の調査結果ではなく、検索画面にも表示しない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "候補型の取得項目とincludeOccupancy=falseの非集計分岐が一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/Contracts.cs",
+            "startLine": 63,
+            "endLine": 64,
+            "quote": "public sealed record SchoolClass(long ClassId, int SchoolYear, string GradeCode, string ClassCode,\n    string ClassName, DateOnly ValidFrom, DateOnly ValidTo, int? Capacity, int Occupied, bool IsActive);"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 201,
+            "endLine": 201,
+            "quote": ": \"CONVERT(int,0)\";"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 39,
+            "endLine": 39,
+            "quote": "service.LookupAsync(false,ct)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-AB09DE17EF",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学生処理の変更先は学生・監査であり、クラスはルール確認の参照先と区別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 525,
+          "endLine": 525,
+          "quote": "m_studentの変更、m_code・m_code_category・m_classのルール再確認、t_operation_logへの監査INSERTである。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "クラスはSELECTで検査し、学生更新SQLはm_studentを対象とする。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 363,
+            "endLine": 363,
+            "quote": "SELECT school_year,grade_code,valid_from,valid_to,is_active,capacity FROM dbo.m_class WHERE class_id=@id"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 297,
+            "endLine": 297,
+            "quote": "UPDATE dbo.m_student SET "
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-6D4034DEE6",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "コードとコード分類をDB保存表として、キー・保存型・制約を説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 603,
+          "endLine": 604,
+          "quote": "category_idとcode_valueは `varchar(24)`・`varchar(10) NOT NULL` の複合PK。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "コード分類表とコード表のDDL宣言に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 90,
+            "endLine": 91,
+            "quote": "CREATE TABLE dbo.m_code_category (\n  category_id varchar(24)"
+          },
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 112,
+            "endLine": 114,
+            "quote": "CREATE TABLE dbo.m_code (\n  category_id varchar(24) COLLATE Latin1_General_100_BIN2 NOT NULL,\n  code_value varchar(10) COLLATE Latin1_General_100_BIN2 NOT NULL,"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-96671DC166",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "コード候補と分類表を別対象として特定し、分類キーによる名称・候補参照を説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 535,
+          "endLine": 535,
+          "quote": "第1結果はm_codeとm_code_categoryの内部結合"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 604,
+          "endLine": 604,
+          "quote": "検索は分類キーで候補・名称参照を限定し、分類名を検索画面には表示しない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "コード表と分類表のcategory_id結合に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 205,
+            "endLine": 205,
+            "quote": "FROM dbo.m_code c JOIN dbo.m_code_category k ON k.category_id=c.category_id"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-6948B6AA22",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "コード・分類は候補取得の参照入力として扱う。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 535,
+          "endLine": 535,
+          "quote": "Snapshotトランザクションで2結果セットを取得する。第1結果はm_codeとm_code_categoryの内部結合"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "LookupAsyncのコードSELECTに一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 203,
+            "endLine": 205,
+            "quote": "SELECT c.category_id,c.code_value,c.code_name,c.display_order,"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 205,
+            "endLine": 205,
+            "quote": "FROM dbo.m_code c JOIN dbo.m_code_category k ON k.category_id=c.category_id"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-8D47E0DBD9",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "分類ID・コード値・名称・有効状態を取得項目として明記する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 547,
+          "endLine": 547,
+          "quote": "コード候補は分類ID、コード値、名称、表示順、有効状態、有効開始・終了、保護値を返す。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "候補SELECTの分類・値・名称とコード／分類を合成した有効状態に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 203,
+            "endLine": 204,
+            "quote": "SELECT c.category_id,c.code_value,c.code_name,c.display_order,\n                   CONVERT(bit,CASE WHEN c.is_active=1 AND k.is_active=1 THEN 1 ELSE 0 END) is_active,c.valid_from,c.valid_to,c.is_protected"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-0C58DEE050",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学生処理ではコード・分類を再参照し、マスタ変更と区別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 525,
+          "endLine": 525,
+          "quote": "m_studentの変更、m_code・m_code_category・m_classのルール再確認、t_operation_logへの監査INSERTである。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "学生保存のコード検査はSELECTであり、書込みは学生表へ行う。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 349,
+            "endLine": 349,
+            "quote": "SELECT c.is_active,k.is_active,c.valid_from,c.valid_to FROM dbo.m_code c JOIN dbo.m_code_category k ON k.category_id=c.category_id"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 297,
+            "endLine": 297,
+            "quote": "UPDATE dbo.m_student SET "
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-949284E510",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "検索状態・編集スナップショット・通知を期限付きメモリ保持として、DB宣言と区別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 622,
+          "endLine": 624,
+          "quote": "SingletonのConcurrentDictionary。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 625,
+          "endLine": 625,
+          "quote": "この検索状態・スナップショット・通知の実装から、この表への読書きは確認されない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "検索状態と編集スナップショットはメモリ辞書である。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/SearchContextStore.cs",
+            "startLine": 10,
+            "endLine": 10,
+            "quote": "private readonly ConcurrentDictionary<string,Entry> entries=new();"
+          },
+          {
+            "path": "source/Infrastructure/EditorSnapshotStore.cs",
+            "startLine": 8,
+            "endLine": 8,
+            "quote": "private readonly ConcurrentDictionary<string,Snapshot> snapshots=new();"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-917EE8EB55",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-CONFIRMATION-IO-TARGET",
+      "reason": "検索状態はあるが、共有規則の警告確認情報を一時IO対象として説明しない。編集スナップショットは別用途である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 620,
+          "endLine": 629,
+          "quote": "| 保持領域 | 内容・用途 | 期限・更新・利用制限 |"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "矛盾",
+        "reason": "接続サービスにはWebConfirmationsがあるが、生成の保持領域説明から欠落する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 29,
+            "endLine": 29,
+            "quote": "private static readonly ConcurrentDictionary<string, Confirmation> WebConfirmations = new(StringComparer.Ordinal);"
+          },
+          {
+            "path": "source/Infrastructure/WebHostSetup.cs",
+            "startLine": 19,
+            "endLine": 19,
+            "quote": "new SqlServerStudentService(connection,()=>identity.CurrentUser,webTokens:true)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-4508534C7C",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "一時検索状態の作成・取得・成功後更新と画面復元を説明し、入出力方向を判断できる。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "所有者・認証セッションを付けた検索状態を作る。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 248,
+          "endLine": 248,
+          "quote": "入力由来条件のコピーをApplied、結果をLastResultへ設定し"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 410,
+          "endLine": 410,
+          "quote": "Appliedから入力を復元する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "辞書への作成、Applied更新、保持条件からの画面入力復元に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/SearchContextStore.cs",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "entries[entry.Id]=entry; return entry;"
+          },
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 9,
+            "endLine": 9,
+            "quote": "entry.Applied=SearchContextStore.Copy(criteria);entry.LastResult=result;"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 11,
+            "endLine": 11,
+            "quote": "var criteria=entry.Applied is null?new StudentSearchInput():From(entry.Applied);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-108C6263B0",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-CONFIRMATION-BOUND-CONTENT",
+      "reason": "確定条件・ページ・編集原入力はあるが、警告確認対象の学生・旧版・入力内容・候補集合を保持する説明がない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 622,
+          "endLine": 623,
+          "quote": "所有者・認証セッション・対象学生ID・読込明細・入力コピー・ReturnRevisionを保持するメモリ辞書。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "矛盾",
+        "reason": "確認情報には対象ID・旧版・入力ハッシュ・候補ハッシュを保持する実装があるが、生成文書に対応説明がない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 22,
+            "endLine": 26,
+            "quote": "public long? Id { get; } = id;\n        public long? Version { get; } = version;\n        public byte[] Payload { get; } = payload;\n        public byte[] Candidates { get; } = candidates;\n        public DateTimeOffset Expires { get; } = expires;"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-F610EA6EE2",
+      "judgement": "粒度不足",
+      "actualDeduction": -2,
+      "defectId": "STU01-CONFIRMATION-OWNER-EXPIRY",
+      "reason": "検索状態・編集スナップショットの所有者と期限は説明するが、警告確認情報の所有者・認証セッション・期限の検査が不明である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 184,
+          "endLine": 184,
+          "quote": "状態所有者・認証セッションの不一致は403、ID不在・失効は409である。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": true,
+      "sourceFidelity": {
+        "judgement": "矛盾",
+        "reason": "Web確認情報の所有者・セッション・期限検査と10分期限は実装にあるが、生成説明から欠落する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 278,
+            "endLine": 278,
+            "quote": "value.Owner.Principal==user.Principal && value.Owner.SessionId==user.SessionId && value.Id==request.StudentId && value.Version==request.ExpectedVersion && value.Expires>now"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 335,
+            "endLine": 335,
+            "quote": "WebConfirmations[token]=new(user,request.StudentId,request.ExpectedVersion,payload,candidates,now.AddMinutes(10));"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-E579062A52",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-EXTERNAL-IO-CLASSIFICATION",
+      "reason": "全体を確認したが、外部ファイルというIO分類を示さない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "外部ファイルの分類宣言は生成にない。アプリのファイル操作不在を宣言の再現とは扱わない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-CA29B70EAB",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-EXTERNAL-IO-TARGET",
+      "reason": "全体を確認したが、外部ファイル対象が「なし」と明示されない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "外部ファイル対象なしという仕様宣言をソースの機能不在から補完しない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-7E1389F83D",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-EXTERNAL-IO-DIRECTION",
+      "reason": "全体を確認したが、外部ファイルの入出力なしを明示しない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "生成に外部ファイルの入出力宣言がなく、ソースだけから一致を補完しない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-499CDB60F6",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "STU01-CSV-REPORT-IMPORT-SCOPE",
+      "reason": "全体を確認したが、CSV・帳票・取込が本機能の対象外であるとの説明がない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "CSV・帳票・取込を対象外とする業務方針は、実装入口の不在だけから観測済みとはしない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-2D9D6B30C2",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "MDは文書の正本パス・根拠として扱い、業務入力・保存先に数えていない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 11,
+          "endLine": 14,
+          "quote": "| 正本の相対パス | 基本設計書/01_学生検索画面.md |"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 29,
+          "endLine": 29,
+          "quote": "ブラウザーからはフォーム値を送る。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "対象外",
+        "reason": "仕様文書と業務IOの区別は文書記述上の規則であり、アプリの観測事実ではない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-AF9FDA94CA",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "結果・通知・エラーをRazor画面の表示として分類できる。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 29,
+          "endLine": 29,
+          "quote": "検索フォームの成功応答はRazor画面である。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "検索アクションはSearchビューを返す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 16,
+            "endLine": 16,
+            "quote": "return View(\"Search\",model);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-7240BE60DD",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "画面出力の対象としてメッセージ・結果状態・一覧を明記する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 27,
+          "endLine": 27,
+          "quote": "画面は、共有ヘッダー、画面名、メッセージ、検索条件、検索・候補更新、クリア・新規登録、結果状態、表示件数・並び順、11列の一覧、ページ操作の順に構成される。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "メッセージ部分ビューと検索結果・行一覧の表示に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 3,
+            "endLine": 3,
+            "quote": "<partial name=\"_MessagePanel\" model=\"Model.Message\" />"
+          },
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8,
+            "quote": "@foreach(var row in items.EnumerateArray())"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-34B6113284",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "検索結果を表示モデル経由でRazorへ渡す出力方向が明確である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 29,
+          "endLine": 29,
+          "quote": "検索結果は `StudentRow`、表示用オブジェクト、`JsonElement` を経てRazorへ渡る。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "表示データのJson化とSearchビュー応答に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 39,
+            "endLine": 39,
+            "quote": "Data=StudentSearchPageModel.Json(data)"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 16,
+            "endLine": 16,
+            "quote": "return View(\"Search\",model);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-B3E3969DD9",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "一覧は必要な基本情報に限定し、住所2・緊急電話を表示しないことを明記する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 155,
+          "endLine": 155,
+          "quote": "住所2は取得・表示しない。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 156,
+          "endLine": 156,
+          "quote": "緊急連絡先電話で検索一致した場合もこの列は本人電話を表示する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "一覧SELECTと表示用Rowは住所1・本人電話を返し、住所2・緊急電話を返さない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 85,
+            "endLine": 85,
+            "quote": "p.code_name prefecture_name,s.address_line1,s.phone_number,s.admission_date,s.updated_at,s.row_version"
+          },
+          {
+            "path": "source/Infrastructure/WebPresentation.cs",
+            "startLine": 20,
+            "endLine": 20,
+            "quote": "addressDisplay=r.Address,r.PhoneNumber,updatedAt=Time(r.UpdatedAt)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-81A009B54D",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "Razorへの表示出力と、検索がDB保存をしないことを区別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 29,
+          "endLine": 29,
+          "quote": "検索フォームの成功応答はRazor画面である。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 292,
+          "endLine": 292,
+          "quote": "検索自体はDBを更新せず"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "SELECTの読取結果をViewへ返す構造に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 168,
+            "endLine": 168,
+            "quote": "return new(Outcome.NoChange,count,rows,now,false,[]);"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 16,
+            "endLine": 16,
+            "quote": "return View(\"Search\",model);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-596672356E",
+      "judgement": "欠落",
+      "actualDeduction": -3,
+      "defectId": "STU01-IO-DATAFLOW-DIAGRAM",
+      "reason": "全図を確認したが、画面入力・学生／マスタ読取り・一時情報との双方向連携・画面出力を示すIO関連図がない。処理フローとFK図は別の関係である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 589,
+          "endLine": 589,
+          "quote": "次図はDDLに宣言された検索関連FKを示す。表示取得のLEFT JOINとは別の関係である。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "対応するIO関連図が生成されていないため、ソースに経路があることを図の一致根拠にはしない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-01-9AD7ED1EF4",
+      "judgement": "粒度不足",
+      "actualDeduction": -2,
+      "defectId": "STU01-MAINTENANCE-APPROVAL-IO-BOUNDARY",
+      "reason": "認証取得と日本時間の業務日は具体化するが、マスタ保守の承認入力ファイルを検索IOから除外する境界と正本の説明がない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 27,
+          "endLine": 27,
+          "quote": "業務日は現在時刻をUTCオフセット+9へ変換した日付である。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 631,
+          "endLine": 631,
+          "quote": "認証情報の実装検査は、認証済み"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "認証主体と日本時間取得は観測できるが、保守承認ファイルの運用契約はソースから確認できない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/RequestIdentity.cs",
+            "startLine": 9,
+            "endLine": 9,
+            "quote": "var id=p.FindFirstValue(ClaimTypes.NameIdentifier); var session=p.FindFirstValue(\"login_session\"); var role=p.FindFirstValue(ClaimTypes.Role);"
+          },
+          {
+            "path": "source/Infrastructure/WebPresentation.cs",
+            "startLine": 5,
+            "endLine": 5,
+            "quote": "DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(9)).DateTime)"
+          }
+        ]
+      }
+    }
+  ],
+  "safetyChecks": [
+    {
+      "topic": "authorization",
+      "judgement": "CONTRADICTION",
+      "reason": "Viewerの保存拒否と管理者限定削除は一致するが、定義外Roleを排除せずViewer以外を登録許可とする。共有権限表に対する重大な矛盾であり、既存ソース由来として記録する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 631,
+          "endLine": 631,
+          "quote": "Role変換後に定義済み値へ限定するEnum.IsDefined検査はなく、画面と権限の比較条件はViewer等との一致・不一致である。"
+        }
+      ],
+      "sourceEvidence": [
+        {
+          "path": "source/Infrastructure/RequestIdentity.cs",
+          "startLine": 10,
+          "endLine": 10,
+          "quote": "!Enum.TryParse<Role>(role,out var r)"
+        },
+        {
+          "path": "source/Infrastructure/RequestIdentity.cs",
+          "startLine": 14,
+          "endLine": 14,
+          "quote": "if(CurrentUser.Role==Role.Viewer) throw new WebFault(403,\"この操作を実行する権限がありません。\");"
+        }
+      ]
+    },
+    {
+      "topic": "concurrency",
+      "judgement": "CONTRADICTION",
+      "reason": "状態更新の排他・版照合と保存ロックは説明するが、候補更新は版照合・排他を通らず古い応答の排除がない。GET復帰のTab照合省略も、共有仕様の画面別状態確認を満たさない。既存ソースの不足である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 323,
+          "endLine": 323,
+          "quote": "Useを呼ばないため、受信ContextRevisionを比較せず、期限延長も行わない。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 405,
+          "endLine": 405,
+          "quote": "このGETではTabを渡さない。"
+        }
+      ],
+      "sourceEvidence": [
+        {
+          "path": "source/Web/Controllers/StudentsController.cs",
+          "startLine": 22,
+          "endLine": 22,
+          "quote": "var entry=contexts.Get(contextId,identity.CurrentUser,tabId);"
+        },
+        {
+          "path": "source/Web/Controllers/StudentsController.cs",
+          "startLine": 10,
+          "endLine": 10,
+          "quote": "coordinator.Resume(new ContextRequest {ContextId=entry.Id,ContextRevision=contextRevision??\"\"},null,ct)"
+        },
+        {
+          "path": "source/Infrastructure/SearchContextStore.cs",
+          "startLine": 13,
+          "endLine": 13,
+          "quote": "(!string.IsNullOrEmpty(tab)&&e.Tab!=tab)"
+        }
+      ]
+    },
+    {
+      "topic": "commit-audit-atomicity",
+      "judgement": "CLEAR",
+      "reason": "学生書込と監査は同じ接続・トランザクションへ渡し、commit成功後だけSavedと成功復帰へ進む説明に一致する。実DBでの成功は認定しない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 481,
+          "endLine": 481,
+          "quote": "保存・削除とも同一トランザクションへ監査を書き、commit成功後にSavedと対象ID・新しい版を返す。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 482,
+          "endLine": 482,
+          "quote": "コントローラーはSavedだけを成功復帰とする。"
+        }
+      ],
+      "sourceEvidence": [
+        {
+          "path": "source/Core/SqlServerStudentService.cs",
+          "startLine": 307,
+          "endLine": 307,
+          "quote": "await Audit(connection,tx,id,insert?\"CREATE\":\"UPDATE\",previousVersion,version,auditChanged,user.Principal,now,reason,candidates.Count>0,Guid.Parse(requestId),ct);"
+        },
+        {
+          "path": "source/Core/SqlServerStudentService.cs",
+          "startLine": 313,
+          "endLine": 315,
+          "quote": "commitAttempted=true; await tx.CommitAsync(ct); completed=true;"
+        },
+        {
+          "path": "source/Core/SqlServerStudentService.cs",
+          "startLine": 413,
+          "endLine": 414,
+          "quote": "commitAttempted=true; await tx.CommitAsync(ct); return new(Outcome.Saved,id,version+1,[],RequestId:requestId);"
+        },
+        {
+          "path": "source/Web/Controllers/StudentsController.cs",
+          "startLine": 31,
+          "endLine": 31,
+          "quote": "if(result?.Outcome==Outcome.Saved)return ReturnAfterSave(input.ReturnContextId,snapshot.ReturnRevision,\"保存しました。\");"
+        }
+      ]
+    },
+    {
+      "topic": "rollback",
+      "judgement": "CLEAR",
+      "reason": "変更なしのrollback、例外分類の順序、一般catchでのrollback成否とcommit試行によるUnknown判定を分け、取消成功を一律保証していない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 520,
+          "endLine": 523,
+          "quote": "rollback結果を取得し、`writeStarted && (commitAttempted || !rolledBack)` がtrueならUnknown、falseならSystemError。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 523,
+          "endLine": 523,
+          "quote": "保存は明示rollbackしてNoChange。保存済み通知・成功303を返さない。"
+        }
+      ],
+      "sourceEvidence": [
+        {
+          "path": "source/Core/SqlServerStudentService.cs",
+          "startLine": 262,
+          "endLine": 262,
+          "quote": "if(changed.Length==0) { await tx.RollbackAsync(ct); return new(Outcome.NoChange,request.StudentId,previousVersion,[],RequestId:requestId); }"
+        },
+        {
+          "path": "source/Core/SqlServerStudentService.cs",
+          "startLine": 320,
+          "endLine": 320,
+          "quote": "var rolledBack=await Rollback(tx); unknown=writeStarted&&(commitAttempted||!rolledBack);"
+        },
+        {
+          "path": "source/Core/SqlServerStudentService.cs",
+          "startLine": 329,
+          "endLine": 329,
+          "quote": "try { await tx.RollbackAsync(CancellationToken.None); return true; } catch(SqlException) { return false; } catch(InvalidOperationException) { return false; }"
+        }
+      ]
+    },
+    {
+      "topic": "logical-deletion",
+      "judgement": "CLEAR",
+      "reason": "削除は対象・期待版・非削除条件のUPDATEで削除属性と更新管理列だけを変更し、検索から除外する。編集中業務値の保存や物理DELETEを追加していない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 481,
+          "endLine": 481,
+          "quote": "削除は同じ対象・比較版・非削除のWHEREで、削除フラグ、削除日時・実施者・理由、更新日時・更新者、版を設定する。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 21,
+          "endLine": 21,
+          "quote": "検索SQLには常に `s.is_deleted=0` が含まれる。"
+        }
+      ],
+      "sourceEvidence": [
+        {
+          "path": "source/Core/SqlServerStudentService.cs",
+          "startLine": 409,
+          "endLine": 409,
+          "quote": "UPDATE dbo.m_student SET is_deleted=1,deleted_at=@now,deleted_by=@actor,delete_reason=@reason,updated_at=@now,updated_by=@actor,row_version=row_version+1 WHERE student_id=@id AND row_version=@version AND is_deleted=0"
+        },
+        {
+          "path": "source/Core/SqlServerStudentService.cs",
+          "startLine": 137,
+          "endLine": 137,
+          "quote": "var predicates = new List<string>{ \"s.is_deleted=0\" };"
+        },
+        {
+          "path": "source/Views/Students/Edit.cshtml",
+          "startLine": 17,
+          "endLine": 17,
+          "quote": "編集中の業務値は保存されません。"
+        }
+      ]
+    },
+    {
+      "topic": "personal-data",
+      "judgement": "MISSING",
+      "reason": "一覧項目の限定は一致するが、no-store、学生値のHTMLエスケープ、URL・Cookie・通常障害ログへの個人情報記録禁止の説明が欠ける。ソースのno-store設定だけで生成文書の一致とはしない。通常ログに関する運用保証は未観測である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 155,
+          "endLine": 156,
+          "quote": "住所2は取得・表示しない。"
+        },
+        {
+          "path": "generated/基本設計書/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 637,
+          "quote": ""
+        }
+      ],
+      "sourceEvidence": [
+        {
+          "path": "source/Infrastructure/WebHostSetup.cs",
+          "startLine": 22,
+          "endLine": 22,
+          "quote": "ctx.Response.Headers.CacheControl=\"no-store\";"
+        },
+        {
+          "path": "source/Views/Students/Search.cshtml",
+          "startLine": 8,
+          "endLine": 8,
+          "quote": "<td>@row.GetProperty(\"studentName\").GetString()</td>"
+        },
+        {
+          "path": "source/Views/Students/Search.cshtml",
+          "startLine": 4,
+          "endLine": 4,
+          "quote": "<form method=\"post\" action=\"/students/search\" data-search-form>"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "生成文書1～637行を全て確認した。quoteが空文字の証拠は、欠落について確認した明示的な全文範囲を表す。",
+    "REF-001の検索候補非集計、REF-002の検索生年月日表示のみを適用した。原版8.0の文字再現は要求していない。",
+    "画面配置・画像・ネイティブ描画の視覚比較は未評価であり、視覚承認は行っていない。",
+    "メニュー・ページ端操作・未検索案内・検索例外の入力保持と受付番号・入力変更直後の未反映通知の不足は、生成文書の不足と既存ソースの不足を分けて記録した。",
+    "警告確認情報の対象・結合内容・所有者と期限はソースに存在するが生成説明から欠落するため、ソース忠実度の一致にはしていない。",
+    "単一校・業務対象外・保守承認ファイル等の設計意図は、ソースの機能不在だけから観測済みとはしていない。",
+    "静的テキスト評価のみ。入力アプリの実行・import・コンパイル・試験、ネットワーク、設定・資格情報の取得、ファイル書込み、委任は行っていない。"
+  ]
+}

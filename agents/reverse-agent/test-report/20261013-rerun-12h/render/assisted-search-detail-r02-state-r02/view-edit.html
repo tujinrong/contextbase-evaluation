@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>学生管理</title>
+<style>:root{font-family:Meiryo,"Yu Gothic UI",sans-serif;color:#243448;background:#f2f5f9;font-size:14px}*{box-sizing:border-box}body{margin:0}header{background:#153654;color:white;padding:16px 28px;display:flex;justify-content:space-between;gap:20px}.screen{background:white;max-width:1440px;margin:24px auto;padding:24px}h1{font-size:24px}fieldset{border:1px solid #c8d1dc;padding:18px;margin:12px 0}legend{font-weight:bold}.fields{display:grid;grid-template-columns:1fr 1fr;gap:14px 28px}label{display:flex;flex-direction:column;gap:5px}input,select,textarea,button{font:inherit;padding:8px;border:1px solid #afbece;border-radius:3px}input,select,textarea{max-width:100%;width:100%}.check{display:inline-flex;flex-direction:row;align-items:center;margin-right:12px}.check input{width:auto}.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0}button{background:white;cursor:pointer}.primary{background:#1c5985;color:white}button:disabled{cursor:default;color:#8a98a5;background:#f3f5f8}.message{padding:14px;border:1px solid #b6dccc;background:#edf7f3}.error{background:#fff1f1;border-color:#c66}.warning{background:#fff8eb;padding:12px}.grid{overflow-x:auto}table{border-collapse:collapse;min-width:1050px;width:100%;font-size:12px}th,td{padding:10px 8px;border:1px solid #d4dee8;vertical-align:top;overflow-wrap:anywhere}th{background:#e6eef6}tr:nth-child(even){background:#f8fafc}.pager{display:flex;gap:14px;align-items:center;justify-content:center;margin:18px}small{color:#5f7183}.projection-note,.role-title{max-width:1440px;margin:12px auto;padding:12px 24px}@media(max-width:760px){.screen{margin:0;padding:15px}.fields{grid-template-columns:1fr}header{flex-direction:column}}</style></head>
+<body>
+<aside class="projection-note">補助投影・非実行。同じ学生検索画面を3役割で比較します。各枠の条件・学生・ID・件数・版・日時・年度とクラス候補は同一の説明用見本で、実取得値ではありません。候補は抜粋です。役割見出しは比較用の説明です。</aside>
+<section aria-labelledby="viewer-heading">
+<h2 class="role-title" id="viewer-heading">Viewer：行操作は参照、新規登録リンクなし</h2>
+<header><strong>学生管理システム</strong><span>利用者 〔表示名〕　業務日 〔yyyy/MM/dd〕</span></header>
+<div class="screen" data-outcome="found" data-role="Viewer" data-source-element="main">
+<h1>学生検索</h1>
+<form data-action="/students/search" data-method="POST" data-search-form="" inert="">
+<input name="ContextId" type="hidden" value=""/><input name="ContextRevision" type="hidden" value="2"/><input name="TabId" type="hidden" value=""/><input name="PageSize" type="hidden" value="20"/><input name="SortKey" type="hidden" value="studentNo"/><input name="SortDirection" type="hidden" value="asc"/><input name="__RequestVerificationToken" type="hidden" value=""/>
+<fieldset><legend>検索条件</legend><div class="fields">
+<label>学籍番号<input data-source-id="SRC-001" id="viewer-SRC-001" maxlength="30" name="Criteria.StudentNo" type="text" value=""/></label>
+<label>氏名<input data-source-id="SRC-002" id="viewer-SRC-002" maxlength="16" name="Criteria.Name" type="text" value=""/></label>
+<label>氏名カナ<input data-source-id="SRC-003" id="viewer-SRC-003" maxlength="72" name="Criteria.Kana" type="text" value=""/></label>
+<label>年度<select data-source-id="SRC-004" id="viewer-SRC-004" name="Criteria.SchoolYear"><option value="">すべて</option><option selected="" value="2026">2026</option></select></label>
+<label>学年<select data-source-id="SRC-005" id="viewer-SRC-005" name="Criteria.GradeCode"><option value="">すべて</option><option value="00">学年なし</option><option selected="" value="01">1年</option><option value="02">2年</option><option value="03">3年</option><option value="04">4年</option><option value="05">5年</option><option value="06">6年</option></select></label>
+<label>クラス<select data-source-id="SRC-006" id="viewer-SRC-006" name="Criteria.ClassId"><option value="">すべて</option><option selected="" value="101">2026 A01 1組</option></select></label>
+<label class="check"><input data-source-id="SRC-007" id="viewer-SRC-007" name="Criteria.UnassignedOnly" type="checkbox" value="true"/>未所属のみ</label>
+<fieldset><legend>在籍区分</legend><label class="check"><input checked="" name="Criteria.StatusCodes" type="checkbox" value="01"/>在学</label><label class="check"><input checked="" name="Criteria.StatusCodes" type="checkbox" value="02"/>休学</label><label class="check"><input name="Criteria.StatusCodes" type="checkbox" value="03"/>卒業</label><label class="check"><input name="Criteria.StatusCodes" type="checkbox" value="04"/>退学</label><small>全解除はすべて</small></fieldset>
+<label>都道府県<select data-source-id="SRC-009" id="viewer-SRC-009" name="Criteria.PrefectureCode"><option selected="" value="">すべて</option><option value="01">北海道</option></select></label>
+<label>電話番号<input data-source-id="SRC-010" id="viewer-SRC-010" maxlength="40" name="Criteria.PhoneNumber" type="text" value=""/></label>
+<label>入学日・開始<input data-source-id="SRC-011" id="viewer-SRC-011" name="Criteria.AdmissionFrom" type="date" value=""/></label>
+<label>入学日・終了<input data-source-id="SRC-012" id="viewer-SRC-012" name="Criteria.AdmissionTo" type="date" value=""/></label>
+</div><div class="actions"><button class="primary" data-action="/students/search" data-method="POST" type="button">検索</button><button data-formaction="/students/options" data-method="POST" type="button">候補を更新</button></div></fieldset>
+</form>
+<div class="actions"><form data-action="/students/clear" data-method="POST" inert=""><input name="__RequestVerificationToken" type="hidden" value=""/><input name="ContextId" type="hidden" value=""/><input name="ContextRevision" type="hidden" value="2"/><input name="TabId" type="hidden" value=""/><button type="button">クリア</button></form></div>
+<p>検索結果 1 件　2026/10/13 10:00:00</p>
+<form data-action="/students/page" data-method="POST" inert="">
+<input name="__RequestVerificationToken" type="hidden" value=""/><input name="ContextId" type="hidden" value=""/><input name="ContextRevision" type="hidden" value="2"/><input name="TabId" type="hidden" value=""/>
+<div class="actions"><label>表示件数<select name="PageSize"><option selected="" value="20">20</option><option value="50">50</option><option value="100">100</option></select></label><label>並び順<select name="SortKey"><option selected="" value="studentNo">学籍番号</option><option value="name">氏名</option><option value="admissionDate">入学日</option><option value="updatedAt">更新日時</option></select></label><select aria-label="並び順方向" name="SortDirection"><option selected="" value="asc">昇順</option><option value="desc">降順</option></select><button name="Page" type="button" value="1">並び順・件数を反映</button></div>
+<div class="grid"><table><thead><tr><th>学籍番号</th><th>氏名</th><th>氏名カナ</th><th>生年月日</th><th>年度／学年</th><th>クラス</th><th>在籍区分</th><th>住所</th><th>本人電話</th><th>更新日時</th><th>操作</th></tr></thead><tbody><tr data-example="true" id="viewer-student-101"><td>A0001</td><td>山田太郎</td><td>ヤマダ タロウ</td><td>令和元年05月01日</td><td>2026 1年</td><td>A01 1組</td><td>在学</td><td>北海道見本市1-2</td><td>09012345678</td><td>2026/10/13 09:00:00</td><td><a data-method="GET" data-route="/students/101?returnContextId={ContextId}" data-student-id="101" href="#viewer-student-101">参照</a></td></tr></tbody></table></div>
+<nav class="pager"><button disabled="" name="Page" type="button" value="0">前へ</button><span>1 / 1</span><button disabled="" name="Page" type="button" value="2">次へ</button></nav>
+</form>
+</div></section>
+<section aria-labelledby="staff-heading">
+<h2 class="role-title" id="staff-heading">Staff：新規登録リンクと編集リンク</h2>
+<header><strong>学生管理システム</strong><span>利用者 〔表示名〕　業務日 〔yyyy/MM/dd〕</span></header>
+<div class="screen" data-outcome="found" data-role="Staff" data-source-element="main">
+<h1>学生検索</h1>
+<form data-action="/students/search" data-method="POST" data-search-form="" inert="">
+<input name="ContextId" type="hidden" value=""/><input name="ContextRevision" type="hidden" value="2"/><input name="TabId" type="hidden" value=""/><input name="PageSize" type="hidden" value="20"/><input name="SortKey" type="hidden" value="studentNo"/><input name="SortDirection" type="hidden" value="asc"/><input name="__RequestVerificationToken" type="hidden" value=""/>
+<fieldset><legend>検索条件</legend><div class="fields">
+<label>学籍番号<input data-source-id="SRC-001" id="staff-SRC-001" maxlength="30" name="Criteria.StudentNo" type="text" value=""/></label>
+<label>氏名<input data-source-id="SRC-002" id="staff-SRC-002" maxlength="16" name="Criteria.Name" type="text" value=""/></label>
+<label>氏名カナ<input data-source-id="SRC-003" id="staff-SRC-003" maxlength="72" name="Criteria.Kana" type="text" value=""/></label>
+<label>年度<select data-source-id="SRC-004" id="staff-SRC-004" name="Criteria.SchoolYear"><option value="">すべて</option><option selected="" value="2026">2026</option></select></label>
+<label>学年<select data-source-id="SRC-005" id="staff-SRC-005" name="Criteria.GradeCode"><option value="">すべて</option><option value="00">学年なし</option><option selected="" value="01">1年</option><option value="02">2年</option><option value="03">3年</option><option value="04">4年</option><option value="05">5年</option><option value="06">6年</option></select></label>
+<label>クラス<select data-source-id="SRC-006" id="staff-SRC-006" name="Criteria.ClassId"><option value="">すべて</option><option selected="" value="101">2026 A01 1組</option></select></label>
+<label class="check"><input data-source-id="SRC-007" id="staff-SRC-007" name="Criteria.UnassignedOnly" type="checkbox" value="true"/>未所属のみ</label>
+<fieldset><legend>在籍区分</legend><label class="check"><input checked="" name="Criteria.StatusCodes" type="checkbox" value="01"/>在学</label><label class="check"><input checked="" name="Criteria.StatusCodes" type="checkbox" value="02"/>休学</label><label class="check"><input name="Criteria.StatusCodes" type="checkbox" value="03"/>卒業</label><label class="check"><input name="Criteria.StatusCodes" type="checkbox" value="04"/>退学</label><small>全解除はすべて</small></fieldset>
+<label>都道府県<select data-source-id="SRC-009" id="staff-SRC-009" name="Criteria.PrefectureCode"><option selected="" value="">すべて</option><option value="01">北海道</option></select></label>
+<label>電話番号<input data-source-id="SRC-010" id="staff-SRC-010" maxlength="40" name="Criteria.PhoneNumber" type="text" value=""/></label>
+<label>入学日・開始<input data-source-id="SRC-011" id="staff-SRC-011" name="Criteria.AdmissionFrom" type="date" value=""/></label>
+<label>入学日・終了<input data-source-id="SRC-012" id="staff-SRC-012" name="Criteria.AdmissionTo" type="date" value=""/></label>
+</div><div class="actions"><button class="primary" data-action="/students/search" data-method="POST" type="button">検索</button><button data-formaction="/students/options" data-method="POST" type="button">候補を更新</button></div></fieldset>
+</form>
+<div class="actions" id="staff-register"><form data-action="/students/clear" data-method="POST" inert=""><input name="__RequestVerificationToken" type="hidden" value=""/><input name="ContextId" type="hidden" value=""/><input name="ContextRevision" type="hidden" value="2"/><input name="TabId" type="hidden" value=""/><button type="button">クリア</button></form><a data-method="GET" data-route="/students/new?returnContextId={ContextId}" href="#staff-register">新規登録</a></div>
+<p>検索結果 1 件　2026/10/13 10:00:00</p>
+<form data-action="/students/page" data-method="POST" inert="">
+<input name="__RequestVerificationToken" type="hidden" value=""/><input name="ContextId" type="hidden" value=""/><input name="ContextRevision" type="hidden" value="2"/><input name="TabId" type="hidden" value=""/>
+<div class="actions"><label>表示件数<select name="PageSize"><option selected="" value="20">20</option><option value="50">50</option><option value="100">100</option></select></label><label>並び順<select name="SortKey"><option selected="" value="studentNo">学籍番号</option><option value="name">氏名</option><option value="admissionDate">入学日</option><option value="updatedAt">更新日時</option></select></label><select aria-label="並び順方向" name="SortDirection"><option selected="" value="asc">昇順</option><option value="desc">降順</option></select><button name="Page" type="button" value="1">並び順・件数を反映</button></div>
+<div class="grid"><table><thead><tr><th>学籍番号</th><th>氏名</th><th>氏名カナ</th><th>生年月日</th><th>年度／学年</th><th>クラス</th><th>在籍区分</th><th>住所</th><th>本人電話</th><th>更新日時</th><th>操作</th></tr></thead><tbody><tr data-example="true" id="staff-student-101"><td>A0001</td><td>山田太郎</td><td>ヤマダ タロウ</td><td>令和元年05月01日</td><td>2026 1年</td><td>A01 1組</td><td>在学</td><td>北海道見本市1-2</td><td>09012345678</td><td>2026/10/13 09:00:00</td><td><a data-method="GET" data-route="/students/101?returnContextId={ContextId}" data-student-id="101" href="#staff-student-101">編集</a></td></tr></tbody></table></div>
+<nav class="pager"><button disabled="" name="Page" type="button" value="0">前へ</button><span>1 / 1</span><button disabled="" name="Page" type="button" value="2">次へ</button></nav>
+</form>
+</div></section>
+<section aria-labelledby="admin-heading">
+<h2 class="role-title" id="admin-heading">Admin（Administrator）：新規登録リンクと編集リンク</h2>
+<header><strong>学生管理システム</strong><span>利用者 〔表示名〕　業務日 〔yyyy/MM/dd〕</span></header>
+<div class="screen" data-outcome="found" data-role="Administrator" data-source-element="main">
+<h1>学生検索</h1>
+<form data-action="/students/search" data-method="POST" data-search-form="" inert="">
+<input name="ContextId" type="hidden" value=""/><input name="ContextRevision" type="hidden" value="2"/><input name="TabId" type="hidden" value=""/><input name="PageSize" type="hidden" value="20"/><input name="SortKey" type="hidden" value="studentNo"/><input name="SortDirection" type="hidden" value="asc"/><input name="__RequestVerificationToken" type="hidden" value=""/>
+<fieldset><legend>検索条件</legend><div class="fields">
+<label>学籍番号<input data-source-id="SRC-001" id="admin-SRC-001" maxlength="30" name="Criteria.StudentNo" type="text" value=""/></label>
+<label>氏名<input data-source-id="SRC-002" id="admin-SRC-002" maxlength="16" name="Criteria.Name" type="text" value=""/></label>
+<label>氏名カナ<input data-source-id="SRC-003" id="admin-SRC-003" maxlength="72" name="Criteria.Kana" type="text" value=""/></label>
+<label>年度<select data-source-id="SRC-004" id="admin-SRC-004" name="Criteria.SchoolYear"><option value="">すべて</option><option selected="" value="2026">2026</option></select></label>
+<label>学年<select data-source-id="SRC-005" id="admin-SRC-005" name="Criteria.GradeCode"><option value="">すべて</option><option value="00">学年なし</option><option selected="" value="01">1年</option><option value="02">2年</option><option value="03">3年</option><option value="04">4年</option><option value="05">5年</option><option value="06">6年</option></select></label>
+<label>クラス<select data-source-id="SRC-006" id="admin-SRC-006" name="Criteria.ClassId"><option value="">すべて</option><option selected="" value="101">2026 A01 1組</option></select></label>
+<label class="check"><input data-source-id="SRC-007" id="admin-SRC-007" name="Criteria.UnassignedOnly" type="checkbox" value="true"/>未所属のみ</label>
+<fieldset><legend>在籍区分</legend><label class="check"><input checked="" name="Criteria.StatusCodes" type="checkbox" value="01"/>在学</label><label class="check"><input checked="" name="Criteria.StatusCodes" type="checkbox" value="02"/>休学</label><label class="check"><input name="Criteria.StatusCodes" type="checkbox" value="03"/>卒業</label><label class="check"><input name="Criteria.StatusCodes" type="checkbox" value="04"/>退学</label><small>全解除はすべて</small></fieldset>
+<label>都道府県<select data-source-id="SRC-009" id="admin-SRC-009" name="Criteria.PrefectureCode"><option selected="" value="">すべて</option><option value="01">北海道</option></select></label>
+<label>電話番号<input data-source-id="SRC-010" id="admin-SRC-010" maxlength="40" name="Criteria.PhoneNumber" type="text" value=""/></label>
+<label>入学日・開始<input data-source-id="SRC-011" id="admin-SRC-011" name="Criteria.AdmissionFrom" type="date" value=""/></label>
+<label>入学日・終了<input data-source-id="SRC-012" id="admin-SRC-012" name="Criteria.AdmissionTo" type="date" value=""/></label>
+</div><div class="actions"><button class="primary" data-action="/students/search" data-method="POST" type="button">検索</button><button data-formaction="/students/options" data-method="POST" type="button">候補を更新</button></div></fieldset>
+</form>
+<div class="actions" id="admin-register"><form data-action="/students/clear" data-method="POST" inert=""><input name="__RequestVerificationToken" type="hidden" value=""/><input name="ContextId" type="hidden" value=""/><input name="ContextRevision" type="hidden" value="2"/><input name="TabId" type="hidden" value=""/><button type="button">クリア</button></form><a data-method="GET" data-route="/students/new?returnContextId={ContextId}" href="#admin-register">新規登録</a></div>
+<p>検索結果 1 件　2026/10/13 10:00:00</p>
+<form data-action="/students/page" data-method="POST" inert="">
+<input name="__RequestVerificationToken" type="hidden" value=""/><input name="ContextId" type="hidden" value=""/><input name="ContextRevision" type="hidden" value="2"/><input name="TabId" type="hidden" value=""/>
+<div class="actions"><label>表示件数<select name="PageSize"><option selected="" value="20">20</option><option value="50">50</option><option value="100">100</option></select></label><label>並び順<select name="SortKey"><option selected="" value="studentNo">学籍番号</option><option value="name">氏名</option><option value="admissionDate">入学日</option><option value="updatedAt">更新日時</option></select></label><select aria-label="並び順方向" name="SortDirection"><option selected="" value="asc">昇順</option><option value="desc">降順</option></select><button name="Page" type="button" value="1">並び順・件数を反映</button></div>
+<div class="grid"><table><thead><tr><th>学籍番号</th><th>氏名</th><th>氏名カナ</th><th>生年月日</th><th>年度／学年</th><th>クラス</th><th>在籍区分</th><th>住所</th><th>本人電話</th><th>更新日時</th><th>操作</th></tr></thead><tbody><tr data-example="true" id="admin-student-101"><td>A0001</td><td>山田太郎</td><td>ヤマダ タロウ</td><td>令和元年05月01日</td><td>2026 1年</td><td>A01 1組</td><td>在学</td><td>北海道見本市1-2</td><td>09012345678</td><td>2026/10/13 09:00:00</td><td><a data-method="GET" data-route="/students/101?returnContextId={ContextId}" data-student-id="101" href="#admin-student-101">編集</a></td></tr></tbody></table></div>
+<nav class="pager"><button disabled="" name="Page" type="button" value="0">前へ</button><span>1 / 1</span><button disabled="" name="Page" type="button" value="2">次へ</button></nav>
+</form>
+</div></section>
+</body></html>

@@ -1,0 +1,14 @@
+flowchart TD
+ A["POST page：共通入口①"] -->|通過| F["try外：FormGuard・CurrentUser<br/>最初のGet"]
+ A -->|認証401・認可403・CSRF400| Q["前段拒否で終了"]
+ A -->|例外| O["共通入口②：元の例外"]
+ F --> U["局所try：identity.Read・Use開始<br/>Get・待機・再Get・版検査"]
+ U --> P{"Appliedありか"}
+ P -->|なし| W["WebFault409：先に検索してください"]
+ P -->|あり| C["Appliedコピー<br/>件数・キー・方向変更ならPage1<br/>同じなら受信Page・新件数と並び設定"]
+ C --> D["P-検索：②へ<br/>Entry・条件・取得中Gate"]
+ W --> E["P-捕捉：③へ<br/>Useのfinally解放後・元のWebFault"]
+ U -->|WebFault| E
+ F -->|例外| O
+ U -->|非WebFault・取消| O
+ C -->|非WebFault| O

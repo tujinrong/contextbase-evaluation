@@ -1,0 +1,1 @@
+synthetic collector code pin

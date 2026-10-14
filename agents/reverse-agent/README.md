@@ -14,6 +14,9 @@ python -m contextbase ai batch --snapshot .tmp/source-snapshot --plan .tmp/run-0
 
 各snapshot/job/outputは新しい名前を使います。プロンプト、schema、未加工AI応答、実行イベント、使用量、失敗を保存し、本文をPythonの定型文へ置換しません。`--without-independent-review` は初稿の測定用で、レビュー合格を意味しません。構造検証、AIレビュー、原評価資料による正式採点は別の状態です。reviewのhandoffとbatch/iterateの結果に記録する`reviewScope=text-source-and-structure`は、本文・原ソース・構造の比較範囲を示します。画像と原ビュー・共有レイアウト・CSSの一致は、この承認では検証しておらず、`visualFidelityVerified=false`を記録します。レビューを省略したbatchは`reviewScope=not-performed`です。
 
+文書契約で`basic-design`または`detailed-specification`を指定した機能文書は、四主章、イベントごとの六見出し、項目一覧の10列を構造検証します。10列はNo・グループ・項目名・種類・入出力・DB連携項目・候補取得元・必須・形式・桁・説明の順で、入出力は`I`・`O`・`I／O`・`‐`です。共通仕様等の別LISTや、テーブル定義の9列は別契約のまま扱います。構造検査は属性の意味や根拠の正しさを認定するものではありません。
+静的画面HTMLのboolean属性は、偽なら属性を省略し、真なら属性名だけ・空値・属性名と同じ値を使用します。`selected="false"`等は有効状態になるため検証で拒否します。data/aria属性とコード例は別扱いです。大きなフローはAIが入口・出口・受渡し状態を明示する番号付きサブフローへ分け、全条件と結果を保持して読みやすさを確認します。
+
 `iterate` は個別文書のAI批評と改訂を繰り返します。`--max-rounds 3` で最大3稿、`--deadline` で各解析・執筆・レビューの開始前に残時間を制限します。各稿は `--output` の `round-01` 等へ保存し、採択文書の場所を `iteration-result.json` へ記録します。構造不備が残ればAIの承認を採択しません。`INDEPENDENT_REVIEW_APPROVED`による終了は本文の批評・改訂工程の終了を示します。画面を完成として扱うには、同じ原稿と画像のハッシュへ結び付けたnative AIの画像・原ソース確認が別途必要です。renderの表示成功と原評価資料による意味採点も別の完了条件であり、batchの`REVIEWED`を含む既存のstatusだけでこれらの実施済みを表しません。解析の根拠が検査に通らない場合は新しいAIジョブで1回訂正し、元の応答も保持します。Pythonが引用や本文を黙って修正することはありません。
 
 完了した解析は `analysis-handoff.json` で原応答、実行結果、schema、原文snapshot、文書計画へ結び付けます。`document --analysis-job <完了解析job>` はこれらのハッシュと前後の入力を再検査し、新しいAI執筆へ進みます。旧jobの解析を引き継ぐ場合は `--recover-analysis-job` も指定します。旧jobの遅延結合として記録され、入力や計画が変わった解析は拒否します。改訂稿でもAIが原文を再読でき、訂正理由を保存します。`iterate` は既定で各稿を新しく解析し、明示的に `--reuse-analysis` を指定した場合だけ同じ検証済み解析を引き継ぎます。batchは文書ごとの完了記録を `progress/` へ即時保存します。
@@ -24,7 +27,17 @@ python -m contextbase ai batch --snapshot .tmp/source-snapshot --plan .tmp/run-0
 
 Codex CLIと既存のログインを使います。モデル指定を上書きせず、別のAPIキーをコードへ埋め込みません。モデル重みの学習ジョブは行っていません。これは評価に基づくAgentの手順・プロンプトの調整です。
 
-2026-10-13のpilotはCSharp_ASPNETです。試行は `.tmp/`、訓練仕様書は `test-project1/spec-analysis/CSharp_ASPNET/`、結果は本Agentの `test-report/20261013-tuning-01/` へ保存します。原本・期待値を変更せず、95%以上の実測と重大矛盾の解消を確認してから展開します。
+2026-10-13の再実施pilotはCSharp_ASPNET、処理時間は最大12時間です。試行は `.tmp/20261013-rerun-12h/`、仕様書は `test-project1/spec-analysis/CSharp_ASPNET/20261013-rerun-12h/`、結果は本Agentの `test-report/20261013-rerun-12h/` へ保存します。原本と同じファイル名・階層を維持し、source-onlyと許可設計を使うtraining-assistedを別記録にします。原本・期待値を変更せず、95%以上の実測と重大矛盾の解消を確認してから展開します。
+
+### ユーザー指定の文書対応契約
+
+原本と同じ文書名・階層を指定する場合、`plan` に `--document-contract <JSON>` を渡します。schemaは `reverse-ai-document-contract/1`、必須項目は `projectId` と `documents`。各文書は `id`、`kind`、`path`、`sourcePaths` だけを持ち、本文・項目値・採点期待値を含めません。`path` は出力ルートからのPOSIX相対MDパス、`sourcePaths` は封印manifestの原ソース相対パスです。原仕様の本文を読むための許可にはなりません。
+
+AIは契約の全件を同じID・種別・pathで計画し、責務と本文を原ソースから判断します。契約外の文書は追加しません。sourcePathsは必須の探索開始点で、関連する依存先の追加と追跡を許可します。重複、欠落、追加、改名、種別変更、不明な開始点は検証失敗です。契約の原JSONを計画jobへそのまま保存し、handoffのハッシュを解析・執筆・レビューの前後に再検査します。
+
+`kind=basic-design` と `detailed-specification` は機能仕様の4主章と各イベントの6下位見出しを検査します。`table-definition`、`logical-table-definition`、`physical-table-definition` はTABLE形式を要求します。TABLEは二章・ヘッダー2列・NOT NULLを含む明細9列を検査します。その他のkindは一般文書として構造を検査し、名称から機能・テーブルへ分類しません。これらは構造と対応の検査であり、factの意味的網羅性・視覚的一致・正式採点の合格を証明しません。
+
+snapshotとjob/outputは重なりを禁止します。snapshot配下への書込みと、snapshotを含む親ディレクトリのjob/output指定をAI起動前に拒否します。CLI結果の`FAILED`と`NOT_RUN_TIME_LIMIT`は非0終了です。`REQUIRES_AI_REVISION`は原稿を保存したが独立レビューで採択されていない状態で、CLIは0終了でも承認済みを意味しません。
 
 ## 従来経路の対象と互換機能
 

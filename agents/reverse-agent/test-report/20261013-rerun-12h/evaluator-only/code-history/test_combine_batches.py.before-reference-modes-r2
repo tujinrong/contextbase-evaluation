@@ -1,0 +1,138 @@
+"""Integrity regressions with clearly synthetic documents and review data."""
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+import grader
+import combine_batches as combine
+
+def criterion(row_id, category='属性', penalty=1):
+    return {'evaluationId': row_id, 'maximumPenalty': penalty, 'category': category}
+
+def grade(row_id):
+    return {'evaluationId': row_id, 'judgement': '一致', 'actualDeduction': 0,
+        'defectId': None, 'reason': 'Synthetic fixture only', 'generatedEvidence': [],
+        'critical': False, 'mandatoryMissing': False,
+        'sourceFidelity': {'judgement': '一致', 'reason': 'Synthetic fixture only', 'sourceEvidence': []}}
+
+def safe_checks(document_id):
+    return [{'documentId': document_id, 'topic': topic, 'judgement': 'CLEAR',
+        'reason': 'Synthetic fixture only', 'generatedEvidence': [], 'sourceEvidence': []} for topic in combine.SAFETY_TOPICS]
+
+def mini_rubric():
+    return {'documents': [{'documentId': 'SYNTHETIC-A', 'rows': [criterion('ROW-A')]},
+        {'documentId': 'SYNTHETIC-B', 'rows': [criterion('ROW-B', '画面設計', 3)]}]}
+
+class SelectionIntegrity(unittest.TestCase):
+    def test_duplicate_document_selection_is_rejected_before_loading(self):
+        selection = {'schema': combine.SELECTION_SCHEMA, 'projectId': 'test-project1', 'profile': 'CSharp_ASPNET',
+            'rubricSha256': 'fixture-rubric', 'documents': [{'documentId': 'SYNTHETIC-A'}, {'documentId': 'SYNTHETIC-A'}]}
+        with self.assertRaisesRegex(ValueError, 'selected more than once'):
+            combine.combine_selection(selection, mini_rubric(), {'effectiveItemsSha256': 'fixture-rubric'},
+                loader=lambda *args: self.fail('Duplicate selection must never load a batch'))
+
+    def test_duplicate_evaluation_id_cannot_inflate_score(self):
+        with self.assertRaisesRegex(ValueError, 'appears more than once'):
+            combine.compute_summary(mini_rubric(), [grade('ROW-A'), grade('ROW-A')], [], [], ['SYNTHETIC-A'])
+
+    def test_partial_document_union_keeps_full_denominator_and_null_score(self):
+        summary = combine.compute_summary(mini_rubric(), [grade('ROW-A')], safe_checks('SYNTHETIC-A'), [], ['SYNTHETIC-A'])
+        self.assertEqual(summary['total']['maximumPoints'], 4)
+        self.assertEqual(summary['gradedRows'], 1)
+        self.assertIsNone(summary['total']['score'])
+        self.assertIsNone(summary['total']['percentage'])
+        self.assertFalse(summary['fullSetComplete'])
+        self.assertFalse(summary['finalQualified'])
+
+    def test_held_row_prevents_formal_combined_score_even_with_full_coverage(self):
+        a = grade('ROW-A')
+        a.update(judgement='保留', actualDeduction=None)
+        summary = combine.compute_summary(mini_rubric(), [a, grade('ROW-B')],
+            safe_checks('SYNTHETIC-A') + safe_checks('SYNTHETIC-B'), [], ['SYNTHETIC-A', 'SYNTHETIC-B'])
+        self.assertTrue(summary['fullSetCoverageComplete'])
+        self.assertFalse(summary['allRowsAssessed'])
+        self.assertIsNone(summary['total']['score'])
+
+    def test_source_contradiction_is_separate_from_design_score(self):
+        a = grade('ROW-A')
+        a['sourceFidelity']['judgement'] = '矛盾'
+        summary = combine.compute_summary(mini_rubric(), [a, grade('ROW-B')],
+            safe_checks('SYNTHETIC-A') + safe_checks('SYNTHETIC-B'), [], ['SYNTHETIC-A', 'SYNTHETIC-B'])
+        self.assertEqual(summary['total']['percentage'], 100)
+        self.assertEqual(summary['status'], 'TEXT_PASSED_SOURCE_GATE_FAILED')
+        self.assertFalse(summary['sourceObservationGatePassed'])
+        self.assertFalse(summary['finalQualified'])
+
+    def test_static_qualified_status_requires_matching_visual_gate(self):
+        audits = [{'documentId': 'SYNTHETIC-B', 'visualReview': {'approvedAndBound': True}}]
+        summary = combine.compute_summary(mini_rubric(), [grade('ROW-A'), grade('ROW-B')],
+            safe_checks('SYNTHETIC-A') + safe_checks('SYNTHETIC-B'), audits, ['SYNTHETIC-A', 'SYNTHETIC-B'])
+        self.assertTrue(summary['finalQualified'])
+        self.assertEqual(summary['status'], 'QUALIFIED_STATIC_SCOPE')
+        self.assertFalse(summary['originalApplicationExecuted'])
+
+    def test_duplicate_safety_topic_is_rejected(self):
+        checks = safe_checks('SYNTHETIC-A')
+        with self.assertRaisesRegex(ValueError, 'repeats a document/topic'):
+            combine.compute_summary(mini_rubric(), [grade('ROW-A')], checks + [checks[0]], [], ['SYNTHETIC-A'])
+
+class ArtifactBinding(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory(dir=grader.HERE)
+        self.root = Path(self.temporary.name).resolve()
+        self.root.relative_to(grader.HERE.resolve())
+        self.batch = self.root / 'batch'
+        self.capsule = self.batch / 'capsule'
+        self.canonical = self.root / 'canonical/基本設計書/01_example.md'
+        self.canonical.parent.mkdir(parents=True)
+        self.canonical.write_text('Synthetic fixture limit 12\n', encoding='utf-8')
+        self.draft = self.capsule / 'generated/基本設計書/01_example.md'
+        self.draft.parent.mkdir(parents=True)
+        self.draft.write_bytes(self.canonical.read_bytes())
+        self.document = {'documentId': 'SYNTHETIC-A', 'sourcePath': 'spec/基本設計書/01_example.md', 'rows': [criterion('ROW-A')]}
+        self.selection = {'rubricSha256': 'fixture-rubric', 'sourceSnapshotSha256': 'fixture-source'}
+        self.entry = {'documentId': 'SYNTHETIC-A', 'batchPath': str(self.batch),
+            'canonicalPath': str(self.canonical), 'canonicalSha256': grader.digest(self.canonical),
+            'normalizationPath': 'normalization.json'}
+        self.seal = {'documentIds': ['SYNTHETIC-A'], 'graderSha256': 'fixture-code', 'jobs': []}
+        self.manifest = {'rubricSha256': 'fixture-rubric', 'sourceSnapshotSha256': 'fixture-source', 'sourceMode': 'source-only',
+            'files': [{'path': 'generated/基本設計書/01_example.md', 'sha256': grader.digest(self.draft), 'role': 'generated'}]}
+        self.write_manifest()
+
+    def write_manifest(self):
+        grader.save(self.capsule / 'manifest.json', self.manifest, exclusive=False)
+
+    def tearDown(self):
+        self.temporary.cleanup()
+
+    def test_old_draft_cannot_be_combined_with_new_canonical(self):
+        self.canonical.write_text('Synthetic fixture limit 14\n', encoding='utf-8')
+        self.entry['canonicalSha256'] = grader.digest(self.canonical)
+        with patch.object(grader, 'check_capsule', return_value=(self.seal, self.capsule)):
+            with self.assertRaisesRegex(ValueError, 'different or older draft'):
+                combine.load_document(self.entry, self.selection, self.document)
+
+    def test_another_source_snapshot_is_rejected_before_grades_are_loaded(self):
+        self.manifest['sourceSnapshotSha256'] = 'different-fixture-source'
+        self.write_manifest()
+        with patch.object(grader, 'check_capsule', return_value=(self.seal, self.capsule)):
+            with self.assertRaisesRegex(ValueError, 'another source snapshot'):
+                combine.load_document(self.entry, self.selection, self.document)
+
+    def test_failed_partial_batch_is_rejected(self):
+        self.seal['jobs'] = [{'shardId': 'FIXTURE-S001', 'documentId': 'SYNTHETIC-A'}]
+        grader.save(self.batch / 'jobs/FIXTURE-S001/result.json', {'status': 'TIMEOUT'})
+        with patch.object(grader, 'check_capsule', return_value=(self.seal, self.capsule)), \
+                patch.object(grader, 'rubric', return_value=({'documents': [self.document]}, {})):
+            with self.assertRaisesRegex(ValueError, 'incomplete or failed grading shard'):
+                combine.load_document(self.entry, self.selection, self.document)
+
+    def test_training_assisted_batch_cannot_enter_source_only_combination(self):
+        self.manifest['sourceMode'] = 'training-assisted'
+        self.write_manifest()
+        with patch.object(grader, 'check_capsule', return_value=(self.seal, self.capsule)):
+            with self.assertRaisesRegex(ValueError, 'Training-assisted'):
+                combine.load_document(self.entry, self.selection, self.document)
+
+if __name__ == '__main__':
+    unittest.main()

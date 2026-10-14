@@ -1,0 +1,243 @@
+{
+  "schema": "reverse-source-projection-gate-probe/1",
+  "recordedAtUtc": "2026-10-13T11:09:07.135850+00:00",
+  "helper": {
+    "path": "agents/reverse-agent/test-report/20261013-rerun-12h/source-pilot/prepare_state_projection.py",
+    "sha256": "2d3380b3a6e886381ecf8d7826f0b636088f88eb285e1e9468b4245fbd319c11"
+  },
+  "runtimeReceipt": {
+    "path": "agents/reverse-agent/test-report/20261013-rerun-12h/source-pilot/runtime-code-source-04.json",
+    "sha256": "c662f126856b5d4a2dd85410e1db62c992a1083d80bb92254ee28a55ae5ded7c",
+    "frozenFilesVerified": 124,
+    "importedCapsuleFromSource04": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-rerun-12h\\source-only\\runtime-code\\source-04\\src\\contextbase\\ai\\capsule.py"
+  },
+  "scope": {
+    "functionDefinitionsOnly": [
+      "InertHtml",
+      "canonical_path",
+      "check_css",
+      "heading_ranges",
+      "reject_css_resources",
+      "validate_canonical_location"
+    ],
+    "argparseTopLevelExecuted": false,
+    "aiProviderCalled": false,
+    "applicationDbOrDeploymentExecuted": false,
+    "htmlRenderedOrNetworkFetched": false,
+    "helperOrDraftEdited": false,
+    "originalSpecEvalTrainingAssistedRead": false
+  },
+  "htmlGateCases": [
+    {
+      "label": "self-contained-static",
+      "html": "<!doctype html><html><head><style>body{color:#243448}</style></head><body><form inert><button type=\"button\">検索</button></form></body></html>",
+      "expectedRejection": false,
+      "actualRejected": false,
+      "matchesExpected": true,
+      "reason": null
+    },
+    {
+      "label": "script",
+      "html": "<script>alert(1)</script>",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection HTML contains an executable or external surface"
+    },
+    {
+      "label": "source-url-attribute",
+      "html": "<img src=\"https://example.invalid/x.png\">",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection HTML must not expose URL or executable attributes"
+    },
+    {
+      "label": "form-not-inert",
+      "html": "<form><button type=\"button\">検索</button></form>",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection forms require inert to disable default submission"
+    },
+    {
+      "label": "submit-input",
+      "html": "<input type=\"submit\">",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection input controls must not submit or reset forms"
+    },
+    {
+      "label": "css-url-escaped",
+      "html": "<style>body{background:u\\72l(\"https://example.invalid/x.png\")}</style>",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection CSS must not fetch or execute resources"
+    },
+    {
+      "label": "css-import-escaped",
+      "html": "<style>@\\69mport \"https://example.invalid/x.css\";</style>",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection CSS must not import resources, including escaped tokens"
+    },
+    {
+      "label": "css-image-set-string-resource",
+      "html": "<style>body{background-image:image-set(\"https://example.invalid/x.png\" 1x)}</style>",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection CSS must not fetch or execute resources"
+    },
+    {
+      "label": "meta-refresh-duplicate-attribute",
+      "html": "<meta http-equiv=\"refresh\" http-equiv=\"x\" content=\"0;url=https://example.invalid/\">",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection HTML must not contain duplicate attributes"
+    },
+    {
+      "label": "css-image-set-escaped",
+      "html": "<style>body{background-image:im\\61ge-set(\"https://example.invalid/x.png\" 1x)}</style>",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection CSS must not fetch or execute resources"
+    },
+    {
+      "label": "css-webkit-image-set",
+      "html": "<style>body{background-image:-webkit-image-set(\"https://example.invalid/x.png\" 1x)}</style>",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection CSS must not fetch or execute resources"
+    },
+    {
+      "label": "css-webkit-image-set-escaped",
+      "html": "<style>body{background-image:-webkit-im\\61ge-set(\"https://example.invalid/x.png\" 1x)}</style>",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection CSS must not fetch or execute resources"
+    },
+    {
+      "label": "inline-css-image-set",
+      "html": "<div style=\"background-image:image-set('https://example.invalid/x.png' 1x)\">x</div>",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection CSS must not fetch or execute resources"
+    },
+    {
+      "label": "css-src-function",
+      "html": "<style>body{background:src(\"https://example.invalid/x.png\")}</style>",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection CSS must not fetch or execute resources"
+    },
+    {
+      "label": "css-paint-function",
+      "html": "<style>body{background:paint(unregistered)}</style>",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection CSS must not fetch or execute resources"
+    },
+    {
+      "label": "duplicate-case-insensitive-safe-attribute",
+      "html": "<div class=\"a\" CLASS=\"b\">x</div>",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection HTML must not contain duplicate attributes"
+    },
+    {
+      "label": "meta-refresh-entity-value",
+      "html": "<meta http-equiv=\"re&#102;resh\" content=\"0;url=https://example.invalid/\">",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection HTML must not navigate by meta refresh"
+    },
+    {
+      "label": "input-image",
+      "html": "<input type=\"image\">",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection input controls must not submit or reset forms"
+    },
+    {
+      "label": "button-default-submit",
+      "html": "<form inert><button>検索</button></form>",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection buttons must have type=button"
+    },
+    {
+      "label": "unclosed-style",
+      "html": "<style>body{color:#243448}",
+      "expectedRejection": true,
+      "actualRejected": true,
+      "matchesExpected": true,
+      "reason": "projection style block is unclosed"
+    }
+  ],
+  "pathCases": [
+    {
+      "case": "basic05",
+      "result": "allowed exact source-only canonical path"
+    },
+    {
+      "case": "detail04",
+      "result": "allowed exact source-only canonical path"
+    },
+    {
+      "case": "outside-approved-root",
+      "result": "rejected",
+      "reason": "projection canonical input must be a regular .md within the approved source-only draft root"
+    }
+  ],
+  "canonicalLocationCases": [
+    {
+      "case": "existing-exact-heading-and-lines",
+      "result": "allowed"
+    },
+    {
+      "case": "invalid-heading",
+      "result": "rejected",
+      "reason": "canonical location must lie within an existing exact heading section and line range"
+    },
+    {
+      "case": "invalid-headingLine",
+      "result": "rejected",
+      "reason": "canonical location must lie within an existing exact heading section and line range"
+    },
+    {
+      "case": "invalid-documentSha256",
+      "result": "rejected",
+      "reason": "canonical location does not bind one exact manuscript SHA"
+    },
+    {
+      "case": "invalid-endLine",
+      "result": "rejected",
+      "reason": "canonical location must lie within an existing exact heading section and line range"
+    }
+  ],
+  "replayedPriorFailures": {
+    "probe": "state-projection-gate-probe-01.json",
+    "helperSha256": "006df8a6091fe3f4fe0118263242877aaf0fa77cab476e4932ba0559e444b9ab",
+    "cases": [
+      "css-image-set-string-resource",
+      "meta-refresh-duplicate-attribute"
+    ]
+  },
+  "findings": [],
+  "limitation": "Function-level mechanical rejection tests only. No provider, browser, network, original application, SQL or renderer was invoked. Other top-level path/job/provenance checks were read statically. Passing these cases does not prove complete inertness, state coverage, source/canonical semantic consistency, or native visual fidelity."
+}

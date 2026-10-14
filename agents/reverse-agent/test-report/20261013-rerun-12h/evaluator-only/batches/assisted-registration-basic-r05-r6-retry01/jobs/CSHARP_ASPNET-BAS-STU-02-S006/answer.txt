@@ -1,0 +1,2753 @@
+{
+  "schema": "independent-semantic-grades/1",
+  "documentId": "CSHARP_ASPNET-BAS-STU-02",
+  "shardId": "CSHARP_ASPNET-BAS-STU-02-S006",
+  "rows": [
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-4394AE5AC0",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "クラスの項目IDがREG-018で一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "`select#REG-018`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューもクラスselectに同じIDを使用する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "<label>クラス<select asp-for=\"Input.ClassId\" id=\"REG-018\">"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-76844DE29E",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "クラスを所属グループに分類している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "| 所属 | 現在・最終所属クラス |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "対象外",
+        "reason": "論理グループは文書上の分類であり、実装属性としての照合対象外。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-29B0E4B5FB",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "現在・最終所属という用途を添えたクラス名で意味が一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "現在・最終所属クラス"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューの入力名もクラスである。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "<label>クラス<select asp-for=\"Input.ClassId\" id=\"REG-018\">"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-B6A0AA15DB",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "クラスを選択項目として定義している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "| 現在・最終所属クラス | 選択 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューはselectで実装する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "<select asp-for=\"Input.ClassId\" id=\"REG-018\">"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-A810776579",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "クラスの入力・再表示とID保存を説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "| 現在・最終所属クラス | 選択 | I／O |"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 20,
+          "endLine": 20,
+          "quote": "所属は学生の`class_id`に最大1件を保存する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "入力ClassIdを保存値に移し、保存列から読み戻す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 138,
+            "endLine": 138,
+            "quote": "Set(\"class_id\", () => raw.ClassId is <= 0 ? throw new ArgumentException(\"E-STU-010: クラスIDが不正です。\") : raw.ClassId);"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 192,
+            "endLine": 192,
+            "quote": "ClassId=(long?)values[\"class_id\"]"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-BEC0BFE625",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "ID桁を方式固有のASCII数字19桁以内として具体化している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "指定時ASCII数字19桁以内、正のInt64。maxlengthなし"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "IdParserは19桁超・非ASCII数字・Int64範囲外を拒否する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 60,
+            "endLine": 60,
+            "quote": "raw.Length>19 || raw.Any(c=>c<'0'||c>'9') || !long.TryParse(raw,NumberStyles.None,CultureInfo.InvariantCulture,out var n)||n<=0"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-3974DF68D9",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "保存値を文字列長ではなくInt64のIDとして区別している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "`Input.ClassId:string?`→`StudentDraft.ClassId:long?`"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "`@class_id BigInt`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "内部型long?と保存パラメータBigIntが一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/Contracts.cs",
+            "startLine": 25,
+            "endLine": 25,
+            "quote": "public long? ClassId { get; set; }"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 36,
+            "endLine": 36,
+            "quote": "[\"class_id\"]=(SqlDbType.BigInt,0)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-32CF7328DE",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "クラスIDの入力単位をASCII数字の桁としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "指定時ASCII数字19桁以内、正のInt64。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原変換処理もASCII数字だけを認める。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 60,
+            "endLine": 60,
+            "quote": "raw.Any(c=>c<'0'||c>'9')"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-654B060C81",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "クラス必須性を在籍区分による条件付きとしている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "01・02必須、03・04任意"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "01・02のクラス未設定だけを必須違反とする。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 154,
+            "endLine": 154,
+            "quote": "if (status is \"01\" or \"02\" && raw.ClassId is null) errors.Add(new(\"ClassId\", \"E-STU-012\", \"在学・休学はクラス必須です。\"));"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-E4A0F38531",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "01・02で必須、03・04で任意という条件が一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "01・02必須、03・04任意"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "正規化検査とDDLが同じ区分条件を持つ。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 154,
+            "endLine": 154,
+            "quote": "if (status is \"01\" or \"02\" && raw.ClassId is null)"
+          },
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 198,
+            "endLine": 198,
+            "quote": "(enrollment_status_code IN ('01','02') AND enrollment_end_date IS NULL AND class_id IS NOT NULL) OR (enrollment_status_code IN ('03','04') AND enrollment_end_date IS NOT NULL AND enrollment_end_date>=admission_date)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-8FBF07B5E5",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "CSHARP_ASPNET-BAS-STU-02:REG-018:new-initial-value",
+      "reason": "全文を確認したが、新規クラスの初期値が空・未設定であるという適用条件の記載がない。空値の意味だけでは初期値を確定できない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 1,
+          "endLine": 1340,
+          "quote": "## 項目一覧"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "NULL・空は未所属。Trimしない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "新規初期値についての生成記載がなく、原ソースのNULL既定値で文書を補完しない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-77D1D0A6C9",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "未所属をNULL・空入力に対応させている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "NULL・空は未所属。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "空入力をNULLへ変換し、class_idもNULL可である。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 60,
+            "endLine": 60,
+            "quote": "if(string.IsNullOrEmpty(raw)) return null;"
+          },
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 28,
+            "endLine": 28,
+            "quote": "class_id bigint NULL,"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-BE23D1F507",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "正の整数と方式別Int64範囲が明示される。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "指定時ASCII数字19桁以内、正のInt64。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "long変換成功と正数を要求する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 60,
+            "endLine": 60,
+            "quote": "!long.TryParse(raw,NumberStyles.None,CultureInfo.InvariantCulture,out var n)||n<=0"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-3831F78D9D",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学生の現在・最終所属を保存する対応が明確であり、物理列名だけを論理名称と読み替えた判定ではない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 18,
+          "endLine": 18,
+          "quote": "学生1人の基本情報、住所、本人と緊急連絡先、生年月日、入学・終了日、在籍区分、現在または最終所属クラスを管理する。"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 20,
+          "endLine": 20,
+          "quote": "所属は学生の`class_id`に最大1件を保存する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "論理DB名「学生基本情報」の宣言は未観測。物理列の存在だけで論理名称の観測一致とはしない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-D86520596B",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "クラス候補をClassIdで選択する説明が一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 79,
+          "endLine": 79,
+          "quote": "| クラス | ClassIdをキーとし、年度・学年コード・クラスコード・名称を表示 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューはクラス一覧のClassIdをoption値にする。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "@foreach(var c in Model.Lookups.Classes)"
+          },
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "<option value=\"@c.ClassId\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-68B81C7C90",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "クラスIDは文字正規化を行わず、厳密な数字変換とするため非適用の意味が一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "NULL・空は未所属。Trimしない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "IdParserはTrim・FormKCを介さず原文字列を検査する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 60,
+            "endLine": 60,
+            "quote": "if(raw.Length>19 || raw.Any(c=>c<'0'||c>'9') || !long.TryParse(raw,NumberStyles.None,CultureInfo.InvariantCulture,out var n)||n<=0)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-4842B4045D",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "共通05のCHK-010・012～015・031に対応する存在、必須、増席可否、上位一致、定員、終了区分の期間重なりを条件別に説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 204,
+          "endLine": 204,
+          "quote": "01・02必須、03・04任意"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 771,
+          "endLine": 771,
+          "quote": "不在E-STU-010、上位不一致E-STU-014、増席不可E-STU-013、期間重なりなしE-STU-108。"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 783,
+          "endLine": 783,
+          "quote": "新規在学・休学、別クラス異動、終了区分から在学・休学へ訂正 | 存在・指定上位値一致・利用可・業務日期間内 | 自分以外の非削除01・02人数＋1を定員と比較。"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 785,
+          "endLine": 785,
+          "quote": "新規卒業・退学、または最終所属・区分・入学日・終了日を変更 | 指定時は存在・上位一致・在籍期間との重なり"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原検査の区分・増席・変更期間条件と一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 154,
+            "endLine": 154,
+            "quote": "if (status is \"01\" or \"02\" && raw.ClassId is null)"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 367,
+            "endLine": 367,
+            "quote": "if(!await reader.ReadAsync(ct)) errors.Add(new(\"ClassId\",\"E-STU-010\",\"指定クラスが存在しません。\"));"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 371,
+            "endLine": 371,
+            "quote": "if(request.SchoolYear is not null&&Convert.ToInt32(reader[0])!=request.SchoolYear || request.GradeCode is not null&&reader.GetString(1)!=request.GradeCode)"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 373,
+            "endLine": 374,
+            "quote": "if(newSeat&&(!oldSeat||oldClass!=classId)&&(!reader.GetBoolean(4)||day<start||day>end)) errors.Add(new(\"ClassId\",\"E-STU-013\",\"このクラスには新たに所属できません。\"));\n                    if(status is \"03\" or \"04\"&&changedPeriod&&(student.Date(\"admission_date\")>end||(DateOnly?)student.Values[\"enrollment_end_date\"]<start)) errors.Add(new(\"ClassId\",\"E-STU-108\",\"在籍期間とクラス期間が重なりません。\"));"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 377,
+            "endLine": 380,
+            "quote": "if(newSeat&&(!oldSeat||oldClass!=classId)&&capacity is not null) {\n                await using var count=Command(connection,tx,\"SELECT COUNT_BIG(*) FROM dbo.m_student WHERE class_id=@class AND is_deleted=0 AND enrollment_status_code IN ('01','02') AND (@id IS NULL OR student_id<>@id)\");\n                Param(count,\"@class\",SqlDbType.BigInt,classId); Param(count,\"@id\",SqlDbType.BigInt,request.StudentId);\n                if((long)(await count.ExecuteScalarAsync(ct))!+1>capacity)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-3A6D4AF049",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "クラスの変換・所属検査・保存をEV-REG-004に対応させている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 456,
+          "endLine": 456,
+          "quote": "### EV-REG-004 新規登録・更新"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 465,
+          "endLine": 465,
+          "quote": "ClassId・期待版を変換してSaveRequestを作る。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "create/updateの共通保存入口でClassIdを要求へ移す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 26,
+            "endLine": 27,
+            "quote": "[HttpPost(\"create\")] public Task<IActionResult> Create([Bind(Prefix=\"Input\")]StudentSaveInput input,string snapshotId,CancellationToken ct)=>Save(null,input,snapshotId,ct);\n    [HttpPost(\"{id:long}/update\")] public Task<IActionResult> Update(long id,[Bind(Prefix=\"Input\")]StudentSaveInput input,string snapshotId,CancellationToken ct)=>Save(id,input,snapshotId,ct);"
+          },
+          {
+            "path": "source/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 40,
+            "endLine": 40,
+            "quote": "ClassId=IdParser.Optional(ClassId,\"REG-018\")"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-40000D4A06",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "所属ID保存と年度・学年コード・クラスコード・名称表示を区別して説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 20,
+          "endLine": 20,
+          "quote": "所属は学生の`class_id`に最大1件を保存する。"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 79,
+          "endLine": 79,
+          "quote": "ClassIdをキーとし、年度・学年コード・クラスコード・名称を表示"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "保存値はclass_idで、optionの表示は年度・学年・コード・名称である。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 138,
+            "endLine": 138,
+            "quote": "Set(\"class_id\", () => raw.ClassId is <= 0 ? throw new ArgumentException(\"E-STU-010: クラスIDが不正です。\") : raw.ClassId);"
+          },
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "@c.SchoolYear @c.GradeCode @c.ClassCode @c.ClassName"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-7846862186",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "CSHARP_ASPNET-BAS-STU-02:REG-019:item-id",
+      "reason": "全文確認済み。人数・定員は別行で説明されるが、対応する項目ID REG-019がない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 1,
+          "endLine": 1340,
+          "quote": "## 項目一覧"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "| 27 | 所属参考表示 | 現在人数 |"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "| 28 | 所属参考表示 | 定員 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "原ビューにもREG-019の識別子は観測できない。表示の存在をID一致に代用しない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-89962D4998",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "所属参考表示という分類は所属グループと意味が一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "| 所属参考表示 | 現在人数 |"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "| 所属参考表示 | 定員 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "対象外",
+        "reason": "論理グループは文書上の分類であり、実装属性としての照合対象外。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-79F88AC7E3",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "所属人数と定員を別行に分けても、対象の意味は保持される。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "現在人数"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "定員"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューもクラスに対応する人数・定員を表示する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "<small>人数 @(cls?.Occupied.ToString()??\"－\")／定員 @(cls?.Capacity.ToString()??\"制限なし\")（参考）</small>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-7C2848C224",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "人数・定員を表示項目としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "| 現在人数 | 表示 |"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "| 定員 | 表示 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューではsmall内の表示であり入力コントロールではない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "<small>人数 @(cls?.Occupied.ToString()??\"－\")／定員 @(cls?.Capacity.ToString()??\"制限なし\")（参考）</small>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-0E1EC85AFD",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "人数・定員を出力専用としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "| 現在人数 | 表示 | O |"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "| 定員 | 表示 | O |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "取得済みクラス値を表示するだけでフォーム入力値を持たない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "<small>人数 @(cls?.Occupied.ToString()??\"－\")／定員 @(cls?.Capacity.ToString()??\"制限なし\")（参考）</small>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-2F28247801",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "入力対象外の表示項目であり、入力最大長は適用されない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "入力対象外"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "入力対象外"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューも人数・定員を受信入力としていない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "<small>人数 @(cls?.Occupied.ToString()??\"－\")／定員 @(cls?.Capacity.ToString()??\"制限なし\")（参考）</small>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-442E5CA748",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "人数は非保存の算出表示、定員は参照マスタ値であり、この画面項目の保存・正規化長は非適用。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "非保存。クラス一致・非削除01・02の学生件数"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "| 定員 | 表示 | O | `m_class.capacity int NULL` |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "人数は集計値で、定員はクラスから読む。マスタ容量を画面入力の保存長に代用していない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 201,
+            "endLine": 201,
+            "quote": "(SELECT COUNT(*) FROM dbo.m_student s WHERE s.class_id=c.class_id AND s.is_deleted=0 AND s.enrollment_status_code IN ('01','02'))"
+          },
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "cls?.Capacity.ToString()"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-BEACE454FA",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "人数・定員を整数表示とし、入力文字列の長さ単位を適用していない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "`SchoolClass.Occupied:int`"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "`Capacity:int?`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "整数の人数・定員をToStringで表示する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "人数 @(cls?.Occupied.ToString()??\"－\")／定員 @(cls?.Capacity.ToString()??\"制限なし\")"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-5FA87AFAD8",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "人数・定員は入力不要でLookup結果から自動表示される。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "登録用LookupAsync | 入力対象外"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "選択クラスLookup結果 | 入力対象外"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "選択クラスのLookup値を表示式が使用する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 2,
+            "endLine": 2,
+            "quote": "var cls=Model.Lookups.Classes.FirstOrDefault(c=>c.ClassId.ToString()==input.ClassId);"
+          },
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "人数 @(cls?.Occupied.ToString()??\"－\")／定員 @(cls?.Capacity.ToString()??\"制限なし\")"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-18C8C2A69E",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "入力対象外で、人数集計と取得した定員を表示する条件が一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "非保存。クラス一致・非削除01・02の学生件数"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "選択クラスLookup結果 | 入力対象外"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "人数を集計し、選択クラスの値を入力なしで表示する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 201,
+            "endLine": 201,
+            "quote": "(SELECT COUNT(*) FROM dbo.m_student s WHERE s.class_id=c.class_id AND s.is_deleted=0 AND s.enrollment_status_code IN ('01','02'))"
+          },
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "<small>人数 @(cls?.Occupied.ToString()??\"－\")／定員 @(cls?.Capacity.ToString()??\"制限なし\")（参考）</small>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-ECBCCB98B4",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "初期表示値は利用者入力ではなくシステムの候補取得・表示計算で設定する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 252,
+          "endLine": 252,
+          "quote": "人数取得ありのLookupAsyncでコード・クラスを読む。"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 85,
+          "endLine": 85,
+          "quote": "未選択の人数は「－」で、現行の定員表示式は未選択時にも「制限なし」と表示する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原表示式が取得値または既定表示を設定する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "人数 @(cls?.Occupied.ToString()??\"－\")／定員 @(cls?.Capacity.ToString()??\"制限なし\")"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-C360358E65",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "CSHARP_ASPNET-BAS-STU-02:REG-019:missing-master-display",
+      "reason": "マスタ欠落時の不整合表示が記載されない。取得不能と定員NULLの表示条件を区別する設計意図が不足する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 1,
+          "endLine": 1340,
+          "quote": "## 項目一覧"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 85,
+          "endLine": 85,
+          "quote": "未選択の人数は「－」で、現行の定員表示式は未選択時にも「制限なし」と表示する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "生成文書が述べる現行表示は原ビューに忠実。専用の不整合表示がない点は実装上の制約として別記する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "<small>人数 @(cls?.Occupied.ToString()??\"－\")／定員 @(cls?.Capacity.ToString()??\"制限なし\")（参考）</small>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-D29EAE33E4",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "人数は件数、定員はNULLまたは1～9999と説明し、0を許容しない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "クラス一致・非削除01・02の学生件数"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "NULLは制限なし、設定時1～9999、0不可"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "COUNTによる非負人数とDDLの定員範囲に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 201,
+            "endLine": 201,
+            "quote": "SELECT COUNT(*) FROM dbo.m_student s"
+          },
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 201,
+            "endLine": 201,
+            "quote": "(capacity IS NULL OR capacity BETWEEN 1 AND 9999)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-9FDD112152",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "所属クラス・在籍区分による学生集計と、クラスマスタの定員参照という業務対応が明確。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 85,
+          "endLine": 85,
+          "quote": "参考人数は同じclass_idを持つ非削除の在学・休学人数である。"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "`m_class.capacity int NULL`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "論理DB名称の宣言は未観測。物理SQLの集計・参照先を論理名称の観測一致に代用しない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-38616253B9",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "人数・定員は候補を選択する項目ではなく、クラスに従う表示値である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "| 現在人数 | 表示 | O |"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "選択クラスLookup結果 | 入力対象外"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューにも人数・定員用の選択候補はない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "<small>人数 @(cls?.Occupied.ToString()??\"－\")／定員 @(cls?.Capacity.ToString()??\"制限なし\")（参考）</small>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-646248FAE8",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "取得した整数の表示であり、入力正規化は非適用。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "`SchoolClass.Occupied:int`"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "`Capacity:int?`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューも取得値をToStringで表示するだけである。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "人数 @(cls?.Occupied.ToString()??\"－\")／定員 @(cls?.Capacity.ToString()??\"制限なし\")"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-DDE4E095A7",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "表示項目自体は入力検査対象外。保存時のクラス増席検査とは区別される。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "入力対象外"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 217,
+          "endLine": 217,
+          "quote": "増席検査は最新DB値を使う。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "表示はsmall、定員判定はサービス内の別処理である。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "<small>人数 @(cls?.Occupied.ToString()??\"－\")／定員 @(cls?.Capacity.ToString()??\"制限なし\")（参考）</small>"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 380,
+            "endLine": 380,
+            "quote": "if((long)(await count.ExecuteScalarAsync(ct))!+1>capacity)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-0538D3D4F2",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "EV-REG-004の非成功再表示で候補を再取得する説明が人数・定員表示に対応する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 456,
+          "endLine": 456,
+          "quote": "### EV-REG-004 新規登録・更新"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 476,
+          "endLine": 476,
+          "quote": "非Savedは送信Input、読込時Detail、同じSnapshot・復帰版、再取得候補で再表示する。"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "登録用LookupAsync"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "保存後の再表示で人数取得ありのLookupAsyncを呼ぶ。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 33,
+            "endLine": 33,
+            "quote": "Lookups=await service.LookupAsync(ct)"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 196,
+            "endLine": 196,
+            "quote": "public Task<LookupSet> LookupAsync(CancellationToken ct = default) => LookupAsync(true,ct);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-9D8EF43F28",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "非削除01・02の参考人数であり席予約ではないと明示している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 85,
+          "endLine": 85,
+          "quote": "参考人数は同じclass_idを持つ非削除の在学・休学人数である。"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 85,
+          "endLine": 85,
+          "quote": "人数は保存列ではなく算出値であり、席予約ではない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "LookupはCOUNT読取であり席確保の書込みを行わない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 201,
+            "endLine": 201,
+            "quote": "(SELECT COUNT(*) FROM dbo.m_student s WHERE s.class_id=c.class_id AND s.is_deleted=0 AND s.enrollment_status_code IN ('01','02'))"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 216,
+            "endLine": 216,
+            "quote": "await tx.CommitAsync(ct); return new(codes,classes);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-13A283510C",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急連絡先氏名の項目IDがREG-020で一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "`input#REG-020`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューも同じIDを使用する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "<label>緊急連絡先氏名<input asp-for=\"Input.EmergencyContactName\" id=\"REG-020\" maxlength=\"16\"></label>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-27A62828FD",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急連絡先というグループは原仕様の緊急と同義。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "| 緊急連絡先 | 氏名 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "対象外",
+        "reason": "論理グループは文書上の分類であり、実装属性としての照合対象外。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-6802F2231E",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "グループと項目名を合わせて緊急連絡先氏名と特定できる。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "| 緊急連絡先 | 氏名 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ソースの日本語項目名に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 25,
+            "endLine": 25,
+            "quote": "[\"EmergencyContactName\"]=\"緊急連絡先氏名\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-95078D10ED",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急氏名を文字入力としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "| 緊急連絡先 | 氏名 | 文字入力 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューは文字列プロパティ用inputを使用する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "<input asp-for=\"Input.EmergencyContactName\" id=\"REG-020\" maxlength=\"16\">"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-3480CFE374",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急氏名の入力・保存・再表示を説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "| 氏名 | 文字入力 | I／O | `emergency_contact_name nvarchar(16) NULL` |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "入力を保存値に移し、同じ列から読み戻す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 139,
+            "endLine": 139,
+            "quote": "Set(\"emergency_contact_name\", () => Text(raw.EmergencyContactName, 8, 8, \"EmergencyContactName\"));"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 192,
+            "endLine": 192,
+            "quote": "EmergencyContactName=S(\"emergency_contact_name\")"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-FC1A8D5ED6",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "raw入力8スカラーとHTML16コード単位を区別している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "HTML16、raw・保存8スカラー"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "Textのraw上限8をScalarCountで検査する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 139,
+            "endLine": 139,
+            "quote": "Text(raw.EmergencyContactName, 8, 8, \"EmergencyContactName\")"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 50,
+            "endLine": 50,
+            "quote": "if (ScalarCount(raw) > rawMax)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-0765720310",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "正規化後の保存上限を8スカラーとしている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "raw・保存8スカラー"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "TextのsavedMax=8と正規化後のScalarCount検査に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 139,
+            "endLine": 139,
+            "quote": "Text(raw.EmergencyContactName, 8, 8, \"EmergencyContactName\")"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 56,
+            "endLine": 56,
+            "quote": "if (ScalarCount(value) > savedMax)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-ACB2446511",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "共通11の業務単位であるUnicodeスカラー数をHTML・DB容量と区別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 91,
+          "endLine": 91,
+          "quote": "文字列の業務上限はUnicodeスカラー数である。"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "HTML16、raw・保存8スカラー"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ScalarCountは補助文字のサロゲート対を1文字として数える。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 40,
+            "endLine": 43,
+            "quote": "for (var i = 0; i < text.Length; i++, count++) {\n            if (char.IsHighSurrogate(text[i])) {\n                if (++i >= text.Length || !char.IsLowSurrogate(text[i])) throw new ArgumentException(\"不正なUnicodeです。\");\n            } else if (char.IsLowSurrogate(text[i])) throw new ArgumentException(\"不正なUnicodeです。\");"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 139,
+            "endLine": 139,
+            "quote": "Text(raw.EmergencyContactName, 8, 8, \"EmergencyContactName\")"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-F5C1FC4F8E",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急3項目一式の条件付き必須としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "緊急3項目一式、または全部未設定"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "設定項目数0または3だけを許容する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 157,
+            "endLine": 157,
+            "quote": "if (emergency is not (0 or 3)) errors.Add(new(\"EmergencyContactName\", \"E-STU-019\", \"緊急連絡先は3項目すべて入力してください。\"));"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-39A44C245F",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "氏名・続柄・電話の全入力または全未設定という条件を、隣接する3項目で特定できる。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "緊急3項目一式、または全部未設定"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "| 緊急連絡先 | 続柄 |"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 207,
+          "endLine": 207,
+          "quote": "| 緊急連絡先 | 電話 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原検査も氏名・続柄・電話の非NULL数を0または3に制限する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 156,
+            "endLine": 157,
+            "quote": "var emergency = new[] { values[\"emergency_contact_name\"], values[\"relationship_code\"], values[\"emergency_phone_number\"] }.Count(value => value is not null);\n        if (emergency is not (0 or 3))"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-A453B0EAD5",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急氏名の新規初期値を未設定としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "`Input.EmergencyContactName:string?`、新規未設定。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "新規Draftの緊急氏名はNULL既定値である。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/Contracts.cs",
+            "startLine": 26,
+            "endLine": 26,
+            "quote": "public string? EmergencyContactName { get; set; }"
+          },
+          {
+            "path": "source/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 46,
+            "endLine": 46,
+            "quote": "var d=detail?.Draft ?? new StudentDraft();"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-B02EDD7841",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急氏名の空欄をNULLに対応させている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "Trim後空欄NULL"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "任意TextのTrim後空文字はNULLとなる。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 54,
+            "endLine": 55,
+            "quote": "value = value.Trim();\n        if (value.Length == 0) { if (required) Fail(field, \"E-STU-001\", $\"{Label(field)}を入力してください。\"); return null; }"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 139,
+            "endLine": 139,
+            "quote": "Text(raw.EmergencyContactName, 8, 8, \"EmergencyContactName\")"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-EE4B5CF283",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急氏名を8スカラー以内とし、HTML16を業務上限にしていない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "HTML16、raw・保存8スカラー"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原正規化処理の入力・保存上限はともに8である。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 139,
+            "endLine": 139,
+            "quote": "Text(raw.EmergencyContactName, 8, 8, \"EmergencyContactName\")"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-AD8F2D7E43",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学生の緊急連絡先氏名と保存列の対応を説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 18,
+          "endLine": 18,
+          "quote": "学生1人の基本情報、住所、本人と緊急連絡先"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "| 緊急連絡先 | 氏名 | 文字入力 | I／O | `emergency_contact_name nvarchar(16) NULL` |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "論理DB名「学生基本情報」の宣言は未観測。物理列対応だけで論理名称の観測一致とはしない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-EF2C8FA79A",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急氏名の候補取得元はなしで、直接文字入力とする。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "‐"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "`input#REG-020`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューは候補なしのinputである。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "<label>緊急連絡先氏名<input asp-for=\"Input.EmergencyContactName\" id=\"REG-020\" maxlength=\"16\"></label>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-F19DCA41FC",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "共通05のN-02に対応するTrimのみの整形が説明され、内部表記を変換する処理は加えていない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "Trim後空欄NULL"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 91,
+          "endLine": 91,
+          "quote": "Textを使用する項目は、加工前上限、制御文字、Trim後の必須性・保存上限を順に検査する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "緊急氏名はTextを使用し、単一行の値はTrim以外で書き換えない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 139,
+            "endLine": 139,
+            "quote": "Text(raw.EmergencyContactName, 8, 8, \"EmergencyContactName\")"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 51,
+            "endLine": 51,
+            "quote": "var value = multiline ? raw.Replace(\"\\r\\n\", \"\\n\").Replace('\\r', '\\n') : raw;"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 54,
+            "endLine": 54,
+            "quote": "value = value.Trim();"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-B2A3BA7D9E",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "共通05のCHK-002の長さ・禁止文字とCHK-020の緊急一式条件が局所説明で判定できる。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 91,
+          "endLine": 91,
+          "quote": "加工前上限、制御文字、Trim後の必須性・保存上限を順に検査する。"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "緊急3項目一式、または全部未設定 | HTML16、raw・保存8スカラー"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "設定時分類RELATIONSHIP、未設定時分類もNULL。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原Text検査と3入力・派生分類の一式条件に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 139,
+            "endLine": 139,
+            "quote": "Text(raw.EmergencyContactName, 8, 8, \"EmergencyContactName\")"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 52,
+            "endLine": 53,
+            "quote": "if (value.EnumerateRunes().Any(rune => Rune.GetUnicodeCategory(rune) == UnicodeCategory.Control && !(multiline && rune.Value == 10)))\n            Fail(field, \"E-STU-002\", $\"{Label(field)}に使用できない制御文字があります。\");"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 147,
+            "endLine": 147,
+            "quote": "values[\"relationship_category\"] = values[\"relationship_code\"] is null ? null : \"RELATIONSHIP\";"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 156,
+            "endLine": 157,
+            "quote": "var emergency = new[] { values[\"emergency_contact_name\"], values[\"relationship_code\"], values[\"emergency_phone_number\"] }.Count(value => value is not null);\n        if (emergency is not (0 or 3))"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-6858998637",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "通常保存19項目の正規化・保存をEV-REG-004に対応させ、緊急氏名もその入力として定義する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 456,
+          "endLine": 456,
+          "quote": "### EV-REG-004 新規登録・更新"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 466,
+          "endLine": 466,
+          "quote": "19項目、理由、対象IDと期待版の設定組合せ・正数"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "`Input.EmergencyContactName:string?`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "create/updateのStudentSaveInputから緊急氏名を保存要求へ渡す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 26,
+            "endLine": 27,
+            "quote": "[HttpPost(\"create\")] public Task<IActionResult> Create([Bind(Prefix=\"Input\")]StudentSaveInput input,string snapshotId,CancellationToken ct)=>Save(null,input,snapshotId,ct);\n    [HttpPost(\"{id:long}/update\")] public Task<IActionResult> Update(long id,[Bind(Prefix=\"Input\")]StudentSaveInput input,string snapshotId,CancellationToken ct)=>Save(id,input,snapshotId,ct);"
+          },
+          {
+            "path": "source/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 40,
+            "endLine": 40,
+            "quote": "EmergencyContactName=EmergencyContactName"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-1C7081649C",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急氏名・続柄・電話の全部入力または全部未設定という保存条件が一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "緊急3項目一式、または全部未設定"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "| 緊急連絡先 | 続柄 |"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 207,
+          "endLine": 207,
+          "quote": "| 緊急連絡先 | 電話 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原サービスは緊急3値の非NULL数0または3だけを許容する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 156,
+            "endLine": 157,
+            "quote": "var emergency = new[] { values[\"emergency_contact_name\"], values[\"relationship_code\"], values[\"emergency_phone_number\"] }.Count(value => value is not null);\n        if (emergency is not (0 or 3))"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-2C780DDC08",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急続柄の項目IDがREG-021で一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "`select#REG-021`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューも同じIDを使用する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "<label>緊急連絡先続柄<select asp-for=\"Input.RelationshipCode\" id=\"REG-021\">"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-1FFB62D1F3",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急連絡先という分類は原仕様の緊急と同義。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "| 緊急連絡先 | 続柄 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "対象外",
+        "reason": "論理グループは文書上の分類であり、実装属性としての照合対象外。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-DD4D2D257F",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "グループと項目名を合わせて緊急連絡先続柄と特定できる。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "| 緊急連絡先 | 続柄 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ソースの日本語項目名に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 25,
+            "endLine": 25,
+            "quote": "[\"RelationshipCode\"]=\"緊急連絡先続柄\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-BB46CF5EEC",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "続柄を選択項目としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "| 続柄 | 選択 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューはselectを使用する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "<select asp-for=\"Input.RelationshipCode\" id=\"REG-021\">"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-4C1CDE24E0",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "続柄の入力・保存・再表示を定義している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "| 続柄 | 選択 | I／O | `relationship_code varchar(2) NULL`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "入力をrelationship_codeへ移し、同列から読み戻す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 140,
+            "endLine": 140,
+            "quote": "Set(\"relationship_code\", () => Code(raw.RelationshipCode, 2, \"RelationshipCode\", false));"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 192,
+            "endLine": 192,
+            "quote": "RelationshipCode=S(\"relationship_code\")"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-4D1696E725",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "続柄のraw入力上限を2とし、maxlengthとは区別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "maxlengthなし、設定時raw2スカラー・FormKC後ASCII数字2桁"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "width=2をTextのraw上限に使用する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 140,
+            "endLine": 140,
+            "quote": "Code(raw.RelationshipCode, 2, \"RelationshipCode\", false)"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 115,
+            "endLine": 115,
+            "quote": "Text(raw, width, width, field, required)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-56D8831D6F",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "正規化後の続柄値をASCII数字2桁としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "FormKC後ASCII数字2桁"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "FormKC後にwidth=2とASCII数字を検査する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 140,
+            "endLine": 140,
+            "quote": "Code(raw.RelationshipCode, 2, \"RelationshipCode\", false)"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 115,
+            "endLine": 116,
+            "quote": "var text = Text(raw, width, width, field, required)?.Normalize(NormalizationForm.FormKC);\n        if (text is not null && (text.Length != width || text.Any(c => c < '0' || c > '9')))"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-1C490E916D",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "保存する固定桁コードの単位をASCII数字としている。rawスカラー上限とは混同していない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "設定時raw2スカラー・FormKC後ASCII数字2桁"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "正規化済みコードはASCII数字だけを許容する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 116,
+            "endLine": 116,
+            "quote": "text.Length != width || text.Any(c => c < '0' || c > '9')"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 140,
+            "endLine": 140,
+            "quote": "Code(raw.RelationshipCode, 2, \"RelationshipCode\", false)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-403C1BB2F3",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "続柄を緊急一式条件による必須項目としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "緊急一式条件"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "緊急3項目一式、または全部未設定"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "単項目では任意、緊急値の一式検査で条件付き必須となる。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 140,
+            "endLine": 140,
+            "quote": "Code(raw.RelationshipCode, 2, \"RelationshipCode\", false)"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 157,
+            "endLine": 157,
+            "quote": "if (emergency is not (0 or 3))"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-5FB8E8E877",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "隣接する氏名・続柄・電話の全入力または全未設定条件として説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "緊急3項目一式、または全部未設定"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "| 緊急連絡先 | 続柄 |"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 207,
+          "endLine": 207,
+          "quote": "| 緊急連絡先 | 電話 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原検査も3値の非NULL数を0または3に制限する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 156,
+            "endLine": 157,
+            "quote": "var emergency = new[] { values[\"emergency_contact_name\"], values[\"relationship_code\"], values[\"emergency_phone_number\"] }.Count(value => value is not null);\n        if (emergency is not (0 or 3))"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-0C052D755D",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "新規の続柄を未選択としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "`Input.RelationshipCode:string?`、新規未選択。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "新規Draftの続柄はNULL既定値であり、ビューに空optionがある。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/Contracts.cs",
+            "startLine": 27,
+            "endLine": 27,
+            "quote": "public string? RelationshipCode { get; set; }"
+          },
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "<select asp-for=\"Input.RelationshipCode\" id=\"REG-021\"><option value=\"\">未選択</option>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-FF7418E749",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "続柄未設定をNULLとし、分類もNULLにする説明が一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "`relationship_code varchar(2) NULL`"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "未設定時分類もNULL。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "任意Codeの空欄はNULLとなり、分類もNULLへ派生する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 140,
+            "endLine": 140,
+            "quote": "Code(raw.RelationshipCode, 2, \"RelationshipCode\", false)"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 55,
+            "endLine": 55,
+            "quote": "if (value.Length == 0) { if (required) Fail(field, \"E-STU-001\", $\"{Label(field)}を入力してください。\"); return null; }"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 147,
+            "endLine": 147,
+            "quote": "values[\"relationship_category\"] = values[\"relationship_code\"] is null ? null : \"RELATIONSHIP\";"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-08625663AD",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "数字2桁とRELATIONSHIP分類の値・名称候補を対応させている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "FormKC後ASCII数字2桁"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 76,
+          "endLine": 76,
+          "quote": "RELATIONSHIPの値と名称。01父・02母・03祖父・04祖母・05兄弟姉妹・06配偶者・07後見人・99その他"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "幅2のコード検査とRELATIONSHIP限定の候補表示に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 140,
+            "endLine": 140,
+            "quote": "Code(raw.RelationshipCode, 2, \"RelationshipCode\", false)"
+          },
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "codes.Where(c=>c.CategoryId==\"RELATIONSHIP\")"
+          },
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "<option value=\"@c.CodeValue\" disabled=\"@(!selectable)\">@c.CodeName</option>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-761EB9C179",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学生の緊急連絡先続柄と保存コード列の対応が説明される。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 18,
+          "endLine": 18,
+          "quote": "学生1人の基本情報、住所、本人と緊急連絡先"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "| 緊急連絡先 | 続柄 | 選択 | I／O | `relationship_code varchar(2) NULL`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "論理DB名「学生基本情報」の宣言は未観測。物理列対応だけで論理名称の観測一致とはしない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-9A730BD9BD",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "続柄候補をRELATIONSHIP分類の値・名称として特定している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 76,
+          "endLine": 76,
+          "quote": "| 続柄 | RELATIONSHIPの値と名称。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューもRELATIONSHIP分類から候補を取得する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "codes.Where(c=>c.CategoryId==\"RELATIONSHIP\")"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-8FEA28F906",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "共通05のN-07に対応するFormKC後の数字固定2桁検査を具体化している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "設定時raw2スカラー・FormKC後ASCII数字2桁"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "CodeはFormKC後に桁数とASCII数字を検査し、自動ゼロ補完しない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 115,
+            "endLine": 116,
+            "quote": "var text = Text(raw, width, width, field, required)?.Normalize(NormalizationForm.FormKC);\n        if (text is not null && (text.Length != width || text.Any(c => c < '0' || c > '9')))"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 140,
+            "endLine": 140,
+            "quote": "Code(raw.RelationshipCode, 2, \"RelationshipCode\", false)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-43F854AC47",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "共通05のCHK-010・011・020に対応する分類付き存在、新規・変更値の有効性、緊急一式・分類NULL条件が説明される。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 83,
+          "endLine": 83,
+          "quote": "保存では最新コードの存在を必ず検査し、新規・変更値だけ分類とコード双方の利用状態・期間も検査する。"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "緊急3項目一式、または全部未設定"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "設定時分類RELATIONSHIP、未設定時分類もNULL。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "続柄の分類付き検査、変更時の状態検査、一式条件と派生分類が原ソースにある。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 347,
+            "endLine": 347,
+            "quote": "(\"relationship_code\",\"RELATIONSHIP\")"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 349,
+            "endLine": 349,
+            "quote": "FROM dbo.m_code c JOIN dbo.m_code_category k ON k.category_id=c.category_id WHERE c.category_id=@category AND c.code_value=@value"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 352,
+            "endLine": 354,
+            "quote": "if(!await reader.ReadAsync(ct)) errors.Add(new(StudentNormalizer.PropertyNames[column],\"E-STU-009\",\"コードが存在しません。\"));\n            else if(previous is null || !Equals(previous[column],value)) {\n                if(!reader.GetBoolean(0) || !reader.GetBoolean(1) || DateOnly.FromDateTime(reader.GetDateTime(2))>day || !reader.IsDBNull(3)&&DateOnly.FromDateTime(reader.GetDateTime(3))<day)"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 147,
+            "endLine": 147,
+            "quote": "values[\"relationship_category\"] = values[\"relationship_code\"] is null ? null : \"RELATIONSHIP\";"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 156,
+            "endLine": 157,
+            "quote": "var emergency = new[] { values[\"emergency_contact_name\"], values[\"relationship_code\"], values[\"emergency_phone_number\"] }.Count(value => value is not null);\n        if (emergency is not (0 or 3))"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-66FA4C3D01",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "続柄を通常保存入力に含め、EV-REG-004で存在・有効性を再検査して保存する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 456,
+          "endLine": 456,
+          "quote": "### EV-REG-004 新規登録・更新"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 469,
+          "endLine": 469,
+          "quote": "性別・都道府県・在籍・設定続柄の存在を確認する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "create/updateの保存要求に続柄を移送する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 26,
+            "endLine": 27,
+            "quote": "[HttpPost(\"create\")] public Task<IActionResult> Create([Bind(Prefix=\"Input\")]StudentSaveInput input,string snapshotId,CancellationToken ct)=>Save(null,input,snapshotId,ct);\n    [HttpPost(\"{id:long}/update\")] public Task<IActionResult> Update(long id,[Bind(Prefix=\"Input\")]StudentSaveInput input,string snapshotId,CancellationToken ct)=>Save(id,input,snapshotId,ct);"
+          },
+          {
+            "path": "source/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 41,
+            "endLine": 41,
+            "quote": "RelationshipCode=RelationshipCode"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-02-C07906F2F8",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "共通08の派生分類契約に従い、値・名称の対応、未選択時の分類NULL、選択時のRELATIONSHIP設定を説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 76,
+          "endLine": 76,
+          "quote": "RELATIONSHIPの値と名称。"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 206,
+          "endLine": 206,
+          "quote": "設定時分類RELATIONSHIP、未設定時分類もNULL。"
+        },
+        {
+          "path": "generated/基本設計書/02_学生登録画面.md",
+          "startLine": 93,
+          "endLine": 93,
+          "quote": "続柄分類は続柄の有無から算定する。これらの生成値は画面から受ける業務入力ではない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "原ビューの分類付き値・名称表示と、正規化処理の派生分類設定に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "codes.Where(c=>c.CategoryId==\"RELATIONSHIP\")"
+          },
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "<option value=\"@c.CodeValue\" disabled=\"@(!selectable)\">@c.CodeName</option>"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 146,
+            "endLine": 147,
+            "quote": "// COM-STU-008 7.4: this category is derived; it is never a client input.\n        values[\"relationship_category\"] = values[\"relationship_code\"] is null ? null : \"RELATIONSHIP\";"
+          }
+        ]
+      }
+    }
+  ],
+  "safetyChecks": [],
+  "limitations": [
+    "requireSafetyReview=falseのため、安全性レビューは実施していない。",
+    "原ソースの人数・定員表示には、クラス取得不能時の専用不整合表示がなく、選択変更後の人数更新もない（source/Views/Students/Edit.cshtml:12、source/wwwroot/js/site.js:8）。生成文書は現行表示と人数更新の欠如を明示しているため、実装上の制約として記録した。原設計の未設定値行の減点は維持した。",
+    "テキスト証拠のみを評価した。アプリケーションの実行・試験、画像比較、視覚承認は行っていない。"
+  ]
+}

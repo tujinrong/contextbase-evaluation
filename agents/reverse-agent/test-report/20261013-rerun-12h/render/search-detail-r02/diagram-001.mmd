@@ -1,0 +1,14 @@
+flowchart TD
+ A[共通入口：認証・認可・MVC] -->|通過| B[identity.Read]
+ A -->|拒否・例外| E[共通入口の拒否または外側例外経路]
+ B --> C{contextIdはNULL・空}
+ C -->|非空| R[検索復帰へ]
+ C -->|はい| N[Entry作成・未検索data・初期入力]
+ N --> T[通知Take]
+ T --> L[候補読取・commit・Json化]
+ L --> V[Searchビュー：未検索]
+ B -->|例外| E
+ N -->|例外| E
+ T -->|例外| E
+ L -->|例外・取消| E
+ V -->|描画例外| E

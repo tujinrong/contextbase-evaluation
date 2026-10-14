@@ -1,0 +1,24 @@
+flowchart TD
+  A{"取得種別"}
+  A -->|"検索"| B{"入力・指定候補の整合"}
+  B -->|"捕捉する入力検証例外・ArgumentException"| V["ValidationFailed／項目エラー"]
+  B -->|"妥当"| C["検索SNAPSHOTで上限付き件数取得"]
+  C --> D{"10000件超"}
+  D -->|"はい"| E["commit／NoChange・Count=10001・行なし・LimitExceeded=true"]
+  D -->|"いいえ"| F["ページ補正・行取得・commit／NoChange・実件数・行"]
+  A -->|"個別読込"| G{"正のIDか"}
+  G -->|"いいえ"| N["NULL"]
+  G -->|"はい"| H{"非削除対象あり"}
+  H -->|"なし"| N
+  H -->|"あり"| I["StudentDetail／取得版・保存値・更新情報"]
+  A -->|"候補"| J["別SNAPSHOTでコード・クラス取得"]
+  J --> K{"includeOccupancy"}
+  K -->|"true"| L["在学・休学の非削除人数を算出"]
+  K -->|"false"| M["人数計算を省略／Occupied=0"]
+  L --> O["commit／LookupSet"]
+  M --> O
+  C -.->|"未捕捉DB例外・取消"| X["呼出元へ例外"]
+  F -.->|"未捕捉DB例外・取消"| X
+  H -.->|"DB例外・取消"| X
+  J -.->|"DB例外・取消"| X
+  O -.->|"commit例外・取消"| X

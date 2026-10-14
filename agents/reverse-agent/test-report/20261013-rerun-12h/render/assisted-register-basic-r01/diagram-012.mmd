@@ -1,0 +1,54 @@
+flowchart TD
+    A[削除POST] --> AU{認証・CSRF検査}
+    AU -->|拒否| AR[認証またはMVCの拒否応答]
+    AU -->|許可| FG{FormGuard}
+    FG -->|不正| W400[事前WebFault 400]
+    FG -->|許可| RD{参照権限}
+    RD -->|拒否| W401[401]
+    RD -->|許可| SN{Snapshot取得・復帰先一致}
+    SN -->|不在・期限切れ| W409[WebFault 409]
+    SN -->|別所有者・対象・復帰先| W403[WebFault 403]
+    SN -. NULL引数等 .-> MW[応答開始前middleware・その他例外503]
+    SN -->|許可| ADM{管理者}
+    ADM -->|いいえ| W403
+    ADM -->|はい| CT{復帰状態有効}
+    CT -->|期限切れ等| W409
+    CT -->|別所有者| W403
+    CT -->|許可| CF{Confirmed}
+    CF -->|false| W422[WebFault 422]
+    CF -->|true| VER[期待版を正のInt64へ変換]
+    VER -->|不正| W422
+    VER --> CHECK{サービス権限・理由・ID版}
+    CHECK -->|権限不足| F[Forbidden 403]
+    CHECK -->|入力不正| V[ValidationFailed 422]
+    CHECK -. 捕捉外の理由例外等 .-> MW
+    CHECK -->|有効| DB[接続・ReadCommitted Tx開始]
+    DB -. try外の失敗 .-> MW
+    DB --> G[書込ゲート取得]
+    G --> E{非削除対象あり}
+    E -->|なし| N[NotFound 404]
+    E -->|あり| P{現在版と期待版一致}
+    P -->|不一致| C[Conflict 409]
+    P -->|一致| W[削除属性・更新管理情報だけUPDATE]
+    W -->|件数1| L[DELETE履歴追記]
+    W -->|件数不一致| CC[DBConcurrencyException catch・rollback試行]
+    CC --> C
+    L --> CM[commitを試みる]
+    CM -->|成功| OK[Saved・IDと版+1]
+    OK --> R[通知・303検索復帰]
+    G -. 対象一般例外 .-> EX[後続catchでrollback試行]
+    W -. 対象一般例外 .-> EX
+    L -. 対象一般例外 .-> EX
+    CM -. 対象一般例外 .-> EX
+    EX --> UQ{書込開始済み かつ commit試行済み又はrollback失敗}
+    UQ -->|はい| U[Unknown 503]
+    UQ -->|いいえ| S[SystemError 503]
+    F --> LOAD[結果別HTTPとエラー設定後にLoad]
+    V --> LOAD
+    N --> LOAD
+    C --> LOAD
+    U --> LOAD
+    S --> LOAD
+    LOAD -->|再読込成功| VIEW[最新DB値・版・新SnapshotのEditビュー]
+    LOAD -->|再読込失敗| MW2[新たなWebFaultの状態又は503]
+    R -. 確定後処理失敗 .-> MW

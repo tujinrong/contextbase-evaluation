@@ -1,0 +1,15 @@
+%%{init: {"flowchart":{"htmlLabels":true,"useMaxWidth":false,"nodeSpacing":28,"rankSpacing":30},"themeCSS":".nodeLabel,.edgeLabel{white-space:nowrap;word-break:keep-all;overflow-wrap:normal;}"}}%%
+flowchart TD
+    A["図19-1 削除POST"] --> AU{"認証・CSRF"}
+    AU -->|拒否| R["認証またはMVC拒否応答"]
+    AU -->|許可| FG{"FormGuard"}
+    FG -->|不正| W400["外側WebFault<br/>400"]
+    FG -->|正常| READ{"参照確認"}
+    READ -->|拒否| W401["401"]
+    READ -->|許可| SN{"Snapshot検査"}
+    SN -->|不在・期限切れ| W409["外側WebFault<br/>409"]
+    SN -->|所有者等不一致| W403["外側WebFault<br/>403"]
+    SN -. NULL辞書引数等 .-> X["外側例外処理"]
+    SN -->|取得| EQ{"Originalの復帰先と一致"}
+    EQ -->|いいえ| W403
+    EQ -->|はい| NEXT["図19-2へ<br/>Snapshot・削除要求保持"]

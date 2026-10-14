@@ -1,0 +1,1275 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;none&#x27;; style-src &#x27;unsafe-inline&#x27;; img-src data:; font-src &#x27;none&#x27;; connect-src &#x27;none&#x27;; frame-src &#x27;none&#x27;; form-action &#x27;none&#x27;; base-uri &#x27;none&#x27;"><style>body{margin:16px;font-family:system-ui,sans-serif}pre{white-space:pre-wrap}table[data-renderer-markdown]{border-collapse:collapse;width:100%;table-layout:fixed;margin:12px 0}table[data-renderer-markdown] th,table[data-renderer-markdown] td{border:1px solid #aaa;padding:6px;vertical-align:top;overflow-wrap:anywhere}table[data-renderer-markdown] th{background:#f0f3f7}img[data-renderer-diagram]{max-width:100%;height:auto}</style></head><body><!-- spec-meta: {"schema":"spec-md/1.0","documentId":"CSHARP_ASPNET-BAS-STU-03","version":"1.1","path":"基本設計書/03_テーブル仕様書.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"概要"},{"heading":"項目一覧","kind":"LIST","sheet":"テーブル索引","key":["No"]},{"heading":"イベント仕様","kind":"GRID","sheet":"データ操作"},{"heading":"補足説明","kind":"GRID","sheet":"横断契約"}]} -->
+<h1>学生管理 テーブル索引・データ関連仕様</h1>
+<table data-renderer-columns="2" data-renderer-markdown="">
+<colgroup><col style="width:24%"/><col style="width:76%"/></colgroup>
+<thead>
+<tr>
+<th>文書属性</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文書ID</td>
+<td>CSHARP_ASPNET-BAS-STU-03</td>
+</tr>
+<tr>
+<td>文書種別</td>
+<td>table-index／基本設計書</td>
+</tr>
+<tr>
+<td>バージョン</td>
+<td>1.1</td>
+</tr>
+<tr>
+<td>文書パス</td>
+<td>基本設計書/03_テーブル仕様書.md</td>
+</tr>
+<tr>
+<td>対象</td>
+<td>学生情報、所属クラス、コード分類、選択コード、操作履歴の5表</td>
+</tr>
+<tr>
+<td>記述区分</td>
+<td>ソースで観測した実装、DDLの宣言、Web入口が接続されていない保守メソッドの宣言契約を区別する。</td>
+</tr>
+</tbody>
+</table>
+<h2>概要</h2>
+<p>本書は、学生情報の保存先と、所属・選択コード・操作履歴との関係を整理する。学生情報は学生の業務値と比較版を保持し、クラスとコードは選択キー、表示名称、利用条件を提供する。コード分類はコードの用途、桁数、通常追加可否を定める。操作履歴は更新対象、前後版、変更列名、実行者、日時、理由を記録する。全列の個別定義は「項目一覧」の5文書へ対応させ、本書では表をまたぐ整合と確定単位を説明する。</p>
+<p>学生Webは、<code>Program</code>でControllerをマップし、<code>WebHostSetup</code>で登録した<code>IStudentService</code>をControllerとCoordinatorから呼び出す。登録実装は<code>SqlServerStudentService</code>である。クラス・コードを書き込む<code>MasterMaintenanceService</code>は存在するが、このWebの実装登録・Controllerから呼ぶ接続は確認できない。以下では、その保守を公開APIや利用可能な保守画面として扱わず、候補データの保存元に宣言された契約として説明する。根拠：<code>sources/Program.cs:3-7</code>、<code>sources/Infrastructure/WebHostSetup.cs:12-19</code>、<code>sources/Web/Controllers/StudentsController.cs:5-39</code>、<code>sources/Core/MasterMaintenanceService.cs:30-121</code>。</p>
+<h3>保存上の参照関係</h3>
+<p>実線はDDLの外部キーである。点線は履歴INSERTに記録する対象表名・対象キーの対応であり、FKではない。図に未宣言の多重度は付けない。</p>
+<figure data-renderer-diagram="1"><pre><code class="language-mermaid">flowchart LR
+  S["dbo.m_student／学生情報"]
+  C["dbo.m_class／所属クラス"]
+  K["dbo.m_code／選択コード"]
+  G["dbo.m_code_category／コード分類"]
+  L["dbo.t_operation_log／操作履歴"]
+  S --&gt;|"class_id／NULL可"| C
+  S --&gt;|"gender_category＋gender_code"| K
+  S --&gt;|"prefecture_category＋prefecture_code"| K
+  S --&gt;|"enrollment_category＋enrollment_status_code"| K
+  S --&gt;|"relationship_category＋relationship_code／NULL可"| K
+  C --&gt;|"grade_category＋grade_code"| K
+  K --&gt;|"category_id"| G
+  S -.-&gt;|"接続された保存・論理削除の履歴／FKなし"| L
+  C -.-&gt;|"宣言された保守の履歴／Web入口未確認・FKなし"| L
+  K -.-&gt;|"宣言された保守の履歴／Web入口未確認・FKなし"| L
+</code></pre></figure><p>7本のFKは参照キーの存在を制約する。性別、都道府県、在籍区分、学年は用途を固定した分類列とコード値を組にして参照するため、異なる分類の同じ数字コードを混同しない。続柄未設定時は分類・コードともNULLとなる。有効状態、利用期間、定員はFKの検査対象ではなく、保存サービスが別に確認する。根拠：<code>sources/database/001_schema.sql:189-199</code>、<code>sources/Core/StudentNormalizer.cs:147-157</code>、<code>sources/Core/SqlServerStudentService.cs:344-383</code>。</p>
+<h3>名称表示の結合と保存先</h3>
+<p>検索と同一人物候補の共通取得SQLは、学生からクラスへ、クラスから学年コードへ、学生から在籍コード・都道府県コードへLEFT JOINする。結合条件はそれぞれ所属ID、学年の分類と値、在籍の分類と値、都道府県の分類と値であり、有効状態や期間では絞らない。停止された参照値も名称の結合対象となる。<code>grade_name</code>、<code>status_name</code>、<code>prefecture_name</code>は<code>m_code.code_name</code>のSQL別名であり、独立した保存列ではない。根拠：<code>sources/Core/SqlServerStudentService.cs:82-90</code>。</p>
+<p><code>StudentRow</code>の年度、学年名、クラスコード・名称、在籍名称は結合結果としてNULLを受け得る。一方、保存元の<code>m_class.class_name</code>と<code>m_code.code_name</code>はNOT NULLである。住所表示は都道府県名と住所1を連結し、都道府県名がNULLなら「[不整合]」を使う。この結果形には住所2を含めない。結合結果のNULL可能性を参照先保存列のNULL属性へ移さない。根拠：<code>sources/Core/Contracts.cs:50-55</code>、<code>sources/Core/SqlServerStudentService.cs:77-90</code>、<code>sources/database/001_schema.sql:68-68</code>、<code>sources/database/001_schema.sql:115-115</code>。</p>
+<h2>項目一覧</h2>
+<table data-renderer-columns="8" data-renderer-markdown="">
+<colgroup><col style="width:4%"/><col style="width:9.33333%"/><col style="width:9.33333%"/><col style="width:9.33333%"/><col style="width:9.33333%"/><col style="width:9.33333%"/><col style="width:9.33333%"/><col style="width:40%"/></colgroup>
+<thead>
+<tr>
+<th>No</th>
+<th>論理名</th>
+<th>物理名・列数</th>
+<th>業務上の用途</th>
+<th>読取り主体</th>
+<th>書込み主体</th>
+<th>個別定義・生成状態</th>
+<th>根拠</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>学生情報</td>
+<td><code>dbo.m_student</code>／35列</td>
+<td>学生識別、氏名と照合キー、生年月日、住所・連絡先、入学・在籍・所属、緊急連絡先、備考、論理削除、作成更新情報、比較版を保持する。</td>
+<td>接続された学生サービスの検索、個別読込、同一人物候補、所属人数計算。宣言されたクラス保守の参照学生・所属人数確認。</td>
+<td>学生サービスの新規INSERT、比較版付きUPDATE、論理削除UPDATE。</td>
+<td>ID：CSHARP_ASPNET-BAS-STU-03-M_STUDENT<br/>kind：table-definition<br/>正式パス：<a href="%E3%83%86%E3%83%BC%E3%83%96%E3%83%AB/01_m_student.md">基本設計書/テーブル/01_m_student.md</a><br/>未生成</td>
+<td><code>sources/database/001_schema.sql:7-59</code><br/><code>sources/Core/SqlServerStudentService.cs:137-181</code>、<code>sources/Core/SqlServerStudentService.cs:269-315</code>、<code>sources/Core/SqlServerStudentService.cs:392-416</code><br/><code>sources/Core/MasterMaintenanceService.cs:53-57</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>所属クラスマスター</td>
+<td><code>dbo.m_class</code>／17列</td>
+<td>年度・学年、クラスコード・名称、期間、定員、表示順、有効状態、備考、作成更新情報、比較版を保持する。人数は保存列ではない。</td>
+<td>学生サービスの候補・名称結合・年度学年整合・期間・定員確認。宣言されたクラス保守の既存行・同名確認。</td>
+<td>宣言された<code>SaveClassAsync</code>のINSERT・比較版付きUPDATE。Web保守入口は未確認。</td>
+<td>ID：CSHARP_ASPNET-BAS-STU-03-M_CLASS<br/>kind：table-definition<br/>正式パス：<a href="%E3%83%86%E3%83%BC%E3%83%96%E3%83%AB/02_m_class.md">基本設計書/テーブル/02_m_class.md</a><br/>未生成</td>
+<td><code>sources/database/001_schema.sql:62-87</code><br/><code>sources/Core/SqlServerStudentService.cs:196-216</code>、<code>sources/Core/SqlServerStudentService.cs:357-383</code><br/><code>sources/Core/MasterMaintenanceService.cs:30-77</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>コード分類マスター</td>
+<td><code>dbo.m_code_category</code>／11列</td>
+<td>分類ID・名称、コード桁数、通常追加可否、有効状態、備考、作成更新情報、比較版を保持する。</td>
+<td>候補・学生保存・クラス保守で分類の有効状態を参照する。コード保守で桁数・追加可否を取得する。</td>
+<td>初期投入SQLの不足行INSERT。マスター保守サービスに分類保存メソッドはない。</td>
+<td>ID：CSHARP_ASPNET-BAS-STU-03-M_CODE_CATEGORY<br/>kind：table-definition<br/>正式パス：<a href="%E3%83%86%E3%83%BC%E3%83%96%E3%83%AB/03_m_code_category.md">基本設計書/テーブル/03_m_code_category.md</a><br/>未生成</td>
+<td><code>sources/database/001_schema.sql:90-109</code><br/><code>sources/database/002_seed.sql:88-89</code><br/><code>sources/Core/SqlServerStudentService.cs:203-212</code>、<code>sources/Core/SqlServerStudentService.cs:347-354</code><br/><code>sources/Core/MasterMaintenanceService.cs:59-63</code>、<code>sources/Core/MasterMaintenanceService.cs:91-104</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>選択コードマスター</td>
+<td><code>dbo.m_code</code>／14列</td>
+<td>分類とコード値の組に名称、表示順、有効状態、期間、保護状態、備考、作成更新情報、比較版を保持する。</td>
+<td>学生・クラス候補、検索条件の存在確認、名称結合、保存時の利用可否確認。</td>
+<td>初期投入SQLの不足行INSERT。宣言された<code>SaveCodeAsync</code>のINSERT・比較版付きUPDATE。Web保守入口は未確認。</td>
+<td>ID：CSHARP_ASPNET-BAS-STU-03-M_CODE<br/>kind：table-definition<br/>正式パス：<a href="%E3%83%86%E3%83%BC%E3%83%96%E3%83%AB/04_m_code.md">基本設計書/テーブル/04_m_code.md</a><br/>未生成</td>
+<td><code>sources/database/001_schema.sql:112-134</code><br/><code>sources/database/002_seed.sql:90-91</code><br/><code>sources/Core/SqlServerStudentService.cs:82-90</code>、<code>sources/Core/SqlServerStudentService.cs:196-222</code><br/><code>sources/Core/MasterMaintenanceService.cs:79-121</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>操作履歴</td>
+<td><code>dbo.t_operation_log</code>／12列</td>
+<td>対象表・対象キー、操作種別、前後版、変更列名JSON、実行者、UTC日時、相関ID、理由、重複確認有無を保持する。</td>
+<td>接続されたアプリケーションに履歴照会処理は確認できない。</td>
+<td>学生保存・論理削除の<code>Audit</code>と、宣言されたクラス・コード保守の<code>Log</code>によるINSERT。</td>
+<td>ID：CSHARP_ASPNET-BAS-STU-03-T_OPERATION_LOG<br/>kind：table-definition<br/>正式パス：<a href="%E3%83%86%E3%83%BC%E3%83%96%E3%83%AB/05_t_operation_log.md">基本設計書/テーブル/05_t_operation_log.md</a><br/>未生成</td>
+<td><code>sources/database/001_schema.sql:137-153</code><br/><code>sources/Core/SqlServerStudentService.cs:385-390</code><br/><code>sources/Core/MasterMaintenanceService.cs:132-135</code></td>
+</tr>
+</tbody>
+</table>
+<h2>イベント仕様</h2>
+<h3>検索・個別読込・選択候補の取得</h3>
+<h4>処理概要</h4>
+<p>検索は条件に合う非削除学生の件数とページを取得する。個別読込は編集対象の保存値・版・更新情報を取得する。候補取得はコードとクラスを返し、登録用途では所属人数も算出する。検索と候補取得はそれぞれ独立したSNAPSHOTトランザクションであり、個別読込には明示トランザクションがない。画面読込全体を一つのSNAPSHOTとして扱わない。根拠：<code>sources/Core/SqlServerStudentService.cs:103-216</code>、<code>sources/Infrastructure/WebStudentCoordinator.cs:17-17</code>。</p>
+<h4>処理手順</h4>
+<ol>
+<li>Web入口は認証を要求する。既存学生画面では認証利用者と任意の検索復帰先を確認し、新規画面では登録更新権限も確認する。各サービスも利用者情報を確認する。</li>
+<li>検索ではページ、ページサイズ、並び順、年度・クラス、未所属との併用、在籍区分の重複・許可値を検査する。文字列、電話、コード、入学日の範囲を正規化する。</li>
+<li>検索用SNAPSHOT内で指定学年・都道府県コードの存在、指定年度のクラス存在、指定クラスと任意指定された年度・学年の一致を確認する。ここでは停止・期間外を存在確認から除外しない。</li>
+<li>検索述語に一致する最大10001行の件数を取得する。10000件を超えた場合はページ行を取得せず、commit後に上限超過結果を返す。</li>
+<li>上限以内なら要求ページを最終ページ以内へ補正し、指定列・方向と学生ID昇順でページを取得する。commit後に実件数と取得行を返す。0件も通常の検索結果である。</li>
+<li>個別読込は正の学生IDを使い、非削除行だけを取得する。保存日付を和暦成分・西暦文字列へ戻し、保存版と更新情報を<code>StudentDetail</code>へ返す。</li>
+<li>候補取得は別のSNAPSHOT内でコード、クラスの2結果を読む。登録用途は非削除の在学・休学人数を算出し、検索用途は人数計算を省いて<code>Occupied=0</code>を設定する。</li>
+<li>編集用入力は保存された<code>class_id</code>に一致するクラス候補から年度・学年を復元する。Controllerは元入力のコピー、読込情報、検索復帰版を編集スナップショットへ保持する。</li>
+</ol>
+<p>根拠：<code>sources/Web/Controllers/StudentsController.cs:5-25</code>、<code>sources/Web/Controllers/StudentsController.cs:39-39</code>、<code>sources/Core/SqlServerStudentService.cs:105-216</code>、<code>sources/Web/Inputs/StudentSaveInput.cs:44-54</code>。</p>
+<h4>処理フロー</h4>
+<p>本図はサービスの利用者確認後の取得処理を示す。Webの認証・復帰先拒否とサービス利用者確認の例外は、通常の検索結果へ合流しない。</p>
+<figure data-renderer-diagram="2"><pre><code class="language-mermaid">flowchart TD
+  A{"取得種別"}
+  A --&gt;|"検索"| B{"入力・指定候補の整合"}
+  B --&gt;|"捕捉する入力検証例外・ArgumentException"| V["ValidationFailed／項目エラー"]
+  B --&gt;|"妥当"| C["検索SNAPSHOTで上限付き件数取得"]
+  C --&gt; D{"10000件超"}
+  D --&gt;|"はい"| E["commit／NoChange・Count=10001・行なし・LimitExceeded=true"]
+  D --&gt;|"いいえ"| F["ページ補正・行取得・commit／NoChange・実件数・行"]
+  A --&gt;|"個別読込"| G{"正のIDか"}
+  G --&gt;|"いいえ"| N["NULL"]
+  G --&gt;|"はい"| H{"非削除対象あり"}
+  H --&gt;|"なし"| N
+  H --&gt;|"あり"| I["StudentDetail／取得版・保存値・更新情報"]
+  A --&gt;|"候補"| J["別SNAPSHOTでコード・クラス取得"]
+  J --&gt; K{"includeOccupancy"}
+  K --&gt;|"true"| L["在学・休学の非削除人数を算出"]
+  K --&gt;|"false"| M["人数計算を省略／Occupied=0"]
+  L --&gt; O["commit／LookupSet"]
+  M --&gt; O
+  C -.-&gt;|"未捕捉DB例外・取消"| X["呼出元へ例外"]
+  F -.-&gt;|"未捕捉DB例外・取消"| X
+  H -.-&gt;|"DB例外・取消"| X
+  J -.-&gt;|"DB例外・取消"| X
+  O -.-&gt;|"commit例外・取消"| X
+</code></pre></figure><h4>SQL・テーブル関連（ER図）</h4>
+<p>概要の関連図に示した学生、クラス、コード、分類を読む。件数取得は学生とクラスのLEFT JOIN、行取得はさらに学年・在籍・都道府県名称のLEFT JOINを使う。コード候補はコードと分類のINNER JOINで双方の有効状態を合成する。クラス候補の学年コードLEFT JOINは並び順に使う。これらのJOINとDDLのFKは別の役割である。根拠：<code>sources/Core/SqlServerStudentService.cs:82-90</code>、<code>sources/Core/SqlServerStudentService.cs:156-162</code>、<code>sources/Core/SqlServerStudentService.cs:203-208</code>。</p>
+<h4>DB操作の詳細</h4>
+<p>検索の共通条件は<code>s.is_deleted=0</code>で、設定された条件をANDで追加する。LIKE入力中の<code>!</code>、<code>%</code>、<code>_</code>、<code>[</code>は<code>!</code>でエスケープする。</p>
+<table data-renderer-columns="3" data-renderer-markdown="">
+<colgroup><col style="width:4%"/><col style="width:56%"/><col style="width:40%"/></colgroup>
+<thead>
+<tr>
+<th>検索対象</th>
+<th>述語・加工</th>
+<th>パラメータ型・Size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>学籍番号</td>
+<td>正規化した<code>student_no</code>の前方一致。末尾にワイルドカードを付ける。</td>
+<td><code>@no</code>：VarChar・31</td>
+</tr>
+<tr>
+<td>氏名</td>
+<td>氏名照合キーに加工し、<code>name_key</code>の部分一致。前後にワイルドカードを付ける。</td>
+<td><code>@name</code>：NVarChar・642</td>
+</tr>
+<tr>
+<td>カナ</td>
+<td>正規化カナから空白を除き、<code>kana_key</code>の部分一致。</td>
+<td><code>@kana</code>：NVarChar・74</td>
+</tr>
+<tr>
+<td>年度・学年</td>
+<td>結合先の<code>c.school_year=@year</code>、<code>c.grade_code=@grade</code>。</td>
+<td><code>@year</code>：SmallInt、<code>@grade</code>：VarChar・2</td>
+</tr>
+<tr>
+<td>クラス</td>
+<td><code>s.class_id=@class</code>。</td>
+<td><code>@class</code>：BigInt</td>
+</tr>
+<tr>
+<td>未所属</td>
+<td><code>s.class_id IS NULL</code>。年度・学年・クラスとの同時指定は拒否する。</td>
+<td>パラメータなし</td>
+</tr>
+<tr>
+<td>都道府県</td>
+<td><code>s.prefecture_code=@prefecture</code>。</td>
+<td><code>@prefecture</code>：VarChar・2</td>
+</tr>
+<tr>
+<td>電話</td>
+<td>本人電話または緊急電話の完全一致。</td>
+<td><code>@phone</code>：VarChar・16</td>
+</tr>
+<tr>
+<td>入学日</td>
+<td>指定した開始以上・終了以下の条件を追加する。</td>
+<td><code>@from</code>、<code>@to</code>：Date</td>
+</tr>
+<tr>
+<td>在籍区分</td>
+<td>指定値のIN条件。全解除ならIN条件を追加しない。</td>
+<td><code>@status0</code>等：各VarChar・2</td>
+</tr>
+<tr>
+<td>ページ</td>
+<td>OFFSET/FETCH。ページサイズは20・50・100。</td>
+<td><code>@offset</code>、<code>@size</code>：Int</td>
+</tr>
+</tbody>
+</table>
+<p>学年・都道府県の存在確認は<code>m_code</code>の分類IDとコード値を条件とし、<code>@category</code>はVarChar・24、<code>@value</code>はVarChar・10である。年度確認は<code>m_class.school_year=@year</code>のCOUNT_BIG、クラス確認は<code>class_id=@id</code>の年度・学年取得で、<code>@id</code>はBigIntである。</p>
+<p>件数は同じ検索述語を付けたTOP(10001)のCOUNT_BIGである。<code>Count=10001</code>は上限超過を示し、それを超える実総件数ではない。並び順は学籍番号、氏名照合キー、入学日、更新日時から許可値を選び、昇順・降順の後に<code>student_id ASC</code>を付ける。根拠：<code>sources/Core/SqlServerStudentService.cs:107-170</code>、<code>sources/Core/SqlServerStudentService.cs:218-222</code>、<code>sources/Core/StudentNormalizer.cs:161-161</code>。</p>
+<p>個別読込は<code>student_id=@id AND is_deleted=0</code>で全学生列を取得し、<code>@id</code>はBigIntである。コード候補はWHEREで停止・期間外を除外せず、分類ID、表示順、コード値の順に並べる。クラス候補は年度降順、学年コードの表示順、クラス表示順、クラスコード、クラスIDの順である。登録用人数は同じクラスに属する非削除かつ在学01・休学02のCOUNTで、検索用の0は実人数の測定値ではない。SQL実行、行読取、結果切替、commitには取消トークンを渡す。根拠：<code>sources/Core/SqlServerStudentService.cs:172-216</code>。</p>
+<h4>結果・例外時の扱い</h4>
+<p>検索は通常・0件・上限超過を<code>Outcome.NoChange</code>で返し、件数、行、<code>LimitExceeded</code>で区別する。入力検証例外とArgumentExceptionは<code>ValidationFailed</code>へ変換する。利用者確認は検索のtryより前であり、同じ入力結果へ変換する範囲には含まれない。DB例外や取消を0件結果にするcatchはない。</p>
+<p>個別読込の対象なしはNULLで、既存画面のCoordinatorは404のWebFaultへ変換する。未処理例外は応答開始前に限りmiddlewareがWebFaultの状態、または503へ変換する。根拠：<code>sources/Core/SqlServerStudentService.cs:103-106</code>、<code>sources/Core/SqlServerStudentService.cs:159-181</code>、<code>sources/Infrastructure/WebStudentCoordinator.cs:17-20</code>、<code>sources/Infrastructure/WebHostSetup.cs:22-24</code>。</p>
+<h3>学生の登録・更新</h3>
+<h4>処理概要</h4>
+<p>登録・更新は正規化した学生情報と操作履歴を同じトランザクションで保存する。既存更新は読込時の比較版を要求し、ロック取得後の再読込とUPDATEのWHEREで競合を確認する。学籍番号は新規時に保存し、既存更新では変更できない。</p>
+<p>実入口はPOST <code>/students/create</code>とPOST <code>/students/{id}/update</code>である。フォーム受信値は<code>Input</code>接頭辞の<code>StudentSaveInput</code>へバインドされ、Coordinator内の<code>ToRequest</code>で<code>StudentDraft</code>と<code>SaveRequest</code>へ変換してからサービスへ渡る。根拠：<code>sources/Web/Controllers/StudentsController.cs:26-33</code>、<code>sources/Infrastructure/WebStudentCoordinator.cs:18-18</code>、<code>sources/Web/Inputs/StudentSaveInput.cs:34-43</code>。</p>
+<h4>処理手順</h4>
+<ol>
+<li>共通設定はControllerへの認証とPOSTのCSRF検査を要求する。アクションに到達した後は、まずFormGuardが送信項目を検査する。未許可項目、不正な<code>__Invariant</code>の値、禁止された同名項目重複は400のWebFaultで拒否する。</li>
+<li>登録更新権限、編集スナップショット、検索復帰先の存在・所有者等、読込時復帰先との一致を順に確認する。この検査は後段のController内catchより前であり、拒否は共通Web例外経路へ進む。</li>
+<li>ModelStateが不正なら422を設定し、サービスを呼ばず候補を再取得して再描画する。</li>
+<li>ModelStateが妥当ならCoordinatorが権限と復帰先を再確認し、<code>ToRequest</code>を評価する。ClassIdのNULL・空文字は未所属とし、それ以外は19コード単位以内のASCII数字から正のInt64へ変換する。不正なら422のWebFaultとなる。既存更新のExpectedVersionは必須の正のInt64で、欠落・不正も422となる。新規のExpectedVersionが非空なら400となる。これらはサービス未呼出しの拒否で、ControllerがWebFaultの状態を保持して項目または全体エラーを追加する。</li>
+<li>サービスは受付Guid、利用者、UTC時刻、日本時間の業務日を取得する。Viewerを拒否し、学生値、任意理由、対象ID・比較版の正数性と同時設定、年度範囲、学年コードを検査する。</li>
+<li>DB接続とReadCommitted開始後、共通保存ロックを取得する。OpenとBeginTransactionはDB処理用tryの外である。</li>
+<li>既存更新は非削除行を再読込する。対象なしはNotFound、比較版不一致はConflict、学籍番号変更はValidationFailedとする。保存済み区分が卒業03・退学04で区分を変更する場合は管理者権限と理由を要求する。</li>
+<li>コードとクラスの存在、利用状態・期間、任意年度・学年との整合、必要な定員をDBで再確認する。画面の候補や参考人数をこの検査の代わりにはしない。</li>
+<li>正規化値に変更がなければ明示rollbackしてNoChangeを返す。変更があり取得版がInt64最大ならConflictとする。</li>
+<li>学籍番号の使用済み検査を行う。削除行も対象とし、自分以外に同番号があれば拒否する。</li>
+<li>非削除、自分以外、同一生年月日、氏名照合キーまたはカナ照合キー一致の全候補を学生ID順に取得する。正規化入力と全候補のID・版から確認用ハッシュを作る。</li>
+<li>確認情報が送信された場合は所有者、セッション、対象ID、比較版、期限、両ハッシュ、Busyの原子的取得を照合する。有効な確認で続ける場合は理由を必須とする。候補あり、または確認情報送信ありで、確認が無効ならrollback後に確認情報を発行し、全候補件数と最大20件を返す。</li>
+<li>書込みへ進む場合、新規は学生INSERTのOUTPUTから採番IDを取得する。更新は学生ID・比較版・非削除をWHEREにして保存対象列と更新情報を設定し、版を1加算する。OUTPUTがNULLまたはDBNullならDBConcurrencyExceptionとする。</li>
+<li>CREATEまたはUPDATEの履歴を同じトランザクションへ追記する。commit試行直前に<code>commitAttempted=true</code>を設定し、commit成功後にSaved、保存ID、保存後版を返す。</li>
+<li>WebはSavedなら通知を置いて303で検索へ戻す。それ以外、またはControllerがWebFaultを捕捉した場合は、候補再取得とEditビューの描画へ進む。</li>
+</ol>
+<p>根拠：<code>sources/Infrastructure/WebHostSetup.cs:14-18</code>、<code>sources/Web/Controllers/StudentsController.cs:28-33</code>、<code>sources/Web/Controllers/StudentsController.cs:41-41</code>、<code>sources/Web/Inputs/StudentSaveInput.cs:34-43</code>、<code>sources/Web/Inputs/StudentSaveInput.cs:59-60</code>、<code>sources/Core/SqlServerStudentService.cs:227-315</code>。</p>
+<h4>処理フロー</h4>
+<p>サブフロー1は共通認証・CSRF検査を通過してアクションに到達した要求から始まる。認証拒否は401、CSRFは共通MVCフィルターの拒否で終了し、この図の変換へ進まない。通常の<code>/students</code>経路に対するCSRF失敗結果の依存実装は、サービスの検証結果とは分ける。</p>
+<figure data-renderer-diagram="3"><pre><code class="language-mermaid">flowchart TD
+  A{"1．FormGuard"} --&gt;|"未許可項目・メタ情報不正・重複"| W400["WebFault 400／共通Web例外経路"]
+  A --&gt;|"通過"| B{"権限・Snapshot・復帰先"}
+  B --&gt;|"WebFault"| W["固有状態を共通Web例外経路へ"]
+  B --&gt;|"ライブラリ等の例外"| X["未処理例外経路"]
+  B --&gt;|"通過"| C{"ModelState"}
+  C --&gt;|"不正"| M["422／サービス未呼出し"]
+  C --&gt;|"妥当"| D{"Coordinator再確認・ToRequest"}
+  D --&gt;|"ClassId不正・既存版欠落又は不正"| V["Controller catch／422・エラー追加／サービス未呼出し"]
+  D --&gt;|"新規版が非空"| N["Controller catch／400・全体エラー／サービス未呼出し"]
+  D --&gt;|"その他WebFault"| F["Controller catch／例外の状態・エラーを保持"]
+  D --&gt;|"変換成功"| E["StudentDraft・ID・比較版・年度・学年等を2へ"]
+  M --&gt; R["設定済み状態を保持して候補再取得・再描画"]
+  V --&gt; R
+  N --&gt; R
+  F --&gt; R
+  R --&gt;|"後続の取得・描画例外"| X
+</code></pre></figure><p>サブフロー2はサービス引数を受け、書込み前の再確認までを行う。新規は以前値・取得版がNULL、既存更新は再読込した以前値・版をサブフロー3へ引き継ぐ。</p>
+<figure data-renderer-diagram="4"><pre><code class="language-mermaid">flowchart TD
+  A["2．利用者・受付ID・now取得"] --&gt; B{"Viewerか"}
+  B --&gt;|"はい"| F["Forbidden"]
+  B --&gt;|"いいえ"| C{"正規化・ID版・年度学年検査"}
+  C --&gt;|"捕捉する入力例外"| V["ValidationFailed"]
+  C --&gt;|"通過"| D["Open・ReadCommitted開始"]
+  D --&gt;|"例外"| X["DB用catch外／呼出元へ例外"]
+  D --&gt; E["共通ロック取得"]
+  E --&gt; G{"既存更新か"}
+  G --&gt;|"新規"| H["以前値・取得版はNULL"]
+  G --&gt;|"既存"| I{"非削除対象・版"}
+  I --&gt;|"対象なし"| NF["NotFound"]
+  I --&gt;|"不一致"| CF["Conflict"]
+  I --&gt;|"一致"| J{"学籍番号・終了区分訂正"}
+  J --&gt;|"番号変更又は理由不足"| V
+  J --&gt;|"訂正権限なし"| F
+  J --&gt;|"通過"| K["以前値・取得版を保持"]
+  H --&gt; Q["DB業務規則の再確認"]
+  K --&gt; Q
+  Q --&gt;|"InputValidationException"| V
+  Q --&gt; L{"変更あり"}
+  L --&gt;|"なし"| NC["rollback／NoChange・要求ID・取得版"]
+  L --&gt;|"あり"| MAX{"取得版がInt64最大か"}
+  MAX --&gt;|"はい"| CF
+  MAX --&gt;|"いいえ"| NEXT["要求・正規化値・理由・以前値・取得版を3へ"]
+</code></pre></figure><p>ロック、再読込、業務規則検査等のDB用try内の例外はサブフロー4へ進む。図のValidationFailedは捕捉された検証例外または明示的な拒否結果であり、未捕捉例外を含めない。</p>
+<figure data-renderer-diagram="5"><pre><code class="language-mermaid">flowchart TD
+  A{"3．学籍番号が使用済みか"}
+  A --&gt;|"はい"| V["ValidationFailed／E-STU-101"]
+  A --&gt;|"いいえ"| B["全候補取得・入力と候補のハッシュ作成"]
+  B --&gt; C["送信された確認の所有者・版・期限・ハッシュ・Busy照合"]
+  C --&gt; D{"有効確認かつ理由なし"}
+  D --&gt;|"はい"| R["ValidationFailed／E-STU-107"]
+  D --&gt;|"いいえ"| E{"候補あり又は確認送信あり／かつ確認無効"}
+  E --&gt;|"はい"| F["rollback・確認発行"]
+  F --&gt; G["ConfirmationRequired／要求ID・取得版・全件数・最大20件"]
+  E --&gt;|"いいえ"| H["学生INSERT又は比較版付きUPDATE／writeStarted=true"]
+  H --&gt;|"OUTPUTがNULL又はDBNull"| X["DBConcurrencyException／4へ"]
+  H --&gt;|"保存ID取得"| I["保存後版＝取得版又は0に1加算／履歴INSERT"]
+  I --&gt; J["commitAttempted=true・commit試行"]
+  J --&gt;|"成功"| K["Saved／保存ID・保存後版／Webは通知・303"]
+</code></pre></figure><p>ConfirmationRequiredのID・版は固定NULLではない。新規時は要求ID・取得版がNULL、既存更新時は要求対象ID・再読込した版を返す。確認発行、学生書込み、履歴、commitの例外もサブフロー4へ進む。</p>
+<figure data-renderer-diagram="6"><pre><code class="language-mermaid">flowchart TD
+  A{"4．DB用try内の例外／catch順"}
+  A --&gt;|"1 InputValidationException"| B["rollback試行／ValidationFailed・項目エラー"]
+  A --&gt;|"2 SQL 2601・2627"| C["rollback試行／ValidationFailed・E-STU-101"]
+  A --&gt;|"3 DBConcurrencyException"| D["rollback試行／Conflict・E-STU-105"]
+  A --&gt;|"4 残るSQL・InvalidOperation・取消"| E["rollback試行・成否取得"]
+  E --&gt; F{"writeStartedかつ／commitAttempted又はrollback失敗"}
+  F --&gt;|"はい"| G["Unknown／E-COM-004"]
+  F --&gt;|"いいえ"| H["SystemError／E-COM-004"]
+  A --&gt;|"捕捉条件外"| X["呼出元へ例外"]
+</code></pre></figure><p>第4catchの条件を先行catchの結果へ適用しない。利用者取得、正規化の未捕捉例外、Open、BeginTransactionはこの図の入口には入らない。根拠：<code>sources/Core/SqlServerStudentService.cs:229-243</code>、<code>sources/Core/SqlServerStudentService.cs:316-329</code>。</p>
+<h4>SQL・テーブル関連（ER図）</h4>
+<p>概要の5表の関連を利用する。書込み対象は学生と操作履歴で、両方を同じ確定単位にする。クラス、コード、分類は保存可否の確認に読む。履歴の対象表・対象キーに学生へのFKはない。接続されたWeb確認はメモリであり、この確定単位へ確認表のUPDATEを追加しない。</p>
+<h4>DB操作の詳細</h4>
+<table data-renderer-columns="3" data-renderer-markdown="">
+<colgroup><col style="width:4%"/><col style="width:56%"/><col style="width:40%"/></colgroup>
+<thead>
+<tr>
+<th>操作</th>
+<th>対象・条件・設定</th>
+<th>パラメータ型・Sizeと結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>既存再読込</td>
+<td><code>m_student</code>の<code>student_id=@id AND is_deleted=0</code>。取得版を比較する。</td>
+<td><code>@id</code>：BigInt。以前値・取得版を保持する。</td>
+</tr>
+<tr>
+<td>学籍番号使用済み確認</td>
+<td><code>student_no=@no AND (@id IS NULL OR student_id&lt;&gt;@id)</code>。削除行を除外しない。</td>
+<td><code>@no</code>：VarChar・15、<code>@id</code>：BigInt・NULL可。COUNT_BIGが0超なら拒否。</td>
+</tr>
+<tr>
+<td>同一人物候補</td>
+<td>非削除、自分以外、同一生年月日、氏名キーまたはカナキー一致。学生ID順。TOPなし。</td>
+<td><code>@id</code>：BigInt、<code>@birth</code>：Date、<code>@name</code>：NVarChar・320、<code>@kana</code>：NVarChar・36。全候補を読む。</td>
+</tr>
+<tr>
+<td>用途別コード確認</td>
+<td>コードと分類をJOINし、分類ID・コード値で取得する。存在、新規・変更値の双方有効状態、業務日の期間を検査する。</td>
+<td><code>@category</code>：VarChar・24、<code>@value</code>：VarChar・10。不存在E-STU-009、利用不可E-STU-011。</td>
+</tr>
+<tr>
+<td>クラス確認</td>
+<td><code>class_id=@id</code>で年度・学年・期間・有効状態・定員を取得する。任意指定された年度・学年との一致を確認する。</td>
+<td><code>@id</code>：BigInt。不在E-STU-010、上位不一致E-STU-014。</td>
+</tr>
+<tr>
+<td>定員確認</td>
+<td>指定クラス、非削除、在学01・休学02、自分以外のCOUNT_BIGに1を加える。新たに席を使い、定員がNULLでない場合だけ行う。</td>
+<td><code>@class</code>、<code>@id</code>：BigInt。超過E-STU-102。</td>
+</tr>
+<tr>
+<td>新規INSERT</td>
+<td>正規化保存列、固定分類、非削除状態、作成更新情報、版1を明示設定する。</td>
+<td>保存列の型・Sizeは補足表に対応。<code>@now</code>：DateTimeOffset、<code>@actor</code>：NVarChar・128。OUTPUTで学生ID取得。</td>
+</tr>
+<tr>
+<td>既存UPDATE</td>
+<td>学籍番号をSETから外し、保存対象列・更新情報・版加算を設定する。WHEREは学生ID・比較版・非削除。</td>
+<td><code>@id</code>、<code>@version</code>：BigInt。OUTPUTで学生ID取得。</td>
+</tr>
+<tr>
+<td>履歴INSERT</td>
+<td>対象表、対象キー、前後版、変更列名、実行者等を追記する。</td>
+<td>学生<code>Audit</code>のリテラル・パラメータ契約は補足説明に示す。</td>
+</tr>
+</tbody>
+</table>
+<p>同じコードを保持する既存更新でも存在確認は行うが、有効状態・期間の拒否対象からは外す。在学・休学で新たに席を使うときはクラスの有効状態・現在期間・定員を確認する。同じクラスで既に席を使っていた場合には、この新規所属の検査を適用しない。卒業・退学で所属、区分、入学日、終了日が変わるときは在籍期間とクラス期間の重なりを確認する。定員NULLは上限制限なしであり、0ではない。根拠：<code>sources/Core/SqlServerStudentService.cs:245-307</code>、<code>sources/Core/SqlServerStudentService.cs:344-383</code>。</p>
+<h4>結果・例外時の扱い</h4>
+<p>NoChangeと確認要求は明示rollbackする。一部の対象なし・競合等の早期returnは明示Rollbackを呼ばず、未commitのトランザクションを<code>await using</code>の破棄対象にする。全拒否経路が同じrollback呼出しを行うとは説明しない。</p>
+<p>DB用catchは入力検証、SQL 2601・2627、DBConcurrencyException、残るSQL・InvalidOperation・取消の順である。最後のcatchだけが、書込み開始済みで、commit試行済みまたはrollback失敗の場合にUnknownを返す。他の場合はSystemErrorである。rollback helperは取消なしで実行し、SQL例外・InvalidOperationExceptionを失敗値へ変換する。根拠：<code>sources/Core/SqlServerStudentService.cs:240-243</code>、<code>sources/Core/SqlServerStudentService.cs:302-329</code>。</p>
+<p>WebではSavedは通知後303、NoChangeは200、ValidationFailedは422、Forbiddenは403、NotFoundは404、ConflictとConfirmationRequiredは409、SystemErrorとUnknownは503へ対応する。変換時のWebFaultは400または422等の元状態を保持し、SaveResultへ変換しない。保存の再描画は元DTOを保持して候補を再取得するため、候補取得や描画の例外で最終応答が変わり得る。応答開始後の例外にmiddlewareの503変換を保証しない。根拠：<code>sources/Web/Controllers/StudentsController.cs:30-33</code>、<code>sources/Infrastructure/WebPresentation.cs:23-23</code>、<code>sources/Infrastructure/WebHostSetup.cs:22-24</code>。</p>
+<h3>学生の論理削除</h3>
+<h4>処理概要</h4>
+<p>POST <code>/students/{id}/delete</code>は学生行を残し、削除状態・削除情報・更新情報・版を変更する。管理者だけが実行できる。編集中の氏名や住所等は保存しない。学生UPDATEとDELETE履歴を同じトランザクションで確定する。根拠：<code>sources/Web/Controllers/StudentsController.cs:37-38</code>、<code>sources/Views/Students/Edit.cshtml:17-17</code>、<code>sources/Core/SqlServerStudentService.cs:409-414</code>。</p>
+<h4>処理手順</h4>
+<ol>
+<li>共通認証・CSRF設定を通過した後、FormGuardが未許可項目、不正な書式メタ情報、禁止された重複を400で拒否する。</li>
+<li>認証利用者、対象IDに対応するスナップショット、読込時復帰先との一致を確認する。</li>
+<li>Coordinatorは管理者権限、復帰先検索状態、Confirmed、比較版文字列から正のInt64への変換を順に確認する。Confirmed=false、版欠落・不正は422のWebFaultで、サービスを呼ばない。削除アクションに保存と同じModelState分岐はなく、明示検査を通してサービスへ渡す。</li>
+<li>サービスは管理者を再確認し、必須理由を原入力・保存値とも60スカラー以内へ正規化する。正のID・版を要求し、Int64最大版を拒否する。</li>
+<li>OpenとReadCommitted開始後、共通ロックを取得する。非削除学生の版を再取得し、対象なしと比較版不一致を分けて返す。</li>
+<li>学生ID・比較版・非削除をWHEREにして論理削除UPDATEを行い、更新件数1を要求する。</li>
+<li>同じトランザクションへDELETE履歴を追記し、commit成功後にSaved、対象ID、版＋1を返す。</li>
+<li>Webは成功なら通知と303復帰を行う。サービスが失敗結果を返した場合はエラー・状態コードを設定してからLoadで学生と候補を再取得し、新しい編集スナップショットを作る。</li>
+</ol>
+<p>根拠：<code>sources/Web/Controllers/StudentsController.cs:25-25</code>、<code>sources/Web/Controllers/StudentsController.cs:37-41</code>、<code>sources/Infrastructure/WebStudentCoordinator.cs:19-19</code>、<code>sources/Core/SqlServerStudentService.cs:392-416</code>。</p>
+<h4>処理フロー</h4>
+<p>サブフロー1は共通認証・CSRF通過後からサービス引数への変換までである。入口拒否はControllerの保存用catchを通らず、共通Web例外経路へ進む。</p>
+<figure data-renderer-diagram="7"><pre><code class="language-mermaid">flowchart TD
+  A{"1．FormGuard"}
+  A --&gt;|"未許可項目・メタ情報不正・重複"| F["WebFault 400／サービス未呼出し"]
+  A --&gt;|"通過"| B{"認証利用者・Snapshot・復帰先一致"}
+  B --&gt;|"WebFault"| W["固有状態で共通Web例外経路"]
+  B --&gt;|"ライブラリ等の例外"| X["未処理例外経路"]
+  B --&gt;|"通過"| C{"Coordinator管理者確認"}
+  C --&gt;|"拒否"| P["WebFault 403"]
+  C --&gt;|"許可"| D{"復帰先・Confirmed・版変換"}
+  D --&gt;|"復帰先拒否"| W
+  D --&gt;|"未確認又は版欠落・不正"| V["WebFault 422／サービス未呼出し"]
+  D --&gt;|"通過"| E["対象ID・正の版・理由を2へ"]
+</code></pre></figure><figure data-renderer-diagram="8"><pre><code class="language-mermaid">flowchart TD
+  A{"2．サービス管理者確認"}
+  A --&gt;|"拒否"| F["Forbidden"]
+  A --&gt;|"許可"| B{"理由・ID・版検査"}
+  B --&gt;|"捕捉する入力不正"| V["ValidationFailed"]
+  B --&gt;|"未捕捉例外"| X["呼出元へ例外"]
+  B --&gt;|"妥当"| C["Open・ReadCommitted開始"]
+  C --&gt;|"例外"| X
+  C --&gt; D["共通ロック・非削除版再取得"]
+  D --&gt; E{"対象と版"}
+  E --&gt;|"対象なし"| N["NotFound"]
+  E --&gt;|"版不一致"| K["Conflict"]
+  E --&gt;|"一致"| U["比較版付き論理削除UPDATE／writeStarted=true"]
+  U --&gt;|"件数が1以外"| Q["DBConcurrencyException／rollback試行・Conflict"]
+  U --&gt;|"1件"| L["DELETE履歴INSERT・commitAttempted=true・commit"]
+  L --&gt;|"成功"| S["Saved・対象ID・版＋1／通知・303"]
+  D -.-&gt;|"残るSQL・InvalidOperation・取消"| ERR["rollback試行"]
+  U -.-&gt;|"残るSQL・InvalidOperation・取消"| ERR
+  L -.-&gt;|"残るSQL・InvalidOperation・取消"| ERR
+  ERR --&gt; CATCH{"writeStartedかつ／commitAttempted又はrollback失敗"}
+  CATCH --&gt;|"はい"| UN["Unknown"]
+  CATCH --&gt;|"いいえ"| SE["SystemError"]
+  F --&gt; R["Webで結果の状態設定後にLoad"]
+  V --&gt; R
+  N --&gt; R
+  K --&gt; R
+  Q --&gt; R
+  UN --&gt; R
+  SE --&gt; R
+  R --&gt;|"読込・描画成功"| VIEW["結果の状態を保持して画面表示"]
+  R --&gt;|"対象消失"| NF["後続WebFault 404"]
+  R --&gt;|"取得・描画例外"| X
+</code></pre></figure><h4>SQL・テーブル関連（ER図）</h4>
+<p>書込み対象は概要の学生と操作履歴である。履歴への点線は文字列の対象対応を表し、学生へのFKではない。クラス・コード・分類を更新しない。論理削除後は通常検索、個別読込、在学・休学人数から除外される。</p>
+<h4>DB操作の詳細</h4>
+<p>再取得は<code>student_id=@id AND is_deleted=0</code>の版を読む。UPDATEもこの条件へ<code>row_version=@version</code>を加え、<code>is_deleted=1</code>、<code>deleted_at</code>、<code>deleted_by</code>、<code>delete_reason</code>、<code>updated_at</code>、<code>updated_by</code>、<code>row_version=row_version+1</code>だけを設定する。<code>@id</code>・<code>@version</code>はBigInt、<code>@now</code>はDateTimeOffset、<code>@actor</code>はNVarChar・128、<code>@reason</code>はNVarChar・120である。</p>
+<p>履歴は上記7列を変更列名として記録し、前版は比較版、後版は版＋1、理由は学生削除理由と同じ正規化値、重複確認有無はfalseとする。学生の物理DELETEではなく、学籍番号の一意性は削除後も残る。根拠：<code>sources/Core/SqlServerStudentService.cs:404-414</code>、<code>sources/database/001_schema.sql:187-187</code>。</p>
+<h4>結果・例外時の扱い</h4>
+<p>理由正規化のcatchはInputValidationExceptionだけで、不正Unicode等のArgumentExceptionを同じValidationFailedへ変換する保証はない。DB用tryはOpenとBeginTransactionの後から始まる。DBConcurrencyExceptionはrollback試行後Conflict、残るSQL・InvalidOperation・取消例外は図の条件でUnknownまたはSystemErrorとなる。先行catchをUnknown判定へ含めない。根拠：<code>sources/Core/SqlServerStudentService.cs:396-416</code>。</p>
+<p>失敗結果の後もLoadによるDB読込が続く。対象が消失していれば404となり、取得・描画が失敗すれば未処理例外経路となるため、サービス結果の状態を最終HTTP応答と断定しない。FormGuard、認証、スナップショット、Coordinatorの拒否はサービス失敗結果の再読込経路には入らない。根拠：<code>sources/Web/Controllers/StudentsController.cs:25-25</code>、<code>sources/Web/Controllers/StudentsController.cs:37-37</code>、<code>sources/Infrastructure/WebStudentCoordinator.cs:17-19</code>。</p>
+<h3>クラス・コード保守の宣言契約</h3>
+<h4>処理概要</h4>
+<p><code>SaveClassAsync</code>と<code>SaveCodeAsync</code>は、学生の候補・名称表示に使うマスターの追加・更新と履歴追記を定義する。呼出入口のWeb接続は確認できない。接続ごとにDB認証の<code>ORIGINAL_LOGIN()</code>と<code>IS_ROLEMEMBER('student_admin')</code>を取得し、管理者所属が1でない接続を拒否する。Web利用者Claimの判定とは別の契約である。根拠：<code>sources/Core/MasterMaintenanceService.cs:17-28</code>、<code>sources/Infrastructure/WebHostSetup.cs:12-19</code>。</p>
+<h4>処理手順</h4>
+<ol>
+<li>クラスは年度1900〜9998、定員NULLまたは1〜9999、非負表示順、ID・比較版の組を検査する。コードを9文字以内のIdentifier、名称を18スカラー、学年を2桁コード、備考を120スカラーへ正規化し、期間を年度内に収める。</li>
+<li>コードは許可された5分類、任意比較版の正数性、非負表示順を検査する。名称を12スカラー、備考を120スカラーへ正規化し、開始日・任意終了日と前後関係を確認する。</li>
+<li>DB接続を開いて管理者所属を読む。結果行なし、所属値NULL、値が1以外ならUnauthorizedAccessExceptionを送出する。接続・SQL読取・実行者正規化の失敗もOpenから再throwする。ここではトランザクションをまだ開始していない。</li>
+<li>DB管理者確認後にReadCommittedを開始し、共通保存ロックを取得する。</li>
+<li>クラス更新は対象と版を確認し、既存の年度・クラスコード変更を拒否する。削除学生を含む参照学生があれば学年変更を拒否する。非削除の在学・休学人数がある場合の停止・現在期間外化と、人数より小さい定員を拒否する。</li>
+<li>クラスの学年はコードと分類のJOINで存在を確認する。新規または学年変更時だけ双方の有効状態と現在期間を要求する。</li>
+<li>コードは分類から桁数・通常追加可否を取得し、分類別の固定桁数字へ正規化して既存行を読む。比較版付き要求で対象なしならNotFound、既存版不一致ならConflict、新規で追加不可なら例外とする。保護値の停止、開始日後ろ倒し、無期限から有限期限への変更、既存終了日より前への短縮を拒否する。</li>
+<li>無変更は明示rollbackしてNoChangeを返す。変更があり比較版がInt64最大なら例外とする。クラスだけは同年度・同学年・同名の別行を取得し、同名警告として保持する。</li>
+<li>業務INSERTまたは比較版付きUPDATEと履歴INSERTを行う。commit成功後にSavedと保存後版を返し、クラスは同名警告も返す。DB用try内の例外はrollbackを試みて再throwする。</li>
+</ol>
+<p>根拠：<code>sources/Core/MasterMaintenanceService.cs:17-121</code>。</p>
+<h4>処理フロー</h4>
+<p>入口の引数検査、DB管理者確認、BeginTransactionの例外と、DB用try内のrollback経路を分ける。</p>
+<figure data-renderer-diagram="9"><pre><code class="language-mermaid">flowchart TD
+  A{"引数・正規化検査"}
+  A --&gt;|"不正・例外"| X["呼出元へ例外／取引開始前"]
+  A --&gt;|"通過"| B["DB接続・認証実行者と所属読取"]
+  B --&gt;|"接続・SQL読取等の例外"| X
+  B --&gt; C{"結果行あり・所属非NULL・値1"}
+  C --&gt;|"いいえ"| U["UnauthorizedAccessException／接続破棄・取引未開始"]
+  C --&gt;|"はい"| D["実行者正規化・ReadCommitted開始"]
+  D --&gt;|"例外"| X
+  D --&gt; E["共通ロック取得"]
+  E --&gt; F{"保守対象"}
+  F --&gt;|"クラス"| G["対象版・不変キー・参照学生・人数・学年確認"]
+  F --&gt;|"コード"| H["分類桁数・追加可否・対象版・保護値確認"]
+  G --&gt;|"対象なし又は版不一致"| R["NotFound又はConflict／未commitで終了"]
+  H --&gt;|"対象なし又は版不一致"| R
+  G --&gt; I{"変更あり"}
+  H --&gt; I
+  I --&gt;|"なし"| N["rollback／NoChange・要求比較版"]
+  I --&gt;|"あり"| J["版上限確認／クラスだけ同名警告取得"]
+  J --&gt; K["業務書込み・状態変化に応じた履歴追記"]
+  K --&gt; L["commit／Saved・保存後版／クラスは警告も保持"]
+  E -.-&gt;|"例外"| ERR["DB用catch／rollback試行・再throw"]
+  G -.-&gt;|"検証・読取例外"| ERR
+  H -.-&gt;|"検証・読取例外"| ERR
+  J -.-&gt;|"例外"| ERR
+  K -.-&gt;|"例外"| ERR
+  L -.-&gt;|"commit例外"| ERR
+</code></pre></figure><h4>SQL・テーブル関連（ER図）</h4>
+<p>クラス保守はクラス、参照学生、学年コード、分類、履歴を使う。コード保守はコード、分類、履歴を使う。関係は概要のFKと履歴の文字列対応に従う。分類の保存メソッドと、クラス・コードの物理削除経路はない。</p>
+<h4>DB操作の詳細</h4>
+<p>クラス既存取得は<code>class_id=@id</code>で、<code>@id</code>はBigIntである。参照確認は<code>m_student WHERE class_id=@id</code>から全参照件数と、非削除かつ在学01・休学02の人数を取得する。同名確認は年度・学年・名称一致、自分以外であり、名称の一意制約ではない。学年取得は分類をSQLリテラル<code>GRADE</code>に固定し、<code>@grade</code>はVarChar・2である。</p>
+<p>クラス新規は<code>grade_category='GRADE'</code>、作成更新情報、版1を明示し、OUTPUTで採番IDを取得する。更新WHEREはクラスID・比較版で、年度・コードは変更を事前拒否するがUPDATEの設定列にも含む。年度はSmallInt、コードはVarChar・9、名称はNVarChar・36、期間はDate、定員・表示順はInt、有効状態はBit、備考はNVarChar・240で渡す。根拠：<code>sources/Core/MasterMaintenanceService.cs:45-75</code>、<code>sources/Core/MasterMaintenanceService.cs:124-130</code>。</p>
+<p>コード既存取得は分類ID・コード値、更新WHEREはこれらと比較版である。分類取得は<code>code_length</code>と<code>allow_add</code>を読むもので、分類有効状態をSaveCodeAsyncの入口条件にする検査はない。追加は<code>is_protected=0</code>・版1を明示し、更新SQLは保護状態を変更しない。分類IDはVarChar・24、コード値はVarChar・10、名称はNVarChar・24、表示順はInt、有効状態はBit、期間はDate、備考はNVarChar・240、比較版はBigIntである。双方の日時はDateTimeOffset、実行者はNVarChar・128で渡す。根拠：<code>sources/Core/MasterMaintenanceService.cs:91-119</code>。</p>
+<h4>結果・例外時の扱い</h4>
+<p>対象なしと競合はMaintenanceResultで返す。既存コードへ比較版なしで要求した場合もConflictとなり、通常追加可の分類でも既存キーを無条件に上書きしない。無変更は要求比較版を返す。クラス同名警告は保存を拒否する条件ではなく、コード保存結果へは設定しない。</p>
+<p>管理者確認の拒否は取引開始前のUnauthorizedAccessExceptionで、MaintenanceResultへ変換しない。DB用catchも例外を再throwし、学生保存のUnknown・SystemError分類は行わない。commit中の例外で保存成否やrollback成功を断定しない。クラス保存helperはNULL出力をDBConcurrencyExceptionにするが、学生保存と同じDBNull検査はなく、その後の型変換例外も保守catchから再throwされる。根拠：<code>sources/Core/MasterMaintenanceService.cs:23-28</code>、<code>sources/Core/MasterMaintenanceService.cs:67-77</code>、<code>sources/Core/MasterMaintenanceService.cs:102-121</code>、<code>sources/Core/MasterMaintenanceService.cs:130-130</code>。</p>
+<h3>初期分類・コードの投入SQL</h3>
+<h4>処理概要</h4>
+<p>初期投入SQLは5分類と70コードを定義し、既存の初期値に差分があれば上書きせず拒否する。学生・クラスの初期データを作る処理ではない。根拠：<code>sources/database/002_seed.sql:8-91</code>。</p>
+<h4>処理手順</h4>
+<ol>
+<li>XACT_ABORTを有効にしてトランザクションを開始し、共通保存ロックを取得する。負のロック戻り値ならrollbackして51001を送出する。</li>
+<li>UTC日時とDB認証実行者を取得し、5分類・70コードの初期値を表変数へ用意する。</li>
+<li>既存初期分類の名称・桁数・追加可否・有効状態と、既存初期コードの名称・表示順・保護状態・有効状態・期間を比較する。</li>
+<li>差分があればrollbackして51002を送出する。</li>
+<li>差分がなければ不存在の分類、続いて不存在の分類・コード値の組を追加する。</li>
+<li>有効状態1、備考NULL、UTC作成更新日時、DB認証実行者、版1を明示設定してcommitする。</li>
+</ol>
+<p>根拠：<code>sources/database/002_seed.sql:2-14</code>、<code>sources/database/002_seed.sql:85-92</code>。</p>
+<h4>処理フロー</h4>
+<figure data-renderer-diagram="10"><pre><code class="language-mermaid">flowchart TD
+  A["XACT_ABORT ON・取引開始・共通ロック"] --&gt; B{"ロック戻り値が負"}
+  B --&gt;|"はい"| C["ROLLBACK・THROW 51001"]
+  B --&gt;|"いいえ"| D["既存初期行と定義値の比較"]
+  D --&gt; E{"差分あり"}
+  E --&gt;|"はい"| F["ROLLBACK・THROW 51002／上書きしない"]
+  E --&gt;|"いいえ"| G["不足分類INSERT・不足コードINSERT"]
+  G --&gt; H["COMMIT"]
+  A -.-&gt;|"その他SQL失敗"| X["SQL例外／XACT_ABORTの宣言に従う"]
+  D -.-&gt;|"その他SQL失敗"| X
+  G -.-&gt;|"その他SQL失敗"| X
+  H -.-&gt;|"COMMIT失敗"| X
+</code></pre></figure><h4>SQL・テーブル関連（ER図）</h4>
+<p>投入対象は概要のコード分類とコードである。分類へのFKに従って分類を先に追加する。学生、クラス、操作履歴へのINSERTはない。</p>
+<h4>DB操作の詳細</h4>
+<table data-renderer-columns="6" data-renderer-markdown="">
+<colgroup><col style="width:4%"/><col style="width:14%"/><col style="width:14%"/><col style="width:14%"/><col style="width:14%"/><col style="width:40%"/></colgroup>
+<thead>
+<tr>
+<th>分類ID</th>
+<th>論理名</th>
+<th>桁数</th>
+<th>通常追加</th>
+<th>初期コード数</th>
+<th>主な利用先</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GENDER</td>
+<td>性別</td>
+<td>1</td>
+<td>不可</td>
+<td>4</td>
+<td>学生の性別選択・保存</td>
+</tr>
+<tr>
+<td>ENROLLMENT_STATUS</td>
+<td>在籍区分</td>
+<td>2</td>
+<td>不可</td>
+<td>4</td>
+<td>在籍選択・検索・名称・席と終了日の判定</td>
+</tr>
+<tr>
+<td>PREFECTURE</td>
+<td>都道府県</td>
+<td>2</td>
+<td>不可</td>
+<td>47</td>
+<td>住所の選択・検索・名称表示</td>
+</tr>
+<tr>
+<td>RELATIONSHIP</td>
+<td>緊急連絡先続柄</td>
+<td>2</td>
+<td>可</td>
+<td>8</td>
+<td>学生の緊急連絡先続柄</td>
+</tr>
+<tr>
+<td>GRADE</td>
+<td>学年</td>
+<td>2</td>
+<td>可</td>
+<td>7</td>
+<td>クラスの学年、上位選択・検索・名称表示</td>
+</tr>
+</tbody>
+</table>
+<p>性別0は未回答、在籍01・02・03・04は在学・休学・卒業・退学、学年00は学年なしである。保護値は性別0、在籍4値、都道府県全値、学年00である。初期コードは開始1900-01-01、終了NULLとし、表示順・保護状態は定義値を使う。</p>
+<p>不存在判定は分類ID、または分類IDとコード値の組で行う。一致した既存行の版、日時、利用者、備考を更新するSQLではない。根拠：<code>sources/database/002_seed.sql:8-91</code>。</p>
+<h4>結果・例外時の扱い</h4>
+<p>ロック失敗は51001、初期値差分は51002で明示rollbackする。その他の失敗にSaveResultを返すcatchはない。SQLの宣言上の終了条件と実投入の成功は別である。</p>
+<h2>補足説明</h2>
+<h3>入力・内部値・保存値・表示値</h3>
+<p>画面からサービスへの入力方向と、DBから表示への出力方向を分ける。StudentSaveInputの値はToRequestでDraftと制御引数へ移され、正規化後に学生保存列へ対応する。年度・学年はクラス選択の補助と整合検査用であり、学生表に複製保存しない。</p>
+<table data-renderer-columns="5" data-renderer-markdown="">
+<colgroup><col style="width:4%"/><col style="width:18.6667%"/><col style="width:18.6667%"/><col style="width:18.6667%"/><col style="width:40%"/></colgroup>
+<thead>
+<tr>
+<th>論理項目・コントロール</th>
+<th>要求DTO・サービス側の型</th>
+<th>正規化・内部値</th>
+<th>保存先・DB属性</th>
+<th>検索・表示用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>学籍番号／REG-002 input</td>
+<td>StudentNo：<code>string</code>／Draft：<code>string</code></td>
+<td>Trim、NFKC、大文字化。先頭英数字、以降英数字・ハイフン。</td>
+<td>student_no：varchar(15)、NOT NULL</td>
+<td>前方一致、一覧、使用済み検査。既存変更不可。</td>
+</tr>
+<tr>
+<td>氏名／REG-003 input</td>
+<td>StudentName：<code>string</code>／Draft：<code>string</code></td>
+<td>表示保存値はTrim。name_keyはNFKC、大文字化、全空白除去。</td>
+<td>student_name：nvarchar(16)、name_key：nvarchar(320)。各NOT NULL</td>
+<td>表示は氏名、検索・同一人物候補はキー。</td>
+</tr>
+<tr>
+<td>氏名カナ／REG-004 input</td>
+<td>StudentNameKana：<code>string</code>／Draft：<code>string</code></td>
+<td>NFKC、ひらがな変換、空白集約。kana_keyは正規化カナの空白除去。</td>
+<td>student_name_kana、kana_key：各nvarchar(36)、NOT NULL</td>
+<td>表示カナと検索・候補用キーを分ける。</td>
+</tr>
+<tr>
+<td>生年月日／REG-005 元号select・年月日input</td>
+<td>BirthDateInput各成分：<code>string</code>／保存値：<code>DateOnly</code></td>
+<td>元号境界・正の年月日・許容日を確認して日付化。</td>
+<td>birth_date：date、NOT NULL</td>
+<td>同一人物候補の同日条件。和暦は保存日付から生成。</td>
+</tr>
+<tr>
+<td>性別／REG-006 select</td>
+<td>GenderCode：<code>string</code></td>
+<td>Trim・NFKC後の1桁数字。</td>
+<td>gender_code：varchar(1)、NOT NULL。新規分類はGENDER固定。</td>
+<td>GENDERのコード値を保存し、名称を候補表示。</td>
+</tr>
+<tr>
+<td>郵便番号／REG-007 input</td>
+<td>PostalCode：<code>string</code></td>
+<td>NFKC、空白・指定ハイフン類除去、7桁数字。</td>
+<td>postal_code：varchar(7)、NOT NULL</td>
+<td>個別読込で入力へ戻す。</td>
+</tr>
+<tr>
+<td>都道府県／REG-008 select</td>
+<td>PrefectureCode：<code>string</code></td>
+<td>Trim・NFKC後の2桁数字。</td>
+<td>prefecture_code：varchar(2)、NOT NULL。新規分類はPREFECTURE固定。</td>
+<td>条件検索、コード名称JOIN、住所表示。</td>
+</tr>
+<tr>
+<td>住所1・2／REG-009・010 input</td>
+<td>AddressLine1：<code>string</code>、AddressLine2：<code>string?</code></td>
+<td>Trim。住所1は必須、住所2の空入力はNULL。</td>
+<td>各nvarchar(90)。住所1はNOT NULL、住所2はNULL可。</td>
+<td>一覧住所は都道府県名＋住所1。住所2は一覧結果に含まない。</td>
+</tr>
+<tr>
+<td>本人電話・緊急電話／REG-011・022 input</td>
+<td>各<code>string?</code></td>
+<td>NFKC、空白・指定ハイフン類・括弧除去。国内0始まり10〜11桁、または＋と1〜9始まり7〜15桁を確認。</td>
+<td>phone_number、emergency_phone_number：各varchar(16)、NULL可</td>
+<td>電話検索は両列のORによる完全一致。一覧は本人電話を返す。</td>
+</tr>
+<tr>
+<td>本人メール／REG-012 input</td>
+<td>EmailAddress：<code>string?</code></td>
+<td>Trim、ローカル部・ドメイン形式確認、ドメインだけ小文字化。</td>
+<td>email_address：varchar(60)、NULL可</td>
+<td>連絡先組合せ検査、個別読込・保存。</td>
+</tr>
+<tr>
+<td>入学日・終了日／REG-013・015 date input</td>
+<td>入学日：<code>string</code>、終了日：<code>string?</code>／内部：<code>DateOnly</code>・<code>DateOnly?</code></td>
+<td>NFKC後のyyyy-MM-ddを日付化。終了日未設定はNULL。</td>
+<td>admission_date：date、NOT NULL。enrollment_end_date：date、NULL可。</td>
+<td>入学日範囲、在籍状態、クラス期間との整合。</td>
+</tr>
+<tr>
+<td>在籍区分／REG-014 select</td>
+<td>EnrollmentStatusCode：<code>string</code></td>
+<td>Trim・NFKC後の2桁数字。</td>
+<td>enrollment_status_code：varchar(2)、NOT NULL。新規分類はENROLLMENT_STATUS固定。</td>
+<td>検索、名称、席を使う01・02、終了日判定。</td>
+</tr>
+<tr>
+<td>年度・学年／REG-016・017 select</td>
+<td>SchoolYear：<code>int?</code>、GradeCode：<code>string?</code>／SaveRequestにも保持</td>
+<td>年度範囲、学年形式、選択クラスとの一致を確認。</td>
+<td>学生保存列なし。参照元はクラスのschool_year：smallint、grade_code：varchar(2)、各NOT NULL。</td>
+<td>上位選択・検索条件。既存値は保存class_idから復元。</td>
+</tr>
+<tr>
+<td>所属クラス／REG-018 select</td>
+<td>ClassId：<code>string?</code>／Draft：<code>long?</code></td>
+<td>NULL・空文字は未所属。他は正のInt64へ変換。</td>
+<td>class_id：bigint、NULL可</td>
+<td>所属保存キー、名称・年度・学年の参照、人数計算。</td>
+</tr>
+<tr>
+<td>緊急氏名・続柄／REG-020 input・REG-021 select</td>
+<td>各<code>string?</code></td>
+<td>氏名はTrim、続柄は2桁。続柄ありなら分類RELATIONSHIP、なしなら分類もNULL。</td>
+<td>氏名nvarchar(16)、分類varchar(24)、続柄varchar(2)。各NULL可。</td>
+<td>緊急電話を含む全設定・全未設定の検査。</td>
+</tr>
+<tr>
+<td>備考／REG-023 textarea</td>
+<td>Remarks：<code>string?</code></td>
+<td>改行をLFへ統一、Trim。空入力はNULL。</td>
+<td>remarks：nvarchar(240)、NULL可</td>
+<td>個別読込・保存。</td>
+</tr>
+<tr>
+<td>確認・変更理由／REG-024 textarea</td>
+<td>OperationReason：<code>string?</code>／SaveRequest.Reason：<code>string?</code></td>
+<td>複数行Textへ正規化。条件により必須。</td>
+<td>履歴operation_reason：nvarchar(120)、NULL可。学生通常保存列なし。</td>
+<td>終了区分訂正・有効な重複確認続行の理由。</td>
+</tr>
+<tr>
+<td>削除理由／REG-026 textarea</td>
+<td>StudentDeleteInput.Reason：<code>string</code>／サービス理由：<code>string</code></td>
+<td>必須の複数行Textへ正規化。</td>
+<td>学生delete_reasonと履歴operation_reason：各nvarchar(120)、列はNULL可だが削除時必須。</td>
+<td>削除情報とDELETE履歴へ同じ値を保存。</td>
+</tr>
+</tbody>
+</table>
+<p>根拠：<code>sources/Views/Students/Edit.cshtml:6-17</code>、<code>sources/Web/Inputs/StudentSaveInput.cs:9-60</code>、<code>sources/Core/Contracts.cs:8-29</code>、<code>sources/Core/Contracts.cs:66-70</code>、<code>sources/Core/StudentNormalizer.cs:47-158</code>、<code>sources/Core/JapaneseDateService.cs:17-59</code>、<code>sources/database/001_schema.sql:9-37</code>、<code>sources/Core/SqlServerStudentService.cs:30-37</code>、<code>sources/Core/SqlServerStudentService.cs:183-194</code>、<code>sources/Core/SqlServerStudentService.cs:409-413</code>。</p>
+<p>クラス選択時はJavaScriptが候補の年度・学年を上位項目へ反映し、上位変更で不一致となったクラスを解除する。候補キーと表示名称、人数・定員の参考表示、選択済値は別の情報である。学生ID・更新情報はDB由来の表示値、SnapshotId・検索復帰先・重複確認情報は制御値で、学生の通常業務保存列ではない。ExpectedVersionはDB版の比較引数であり、その値をそのまま新しい版として保存する処理ではない。根拠：<code>sources/Views/Students/Edit.cshtml:4-5</code>、<code>sources/Views/Students/Edit.cshtml:12-12</code>、<code>sources/wwwroot/js/site.js:8-8</code>。</p>
+<h3>文字上限・DB容量・SQLサイズ</h3>
+<p>サービスの文字数はUnicodeスカラー数で、サロゲートペアを1と数え、不正な単独サロゲートはArgumentExceptionとなる。Textは原入力上限、必要な改行統一、制御文字、Trim、必須・空値、正規化後上限の順で検査する。原入力上限を、Trim後の値だけの上限へ置き換えない。</p>
+<p>ブラウザーmaxlengthはUTF-16コード単位の制約である。<code>nvarchar(n)</code>のnは2バイトの格納単位であり、任意のUnicode文字をn個保存できる意味ではない。SQLパラメータSizeはさらに別の指定として記録する。</p>
+<table data-renderer-columns="5" data-renderer-markdown="">
+<colgroup><col style="width:4%"/><col style="width:18.6667%"/><col style="width:18.6667%"/><col style="width:18.6667%"/><col style="width:40%"/></colgroup>
+<thead>
+<tr>
+<th>値</th>
+<th>サービス原入力→正規化後上限</th>
+<th>DB容量</th>
+<th>保存パラメータ型・Size</th>
+<th>画面maxlength</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>学籍番号</td>
+<td>15→15スカラー、正規化後は許可ASCII形式</td>
+<td>varchar(15)</td>
+<td>VarChar・15</td>
+<td>30</td>
+</tr>
+<tr>
+<td>氏名・氏名キー</td>
+<td>氏名8→8。生成キーは160スカラー以内。</td>
+<td>nvarchar(16)・nvarchar(320)</td>
+<td>NVarChar・16、NVarChar・320</td>
+<td>氏名16、キー入力なし</td>
+</tr>
+<tr>
+<td>カナ・カナキー</td>
+<td>原入力36、表示保存値18スカラー以内。キーは空白除去値。</td>
+<td>各nvarchar(36)</td>
+<td>各NVarChar・36</td>
+<td>カナ72、キー入力なし</td>
+</tr>
+<tr>
+<td>郵便番号</td>
+<td>原入力10スカラー、保存値7桁</td>
+<td>varchar(7)</td>
+<td>VarChar・7</td>
+<td>20</td>
+</tr>
+<tr>
+<td>住所1・2</td>
+<td>各45→45スカラー</td>
+<td>各nvarchar(90)</td>
+<td>各NVarChar・90</td>
+<td>各90</td>
+</tr>
+<tr>
+<td>本人・緊急電話</td>
+<td>原入力20スカラー、保存形式最大16ASCII文字</td>
+<td>各varchar(16)</td>
+<td>各VarChar・16</td>
+<td>各40</td>
+</tr>
+<tr>
+<td>メール</td>
+<td>60→60スカラー、許可形式はASCII</td>
+<td>varchar(60)</td>
+<td>VarChar・60</td>
+<td>120</td>
+</tr>
+<tr>
+<td>緊急氏名</td>
+<td>8→8スカラー</td>
+<td>nvarchar(16)</td>
+<td>NVarChar・16</td>
+<td>16</td>
+</tr>
+<tr>
+<td>備考</td>
+<td>120→120スカラー</td>
+<td>nvarchar(240)</td>
+<td>NVarChar・240</td>
+<td>240</td>
+</tr>
+<tr>
+<td>確認・変更理由、削除理由</td>
+<td>各60→60スカラー</td>
+<td>nvarchar(120)</td>
+<td>NVarChar・120</td>
+<td>各120</td>
+</tr>
+<tr>
+<td>クラスコード・名称</td>
+<td>宣言保守：コード9→9、名称18→18スカラー</td>
+<td>varchar(9)・nvarchar(36)</td>
+<td>VarChar・9、NVarChar・36</td>
+<td>保守画面は未接続</td>
+</tr>
+<tr>
+<td>コード名称</td>
+<td>宣言保守：12→12スカラー</td>
+<td>nvarchar(24)、NOT NULL</td>
+<td>NVarChar・24</td>
+<td>保守画面は未接続</td>
+</tr>
+<tr>
+<td>分類名称</td>
+<td>DDL CHECKは12スカラー。通常保存処理の上限は未確認。</td>
+<td>nvarchar(24)、NOT NULL</td>
+<td>通常保存パラメータなし</td>
+<td>分類編集画面は未確認</td>
+</tr>
+</tbody>
+</table>
+<p>DDLの名称・住所・備考・理由・実行者等のCHECKは、SC照合順序で末尾記号を付けたLENから1を引き、末尾空白を含めたスカラー上限を設定する。識別値・コード・照合キーは<code>Latin1_General_100_BIN2</code>、名称・説明・実行者等は<code>Latin1_General_100_CS_AS_SC</code>である。分類名称の容量から通常保守の業務上限を補うことはしない。根拠：<code>sources/Core/StudentNormalizer.cs:37-117</code>、<code>sources/Core/StudentNormalizer.cs:124-142</code>、<code>sources/Core/SqlServerStudentService.cs:30-37</code>、<code>sources/Core/MasterMaintenanceService.cs:32-35</code>、<code>sources/Core/MasterMaintenanceService.cs:73-73</code>、<code>sources/Core/MasterMaintenanceService.cs:82-83</code>、<code>sources/Core/MasterMaintenanceService.cs:115-115</code>、<code>sources/database/001_schema.sql:9-153</code>、<code>sources/Views/Students/Edit.cshtml:6-17</code>。</p>
+<h3>共通制約と状態別の整合</h3>
+<table data-renderer-columns="3" data-renderer-markdown="">
+<colgroup><col style="width:4%"/><col style="width:56%"/><col style="width:40%"/></colgroup>
+<thead>
+<tr>
+<th>対象</th>
+<th>制約・業務上の意味</th>
+<th>根拠</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>主キー</td>
+<td>学生ID、クラスID、履歴IDはbigint IDENTITY(1,1)のPK。分類は分類ID、コードは分類ID・コード値の複合PK。</td>
+<td><code>sources/database/001_schema.sql:8-43</code>、<code>sources/database/001_schema.sql:63-80</code>、<code>sources/database/001_schema.sql:102-102</code>、<code>sources/database/001_schema.sql:127-150</code></td>
+</tr>
+<tr>
+<td>学籍番号</td>
+<td>一意制約と使用済み検査は削除行も含む。論理削除後も同番号を再使用できない。</td>
+<td><code>sources/database/001_schema.sql:187-187</code>、<code>sources/Core/SqlServerStudentService.cs:264-266</code></td>
+</tr>
+<tr>
+<td>クラス一意性</td>
+<td>年度・クラスコードの組が一意。同年度・同学年・同名は保守の警告で、名称一意制約ではない。</td>
+<td><code>sources/database/001_schema.sql:188-188</code>、<code>sources/Core/MasterMaintenanceService.cs:69-76</code></td>
+</tr>
+<tr>
+<td>固定分類</td>
+<td>学生の性別GENDER、都道府県PREFECTURE、在籍ENROLLMENT_STATUS、クラスの学年GRADEを固定する。緊急設定時の続柄はRELATIONSHIP。</td>
+<td><code>sources/database/001_schema.sql:196-199</code></td>
+</tr>
+<tr>
+<td>学生日付</td>
+<td>生年月日・入学日は1900年以降で、生年月日≦入学日。サービスは業務日以前も要求するがDDLに業務日上限はない。</td>
+<td><code>sources/database/001_schema.sql:198-198</code>、<code>sources/Core/JapaneseDateService.cs:17-29</code>、<code>sources/Core/JapaneseDateService.cs:52-59</code></td>
+</tr>
+<tr>
+<td>在学・休学</td>
+<td>区分01・02は終了日NULL、クラス必須。class_id列のNULL可否と状態別必須を分ける。</td>
+<td><code>sources/database/001_schema.sql:198-198</code>、<code>sources/Core/StudentNormalizer.cs:152-154</code></td>
+</tr>
+<tr>
+<td>卒業・退学</td>
+<td>区分03・04は終了日必須、入学日以降。所属・区分・日付の変更時はクラス期間との重なりも確認する。</td>
+<td><code>sources/database/001_schema.sql:198-198</code>、<code>sources/Core/SqlServerStudentService.cs:372-374</code></td>
+</tr>
+<tr>
+<td>本人連絡先</td>
+<td>本人電話・メール・緊急電話の少なくとも一つを要求する。</td>
+<td><code>sources/database/001_schema.sql:199-199</code>、<code>sources/Core/StudentNormalizer.cs:155-155</code></td>
+</tr>
+<tr>
+<td>緊急連絡先</td>
+<td>氏名・続柄分類・続柄コード・電話は全NULLまたは全設定。設定時の分類はRELATIONSHIP。</td>
+<td><code>sources/database/001_schema.sql:199-199</code>、<code>sources/Core/StudentNormalizer.cs:147-157</code></td>
+</tr>
+<tr>
+<td>論理削除</td>
+<td>非削除は削除日時・利用者・理由が全NULL、削除済みは全設定。</td>
+<td><code>sources/database/001_schema.sql:200-200</code></td>
+</tr>
+<tr>
+<td>クラス期間・定員</td>
+<td>年度1900〜9998、開始≦終了、年度4月1日〜翌年3月31日内。定員NULLまたは1〜9999、表示順非負。</td>
+<td><code>sources/database/001_schema.sql:201-201</code></td>
+</tr>
+<tr>
+<td>コード桁数・期間</td>
+<td>分類桁数は1〜10。コードは非空数字列、開始1900年以降、終了NULLまたは開始以降、表示順非負。分類別桁数照合は保守が行い、DDLに分類表との桁数照合CHECKはない。</td>
+<td><code>sources/database/001_schema.sql:202-203</code>、<code>sources/Core/MasterMaintenanceService.cs:91-96</code></td>
+</tr>
+<tr>
+<td>履歴</td>
+<td>操作はCREATE・UPDATE・DELETE・DISABLE・ENABLE。変更列名は有効JSONかつ配列開始記号を先頭に要求する。全要素の実在列名まではDDLで検査しない。</td>
+<td><code>sources/database/001_schema.sql:204-205</code></td>
+</tr>
+</tbody>
+</table>
+<h3>候補の状態と保存時検査</h3>
+<p>コード候補DTOのIsActiveはコード・分類双方の有効状態のANDである。期間は別属性で返す。検索画面は停止・期間外のコードも表示する。登録画面の性別・都道府県・在籍・続柄は、現在利用可能な候補または読込時の既存値を選択可能にする。学年の上位選択はGRADE候補を使うが、学生への直接保存ではなくクラス整合の引数である。根拠：<code>sources/Core/Contracts.cs:61-65</code>、<code>sources/Core/SqlServerStudentService.cs:203-214</code>、<code>sources/Views/Students/Edit.cshtml:8-13</code>、<code>sources/Views/Students/Search.cshtml:5-5</code>。</p>
+<p>既存クラスは停止・期間外でも保持できる。卒業・退学の新しいクラス選択は入力した在籍期間との重なり、その他の新しい選択はクラスの有効状態と現在期間を画面が使う。年度候補はクラスの実年度から作り、登録画面では入力年度も加える。初期性別0・在籍01はDTO既定値であり、クラス初期データの存在を意味しない。表示・選択可能であっても、保存時のDB再検査成功は保証しない。根拠：<code>sources/Web/Inputs/StudentSaveInput.cs:13-21</code>、<code>sources/Web/Inputs/StudentSaveInput.cs:44-54</code>、<code>sources/Views/Students/Edit.cshtml:12-12</code>、<code>sources/Core/SqlServerStudentService.cs:344-383</code>。</p>
+<p>候補名称の保存元も区別する。CodeEntryの名称はコード保存列、SchoolClassの名称はクラス保存列であり、各保守に12・18スカラーの上限がある。分類名称は保持されるがLookupSetには含まれない。名称変更は次回候補取得や検索JOINへ反映する構造で、学生の保存コード・所属IDを名称へ置き換える処理ではない。根拠：<code>sources/Core/Contracts.cs:61-65</code>、<code>sources/Core/MasterMaintenanceService.cs:33-35</code>、<code>sources/Core/MasterMaintenanceService.cs:82-83</code>、<code>sources/Core/SqlServerStudentService.cs:82-90</code>。</p>
+<h3>DEFAULT・採番・日時・比較版</h3>
+<table data-renderer-columns="3" data-renderer-markdown="">
+<colgroup><col style="width:4%"/><col style="width:56%"/><col style="width:40%"/></colgroup>
+<thead>
+<tr>
+<th>設定対象</th>
+<th>DDL DEFAULT</th>
+<th>処理による明示設定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>学生の削除状態</td>
+<td>0</td>
+<td>新規INSERTで0、論理削除で1。</td>
+</tr>
+<tr>
+<td>学生・クラス・分類・コードの版</td>
+<td>1</td>
+<td>学生・クラス・コードの新規、分類・コードseedで1。更新処理は1加算。分類の通常更新処理はない。</td>
+</tr>
+<tr>
+<td>クラス・コードの表示順</td>
+<td>0</td>
+<td>保守要求値またはseed定義値。</td>
+</tr>
+<tr>
+<td>クラス・分類・コードの有効状態</td>
+<td>1</td>
+<td>保守要求値またはseedの1。</td>
+</tr>
+<tr>
+<td>履歴の重複確認有無</td>
+<td>0</td>
+<td>学生保存は候補件数0超、削除はfalse。保守LogはSQLリテラル0。</td>
+</tr>
+<tr>
+<td>作成更新日時・利用者</td>
+<td>なし</td>
+<td>学生はWeb利用者とUTC時刻、保守・seedはDB認証実行者とUTC時刻。</td>
+</tr>
+</tbody>
+</table>
+<p>IDENTITY採番、DEFAULT、処理の明示設定は別の契約である。コードの保護状態にはDEFAULTがなく、通常追加は0、seedは定義値を明示する。根拠：<code>sources/database/001_schema.sql:8-42</code>、<code>sources/database/001_schema.sql:63-101</code>、<code>sources/database/001_schema.sql:116-149</code>、<code>sources/Core/SqlServerStudentService.cs:294-307</code>、<code>sources/Core/MasterMaintenanceService.cs:113-135</code>、<code>sources/database/002_seed.sql:88-91</code>。</p>
+<p>業務表の作成更新日時、学生削除日時、履歴実行日時は<code>datetimeoffset(7)</code>で、DDLはUTCオフセット0を要求する。学生はTimeProviderのUTC時刻、保守はDateTimeOffset.UtcNow、seedはSYSUTCDATETIMEにUTCオフセットを付けた値を使う。表示は日本時間の<code>yyyy/MM/dd HH:mm:ss</code>へ変換する。</p>
+<p>4業務表の<code>row_version</code>は正のbigintで、SQL Serverの自動rowversion型ではない。新規1と更新時加算は処理が設定する。履歴の前版はNULL可、後版はNOT NULLだが、履歴版自体に正数CHECKはない。根拠：<code>sources/database/001_schema.sql:35-59</code>、<code>sources/database/001_schema.sql:75-109</code>、<code>sources/database/001_schema.sql:122-153</code>、<code>sources/Core/SqlServerStudentService.cs:44-45</code>、<code>sources/Core/SqlServerStudentService.cs:292-307</code>、<code>sources/Core/MasterMaintenanceService.cs:40-40</code>、<code>sources/database/002_seed.sql:7-7</code>、<code>sources/Infrastructure/WebPresentation.cs:5-7</code>。</p>
+<h3>排他・接続・取消・索引</h3>
+<p>学生保存・削除、宣言されたマスター保守、seedは、資源<code>test-project1:student-write</code>のExclusiveアプリケーションロックをTransaction所有で取得する。待機5000ミリ秒、DB Principalはpublicで、負の戻り値は51001となる。学生・保守が使うGateはXACT_ABORT ONを設定する。比較版はこのロックと併用するが、同じ規約を使わない外部更新まで排除する保証はない。根拠：<code>sources/Core/SqlServerStudentService.cs:92-101</code>、<code>sources/Core/MasterMaintenanceService.cs:39-42</code>、<code>sources/Core/MasterMaintenanceService.cs:88-90</code>、<code>sources/database/002_seed.sql:3-6</code>。</p>
+<p>学生接続は暗号化必須、TrustServerCertificate=falseで構築し、Open時にSNAPSHOT有効状態を確認する。共通Commandで作る通常SQLのタイムアウトは30秒である。ParamはSQL型・必要なSizeを指定し、DateOnlyを午前0時のDateTime、NULLをDBNull.Valueへ変換する。DB実行・読取・commitには取消トークンを渡すが、例外処理用rollback helperはCancellationToken.Noneを使う。根拠：<code>sources/Core/SqlServerStudentService.cs:39-72</code>、<code>sources/Core/SqlServerStudentService.cs:329-329</code>。</p>
+<table data-renderer-columns="3" data-renderer-markdown="">
+<colgroup><col style="width:4%"/><col style="width:56%"/><col style="width:40%"/></colgroup>
+<thead>
+<tr>
+<th>索引名</th>
+<th>キー・条件</th>
+<th>処理との対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ix_student_birth</td>
+<td>birth_date、非削除行</td>
+<td>同一人物候補の同一生年月日条件。</td>
+</tr>
+<tr>
+<td>ix_student_class_status</td>
+<td>class_id・enrollment_status_code、非削除行</td>
+<td>所属条件、在学・休学人数。</td>
+</tr>
+<tr>
+<td>ix_student_admission</td>
+<td>admission_date、非削除行</td>
+<td>入学日範囲・並び順。</td>
+</tr>
+<tr>
+<td>ix_student_updated</td>
+<td>updated_at、非削除行</td>
+<td>更新日時の並び順。</td>
+</tr>
+<tr>
+<td>ix_student_phone</td>
+<td>phone_number、非削除行</td>
+<td>本人電話一致。</td>
+</tr>
+<tr>
+<td>ix_student_emergency_phone</td>
+<td>emergency_phone_number、非削除行</td>
+<td>緊急電話一致。</td>
+</tr>
+<tr>
+<td>ix_operation_target</td>
+<td>target_table・target_key・executed_at</td>
+<td>履歴対象と実行日時。接続された履歴照会処理の存在は意味しない。</td>
+</tr>
+</tbody>
+</table>
+<p>根拠：<code>sources/database/001_schema.sql:206-212</code>、<code>sources/Core/SqlServerStudentService.cs:137-164</code>、<code>sources/Core/SqlServerStudentService.cs:269-271</code>、<code>sources/Core/SqlServerStudentService.cs:378-380</code>。</p>
+<h3>操作履歴の意味とSQLへの渡し方</h3>
+<p>履歴は変更列名の配列をJSONで保存し、変更前後の個人情報値を保存する実装ではない。学生新規は保存列と固定分類・状態・作成更新情報・版、更新は差分列と更新情報・版、削除は削除関連7列を記録する。保守Logの変更列名は保守値辞書から抽出し、学生Auditと同じ列名集合へ補完しない。</p>
+<table data-renderer-columns="4" data-renderer-markdown="">
+<colgroup><col style="width:4%"/><col style="width:28%"/><col style="width:28%"/><col style="width:40%"/></colgroup>
+<thead>
+<tr>
+<th>主体</th>
+<th>対象表・対象キー</th>
+<th>操作・版</th>
+<th>実行者・理由・確認</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>学生登録・更新</td>
+<td>m_student、学生IDの十進文字列</td>
+<td>CREATE／UPDATE。新規前版NULL、更新前版は取得版、後版は保存後版。</td>
+<td>Web利用者Principal、UTC時刻、受付Guid。正規化理由。重複確認は保存時候補件数0超。</td>
+</tr>
+<tr>
+<td>学生論理削除</td>
+<td>m_student、学生IDの十進文字列</td>
+<td>DELETE、前版は比較版、後版は版＋1。</td>
+<td>Web利用者Principal、UTC時刻、受付Guid。削除理由、重複確認false。</td>
+</tr>
+<tr>
+<td>宣言されたクラス保守</td>
+<td>m_class、クラスIDの十進文字列</td>
+<td>新規CREATE、同じ有効状態UPDATE、無効→有効ENABLE、有効→無効DISABLE。前版は要求比較版、後版は保存後版。</td>
+<td>DB認証実行者、UTC時刻、新規Guid。理由NULL、重複確認false。</td>
+</tr>
+<tr>
+<td>宣言されたコード保守</td>
+<td>m_code、分類ID＋「:」＋コード値</td>
+<td>クラスと同じ操作判定。新規前版NULL、更新前版は要求比較版、後版は保存後版。</td>
+<td>DB認証実行者、UTC時刻、新規Guid。理由NULL、重複確認false。</td>
+</tr>
+</tbody>
+</table>
+<p>学生Auditと保守Logでは、SQLリテラルとパラメータの指定が異なる。</p>
+<table data-renderer-columns="3" data-renderer-markdown="">
+<colgroup><col style="width:4%"/><col style="width:56%"/><col style="width:40%"/></colgroup>
+<thead>
+<tr>
+<th>履歴項目</th>
+<th>学生Audit</th>
+<th>保守Log</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>対象表</td>
+<td>SQLリテラル<code>'m_student'</code>。対象表名パラメータはない。</td>
+<td><code>@table</code>：VarChar・21。</td>
+</tr>
+<tr>
+<td>対象キー</td>
+<td><code>@id</code>：VarChar・35。業務UPDATEのBigInt IDとは別の履歴文字列。</td>
+<td><code>@key</code>：VarChar・35。</td>
+</tr>
+<tr>
+<td>操作・前後版</td>
+<td><code>@op</code>：VarChar・11、<code>@before</code>・<code>@after</code>：BigInt。</td>
+<td>同じ型・Sizeのパラメータ。</td>
+</tr>
+<tr>
+<td>変更列名</td>
+<td><code>@changed</code>：NVarChar・Size=-1、列名配列のJSON。</td>
+<td>同じ型・Size、保守差分列名のJSON。</td>
+</tr>
+<tr>
+<td>実行者・日時</td>
+<td><code>@actor</code>：NVarChar・128、<code>@now</code>：DateTimeOffset。</td>
+<td>同じ型・Size、DB認証実行者を渡す。</td>
+</tr>
+<tr>
+<td>相関ID</td>
+<td><code>@request</code>：UniqueIdentifier、保存・削除受付Guid。</td>
+<td><code>@request</code>：UniqueIdentifier、Log内で新規Guid。</td>
+</tr>
+<tr>
+<td>理由</td>
+<td><code>@reason</code>：NVarChar・120。</td>
+<td>SQLリテラルNULL。理由パラメータはない。</td>
+</tr>
+<tr>
+<td>重複確認有無</td>
+<td><code>@confirmed</code>：Bit。</td>
+<td>SQLリテラル0。確認パラメータはない。</td>
+</tr>
+</tbody>
+</table>
+<p>対象表名・対象キーに業務表へのFKはない。DB列容量を、存在しないパラメータのSizeとして記載しない。根拠：<code>sources/Core/SqlServerStudentService.cs:306-307</code>、<code>sources/Core/SqlServerStudentService.cs:385-389</code>、<code>sources/Core/SqlServerStudentService.cs:413-413</code>、<code>sources/Core/MasterMaintenanceService.cs:74-75</code>、<code>sources/Core/MasterMaintenanceService.cs:118-119</code>、<code>sources/Core/MasterMaintenanceService.cs:132-135</code>、<code>sources/Core/AuditOperation.cs:6-7</code>。</p>
+<h3>Web利用者権限とDBロール</h3>
+<p>Webは認証ClaimsからViewer・Staff・Administratorを取得する。Viewerの登録更新、管理者以外の削除をWeb入口と学生サービスで拒否する。DBロール所属は別の契約で、Webの管理者ClaimからDB接続のstudent_admin所属を導くことはできない。根拠：<code>sources/Infrastructure/RequestIdentity.cs:7-16</code>、<code>sources/Core/SqlServerStudentService.cs:229-230</code>、<code>sources/Core/SqlServerStudentService.cs:394-395</code>。</p>
+<table data-renderer-columns="4" data-renderer-markdown="">
+<colgroup><col style="width:4%"/><col style="width:28%"/><col style="width:28%"/><col style="width:40%"/></colgroup>
+<thead>
+<tr>
+<th>DBロール</th>
+<th>明示GRANT</th>
+<th>明示DENY</th>
+<th>継承関係</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>student_viewer</td>
+<td>学生・クラス・分類・コードのSELECT</td>
+<td>このSQLに明示DENYなし</td>
+<td>student_staffがこのロールのメンバーとなる。</td>
+</tr>
+<tr>
+<td>student_staff</td>
+<td>学生INSERT・UPDATE、履歴INSERT</td>
+<td>学生DELETE、履歴UPDATE・DELETE</td>
+<td>student_viewerの権限を継承。student_adminがこのロールのメンバーとなる。</td>
+</tr>
+<tr>
+<td>student_admin</td>
+<td>クラス・コードINSERT・UPDATE</td>
+<td>クラス・コードDELETE、分類INSERT・UPDATE・DELETE</td>
+<td>student_staffの権限を継承。宣言保守は接続ごとに所属を確認する。</td>
+</tr>
+</tbody>
+</table>
+<p>この権限SQLに履歴SELECT、確認表・実行状態表のDML許可はない。分類初期投入と通常Web用権限を分け、管理者が通常画面で分類を自由に編集できる仕様にはしない。根拠：<code>sources/database/003_web_permissions.sql:8-24</code>、<code>sources/Core/MasterMaintenanceService.cs:23-26</code>。</p>
+<h3>補助DDLと一時情報の保持領域</h3>
+<table data-renderer-columns="4" data-renderer-markdown="">
+<colgroup><col style="width:4%"/><col style="width:28%"/><col style="width:28%"/><col style="width:40%"/></colgroup>
+<thead>
+<tr>
+<th>保持領域</th>
+<th>保持する値</th>
+<th>接続・検査・寿命</th>
+<th>根拠</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dbo.t_confirmation</td>
+<td>uniqueidentifierの確認ID、所有者、セッションGuid、任意対象ID・版、binary(32)の入力・候補ハッシュ、UTC期限、消費状態。</td>
+<td>webTokens=false分岐の保存先。Web登録はtrueを指定するため選ばない。契約対象5表の個別定義へ追加しない。</td>
+<td><code>sources/database/001_schema.sql:156-168</code>、<code>sources/Infrastructure/WebHostSetup.cs:19-19</code></td>
+</tr>
+<tr>
+<td>WebConfirmations</td>
+<td>CurrentUser、対象ID・版、両ハッシュ、期限、Busy。</td>
+<td>static ConcurrentDictionary。保存入口のnowを基準に10分。所有者・セッション・対象・版・期限・ハッシュ・Busyを照合する。</td>
+<td><code>sources/Core/SqlServerStudentService.cs:19-29</code>、<code>sources/Core/SqlServerStudentService.cs:229-229</code>、<code>sources/Core/SqlServerStudentService.cs:276-278</code>、<code>sources/Core/SqlServerStudentService.cs:330-335</code></td>
+</tr>
+<tr>
+<td>EditorSnapshotStore</td>
+<td>所有者、セッション、対象ID、読込Detail、元入力のJSONコピー、検索復帰版、期限。</td>
+<td>Singletonのメモリ辞書、作成から30分。resetは元入力と読込情報を使い候補を再取得。最新再読込は学生DBを読み直す。</td>
+<td><code>sources/Infrastructure/EditorSnapshotStore.cs:7-11</code>、<code>sources/Infrastructure/WebHostSetup.cs:13-13</code>、<code>sources/Web/Controllers/StudentsController.cs:25-35</code></td>
+</tr>
+<tr>
+<td>SearchContextStore</td>
+<td>所有者、セッション、タブ、検索状態版、適用条件、最終結果、SemaphoreSlim、期限。</td>
+<td>メモリ辞書、初期版1、30分。待機前後に所有者・期限等を確認し、要求版・版上限を検査する。正常Use後に期限を延長する。</td>
+<td><code>sources/Infrastructure/SearchContextStore.cs:9-15</code></td>
+</tr>
+<tr>
+<td>FlashMessageStore</td>
+<td>利用者・セッション・検索状態IDを組にしたキー、通知、期限。</td>
+<td>メモリ辞書、10分。TakeのTryRemoveで一回取り出す。保存・削除後の303復帰通知に使う。</td>
+<td><code>sources/Infrastructure/FlashMessageStore.cs:6-9</code>、<code>sources/Web/Controllers/StudentsController.cs:38-38</code></td>
+</tr>
+<tr>
+<td>dbo.t_runtime_state</td>
+<td>varchar(64)の状態ID、所有者、セッション文字列、種別、varbinary(max)のペイロード、UTC期限、正のbigint版、消費状態。</td>
+<td>DDL宣言はあるが、上記ストアから接続された読書きは確認できない。暗号化・復号・消費を稼働処理として定義しない。</td>
+<td><code>sources/database/001_schema.sql:171-184</code>、<code>sources/Infrastructure/EditorSnapshotStore.cs:7-11</code>、<code>sources/Infrastructure/SearchContextStore.cs:9-15</code>、<code>sources/Infrastructure/FlashMessageStore.cs:6-9</code></td>
+</tr>
+</tbody>
+</table>
+<p>Web確認はcommit成功後に除去し、保存の最後のcatchでUnknownとなった場合も除去する。取得済み確認があり、成功でもUnknownでもない終了ではfinallyがBusyを解放する。期限判定に使うnowは保存入口の取得値で、照合直前に取り直していない。入力変更・確認取消のJavaScriptはhiddenの確認値を空にする操作で、DB確認行の消費UPDATEではない。根拠：<code>sources/Core/SqlServerStudentService.cs:313-335</code>、<code>sources/wwwroot/js/site.js:3-6</code>。</p>
+<p>未選択のDB確認分岐は、所有者・セッション・対象ID・比較版・期限・未消費を条件にUPDLOCKでハッシュを読む。確認発行は業務rollback後の別トランザクションINSERT、消費は業務更新と同じトランザクションで確認ID・未消費を条件にUPDATEし、更新件数1を要求する。この宣言をWebメモリ確認の永続化として扱わない。根拠：<code>sources/Core/SqlServerStudentService.cs:279-284</code>、<code>sources/Core/SqlServerStudentService.cs:308-311</code>、<code>sources/Core/SqlServerStudentService.cs:337-342</code>。</p>
+<p>検索状態版は検索・ページ・クリア、および適用済み条件がある再開で加算する。適用条件がない再開は未検索表示を返し、版を加算しない。検索状態版は学生DBの比較版とは別である。根拠：<code>sources/Infrastructure/WebStudentCoordinator.cs:7-15</code>、<code>sources/Infrastructure/SearchContextStore.cs:14-14</code>。</p>
+<h3>受信・変換・再描画の境界</h3>
+<p>非nullable参照型への暗黙Requiredは抑止されている。DTOのstring宣言とブラウザーrequiredを受信NULL排除の実行保証にしない。ToRequestはBirthDateInput全体のNULLを補完するが、内部Year・Month・Dayは補完しない。有効な元号の後でこれらのNormalizeへNULLが届く経路、入学日NormalizeへNULLが届く経路は、TextがNULLを空文字にして必須検査へ進む経路とは異なる。NormalizeのSetと保存前catchが扱うInputValidationException・ArgumentExceptionへNULL参照例外を含めない。根拠：<code>sources/Infrastructure/WebHostSetup.cs:16-16</code>、<code>sources/Web/Inputs/StudentSaveInput.cs:34-43</code>、<code>sources/Core/StudentNormalizer.cs:47-55</code>、<code>sources/Core/StudentNormalizer.cs:119-143</code>、<code>sources/Core/JapaneseDateService.cs:19-24</code>、<code>sources/Core/JapaneseDateService.cs:52-59</code>、<code>sources/Core/SqlServerStudentService.cs:232-239</code>。</p>
+<p>SnapshotIdはNULL・空文字・不在キーを一律409へまとめない。EditorSnapshotStore.Getは明示NULL検査より先にConcurrentDictionary.TryGetValueを呼ぶ。NULL引数が届く場合のライブラリ例外経路と、空文字・不在キー・期限切れの独自409、所有者・セッション・対象不一致の403を分ける。SearchContextStore.Getには先行NULL検査がある。依存実装と実受信結果がないため、任意のフォーム欠落がどの値として到達するかは別途確認対象である。根拠：<code>sources/Infrastructure/EditorSnapshotStore.cs:10-10</code>、<code>sources/Infrastructure/SearchContextStore.cs:13-14</code>。</p>
+<p>保存でModelStateまたはToRequestが拒否された場合も、元の入力を再表示モデルに保持する。EditビューはClassIdを候補IDの文字列と比較し、年度値を候補集合へ加え、クラス期間の表示判定にはDateOnly.TryParseを使う。ClassIdを再描画時にIdParserへ渡す処理ではない。一方、候補取得、Tag Helper、ビュー評価が完了するまでは応答確定とは扱わない。取得・描画の二次例外はControllerの変換用catchの範囲を越え、応答開始前だけmiddlewareの変換対象となる。根拠：<code>sources/Web/Controllers/StudentsController.cs:30-33</code>、<code>sources/Views/Students/Edit.cshtml:2-12</code>、<code>sources/Infrastructure/WebHostSetup.cs:22-24</code>。</p>
+<h3>配備検証SQLの宣言範囲</h3>
+<p>権限SQLと検証SQLはDB名を<code>contextbase_test_project1_mvc</code>に限定する。検証SQLはExpressメジャー17、SNAPSHOT有効、dbo配下の7表・列数、FKとCHECKの有効かつ信頼状態、FK数7、続柄のNULL属性・FK・CHECK、分類数5、初期70コードキーの存在、明示GRANT・DENYとロール継承を検査する。コード総数を70へ固定する条件はなく、末尾SELECTで現在件数を返す。</p>
+<p>末尾のPASSは条件を通過した場合に返すSQLの宣言である。検査対象はDBローカルの明示権限で、Windowsグループ・サーバー権限を含む実効権限とは別である。根拠：<code>sources/database/003_web_permissions.sql:5-7</code>、<code>sources/database/004_verify_deployment.sql:3-25</code>、<code>sources/database/004_verify_deployment.sql:26-99</code>、<code>sources/database/004_verify_deployment.sql:100-134</code>。</p>
+<h3>関連文書</h3>
+<p>以下は提示された文書計画との対応で、各リンク先は未生成である。5個の個別テーブル定義は項目一覧に対応させている。</p>
+<table data-renderer-columns="4" data-renderer-markdown="">
+<colgroup><col style="width:4%"/><col style="width:28%"/><col style="width:28%"/><col style="width:40%"/></colgroup>
+<thead>
+<tr>
+<th>文書ID・kind</th>
+<th>正式パスと本書からのリンク</th>
+<th>本書との対応</th>
+<th>生成状態</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CSHARP_ASPNET-BAS-STU-02／basic-design</td>
+<td><a href="02_%E5%AD%A6%E7%94%9F%E7%99%BB%E9%8C%B2%E7%94%BB%E9%9D%A2.md">基本設計書/02_学生登録画面.md</a></td>
+<td>登録・編集・参照の項目・イベントと、保存先・状態別整合を対応させる。</td>
+<td>未生成</td>
+</tr>
+<tr>
+<td>CSHARP_ASPNET-BAS-STU-04／code-design</td>
+<td><a href="04_%E3%82%B3%E3%83%BC%E3%83%89%E8%A8%AD%E8%A8%88%E6%9B%B8.md">基本設計書/04_コード設計書.md</a></td>
+<td>分類別コード、候補、初期値、クラス・コード保守の宣言契約を対応させる。</td>
+<td>未生成</td>
+</tr>
+<tr>
+<td>CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-002／detailed-specification</td>
+<td><a href="../%E8%A9%B3%E7%B4%B0%E4%BB%95%E6%A7%98%E6%9B%B8/CSharp_ASPNET/02_%E5%AD%A6%E7%94%9F%E7%99%BB%E9%8C%B2%E7%94%BB%E9%9D%A2.md">詳細仕様書/CSharp_ASPNET/02_学生登録画面.md</a></td>
+<td>実コントロール、受信・変換、サービス引数、SQL、一時状態、例外・最終応答の詳細を対応させる。</td>
+<td>未生成</td>
+</tr>
+</tbody>
+</table>
+</body></html>

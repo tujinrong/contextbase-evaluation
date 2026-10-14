@@ -1,0 +1,17 @@
+flowchart TD
+ A[2：サービス検索] --> B[ページ等の検査・コード正規化]
+ B --> C[SNAPSHOT内のコード存在・所属整合確認]
+ B -->|入力検証例外| V[ValidationFailed・422再表示へ]
+ B -->|ArgumentException| V
+ C -->|ArgumentException| V
+ C -->|正常| D[全検索条件を適用・TOP 10001件確認]
+ D --> E{10000件を超えるか}
+ E -->|はい| F[NoChange<br/>件数10001・一覧空・超過真]
+ E -->|いいえ| G[ページ行取得・commit<br/>NoChange・実件数・行・超過偽]
+ F --> H[各枝の結果を保持<br/>実行条件保存・版加算・期限延長]
+ G --> H
+ H --> I[候補再取得・原入力と結果を再表示]
+ C -.->|DB<br/>等の未処理例外| U[Web例外処理へ]
+ D -.->|DB<br/>・取消例外| U
+ G -.->|DB<br/>・取消例外| U
+ I -.->|取得・ビューの二次例外| U

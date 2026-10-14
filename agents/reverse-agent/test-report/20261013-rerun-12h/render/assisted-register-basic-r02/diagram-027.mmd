@@ -1,0 +1,11 @@
+flowchart LR
+    SNAP[Snapshot Original・Detail参照] -->|取消| E[読込時入力のEdit]
+    MASTER[コード・クラス・人数] -->|候補再取得| E
+    STUDENT[m_student 最新値と版] -->|再読込| NEW[新Snapshot・Edit]
+    MASTER --> NEW
+    CONTEXT[SearchContext Applied・Revision] -->|Appliedありだけ| QUERY[学生検索・表示マスタJOIN]
+    QUERY --> RESULT[再検索結果・版加算]
+    CONTEXT -->|Appliedなし| UNS[未検索・版保持]
+    FLASH[FlashMessageStore] -->|一度取得| VIEW[検索表示]
+    RESULT --> VIEW
+    UNS --> VIEW

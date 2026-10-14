@@ -1,0 +1,7998 @@
+{
+  "workbook": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\test-report\\20261013-rerun-12h\\source-pilot\\assisted-index-oplog-r04-delivery-r18\\xlsx-r01\\Excel\\基本設計書\\03_テーブル仕様書.xlsx",
+  "workbookSha256": "a689b5d6e2f54462eae73cf8cf68506a44c2fd45bac3d2e4312a2755b2f520c1",
+  "manifest": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\test-report\\20261013-rerun-12h\\source-pilot\\assisted-index-oplog-r04-delivery-r18\\xlsx-r01\\delivery-manifest.json",
+  "manifestSha256": "1b0e65ad711f8bb28a618d6ae086d01bac8558d0273cc2f968d9ac6f399d72dc",
+  "sheets": [
+    "表紙",
+    "01_概要",
+    "02_テーブル一覧",
+    "03_イベント仕様",
+    "04_補足説明"
+  ],
+  "cells": [
+    {
+      "sheet": "表紙",
+      "cell": "O6",
+      "value": "テーブル仕様書（索引・データ関連・共通保存規則）",
+      "range": "O6:AU9",
+      "sourceLines": null
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A1",
+      "value": "概要",
+      "range": "A1:DP1",
+      "sourceLines": null
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U3",
+      "value": "文書ID：CSHARP_ASPNET-BAS-STU-03／種別：基本設計・テーブル索引（table-index）／版：1.3／正本：Markdown／対象：学生、年度内クラス、業務コード、操作履歴",
+      "range": "U3:DP3",
+      "sourceLines": [
+        4,
+        4
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U5",
+      "value": "本書は、5業務表の保存単位と個別テーブル仕様への索引を示し、参照関係、表示情報の取得、変更と監査の一括保存、比較版、排他、一時情報、権限、DB配備の共通規則を説明する。列ごとの物理属性は各表の分冊へ対応させ、本書では複数表・複数処理にまたがる条件と確定境界を扱う。",
+      "range": "U5:DP5",
+      "sourceLines": [
+        8,
+        8
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U6",
+      "value": "学生基本情報は学生1人、クラスマスタは年度内のクラス1件、コード種別マスタは分類1件、コード管理マスタは分類内のコード1件、操作履歴は操作記録1件を保存する。列数は順に35、17、11、14、12、合計89列である。学生・クラス・履歴の主キーはbigint IDENTITY(1,1)、分類の主キーは分類識別子、コードの主キーは分類と値の組である。確認表と実行時状態表の17列は、この89列に含めない。〔observed-source：sources/database/001_schema.sql:7-184、sources/database/004_verify_deployment.sql:7-17〕",
+      "range": "U6:DP6",
+      "sourceLines": [
+        10,
+        10
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U7",
+      "value": "学生は学籍番号、氏名原表記、整えたカナ、日付、住所、連絡先、在籍区分、現在・最終所属、緊急連絡先、備考を保存する。氏名・カナ照合キーは処理が生成して通常の保存列へ書き込む値であり、表示原表記と分ける。論理削除の状態・日時・者・理由も、卒業・退学等の在籍区分とは別の管理情報である。〔observed-source：sources/database/001_schema.sql:9-42、sources/Core/StudentNormalizer.cs:124-158〕",
+      "range": "U7:DP7",
+      "sourceLines": [
+        12,
+        12
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U8",
+      "value": "学生には年度、学年、クラス名称、年齢を重複保存しない。年度・所属名称は参照先から取得し、クラスの現在人数は非削除・在籍01又は02の学生から集計する。取得用のStudentRow、StudentDetail、CodeEntry、SchoolClassはDB表そのものではなく、JOIN結果のNULLや人数等の算出値を含む移送型である。取得DTOのnullable属性から保存列のNULL可否を決めない。〔observed-source：sources/database/001_schema.sql:7-88、sources/Core/Contracts.cs:50-70、sources/Core/SqlServerStudentService.cs:77-90,196-216〕",
+      "range": "U8:DP8",
+      "sourceLines": [
+        14,
+        14
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U9",
+      "value": "参考設計は学生・クラス・業務コード・履歴を対象とし、成績テーブルを設けないと定める。これは設計上の対象範囲である。現行DDLで観測できるのは5業務表と補助2表であり、成績機能や追加文書を本書へ補わない。〔reference-design：reference-designs/基本設計書/03_テーブル仕様書.md:8-18。observed-source：sources/database/001_schema.sql:7-184〕",
+      "range": "U9:DP9",
+      "sourceLines": [
+        16,
+        16
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A10",
+      "value": "保存情報の参照関係",
+      "range": "A10:DP10",
+      "sourceLines": [
+        18,
+        18
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U11",
+      "value": "コードは分類と値の組で識別する。異なる分類の01は別の親行であり、コード値だけで分類を横断して関連付けない。",
+      "range": "U11:DP11",
+      "sourceLines": [
+        20,
+        20
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A12",
+      "value": "FK名",
+      "range": "A12:AD12",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AE12",
+      "value": "子側の保存列",
+      "range": "AE12:BH12",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI12",
+      "value": "親側のキー",
+      "range": "BI12:CL12",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CM12",
+      "value": "子1件の参照条件",
+      "range": "CM12:DP12",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A13",
+      "value": "fk_code_category",
+      "range": "A13:AD13",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AE13",
+      "value": "m_code.category_id",
+      "range": "AE13:BH13",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI13",
+      "value": "m_code_category.category_id",
+      "range": "BI13:CL13",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CM13",
+      "value": "分類1件、必須",
+      "range": "CM13:DP13",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A14",
+      "value": "fk_class_grade",
+      "range": "A14:AD14",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AE14",
+      "value": "m_class.grade_category, grade_code",
+      "range": "AE14:BH14",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI14",
+      "value": "m_code.category_id, code_value",
+      "range": "BI14:CL14",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CM14",
+      "value": "学年コード1件、必須",
+      "range": "CM14:DP14",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A15",
+      "value": "fk_student_class",
+      "range": "A15:AD15",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AE15",
+      "value": "m_student.class_id",
+      "range": "AE15:BH15",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI15",
+      "value": "m_class.class_id",
+      "range": "BI15:CL15",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CM15",
+      "value": "クラス0又は1件。在学・休学では必須",
+      "range": "CM15:DP15",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A16",
+      "value": "fk_student_gender",
+      "range": "A16:AD16",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AE16",
+      "value": "m_student.gender_category, gender_code",
+      "range": "AE16:BH16",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI16",
+      "value": "m_code.category_id, code_value",
+      "range": "BI16:CL16",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CM16",
+      "value": "性別コード1件、必須",
+      "range": "CM16:DP16",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A17",
+      "value": "fk_student_prefecture",
+      "range": "A17:AD17",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AE17",
+      "value": "m_student.prefecture_category, prefecture_code",
+      "range": "AE17:BH17",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI17",
+      "value": "m_code.category_id, code_value",
+      "range": "BI17:CL17",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CM17",
+      "value": "都道府県コード1件、必須",
+      "range": "CM17:DP17",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A18",
+      "value": "fk_student_enrollment",
+      "range": "A18:AD18",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AE18",
+      "value": "m_student.enrollment_category, enrollment_status_code",
+      "range": "AE18:BH18",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI18",
+      "value": "m_code.category_id, code_value",
+      "range": "BI18:CL18",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CM18",
+      "value": "在籍コード1件、必須",
+      "range": "CM18:DP18",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A19",
+      "value": "fk_student_relationship",
+      "range": "A19:AD19",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AE19",
+      "value": "m_student.relationship_category, relationship_code",
+      "range": "AE19:BH19",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI19",
+      "value": "m_code.category_id, code_value",
+      "range": "BI19:CL19",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CM19",
+      "value": "続柄コード0又は1件。緊急連絡先設定時は必須",
+      "range": "CM19:DP19",
+      "sourceLines": [
+        22,
+        30
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U82",
+      "value": "親キーは一意で、子の参照列には一意制約がないため、親1件を子0件以上が参照できる。学生のクラスと続柄2列はNULL可能だが、別のCHECKが在籍区分に応じた所属と緊急連絡先の一式設定を要求する。7FKにはCASCADE指定がない。参照先の存在はFKの条件、停止・期間・定員の適合は保存処理の条件として分ける。〔observed-source：sources/database/001_schema.sql:15-32,63-66,91-127,187-203〕",
+      "range": "U82:DP82",
+      "sourceLines": [
+        67,
+        67
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A83",
+      "value": "表示JOINと監査追記",
+      "range": "A83:DP83",
+      "sourceLines": [
+        69,
+        69
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U84",
+      "value": "一覧SQLは学生を起点に、クラス、クラスの学年コード、学生の在籍コード、都道府県コードをLEFT JOINする。この一覧SQLには性別・続柄名称のJOINがない。JOIN自体は参照先欠落だけで学生行を除去しないが、指定した年度・学年等の検索述語による絞込みは別に適用される。",
+      "range": "U84:DP84",
+      "sourceLines": [
+        71,
+        71
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U99",
+      "value": "一覧住所は都道府県名称とaddress_line1の連結値であり、名称欠落時は[不整合]を使用する。address_line2は連結しない。名称保存列のNOT NULLと、LEFT JOIN結果として生じ得る名称NULLは別の属性である。表示名称の業務上限は、補足説明でマスタ保存側へ対応させる。〔observed-source：sources/Core/SqlServerStudentService.cs:77-90,137-153〕",
+      "range": "U99:DP99",
+      "sourceLines": [
+        81,
+        81
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U100",
+      "value": "監査追記は処理から履歴への依存であり、保存情報のFKとは分ける。",
+      "range": "U100:DP100",
+      "sourceLines": [
+        83,
+        83
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U121",
+      "value": "履歴のtarget_tableとtarget_keyには業務表へのFKがない。対象キーは学生・クラスの管理番号の十進文字列、又は分類:コード値である。参考設計は分類変更も監査対象とするが、現行で確認できる分類書込みはseedの不足行追加であり、通常分類更新と監査追記の入口は確認できない。〔observed-source：sources/database/001_schema.sql:137-154,189-205、sources/Core/SqlServerStudentService.cs:385-390、sources/Core/MasterMaintenanceService.cs:132-135、sources/database/002_seed.sql:88-92。reference-design：reference-designs/基本設計書/03_テーブル仕様書.md:20-34〕",
+      "range": "U121:DP121",
+      "sourceLines": [
+        93,
+        93
+      ]
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U122",
+      "value": "本書の個別表リンクと関連文書リンクは、提供された文書計画との対応を示す。本応答では本書だけを作成し、他の文書は未生成の計画先として扱う。",
+      "range": "U122:DP122",
+      "sourceLines": [
+        95,
+        95
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "A1",
+      "value": "No",
+      "range": "A1:A1",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "B1",
+      "value": "論理名",
+      "range": "B1:B1",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "C1",
+      "value": "物理名",
+      "range": "C1:C1",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "D1",
+      "value": "1件の単位・主キー",
+      "range": "D1:D1",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "E1",
+      "value": "列数",
+      "range": "E1:E1",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "F1",
+      "value": "kind",
+      "range": "F1:F1",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "G1",
+      "value": "個別文書ID",
+      "range": "G1:G1",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "H1",
+      "value": "契約path・本書からの相対リンク",
+      "range": "H1:H1",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "I1",
+      "value": "文書状態",
+      "range": "I1:I1",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "A2",
+      "value": "1",
+      "range": "A2:A2",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "B2",
+      "value": "学生基本情報",
+      "range": "B2:B2",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "C2",
+      "value": "dbo.m_student",
+      "range": "C2:C2",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "D2",
+      "value": "学生1人。student_id",
+      "range": "D2:D2",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "E2",
+      "value": "35",
+      "range": "E2:E2",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "F2",
+      "value": "table-definition",
+      "range": "F2:F2",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "G2",
+      "value": "CSHARP_ASPNET-BAS-STU-03-M_STUDENT",
+      "range": "G2:G2",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "H2",
+      "value": "基本設計書/テーブル/01_m_student.md",
+      "range": "H2:H2",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "I2",
+      "value": "計画先・未生成",
+      "range": "I2:I2",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "A3",
+      "value": "2",
+      "range": "A3:A3",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "B3",
+      "value": "クラスマスタ",
+      "range": "B3:B3",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "C3",
+      "value": "dbo.m_class",
+      "range": "C3:C3",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "D3",
+      "value": "年度内のクラス1件。class_id",
+      "range": "D3:D3",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "E3",
+      "value": "17",
+      "range": "E3:E3",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "F3",
+      "value": "table-definition",
+      "range": "F3:F3",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "G3",
+      "value": "CSHARP_ASPNET-BAS-STU-03-M_CLASS",
+      "range": "G3:G3",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "H3",
+      "value": "基本設計書/テーブル/02_m_class.md",
+      "range": "H3:H3",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "I3",
+      "value": "計画先・未生成",
+      "range": "I3:I3",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "A4",
+      "value": "3",
+      "range": "A4:A4",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "B4",
+      "value": "コード種別マスタ",
+      "range": "B4:B4",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "C4",
+      "value": "dbo.m_code_category",
+      "range": "C4:C4",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "D4",
+      "value": "分類1件。category_id",
+      "range": "D4:D4",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "E4",
+      "value": "11",
+      "range": "E4:E4",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "F4",
+      "value": "table-definition",
+      "range": "F4:F4",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "G4",
+      "value": "CSHARP_ASPNET-BAS-STU-03-M_CODE_CATEGORY",
+      "range": "G4:G4",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "H4",
+      "value": "基本設計書/テーブル/03_m_code_category.md",
+      "range": "H4:H4",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "I4",
+      "value": "計画先・未生成",
+      "range": "I4:I4",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "A5",
+      "value": "4",
+      "range": "A5:A5",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "B5",
+      "value": "コード管理マスタ",
+      "range": "B5:B5",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "C5",
+      "value": "dbo.m_code",
+      "range": "C5:C5",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "D5",
+      "value": "分類内コード1件。category_id, code_value",
+      "range": "D5:D5",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "E5",
+      "value": "14",
+      "range": "E5:E5",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "F5",
+      "value": "table-definition",
+      "range": "F5:F5",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "G5",
+      "value": "CSHARP_ASPNET-BAS-STU-03-M_CODE",
+      "range": "G5:G5",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "H5",
+      "value": "基本設計書/テーブル/04_m_code.md",
+      "range": "H5:H5",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "I5",
+      "value": "計画先・未生成",
+      "range": "I5:I5",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "A6",
+      "value": "5",
+      "range": "A6:A6",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "B6",
+      "value": "操作履歴",
+      "range": "B6:B6",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "C6",
+      "value": "dbo.t_operation_log",
+      "range": "C6:C6",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "D6",
+      "value": "操作記録1件。log_id",
+      "range": "D6:D6",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "E6",
+      "value": "12",
+      "range": "E6:E6",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "F6",
+      "value": "table-definition",
+      "range": "F6:F6",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "G6",
+      "value": "CSHARP_ASPNET-BAS-STU-03-T_OPERATION_LOG",
+      "range": "G6:G6",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "H6",
+      "value": "基本設計書/テーブル/05_t_operation_log.md",
+      "range": "H6:H6",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "cell": "I6",
+      "value": "計画先・未生成",
+      "range": "I6:I6",
+      "sourceLines": [
+        99,
+        105
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1",
+      "value": "イベント仕様",
+      "range": "A1:DP1",
+      "sourceLines": null
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A3",
+      "value": "学生検索・詳細読込み・候補取得",
+      "range": "A3:DP3",
+      "sourceLines": [
+        109,
+        109
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A4",
+      "value": "処理概要",
+      "range": "A4:DP4",
+      "sourceLines": [
+        111,
+        111
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U5",
+      "value": "検索は非削除学生を条件で絞り、所属とコード名称を付けた一覧を返す。詳細読込みは学生1件を登録画面用の値へ戻す。候補取得はコードとクラスの選択キー、名称、期間、利用状態を供給する。いずれも参照処理であり、業務表を変更せず、操作履歴を増やさない。",
+      "range": "U5:DP5",
+      "sourceLines": [
+        113,
+        113
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A6",
+      "value": "処理手順",
+      "range": "A6:DP6",
+      "sourceLines": [
+        115,
+        115
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U7",
+      "value": "1. 検索POSTは認証・CSRFの設定下でFormGuardを実施する。許可項目・重複を検査し、在籍区分が未送信の場合だけ空配列を設定する。最初の検索状態取得はControllerの個別WebFault catchの外で行う。",
+      "range": "U7:DP7",
+      "sourceLines": [
+        117,
+        117
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U8",
+      "value": "2. ModelStateが無効なら状態422を設定する。有効ならcatch内でCoordinatorを呼び、認証主体確認、DTOから検索条件への変換、検索状態のGate待機へ進む。Gate待機後にも所有者・セッション・タブ・期限を確認し、要求状態版と版上限を検査する。",
+      "range": "U8:DP8",
+      "sourceLines": [
+        118,
+        118
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U9",
+      "value": "3. サービスはページ正数、表示件数20・50・100、並び順4種類、昇降順、年度1900～9998、正のクラスIDを検査する。未所属と年度・学年・クラスの併用を拒否する。在籍区分は最大4値、重複なし、01～04とする。",
+      "range": "U9:DP9",
+      "sourceLines": [
+        119,
+        119
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U10",
+      "value": "4. 検索文字列を番号、氏名・カナ照合キー、電話、コード、日付へ整える。入学日両端指定時は開始日以下の終了日を要求しないよう、開始日≦終了日を検査する。SNAPSHOT開始後、指定学年・都道府県コード、指定年度のクラス存在、指定クラスと年度・学年の一致を確認する。この存在検査は停止・期間外の一律拒否ではない。",
+      "range": "U10:DP10",
+      "sourceLines": [
+        120,
+        120
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U11",
+      "value": "5. 同じ条件で最大10001件を数える。10000件超ならcommitして一覧を抑止する。通常は最終ページを計算して取得ページを補正し、ページ行を取得してcommitする。成功した検索は実行条件・結果を検索状態へ保持し、状態版を加算する。",
+      "range": "U11:DP11",
+      "sourceLines": [
+        121,
+        121
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U12",
+      "value": "6. CoordinatorからのWebFaultはControllerがエラーとその状態コードを設定する。拒否ではAppliedとLastResultを更新しないが、当該検索POSTの表示データは初期設定したPresent(entry,null)を引き継ぐ。成功・拒否のいずれも、その後に検索用候補取得とビュー出力が続く。",
+      "range": "U12:DP12",
+      "sourceLines": [
+        122,
+        122
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U13",
+      "value": "7. 詳細読込みは主体確認後、正でないIDならNULLを返す。正のIDでは非削除学生を読み、不在はNULL、存在時は日付・任意値・比較版・更新情報をStudentDetailへ移す。明示SNAPSHOTトランザクションはない。",
+      "range": "U13:DP13",
+      "sourceLines": [
+        123,
+        123
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U14",
+      "value": "8. 候補取得はSNAPSHOT内でコードとクラスの2結果集合を読む。人数付きでは非削除・在籍01又は02を集計する。検索用LookupAsync(false)は人数を集計せず、Occupied=0を設定する。",
+      "range": "U14:DP14",
+      "sourceLines": [
+        124,
+        124
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U15",
+      "value": "〔observed-source：sources/Web/Controllers/StudentsController.cs:13-19,39-41、sources/Infrastructure/SearchContextStore.cs:13-14、sources/Infrastructure/WebStudentCoordinator.cs:7-14,20-21、sources/Core/SqlServerStudentService.cs:103-222〕",
+      "range": "U15:DP15",
+      "sourceLines": [
+        126,
+        126
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A16",
+      "value": "処理フロー",
+      "range": "A16:DP16",
+      "sourceLines": [
+        128,
+        128
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U17",
+      "value": "参照1は検索POSTの受付と応答境界である。最初の状態取得失敗はmiddlewareへ進み、catch内の拒否は再表示へ進む。参照2の結果・例外は、それぞれこの図の対応する出口へ戻す。",
+      "range": "U17:DP17",
+      "sourceLines": [
+        130,
+        130
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U80",
+      "value": "参照2はサービス検索である。入力検証結果はCoordinatorのEnsureSearchでWebFaultへ変換され、参照1の項目エラー設定へ戻る。主体取得は検索tryの外にある。",
+      "range": "U80:DP80",
+      "sourceLines": [
+        155,
+        155
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U134",
+      "value": "参照3は詳細と候補の取得である。詳細NULL、集計人数、集計省略の0を別の出口で扱う。",
+      "range": "U134:DP134",
+      "sourceLines": [
+        177,
+        177
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A199",
+      "value": "SQL・テーブル関連（ER図）",
+      "range": "A199:DP199",
+      "sourceLines": [
+        202,
+        202
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U200",
+      "value": "保存参照は概要のER図に対応する。件数SQLは学生とクラスを使い、行SQLは学年・在籍・都道府県名称のLEFT JOINを加える。候補コードは分類とのINNER JOINで、分類と値の両方が利用可の場合だけDTOのIsActive=trueとする。クラス候補は学年コードをLEFT JOINする。候補SQLには停止・期間外を除外するWHEREがなく、表示用途に応じた選択可否は取得後に判定する。〔observed-source：sources/Core/SqlServerStudentService.cs:82-90,156-168,203-214〕",
+      "range": "U200:DP200",
+      "sourceLines": [
+        204,
+        204
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A201",
+      "value": "DB操作の詳細",
+      "range": "A201:DP201",
+      "sourceLines": [
+        206,
+        206
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U202",
+      "value": "検索には常にs.is_deleted=0を適用する。任意条件は正規化後の値が非NULLの場合にANDで追加する。電話だけは括弧内で本人・緊急電話のORを使う。",
+      "range": "U202:DP202",
+      "sourceLines": [
+        208,
+        208
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A203",
+      "value": "条件",
+      "range": "A203:AN203",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO203",
+      "value": "検索対象・述語",
+      "range": "AO203:CB203",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC203",
+      "value": "パラメータ・型・サイズ",
+      "range": "CC203:DP203",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A204",
+      "value": "学籍番号",
+      "range": "A204:AN204",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO204",
+      "value": "s.student_no前方一致",
+      "range": "AO204:CB204",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC204",
+      "value": "@no VarChar(31)。エスケープ後、末尾に%",
+      "range": "CC204:DP204",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A205",
+      "value": "氏名",
+      "range": "A205:AN205",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO205",
+      "value": "s.name_key部分一致",
+      "range": "AO205:CB205",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC205",
+      "value": "@name NVarChar(642)。前後に%",
+      "range": "CC205:DP205",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A206",
+      "value": "氏名カナ",
+      "range": "A206:AN206",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO206",
+      "value": "s.kana_key部分一致",
+      "range": "AO206:CB206",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC206",
+      "value": "@kana NVarChar(74)。前後に%",
+      "range": "CC206:DP206",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A207",
+      "value": "年度",
+      "range": "A207:AN207",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO207",
+      "value": "c.school_year=@year",
+      "range": "AO207:CB207",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC207",
+      "value": "@year SmallInt",
+      "range": "CC207:DP207",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A208",
+      "value": "学年",
+      "range": "A208:AN208",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO208",
+      "value": "c.grade_code=@grade",
+      "range": "AO208:CB208",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC208",
+      "value": "@grade VarChar(2)",
+      "range": "CC208:DP208",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A209",
+      "value": "クラス",
+      "range": "A209:AN209",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO209",
+      "value": "s.class_id=@class",
+      "range": "AO209:CB209",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC209",
+      "value": "@class BigInt",
+      "range": "CC209:DP209",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A210",
+      "value": "未所属",
+      "range": "A210:AN210",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO210",
+      "value": "s.class_id IS NULL",
+      "range": "AO210:CB210",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC210",
+      "value": "なし。所属条件との併用を拒否",
+      "range": "CC210:DP210",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A211",
+      "value": "都道府県",
+      "range": "A211:AN211",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO211",
+      "value": "s.prefecture_code=@prefecture",
+      "range": "AO211:CB211",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC211",
+      "value": "@prefecture VarChar(2)",
+      "range": "CC211:DP211",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A212",
+      "value": "電話",
+      "range": "A212:AN212",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO212",
+      "value": "本人電話又は緊急電話が@phoneと一致",
+      "range": "AO212:CB212",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC212",
+      "value": "@phone VarChar(16)",
+      "range": "CC212:DP212",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A213",
+      "value": "入学日開始",
+      "range": "A213:AN213",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO213",
+      "value": "s.admission_date>=@from",
+      "range": "AO213:CB213",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC213",
+      "value": "@from Date",
+      "range": "CC213:DP213",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A214",
+      "value": "入学日終了",
+      "range": "A214:AN214",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO214",
+      "value": "s.admission_date<=@to",
+      "range": "AO214:CB214",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC214",
+      "value": "@to Date",
+      "range": "CC214:DP214",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A215",
+      "value": "在籍区分",
+      "range": "A215:AN215",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO215",
+      "value": "s.enrollment_status_code IN (...)",
+      "range": "AO215:CB215",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC215",
+      "value": "各値を@statusN VarChar(2)。空配列は条件なし",
+      "range": "CC215:DP215",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A216",
+      "value": "ページ",
+      "range": "A216:AN216",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO216",
+      "value": "OFFSET @offset ROWS FETCH NEXT @size ROWS ONLY",
+      "range": "AO216:CB216",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC216",
+      "value": "@offset Int、@size Int",
+      "range": "CC216:DP216",
+      "sourceLines": [
+        210,
+        224
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U218",
+      "value": "LIKEは!をESCAPE文字とし、!、%、_、[をエスケープする。並び順は学籍番号、氏名キー、入学日、更新日時の4種類、昇順又は降順に限定する。副順序は学生ID昇順である。確認件数とページ行は同じSNAPSHOT内で取得する。ページ操作は最後に実行した条件を使い、表示件数・並び順変更時は1ページへ戻す。件数減少で保持ページが範囲外になった場合は補正条件で再検索する。〔observed-source：sources/Core/SqlServerStudentService.cs:107-168、sources/Core/StudentNormalizer.cs:161-161、sources/Infrastructure/WebStudentCoordinator.cs:11-14〕",
+      "range": "U218:DP218",
+      "sourceLines": [
+        226,
+        226
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U219",
+      "value": "詳細SQLはstudent_id=@id AND is_deleted=0、パラメータはBigIntである。コード候補は分類・表示順・値、クラス候補は年度降順・学年表示順・クラス表示順・クラスコード・IDの順で返す。人数集計はクラス一致、非削除、在籍01又は02を条件とする。検索用の人数0は実測0人ではない。〔observed-source：sources/Core/SqlServerStudentService.cs:172-216〕",
+      "range": "U219:DP219",
+      "sourceLines": [
+        228,
+        228
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A220",
+      "value": "結果・例外時の扱い",
+      "range": "A220:DP220",
+      "sourceLines": [
+        230,
+        230
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U221",
+      "value": "0件、通常一覧、10000件超は、サービスではいずれもNoChangeである。10001は上限超過を確認するための件数であり、全該当件数ではない。上限超過のWeb表示では総件数をNULLとし、一覧を抑止する。詳細NULLは既存学生の画面読込みで対象不在404へ変換する。〔observed-source：sources/Core/SqlServerStudentService.cs:159-181、sources/Infrastructure/WebStudentCoordinator.cs:17-21〕",
+      "range": "U221:DP221",
+      "sourceLines": [
+        232,
+        232
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U222",
+      "value": "検索try内のInputValidationExceptionとArgumentExceptionはValidationFailedへ変換する。DB・取消等の未捕捉例外は呼出元へ伝播する。在籍配列NULLがサービスへ届いた場合はLengthへのアクセスがあり、非nullable注釈だけでその経路を排除できない。HTTP受信・MVC変換・サービス引数は別の境界である。〔observed-source：sources/Core/SqlServerStudentService.cs:105-112,169-170、sources/Web/Controllers/StudentsController.cs:14-16〕",
+      "range": "U222:DP222",
+      "sourceLines": [
+        234,
+        234
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U223",
+      "value": "catch内の拒否後も候補取得とビュー出力が続く。検索POSTは受信pageSizeを再表示モデルへ設定し、ビューはその値でページ数を除算するため、0が残れば二次例外が生じ得る。図の画面応答へ到達するのは、後続表示まで完了した場合である。middlewareは応答未開始の場合だけWebFaultの状態又は一般例外503を設定し、学生ルートには簡易エラーHTMLを出力する。応答開始後の例外は同catchの対象外である。〔observed-source：sources/Web/Controllers/StudentsController.cs:13-19、sources/Views/Students/Search.cshtml:8-8、sources/Infrastructure/WebHostSetup.cs:22-24〕",
+      "range": "U223:DP223",
+      "sourceLines": [
+        236,
+        236
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A224",
+      "value": "学生の新規登録・更新・重複確認続行",
+      "range": "A224:DP224",
+      "sourceLines": [
+        238,
+        238
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A225",
+      "value": "処理概要",
+      "range": "A225:DP225",
+      "sourceLines": [
+        240,
+        240
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U226",
+      "value": "保存は業務入力を正規化し、書込ゲート下で最新対象、期待版、コード、所属、定員、番号一意性、同一人物候補を確認する。学生1件と操作履歴1件を同じトランザクションで確定する。変更なしと確認待ちは学生書込みへ進まない。",
+      "range": "U226:DP226",
+      "sourceLines": [
+        242,
+        242
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A227",
+      "value": "処理手順",
+      "range": "A227:DP227",
+      "sourceLines": [
+        244,
+        244
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U228",
+      "value": "1. Web受付はFormGuard、作成更新権限、Snapshot取得、復帰検索状態、読込時復帰先との一致を順に確認する。これらはControllerの個別WebFault catchの外であり、拒否はmiddlewareへ伝播する。その後にModelStateを判定する。",
+      "range": "U228:DP228",
+      "sourceLines": [
+        246,
+        246
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U229",
+      "value": "2. ModelState有効時だけcatch内でCoordinatorを呼ぶ。Coordinatorは権限・復帰状態を再確認し、ToRequestでクラスID・期待版を変換する。ここでのWebFaultはControllerが捕捉し、エラー・状態を設定して再表示へ進む。",
+      "range": "U229:DP229",
+      "sourceLines": [
+        247,
+        247
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U230",
+      "value": "3. サービスは受付GUID、主体、入口UTC時刻、日本時間の業務日を取得する。Viewerを拒否し、19業務入力、任意理由60スカラー、対象IDと期待版の同時設定・正数、年度範囲、任意学年コードを検査する。接続とReadCommitted開始は書込tryの外である。",
+      "range": "U230:DP230",
+      "sourceLines": [
+        248,
+        248
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U231",
+      "value": "4. try内で共通書込ゲートを取得する。更新だけが非削除対象を再読込みし、不在、期待版不一致、学籍番号変更を区別する。保存済み在籍03・04から別区分へ訂正する場合は管理者権限と理由を要求する。新規は既存行・既存版をNULLのまま保持する。",
+      "range": "U231:DP231",
+      "sourceLines": [
+        249,
+        249
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U232",
+      "value": "5. 最新コードは常に存在を要求し、新規又は変更値だけに分類・値の利用可と当日有効を要求する。指定クラスは存在と年度・学年一致を確認する。新たな在学・休学の席を増やす場合は利用状態、当日期間、最新人数による定員を検査する。卒業・退学で所属・区分・入学日・終了日が変わる場合は在籍期間とクラス期間の重なりを検査する。",
+      "range": "U232:DP232",
+      "sourceLines": [
+        250,
+        250
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U233",
+      "value": "6. 正規化保存値とDB値を比較する。変更なしなら明示rollbackし、既存ID・読込済み版を返す。変更ありでは版上限、その後に削除済みを含む学籍番号一意性を検査する。理由だけの変更では学生の日時・版・履歴を増やさない。",
+      "range": "U233:DP233",
+      "sourceLines": [
+        251,
+        251
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U234",
+      "value": "7. 非削除、自身以外、生年月日一致、氏名キー又はカナキー一致の候補を学生ID順で全件取得する。正規化内容と全候補ID・版をハッシュ化し、提示確認情報を照合する。有効な確認で続行する場合は理由が必須である。",
+      "range": "U234:DP234",
+      "sourceLines": [
+        252,
+        252
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U235",
+      "value": "8. 候補がある、又は確認値が非NULLで、確認が無効なら、保存トランザクションをrollbackして確認情報を発行する。全候補件数と最大20件を返す。新規のID・既存版はNULL、更新は対象ID・読込済み版を保持する。",
+      "range": "U235:DP235",
+      "sourceLines": [
+        253,
+        253
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U236",
+      "value": "9. 保存可能なら学生をINSERT又はUPDATEし、OUTPUTでIDを取得する。履歴を追記し、非Web方式で有効確認を使用した場合は消費更新も加えてcommitする。commit完了後だけSavedを返す。",
+      "range": "U236:DP236",
+      "sourceLines": [
+        254,
+        254
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U237",
+      "value": "10. SavedはFlashと303へ進む。その他のサービス結果は結果別の状態と確認値を設定し、Snapshotの読込時Detail、受信入力、候補を使って再表示する。ModelState不正又は個別WebFault捕捉で結果がNULLの場合は、サービス結果による確認値置換を行わない。",
+      "range": "U237:DP237",
+      "sourceLines": [
+        255,
+        255
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U238",
+      "value": "〔observed-source：sources/Web/Controllers/StudentsController.cs:26-33、sources/Infrastructure/WebStudentCoordinator.cs:18-18、sources/Web/Inputs/StudentSaveInput.cs:34-43、sources/Core/SqlServerStudentService.cs:227-324,344-383〕",
+      "range": "U238:DP238",
+      "sourceLines": [
+        257,
+        257
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A239",
+      "value": "処理フロー",
+      "range": "A239:DP239",
+      "sourceLines": [
+        259,
+        259
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U240",
+      "value": "保存1-Aはcatch外の受付である。各拒否の状態は直後の対応表に示す。有効なSnapshotと入力を保存1-Bへ渡す。",
+      "range": "U240:DP240",
+      "sourceLines": [
+        261,
+        261
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A278",
+      "value": "catch外の検査",
+      "range": "A278:AN278",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO278",
+      "value": "拒否又は失敗",
+      "range": "AO278:CB278",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC278",
+      "value": "上位での扱い",
+      "range": "CC278:DP278",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A279",
+      "value": "FormGuard",
+      "range": "A279:AN279",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO279",
+      "value": "未知項目、不許可重複、不正フォームメタ情報",
+      "range": "AO279:CB279",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC279",
+      "value": "WebFault 400",
+      "range": "CC279:DP279",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A280",
+      "value": "作成更新権限",
+      "range": "A280:AN280",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO280",
+      "value": "Viewer",
+      "range": "AO280:CB280",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC280",
+      "value": "WebFault 403",
+      "range": "CC280:DP280",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A281",
+      "value": "Snapshot取得",
+      "range": "A281:AN281",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO281",
+      "value": "キー不在・期限切れ",
+      "range": "AO281:CB281",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC281",
+      "value": "WebFault 409",
+      "range": "CC281:DP281",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A282",
+      "value": "Snapshot取得",
+      "range": "A282:AN282",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO282",
+      "value": "所有者・セッション・対象不一致",
+      "range": "AO282:CB282",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC282",
+      "value": "WebFault 403",
+      "range": "CC282:DP282",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A283",
+      "value": "Snapshot取得",
+      "range": "A283:AN283",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO283",
+      "value": "NULLキーが辞書へ渡る等、独自検査前のライブラリ例外",
+      "range": "AO283:CB283",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC283",
+      "value": "個別WebFault catchへ入らず上位へ伝播",
+      "range": "CC283:DP283",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A284",
+      "value": "復帰状態",
+      "range": "A284:AN284",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO284",
+      "value": "状態不在・期限切れ／所有者・セッション不一致",
+      "range": "AO284:CB284",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC284",
+      "value": "WebFault 409／403",
+      "range": "CC284:DP284",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A285",
+      "value": "元復帰先照合",
+      "range": "A285:AN285",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO285",
+      "value": "読込時と異なる復帰先",
+      "range": "AO285:CB285",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC285",
+      "value": "WebFault 403",
+      "range": "CC285:DP285",
+      "sourceLines": [
+        280,
+        288
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U287",
+      "value": "保存1-Bは個別catchと結果後処理である。catch内の拒否は保存1-Aの拒否と同じ終端へ直接合流させず、候補再取得とビュー出力へ接続する。",
+      "range": "U287:DP287",
+      "sourceLines": [
+        290,
+        290
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U352",
+      "value": "ToRequestの識別値・期待版変換拒否は422、新規への期待版指定は400である。Coordinator再確認の認証・権限・復帰状態拒否も、そのWebFault状態を保持して保存1-Bのエラー設定へ進む。〔observed-source：sources/Web/Inputs/StudentSaveInput.cs:40-43,57-60、sources/Infrastructure/WebStudentCoordinator.cs:6-6,18-18〕",
+      "range": "U352:DP352",
+      "sourceLines": [
+        312,
+        312
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U353",
+      "value": "保存2-Aはサービス入口である。入口時刻と正規化成功値を保存2-Bへ渡す。",
+      "range": "U353:DP353",
+      "sourceLines": [
+        314,
+        314
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U393",
+      "value": "保存2-Bは書込try内の最新検査である。新規のNULL情報と更新の取得済み情報を分けて保存3へ引き継ぐ。",
+      "range": "U393:DP393",
+      "sourceLines": [
+        329,
+        329
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U464",
+      "value": "不在・版不一致等の早期returnではcommitしない。変更なしは明示rollbackで戻る。各結果はその種類を保持して保存1-Bへ返す。",
+      "range": "U464:DP464",
+      "sourceLines": [
+        356,
+        356
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U465",
+      "value": "保存3は同一人物確認と確定である。確認待ちと保存成功のID・版は後述の結果表に対応し、新規枝のNULLを更新枝へ適用しない。",
+      "range": "U465:DP465",
+      "sourceLines": [
+        358,
+        358
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U535",
+      "value": "手順8の条件は、候補件数が正又は確認値が非NULLであり、かつ確認が無効であること。空文字の確認値も非NULLとしてこの判定に参加する。確認待ちの発行は学生保存rollback後に行う。",
+      "range": "U535:DP535",
+      "sourceLines": [
+        381,
+        381
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U536",
+      "value": "保存4は書込tryのcatch順である。後段の結果不明条件を先行catchへ適用しない。",
+      "range": "U536:DP536",
+      "sourceLines": [
+        383,
+        383
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U638",
+      "value": "Busyを取得済みで未完了、かつUnknownでない場合はfinallyでBusyを解除する。完了又はUnknownの場合には、その解除条件へ入らない。",
+      "range": "U638:DP638",
+      "sourceLines": [
+        401,
+        401
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A639",
+      "value": "SQL・テーブル関連（ER図）",
+      "range": "A639:DP639",
+      "sourceLines": [
+        403,
+        403
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U640",
+      "value": "参照先は概要のER図に対応する。保存前に分類付きコード、クラス、人数集計用学生、同一人物候補を読み、学生書込みと履歴追記を同じトランザクションに置く。非Web確認方式だけは確認表の消費更新を追加する。Web確認方式はメモリ保持である。",
+      "range": "U640:DP640",
+      "sourceLines": [
+        405,
+        405
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A641",
+      "value": "DB操作の詳細",
+      "range": "A641:DP641",
+      "sourceLines": [
+        407,
+        407
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U642",
+      "value": "新規INSERTは正規化保存列に固定分類GENDER、PREFECTURE、ENROLLMENT_STATUS、未削除、作成更新日時・者、版1を加える。UPDATEは学籍番号を除く正規化保存列と更新管理情報・版を設定し、学籍番号・固定3分類・作成情報を保持する。WHEREはstudent_id=@id AND row_version=@version AND is_deleted=0、ID・版はBigIntである。OUTPUTは表変数経由で取得し、NULL又はDBNullなら競合例外とする。〔observed-source：sources/Core/SqlServerStudentService.cs:292-305〕",
+      "range": "U642:DP642",
+      "sourceLines": [
+        409,
+        409
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U643",
+      "value": "コード検査は分類・値の両条件でコードと分類をJOINし、分類をVarChar(24)、値をVarChar(10)で渡す。新規又は変更値だけに利用状態・当日期間を要求する。クラスは@id BigIntで読み、指定年度・学年と一致させる。増席時の定員集計はクラス一致、非削除、在籍01又は02、自身以外を条件とし、人数に1を加える。定員NULLは制限なしである。〔observed-source：sources/Core/SqlServerStudentService.cs:347-380〕",
+      "range": "U643:DP643",
+      "sourceLines": [
+        411,
+        411
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U644",
+      "value": "学籍番号一意検査は番号一致と自身以外を条件とし、論理削除を除外しない。同一人物候補は非削除、自身以外、生年月日一致、氏名キー又はカナキー一致、学生ID順で全件取得する。候補パラメータはID=BigInt、生年月日=Date、氏名キー=NVarChar(320)、カナキー=NVarChar(36)である。表示20件を照合対象の取得上限にしない。〔observed-source：sources/Core/SqlServerStudentService.cs:264-290〕",
+      "range": "U644:DP644",
+      "sourceLines": [
+        413,
+        413
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U645",
+      "value": "学生監査は対象表m_student、対象キーは取得IDの十進文字列とする。新規はCREATE・前版NULL・後版1、更新はUPDATE・取得版・新版を記録する。新規の変更列名一覧には固定分類・削除状態・管理列も加え、更新には実変更列と更新日時・者・版を記録する。理由を履歴へ渡し、確認フラグは最新候補件数が正かどうかで設定する。業務値の前後コピーは保存しない。〔observed-source：sources/Core/SqlServerStudentService.cs:306-307,385-390〕",
+      "range": "U645:DP645",
+      "sourceLines": [
+        415,
+        415
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A646",
+      "value": "結果・例外時の扱い",
+      "range": "A646:DP646",
+      "sourceLines": [
+        417,
+        417
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A647",
+      "value": "結果",
+      "range": "A647:AN647",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO647",
+      "value": "返却ID・版と処理段階",
+      "range": "AO647:CB647",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC647",
+      "value": "通常のWeb後処理",
+      "range": "CC647:DP647",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A648",
+      "value": "Saved",
+      "range": "A648:AN648",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO648",
+      "value": "commit完了。新規は採番ID・1、更新は対象ID・取得版+1",
+      "range": "AO648:CB648",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC648",
+      "value": "Flash・303",
+      "range": "CC648:DP648",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A649",
+      "value": "NoChange",
+      "range": "A649:AN649",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO649",
+      "value": "既存ID・取得版。明示rollback",
+      "range": "AO649:CB649",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC649",
+      "value": "200・再表示。日時・版・履歴を増やさない",
+      "range": "CC649:DP649",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A650",
+      "value": "ConfirmationRequired",
+      "range": "A650:AN650",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO650",
+      "value": "学生保存rollback済み。新規ID・版NULL、更新ID・取得版保持",
+      "range": "AO650:CB650",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC650",
+      "value": "409・全件数と最大20候補を表示",
+      "range": "CC650:DP650",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A651",
+      "value": "ValidationFailed",
+      "range": "A651:AN651",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO651",
+      "value": "ID・版未設定。入力・参照先・定員・番号一意等の拒否",
+      "range": "AO651:CB651",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC651",
+      "value": "422・再表示",
+      "range": "CC651:DP651",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A652",
+      "value": "Forbidden",
+      "range": "A652:AN652",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO652",
+      "value": "ID・版未設定。保存又は終了区分訂正の権限不足",
+      "range": "AO652:CB652",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC652",
+      "value": "403・再表示",
+      "range": "CC652:DP652",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A653",
+      "value": "NotFound",
+      "range": "A653:AN653",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO653",
+      "value": "ID・版未設定。最新非削除対象なし",
+      "range": "AO653:CB653",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC653",
+      "value": "404・再表示",
+      "range": "CC653:DP653",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A654",
+      "value": "Conflict",
+      "range": "A654:AN654",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO654",
+      "value": "ID・版未設定。期待版不一致、変更ありの版上限、競合catch",
+      "range": "AO654:CB654",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC654",
+      "value": "409・再表示",
+      "range": "CC654:DP654",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A655",
+      "value": "SystemError",
+      "range": "A655:AN655",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO655",
+      "value": "最後の対象catchへ到達し、Unknown条件に該当しない",
+      "range": "AO655:CB655",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC655",
+      "value": "503・再表示",
+      "range": "CC655:DP655",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A656",
+      "value": "Unknown",
+      "range": "A656:AN656",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO656",
+      "value": "最後の対象catchで書込開始済み、かつcommit試行済み又はrollback失敗",
+      "range": "AO656:CB656",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC656",
+      "value": "503・再保存前に検索確認",
+      "range": "CC656:DP656",
+      "sourceLines": [
+        419,
+        429
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U658",
+      "value": "入力検証、SQL一意違反、DB競合の先行3catchはrollbackを試みるが、成否でUnknownへ再分類しない。最後の対象catchだけがwriteStarted && (commitAttempted || !rolledBack)でUnknownを判定する。rollback helperは取消なしで試み、SQL例外又は無効状態例外ならfalseを返す。履歴失敗も同じ取消対象だが、結果分類は到達したcatchと書込・commit段階に従う。OUTPUT取得だけでは保存確定ではない。〔observed-source：sources/Core/SqlServerStudentService.cs:302-329〕",
+      "range": "U658:DP658",
+      "sourceLines": [
+        431,
+        431
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U659",
+      "value": "主体取得、接続・トランザクション開始、Controller事前検査、候補再取得、ビュー出力は同じcatch範囲ではない。Saved以外でも表示処理が続くため、上表の通常状態だけで最終HTML完了を保証しない。Saved後のFlash・303生成・次要求の検索復帰の失敗は、確定済みDB保存のrollbackを意味しない。上位のWebFault又は一般例外は、応答未開始の場合に限りmiddlewareのエラー出力へ進む。〔observed-source：sources/Web/Controllers/StudentsController.cs:29-39、sources/Infrastructure/WebHostSetup.cs:22-24〕",
+      "range": "U659:DP659",
+      "sourceLines": [
+        433,
+        433
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A660",
+      "value": "学生の論理削除",
+      "range": "A660:DP660",
+      "sourceLines": [
+        435,
+        435
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A661",
+      "value": "処理概要",
+      "range": "A661:DP661",
+      "sourceLines": [
+        437,
+        437
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U662",
+      "value": "管理者が対象と理由を確認し、削除属性と更新管理情報だけを変更する。編集中の氏名・住所・所属等は保存しない。論理削除とDELETE監査を同じトランザクションで確定する。",
+      "range": "U662:DP662",
+      "sourceLines": [
+        439,
+        439
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A663",
+      "value": "処理手順",
+      "range": "A663:DP663",
+      "sourceLines": [
+        441,
+        441
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U664",
+      "value": "1. WebはFormGuard、参照権限、Snapshot取得、読込時復帰先との一致を確認する。Coordinatorは管理者権限、復帰状態、明示確認、期待版変換の順に検査する。削除Controllerには保存と同じ個別WebFault catchがない。",
+      "range": "U664:DP664",
+      "sourceLines": [
+        443,
+        443
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U665",
+      "value": "2. サービスは主体・管理者を確認し、必須理由のraw・保存60スカラーを検査する。この入口catchはInputValidationExceptionだけである。その後に正のID・版、版上限を確認する。",
+      "range": "U665:DP665",
+      "sourceLines": [
+        444,
+        444
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U666",
+      "value": "3. 接続とReadCommitted開始後、try内でGateを取得する。非削除対象の現在版を読み、不在はNotFound、版不一致はConflictとする。",
+      "range": "U666:DP666",
+      "sourceLines": [
+        445,
+        445
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U667",
+      "value": "4. ID・期待版・非削除のWHEREで削除7列だけを更新し、1件を要求する。DELETE監査を追記してcommitする。",
+      "range": "U667:DP667",
+      "sourceLines": [
+        446,
+        446
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U668",
+      "value": "5. 成功は対象ID・版+1を返し、Webは303へ進む。それ以外は結果別状態とエラーを設定した後、最新対象と候補をLoadして再表示する。",
+      "range": "U668:DP668",
+      "sourceLines": [
+        447,
+        447
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U669",
+      "value": "〔observed-source：sources/Web/Controllers/StudentsController.cs:25-25,37-38、sources/Infrastructure/WebStudentCoordinator.cs:19-19、sources/Core/SqlServerStudentService.cs:392-416〕",
+      "range": "U669:DP669",
+      "sourceLines": [
+        449,
+        449
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A670",
+      "value": "処理フロー",
+      "range": "A670:DP670",
+      "sourceLines": [
+        451,
+        451
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U671",
+      "value": "削除1は受付と入口検査である。独自拒否、変換拒否、ライブラリ例外はいずれも個別Controller catchを経由しない。",
+      "range": "U671:DP671",
+      "sourceLines": [
+        453,
+        453
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U719",
+      "value": "削除2はDB更新とcatch分類である。接続開始失敗は書込catchの外にあり、競合catchを後段のUnknown条件へ含めない。",
+      "range": "U719:DP719",
+      "sourceLines": [
+        479,
+        479
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U803",
+      "value": "削除3は結果後処理である。各流入枝の結果を保持し、後段Loadの失敗を固定のサービス状態へまとめない。",
+      "range": "U803:DP803",
+      "sourceLines": [
+        504,
+        504
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A844",
+      "value": "SQL・テーブル関連（ER図）",
+      "range": "A844:DP844",
+      "sourceLines": [
+        520,
+        520
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U845",
+      "value": "対象は学生と操作履歴で、概要の監査追記図に対応する。クラス・コード参照列を変更せず、物理DELETEやFKによる削除連動は行わない。",
+      "range": "U845:DP845",
+      "sourceLines": [
+        522,
+        522
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A846",
+      "value": "DB操作の詳細",
+      "range": "A846:DP846",
+      "sourceLines": [
+        524,
+        524
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U847",
+      "value": "WHEREはstudent_id=@id AND row_version=@version AND is_deleted=0である。設定列はis_deleted、deleted_at、deleted_by、delete_reason、updated_at、updated_by、row_versionの7列だけである。ID・版=BigInt、日時=DateTimeOffset、者=NVarChar(128)、理由=NVarChar(120)を使用し、更新1件を要求する。",
+      "range": "U847:DP847",
+      "sourceLines": [
+        526,
+        526
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U848",
+      "value": "監査はDELETE、前後版は期待版と期待版+1、変更列JSONは上記7列、理由は削除理由、確認フラグはfalseとする。DDLは削除済み状態で削除日時・者・理由の全設定を要求する。〔observed-source：sources/Core/SqlServerStudentService.cs:404-414、sources/database/001_schema.sql:200-200〕",
+      "range": "U848:DP848",
+      "sourceLines": [
+        528,
+        528
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A849",
+      "value": "結果・例外時の扱い",
+      "range": "A849:DP849",
+      "sourceLines": [
+        530,
+        530
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U850",
+      "value": "理由の必須・長さ・制御文字等によるInputValidationExceptionはValidationFailedとなる。不正サロゲートのArgumentExceptionは入口catchで変換されず上位へ伝播する。これはその値がサービスへ届いた場合の経路であり、HTTPバインド全体についての保証ではない。〔observed-source：sources/Core/StudentNormalizer.cs:37-56、sources/Core/SqlServerStudentService.cs:394-398〕",
+      "range": "U850:DP850",
+      "sourceLines": [
+        532,
+        532
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U851",
+      "value": "競合は先行catchでConflictとなる。後続の対象catchだけが書込開始・commit試行・rollback成否からUnknown又はSystemErrorを決める。削除の版上限は入口ValidationFailedであり、変更あり学生更新のConflictとは異なる。通常の状態対応は保存結果表に従い、Savedだけは303となる。〔observed-source：sources/Core/SqlServerStudentService.cs:398-416、sources/Infrastructure/WebPresentation.cs:23-23〕",
+      "range": "U851:DP851",
+      "sourceLines": [
+        534,
+        534
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U852",
+      "value": "Saved以外は最新Loadが続く。例えば結果不明の後に対象が既に削除されていれば、Loadの対象不在404へ進み得る。候補取得等の失敗も別の上位例外となるため、最初に設定したサービス結果の状態を最終応答へ固定しない。middlewareの捕捉は応答未開始の場合に限る。〔observed-source：sources/Web/Controllers/StudentsController.cs:25-25,37-38、sources/Infrastructure/WebStudentCoordinator.cs:17-17、sources/Infrastructure/WebHostSetup.cs:22-24〕",
+      "range": "U852:DP852",
+      "sourceLines": [
+        536,
+        536
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A853",
+      "value": "クラスマスタの保守",
+      "range": "A853:DP853",
+      "sourceLines": [
+        538,
+        538
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A854",
+      "value": "処理概要",
+      "range": "A854:DP854",
+      "sourceLines": [
+        540,
+        540
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U855",
+      "value": "クラス保守サービスは年度内クラスの学年、名称、期間、定員、表示順、利用状態、備考を保存する。引数はClassChange、戻り値は結果、版、メッセージ、同名警告を持つMaintenanceResultである。Webの実装登録・Controllerからの入口は確認できない。実行者と管理者判定はDB接続の認証主体から取得する。",
+      "range": "U855:DP855",
+      "sourceLines": [
+        542,
+        542
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A856",
+      "value": "処理手順",
+      "range": "A856:DP856",
+      "sourceLines": [
+        544,
+        544
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U857",
+      "value": "1. 年度1900～9998、定員NULL又は1～9999、非負表示順、対象ID・期待版の同時設定と正数を検査する。コードはraw・正規化後9以内、名称はraw・保存18スカラー、備考は120スカラーへ整える。",
+      "range": "U857:DP857",
+      "sourceLines": [
+        546,
+        546
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U858",
+      "value": "2. 開始・終了日をISO日付から変換し、開始日≦終了日、当該年度4月1日～翌年3月31日の範囲内を要求する。同日を許す。",
+      "range": "U858:DP858",
+      "sourceLines": [
+        547,
+        547
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U859",
+      "value": "3. 接続でDB認証者とstudent_admin所属を確認し、ReadCommittedを開始する。try内で共通Gateを取得する。",
+      "range": "U859:DP859",
+      "sourceLines": [
+        548,
+        548
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U860",
+      "value": "4. 新規は既存行NULLのまま手順6へ進む。新規には既存比較、学生参照集計、現在人数検査を行わない。",
+      "range": "U860:DP860",
+      "sourceLines": [
+        549,
+        549
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U861",
+      "value": "5. 更新だけが既存行を読み、不在・期待版不一致を結果として返す。一致時は年度・コード変更を拒否する。削除済みを含む参照学生が存在すれば学年変更を拒否する。非削除・在籍01又は02の現在人数が正なら停止・当日期間外を拒否し、定員を現在人数未満にする変更も拒否する。",
+      "range": "U861:DP861",
+      "sourceLines": [
+        550,
+        550
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U862",
+      "value": "6. 共通処理で学年コードの存在を確認する。新規又は学年変更時だけ分類・値の利用可と当日有効を要求する。未変更の停止・期間外学年は存在確認の上で保持できる。",
+      "range": "U862:DP862",
+      "sourceLines": [
+        551,
+        551
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U863",
+      "value": "7. 保存値を比較し、変更なしならrollbackして既存期待版、同名警告falseを返す。変更ありでは版上限を検査し、同年度・同学年・同名・自身以外の件数から警告を求める。停止クラスも対象で、同名だけでは拒否しない。",
+      "range": "U863:DP863",
+      "sourceLines": [
+        552,
+        552
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U864",
+      "value": "8. クラスと監査を保存してcommitし、新規1又は期待版+1と、取得した同名警告を返す。",
+      "range": "U864:DP864",
+      "sourceLines": [
+        553,
+        553
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U865",
+      "value": "〔observed-source：sources/Core/MasterMaintenanceService.cs:9-11,17-77、sources/Infrastructure/WebHostSetup.cs:12-19〕",
+      "range": "U865:DP865",
+      "sourceLines": [
+        555,
+        555
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A866",
+      "value": "処理フロー",
+      "range": "A866:DP866",
+      "sourceLines": [
+        557,
+        557
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U867",
+      "value": "クラス1は新規・更新の分岐である。新規は既存行NULLを、更新は取得済み既存行と期待版をクラス2へ渡す。",
+      "range": "U867:DP867",
+      "sourceLines": [
+        559,
+        559
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U931",
+      "value": "クラス2は共通学年検査と確定である。成功時の警告は同名検査で得た値を引き継ぐ。",
+      "range": "U931:DP931",
+      "sourceLines": [
+        583,
+        583
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1003",
+      "value": "SQL・テーブル関連（ER図）",
+      "range": "A1003:DP1003",
+      "sourceLines": [
+        606,
+        606
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1004",
+      "value": "クラスは学年コードを複合FKで参照し、学生はクラスIDを参照する。概要のER図に対応する。更新時の全参照数と現在人数は、同じ学生表から異なる条件で求める。クラス保存から履歴への追記はFKではなく処理依存である。",
+      "range": "U1004:DP1004",
+      "sourceLines": [
+        608,
+        608
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1005",
+      "value": "DB操作の詳細",
+      "range": "A1005:DP1005",
+      "sourceLines": [
+        610,
+        610
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1006",
+      "value": "既存クラスはclass_id=@id、@id BigIntで取得する。更新時の学生集計はクラスID一致を条件とし、全参照数は削除済みを含む。現在人数だけを非削除・在籍01又は02に限定する。この学生読取りを新規枝へ適用しない。",
+      "range": "U1006:DP1006",
+      "sourceLines": [
+        612,
+        612
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1007",
+      "value": "学年検査は分類とコードをJOINし、category_id='GRADE' AND code_value=@grade、@grade VarChar(2)を使用する。同名検査は年度・学年・名称・自身以外の4条件であり、利用状態を条件にしない。年度=SmallInt、学年=VarChar(2)、名称=NVarChar(36)、任意ID=BigIntで渡す。〔observed-source：sources/Core/MasterMaintenanceService.cs:44-71〕",
+      "range": "U1007:DP1007",
+      "sourceLines": [
+        614,
+        614
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1008",
+      "value": "保存値は年度、学年、コード、名称、期間、定員、順序、状態、備考である。新規は固定分類GRADE、作成更新情報、版1を加える。更新WHEREはID・期待版で、年度・コードもSQL設定対象だが、事前不変検査で既存値に限定する。",
+      "range": "U1008:DP1008",
+      "sourceLines": [
+        616,
+        616
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1009",
+      "value": "型は年度=SmallInt、学年=VarChar(2)、コード=VarChar(9)、名称=NVarChar(36)、期間=Date、定員・順序=Int、状態=Bit、備考=NVarChar(240)、ID・版=BigIntである。OUTPUTの明示的な不成立検査はNULLだけで、学生保存のNULL・DBNull検査と同一ではない。取得IDを監査へ渡し、commit後に結果を返す。〔observed-source：sources/Core/MasterMaintenanceService.cs:73-76,124-135〕",
+      "range": "U1009:DP1009",
+      "sourceLines": [
+        618,
+        618
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1010",
+      "value": "結果・例外時の扱い",
+      "range": "A1010:DP1010",
+      "sourceLines": [
+        620,
+        620
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1011",
+      "value": "不在・版不一致は版NULL、警告falseとなる。変更なしは既存期待版、警告falseとなり、日時・版・履歴を増やさない。Savedは新規1又は期待版+1と、取得した警告値を返す。更新枝の取得済み情報を新規枝のNULLや警告falseで上書きしない。",
+      "range": "U1011:DP1011",
+      "sourceLines": [
+        622,
+        622
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1012",
+      "value": "監査種別は新規CREATE、利用状態維持UPDATE、利用可への変更ENABLE、利用不可への変更DISABLEである。停止したままの名称変更もUPDATEとなる。対象キーはクラスID、前版は要求期待版、新版は保存結果、理由NULL、確認フラグfalse、実行者はDB認証者である。変更列一覧へ管理列を追加する処理はない。〔observed-source：sources/Core/MasterMaintenanceService.cs:65-77,132-135、sources/Core/AuditOperation.cs:6-7〕",
+      "range": "U1012:DP1012",
+      "sourceLines": [
+        624,
+        624
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1013",
+      "value": "try内の失敗はrollbackを試みて再throwする。学生サービスのSystemError・UnknownやHTTP状態へ変換する処理はない。入力、接続、トランザクション開始の失敗は、このrollback catchの外である。",
+      "range": "U1013:DP1013",
+      "sourceLines": [
+        626,
+        626
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1014",
+      "value": "参考設計の学年00、年度開始・終了日は業務初期値の意図である。現行DDLにそれらのDEFAULTはなく、サービスは渡された学年・日付を検査して使う。未確認の保守入口による自動補完を実装済みとは扱わない。〔reference-design：reference-designs/基本設計書/テーブル/02_m_class.md:25-40。observed-source：sources/database/001_schema.sql:62-88、sources/Core/MasterMaintenanceService.cs:32-37〕",
+      "range": "U1014:DP1014",
+      "sourceLines": [
+        628,
+        628
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1015",
+      "value": "コード管理マスタの保守",
+      "range": "A1015:DP1015",
+      "sourceLines": [
+        630,
+        630
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1016",
+      "value": "処理概要",
+      "range": "A1016:DP1016",
+      "sourceLines": [
+        632,
+        632
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1017",
+      "value": "コード保守サービスはCodeChangeを受け、分類内コードの名称、順序、利用状態、期間、備考を保存する。学生・クラスが保持するコード値を名称変更に合わせて置換しない。Web保守入口は確認できない。",
+      "range": "U1017:DP1017",
+      "sourceLines": [
+        634,
+        634
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1018",
+      "value": "処理手順",
+      "range": "A1018:DP1018",
+      "sourceLines": [
+        636,
+        636
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1019",
+      "value": "1. 分類をGENDER、ENROLLMENT_STATUS、PREFECTURE、RELATIONSHIP、GRADEに限定する。名称12スカラー、備考120スカラー、非負順序、指定時の正の期待版を検査する。開始日を必須とし、終了日はNULL又は開始日以上とする。",
+      "range": "U1019:DP1019",
+      "sourceLines": [
+        638,
+        638
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1020",
+      "value": "2. DB管理者確認、ReadCommitted開始、Gate取得後、分類の固定桁数と通常追加可否を読む。分類不在は例外とする。この読取りは分類利用状態の検査ではない。",
+      "range": "U1020:DP1020",
+      "sourceLines": [
+        639,
+        639
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1021",
+      "value": "3. 値を分類設定の固定桁数字へ正規化し、分類・値で既存行を読む。不在で期待版ありはNotFound、既存版と要求版の不一致はConflictとする。既存行への期待版省略も不一致となる。新規で通常追加不可なら例外とする。",
+      "range": "U1021:DP1021",
+      "sourceLines": [
+        640,
+        640
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1022",
+      "value": "4. 保護値の停止、開始日の後ろ倒し、無期限値への終了日設定、既存終了日の短縮を拒否する。",
+      "range": "U1022:DP1022",
+      "sourceLines": [
+        641,
+        641
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1023",
+      "value": "5. 保存値を比較し、変更なしならrollbackして既存期待版を返す。変更ありの場合だけ版上限を確認する。",
+      "range": "U1023:DP1023",
+      "sourceLines": [
+        642,
+        642
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1024",
+      "value": "6. コードと監査を同じトランザクションで保存してcommitし、新規1又は期待版+1を返す。",
+      "range": "U1024:DP1024",
+      "sourceLines": [
+        643,
+        643
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1025",
+      "value": "〔observed-source：sources/Core/MasterMaintenanceService.cs:79-121〕",
+      "range": "U1025:DP1025",
+      "sourceLines": [
+        645,
+        645
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1026",
+      "value": "処理フロー",
+      "range": "A1026:DP1026",
+      "sourceLines": [
+        647,
+        647
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1027",
+      "value": "コード1は分類・既存版・保護の検査である。キー、保存値、既存行、期待版をコード2へ渡す。",
+      "range": "U1027:DP1027",
+      "sourceLines": [
+        649,
+        649
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1124",
+      "value": "SQL・テーブル関連（ER図）",
+      "range": "A1124:DP1124",
+      "sourceLines": [
+        684,
+        684
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1125",
+      "value": "コードは分類をFKで参照し、学生の性別・都道府県・在籍・続柄、クラスの学年から参照される。概要のER図に対応する。この保守は分類の桁数・追加可否を読むが、分類名称・桁数・追加可否・利用状態は更新しない。履歴追記はコード保存の処理依存である。",
+      "range": "U1125:DP1125",
+      "sourceLines": [
+        686,
+        686
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1126",
+      "value": "DB操作の詳細",
+      "range": "A1126:DP1126",
+      "sourceLines": [
+        688,
+        688
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1127",
+      "value": "既存キーはcategory_id=@category AND code_value=@valueである。分類=VarChar(24)、値=VarChar(10)を使用する。保存列の汎用容量10と、分類設定による固定桁数検査を分ける。",
+      "range": "U1127:DP1127",
+      "sourceLines": [
+        690,
+        690
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1128",
+      "value": "新規は分類・値、名称・順序・状態・期間・備考、保護false、作成更新情報、版1をINSERTする。更新は名称・順序・状態・期間・備考・更新管理情報・版を設定し、WHEREを分類・値・期待版とする。キーと保護状態は変更しない。",
+      "range": "U1128:DP1128",
+      "sourceLines": [
+        692,
+        692
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1129",
+      "value": "名称=NVarChar(24)、備考=NVarChar(240)、期間=Date、順序=Int、状態=Bit、版=BigIntで渡し、実行件数1を要求する。監査対象キーは分類:値、前版は期待版、新版は新規1又は期待版+1である。〔observed-source：sources/Core/MasterMaintenanceService.cs:91-120,132-135〕",
+      "range": "U1129:DP1129",
+      "sourceLines": [
+        694,
+        694
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1130",
+      "value": "結果・例外時の扱い",
+      "range": "A1130:DP1130",
+      "sourceLines": [
+        696,
+        696
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1131",
+      "value": "変更なしは版・日時・履歴を増やさない。Savedの監査種別は新規CREATE、状態維持UPDATE、利用可への変更ENABLE、利用不可への変更DISABLEである。停止したままの名称変更もUPDATEとなる。理由NULL、確認フラグfalse、実行者DB認証者で記録する。try内の失敗はrollbackを試みて再throwする。〔observed-source：sources/Core/AuditOperation.cs:6-7、sources/Core/MasterMaintenanceService.cs:109-135〕",
+      "range": "U1131:DP1131",
+      "sourceLines": [
+        698,
+        698
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1132",
+      "value": "参考設計はコード値を別の意味へ再利用せず、名称を識別子にしない保守を要求する。意味を変えてよいかの判断には、削除済み学生からの参照も含める。現行SaveCodeAsyncには学生参照の読取りや名称変更前後の意味判定がないため、この要求を自動検査済みとは扱わない。保守担当は意味を保つ調整であることと、削除済みを含む既存参照への影響を確認する責務を持つ。クラス学年変更の参照数検査とは別の責務である。〔reference-design：reference-designs/基本設計書/03_テーブル仕様書.md:59-59,85-87、reference-designs/基本設計書/04_コード設計書.md:110-116。observed-source：sources/Core/MasterMaintenanceService.cs:79-121〕",
+      "range": "U1132:DP1132",
+      "sourceLines": [
+        700,
+        700
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1133",
+      "value": "DB配備・初期投入・Principal結合・配備検査",
+      "range": "A1133:DP1133",
+      "sourceLines": [
+        702,
+        702
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1134",
+      "value": "処理概要",
+      "range": "A1134:DP1134",
+      "sourceLines": [
+        704,
+        704
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1135",
+      "value": "配備スクリプトはInstall、Verify、BindPrincipalを宣言し、既定ActionをVerify、対象DBをcontextbase_test_project1_mvcとする。Installは空の専用DBへスキーマ・初期コード・権限を順に適用する。Verifyは配備印・入力ハッシュ・宣言定義を照合し、BindPrincipalは既存Windowsログイン又はグループをDBユーザー・ロールへ結合する。以下はスクリプトに定義された処理契約である。",
+      "range": "U1135:DP1135",
+      "sourceLines": [
+        706,
+        706
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1136",
+      "value": "処理手順",
+      "range": "A1136:DP1136",
+      "sourceLines": [
+        708,
+        708
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1137",
+      "value": "1. 4ローカルSQLの存在と引数を検査する。Microsoft ODBC版sqlcmdの製品情報・PEヘッダーを読み、ProductVersion major16以上のx64又はx86を選ぶ。x64を優先し、その後に製品版、パス順で選ぶ。PlanOnlyでもメタデータとSQLハッシュを読み、SQL呼出しを計画出力へ置き換える。",
+      "range": "U1137:DP1137",
+      "sourceLines": [
+        710,
+        710
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1138",
+      "value": "2. 通常呼出しはWindows認証、暗号化、証明書検証を使用する。serverGuardはExpress major17、MachineNameとHOST_NAMEの一致、NTLM又はKERBEROSを要求する。sqlcmdの製品版条件とサーバー版条件は別である。",
+      "range": "U1138:DP1138",
+      "sourceLines": [
+        711,
+        711
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1139",
+      "value": "3. InstallはDB不在なら作成する。既存DBにはUseExistingEmptyDatabaseを要求し、非システムオブジェクト、対象3ロール、プロジェクト印がない空DBを確認する。",
+      "range": "U1139:DP1139",
+      "sourceLines": [
+        712,
+        712
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1140",
+      "value": "4. 001_schema、002_seed、003_web_permissionsを別々のsqlcmd呼出しで適用する。001はSNAPSHOT有効化、7表、制約、索引、3ロールを宣言する。002はGate下で初期値差分を確認し、不足分類の後に不足コードを追加する。003はDB権限とロール継承を設定する。",
+      "range": "U1140:DP1140",
+      "sourceLines": [
+        713,
+        713
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1141",
+      "value": "5. Installはプロジェクト印と3 SQLのSHA-256をDB拡張プロパティへ保存する。その後、全ActionでserverGuard、DB名、印、ハッシュを照合する。",
+      "range": "U1141:DP1141",
+      "sourceLines": [
+        714,
+        714
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1142",
+      "value": "6. Install又はBindPrincipalでApplicationPrincipalが指定された場合は、既存Windows主体、sysadmin・DB所有者との分離、SID・種類、異なる直接ロール所属の不在を検査する。許容時だけDB USERと指定ロール所属を追加する。",
+      "range": "U1142:DP1142",
+      "sourceLines": [
+        715,
+        715
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1143",
+      "value": "7. 004の配備検査を行う。Installでは初期空データ検査も必須とし、その他はRequireInitialEmptyData指定時に追加する。",
+      "range": "U1143:DP1143",
+      "sourceLines": [
+        716,
+        716
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1144",
+      "value": "〔observed-source：sources/database/Deploy-Database.ps1:1-165、sources/database/001_schema.sql:3-7,187-218、sources/database/002_seed.sql:2-13,85-92〕",
+      "range": "U1144:DP1144",
+      "sourceLines": [
+        718,
+        718
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1145",
+      "value": "処理フロー",
+      "range": "A1145:DP1145",
+      "sourceLines": [
+        720,
+        720
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1146",
+      "value": "配備1は前提とInstallである。PlanOnlyは選択Actionに対応する全段階の呼出計画を出力する経路であり、SQLを起動しない。",
+      "range": "U1146:DP1146",
+      "sourceLines": [
+        722,
+        722
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1219",
+      "value": "配備2は照合・Principal結合・検査である。後段の失敗を前段DDLの取消へ合流させない。",
+      "range": "U1219:DP1219",
+      "sourceLines": [
+        747,
+        747
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1291",
+      "value": "SQL・テーブル関連（ER図）",
+      "range": "A1291:DP1291",
+      "sourceLines": [
+        767,
+        767
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1292",
+      "value": "DDLは概要の5業務表と補助2表を宣言する。seedは分類を先に、コード値を後に追加し、分類FKの参照先を揃える。学生・クラスのサンプル投入と、seedからの履歴追記はない。",
+      "range": "U1292:DP1292",
+      "sourceLines": [
+        769,
+        769
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1293",
+      "value": "DB操作の詳細",
+      "range": "A1293:DP1293",
+      "sourceLines": [
+        771,
+        771
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1294",
+      "value": "段階",
+      "range": "A1294:AN1294",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO1294",
+      "value": "操作・検査",
+      "range": "AO1294:CB1294",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC1294",
+      "value": "確定単位",
+      "range": "CC1294:DP1294",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1295",
+      "value": "001",
+      "range": "A1295:AN1295",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO1295",
+      "value": "SNAPSHOTをONにし、表・制約・索引・ロールを作成",
+      "range": "AO1295:CB1295",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC1295",
+      "value": "配備全体を包む単一トランザクションではない",
+      "range": "CC1295:DP1295",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1296",
+      "value": "002",
+      "range": "A1296:AN1296",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO1296",
+      "value": "5分類・70初期値の比較、不足行追加",
+      "range": "AO1296:CB1296",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC1296",
+      "value": "共通Gateを持つ明示トランザクション",
+      "range": "CC1296:DP1296",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1297",
+      "value": "003",
+      "range": "A1297:AN1297",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO1297",
+      "value": "DB名・ロール存在、GRANT・DENY・継承設定",
+      "range": "AO1297:CB1297",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC1297",
+      "value": "明示トランザクション",
+      "range": "CC1297:DP1297",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1298",
+      "value": "配備印",
+      "range": "A1298:AN1298",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO1298",
+      "value": "プロジェクト印・3 SQLハッシュ追加",
+      "range": "AO1298:CB1298",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC1298",
+      "value": "個別トランザクション",
+      "range": "CC1298:DP1298",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1299",
+      "value": "Principal結合",
+      "range": "A1299:AN1299",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO1299",
+      "value": "DB USER・直接ロール所属追加",
+      "range": "AO1299:CB1299",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC1299",
+      "value": "個別トランザクション",
+      "range": "CC1299:DP1299",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1300",
+      "value": "004",
+      "range": "A1300:AN1300",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO1300",
+      "value": "定義・初期キー・宣言権限の参照検査",
+      "range": "AO1300:CB1300",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC1300",
+      "value": "業務データ更新なし",
+      "range": "CC1300:DP1300",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1301",
+      "value": "初期空データ検査",
+      "range": "A1301:AN1301",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "AO1301",
+      "value": "5表の空、分類5件・コード70件の確認",
+      "range": "AO1301:CB1301",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "CC1301",
+      "value": "業務データ更新なし",
+      "range": "CC1301:DP1301",
+      "sourceLines": [
+        773,
+        781
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1303",
+      "value": "seedの分類設定は性別1桁、その他4分類2桁、通常追加可は続柄・学年だけである。既存分類の名称・桁数・追加可否・利用状態、初期コードの名称・順序・保護・利用状態・開始1900-01-01・終了NULLが違えばrollbackし、THROW 51002で停止する。一致行は上書きしない。不足行は利用可、備考NULL、UTC管理日時、DB認証者、版1を設定する。既存管理列・備考まで完全一致を要求する検査ではない。〔observed-source：sources/database/002_seed.sql:3-13,85-92〕",
+      "range": "U1303:DP1303",
+      "sourceLines": [
+        783,
+        783
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1304",
+      "value": "004はDB名、Express major17、SNAPSHOT状態、非システム表総数7、dboの指定表と列数35・17・11・14・12・9・8を確認する。無効又は未信頼のFK/CHECK、FK総数7、続柄FKの参照表と削除更新非連動、続柄2列のNULL可能、連絡先CHECKの存在を検査する。全列型・容量、全CHECK本文、全FK列対応、全索引を完全比較する検査ではない。〔observed-source：sources/database/004_verify_deployment.sql:3-25〕",
+      "range": "U1304:DP1304",
+      "sourceLines": [
+        785,
+        785
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1305",
+      "value": "004は分類数5、列挙70初期キーの存在、対象3ロールの宣言GRANT/DENYとの差分、viewerからstaff・staffからadminへの継承を検査する。このSQL単体はコード総数70や全名称・期間一致を要求しない。コード総数70と学生・クラス・履歴・補助表の空は、追加の初期空データ検査で要求する。〔observed-source：sources/database/004_verify_deployment.sql:26-127、sources/database/Deploy-Database.ps1:149-156〕",
+      "range": "U1305:DP1305",
+      "sourceLines": [
+        787,
+        787
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "A1306",
+      "value": "結果・例外時の扱い",
+      "range": "A1306:DP1306",
+      "sourceLines": [
+        789,
+        789
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1307",
+      "value": "配備全体には一つの共通トランザクションがない。sqlcmdが非ゼロ終了すると停止してDBを残すため、スキーマだけ適用済み、権限まで適用済み等の途中状態があり得る。後段検査の失敗が前段DDLを取り消したとは判断しない。〔observed-source：sources/database/Deploy-Database.ps1:65-76,90-123〕",
+      "range": "U1307:DP1307",
+      "sourceLines": [
+        791,
+        791
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1308",
+      "value": "Principal結合はサーバーログインを作成・変更せず、異なる既存ロール所属を自動置換しない。Viewer・Staff・Administrator引数はDBロールへの対応であり、Web Claimsを付与する処理ではない。〔observed-source：sources/database/Deploy-Database.ps1:125-147〕",
+      "range": "U1308:DP1308",
+      "sourceLines": [
+        793,
+        793
+      ]
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "cell": "U1309",
+      "value": "004と追加検査のPASSは、条件通過時にSELECTする文字列である。宣言権限検査と、Windowsグループ・サーバー権限を含む運用Principalの実効権限確認は別である。ソースコメントは実Windowsログインを通した実効権限確認を要求する。〔observed-source：sources/database/004_verify_deployment.sql:128-134、sources/database/Deploy-Database.ps1:150-156〕",
+      "range": "U1309:DP1309",
+      "sourceLines": [
+        795,
+        795
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A1",
+      "value": "補足説明",
+      "range": "A1:DP1",
+      "sourceLines": null
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A3",
+      "value": "個別テーブル仕様の共通記述規約",
+      "range": "A3:DP3",
+      "sourceLines": [
+        799,
+        799
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U4",
+      "value": "参考設計は各表を「テーブルヘッダー＋項目詳細」の1ファイルとし、Excelでは二章を同一シートに配置する。索引・共通保存規則は各テーブルシートへ繰り返し展開しない。本文は論理名を中心に言語非依存で記述し、物理名はDBとの対応確認用として併記する。製品別の実DB型・索引・作成命令は採用DDLへ対応させる。本書ではSQL Serverの現行DDLをその物理根拠とする。〔reference-design：reference-designs/基本設計書/03_テーブル仕様書.md:8-10〕",
+      "range": "U4:DP4",
+      "sourceLines": [
+        801,
+        801
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U5",
+      "value": "分冊の明細は「No、論理名、物理名、PK、NOT NULL、タイプ、長さ、初期値、説明」の九列とする。PK・NOT NULLは該当時〇、非該当は空欄、初期値なしと長さ非適用も空欄とする。参考設計の長さは業務上限を表すため、単位を明示し、nvarchar容量やSQLパラメータサイズを同じ値として代用しない。DB確定後のタイプには実DB型を示し、物理容量はタイプ・説明又はヘッダーで併記する。〔reference-design：reference-designs/基本設計書/03_テーブル仕様書.md:36-36〕",
+      "range": "U5:DP5",
+      "sourceLines": [
+        803,
+        803
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U6",
+      "value": "文書対応契約では個別表をspec-md/1.1のTABLE文書とし、物理表名のシート1件、HEADERとLISTの二章、九列の明細へ対応させる。ヘッダーに定義・制約・索引・根拠・実装との差をまとめる。参考設計の業務初期値、DDL DEFAULT、保存処理が明示設定する値を区別し、条件付き必須と参照先は説明へ残す。これにより、論理的意味と実DB型・容量・NULL属性を一つの表別文書で確認できる。",
+      "range": "U6:DP6",
+      "sourceLines": [
+        805,
+        805
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A7",
+      "value": "共通管理項目・比較版・日時",
+      "range": "A7:DP7",
+      "sourceLines": [
+        807,
+        807
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U8",
+      "value": "学生、クラス、コード分類、コード値の4表には、次の5管理列を持つ。各表の列数にはこれらを含む。",
+      "range": "U8:DP8",
+      "sourceLines": [
+        809,
+        809
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A9",
+      "value": "論理項目",
+      "range": "A9:AD9",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AE9",
+      "value": "物理列",
+      "range": "AE9:BH9",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI9",
+      "value": "DB属性",
+      "range": "BI9:CL9",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CM9",
+      "value": "設定・用途",
+      "range": "CM9:DP9",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A10",
+      "value": "作成日時",
+      "range": "A10:AD10",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AE10",
+      "value": "created_at",
+      "range": "AE10:BH10",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI10",
+      "value": "datetimeoffset(7) NOT NULL、UTCオフセット0",
+      "range": "BI10:CL10",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CM10",
+      "value": "初回保存で設定。既存更新で保持",
+      "range": "CM10:DP10",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A11",
+      "value": "作成者",
+      "range": "A11:AD11",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AE11",
+      "value": "created_by",
+      "range": "AE11:BH11",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI11",
+      "value": "nvarchar(128) NOT NULL、64スカラー以下",
+      "range": "BI11:CL11",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CM11",
+      "value": "初回保存の認証主体。既存更新で保持",
+      "range": "CM11:DP11",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A12",
+      "value": "更新日時",
+      "range": "A12:AD12",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AE12",
+      "value": "updated_at",
+      "range": "AE12:BH12",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI12",
+      "value": "datetimeoffset(7) NOT NULL、UTCオフセット0",
+      "range": "BI12:CL12",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CM12",
+      "value": "実変更時に設定。変更なしでは変更しない",
+      "range": "CM12:DP12",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A13",
+      "value": "更新者",
+      "range": "A13:AD13",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AE13",
+      "value": "updated_by",
+      "range": "AE13:BH13",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI13",
+      "value": "nvarchar(128) NOT NULL、64スカラー以下",
+      "range": "BI13:CL13",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CM13",
+      "value": "実変更を行う認証主体",
+      "range": "CM13:DP13",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A14",
+      "value": "更新管理番号",
+      "range": "A14:AD14",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AE14",
+      "value": "row_version",
+      "range": "AE14:BH14",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI14",
+      "value": "bigint NOT NULL、DEFAULT 1、正数CHECK",
+      "range": "BI14:CL14",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CM14",
+      "value": "新規1、実変更ごとに1加算。期待版と比較",
+      "range": "CM14:DP14",
+      "sourceLines": [
+        811,
+        817
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U16",
+      "value": "日時・者にはDDL DEFAULTがなく、保存処理が設定する。学生はWeb認証主体とTimeProviderのUTC時刻、マスタ保守はDB認証主体とUTC時刻、seedはORIGINAL_LOGINとUTC SQL時刻を使う。分類の設定入口として確認できるのはseedの不足行追加である。管理情報を通常業務入力DTOから上書きする処理はない。〔observed-source：sources/database/001_schema.sql:38-59,75-109,122-134、sources/Core/SqlServerStudentService.cs:44-50,296-307、sources/Core/MasterMaintenanceService.cs:23-26,113-128、sources/database/002_seed.sql:7-7,88-91。reference-design：reference-designs/基本設計書/03_テーブル仕様書.md:71-75〕",
+      "range": "U16:DP16",
+      "sourceLines": [
+        819,
+        819
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U17",
+      "value": "row_versionは自動rowversion型ではなく、処理が比較・加算するbigintで、C#のlongへ対応する。フォーム期待版は正の十進文字列からlongへ変換する。変更なし判定は版上限検査より前にある。変更あり学生更新の上限はConflict、マスタ保守は例外、学生削除は入口ValidationFailedとなる。〔observed-source：sources/Web/Inputs/StudentSaveInput.cs:42-60、sources/Core/SqlServerStudentService.cs:261-263,398-398、sources/Core/MasterMaintenanceService.cs:65-68,109-112〕",
+      "range": "U17:DP17",
+      "sourceLines": [
+        821,
+        821
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U18",
+      "value": "Web管理日時は+09:00へ変換し、yyyy/MM/dd HH:mm:ssで表示する。学生保存と履歴はサービス入口時刻を使用し、commit完了時刻を取り直さない。生年月日、入学日、終了日、マスタ期間は時刻を持たないdateである。DateOnlyのSQL移送では午前0時のDateTimeをDateパラメータへ渡し、管理日時の時差変換と分ける。〔observed-source：sources/Infrastructure/WebPresentation.cs:5-7、sources/Core/SqlServerStudentService.cs:67-72,229-229,300-313〕",
+      "range": "U18:DP18",
+      "sourceLines": [
+        823,
+        823
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A19",
+      "value": "日付の正本参照と表示・保存の分担",
+      "range": "A19:DP19",
+      "sourceLines": [
+        825,
+        825
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U20",
+      "value": "参考設計は日付・年範囲を日付・年範囲の正本として指定する。この参照名と相対パスは設計上の参照として保持する。当該資料はcapsuleに未収録で本文未確認、現文書契約の生成対象外であるため、その文書IDや未提供の規則は補わない。〔reference-design：reference-designs/基本設計書/03_テーブル仕様書.md:65-67〕",
+      "range": "U20:DP20",
+      "sourceLines": [
+        827,
+        827
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U21",
+      "value": "本書で確認できる現行処理は、生年月日の元号・年・月・日からDateOnlyへの変換、元年、FormKC後の正数、実在日、元号境界、1900年下限、業務日上限の検査である。他の日付はFormKC後のyyyy-MM-ddからDateOnlyへ変換する。元号は日付処理の固定定義であり、seedの5分類70値へ追加するものではない。〔observed-source：sources/Core/JapaneseDateService.cs:9-59、sources/database/002_seed.sql:8-84〕",
+      "range": "U21:DP21",
+      "sourceLines": [
+        829,
+        829
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U22",
+      "value": "参考設計は生年月日だけ和暦、他日付は西暦表示、郵便番号は7桁保存・3桁－4桁表示を意図する。現行は生年月日を和暦4入力へ戻し、他日付をISO文字列でdate inputへ渡す。実ブラウザーの日付描画形式は値移送だけでは確定しない。郵便番号は保存7桁をそのままフォームへ戻しており、ハイフン表示加工は確認できない。〔reference-design：reference-designs/基本設計書/03_テーブル仕様書.md:67-67、reference-designs/基本設計書/02_学生登録画面.md:125-145。observed-source：sources/Web/Inputs/StudentSaveInput.cs:47-54、sources/Views/Students/Edit.cshtml:7-11〕",
+      "range": "U22:DP22",
+      "sourceLines": [
+        831,
+        831
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A23",
+      "value": "受信値・正規化値・保存値の対応",
+      "range": "A23:DP23",
+      "sourceLines": [
+        833,
+        833
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U24",
+      "value": "登録フォームはInput接頭辞でStudentSaveInputへバインドし、ToRequestでStudentDraftと保存制御値へ移す。次表のDTO型は受信後の言語型、DBのNULL属性はDDL、SQL型・サイズは保存パラメータ宣言に基づく。文字列のraw・保存上限はスカラー数、HTML maxlengthはブラウザーの物理入力ガードとして区別する。",
+      "range": "U24:DP24",
+      "sourceLines": [
+        835,
+        835
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A25",
+      "value": "項目・実コントロール",
+      "range": "A25:T25",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U25",
+      "value": "DTOから内部値への対応",
+      "range": "U25:AN25",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO25",
+      "value": "raw上限・正規化後条件",
+      "range": "AO25:BH25",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI25",
+      "value": "保存列・DB型・NULL",
+      "range": "BI25:CB25",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC25",
+      "value": "SQLパラメータ・型・サイズ",
+      "range": "CC25:CV25",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW25",
+      "value": "HTML maxlength",
+      "range": "CW25:DP25",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A26",
+      "value": "学籍番号 REG-002 input",
+      "range": "A26:T26",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U26",
+      "value": "StudentNo:string→識別子文字列",
+      "range": "U26:AN26",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO26",
+      "value": "raw15・保存15。FormKC・大文字化、先頭英数字、英数字・ハイフン",
+      "range": "AO26:BH26",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI26",
+      "value": "student_no varchar(15)、不可",
+      "range": "BI26:CB26",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC26",
+      "value": "@student_no VarChar(15)。新規のみ",
+      "range": "CC26:CV26",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW26",
+      "value": "30",
+      "range": "CW26:DP26",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A27",
+      "value": "氏名 REG-003 input",
+      "range": "A27:T27",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U27",
+      "value": "StudentName:string→原表記文字列",
+      "range": "U27:AN27",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO27",
+      "value": "raw8・保存8。Trim",
+      "range": "AO27:BH27",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI27",
+      "value": "student_name nvarchar(16)、不可",
+      "range": "BI27:CB27",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC27",
+      "value": "@student_name NVarChar(16)",
+      "range": "CC27:CV27",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW27",
+      "value": "16",
+      "range": "CW27:DP27",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A28",
+      "value": "氏名カナ REG-004 input",
+      "range": "A28:T28",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U28",
+      "value": "StudentNameKana:string→カナ文字列",
+      "range": "U28:AN28",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO28",
+      "value": "raw36・保存18。FormKC、カタカナ化、空白整理",
+      "range": "AO28:BH28",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI28",
+      "value": "student_name_kana nvarchar(36)、不可",
+      "range": "BI28:CB28",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC28",
+      "value": "@student_name_kana NVarChar(36)",
+      "range": "CC28:CV28",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW28",
+      "value": "72",
+      "range": "CW28:DP28",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A29",
+      "value": "生年月日 REG-005 selectと3 input",
+      "range": "A29:T29",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U29",
+      "value": "BirthDateInputの4つのstring→DateOnly",
+      "range": "U29:AN29",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO29",
+      "value": "元号・年・月・日、実在日、元号境界、1900年下限、業務日上限",
+      "range": "AO29:BH29",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI29",
+      "value": "birth_date date、不可",
+      "range": "BI29:CB29",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC29",
+      "value": "@birth_date Date",
+      "range": "CC29:CV29",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW29",
+      "value": "年4、月2、日2",
+      "range": "CW29:DP29",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A30",
+      "value": "性別 REG-006 select",
+      "range": "A30:T30",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U30",
+      "value": "GenderCode:string→数字文字列",
+      "range": "U30:AN30",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO30",
+      "value": "raw・正規化後1桁。新規0",
+      "range": "AO30:BH30",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI30",
+      "value": "gender_code varchar(1)、不可",
+      "range": "BI30:CB30",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC30",
+      "value": "@gender_code VarChar(1)",
+      "range": "CC30:CV30",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW30",
+      "value": "なし",
+      "range": "CW30:DP30",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A31",
+      "value": "郵便番号 REG-007 input",
+      "range": "A31:T31",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U31",
+      "value": "PostalCode:string→7桁文字列",
+      "range": "U31:AN31",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO31",
+      "value": "raw10。FormKC、空白・区切り除去後7桁",
+      "range": "AO31:BH31",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI31",
+      "value": "postal_code varchar(7)、不可",
+      "range": "BI31:CB31",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC31",
+      "value": "@postal_code VarChar(7)",
+      "range": "CC31:CV31",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW31",
+      "value": "20",
+      "range": "CW31:DP31",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A32",
+      "value": "都道府県 REG-008 select",
+      "range": "A32:T32",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U32",
+      "value": "PrefectureCode:string→数字文字列",
+      "range": "U32:AN32",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO32",
+      "value": "raw・正規化後2桁",
+      "range": "AO32:BH32",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI32",
+      "value": "prefecture_code varchar(2)、不可",
+      "range": "BI32:CB32",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC32",
+      "value": "@prefecture_code VarChar(2)",
+      "range": "CC32:CV32",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW32",
+      "value": "なし",
+      "range": "CW32:DP32",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A33",
+      "value": "住所1 REG-009 input",
+      "range": "A33:T33",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U33",
+      "value": "AddressLine1:string→文字列",
+      "range": "U33:AN33",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO33",
+      "value": "raw45・保存45、必須、Trim",
+      "range": "AO33:BH33",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI33",
+      "value": "address_line1 nvarchar(90)、不可",
+      "range": "BI33:CB33",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC33",
+      "value": "@address_line1 NVarChar(90)",
+      "range": "CC33:CV33",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW33",
+      "value": "90",
+      "range": "CW33:DP33",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A34",
+      "value": "住所2 REG-010 input",
+      "range": "A34:T34",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U34",
+      "value": "AddressLine2:string?→任意文字列",
+      "range": "U34:AN34",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO34",
+      "value": "raw45・保存45。Trim後空はNULL",
+      "range": "AO34:BH34",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI34",
+      "value": "address_line2 nvarchar(90)、可",
+      "range": "BI34:CB34",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC34",
+      "value": "@address_line2 NVarChar(90)",
+      "range": "CC34:CV34",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW34",
+      "value": "90",
+      "range": "CW34:DP34",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A35",
+      "value": "本人電話 REG-011 input",
+      "range": "A35:T35",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U35",
+      "value": "PhoneNumber:string?→任意電話文字列",
+      "range": "U35:AN35",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO35",
+      "value": "raw20。FormKC、空白・区切り・括弧除去。国内0始まり10～11桁又は国番号付き最大16文字",
+      "range": "AO35:BH35",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI35",
+      "value": "phone_number varchar(16)、可",
+      "range": "BI35:CB35",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC35",
+      "value": "@phone_number VarChar(16)",
+      "range": "CC35:CV35",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW35",
+      "value": "40",
+      "range": "CW35:DP35",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A36",
+      "value": "本人メール REG-012 input",
+      "range": "A36:T36",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U36",
+      "value": "EmailAddress:string?→任意メール文字列",
+      "range": "U36:AN36",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO36",
+      "value": "raw・保存60。ASCII形式・ドメイン構成、ドメイン小文字化",
+      "range": "AO36:BH36",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI36",
+      "value": "email_address varchar(60)、可",
+      "range": "BI36:CB36",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC36",
+      "value": "@email_address VarChar(60)",
+      "range": "CC36:CV36",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW36",
+      "value": "120",
+      "range": "CW36:DP36",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A37",
+      "value": "入学日 REG-013 date input",
+      "range": "A37:T37",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U37",
+      "value": "AdmissionDate:string→DateOnly",
+      "range": "U37:AN37",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO37",
+      "value": "FormKC後ISO10文字、1900年下限、業務日上限",
+      "range": "AO37:BH37",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI37",
+      "value": "admission_date date、不可",
+      "range": "BI37:CB37",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC37",
+      "value": "@admission_date Date",
+      "range": "CC37:CV37",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW37",
+      "value": "指定なし",
+      "range": "CW37:DP37",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A38",
+      "value": "卒業・退学日 REG-015 date input",
+      "range": "A38:T38",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U38",
+      "value": "EnrollmentEndDate:string?→DateOnly?",
+      "range": "U38:AN38",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO38",
+      "value": "NULL・空はNULL。設定時ISO日付と在籍条件検査",
+      "range": "AO38:BH38",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI38",
+      "value": "enrollment_end_date date、可・条件付き必須",
+      "range": "BI38:CB38",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC38",
+      "value": "@enrollment_end_date Date",
+      "range": "CC38:CV38",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW38",
+      "value": "指定なし",
+      "range": "CW38:DP38",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A39",
+      "value": "在籍区分 REG-014 select",
+      "range": "A39:T39",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U39",
+      "value": "EnrollmentStatusCode:string→数字文字列",
+      "range": "U39:AN39",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO39",
+      "value": "raw・正規化後2桁。新規01",
+      "range": "AO39:BH39",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI39",
+      "value": "enrollment_status_code varchar(2)、不可",
+      "range": "BI39:CB39",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC39",
+      "value": "@enrollment_status_code VarChar(2)",
+      "range": "CC39:CV39",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW39",
+      "value": "なし",
+      "range": "CW39:DP39",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A40",
+      "value": "クラス REG-018 select",
+      "range": "A40:T40",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U40",
+      "value": "ClassId:string?→long?",
+      "range": "U40:AN40",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO40",
+      "value": "NULL・空は未所属。指定時19桁以内の正のlong",
+      "range": "AO40:BH40",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI40",
+      "value": "class_id bigint、可・条件付き必須",
+      "range": "BI40:CB40",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC40",
+      "value": "@class_id BigInt",
+      "range": "CC40:CV40",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW40",
+      "value": "なし",
+      "range": "CW40:DP40",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A41",
+      "value": "緊急氏名 REG-020 input",
+      "range": "A41:T41",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U41",
+      "value": "EmergencyContactName:string?→任意文字列",
+      "range": "U41:AN41",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO41",
+      "value": "raw8・保存8。Trim後空はNULL",
+      "range": "AO41:BH41",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI41",
+      "value": "emergency_contact_name nvarchar(16)、可",
+      "range": "BI41:CB41",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC41",
+      "value": "@emergency_contact_name NVarChar(16)",
+      "range": "CC41:CV41",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW41",
+      "value": "16",
+      "range": "CW41:DP41",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A42",
+      "value": "続柄 REG-021 select",
+      "range": "A42:T42",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U42",
+      "value": "RelationshipCode:string?→任意数字文字列",
+      "range": "U42:AN42",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO42",
+      "value": "raw・正規化後2桁。未選択はNULL",
+      "range": "AO42:BH42",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI42",
+      "value": "relationship_code varchar(2)、可",
+      "range": "BI42:CB42",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC42",
+      "value": "@relationship_code VarChar(2)",
+      "range": "CC42:CV42",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW42",
+      "value": "なし",
+      "range": "CW42:DP42",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A43",
+      "value": "緊急電話 REG-022 input",
+      "range": "A43:T43",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U43",
+      "value": "EmergencyPhoneNumber:string?→任意電話文字列",
+      "range": "U43:AN43",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO43",
+      "value": "本人電話と同じraw20・正規化後最大16",
+      "range": "AO43:BH43",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI43",
+      "value": "emergency_phone_number varchar(16)、可",
+      "range": "BI43:CB43",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC43",
+      "value": "@emergency_phone_number VarChar(16)",
+      "range": "CC43:CV43",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW43",
+      "value": "40",
+      "range": "CW43:DP43",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A44",
+      "value": "備考 REG-023 textarea",
+      "range": "A44:T44",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U44",
+      "value": "Remarks:string?→任意文字列",
+      "range": "U44:AN44",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO44",
+      "value": "raw120・保存120、LF改行可。空はNULL",
+      "range": "AO44:BH44",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI44",
+      "value": "remarks nvarchar(240)、可",
+      "range": "BI44:CB44",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC44",
+      "value": "@remarks NVarChar(240)",
+      "range": "CC44:CV44",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CW44",
+      "value": "240",
+      "range": "CW44:DP44",
+      "sourceLines": [
+        837,
+        857
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U46",
+      "value": "〔observed-source：sources/Views/Students/Edit.cshtml:6-13、sources/Web/Inputs/StudentSaveInput.cs:9-42,57-60、sources/Core/StudentNormalizer.cs:59-158、sources/Core/JapaneseDateService.cs:17-59、sources/database/001_schema.sql:9-33、sources/Core/SqlServerStudentService.cs:30-37,294-301〕",
+      "range": "U46:DP46",
+      "sourceLines": [
+        859,
+        859
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U47",
+      "value": "Text処理はNULLを空文字へ補い、raw上限、複数行のLF統一、許可外制御文字、Trim、必須又は空欄NULL化、保存上限の順に検査する。ScalarCountは正常なサロゲートペアを1スカラーと数え、不正な組合せをArgumentExceptionとする。nvarchar容量とNVarCharサイズはUTF-16コード単位の領域であり、業務スカラー上限を拡張しない。DDLの文字数CHECKはSC照合順序と末尾付加文字を使い、末尾空白も数える。識別子・照合キー等の比較にはBIN2照合順序を使用する。〔observed-source：sources/Core/StudentNormalizer.cs:37-85、sources/database/001_schema.sql:9-13,44-58〕",
+      "range": "U47:DP47",
+      "sourceLines": [
+        861,
+        861
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U48",
+      "value": "氏名原表記からFormKC・大文字化・全空白除去でname_keyを生成する。業務上限160スカラー、DB・保存パラメータは320コード単位である。保存カナから空白を除いたkana_keyは18スカラー、DB・保存領域36コード単位である。検索はキー部分一致、同一人物候補はキー等値比較を使う。検索パラメータ642・74はLIKEエスケープとワイルドカードを含む別の領域である。〔observed-source：sources/Core/StudentNormalizer.cs:66-85,144-145、sources/Core/SqlServerStudentService.cs:32-32,140-142,269-271〕",
+      "range": "U48:DP48",
+      "sourceLines": [
+        863,
+        863
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U49",
+      "value": "年度REG-016のSchoolYear:int?と学年REG-017のGradeCode:string?は、候補絞込み・クラス整合検査のための選択補助であり、学生へ保存しない。年度候補はクラスの年度、学年候補はGRADE分類のコード名称、クラス候補はIDと名称を使う。既存読込みでは選択クラスから年度・学年を戻し、新規でクラスがない場合は当年度を補助初期値とする。人数・定員はREG-018内のsmallに表示する参考値で、REG-019の独立DOM IDはない。人数表示は席の予約ではない。〔observed-source：sources/Views/Students/Edit.cshtml:12-12、sources/Web/Inputs/StudentSaveInput.cs:28-29,44-54、sources/Core/SqlServerStudentService.cs:371-380〕",
+      "range": "U49:DP49",
+      "sourceLines": [
+        865,
+        865
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U50",
+      "value": "続柄分類はフォーム入力に持たず、正規化後の続柄値がNULLならNULL、設定済みならRELATIONSHIPを算定する。保存列relationship_category varchar(24) NULLへVarChar(24)で渡す。緊急連絡先の全消去では、氏名・分類・値・電話を同時にNULL化する。〔observed-source：sources/Core/StudentNormalizer.cs:139-158、sources/Core/SqlServerStudentService.cs:36-37、sources/database/001_schema.sql:29-32,199-199。reference-design：reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:811-815〕",
+      "range": "U50:DP50",
+      "sourceLines": [
+        867,
+        867
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U51",
+      "value": "確認・変更理由REG-024のOperationReason:string?はraw・保存60スカラー、HTML上限120である。学生業務列ではなく履歴のoperation_reason nvarchar(120) NULLへ@reason NVarChar(120)で渡す。削除理由REG-026のReason:stringも60スカラーだが必須で、学生delete_reasonと履歴理由の双方へ保存する。〔observed-source：sources/Views/Students/Edit.cshtml:13-13,17-17、sources/Web/Inputs/StudentSaveInput.cs:30-43、sources/Web/Inputs/StudentDeleteInput.cs:4-4、sources/Core/SqlServerStudentService.cs:234-234,389-389,396-413〕",
+      "range": "U51:DP51",
+      "sourceLines": [
+        869,
+        869
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U52",
+      "value": "ExpectedVersionは比較条件、DuplicateTokenは確認情報参照、ReturnContextIdは検索復帰先、Controller引数SnapshotIdは読込時状態参照であり、学生業務列へ保存しない。ルートID、管理日時・者、固定分類、削除情報は通常保存DTOの業務入力ではない。〔observed-source：sources/Web/Inputs/StudentSaveInput.cs:28-43、sources/Web/Controllers/StudentsController.cs:26-38〕",
+      "range": "U52:DP52",
+      "sourceLines": [
+        871,
+        871
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U53",
+      "value": "HTML required・maxlength、DTOの非nullable注釈は受信NULL排除の実行保証ではない。MVCは非nullable参照型からの暗黙required生成を抑止している。ToRequestはBirthDateInput全体のNULLを補うが構成文字列までは補わず、日付処理にはNormalizeへの直接呼出しがある。項目集約はInputValidationExceptionとArgumentExceptionだけを捕捉し、別種の例外をすべて入力不正へ変換するものではない。〔observed-source：sources/Infrastructure/WebHostSetup.cs:16-18、sources/Web/Inputs/StudentSaveInput.cs:34-42、sources/Core/JapaneseDateService.cs:19-24,52-55、sources/Core/StudentNormalizer.cs:123-143〕",
+      "range": "U53:DP53",
+      "sourceLines": [
+        873,
+        873
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A54",
+      "value": "表示名称・識別子の保存側制約",
+      "range": "A54:DP54",
+      "sourceLines": [
+        875,
+        875
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A55",
+      "value": "対象",
+      "range": "A55:AD55",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AE55",
+      "value": "業務上限・正規化",
+      "range": "AE55:BH55",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI55",
+      "value": "保存列・DB属性",
+      "range": "BI55:CL55",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CM55",
+      "value": "保存パラメータ・確認できる入口",
+      "range": "CM55:DP55",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A56",
+      "value": "クラス名称",
+      "range": "A56:AD56",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AE56",
+      "value": "raw・保存18スカラー、Trim",
+      "range": "AE56:BH56",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI56",
+      "value": "class_name nvarchar(36) NOT NULL",
+      "range": "BI56:CL56",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CM56",
+      "value": "NVarChar(36)、宣言クラス保守",
+      "range": "CM56:DP56",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A57",
+      "value": "コード名称",
+      "range": "A57:AD57",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AE57",
+      "value": "raw・保存12スカラー、Trim",
+      "range": "AE57:BH57",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI57",
+      "value": "code_name nvarchar(24) NOT NULL",
+      "range": "BI57:CL57",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CM57",
+      "value": "NVarChar(24)、宣言コード保守",
+      "range": "CM57:DP57",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A58",
+      "value": "分類名称",
+      "range": "A58:AD58",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AE58",
+      "value": "DDLで12スカラー以下",
+      "range": "AE58:BH58",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI58",
+      "value": "category_name nvarchar(24) NOT NULL",
+      "range": "BI58:CL58",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CM58",
+      "value": "seed不足行追加。通常分類保守入口未確認",
+      "range": "CM58:DP58",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A59",
+      "value": "クラスコード",
+      "range": "A59:AD59",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AE59",
+      "value": "raw・正規化後9以内、FormKC・大文字化、英数字・ハイフン",
+      "range": "AE59:BH59",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI59",
+      "value": "class_code varchar(9) NOT NULL",
+      "range": "BI59:CL59",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CM59",
+      "value": "VarChar(9)、宣言クラス保守",
+      "range": "CM59:DP59",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A60",
+      "value": "分類内コード値",
+      "range": "A60:AD60",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AE60",
+      "value": "分類設定の固定桁数字",
+      "range": "AE60:BH60",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI60",
+      "value": "code_value varchar(10) NOT NULL",
+      "range": "BI60:CL60",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CM60",
+      "value": "VarChar(10)、宣言コード保守・seed",
+      "range": "CM60:DP60",
+      "sourceLines": [
+        877,
+        883
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U62",
+      "value": "名称は表示値であり、学生・クラスが保存する参照キーの代わりにはしない。分類名は候補名code_nameとは別列である。分類の桁数はsmallint、1～10のCHECKを持つが、seed設定は性別1、他4分類2である。表示名称の上限は保存側検査とDDLを対応させ、JOIN DTOやDB容量だけから決めない。〔observed-source：sources/database/001_schema.sql:67-81,91-103,113-128,202-203、sources/Core/MasterMaintenanceService.cs:33-35,73-73,81-83,91-115、sources/database/002_seed.sql:9-13〕",
+      "range": "U62:DP62",
+      "sourceLines": [
+        885,
+        885
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A63",
+      "value": "条件付き必須・固定分類・所属の意味",
+      "range": "A63:DP63",
+      "sourceLines": [
+        887,
+        887
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A64",
+      "value": "対象",
+      "range": "A64:BH64",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI64",
+      "value": "条件と保存上の意味",
+      "range": "BI64:DP64",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A65",
+      "value": "学生日付",
+      "range": "A65:BH65",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI65",
+      "value": "生年月日≦入学日。同日可。終了日設定時は入学日以上",
+      "range": "BI65:DP65",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A66",
+      "value": "在学01・休学02",
+      "range": "A66:BH66",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI66",
+      "value": "クラス必須、終了日NULL",
+      "range": "BI66:DP66",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A67",
+      "value": "卒業03・退学04",
+      "range": "A67:BH67",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI67",
+      "value": "終了日必須、クラスNULL可",
+      "range": "BI67:DP67",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A68",
+      "value": "連絡方法",
+      "range": "A68:BH68",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI68",
+      "value": "本人電話・本人メール・緊急電話の少なくとも1つ",
+      "range": "BI68:DP68",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A69",
+      "value": "緊急連絡先",
+      "range": "A69:BH69",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI69",
+      "value": "氏名・続柄・電話が全部未設定又は全部設定。分類も連動",
+      "range": "BI69:DP69",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A70",
+      "value": "削除属性",
+      "range": "A70:BH70",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI70",
+      "value": "未削除なら日時・者・理由NULL。削除済みなら全部設定",
+      "range": "BI70:DP70",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A71",
+      "value": "クラス期間",
+      "range": "A71:BH71",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI71",
+      "value": "年度内、開始日≦終了日。同日可",
+      "range": "BI71:DP71",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A72",
+      "value": "クラス定員",
+      "range": "A72:BH72",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI72",
+      "value": "NULLは制限なし。0不可。設定時1～9999",
+      "range": "BI72:DP72",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A73",
+      "value": "学籍番号",
+      "range": "A73:BH73",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI73",
+      "value": "全行一意、更新不可、削除後も再利用不可",
+      "range": "BI73:DP73",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A74",
+      "value": "クラスコード",
+      "range": "A74:BH74",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BI74",
+      "value": "年度とコードの組で一意。同年度なら学年が違っても重複不可",
+      "range": "BI74:DP74",
+      "sourceLines": [
+        889,
+        900
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U76",
+      "value": "学生日付の1900年下限・業務日上限は日付処理で検査する。DDLも1900年下限、前後関係、在籍条件を制約するが、サービスの未来日上限を同じ形では検査していない。〔observed-source：sources/Core/JapaneseDateService.cs:17-29,52-59、sources/Core/StudentNormalizer.cs:148-158、sources/database/001_schema.sql:187-203〕",
+      "range": "U76:DP76",
+      "sourceLines": [
+        902,
+        902
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U77",
+      "value": "「学年なし」は所属クラスのgrade_category='GRADE', grade_code='00'を意味する。学生がそのクラスIDを保持していれば、学年なしのクラスに所属している。一方、「クラス未所属」は学生のclass_id=NULLであり、所属クラス自体がない。画面の学年「すべて」や年度「未指定」は選択補助の条件省略で、この二つの保存状態とも異なる。性別0もseedの文字列コード「未回答」であり、NULLや数値ゼロと混同しない。〔reference-design：reference-designs/基本設計書/03_テーブル仕様書.md:79-79。observed-source：sources/database/002_seed.sql:15-15,78-78、sources/database/001_schema.sql:28-28,65-66、sources/Views/Students/Edit.cshtml:12-12〕",
+      "range": "U77:DP77",
+      "sourceLines": [
+        904,
+        904
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U78",
+      "value": "学生の性別・都道府県・在籍分類、クラスの学年分類は処理が固定値を設定し、DDLのCHECKも限定する。固定分類にDDL DEFAULTはない。続柄分類は値の有無から算定する。学籍番号・クラスコードは個別識別子であり、コード管理へ1件ずつ追加する選択値ではない。〔observed-source：sources/Core/SqlServerStudentService.cs:296-297、sources/Core/MasterMaintenanceService.cs:127-127、sources/Core/StudentNormalizer.cs:147-147、sources/database/001_schema.sql:196-199。reference-design：reference-designs/基本設計書/04_コード設計書.md:122-127〕",
+      "range": "U78:DP78",
+      "sourceLines": [
+        906,
+        906
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U79",
+      "value": "候補はコード値・クラスIDを保存し、名称・人数を保存しない。検索候補は停止・期間外も含む。登録候補は利用状態・期間を判定しつつ、読込時の既存値を保持できる。新規クラス選択は在学・休学で利用可かつ当日期間内、卒業・退学で入力在籍期間との重なりを使う。年度・学年変更時は不適合クラスを解除し、検索の未所属指定時は年度・学年・クラスを解除する。保存時は最新DBを再検査するため、候補表示と参考人数だけでは保存可否を確定しない。〔observed-source：sources/Views/Students/Edit.cshtml:8-13、sources/Web/Controllers/StudentsController.cs:22-22、sources/wwwroot/js/site.js:7-8、sources/Core/SqlServerStudentService.cs:344-383〕",
+      "range": "U79:DP79",
+      "sourceLines": [
+        908,
+        908
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A80",
+      "value": "CRUDと保存の依存",
+      "range": "A80:DP80",
+      "sourceLines": [
+        910,
+        910
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U81",
+      "value": "CはINSERT、Rは参照、UはUPDATE、‐は当該処理で操作しないことを示す。論理削除はUである。",
+      "range": "U81:DP81",
+      "sourceLines": [
+        912,
+        912
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A82",
+      "value": "処理",
+      "range": "A82:Q82",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "R82",
+      "value": "学生",
+      "range": "R82:AH82",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AI82",
+      "value": "クラス",
+      "range": "AI82:AY82",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AZ82",
+      "value": "コード種別",
+      "range": "AZ82:BP82",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BQ82",
+      "value": "コード値",
+      "range": "BQ82:CG82",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CH82",
+      "value": "操作履歴",
+      "range": "CH82:CX82",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CY82",
+      "value": "接続状況・条件",
+      "range": "CY82:DP82",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A83",
+      "value": "学生検索",
+      "range": "A83:Q83",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "R83",
+      "value": "R",
+      "range": "R83:AH83",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AI83",
+      "value": "R",
+      "range": "AI83:AY83",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AZ83",
+      "value": "‐",
+      "range": "AZ83:BP83",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BQ83",
+      "value": "R",
+      "range": "BQ83:CG83",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CH83",
+      "value": "‐",
+      "range": "CH83:CX83",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CY83",
+      "value": "Web接続あり",
+      "range": "CY83:DP83",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A84",
+      "value": "学生詳細",
+      "range": "A84:Q84",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "R84",
+      "value": "R",
+      "range": "R84:AH84",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AI84",
+      "value": "‐",
+      "range": "AI84:AY84",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AZ84",
+      "value": "‐",
+      "range": "AZ84:BP84",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BQ84",
+      "value": "‐",
+      "range": "BQ84:CG84",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CH84",
+      "value": "‐",
+      "range": "CH84:CX84",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CY84",
+      "value": "Web接続あり",
+      "range": "CY84:DP84",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A85",
+      "value": "候補取得",
+      "range": "A85:Q85",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "R85",
+      "value": "人数付きのみR",
+      "range": "R85:AH85",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AI85",
+      "value": "R",
+      "range": "AI85:AY85",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AZ85",
+      "value": "R",
+      "range": "AZ85:BP85",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BQ85",
+      "value": "R",
+      "range": "BQ85:CG85",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CH85",
+      "value": "‐",
+      "range": "CH85:CX85",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CY85",
+      "value": "Web接続あり",
+      "range": "CY85:DP85",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A86",
+      "value": "学生保存",
+      "range": "A86:Q86",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "R86",
+      "value": "R・C又はU",
+      "range": "R86:AH86",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AI86",
+      "value": "R",
+      "range": "AI86:AY86",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AZ86",
+      "value": "R",
+      "range": "AZ86:BP86",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BQ86",
+      "value": "R",
+      "range": "BQ86:CG86",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CH86",
+      "value": "C",
+      "range": "CH86:CX86",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CY86",
+      "value": "最新参照先・候補を検査",
+      "range": "CY86:DP86",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A87",
+      "value": "学生論理削除",
+      "range": "A87:Q87",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "R87",
+      "value": "R・U",
+      "range": "R87:AH87",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AI87",
+      "value": "‐",
+      "range": "AI87:AY87",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AZ87",
+      "value": "‐",
+      "range": "AZ87:BP87",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BQ87",
+      "value": "‐",
+      "range": "BQ87:CG87",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CH87",
+      "value": "C",
+      "range": "CH87:CX87",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CY87",
+      "value": "削除属性・管理情報のみ",
+      "range": "CY87:DP87",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A88",
+      "value": "クラス保守",
+      "range": "A88:Q88",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "R88",
+      "value": "更新時だけR",
+      "range": "R88:AH88",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AI88",
+      "value": "R・C又はU",
+      "range": "AI88:AY88",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AZ88",
+      "value": "R",
+      "range": "AZ88:BP88",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BQ88",
+      "value": "R",
+      "range": "BQ88:CG88",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CH88",
+      "value": "C",
+      "range": "CH88:CX88",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CY88",
+      "value": "宣言サービス。Web入口未確認",
+      "range": "CY88:DP88",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A89",
+      "value": "コード値保守",
+      "range": "A89:Q89",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "R89",
+      "value": "‐",
+      "range": "R89:AH89",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AI89",
+      "value": "‐",
+      "range": "AI89:AY89",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AZ89",
+      "value": "R",
+      "range": "AZ89:BP89",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BQ89",
+      "value": "R・C又はU",
+      "range": "BQ89:CG89",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CH89",
+      "value": "C",
+      "range": "CH89:CX89",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CY89",
+      "value": "宣言サービス。Web入口未確認",
+      "range": "CY89:DP89",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A90",
+      "value": "seed",
+      "range": "A90:Q90",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "R90",
+      "value": "‐",
+      "range": "R90:AH90",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AI90",
+      "value": "‐",
+      "range": "AI90:AY90",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AZ90",
+      "value": "R・不足行C",
+      "range": "AZ90:BP90",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BQ90",
+      "value": "R・不足行C",
+      "range": "BQ90:CG90",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CH90",
+      "value": "‐",
+      "range": "CH90:CX90",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CY90",
+      "value": "配備スクリプトの適用対象",
+      "range": "CY90:DP90",
+      "sourceLines": [
+        914,
+        923
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U92",
+      "value": "各処理が行い得る操作を示しており、拒否・変更なし・確認待ちでは書込みや履歴追記へ到達しない。通常処理に業務表の物理DELETE、履歴UPDATE・DELETEはない。分類の確認できる書込みはseedである。学生機能はマスタを参照するが更新せず、入力・理由、DB値、一時情報、画面出力を別の入出力として扱う。〔observed-source：sources/Core/SqlServerStudentService.cs:123-222,245-324,344-414、sources/Core/MasterMaintenanceService.cs:44-77,91-135、sources/database/002_seed.sql:85-92。reference-design：reference-designs/基本設計書/02_学生登録画面.md:85-115〕",
+      "range": "U92:DP92",
+      "sourceLines": [
+        925,
+        925
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A93",
+      "value": "排他・メモリ保持・補助表",
+      "range": "A93:DP93",
+      "sourceLines": [
+        927,
+        927
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U94",
+      "value": "学生保存・削除、宣言クラス・コード保守、seedは共通資源test-project1:student-writeを使う。GateはXACT_ABORT ON、Exclusive、Transaction所有、待機5000ミリ秒、DbPrincipal publicでsp_getapplockを呼び、負の戻り値をTHROW 51001で拒否する。同じGateを使う処理間の契約であり、外部DMLまで参加する保証ではない。検索状態のSemaphoreSlimとは別の排他である。〔observed-source：sources/Core/SqlServerStudentService.cs:92-102,241-244,399-403、sources/Core/MasterMaintenanceService.cs:38-42,87-90、sources/database/002_seed.sql:3-6〕",
+      "range": "U94:DP94",
+      "sourceLines": [
+        929,
+        929
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A95",
+      "value": "保持対象",
+      "range": "A95:AN95",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO95",
+      "value": "保持先・内容",
+      "range": "AO95:CB95",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC95",
+      "value": "期限・使用・終了",
+      "range": "CC95:DP95",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A96",
+      "value": "検索状態",
+      "range": "A96:AN96",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO96",
+      "value": "singleton辞書。所有者・セッション・タブ、Applied、LastResult、初期Revision=1、Gate",
+      "range": "AO96:CB96",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC96",
+      "value": "30分。取得時とGate待機後に再確認。正常操作後に延長。検索・ページ・実行済み復帰再検索・クリアで版加算",
+      "range": "CC96:DP96",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A97",
+      "value": "編集Snapshot",
+      "range": "A97:AN97",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO97",
+      "value": "singleton辞書。所有者・セッション・対象ID、読込時Detail、OriginalのJSON複製、復帰版",
+      "range": "AO97:CB97",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC97",
+      "value": "30分。保存・削除・Resetで確認。ResetはOriginal複製へ復帰",
+      "range": "CC97:DP97",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A98",
+      "value": "Flash",
+      "range": "A98:AN98",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO98",
+      "value": "singleton辞書。利用者・セッション・検索Contextの組と通知",
+      "range": "AO98:CB98",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC98",
+      "value": "10分。Takeで先に除去し、期限内なら一度返す",
+      "range": "CC98:DP98",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A99",
+      "value": "Web重複確認",
+      "range": "A99:AN99",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO99",
+      "value": "static辞書。参照値、所有者・セッション、対象ID・版、内容・全候補ハッシュ、Busy",
+      "range": "AO99:CB99",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC99",
+      "value": "10分。最新候補取得後に照合・Busy取得。Saved・Unknownで提示値除去。未完了かつUnknown以外はBusy解除",
+      "range": "CC99:DP99",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A100",
+      "value": "非Web重複確認",
+      "range": "A100:AN100",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO100",
+      "value": "t_confirmation。GUID、所有者、GUIDセッション、任意ID・版、2つの32バイトハッシュ、UTC期限、消費状態",
+      "range": "AO100:CB100",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC100",
+      "value": "webTokens=false分岐。発行は元保存rollback後の別トランザクション。成功時消費は学生・履歴と一括",
+      "range": "CC100:DP100",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A101",
+      "value": "実行時状態表",
+      "range": "A101:AN101",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO101",
+      "value": "t_runtime_stateのDDL。状態ID、所有者、セッション、種別、バイナリペイロード、UTC期限、版、消費状態",
+      "range": "AO101:CB101",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC101",
+      "value": "業務読書き入口未確認。配備検査・初期空データ検査の対象",
+      "range": "CC101:DP101",
+      "sourceLines": [
+        931,
+        938
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U103",
+      "value": "〔observed-source：sources/Infrastructure/WebHostSetup.cs:13-19、sources/Infrastructure/SearchContextStore.cs:9-15、sources/Infrastructure/EditorSnapshotStore.cs:7-11、sources/Infrastructure/FlashMessageStore.cs:6-9、sources/Infrastructure/WebStudentCoordinator.cs:7-15、sources/Core/SqlServerStudentService.cs:19-29,276-342、sources/database/001_schema.sql:156-184〕",
+      "range": "U103:DP103",
+      "sourceLines": [
+        940,
+        940
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U104",
+      "value": "未実行の画面入力、Applied、LastResult、検索状態版、学生DB版は別の情報である。候補更新は未実行入力を使うがApplied・LastResultを置換しない。SnapshotのDetail、現在入力、DB最新行も別であり、OriginalへのResetと最新DB再読込みを同一処理にしない。",
+      "range": "U104:DP104",
+      "sourceLines": [
+        942,
+        942
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U105",
+      "value": "Context.GetはNULLを明示検査する。一方、Snapshot.GetはNULL事前検査なしでTryGetValueを呼ぶため、NULL引数のライブラリ例外が独自409判定に先行し得る。空文字・キー不在・期限切れとNULLを同じ結果へまとめない。Context・Snapshotは期限が現在時刻より前なら拒否する。Web確認は期限がサービス入口nowより後の場合だけ有効で、待機・DB読取り後に時計を取り直さない。〔observed-source：sources/Infrastructure/SearchContextStore.cs:13-14、sources/Infrastructure/EditorSnapshotStore.cs:10-10、sources/Core/SqlServerStudentService.cs:229-229,278-278〕",
+      "range": "U105:DP105",
+      "sourceLines": [
+        944,
+        944
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U106",
+      "value": "Web確認は所有者・セッション・対象ID・期待版・正規化内容・全候補IDと版を結び付け、Busyを原子的に0から1へ変更できた場合だけ有効とする。参照値は32ランダムバイト由来の64桁小文字16進文字列である。入力変更・確認取消はブラウザーのhidden確認値を消すが、その操作だけでサーバー辞書を即削除しない。期限切れ情報の除去は新規発行時に行う。〔observed-source：sources/Core/SqlServerStudentService.cs:224-225,274-290,313-323,332-335、sources/wwwroot/js/site.js:3-6〕",
+      "range": "U106:DP106",
+      "sourceLines": [
+        946,
+        946
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U107",
+      "value": "t_confirmationは9列で、token uniqueidentifierがPK、所有者nvarchar(128)、セッションuniqueidentifier、対象ID・期待版bigint NULL、2ハッシュbinary(32)、期限datetimeoffset(7)、消費状態bitを宣言する。非Web確認はUPDLOCK付きで参照値・所有者・セッション・NULL同士を含む対象と版一致・期限がnowより後・未消費を要求し、両ハッシュを照合する。発行は元保存rollback後の別ReadCommittedで、未消費とnowから10分後を設定する。成功時の消費更新は参照値・未消費を条件に1件を要求する。Web登録はwebTokens=trueであり、通常保持先はこの表ではない。〔observed-source：sources/database/001_schema.sql:156-169、sources/Core/SqlServerStudentService.cs:276-283,308-312,330-342、sources/Infrastructure/WebHostSetup.cs:19-19〕",
+      "range": "U107:DP107",
+      "sourceLines": [
+        948,
+        948
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U108",
+      "value": "t_runtime_stateは8列すべてNOT NULLで、state_id varchar(64)がPKである。所有者nvarchar(128)、セッションvarchar(64)、種別varchar(16)、encrypted_payload varbinary(max)、UTC期限、正数bigint revision、bit consumedを宣言する。列名から暗号化・復号・消費・期限清掃・DB状態共有を実装済みとは扱わない。Webストアはメモリ辞書であり、この表への保存経路は確認できない。補助2表の説明は本書へ置き、契約外の個別表文書を追加しない。〔observed-source：sources/database/001_schema.sql:171-184、sources/Infrastructure/SearchContextStore.cs:9-15、sources/Infrastructure/EditorSnapshotStore.cs:7-11、sources/database/004_verify_deployment.sql:7-17〕",
+      "range": "U108:DP108",
+      "sourceLines": [
+        950,
+        950
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A109",
+      "value": "接続・Web認可・DB権限",
+      "range": "A109:DP109",
+      "sourceLines": [
+        952,
+        952
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U110",
+      "value": "ProgramはWebHostSetup.Add・UseとMapControllersを接続する。Webは設定名StudentDbを要求し、空ならWebFault 503とする。IStudentServiceにはRequestIdentityを主体供給元とするSqlServerStudentServiceをwebTokens=trueで登録する。学生サービスとマスタ保守は暗号化必須・証明書検証ありの接続を生成し、学生サービスは接続ごとにSNAPSHOT有効状態1を要求する。〔observed-source：sources/Program.cs:2-8、sources/Infrastructure/WebHostSetup.cs:13-19、sources/Core/SqlServerStudentService.cs:39-63、sources/Core/MasterMaintenanceService.cs:17-28〕",
+      "range": "U110:DP110",
+      "sourceLines": [
+        954,
+        954
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U111",
+      "value": "共通Commandはタイムアウト30秒を設定する。ParamはSqlDbTypeと指定時のSizeを設定し、NULLをDBNullへ変換する。接続・実行・読取り・トランザクション操作へ取消トークンを渡す。OpenのSNAPSHOT診断はCreateCommandで別に作られ、共通Commandの明示設定を直接通らない。〔observed-source：sources/Core/SqlServerStudentService.cs:53-72,156-167,298-313〕",
+      "range": "U111:DP111",
+      "sourceLines": [
+        956,
+        956
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A112",
+      "value": "認可層・主体",
+      "range": "A112:AN112",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO112",
+      "value": "許可範囲",
+      "range": "AO112:CB112",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC112",
+      "value": "制限・補足",
+      "range": "CC112:DP112",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A113",
+      "value": "Web Viewer",
+      "range": "A113:AN113",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO113",
+      "value": "学生参照",
+      "range": "AO113:CB113",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC113",
+      "value": "作成・更新不可",
+      "range": "CC113:DP113",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A114",
+      "value": "Web Staff",
+      "range": "A114:AN114",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO114",
+      "value": "学生作成・更新",
+      "range": "AO114:CB114",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC114",
+      "value": "論理削除不可。終了区分訂正には管理者条件あり",
+      "range": "CC114:DP114",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A115",
+      "value": "Web Administrator",
+      "range": "A115:AN115",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO115",
+      "value": "学生作成・更新・論理削除",
+      "range": "AO115:CB115",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC115",
+      "value": "入力・対象・版・業務条件の検査は継続",
+      "range": "CC115:DP115",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A116",
+      "value": "DB student_viewer",
+      "range": "A116:AN116",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO116",
+      "value": "学生・クラス・分類・コードSELECT",
+      "range": "AO116:CB116",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC116",
+      "value": "履歴SELECTのGRANTは当該SQLにない",
+      "range": "CC116:DP116",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A117",
+      "value": "DB student_staff",
+      "range": "A117:AN117",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO117",
+      "value": "viewer継承、学生INSERT・UPDATE、履歴INSERT",
+      "range": "AO117:CB117",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC117",
+      "value": "学生DELETE、履歴UPDATE・DELETEをDENY",
+      "range": "CC117:DP117",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A118",
+      "value": "DB student_admin",
+      "range": "A118:AN118",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO118",
+      "value": "staff継承、クラス・コードINSERT・UPDATE",
+      "range": "AO118:CB118",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC118",
+      "value": "クラス・コードDELETE、分類INSERT・UPDATE・DELETEをDENY",
+      "range": "CC118:DP118",
+      "sourceLines": [
+        958,
+        965
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U120",
+      "value": "Web Claims Roleと接続主体のDB Roleは別の認可層であり、要求ごとに同一化する登録は確認できない。権限SQLは補助2表のDMLを付与しない。非Web確認表分岐の呼出元と必要権限はWeb登録から確定しない。MasterMaintenanceServiceの宣言・コメントから公開保守画面や稼働CLIを補わず、StrictJsonやCoordinator.Optionsの存在から公開学生JSON APIを補わない。〔observed-source：sources/Infrastructure/RequestIdentity.cs:7-16、sources/Infrastructure/WebHostSetup.cs:13-19、sources/Web/Controllers/StudentsController.cs:5-42、sources/Infrastructure/WebStudentCoordinator.cs:16-19、sources/database/003_web_permissions.sql:8-24〕",
+      "range": "U120:DP120",
+      "sourceLines": [
+        967,
+        967
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A121",
+      "value": "索引・履歴・運用要求",
+      "range": "A121:DP121",
+      "sourceLines": [
+        969,
+        969
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U122",
+      "value": "学生の学籍番号一意制約は論理削除行を含み、クラスは年度・コードの組で一意である。学生には非削除行を対象とする生年月日、クラス・在籍区分、入学日、更新日時、本人電話、緊急電話の索引がある。履歴には対象表・対象キー・実行日時の索引がある。索引宣言は各検索の実行計画や性能値を定めるものではない。〔observed-source：sources/database/001_schema.sql:187-188,206-212〕",
+      "range": "U122:DP122",
+      "sourceLines": [
+        971,
+        971
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U123",
+      "value": "履歴は対象、操作、前後版、変更列名JSON、実行者・UTC日時、受付UUID、理由、確認フラグを保存する。操作はCREATE・UPDATE・DELETE・DISABLE・ENABLEに限定し、変更列JSONは配列を要求する。業務変更と同じトランザクションで追記し、変更なし・参照だけでは追記しない。過去の氏名・住所・所属の値コピーや復元処理はない。〔observed-source：sources/database/001_schema.sql:137-154,204-205、sources/Core/SqlServerStudentService.cs:262-262,306-324,385-390、sources/Core/MasterMaintenanceService.cs:67-77,111-121。reference-design：reference-designs/基本設計書/03_テーブル仕様書.md:89-91〕",
+      "range": "U123:DP123",
+      "sourceLines": [
+        973,
+        973
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U124",
+      "value": "参考設計は、物理消去と保管期間には別途運用承認が必要と定める。また、サンプル学生・クラスを本番へ自動投入しないこと、初期投入をコード分類、コード値、学校が確認したクラスの順とすることを要求する。学校名・実クラスは未指定である。現行seedが実装するのは分類・コードまでであり、学校確認済みクラスの投入や承認取得を示すものではない。〔reference-design：reference-designs/基本設計書/03_テーブル仕様書.md:63-63。observed-source：sources/database/002_seed.sql:88-92〕",
+      "range": "U124:DP124",
+      "sourceLines": [
+        975,
+        975
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U125",
+      "value": "個人情報の保存期間、削除復元、物理消去は運用要件として確認する。論理削除を永久保存の承認として扱わない。参照されているクラス・コードの実体を通常削除せず、意味変更の判断には削除済み学生からの参照も含めるという設計要求を、通常DMLの有無とは分けて保持する。〔reference-design：reference-designs/基本設計書/03_テーブル仕様書.md:59-63、reference-designs/基本設計書/02_学生登録画面.md:679-681〕",
+      "range": "U125:DP125",
+      "sourceLines": [
+        977,
+        977
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A126",
+      "value": "設計確認・実装確認の責務",
+      "range": "A126:DP126",
+      "sourceLines": [
+        979,
+        979
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U127",
+      "value": "参考設計は、顧客IT部門の確認対象を入出力、権限、画面とDBの追跡、競合・障害時結果とする。実装工程では入力→処理値→DB→再表示の往復を確認する。本書の保存契約に対応する具体的な対象は次のとおりである。",
+      "range": "U127:DP127",
+      "sourceLines": [
+        981,
+        981
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A128",
+      "value": "確認対象",
+      "range": "A128:AN128",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO128",
+      "value": "値の往復",
+      "range": "AO128:CB128",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC128",
+      "value": "異常段階の確認対象",
+      "range": "CC128:DP128",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A129",
+      "value": "文字列・日付",
+      "range": "A129:AN129",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO129",
+      "value": "raw入力、正規化値、生成キー、DB値、和暦・ISO再設定",
+      "range": "AO129:CB129",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC129",
+      "value": "Unicode最大長、不正サロゲート、NULL・変換失敗、日付・元号境界",
+      "range": "CC129:DP129",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A130",
+      "value": "選択値・所属",
+      "range": "A130:AN130",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO130",
+      "value": "コード値・クラスID保存、名称・人数参照表示",
+      "range": "AO130:CB130",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC130",
+      "value": "停止・期間外、既存値保持、上位不一致、最終席競合、最新マスタ検査",
+      "range": "CC130:DP130",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A131",
+      "value": "保存・削除",
+      "range": "A131:AN131",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO131",
+      "value": "期待版、DB版、業務更新、監査、返却ID・版",
+      "range": "AO131:CB131",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC131",
+      "value": "旧版、履歴失敗、OUTPUT後commit失敗、rollback失敗、結果不明",
+      "range": "CC131:DP131",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A132",
+      "value": "一時情報・認可",
+      "range": "A132:AN132",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO132",
+      "value": "Web主体・DB主体、Context、Snapshot、確認値を分離",
+      "range": "AO132:CB132",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC132",
+      "value": "別所有者・セッション、期限、NULLキー、待機後再確認、確定後Web失敗",
+      "range": "CC132:DP132",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A133",
+      "value": "マスタ保守",
+      "range": "A133:AN133",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AO133",
+      "value": "新規・更新、全参照数、現在人数、比較版、同名警告",
+      "range": "AO133:CB133",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CC133",
+      "value": "更新だけの検査範囲、削除済み参照、意味保持、警告値保持、再throw境界",
+      "range": "CC133:DP133",
+      "sourceLines": [
+        983,
+        989
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "U135",
+      "value": "rawは再表示用に保持し、正規化成功値だけを保存対象へ移す。変換失敗をNULL・0へ置き換えず、共通変換成功、OUTPUT取得、DB確定、画面出力を別の段階として確認する。参考設計の内部名や要求連番を現行実装の存在証明に使わない。この節は確認責務を定義し、顧客承認や試験合格の結果を記録するものではない。〔reference-design：reference-designs/基本設計書/02_学生登録画面.md:685-697、reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md:749-753,759-809〕",
+      "range": "U135:DP135",
+      "sourceLines": [
+        991,
+        991
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A136",
+      "value": "関連文書の対応",
+      "range": "A136:DP136",
+      "sourceLines": [
+        993,
+        993
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A137",
+      "value": "文書ID",
+      "range": "A137:X137",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "Y137",
+      "value": "kind",
+      "range": "Y137:AV137",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AW137",
+      "value": "契約path・本書からの相対リンク",
+      "range": "AW137:BT137",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BU137",
+      "value": "分担",
+      "range": "BU137:CR137",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CS137",
+      "value": "文書状態",
+      "range": "CS137:DP137",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A138",
+      "value": "CSHARP_ASPNET-BAS-STU-01",
+      "range": "A138:X138",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "Y138",
+      "value": "basic-design",
+      "range": "Y138:AV138",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AW138",
+      "value": "基本設計書/01_学生検索画面.md",
+      "range": "AW138:BT138",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BU138",
+      "value": "検索条件・一覧・候補連動・検索状態の業務説明",
+      "range": "BU138:CR138",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CS138",
+      "value": "計画先・未生成",
+      "range": "CS138:DP138",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A139",
+      "value": "CSHARP_ASPNET-BAS-STU-02",
+      "range": "A139:X139",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "Y139",
+      "value": "basic-design",
+      "range": "Y139:AV139",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AW139",
+      "value": "基本設計書/02_学生登録画面.md",
+      "range": "AW139:BT139",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BU139",
+      "value": "登録・編集・参照、条件付き必須、確認・削除操作",
+      "range": "BU139:CR139",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CS139",
+      "value": "計画先・未生成",
+      "range": "CS139:DP139",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A140",
+      "value": "CSHARP_ASPNET-BAS-STU-04",
+      "range": "A140:X140",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "Y140",
+      "value": "code-design",
+      "range": "Y140:AV140",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AW140",
+      "value": "基本設計書/04_コード設計書.md",
+      "range": "AW140:BT140",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BU140",
+      "value": "5分類70初期値、順序・保護・追加可否、意味保持",
+      "range": "BU140:CR140",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CS140",
+      "value": "計画先・未生成",
+      "range": "CS140:DP140",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A141",
+      "value": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001",
+      "range": "A141:X141",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "Y141",
+      "value": "detailed-specification",
+      "range": "Y141:AV141",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AW141",
+      "value": "詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+      "range": "AW141:BT141",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BU141",
+      "value": "フォーム・DTO・検索SQL・状態版・例外応答",
+      "range": "BU141:CR141",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CS141",
+      "value": "計画先・未生成",
+      "range": "CS141:DP141",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "A142",
+      "value": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-002",
+      "range": "A142:X142",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "Y142",
+      "value": "detailed-specification",
+      "range": "Y142:AV142",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "AW142",
+      "value": "詳細仕様書/CSharp_ASPNET/02_学生登録画面.md",
+      "range": "AW142:BT142",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "BU142",
+      "value": "入力移送、保存・確認・削除、catchと確定応答",
+      "range": "BU142:CR142",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    },
+    {
+      "sheet": "04_補足説明",
+      "cell": "CS142",
+      "value": "計画先・未生成",
+      "range": "CS142:DP142",
+      "sourceLines": [
+        995,
+        1001
+      ]
+    }
+  ],
+  "previews": [
+    {
+      "sheet": "表紙",
+      "range": "A1:AU36"
+    },
+    {
+      "sheet": "01_概要",
+      "range": "A1:DP45"
+    },
+    {
+      "sheet": "01_概要",
+      "range": "A46:DP90"
+    },
+    {
+      "sheet": "01_概要",
+      "range": "A91:DP122"
+    },
+    {
+      "sheet": "02_テーブル一覧",
+      "range": "A1:I6"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A1:DP45"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A46:DP90"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A91:DP135"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A136:DP180"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A181:DP224"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A225:DP269"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A270:DP314"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A315:DP359"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A360:DP404"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A405:DP449"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A450:DP494"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A495:DP539"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A540:DP584"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A585:DP629"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A630:DP669"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A670:DP714"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A715:DP759"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A760:DP804"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A805:DP849"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A850:DP894"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A895:DP939"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A940:DP984"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A985:DP1029"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A1030:DP1074"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A1075:DP1119"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A1120:DP1164"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A1165:DP1209"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A1210:DP1254"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A1255:DP1299"
+    },
+    {
+      "sheet": "03_イベント仕様",
+      "range": "A1300:DP1309"
+    },
+    {
+      "sheet": "04_補足説明",
+      "range": "A1:DP32"
+    },
+    {
+      "sheet": "04_補足説明",
+      "range": "A33:DP62"
+    },
+    {
+      "sheet": "04_補足説明",
+      "range": "A63:DP97"
+    },
+    {
+      "sheet": "04_補足説明",
+      "range": "A98:DP125"
+    },
+    {
+      "sheet": "04_補足説明",
+      "range": "A126:DP142"
+    }
+  ],
+  "documentId": "CSHARP_ASPNET-BAS-STU-03",
+  "markdownSha256": "d328d6a6f42f201b8d4026aa091b123a84ecd36fe8ae70729fd20b8dd6872eb7",
+  "canonicalDocumentPath": "基本設計書/03_テーブル仕様書.md"
+}

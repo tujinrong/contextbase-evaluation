@@ -79,7 +79,7 @@ def references_valid(answer: dict, manifest: dict) -> None:
             raise ValueError('Non-snapshot source claimed as read: ' + name)
 
 
-def _validate_plan(answer: dict, manifest: dict) -> None:
+def _validate_plan(answer: dict, manifest: dict, document_contract: dict | None = None) -> None:
     from jsonschema import Draft202012Validator, ValidationError
     try:
         Draft202012Validator(schemas.PLAN).validate(answer)
@@ -96,6 +96,9 @@ def _validate_plan(answer: dict, manifest: dict) -> None:
             raise ValueError('Document plan uses unknown or empty source paths')
     if not answer['documents']:
         raise ValueError('No documents planned')
+    if document_contract is not None:
+        from .document_contract import match
+        match(answer, document_contract, manifest)
 
 
 def _same_snapshot(snapshot: Path, expected: dict) -> dict:
@@ -118,10 +121,19 @@ def _timeout(timeout, deadline):
     return min(timeout, remaining - 30)
 
 
+def _execution_root(snapshot: Path, destination: Path, label: str) -> Path:
+    """Job/output roots must neither contain nor be inside the sealed capsule."""
+    snapshot = capsule.safe_path(snapshot)
+    destination = capsule.safe_path(destination)
+    if destination == snapshot or snapshot in destination.parents or destination in snapshot.parents:
+        raise ValueError(label + ' root must be disjoint from the immutable source capsule')
+    return destination
+
+
 def _bound_job(snapshot, job, prompt, schema, timeout, state, deadline=None):
     _same_snapshot(snapshot, state)
     allowance = _timeout(timeout, deadline)
-    job = capsule.safe_path(job)
+    job = _execution_root(snapshot, job, 'AI job')
     before_file = job.parent / (job.name + '-snapshot-before.json')
     capsule.write_json(before_file, state)
     result = run_job(snapshot, job, prompt, schema, allowance)
@@ -136,24 +148,49 @@ def _bound_job(snapshot, job, prompt, schema, timeout, state, deadline=None):
     return require_answer(result)
 
 
-def _handoff(plan_file, state, origin):
-    capsule.write_json(plan_file.parent / 'plan-handoff.json', {
+def _handoff(plan_file, state, origin, contract_pin=None):
+    value = {
         'schema': 'reverse-ai-plan-handoff/1', 'snapshot': state,
         'planFile': plan_file.name, 'planSha256': capsule.sha256(plan_file.read_bytes()),
         'origin': origin,
-    })
+    }
+    if contract_pin is not None:
+        value['documentContract'] = contract_pin
+    capsule.write_json(plan_file.parent / 'plan-handoff.json', value)
 
 
-def plan(snapshot: Path, job: Path, *, timeout=1800, deadline=None, revision_context=None) -> dict:
+def plan(snapshot: Path, job: Path, *, timeout=1800, deadline=None, revision_context=None,
+         document_contract: Path | None = None) -> dict:
     state = capsule.verification_state(snapshot)
     manifest = capsule.verify(snapshot)
     context = ''
     if revision_context is not None:
         context = '\n以前のAI文書計画と改善指摘:\n' + json.dumps(revision_context, ensure_ascii=False, indent=2)
+    contract_value, contract_bytes, contract_pin = None, None, None
+    if document_contract is not None:
+        from . import document_contract as contracts
+        document_contract = capsule.safe_path(document_contract)
+        contract_value, contract_bytes = contracts.load(document_contract, manifest)
+        context += contracts.prompt(contract_value)
     answer = _bound_job(snapshot, job, prompts.PLAN + context, schemas.PLAN, timeout, state, deadline)
-    _validate_plan(answer, manifest)
+    if document_contract is not None:
+        if document_contract.read_bytes() != contract_bytes:
+            raise ValueError('Document contract changed during the AI planning job')
+        target = capsule.safe_path(job / contracts.FILENAME)
+        with target.open('xb') as handle:
+            handle.write(contract_bytes)
+        contract_pin = {'schema': contract_value['schema'], 'file': contracts.FILENAME,
+                        'sha256': capsule.sha256(contract_bytes)}
+    try:
+        _validate_plan(answer, manifest, contract_value)
+    except ValueError as exc:
+        capsule.write_json(job / 'plan-validation-failure.json', {
+            'status': 'AI_PLAN_NOT_VERIFIED', 'error': str(exc),
+            'documentContract': contract_pin, 'previousAiPlan': answer,
+        })
+        raise
     capsule.write_json(job / 'plan-verified.json', answer)
-    _handoff(job / 'plan-verified.json', state, 'same-job-before-after-snapshot-verified')
+    _handoff(job / 'plan-verified.json', state, 'same-job-before-after-snapshot-verified', contract_pin)
     return answer
 
 
@@ -210,6 +247,8 @@ def select_document(plan_file: Path, document_id: str) -> dict:
     if (handoff.get('schema') != 'reverse-ai-plan-handoff/1' or handoff.get('planFile') != plan_file.name or
             handoff.get('planSha256') != capsule.sha256(plan_file.read_bytes())):
         raise ValueError('Plan differs from its snapshot handoff')
+    from .document_contract import bound
+    bound(plan_file, handoff)
     matches = [doc for doc in plan_value['documents'] if doc['id'] == document_id]
     if len(matches) != 1:
         raise ValueError('Unique planned document required: ' + document_id)
@@ -224,7 +263,10 @@ def _definition_state(snapshot, definition):
         raise ValueError('Document plan changed between phases')
     state = definition.handoff['snapshot']
     _same_snapshot(snapshot, state)
-    _validate_plan(capsule._load_json(definition.plan_file), capsule.verify(snapshot))
+    from .document_contract import bound
+    manifest = capsule.verify(snapshot)
+    contract = bound(definition.plan_file, definition.handoff, manifest)
+    _validate_plan(capsule._load_json(definition.plan_file), manifest, contract)
     return state
 
 
@@ -239,10 +281,13 @@ def _document_context(snapshot, definition):
               'title': document['title'], 'kind': document['kind'],
               'responsibilities': document['responsibilities']}
              for document in plan_value['documents']]
+    from .document_contract import bound, prompt
+    contract = bound(definition.plan_file, definition.handoff)
     return ('\n対象文書計画:\n' + json.dumps(definition, ensure_ascii=False, indent=2)
             + '\n原文からAIが作成した全体文書計画（生成状態・採点期待値ではありません）:\n'
             + json.dumps(index, ensure_ascii=False, indent=2)
-            + '\n関連文書のIDと相対pathはこの計画で照合してください。計画にあるだけで生成済みとは扱いません。')
+            + '\n関連文書のIDと相対pathはこの計画で照合してください。計画にあるだけで生成済みとは扱いません。'
+            + (prompt(contract) if contract is not None else ''))
 
 
 def _analysis_pin(snapshot, definition, analysis_job, provider_directory):
@@ -375,7 +420,7 @@ def _resume_analysis(snapshot, definition, analysis_job):
 def document(snapshot: Path, definition: dict, job_root: Path, output: Path,
              *, timeout=1800, revision_context=None, deadline=None, analysis_job=None) -> dict:
     state = _definition_state(snapshot, definition)
-    job_root = capsule.safe_path(job_root)
+    job_root = _execution_root(snapshot, job_root, 'Document job')
     if job_root.exists():
         raise FileExistsError('Use a fresh document job root')
     safe_snapshot = capsule.safe_path(snapshot)
@@ -385,7 +430,7 @@ def document(snapshot: Path, definition: dict, job_root: Path, output: Path,
         safe_analysis = capsule.safe_path(analysis_job)
         if safe_analysis == job_root or safe_analysis in job_root.parents:
             raise ValueError('Resumed draft job must be outside the completed analysis job')
-    output = capsule.safe_path(output)
+    output = _execution_root(snapshot, output, 'Document output')
     planned_target = capsule.safe_path(output / relative_path(definition['path']))
     if output not in planned_target.parents:
         raise ValueError('Output escapes target root')
@@ -451,7 +496,8 @@ def document(snapshot: Path, definition: dict, job_root: Path, output: Path,
     with target.open('x', encoding='utf-8', newline='\n') as handle:
         handle.write(draft['content'])
     from .validation import validate_document
-    structural_findings = validate_document(draft['content'], draft['path'], expected_document_id=definition['id'])
+    structural_findings = validate_document(draft['content'], draft['path'], expected_document_id=definition['id'],
+                                           expected_kind=definition['kind'])
     capsule.write_json(job_root / 'document-structure.json', {
         'documentId': definition['id'], 'contentSha256': capsule.sha256(draft['content'].encode('utf-8')),
         'status': 'STRUCTURE_INVALID' if structural_findings else 'STRUCTURE_VALID',
@@ -484,7 +530,8 @@ def review(snapshot: Path, document_file: Path, definition: dict, job: Path,
         raise ValueError('An empty document cannot be reviewed as complete')
     document_sha = capsule.sha256(document_bytes)
     from .validation import validate_document
-    structural_findings = validate_document(document_bytes.decode('utf-8'), definition['path'], expected_document_id=definition['id'])
+    structural_findings = validate_document(document_bytes.decode('utf-8'), definition['path'], expected_document_id=definition['id'],
+                                           expected_kind=definition['kind'])
     context += '\n原稿本文:\n' + document_bytes.decode('utf-8')
     context += '\n構造検査の指摘（意味の正確さを採点した結果ではありません）:\n' + json.dumps(structural_findings, ensure_ascii=False)
     answer = _bound_job(snapshot, job, prompts.REVIEW + context, schemas.REVIEW, timeout, state, deadline)

@@ -1,0 +1,13 @@
+flowchart TD
+ A["B-GET：②からの復帰要求"] --> G["共通入口・identity.Read・Get<br/>ResumeのUse：待機後再確認・版照合"]
+ G -->|前段認証・認可拒否| F["401または403で終了<br/>通知Take前"]
+ G -->|WebFault・その他例外・取消| E["共通入口②：元のStatusまたは503<br/>通知Take前"]
+ G -->|許可| P{"Appliedありか"}
+ P -->|はい| S["SearchAsync・EnsureSearch<br/>LastResult更新・Revision＋1<br/>Applied保持"]
+ P -->|いいえ| N["未検索data・Revision増分なし"]
+ S --> X["Use正常終了：期限延長・解放"]
+ N --> X
+ X --> D["B-表示：④へ<br/>各枝のdata・Entry・Revision"]
+ S -->|例外・取消| E
+ N -->|例外| E
+ X -->|例外| E

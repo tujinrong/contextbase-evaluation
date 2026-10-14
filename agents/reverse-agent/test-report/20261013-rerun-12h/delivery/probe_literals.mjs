@@ -1,0 +1,10 @@
+import fs from 'node:fs/promises';
+import {Workbook,SpreadsheetFile} from '@oai/artifact-tool';
+const root=process.argv[2];await fs.mkdir(root,{recursive:false});
+const wb=Workbook.create();const sheet=wb.worksheets.add('literal');
+sheet.getRange('A1:C9').setNumberFormat('@');sheet.getRange('A1:C9').format.columnWidth=20;
+const values=['1.0','001','3.10','1900-01-01','=A1',"'source",'12','1E3'];
+sheet.getRange('A1:C9').values=[['input','as string','literal prefix'],...values.map(v=>["'"+v,v,"'"+v])];
+const png=await wb.render({sheetName:'literal',range:'A1:C9',scale:1,format:'png'});
+await fs.writeFile(root+'/probe.png',new Uint8Array(await png.arrayBuffer()));
+await (await SpreadsheetFile.exportXlsx(wb)).save(root+'/probe.xlsx');

@@ -1,0 +1,15 @@
+flowchart TD
+ A[1：検索POST] --> B{認証・CSRFを通過}
+ B -->|いいえ| R0[フィルターで拒否]
+ B -->|はい| C{FormGuardを通過}
+ C -->|いいえ| R1[個別catch外のWebFault 400]
+ C -->|はい| D[未送信在籍配列を空配列へ補完]
+ D --> E{検索状態が使用可能か}
+ E -->|いいえ| R2[個別catch外のWebFault 403・409]
+ E -->|はい| F{ModelState正常か}
+ F -->|いいえ| V[422設定・原入力再表示へ]
+ F -->|はい| G[条件変換・状態Gate待機]
+ G -->|ClassId<br/>不正| W[個別catchで422設定・再表示へ]
+ G --> H{待機後の所有者・期限・版が有効か}
+ H -->|いいえ| X[個別catchで該当WebFault status設定]
+ H -->|はい| I[2へ：条件・Gate保持状態]

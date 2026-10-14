@@ -1,0 +1,2906 @@
+{
+  "schema": "independent-semantic-grades/1",
+  "documentId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001",
+  "shardId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-S016",
+  "rows": [
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-1DD2019319",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "件数取得を読取りとして説明し、検索から業務表を更新しない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 594,
+          "endLine": 594,
+          "quote": "検索は読取りのみで、業務表の更新・履歴追記を行わない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "件数操作はSELECTである。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 156,
+            "endLine": 156,
+            "quote": "SELECT COUNT_BIG(*) FROM (SELECT TOP (10001) s.student_id"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-813D2C0868",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "実行条件から正規化したローカル値をSQLへ渡す。保持条件の原文字列とは区別されている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 871,
+          "endLine": 871,
+          "quote": "正規化成功値をSQLへ渡す。元条件に書き戻さない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "正規化値noを件数・一覧で共用するパラメータへ設定する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 113,
+            "endLine": 113,
+            "quote": "var no = string.IsNullOrEmpty(criteria.StudentNo) ? null : StudentNormalizer.Identifier(criteria.StudentNo,15,\"StudentNo\");"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 140,
+            "endLine": 140,
+            "quote": "Where(\"s.student_no LIKE @no ESCAPE '!'\",\"@no\",SqlDbType.VarChar,no is null ? null : StudentNormalizer.EscapeLike(no)+\"%\",31);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-E9BE41737D",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "非削除、項目間AND、在籍内OR、二電話OR、全条件一致IDの10001件打切りを説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 419,
+          "endLine": 419,
+          "quote": "常設の非削除条件に指定条件をANDで加え、在籍配列内はIN、電話は本人・緊急の括弧付きORとする。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 974,
+          "endLine": 977,
+          "quote": "SELECT TOP (10001) s.student_id\n  FROM dbo.m_student s\n  LEFT JOIN dbo.m_class c ON c.class_id=s.class_id\n  {検索述語}"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "必須述語と指定条件をAND結合し、電話OR・在籍INの適用後にTOPを評価する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 137,
+            "endLine": 137,
+            "quote": "var predicates = new List<string>{ \"s.is_deleted=0\" };"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 148,
+            "endLine": 148,
+            "quote": "(s.phone_number=@phone OR s.emergency_phone_number=@phone)"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 152,
+            "endLine": 152,
+            "quote": "s.enrollment_status_code IN ("
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 155,
+            "endLine": 156,
+            "quote": "var where = \" WHERE \"+string.Join(\" AND \",predicates);\n            await using var countCommand = Command(connection,tx,\"SELECT COUNT_BIG(*) FROM (SELECT TOP (10001) s.student_id FROM dbo.m_student s LEFT JOIN dbo.m_class c ON c.class_id=s.class_id\"+where+\") limited\");"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-57C64ADF66",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "10001は打切り値、10000以下は実件数、0件は該当なしとして区別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 112,
+          "endLine": 112,
+          "quote": "Count=10001は打切り値。行を取得しない。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 356,
+          "endLine": 356,
+          "quote": "NoChange・実件数・取得行"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 111,
+          "endLine": 111,
+          "quote": "文言「該当する学生はありません。」。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "打切り件数と上限フラグを返し、表示は0件を別扱いにする。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 156,
+            "endLine": 159,
+            "quote": "if(count>10000) { await tx.CommitAsync(ct); return new(Outcome.NoChange,count,[],now,true,[]); }"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 168,
+            "endLine": 168,
+            "quote": "return new(Outcome.NoChange,count,rows,now,false,[]);"
+          },
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 7,
+            "endLine": 7,
+            "quote": "else if(outcome==\"empty\"){<p>該当する学生はありません。</p>}"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-A3CF401DD0",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "件数とページを同じ接続・SNAPSHOTで読む契約が明示される。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 419,
+          "endLine": 419,
+          "quote": "存在確認、件数、ページは1接続のSNAPSHOTに属し、正常枝でcommitする。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "両コマンドに同じconnectionとtxを渡す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 124,
+            "endLine": 124,
+            "quote": "await using var tx = (SqlTransaction)await connection.BeginTransactionAsync(IsolationLevel.Snapshot,ct);"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 156,
+            "endLine": 156,
+            "quote": "await using var countCommand = Command(connection,tx,"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 162,
+            "endLine": 162,
+            "quote": "await using var pageCommand = Command(connection,tx,"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-A6FFDF0FC5",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学生、クラス、学年・在籍・都道府県のコードを特定する。在籍別名eと原仕様esの違いは意味を変えない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 406,
+          "endLine": 409,
+          "quote": "S[(m_student s)] -->|class_id| C[(m_class c)]\n    C -->|grade_category・grade_code| G[(m_code g)]\n    S -->|enrollment_category・status_code| E[(m_code e)]\n    S -->|prefecture_category・code| P[(m_code p)]"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "RowSelectの対象と用途別コード結合に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 86,
+            "endLine": 90,
+            "quote": "FROM dbo.m_student s\n           LEFT JOIN dbo.m_class c ON c.class_id=s.class_id\n           LEFT JOIN dbo.m_code g ON g.category_id=c.grade_category AND g.code_value=c.grade_code\n           LEFT JOIN dbo.m_code e ON e.category_id=s.enrollment_category AND e.code_value=s.enrollment_status_code\n           LEFT JOIN dbo.m_code p ON p.category_id=s.prefecture_category AND p.code_value=s.prefecture_code"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-F6F8BBEA79",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "一覧取得を参照操作として説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 594,
+          "endLine": 594,
+          "quote": "検索は読取りのみで、業務表の更新・履歴追記を行わない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "一覧取得はSELECTである。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 83,
+            "endLine": 83,
+            "quote": "SELECT s.student_id,s.student_no,s.student_name,s.student_name_kana,s.birth_date,"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-A64DDEBE18",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "件数と共通の述語・パラメータ、ページ・件数、許可ソート列を説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 981,
+          "endLine": 981,
+          "quote": "10000件以下は同じSNAPSHOTでRowSelectへ同じ述語・パラメータを適用する。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 992,
+          "endLine": 992,
+          "quote": "実取得ページは要求Pageと最終ページの小さい方である。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 156,
+          "endLine": 156,
+          "quote": "許可値を固定SQL列へ対応付ける。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "共通whereを使い、許可キーを列へ変換してoffsetとsizeを設定する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 108,
+            "endLine": 108,
+            "quote": "var order = criteria.SortKey switch"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 162,
+            "endLine": 164,
+            "quote": "Param(pageCommand,\"@offset\",SqlDbType.Int,checked((page-1)*criteria.PageSize)); Param(pageCommand,\"@size\",SqlDbType.Int,criteria.PageSize);"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 162,
+            "endLine": 162,
+            "quote": "RowSelect+where+\" ORDER BY \"+order"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-A8CBC6B70E",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "一覧11列と学生IDを説明し、指定された個人情報を一覧出力から除外する。内部取得列と表示投影を区別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 97,
+          "endLine": 97,
+          "quote": "<th>学籍番号</th><th>氏名</th><th>氏名カナ</th><th>生年月日</th><th>年度／学年</th><th>クラス</th><th>在籍区分</th><th>住所</th><th>本人電話</th><th>更新日時</th><th>操作</th>"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 983,
+          "endLine": 983,
+          "quote": "一覧投影は入学日と学生版を含めず、住所2、メール、緊急連絡先、備考も出力しない。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 173,
+          "endLine": 173,
+          "quote": "`StudentId: long` →InvariantCultureの10進文字列。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "一覧投影は学生IDを含み、除外対象の項目を持たない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/WebPresentation.cs",
+            "startLine": 20,
+            "endLine": 20,
+            "quote": "new { studentId=r.StudentId.ToString(System.Globalization.CultureInfo.InvariantCulture),r.StudentNo,r.StudentName,r.StudentNameKana,r.BirthDateWareki,r.SchoolYear,r.GradeName,r.ClassCode,r.ClassName,enrollmentName=r.EnrollmentStatusName,addressDisplay=r.Address,r.PhoneNumber,updatedAt=Time(r.UpdatedAt) }"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-30FAA2AC60",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "全一致集合のソート後にページ化し、同順位は学生ID昇順とする。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 992,
+          "endLine": 992,
+          "quote": "全一致集合をこの順序にしてからOFFSET/FETCHを適用する。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 987,
+          "endLine": 987,
+          "quote": "ascまたはdesc、続けて `s.student_id ASC`。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ORDER BYの副順序とOFFSET/FETCHが同一SQLにある。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 162,
+            "endLine": 162,
+            "quote": "\" ORDER BY \"+order+\" \"+criteria.SortDirection+\",s.student_id ASC OFFSET @offset ROWS FETCH NEXT @size ROWS ONLY\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-0B3F92541F",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "参照のみで、拒否応答には旧一覧を表示しない。前回成功状態の保持とは区別される。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 278,
+          "endLine": 278,
+          "quote": "拒否応答の一覧は空にするが、以前のApplied・LastResultをクリアする処理は行わない。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 594,
+          "endLine": 594,
+          "quote": "検索は読取りのみで、業務表の更新・履歴追記を行わない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "拒否時はPresentへNULL結果を渡すため、旧LastResultを応答一覧へ流用しない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 14,
+            "endLine": 14,
+            "quote": "object data=WebStudentCoordinator.Present(entry,null);"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 19,
+            "endLine": 19,
+            "quote": "WebStudentCoordinator.Present(entry,null)"
+          },
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 21,
+            "endLine": 21,
+            "quote": "items=(result?.Items??[]).Select(WebPresentation.Row)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-A7B5CEDF08",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "Read確認、候補取得、在籍01・02、20件、未検索HTMLを説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 220,
+          "endLine": 225,
+          "quote": "初期条件は在籍01・02、Page=1、20件、studentNo昇順である。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 216,
+          "endLine": 216,
+          "quote": "新しい検索状態、初期条件、全候補を表示する。学生件数と一覧は取得しない。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 220,
+          "endLine": 220,
+          "quote": "`identity.Read()` でClaimから得る利用者情報を確認する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "初回はReadとNewContextを行い、初期DTO・表示指定・候補を検索ビューへ渡す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 9,
+            "endLine": 9,
+            "quote": "identity.Read();var entry=string.IsNullOrEmpty(contextId)?coordinator.NewContext():contexts.Get(contextId,identity.CurrentUser);"
+          },
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 14,
+            "endLine": 14,
+            "quote": "public string[] StatusCodes { get; set; } = [\"01\",\"02\"];"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 39,
+            "endLine": 39,
+            "quote": "Lookups=await service.LookupAsync(false,ct)"
+          },
+          {
+            "path": "source/Core/Contracts.cs",
+            "startLine": 46,
+            "endLine": 46,
+            "quote": "public int PageSize { get; set; } = 20;"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-FFE1E4B72B",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "search-invalid-pagesize-render-status",
+      "reason": "状態版・CSRF・検査・同一読取Txは説明されるが、入力不備PageSize=0では422の検索HTMLを保証できないと明示する。参照の入力不備422とは異なる実装制約である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 427,
+          "endLine": 427,
+          "quote": "バインド後PageSize=0の場合、サービスまたはModelStateで拒否しても、Controllerは再表示モデルへ受信0を設定する。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 427,
+          "endLine": 427,
+          "quote": "この枝を422の検索HTMLが必ず返る経路として扱わない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "拒否後も受信PageSizeを再設定し、ビューはその値で除算する。文書は実装制約を正しく開示する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 16,
+            "endLine": 16,
+            "quote": "model.PageSize=pageSize;"
+          },
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8,
+            "quote": "@Math.Max(1,(count+Model.PageSize-1)/Model.PageSize)"
+          },
+          {
+            "path": "source/Infrastructure/WebHostSetup.cs",
+            "startLine": 23,
+            "endLine": 23,
+            "quote": "ctx.Response.StatusCode=fault?.Status??503;"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-190505ABB0",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "状態ID・版とページ表示指定を受け、編集中Criteriaを混ぜずAppliedで再取得する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 505,
+          "endLine": 505,
+          "quote": "一覧フォームの表示指定と要求Pageを使い、最後に実行した条件でDBを再検索する。編集中のCriteriaはこのフォームに含まれない。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 511,
+          "endLine": 511,
+          "quote": "ReadとUseのGet・Gate待機・再Get・版一致・版上限を確認する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "PageRequestは条件入力を含まず、処理は保持条件の複製から始まる。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 29,
+            "endLine": 29,
+            "quote": "public sealed class PageRequest : ContextRequest"
+          },
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "var criteria=SearchContextStore.Copy(entry.Applied);"
+          },
+          {
+            "path": "source/Infrastructure/SearchContextStore.cs",
+            "startLine": 14,
+            "endLine": 14,
+            "quote": "if(request.ContextRevision!=e.Revision.ToString(System.Globalization.CultureInfo.InvariantCulture))"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-D7B8115A32",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "状態ID・版を検査し、同じContextの条件と結果を解除して未検索へ戻す。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 606,
+          "endLine": 606,
+          "quote": "同じContextIdとTabを保ち、実行済み条件と結果を解除して初期入力・未検索へ戻す。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 611,
+          "endLine": 612,
+          "quote": "AppliedとLastResultをNULLにし、版を加算して未検索Presentを返す。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ClearはUseによる版検査後に条件・結果を解除する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 15,
+            "endLine": 15,
+            "quote": "entry.Applied=null;entry.LastResult=null;entry.Revision++;return Task.FromResult(Present(entry,null));"
+          },
+          {
+            "path": "source/Infrastructure/SearchContextStore.cs",
+            "startLine": 14,
+            "endLine": 14,
+            "quote": "if(request.ContextRevision!=e.Revision.ToString(System.Globalization.CultureInfo.InvariantCulture))"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-736C4F23AE",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "options-http-input-response-contract",
+      "reason": "候補連動用の限定条件と部分HTML／候補JSONに対し、全文書は検索フォーム全体を受ける全HTML応答を記載する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 30,
+          "endLine": 30,
+          "quote": "検索フォームの「候補を更新」。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 30,
+          "endLine": 30,
+          "quote": "全HTMLを返す。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 890,
+          "endLine": 890,
+          "quote": "Search・OptionsはCriteria.*と状態3項目・表示3項目"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "Optionsは検索DTOと表示指定を受け、Searchビュー全体を返す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 22,
+            "endLine": 22,
+            "quote": "Options([Bind(Prefix=\"Criteria\")]StudentSearchInput input,string contextId,string contextRevision,string tabId,int pageSize=20,string sortKey=\"studentNo\",string sortDirection=\"asc\",CancellationToken ct=default)"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 22,
+            "endLine": 22,
+            "quote": "return View(\"Search\",model);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-4CBDD5BDF6",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "新規登録の入口でもCreate相当の権限を確認し、新規画面へ進む。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 721,
+          "endLine": 721,
+          "quote": "新規だけCreateOrUpdateを確認し、Viewerを拒否する。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 740,
+          "endLine": 740,
+          "quote": "新規入力・Detailなし"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "新規はLoad(null)へ接続され、対象なしの場合に作成権限を確認する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 23,
+            "endLine": 23,
+            "quote": "New(string? returnContextId,CancellationToken ct)=>Load(null,returnContextId,ct);"
+          },
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 17,
+            "endLine": 17,
+            "quote": "if(id is null) identity.CreateOrUpdate();"
+          },
+          {
+            "path": "source/Infrastructure/RequestIdentity.cs",
+            "startLine": 14,
+            "endLine": 14,
+            "quote": "if(CurrentUser.Role==Role.Viewer) throw new WebFault(403,"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-60E549A414",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "Read確認、最新非削除対象の再取得、Viewer参照／その他編集を説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 719,
+          "endLine": 722,
+          "quote": "Viewerには新規リンクを置かず、行リンクを参照とする。それ以外は新規・編集を表示する。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 721,
+          "endLine": 722,
+          "quote": "既存はGetAsyncで最新の非削除対象を読み、不在なら404 E-STU-103とする。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "既存読込みでReadを行い、非削除条件で取得し、編集可否はViewer以外に限定する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 17,
+            "endLine": 17,
+            "quote": "identity.Read();CheckReturn(contextId);"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 176,
+            "endLine": 176,
+            "quote": "SELECT * FROM dbo.m_student WHERE student_id=@id AND is_deleted=0"
+          },
+          {
+            "path": "source/Web/Models/StudentEditPageModel.cs",
+            "startLine": 14,
+            "endLine": 14,
+            "quote": "public bool CanEdit=>User.Role!=Role.Viewer;"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-65FC522EC2",
+      "judgement": "内容誤り",
+      "actualDeduction": -3,
+      "defectId": "resume-empty-result-page-normalization",
+      "reason": "初回・Applied分離・ソート時page=1・一覧消去は説明するが、Resumeは件数減少後も保持Pageを返す。復帰時に0件となる場合のページ1/1という参照契約を満たさない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 857,
+          "endLine": 857,
+          "quote": "ResumeにはPageイベントの保持Page補正と再検索がない。サービスが実取得ページを最終ページへ補正してもApplied.Pageは元のままで、Presentも保持Pageを返す。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 111,
+          "endLine": 111,
+          "quote": "正常検索0件"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ResumeはApplied.Pageを変更せず、Presentとビューは保持Pageを使う。実装制約の記載は忠実である。",
+        "sourceEvidence": [
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 14,
+            "endLine": 14,
+            "quote": "var result=await service.SearchAsync(entry.Applied,ct);EnsureSearch(result);entry.LastResult=result;entry.Revision++;return Present(entry,result);"
+          },
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 21,
+            "endLine": 21,
+            "quote": "page=c.Page"
+          },
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 8,
+            "endLine": 8,
+            "quote": "<span>@(page) / @Math.Max(1,(count+Model.PageSize-1)/Model.PageSize)</span>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-8C45735FBB",
+      "judgement": "内容誤り",
+      "actualDeduction": -3,
+      "defectId": "options-grade-normalization-before-class-check",
+      "reason": "POST再描画・解除通知・フォーム分離はあるが、Optionsは学年を生値で照合する。共通N-07で等価な全角学年でも適合クラスを解除する差が明示され、参照の不適合クラス解除と異なる。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 446,
+          "endLine": 446,
+          "quote": "この経路はModelState全体判定、IdParser、コード正規化を呼ばない。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 446,
+          "endLine": 446,
+          "quote": "生の全角GradeCodeも検索サービスの正規化と同じ方法では比較されない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "Optionsは入力GradeCodeと候補のASCIIコードを直接比較する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 22,
+            "endLine": 22,
+            "quote": "(string.IsNullOrEmpty(input.GradeCode)||c.GradeCode==input.GradeCode)"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 22,
+            "endLine": 22,
+            "quote": "input.ClassId=null;ModelState.Remove(\"Criteria.ClassId\");model.Message=\"上位条件に合わないクラスを解除しました。\";"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-6623422F55",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学籍番号の移送はSRC-001の一意な項目行とMOVE-002・003で特定できる。識別表記・表の分割変更だけでは減点しない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 143,
+          "endLine": 143,
+          "quote": "| SRC-001 | 検索条件 | 学籍番号 |"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 871,
+          "endLine": 871,
+          "quote": "| MOVE-003 | 条件→照合値 | サービスローカル・SQLパラメータ | 番号、氏名キー、カナキー、電話、コード、DateOnly範囲を生成。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "対象外",
+        "reason": "移送IDの採番は文書の識別規約であり、実装動作の観測対象ではない。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-38C3B9E2B1",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学籍番号をSRC-001として識別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 143,
+          "endLine": 143,
+          "quote": "| SRC-001 | 検索条件 | 学籍番号 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "実ビューの学籍番号コントロールIDに一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5,
+            "quote": "<input asp-for=\"Criteria.StudentNo\" id=\"SRC-001\" maxlength=\"30\">"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-6F73AC79DF",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学籍番号入力を検索実行イベントへ接続する。EV-SRC-002の番号再掲がなくても関連処理は特定できる。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 29,
+          "endLine": 29,
+          "quote": "POST `/students/search`"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 349,
+          "endLine": 349,
+          "quote": "番号・氏名・カナ・電話"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "検索POSTはCriteria接頭辞のDTOを受ける。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "[HttpPost(\"search\")] public async Task<IActionResult> Search([Bind(Prefix=\"Criteria\")]StudentSearchInput input"
+          },
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 7,
+            "endLine": 7,
+            "quote": "public string StudentNo { get; set; } = \"\";"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-FD026A187F",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "画面側Criteria.StudentNoを明示する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 143,
+          "endLine": 143,
+          "quote": "`Criteria.StudentNo` → DTO `StudentNo: string`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ビューのバインド名に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5,
+            "quote": "asp-for=\"Criteria.StudentNo\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-D17D913BD4",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "StudentNoPrefix相当の正規化処理値をローカルnoとして特定する。保持する原文字列と混同しない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "`no,name,kana,phone,grade,prefecture`、`DateOnly? from,to`。サービスローカル。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 952,
+          "endLine": 952,
+          "quote": "| no非NULL | `s.student_no LIKE @no ESCAPE '!'` | VarChar(31)。エスケープ済みno＋末尾%。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "noはIdentifierの結果で、前方一致パラメータへ渡される。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 113,
+            "endLine": 113,
+            "quote": "var no = string.IsNullOrEmpty(criteria.StudentNo) ? null : StudentNormalizer.Identifier(criteria.StudentNo,15,\"StudentNo\");"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 140,
+            "endLine": 140,
+            "quote": "StudentNormalizer.EscapeLike(no)+\"%\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-16AEB7C9CD",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "DB条件をm_student.student_noへ対応付ける。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 143,
+          "endLine": 143,
+          "quote": "`m_student.student_no: varchar(15) NOT NULL`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "学生別名sのstudent_noを照合する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 140,
+            "endLine": 140,
+            "quote": "s.student_no LIKE @no ESCAPE '!'"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 156,
+            "endLine": 156,
+            "quote": "FROM dbo.m_student s"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-C1C3BB466A",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学籍番号を検索条件の入力方向として記載する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 143,
+          "endLine": 143,
+          "quote": "| SRC-001 | 検索条件 | 学籍番号 | input、id=`SRC-001` | I |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "入力StudentNoから検索条件StudentNoへ移送する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 19,
+            "endLine": 19,
+            "quote": "StudentNo=StudentNo"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-E63F711410",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "N-06相当のFormKC・大文字化・英数字／ハイフン・15スカラー検査を具体化する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 143,
+          "endLine": 143,
+          "quote": "raw・Trim後・FormKCと大文字化後の各上限15スカラー。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 143,
+          "endLine": 143,
+          "quote": "先頭英数字、後続英数字・ハイフン。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "Identifierの変換と形式検査に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 61,
+            "endLine": 62,
+            "quote": "var value = Text(raw, max, max, field, true)!.Normalize(NormalizationForm.FormKC).ToUpperInvariant();\n        if (ScalarCount(value) > max || !Regex.IsMatch(value, \"^[A-Z0-9][A-Z0-9-]*$\", RegexOptions.CultureInvariant))"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-DE111291B1",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "student-no-whitespace-unset-normalization",
+      "reason": "NULL・空文字は未指定だが、任意空入力を未設定へ統一する共通N-01に対し、空白だけを必須不正として拒否する差がある。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 143,
+          "endLine": 143,
+          "quote": "NULL・空文字は条件なし、非空の空白だけは必須検査で拒否。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "非空入力は必須Identifierへ入り、Trim後空を拒否する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 113,
+            "endLine": 113,
+            "quote": "string.IsNullOrEmpty(criteria.StudentNo) ? null : StudentNormalizer.Identifier(criteria.StudentNo,15,\"StudentNo\")"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 61,
+            "endLine": 61,
+            "quote": "Text(raw, max, max, field, true)"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 55,
+            "endLine": 55,
+            "quote": "if (value.Length == 0) { if (required) Fail(field, \"E-STU-001\", $\"{Label(field)}を入力してください。\"); return null; }"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-4D4245C186",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "N-06相当の正規化後に末尾%で前方一致し、検索から学生へ保存しない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 143,
+          "endLine": 143,
+          "quote": "前方一致。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 952,
+          "endLine": 952,
+          "quote": "VarChar(31)。エスケープ済みno＋末尾%。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 920,
+          "endLine": 920,
+          "quote": "検索側のローカルキーをそのまま学生へ保存する経路はない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "Identifierの値を前方一致検索へ使い、SearchAsync内で書込みを行わない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 113,
+            "endLine": 113,
+            "quote": "StudentNormalizer.Identifier(criteria.StudentNo,15,\"StudentNo\")"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 140,
+            "endLine": 140,
+            "quote": "Where(\"s.student_no LIKE @no ESCAPE '!'\",\"@no\",SqlDbType.VarChar,no is null ? null : StudentNormalizer.EscapeLike(no)+\"%\",31);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-F82D5CDE86",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学籍番号の項目検査不正では元DTO・ModelStateを再表示し、学生の件数・一覧検索へ進まない。再表示候補の別読取りは区別される。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 114,
+          "endLine": 114,
+          "quote": "受信DTOとModelStateを再表示へ渡す。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 289,
+          "endLine": 290,
+          "quote": "文字列・コード正規化、日付解析と範囲を順に検査する。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 293,
+          "endLine": 293,
+          "quote": "catch外で候補を再取得する。再表示条件は受信DTOで"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "番号検査はDB接続前で、入力例外は結果へ変換し、Controllerは受信inputを返す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 113,
+            "endLine": 113,
+            "quote": "StudentNormalizer.Identifier(criteria.StudentNo,15,\"StudentNo\")"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 169,
+            "endLine": 169,
+            "quote": "catch(InputValidationException e) { return new(Outcome.ValidationFailed,0,[],now,false,e.Errors); }"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 16,
+            "endLine": 16,
+            "quote": "var model=await SearchModel(entry,data,input,\"\",ct);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-34B834BB62",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "氏名の移送はSRC-002とMOVE-002・003で一意に追跡でき、移送ID表記の変更は意味を変えない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 144,
+          "endLine": 144,
+          "quote": "| SRC-002 | 検索条件 | 氏名 |"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 870,
+          "endLine": 870,
+          "quote": "Name→StudentName"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 871,
+          "endLine": 871,
+          "quote": "番号、氏名キー、カナキー、電話、コード、DateOnly範囲を生成。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "対象外",
+        "reason": "移送IDの採番は文書の識別規約である。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-E72910ACEA",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "氏名をSRC-002として識別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 144,
+          "endLine": 144,
+          "quote": "| SRC-002 | 検索条件 | 氏名 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "実ビューの氏名コントロールIDに一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5,
+            "quote": "<input asp-for=\"Criteria.Name\" id=\"SRC-002\" maxlength=\"16\">"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-0C2E068102",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "氏名入力を検索実行の正規化処理へ対応付ける。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 29,
+          "endLine": 29,
+          "quote": "POST `/students/search`"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 349,
+          "endLine": 349,
+          "quote": "番号・氏名・カナ・電話"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "検索DTOのNameはStudentNameへ移送される。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "[HttpPost(\"search\")]"
+          },
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 19,
+            "endLine": 19,
+            "quote": "StudentName=Name"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-D809AA9B8E",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "画面側Criteria.Nameを明示する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 144,
+          "endLine": 144,
+          "quote": "`Criteria.Name` → `Name: string` → `StudentName: string?`。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ビューのバインド名に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5,
+            "quote": "asp-for=\"Criteria.Name\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-2587A47A85",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "NameKey相当の処理値はローカルnameとして特定され、原入力StudentNameと分離される。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "`no,name,kana,phone,grade,prefecture`、`DateOnly? from,to`。サービスローカル。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 953,
+          "endLine": 953,
+          "quote": "| name非NULL | `s.name_key LIKE @name ESCAPE '!'` | NVarChar(642)。エスケープ済みキーの両側に%。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ローカルnameへNameKeyの結果を代入する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 114,
+            "endLine": 115,
+            "quote": "var name = StudentNormalizer.Text(criteria.StudentName,8,8,\"StudentName\");\n            name = name is null ? null : StudentNormalizer.NameKey(name);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-7771DFB76C",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "氏名検索は原表記列ではなくm_student.name_keyへ移送する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 144,
+          "endLine": 144,
+          "quote": "検索は `name_key: nvarchar(320) NOT NULL`、BIN2。表示・保存原表記は `student_name: nvarchar(16) NOT NULL`。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "SQL述語はname_keyを対象とする。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 141,
+            "endLine": 141,
+            "quote": "s.name_key LIKE @name ESCAPE '!'"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 156,
+            "endLine": 156,
+            "quote": "FROM dbo.m_student s"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-0F4CEAC014",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "氏名を検索条件の入力方向として記載する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 144,
+          "endLine": 144,
+          "quote": "| SRC-002 | 検索条件 | 氏名 | input、id=`SRC-002` | I |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "入力Nameから検索条件StudentNameへ移送する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 19,
+            "endLine": 19,
+            "quote": "StudentName=Name"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-D0CA64ECFA",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "name-key-invariant-uppercase-detail",
+      "reason": "N-03相当の変換は説明するが、共通N-03が指定するカルチャー非依存の大文字化条件が本文にない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 144,
+          "endLine": 144,
+          "quote": "Text後にFormKC、大文字化、全Unicode空白除去。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 1097,
+          "quote": "### 文字列正規化の具体的契約"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "記載された変換自体はNameKeyに一致する。Invariant条件の不足は文書の説明欠落である。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 68,
+            "endLine": 68,
+            "quote": "name.Normalize(NormalizationForm.FormKC).ToUpperInvariant().EnumerateRunes().Where(rune => !Rune.IsWhiteSpace(rune))"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-293BE0A9BF",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "氏名の空・空白だけを条件なしとして扱う。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 144,
+          "endLine": 144,
+          "quote": "空・空白だけは条件なし。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "任意TextはTrim後空をNULLへ変換し、NameKeyを呼ばない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 54,
+            "endLine": 55,
+            "quote": "value = value.Trim();\n        if (value.Length == 0) { if (required) Fail(field, \"E-STU-001\", $\"{Label(field)}を入力してください。\"); return null; }"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 115,
+            "endLine": 115,
+            "quote": "name = name is null ? null : StudentNormalizer.NameKey(name);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-71DDFF640F",
+      "judgement": "粒度不足",
+      "actualDeduction": -2,
+      "defectId": "name-key-invariant-uppercase-detail",
+      "reason": "照合キーの部分一致と原表記の分離は正しいが、N-03の大文字化がカルチャー非依存であることを説明しない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 144,
+          "endLine": 144,
+          "quote": "Text後にFormKC、大文字化、全Unicode空白除去。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 144,
+          "endLine": 144,
+          "quote": "`@name: NVarChar(642)` の部分一致。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 1,
+          "endLine": 1097,
+          "quote": "### 文字列正規化の具体的契約"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "記載されたキー生成と部分一致は実装に一致するが、ソースにあるInvariant条件を文書が省略する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 68,
+            "endLine": 68,
+            "quote": "Normalize(NormalizationForm.FormKC).ToUpperInvariant()"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 141,
+            "endLine": 141,
+            "quote": "name is null ? null : \"%\"+StudentNormalizer.EscapeLike(name)+\"%\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-776E384F21",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "氏名検査不正時は受信DTO・ModelStateを保持し、学生の件数・一覧検索を実行しない。再表示候補読取りは別処理と説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 114,
+          "endLine": 114,
+          "quote": "受信DTOとModelStateを再表示へ渡す。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 289,
+          "endLine": 290,
+          "quote": "文字列・コード正規化、日付解析と範囲を順に検査する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "氏名検査は接続前で、失敗後も受信inputを再表示モデルへ渡す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 114,
+            "endLine": 114,
+            "quote": "var name = StudentNormalizer.Text(criteria.StudentName,8,8,\"StudentName\");"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 169,
+            "endLine": 169,
+            "quote": "catch(InputValidationException e) { return new(Outcome.ValidationFailed,0,[],now,false,e.Errors); }"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 16,
+            "endLine": 16,
+            "quote": "var model=await SearchModel(entry,data,input,\"\",ct);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-C49AD7D826",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "カナの移送はSRC-003とMOVE-002・003で一意に追跡でき、移送ID表記の変更は意味を変えない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 145,
+          "endLine": 145,
+          "quote": "| SRC-003 | 検索条件 | 氏名カナ |"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 870,
+          "endLine": 870,
+          "quote": "Kana→StudentNameKana"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 871,
+          "endLine": 871,
+          "quote": "番号、氏名キー、カナキー、電話、コード、DateOnly範囲を生成。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "対象外",
+        "reason": "移送IDの採番は文書の識別規約である。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-4F3A94FADF",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "氏名カナをSRC-003として識別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 145,
+          "endLine": 145,
+          "quote": "| SRC-003 | 検索条件 | 氏名カナ |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "実ビューのカナコントロールIDに一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5,
+            "quote": "<input asp-for=\"Criteria.Kana\" id=\"SRC-003\" maxlength=\"72\">"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-BACF64C6A6",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "カナ入力を検索実行の正規化処理へ対応付ける。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 29,
+          "endLine": 29,
+          "quote": "POST `/students/search`"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 349,
+          "endLine": 349,
+          "quote": "番号・氏名・カナ・電話"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "検索DTOのKanaはStudentNameKanaへ移送される。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "[HttpPost(\"search\")]"
+          },
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 19,
+            "endLine": 19,
+            "quote": "StudentNameKana=Kana"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-E744E42B26",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "画面側Criteria.Kanaを明示する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 145,
+          "endLine": 145,
+          "quote": "`Criteria.Kana` → `Kana: string` → `StudentNameKana: string?`。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ビューのバインド名に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5,
+            "quote": "asp-for=\"Criteria.Kana\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-B2403A0C5B",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "KanaKey相当の正規化・空白除去値をローカルkanaとして特定し、保持原文字列と区別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "`no,name,kana,phone,grade,prefecture`、`DateOnly? from,to`。サービスローカル。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 954,
+          "endLine": 954,
+          "quote": "| kana非NULL | `s.kana_key LIKE @kana ESCAPE '!'` |"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 910,
+          "endLine": 910,
+          "quote": "検索キーではASCII空白を除去し、LIKE部分一致へ渡す。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ローカルkanaはKana正規化と空白除去の結果である。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 116,
+            "endLine": 116,
+            "quote": "var kana = string.IsNullOrEmpty(criteria.StudentNameKana) ? null : StudentNormalizer.Kana(criteria.StudentNameKana,false).Replace(\" \",\"\");"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-4D03E17C90",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "カナ検索をm_student.kana_keyへ対応付け、表示・保存カナと区別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 145,
+          "endLine": 145,
+          "quote": "検索 `kana_key`、表示・保存 `student_name_kana`。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "学生のkana_keyを部分一致条件に使う。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 142,
+            "endLine": 142,
+            "quote": "s.kana_key LIKE @kana ESCAPE '!'"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 156,
+            "endLine": 156,
+            "quote": "FROM dbo.m_student s"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-EE9888087B",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "氏名カナを検索条件の入力方向として記載する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 145,
+          "endLine": 145,
+          "quote": "| SRC-003 | 検索条件 | 氏名カナ | input、id=`SRC-003` | I |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "入力Kanaから検索条件StudentNameKanaへ移送する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 19,
+            "endLine": 19,
+            "quote": "StudentNameKana=Kana"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-3890FFE1F5",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "N-04のFormKC・限定カナ変換・空白整理・18スカラーと、N-05の空白除去を具体的に説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 145,
+          "endLine": 145,
+          "quote": "FormKC、空白整理、限定ひらがな変換、限定カタカナ検査、18スカラー検査、検索用ASCII空白除去の順。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 907,
+          "endLine": 908,
+          "quote": "ひらがなU+3041～U+3096、U+309D、U+309Eだけに0x60を加える。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "Kanaの変換と検索時の空白除去に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 79,
+            "endLine": 80,
+            "quote": "var c = rune.Value is >= 0x3041 and <= 0x3096 || rune.Value is 0x309D or 0x309E ? rune.Value + 0x60 : rune.Value;\n            if (!(c is >= 0x30A1 and <= 0x30FA || c is 0x30FC or 0x30FB or 0x30FD or 0x30FE))"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 116,
+            "endLine": 116,
+            "quote": "StudentNormalizer.Kana(criteria.StudentNameKana,false).Replace(\" \",\"\")"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-6D01B1605B",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "kana-whitespace-unset-normalization",
+      "reason": "NULL・空文字は未指定だが、共通N-01の任意空入力の未設定化に対し、空白だけは空キーとLIKE '%%'を残す。NULL相当と区別される差である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 910,
+          "endLine": 910,
+          "quote": "非空の空白だけの入力は空キーとなり、NULLでないため `LIKE '%%'` が残る。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "非空空白はKanaの空文字結果となり、WhereはNULL以外を省略しない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 116,
+            "endLine": 116,
+            "quote": "string.IsNullOrEmpty(criteria.StudentNameKana) ? null : StudentNormalizer.Kana(criteria.StudentNameKana,false).Replace(\" \",\"\")"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 74,
+            "endLine": 74,
+            "quote": "Text(raw, 36, 36, \"StudentNameKana\", required)?.Normalize(NormalizationForm.FormKC) ?? \"\""
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 139,
+            "endLine": 139,
+            "quote": "if (value is not null) { predicates.Add(sql); parameters.Add((key,type,value,size)); }"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-C39C6484A7",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "N-04後に空白を除くN-05相当値で部分一致する。中点・長音は許可集合に残る。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 910,
+          "endLine": 910,
+          "quote": "検索キーではASCII空白を除去し、LIKE部分一致へ渡す。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 908,
+          "endLine": 908,
+          "quote": "U+30FC、U+30FB、U+30FD、U+30FEだけを許可する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "Kanaの結果から空白だけを除き、両側%で検索する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 116,
+            "endLine": 116,
+            "quote": "StudentNormalizer.Kana(criteria.StudentNameKana,false).Replace(\" \",\"\")"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 142,
+            "endLine": 142,
+            "quote": "kana is null ? null : \"%\"+StudentNormalizer.EscapeLike(kana)+\"%\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-2619041195",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "カナ検査不正時は受信DTO・ModelStateを保持し、学生の件数・一覧検索を実行しない。再表示候補読取りは別処理である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 114,
+          "endLine": 114,
+          "quote": "受信DTOとModelStateを再表示へ渡す。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 289,
+          "endLine": 290,
+          "quote": "文字列・コード正規化、日付解析と範囲を順に検査する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "カナ検査は接続前で、入力例外後も元inputを再表示へ渡す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 116,
+            "endLine": 116,
+            "quote": "StudentNormalizer.Kana(criteria.StudentNameKana,false)"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 169,
+            "endLine": 169,
+            "quote": "catch(InputValidationException e) { return new(Outcome.ValidationFailed,0,[],now,false,e.Errors); }"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 16,
+            "endLine": 16,
+            "quote": "var model=await SearchModel(entry,data,input,\"\",ct);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-B26CC7BE12",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "年度の画面・処理値・DB対応はSRC-004で一意に特定され、MOVE-001・003の工程と接続される。移送IDの表記変更だけでは減点しない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 146,
+          "endLine": 146,
+          "quote": "| SRC-004 | 検索条件 | 年度 |"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 869,
+          "endLine": 869,
+          "quote": "Criteria接頭辞。年度int?"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 955,
+          "endLine": 955,
+          "quote": "| 年度非NULL | `c.school_year=@year` | SmallInt。 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "対象外",
+        "reason": "移送IDの採番は文書の識別規約である。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-F50FA72E19",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "年度をSRC-004として識別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 146,
+          "endLine": 146,
+          "quote": "| SRC-004 | 検索条件 | 年度 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "実ビューの年度コントロールIDに一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5,
+            "quote": "<select asp-for=\"Criteria.SchoolYear\" id=\"SRC-004\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-65631F3B8C",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "年度を検索実行の入力と検査へ関連付ける。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 29,
+          "endLine": 29,
+          "quote": "POST `/students/search`"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 289,
+          "endLine": 289,
+          "quote": "表示指定、年度・クラス値"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "検索POSTのDTOからSchoolYearを検索条件へ移送する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "[HttpPost(\"search\")]"
+          },
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 20,
+            "endLine": 20,
+            "quote": "SchoolYear=SchoolYear"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-69287B633A",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "画面側Criteria.SchoolYearを明示する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 146,
+          "endLine": 146,
+          "quote": "`Criteria.SchoolYear`。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ビューのバインド名に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5,
+            "quote": "asp-for=\"Criteria.SchoolYear\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-66BBA32394",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "年度はDTO・検索条件ともSchoolYearのint?として対応する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 146,
+          "endLine": 146,
+          "quote": "DTO・条件とも `int?`。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 146,
+          "endLine": 146,
+          "quote": "`Criteria.SchoolYear`。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "同名プロパティへ年度を移送する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 20,
+            "endLine": 20,
+            "quote": "SchoolYear=SchoolYear"
+          },
+          {
+            "path": "source/Core/Contracts.cs",
+            "startLine": 36,
+            "endLine": 36,
+            "quote": "public int? SchoolYear { get; set; }"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-397469FA46",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "年度条件をm_class.school_yearへ対応付ける。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 146,
+          "endLine": 146,
+          "quote": "`m_class.school_year: smallint NOT NULL`。一致条件。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "クラス別名cのschool_yearを比較する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 143,
+            "endLine": 143,
+            "quote": "Where(\"c.school_year=@year\",\"@year\",SqlDbType.SmallInt,criteria.SchoolYear);"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 87,
+            "endLine": 87,
+            "quote": "LEFT JOIN dbo.m_class c ON c.class_id=s.class_id"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-FECCFAD9F1",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "年度を検索条件の入力方向として記載する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 146,
+          "endLine": 146,
+          "quote": "| SRC-004 | 検索条件 | 年度 | select、id=`SRC-004` | I |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "入力年度を検索条件へ移送する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 20,
+            "endLine": 20,
+            "quote": "SchoolYear=SchoolYear"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-26DF6226D9",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "検索年度に適用するN-11／DATE-R04相当の型付き年度値と1900～9998の検査を具体化する。日付保存処理とは扱いを分ける。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 146,
+          "endLine": 146,
+          "quote": "DTO・条件とも `int?`。1900～9998と年度存在を検査。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "年度の型と範囲検査はソースで観測できる。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 10,
+            "endLine": 10,
+            "quote": "public int? SchoolYear { get; set; }"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 109,
+            "endLine": 109,
+            "quote": "criteria.SchoolYear is < 1900 or > 9998"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-3858DDDD2D",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "年度の初期NULLと「すべて」の未指定を説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 146,
+          "endLine": 146,
+          "quote": "初期NULL、「すべて」は未指定。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "nullable年度と空optionを使い、NULL条件はSQLへ追加しない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 10,
+            "endLine": 10,
+            "quote": "public int? SchoolYear { get; set; }"
+          },
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5,
+            "quote": "<select asp-for=\"Criteria.SchoolYear\" id=\"SRC-004\" disabled=\"@Model.Criteria.UnassignedOnly\"><option value=\"\">すべて</option>"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 139,
+            "endLine": 139,
+            "quote": "if (value is not null)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-2E9C633306",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "検索年度の完全一致とDATE-R04の1900～9998を具体的に記載する。年度候補存在も検査する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 146,
+          "endLine": 146,
+          "quote": "`m_class.school_year: smallint NOT NULL`。一致条件。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 146,
+          "endLine": 146,
+          "quote": "1900～9998と年度存在を検査。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 955,
+          "endLine": 955,
+          "quote": "`c.school_year=@year`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "範囲検査とschool_yearの等値述語に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 109,
+            "endLine": 109,
+            "quote": "criteria.SchoolYear is < 1900 or > 9998"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 143,
+            "endLine": 143,
+            "quote": "Where(\"c.school_year=@year\",\"@year\",SqlDbType.SmallInt,criteria.SchoolYear);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-B06CF38370",
+      "judgement": "属性誤り",
+      "actualDeduction": -1,
+      "defectId": "school-year-invalid-raw-input-preservation",
+      "reason": "学生検索の停止は説明するが、参照が求める年度の不正原入力保持に対し、バインド後int?を保持し原HTTP文字列を独立保持しない差を記載する。原入力再表示の契約が満たされたとは確認できない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 1064,
+          "endLine": 1064,
+          "quote": "年度・bool・ページ等の原HTTP文字列は独立保持しない。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 286,
+          "endLine": 286,
+          "quote": "ModelState不正なら422を設定してCoordinatorを呼ばない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "年度のint?バインドと受信DTO再表示は観測できるが、変換失敗した原文字列が実際のselect表示に残るかは、この静的ソースだけでは確定しない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 10,
+            "endLine": 10,
+            "quote": "public int? SchoolYear { get; set; }"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 16,
+            "endLine": 16,
+            "quote": "var model=await SearchModel(entry,data,input,\"\",ct);"
+          },
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5,
+            "quote": "asp-for=\"Criteria.SchoolYear\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-CEFF07EB48",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学年の画面・正規化値・DB対応はSRC-005とMOVE-003で特定でき、移送ID表記の変更は意味を変えない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 147,
+          "endLine": 147,
+          "quote": "| SRC-005 | 検索条件 | 学年 |"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 956,
+          "endLine": 956,
+          "quote": "| grade非NULL | `c.grade_code=@grade` | VarChar(2)。 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "対象外",
+        "reason": "移送IDの採番は文書の識別規約である。",
+        "sourceEvidence": []
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-AE7971C688",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学年をSRC-005として識別する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 147,
+          "endLine": 147,
+          "quote": "| SRC-005 | 検索条件 | 学年 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "実ビューの学年コントロールIDに一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5,
+            "quote": "<select asp-for=\"Criteria.GradeCode\" id=\"SRC-005\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-3E7F708C5A",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学年の正規化値移送を検索実行イベントへ関連付ける。候補更新の生値照合とは区別される。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 29,
+          "endLine": 29,
+          "quote": "POST `/students/search`"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 350,
+          "endLine": 350,
+          "quote": "学年・都道府県の正規化"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "検索条件GradeCodeをSearchAsyncで正規化する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 20,
+            "endLine": 20,
+            "quote": "GradeCode=GradeCode"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 118,
+            "endLine": 118,
+            "quote": "var grade = StudentNormalizer.Code(criteria.GradeCode,2,\"GradeCode\",false);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-ACE3CE1312",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "画面側Criteria.GradeCodeを明示する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 147,
+          "endLine": 147,
+          "quote": "`Criteria.GradeCode`。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ビューのバインド名に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Search.cshtml",
+            "startLine": 5,
+            "endLine": 5,
+            "quote": "asp-for=\"Criteria.GradeCode\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-DCFAF98867",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "条件GradeCodeと正規化後ローカルgradeを特定し、SQLへ渡す処理値を説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 205,
+          "endLine": 205,
+          "quote": "`no,name,kana,phone,grade,prefecture`、`DateOnly? from,to`。サービスローカル。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 147,
+          "endLine": 147,
+          "quote": "GRADEの存在確認後に `@grade: VarChar(2)` で一致。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "criteria.GradeCodeからgradeを生成し、その値をSQL条件へ渡す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 118,
+            "endLine": 118,
+            "quote": "var grade = StudentNormalizer.Code(criteria.GradeCode,2,\"GradeCode\",false);"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 144,
+            "endLine": 144,
+            "quote": "Where(\"c.grade_code=@grade\",\"@grade\",SqlDbType.VarChar,grade,2);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-628C298A63",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学年条件をm_class.grade_codeへ対応付ける。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 147,
+          "endLine": 147,
+          "quote": "`m_class.grade_code: varchar(2) NOT NULL`。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "クラス別名cのgrade_codeを比較する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 144,
+            "endLine": 144,
+            "quote": "Where(\"c.grade_code=@grade\",\"@grade\",SqlDbType.VarChar,grade,2);"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 87,
+            "endLine": 87,
+            "quote": "LEFT JOIN dbo.m_class c ON c.class_id=s.class_id"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-22C88C63DC",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学年を検索条件の入力方向として記載する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 147,
+          "endLine": 147,
+          "quote": "| SRC-005 | 検索条件 | 学年 | select、id=`SRC-005` | I |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "入力GradeCodeを検索条件へ移送する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSearchInput.cs",
+            "startLine": 20,
+            "endLine": 20,
+            "quote": "GradeCode=GradeCode"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-AC58AE99D4",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "検索実行のN-07相当処理としてFormKC後のASCII数字2桁検査を説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 147,
+          "endLine": 147,
+          "quote": "raw・Trim後2スカラー、FormKC後ASCII数字2桁。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "CodeのFormKCと固定幅ASCII数字検査に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 115,
+            "endLine": 116,
+            "quote": "var text = Text(raw, width, width, field, required)?.Normalize(NormalizationForm.FormKC);\n        if (text is not null && (text.Length != width || text.Any(c => c < '0' || c > '9')))"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 118,
+            "endLine": 118,
+            "quote": "StudentNormalizer.Code(criteria.GradeCode,2,\"GradeCode\",false)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-E7C011A435",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学年の空・空白をNULLに正規化し、未指定とする。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 147,
+          "endLine": 147,
+          "quote": "初期NULL。空・空白はNULLへ正規化。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "任意CodeはTextの未設定結果をNULLのまま返す。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 115,
+            "endLine": 117,
+            "quote": "var text = Text(raw, width, width, field, required)?.Normalize(NormalizationForm.FormKC);"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 55,
+            "endLine": 55,
+            "quote": "if (value.Length == 0) { if (required) Fail(field, \"E-STU-001\", $\"{Label(field)}を入力してください。\"); return null; }"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 118,
+            "endLine": 118,
+            "quote": "StudentNormalizer.Code(criteria.GradeCode,2,\"GradeCode\",false)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-10AB2EC41F",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学年の完全一致と、00学年なし・所属なし・条件未指定の区別を説明する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 147,
+          "endLine": 147,
+          "quote": "GRADEの存在確認後に `@grade: VarChar(2)` で一致。00は学年なしという値で、未所属や未指定とは別。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "00は実コードで、grade_code等値条件とclass_id IS NULLは別述語である。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 78,
+            "endLine": 78,
+            "quote": "('GRADE','00',N'学年なし',0,1),"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 144,
+            "endLine": 144,
+            "quote": "Where(\"c.grade_code=@grade\",\"@grade\",SqlDbType.VarChar,grade,2);"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 146,
+            "endLine": 146,
+            "quote": "if(criteria.UnassignedOnly) predicates.Add(\"s.class_id IS NULL\");"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001-77B72477B7",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学年の形式不正時は元入力を再表示し、件数・一覧検索へ進まない。参照イベントのOP-EXISTSによる存在検査と再表示候補読取りは別処理として説明される。",
+      "generatedEvidence": [
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 114,
+          "endLine": 114,
+          "quote": "受信DTOとModelStateを再表示へ渡す。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 289,
+          "endLine": 290,
+          "quote": "文字列・コード正規化、日付解析と範囲を順に検査する。"
+        },
+        {
+          "path": "generated/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+          "startLine": 290,
+          "endLine": 290,
+          "quote": "接続・SNAPSHOT開始後、学年・都道府県、年度、クラスと上位条件を確認する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "Code形式検査は接続前にあり、失敗時は受信inputを再表示へ渡す。コード存在確認は接続後の独立検査である。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 118,
+            "endLine": 118,
+            "quote": "var grade = StudentNormalizer.Code(criteria.GradeCode,2,\"GradeCode\",false);"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 125,
+            "endLine": 125,
+            "quote": "grade is not null && !await CodeExists(connection,tx,\"GRADE\",grade,ct)"
+          },
+          {
+            "path": "source/Web/Controllers/StudentsController.cs",
+            "startLine": 16,
+            "endLine": 16,
+            "quote": "var model=await SearchModel(entry,data,input,\"\",ct);"
+          }
+        ]
+      }
+    }
+  ],
+  "safetyChecks": [],
+  "limitations": [
+    "静的テキスト評価のみ。入力アプリケーションの実行・試験、画像比較、視覚承認は行っていない。requireSafetyReview=falseのためトピック別安全性レビューは実施していない。",
+    "ソース制約：拒否後のPageSize=0がビューの除算へ到達し得る。生成文書は422の検索HTMLを保証しないと明示している。",
+    "ソース制約：Optionsは検索DTOを受ける全HTML応答で、学年の生値照合を行う。検索実行の正規化とは異なる。",
+    "ソース制約：Resumeは保持Pageを補正しない。件数減少・0件時に表示ページと取得ページが一致しない場合がある。",
+    "ソース制約：任意検索の空白だけの入力は、学籍番号では拒否、カナでは空キーのLIKE条件となる。生成文書は双方を明示している。",
+    "年度の変換失敗時に原HTTP文字列が実際のselect表示へ残るかは未観測。int?へのバインドと受信DTOの再表示だけを確認した。"
+  ]
+}

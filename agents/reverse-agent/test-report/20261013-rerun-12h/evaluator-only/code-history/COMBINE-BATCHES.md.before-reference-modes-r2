@@ -1,0 +1,44 @@
+# 文書別batchの明示選択と統合
+
+`combine_batches.py` は日付最新globや過去のsummary得点を使用しない。rootが選んだ文書ごとのbatchと最終採用MarkdownをJSONで列挙する。schemaは `batch-selection.schema.json`。
+
+```json
+{
+  "schema": "independent-evaluation-batch-selection/1",
+  "projectId": "test-project1",
+  "profile": "CSharp_ASPNET",
+  "rubricSha256": "effective-items.json の SHA-256（64桁）",
+  "sourceSnapshotSha256": "source-only/snapshot/manifest.json の SHA-256（64桁）",
+  "documents": [
+    {
+      "documentId": "CSHARP_ASPNET-BAS-STU-01",
+      "batchPath": "evaluator-only 配下の選択batch絶対パス",
+      "normalizationPath": "normalization.json",
+      "canonicalPath": "最終納品root/基本設計書/01_学生検索画面.md の絶対パス",
+      "canonicalSha256": "最終採用MDの SHA-256（64桁）",
+      "roundId": "今回採用したroundの識別子",
+      "visualReviewPath": null,
+      "requiredVisualModes": []
+    }
+  ]
+}
+```
+
+上記は説明用であり、SHA欄とパス欄を実値へ置き換える。`batchPath` はevaluator-onlyを基準にした相対パスも可。`normalizationPath` は当該batchを基準にする。`canonicalPath` は絶対パスを使用し、承認出力領域内で原本と同じ基本/詳細/テーブル相対パスを保持する。未完成文書をentryへ入れず、採用完了した文書だけを追加する。
+
+```powershell
+& '<bundled Python 3.12の絶対パス>' -X utf8 `
+  'agents/reverse-agent/test-report/20261013-rerun-12h/evaluator-only/combine_batches.py' `
+  --selection '<evaluator-only内の明示selection JSON>' `
+  --output '<evaluator-only内の新規 combined-summary.json>'
+```
+
+batchごとに封印capsuleを検査し、同じeffective rubric SHA、同じsource-only snapshot SHA、最終MD SHAの一致を必須にする。すべてのraw評価・prompt・独立推論events・stderr・独立欠陥正規化のSHAを再確認する。requestの全評価行も固定rubric本体へ再照合する。raw評価IDを1回だけ取り込み、全文書和集合7,079行・満点8,682点、カテゴリ別、文書別、Safety6topic×11を再集計する。正規化前の単純summary得点を足さない。
+
+部分選択の文書別採点は示すが、全体の正式得点はnull。保留・未評価があっても全体null。別稿、別source、同文書/同評価IDの二重採用、失敗/欠損shard、未完の正規化は採用拒否し、`REJECTED`・総点null・最終falseの記録を残す。出力ファイルは不変で、再集計は新しいoutput名を指定する。
+
+画像レビューを結合する時はentryへ `visualReviewPath`（今回runレポートroot内のレビューJSONパス）と `requiredVisualModes`（今回承認対象の状態名を文字列配列）を設定する。原稿・snapshot・画像・ソース資源hashが一致し、`reverse-agent-native-visual-review/1`、`reviewScope=STATIC_PROJECTION_VS_SOURCE_RESOURCES`、`originalApplicationExecuted=false` のレビューだけを受理する。必要状態の明示がない、状態未確認、画像未閲覧、approved=falseなら視覚ゲートは未通過。
+
+画面設計カテゴリのある4文書の視覚pinを揃える。静的画面と原ビュー/CSSの比較であり、実アプリ実行表示の全面的な一致は主張しない。全ゲート通過時だけ `QUALIFIED_STATIC_SCOPE`。本文が95％でもソース観測矛盾・保留があれば `TEXT_PASSED_SOURCE_GATE_FAILED`、画像ゲート未通過なら `TEXT_GATES_PASSED_VISUAL_PENDING` とする。
+
+原仕様・期待値・採点表は生成側へ渡さない。統合結果は評価者側に保持する。

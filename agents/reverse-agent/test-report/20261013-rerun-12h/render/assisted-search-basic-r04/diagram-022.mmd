@@ -1,0 +1,11 @@
+%%{init: {"flowchart":{"htmlLabels":true},"themeCSS":".nodeLabel, .nodeLabel p { white-space: nowrap !important; overflow-wrap: normal !important; word-break: normal !important; }"}}%%
+flowchart TD
+  A["サブフロー1から"] --> B{"Applied<br/>あり"}
+  B -->|いいえ| C["未検索・版維持<br/>LastResult<br/>代入なし"]
+  B -->|はい| D["元条件で再検索・受入確認"]
+  D -->|例外・入力拒否| Q["F0：Flash未取得<br/>未実施の代入を補わない"]
+  D -->|受入| E["LastResult<br/>設定・版加算<br/>Applied<br/>維持"]
+  C --> F["期限延長・Gate解放"]
+  E --> F
+  E -->|代入後等の例外| Q
+  F --> G["サブフロー3へ<br/>各結果・版・保持条件"]

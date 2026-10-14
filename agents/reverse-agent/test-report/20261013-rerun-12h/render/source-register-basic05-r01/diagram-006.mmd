@@ -1,0 +1,15 @@
+flowchart TD
+ A[1から] --> B[Coordinatorの保存権限・復帰先再確認]
+ B -- WebFault --> WF[固有Status・項目エラー・8へ]
+ B -- 正常 --> C[クラスID・版変換／BirthDateInput全体NULL補完]
+ C -- WebFault --> WF
+ C -- 正常 --> D[受付番号・利用者・開始時刻取得]
+ D -- 捕捉対象外例外 --> OUT[外側エラー]
+ D -- 正常 --> E{Viewerか}
+ E -- はい --> FB[Forbidden・8へ]
+ E -- いいえ --> F[項目正規化・理由・ID版・年度学年検査]
+ F -- InputValidationException・ArgumentException --> VF[ValidationFailed・8へ]
+ F -- NULL参照等の捕捉対象外例外 --> OUT
+ F -- 正常 --> G[DB接続・BeginTransaction]
+ G -- try外失敗 --> OUT
+ G -- 正常 --> NEXT[3へ・正規化値／理由／要求ID版／nowを保持]

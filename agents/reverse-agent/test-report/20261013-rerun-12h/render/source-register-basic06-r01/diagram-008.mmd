@@ -1,0 +1,16 @@
+flowchart TD
+ A[3から] --> B[コード存在／変更時の有効状態・期間を検査]
+ B --> C[指定クラスの存在・指定年度学年一致を検査<br>新席あり かつ旧席なし又はクラス変更時だけ<br>有効状態・業務日期間・定員を検査<br>03／04は対象変更時の期間重なりを検査]
+ C --> D{収集した違反ありか}
+ D -- はい --> IV[InputValidationException・7へ]
+ D -- いいえ --> E{学生保存値に差分ありか}
+ E -- いいえ --> NC[明示rollback・NoChange<br>要求ID・取得済み版を保持・8へ]
+ E -- はい --> F{取得版がInt64上限か}
+ F -- はい --> CF[Conflict・8へ]
+ F -- いいえ --> G[他学生の学籍番号使用を照会]
+ G -- 使用済み --> VF[ValidationFailed・8へ]
+ G -- 未使用 --> NEXT[5へ・正規化値／理由／previous版を保持]
+ B -. try内例外 .-> EX[7へ]
+ C -. try内例外 .-> EX
+ NC -. rollback例外 .-> EX
+ G -. try内例外 .-> EX

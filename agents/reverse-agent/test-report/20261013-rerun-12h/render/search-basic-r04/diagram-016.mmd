@@ -1,0 +1,18 @@
+flowchart TD
+  A["SV-X：3.8-2・3・4から<br/>元の例外・tx・writeStarted・commitAttempted"] --> B{"InputValidationException"}
+  B -->|はい| B1["rollback試行<br/>ErrorsをValidationFailedへ引継ぐ"]
+  B -->|いいえ| C{"SqlExceptionで番号2601または2627"}
+  C -->|はい| C1["rollback試行<br/>ValidationFailed・E-STU-101"]
+  C -->|いいえ| D{"DBConcurrencyException"}
+  D -->|はい| D1["rollback試行<br/>Conflict・E-STU-105"]
+  D -->|いいえ| E{"残るSqlException・InvalidOperationException<br/>OperationCanceledExceptionのいずれか"}
+  E -->|いいえ| O["内側catchの対象外<br/>元の例外を4.5へ"]
+  E -->|はい| F["一般catchへ到達<br/>rollbackを試み成否を得る"]
+  F --> G{"書込開始済み、かつ<br/>commit試行済みまたはrollback不成功"}
+  G -->|はい| U["Unknown・E-COM-004<br/>再保存前に検索で確認・303なし"]
+  G -->|いいえ| S["SystemError・E-COM-004<br/>処理失敗・303なし"]
+  B1 --> R["SV-R → 3.8-6<br/>各catchが生成した結果を保持"]
+  C1 --> R
+  D1 --> R
+  U --> R
+  S --> R

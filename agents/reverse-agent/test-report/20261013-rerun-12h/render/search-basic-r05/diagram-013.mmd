@@ -1,0 +1,22 @@
+flowchart TD
+  A["SV-A・3.8-1から"] --> L
+  subgraph TX["トランザクション内：対象・保存条件"]
+    L["学生書込ロック取得"] --> B{"既存対象か"}
+    B -->|はい| C{"非削除対象を<br/>IDで取得できたか"}
+    C -->|いいえ| N["NotFound・E-STU-103<br/>後続検査なし"]
+    C -->|はい| D{"読込版と<br/>ExpectedVersion一致"}
+    D -->|いいえ| K["Conflict・E-STU-105<br/>後続検査なし"]
+    D -->|はい| E["取得行・版を保持<br/>学籍番号不変・終了区分訂正を検査"]
+    E -->|拒否結果| P["理由別のForbidden<br/>またはValidationFailed"]
+    E -->|通過| F["CheckRules・手順6<br/>コード・クラス・期間・定員を再確認"]
+    B -->|新規| F
+    F --> G{"変更列あり"}
+    G -->|いいえ| H["明示rollback・NoChange<br/>要求対象ID・読込版"]
+    G -->|はい| J["確認済み行・版を保持"]
+  end
+  N --> R["SV-R → 3.8-6<br/>各枝のSaveResult"]
+  K --> R
+  P --> R
+  H --> R
+  J --> Q["SV-B → 3.8-3<br/>変更あり・新規と既存の値を保持"]
+  TX -->|枠内の例外| X["SV-X → 3.8-5<br/>元の例外・tx・発生時のフラグ"]

@@ -1,0 +1,21 @@
+%%{init: {"flowchart":{"htmlLabels":true,"useMaxWidth":false,"nodeSpacing":28,"rankSpacing":30},"themeCSS":".nodeLabel,.edgeLabel{white-space:nowrap;word-break:keep-all;overflow-wrap:normal;}"}}%%
+flowchart TD
+    A{"操作"} -->|入力クリア・編集取消| C{"送信確認"}
+    C -->|取消| STAY["現在入力保持"]
+    C -->|受理| R["FormGuard・参照<br/>ID変換・Snapshot検査"]
+    R -->|拒否・例外| X["経路別外側応答"]
+    R -->|成功| O["ModelStateクリア<br/>Original複製"]
+    O --> P["同じDetail・SnapshotId<br/>復帰版保持"]
+    P --> L["候補だけ再取得"]
+    L --> V["200<br/>読込時入力・取消通知"]
+    L -. 取得・描画例外 .-> X
+    A -->|再読込| D{"dirty"}
+    D -->|いいえ| GET["EV-REG-002<br/>既存GET"]
+    D -->|はい| Q{"破棄確認"}
+    Q -->|取消| STAY
+    Q -->|受理| GET
+    A -->|手動検索復帰| D2{"dirty"}
+    D2 -->|いいえ| RET["R3へ<br/>入力Context・保持復帰版"]
+    D2 -->|はい| Q2{"破棄確認"}
+    Q2 -->|取消| STAY
+    Q2 -->|受理| RET

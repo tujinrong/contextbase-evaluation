@@ -1,0 +1,16 @@
+flowchart TD
+ A[6：Controllerへ結果または捕捉WebFault] --> B{SaveResultがあるか}
+ B -->|なし| C[400・422等の捕捉statusまたはModelStateの422を保持<br/>原入力の確認値も保持]
+ B -->|あり| D{Savedか}
+ D -->|はい| E[復帰先作成・Flash設定・303]
+ D -->|いいえ| F[Outcome対応status設定<br/>DuplicateTokenを返却確認値へ設定]
+ C --> G[原入力・SnapshotのDetail等でモデル作成]
+ F --> G
+ G --> H[候補を再取得]
+ H --> I[Editビュー描画]
+ E -.->|確定後の復帰処理失敗| U[Web例外処理へ<br/>保存確定は取り消されない]
+ H -.->|個別<br/>catch<br/>外の例外| U
+ I -.->|描画例外| U
+ U --> J{応答開始前か}
+ J -->|はい| K[WebFaultのstatus<br/>その他は503のHTMLエラー]
+ J -->|いいえ| L[当該middleware catchの対象外]

@@ -1,0 +1,12 @@
+flowchart TD
+  A[サブフロー1から] --> B{復帰先が非空}
+  B -->|はい| C[DB await後に復帰状態を再Get]
+  C -->|拒否| Q[F0：Snapshot作成前]
+  C -->|受入| D[ReturnRevision=取得した現在版]
+  B -->|いいえ| E[ReturnRevision=NULL]
+  D --> F[枝のDetail・Form・復帰版で<br/>Snapshotを作成]
+  E --> F
+  F --> G[新規・編集・参照の登録HTML描画]
+  G -->|成功| H[登録画面]
+  F -->|例外| Q
+  G -->|例外| P[F0：Snapshot作成済み]

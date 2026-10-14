@@ -1,0 +1,20 @@
+%%{init: {"flowchart":{"htmlLabels":true},"themeCSS":".nodeLabel, .nodeLabel p { white-space: nowrap !important; overflow-wrap: normal !important; word-break: normal !important; }"}}%%
+flowchart TD
+  A["新規または既存IDのGET"] --> B{"MVC認証"}
+  B -->|拒否| X["認証の拒否応答"]
+  B -->|到達| C["参照情報・任意の<br/>復帰状態確認"]
+  C -->|拒否・例外| Q["F0：該当理由を保持"]
+  C -->|受入| D{"新規"}
+  D -->|はい| E{"作成権限"}
+  E -->|なし| F["403 WebFault"]
+  F --> Q
+  E -->|あり| G["Detail=NULL<br/>学生読取なし・<br/>Form<br/>未作成"]
+  D -->|いいえ| H["学生ID・非削除で<br/>詳細再取得"]
+  H -->|詳細なし| I["404 WebFault"]
+  I --> Q
+  H -->|読取例外| Q
+  H -->|取得| J["取得Detailを保持<br/>Form<br/>未作成"]
+  G --> K["登録用候補・現在人数取得"]
+  J --> K
+  K -->|失敗| L["F0：<br/>Form・Snapshot<br/>未作成"]
+  K -->|成功| M["サブフロー2へ<br/>枝ごとのDetail・<br/>Lookups<br/>・復帰ID"]

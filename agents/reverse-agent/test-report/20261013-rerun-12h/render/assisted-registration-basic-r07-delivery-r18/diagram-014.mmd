@@ -1,0 +1,11 @@
+%%{init: {"flowchart":{"htmlLabels":true,"useMaxWidth":false,"nodeSpacing":28,"rankSpacing":30},"themeCSS":".nodeLabel,.edgeLabel{white-space:nowrap;word-break:keep-all;overflow-wrap:normal;}"}}%%
+flowchart TD
+    A["図10-2 全候補取得済み"] --> TV{"確認照合・Busy取得が有効"}
+    TV -->|有効| R{"理由あり"}
+    R -->|なし| V["S6へ<br/>ValidationFailed 422<br/>ID版NULL"]
+    R -->|あり| W["S5へ<br/>確認済み・前版保持"]
+    TV -->|無効・未指定| NEED{"候補1件以上<br/>またはキー非NULL"}
+    NEED -->|いいえ| W2["S5へ<br/>確認不要・前版保持"]
+    NEED -->|はい| RB2["明示rollback<br/>新確認キー発行"]
+    RB2 --> CR["S6へ<br/>ConfirmationRequired 409<br/>要求対象ID・取得済み前版<br/>全件数・最大20件"]
+    RB2 -. 例外 .-> SC["SCへ"]

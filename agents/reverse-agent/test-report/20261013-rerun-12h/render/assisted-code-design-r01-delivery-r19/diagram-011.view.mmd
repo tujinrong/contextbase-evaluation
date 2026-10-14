@@ -1,0 +1,19 @@
+flowchart TD
+ A[3：接続・ReadCommitted開始] --> B[保存try内で共通ゲート取得]
+ A -.->|try<br/>外の失敗| U[Web例外処理へ]
+ B --> C{更新対象・期待版を確認}
+ C -->|新規| G[最新コード・所属・定員検査]
+ C -->|対象なし| N[NotFound・ID NULL・版NULLを6へ]
+ C -->|版不一致| K[Conflict・ID NULL・版NULLを6へ]
+ C -->|対象・版一致| D{学籍番号が不変か}
+ D -->|いいえ| V[ValidationFailed・ID NULL・版NULLを6へ]
+ D -->|はい| E{終了区分03・04から別区分への訂正か}
+ E -->|いいえ| G
+ E -->|はい| F{管理者で理由ありか}
+ F -->|管理者でない| R[Forbidden・ID NULL・版NULLを6へ]
+ F -->|理由なし| V
+ F -->|両方満たす| G
+ G -->|正常| H[4へ：正規化値・最新保存値・取得済み版]
+ G -->|入力検証例外| X[5へ：保存tryの例外]
+ B -.->|try<br/>内例外| X
+ C -.->|try<br/>内例外| X

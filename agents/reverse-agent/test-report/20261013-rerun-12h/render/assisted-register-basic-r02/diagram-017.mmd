@@ -1,0 +1,14 @@
+flowchart TD
+    A[C1から最新前値・前版] --> D{保存値に差分あり}
+    D -->|なし| N[rollback・NoChange 200・対象IDと取得版]
+    N --> V[S6の入力再表示]
+    D -->|あり| B[S4の版上限・番号一意・全候補取得]
+    B -->|拒否・失敗| E[S4・SCの経路別結果]
+    B --> T{確認照合とBusy取得が有効}
+    T -->|無効| CR[rollback・新確認キー・409・対象IDと取得版]
+    CR --> BACK[C1の候補表示へ]
+    T -->|有効| R{理由あり}
+    R -->|なし| F[ValidationFailed 422]
+    R -->|あり| W[S5の学生・履歴書込とcommit]
+    W -->|成功| OK[Saved・確認キー除去・303]
+    W -->|例外| EX[SCの順序で分類しS6へ]

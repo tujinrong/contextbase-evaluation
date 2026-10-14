@@ -1,0 +1,153 @@
+{
+  "schema": "reverse-source-projection-helper-review/1",
+  "recordedAtUtc": "2026-10-13T11:10:49.230876+00:00",
+  "reviewRole": "SOURCE_ONLY_INDEPENDENT_TECHNICAL_GATE",
+  "helper": {
+    "path": "agents/reverse-agent/test-report/20261013-rerun-12h/source-pilot/prepare_state_projection.py",
+    "sha256": "2d3380b3a6e886381ecf8d7826f0b636088f88eb285e1e9468b4245fbd319c11"
+  },
+  "boundPreviouslyAuditedDrafts": [
+    {
+      "id": "search-basic-05",
+      "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-rerun-12h/source-only/drafts/search-basic-05/基本設計書/01_学生検索画面.md",
+      "sha256": "1f307707bebcb621f7c0e7f895cec8e2a5c386c98c96aa5821c7e9619f0f6778"
+    },
+    {
+      "id": "search-detail-04",
+      "path": "test-project1/spec-analysis/CSharp_ASPNET/20261013-rerun-12h/source-only/drafts/search-detail-04/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+      "sha256": "658617eb1367817031128eef12fbd51d50b758e04dff14f01997f14eacb1c785"
+    }
+  ],
+  "scopeBoundary": {
+    "originalSpecificationRead": false,
+    "specEvalRead": false,
+    "trainingAssistedRead": false,
+    "scoresCreated": false,
+    "helperOrCanonicalDraftEdited": false,
+    "aiProviderInvoked": false,
+    "applicationDbSqlDeploymentExecuted": false,
+    "browserRendererNetworkExecuted": false,
+    "executedHelperDefinitionsOnly": [
+      "InertHtml",
+      "canonical_path",
+      "check_css",
+      "heading_ranges",
+      "reject_css_resources",
+      "validate_canonical_location"
+    ],
+    "topLevelJobPipeline": "READ_STATICALLY_NOT_INVOKED"
+  },
+  "judgment": {
+    "testedCases": "PASS_20_HTML_3_PATH_5_CANONICAL_LOCATION",
+    "priorTwoNegativeCases": "RESOLVED_ON_THIS_EXACT_HELPER_SHA",
+    "newImportantTechnicalDefectFound": false,
+    "readyForParentControlledAiProjectionRequest": true,
+    "projectionMeaningVerified": false,
+    "fullInertnessProven": false,
+    "nativeVisualFidelityVerified": false,
+    "applicationRuntimeVerified": false,
+    "formalOriginalRubricPass": false
+  },
+  "dynamicEvidence": {
+    "priorProbe": {
+      "path": "agents/reverse-agent/test-report/20261013-rerun-12h/source-audit/state-projection-gate-probe-01.json",
+      "sha256": "8838a7736700d7bf9cb02372e509523e18cbfd33d0d4a2da45f321461a400650"
+    },
+    "latestProbe": {
+      "path": "agents/reverse-agent/test-report/20261013-rerun-12h/source-audit/state-projection-gate-probe-02.json",
+      "sha256": "3b788f50ccaecd891c2101396b40e41b93e0ad82edb77ec7c238cd655004bc9f"
+    },
+    "htmlCases": 20,
+    "pathCases": 3,
+    "canonicalLocationCases": 5,
+    "runtimeReceipt": {
+      "path": "agents/reverse-agent/test-report/20261013-rerun-12h/source-pilot/runtime-code-source-04.json",
+      "sha256": "c662f126856b5d4a2dd85410e1db62c992a1083d80bb92254ee28a55ae5ded7c",
+      "frozenFilesVerified": 124,
+      "importedCapsuleFromSource04": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-rerun-12h\\source-only\\runtime-code\\source-04\\src\\contextbase\\ai\\capsule.py"
+    },
+    "unexpectedResults": []
+  },
+  "resolvedFindings": [
+    {
+      "id": "PG01",
+      "problem": "Old helper accepted an image-set() string URL.",
+      "resolution": "Reference functions including escaped image-set and -webkit-image-set are rejected recursively in parsed CSS.",
+      "evidence": {
+        "path": "agents/reverse-agent/test-report/20261013-rerun-12h/source-pilot/prepare_state_projection.py",
+        "sha256": "2d3380b3a6e886381ecf8d7826f0b636088f88eb285e1e9468b4245fbd319c11",
+        "startLine": 17,
+        "endLine": 32,
+        "quote": "def reject_css_resources(nodes):\n    for node in nodes:\n        kind = getattr(node, \"type\", \"\")\n        if kind in {\"error\", \"url\", \"bad-url\"}:\n            raise ValueError(\"projection CSS must parse without external resources\")\n        if kind in {\"at-rule\", \"at-keyword\"} and getattr(node, \"lower_at_keyword\", getattr(node, \"value\", \"\")).casefold() == \"import\":\n            raise ValueError(\"projection CSS must not import resources, including escaped tokens\")\n        if kind == \"function\" and node.lower_name in {\n            \"url\", \"src\", \"expression\", \"image\", \"image-set\", \"-webkit-image-set\",\n            \"cross-fade\", \"-webkit-cross-fade\", \"paint\", \"element\", \"-moz-element\",\n        }:\n            raise ValueError(\"projection CSS must not fetch or execute resources\")\n        for field in (\"prelude\", \"content\", \"arguments\", \"value\"):\n            children = getattr(node, field, None)\n            if isinstance(children, list):\n                reject_css_resources(children)"
+      },
+      "testedLabels": [
+        "css-image-set-string-resource",
+        "css-image-set-escaped",
+        "css-webkit-image-set",
+        "css-webkit-image-set-escaped",
+        "inline-css-image-set"
+      ]
+    },
+    {
+      "id": "PG02",
+      "problem": "Old helper accepted duplicate meta http-equiv refresh because dict(attrs) retained the later value.",
+      "resolution": "Case-insensitive duplicate attributes are rejected for all HTML tags before dict(attrs) construction.",
+      "evidence": {
+        "path": "agents/reverse-agent/test-report/20261013-rerun-12h/source-pilot/prepare_state_projection.py",
+        "sha256": "2d3380b3a6e886381ecf8d7826f0b636088f88eb285e1e9468b4245fbd319c11",
+        "startLine": 46,
+        "endLine": 51,
+        "quote": "    def handle_starttag(self, tag, attrs):\n        tag = tag.casefold()\n        names = [name.casefold() for name, _ in attrs]\n        if len(set(names)) != len(names):\n            raise ValueError(\"projection HTML must not contain duplicate attributes\")\n        values = dict(attrs)"
+      },
+      "testedLabels": [
+        "meta-refresh-duplicate-attribute",
+        "duplicate-case-insensitive-safe-attribute",
+        "meta-refresh-entity-value"
+      ]
+    }
+  ],
+  "staticReview": [
+    {
+      "area": "input roles and exact pins",
+      "observation": "Approved snapshot, source-only mode/no reference files, receipt04/05, fresh disjoint job root, two unique approved manuscript paths, explicit caller SHA, complete runtime hash map, and runtime import location are checked before dispatch."
+    },
+    {
+      "area": "state answer bindings",
+      "observation": "Answer schema binds the exact manifest/draft SHA set. Every exact draft must be bound; state IDs must be unique; references are validated. Renderable states require source references and exact heading/line locations."
+    },
+    {
+      "area": "canonical omission handling",
+      "observation": "When requiresCanonicalRevision is true, auxiliary HTML must be empty. The AI task explicitly returns canonical gaps for canonical AI revision; Python does not assemble semantic body/HTML."
+    },
+    {
+      "area": "immutability and handoff",
+      "observation": "Draft SHA, sealed snapshot, original source hashes and frozen runtime hashes are rechecked after the AI answer. Handoff declares independent semantic review, strict renderer sanitizer, no complete inertness proof, no visual/runtime/original-rubric pass."
+    }
+  ],
+  "limitationsForIndependentReview": [
+    {
+      "id": "PL01",
+      "severity": "review-required",
+      "detail": "A correct heading/line binding proves position only, not that the cited text supports a state or its projected controls. Independent source/canonical meaning review remains required."
+    },
+    {
+      "id": "PL02",
+      "severity": "review-required",
+      "detail": "states minItems=1 and distinct IDs do not mechanically prove coverage of initial/normal/empty/tooMany/Viewer or other applicable source states. State completeness must be judged independently."
+    },
+    {
+      "id": "PL03",
+      "severity": "known-mechanical-limit",
+      "detail": "The canonical path gate permits both allowed suffixes under either search-basic-* or search-detail-* folder prefix, and the top-level pair check does not require exactly one basic and one detail kind. The tested caller pair contains the requested distinct basic05/detail04 files; this weakness did not affect the current review."
+    },
+    {
+      "id": "PL04",
+      "severity": "review-required",
+      "detail": "Twenty HTML cases are a finite rejection suite, not exhaustive browser inertness proof. Parent-controlled strict renderer sanitization and native visual review remain prerequisites to interpreting rendered evidence."
+    }
+  ],
+  "relatedBusinessAudit": {
+    "path": "agents/reverse-agent/test-report/20261013-rerun-12h/source-audit/document-comparison-03.json",
+    "sha256": "3e1b6ee5f8d0a61fec5d5aa055d48bda3e48cf37ea9afc2e993eaa8a23d8716d"
+  }
+}

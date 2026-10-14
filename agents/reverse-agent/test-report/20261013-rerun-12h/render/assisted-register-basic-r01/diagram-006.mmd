@@ -1,0 +1,78 @@
+flowchart TD
+    A[保存POST] --> AU{認証}
+    AU -->|拒否| U[401]
+    AU -->|許可| CS{CSRF検査}
+    CS -->|拒否| C400[MVCによる要求拒否]
+    CS -->|許可| FG{FormGuard}
+    FG -->|不明項目・不正重複等| W400[事前WebFault 400]
+    FG -->|許可| P{作成・更新権限}
+    P -->|Viewer| W403[事前WebFault 403]
+    P -->|許可| SN{Snapshot取得}
+    SN -->|キー不在・期限切れ| W409[事前WebFault 409]
+    SN -->|別所有者・セッション・対象| W403
+    SN -->|取得| RT{復帰先の有効性と読込時一致}
+    SN -. NULL引数等の未捕捉例外 .-> MW[応答開始前middleware・その他例外503]
+    RT -->|期限切れ等| W409
+    RT -->|所有者・復帰先不一致| W403
+    RT -->|有効| MS{ModelState}
+    MS -->|不正| M422[422・サービス呼出しなし]
+    MS -->|有効| CV[Coordinator再検査・IDと版の変換]
+    CV -->|局所WebFault| WF[その状態と項目エラーを保持]
+    CV --> NM{正規化・理由・対象版・年度学年}
+    NM -->|入力検証・ArgumentException| V422[ValidationFailed 422・返却ID版NULL]
+    NM -. その他未捕捉例外 .-> MW
+    NM -->|有効| DB[接続・ReadCommitted Tx開始]
+    DB -. 保存try外の失敗 .-> MW
+    DB --> G[保存try内で書込ゲート取得]
+    G --> EX{更新対象あり}
+    EX -->|新規| RULE[最新コード・所属・期間・増席定員を検査]
+    EX -->|更新| LO{最新の非削除対象あり}
+    LO -->|なし| N404[NotFound 404・返却ID版NULL]
+    LO -->|あり| VER{期待版一致}
+    VER -->|不一致| C409[Conflict 409・返却ID版NULL]
+    VER -->|一致| NO{学籍番号不変}
+    NO -->|不一致| V422
+    NO -->|一致| END{終了区分から別区分へ変更}
+    END -->|変更なし| RULE
+    END -->|変更あり| ADM{管理者か}
+    ADM -->|いいえ| F403[Forbidden 403・返却ID版NULL]
+    ADM -->|はい| RE{理由あり}
+    RE -->|なし| V422
+    RE -->|あり| RULE
+    RULE -->|業務検証例外| V422
+    RULE --> DIFF{保存値の差分あり}
+    DIFF -->|なし| NC[rollback・NoChange 200・対象IDと取得版]
+    DIFF -->|あり| MAX{版上限でない}
+    MAX -->|上限| C409
+    MAX -->|許可| UN{学籍番号が全行で一意}
+    UN -->|使用済み| V422
+    UN -->|一意| DUP[全同一人物候補を取得・内容と候補を照合]
+    DUP --> TV{確認情報が有効}
+    TV -->|有効| RR{確認理由あり}
+    RR -->|なし| V422
+    RR -->|あり| WRITE[学生INSERTまたは条件付きUPDATE]
+    TV -->|無効または未指定| NEED{候補あり または 確認キー非NULL}
+    NEED -->|はい| CR[rollback・確認発行・409・対象IDと取得済み版を保持]
+    NEED -->|いいえ| WRITE
+    WRITE --> AUDIT[同じTxで履歴追記]
+    AUDIT --> COMMIT[commitを試みる]
+    COMMIT -->|成功| OK[Saved・採番または既存IDと新版]
+    OK --> RED[通知保持・303検索復帰]
+    G -. 例外 .-> HAND[下のcatch分類]
+    RULE -. DB等の例外 .-> HAND
+    DUP -. DB等の例外 .-> HAND
+    WRITE -. 例外・OUTPUTなし .-> HAND
+    AUDIT -. 例外 .-> HAND
+    COMMIT -. 例外 .-> HAND
+    NC --> VIEW[枝ごとのHTTPと結果を引継ぎ再表示]
+    CR --> VIEW
+    V422 --> VIEW
+    F403 --> VIEW
+    N404 --> VIEW
+    C409 --> VIEW
+    M422 --> VIEW
+    WF --> VIEW
+    HAND --> VIEW
+    VIEW --> L[送信Input・読込時DetailとSnapshot・候補再取得]
+    L -. 候補取得・描画失敗 .-> MW
+    RED -. 確定後処理の失敗 .-> MW

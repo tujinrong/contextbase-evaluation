@@ -1,0 +1,13 @@
+flowchart TD
+ A[全候補取得・両ハッシュ生成] --> B{Token非NULL}
+ B -->|はい| C[所有者・対象・版・期限・ハッシュ・Busy照合]
+ C --> D{有効確認}
+ B -->|いいえ| E[有効確認なし]
+ D -->|いいえ| E
+ D -->|はい| F{理由非NULL}
+ F -->|いいえ| G[ValidationFailed E-STU-107]
+ F -->|はい| H[SF-4へ・確認有効]
+ E --> I{候補あり または Token非NULL}
+ I -->|いいえ| J[SF-4へ・確認不要]
+ I -->|はい| K[rollback後に新Token発行]
+ K --> L[ConfirmationRequired]

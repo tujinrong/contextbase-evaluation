@@ -1,0 +1,6424 @@
+{
+  "workbook": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\test-report\\20261013-rerun-12h\\delivery\\xlsx-assisted-search-detail-r18-r03-widthonly\\Excel\\詳細仕様書\\CSharp_ASPNET\\01_学生検索画面.xlsx",
+  "workbookSha256": "47cd77ca1ecf27b57cb31dd6b250beea158acc42df8a0149a35c2eedbf2d544e",
+  "manifest": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\test-report\\20261013-rerun-12h\\delivery\\xlsx-assisted-search-detail-r18-r03-widthonly\\delivery-manifest.json",
+  "manifestSha256": "7c16d1d4acbe4787849966a860110c678a9f2e13249c48f13176d2694cbfb204",
+  "sheets": [
+    "表紙",
+    "01_概要",
+    "02_項目一覧",
+    "03_選択候補一覧",
+    "04_内部項目一覧",
+    "05_イベント仕様",
+    "06_項目移送仕様",
+    "07_補足説明"
+  ],
+  "cells": [
+    {
+      "sheet": "表紙",
+      "cell": "O6",
+      "value": "学生検索画面 詳細仕様書"
+    },
+    {
+      "sheet": "表紙",
+      "cell": "O12",
+      "value": "文書ID"
+    },
+    {
+      "sheet": "表紙",
+      "cell": "X12",
+      "value": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001"
+    },
+    {
+      "sheet": "表紙",
+      "cell": "O15",
+      "value": "文書種別"
+    },
+    {
+      "sheet": "表紙",
+      "cell": "X15",
+      "value": "detailed-specification"
+    },
+    {
+      "sheet": "表紙",
+      "cell": "O18",
+      "value": "版"
+    },
+    {
+      "sheet": "表紙",
+      "cell": "X18",
+      "value": "1.1"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A1",
+      "value": "概要"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A3",
+      "value": "文書属性"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI3",
+      "value": "値"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A4",
+      "value": "文書ID"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI4",
+      "value": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A5",
+      "value": "文書種別"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI5",
+      "value": "detailed-specification"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A6",
+      "value": "版"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI6",
+      "value": "1.1"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A7",
+      "value": "正本の相対パス"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI7",
+      "value": "詳細仕様書/CSharp_ASPNET/01_学生検索画面.md"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A8",
+      "value": "対象"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI8",
+      "value": "ASP.NETの学生検索フォーム、検索状態、候補、一覧取得、登録画面との移送"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A9",
+      "value": "読者"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI9",
+      "value": "業務システムのIT担当者、経験5年程度の実装者"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A10",
+      "value": "根拠の区分"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "BI10",
+      "value": "「実装根拠」は現行ソースの静的な観測、「設計意図」は参考設計が要求する動作を示す。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A12",
+      "value": "機能と処理の責務"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U13",
+      "value": "学生検索画面は、論理削除されていない学生を検索し、新規登録・編集・参照へ進む入口である。年度と学年は、学生の所属先 class_id が参照するクラスの属性を使って絞り込む。年度別の所属履歴を読み出す処理はない。検索画面の操作は学生やマスタを更新せず、検索条件、結果、ページ、検索状態の版をサーバープロセスのメモリへ保持する。〔実装根拠：sources/Views/Students/Search.cshtml:4-8、sources/Core/SqlServerStudentService.cs:137-168、sources/Infrastructure/WebStudentCoordinator.cs:7-15〕"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U14",
+      "value": "画面で編集中の条件、最後に正常実行した条件 Applied、その結果 LastResult は別の値である。候補更新は編集中の条件を返し、一覧には保持結果を使う。ページ操作は保持条件を複製して実行し、編集中の検索フォームを送信しない。サービス内の正規化キーや電話値はSQL照合用のローカル値であり、保持条件の文字列へ書き戻さない。〔実装根拠：sources/Web/Controllers/StudentsController.cs:13-22、sources/Infrastructure/WebStudentCoordinator.cs:8-14、sources/Core/SqlServerStudentService.cs:113-153〕"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U15",
+      "value": "参考設計は、学生基本情報の検索から登録画面へ進む業務を対象とし、入力・処理値・DB・再表示の対応を確認する責務を定義している。本書では現行の接続と動作を具体化し、候補連動、失効時の初期化、表示形式等の設計との差を補足説明に分ける。〔設計意図：reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:16-25、reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:586-608〕"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A16",
+      "value": "接続される入口"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A17",
+      "value": "HTTP入口"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO17",
+      "value": "実画面・受信値"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC17",
+      "value": "接続先と結果"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A18",
+      "value": "GET /students"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO18",
+      "value": "初回は状態指定なし。復帰は contextId、contextRevision。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC18",
+      "value": "StudentsController.Index。初期状態の作成、または Resume 後に検索HTMLを返す。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A19",
+      "value": "POST /students/search"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO19",
+      "value": "検索フォーム。Criteria 接頭辞の StudentSearchInput、状態3項目、表示3項目。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC19",
+      "value": "Search → Coordinatorの Search → 登録された IStudentService.SearchAsync。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A20",
+      "value": "POST /students/options"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO20",
+      "value": "検索フォームの「候補を更新」。原ビューはボタンの formaction で送信先を変更する。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC20",
+      "value": "Controllerの Options → SearchModel → LookupAsync(false, ct)。全HTMLを返す。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A21",
+      "value": "POST /students/page"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO21",
+      "value": "一覧側の独立フォーム。PageRequest と TabId。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC21",
+      "value": "Page → Coordinatorの Page。保持条件で再検索する。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A22",
+      "value": "POST /students/clear"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO22",
+      "value": "独立したクリアフォーム。ContextRequest と TabId。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC22",
+      "value": "Clear → Coordinatorの Clear。同じ状態を未検索へ戻す。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A23",
+      "value": "GET /students/new"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO23",
+      "value": "Viewer以外に表示する新規登録リンク。returnContextId。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC23",
+      "value": "登録側の Load(null, ...)。新規登録権限を入口でも確認する。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A24",
+      "value": "GET /students/{id:long}"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO24",
+      "value": "一覧の学生IDと returnContextId。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC24",
+      "value": "登録側の Load(id, ...)。最新の非削除学生を再取得する。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U26",
+      "value": "Program は依存登録、middleware、Controllerルートを接続する。Controller全体に Authorize と Route(\"students\") がある。RequestIdentity、Coordinator、IStudentService はScoped、検索状態・Flash・編集スナップショットはSingletonである。IStudentService の実装は SqlServerStudentService で、StudentDb が空白の場合は生成時に503の WebFault となる。WebとCoreは net10.0、CoreのSqlClient参照は6.1.3である。〔実装根拠：sources/Program.cs:2-8、sources/Infrastructure/WebHostSetup.cs:13-19、sources/Web/Controllers/StudentsController.cs:5-25、sources/StudentManagement.Web.csproj:1-5、sources/Core/StudentManagement.Core.csproj:1-9〕"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U27",
+      "value": "SearchRequest は検索アクションが組み立てる内部引数である。OptionsRequest、StrictJson.Read、Coordinatorの Options、WebPresentation.Lookups は宣言されているが、接続された学生フォームのControllerから呼ばれない。したがって、これらを公開学生JSON APIへ数えず、StrictJsonの64KiB、深さ16、重複・未知プロパティ検査をフォーム受信の保証へ転用しない。〔実装根拠：sources/Web/Inputs/StudentSearchInput.cs:24-31、sources/Infrastructure/StrictJson.cs:4-15、sources/Infrastructure/WebStudentCoordinator.cs:16-16、sources/Infrastructure/WebPresentation.cs:8-19、sources/Web/Controllers/StudentsController.cs:13-22〕"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A28",
+      "value": "入出力と保持領域"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A29",
+      "value": "領域"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO29",
+      "value": "当該機能との関係"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC29",
+      "value": "内容"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A30",
+      "value": "HTTPフォーム"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO30",
+      "value": "入力"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC30",
+      "value": "条件、ページ・ソート、状態ID・版・タブ、CSRF情報。MVCのバインド後にアクションへ渡る。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A31",
+      "value": "認証情報"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO31",
+      "value": "入力"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC31",
+      "value": "Claimの主体、ログインセッション、Role。フォームから権限を受けない。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A32",
+      "value": "学生DB"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO32",
+      "value": "読取り"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC32",
+      "value": "条件照合、件数、一覧。検索入口から学生保存や履歴追記を行わない。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A33",
+      "value": "クラス・コード・コード種別DB"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO33",
+      "value": "読取り"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC33",
+      "value": "指定値の存在、所属組合せ、候補、一覧の名称。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A34",
+      "value": "検索状態"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO34",
+      "value": "入出力"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC34",
+      "value": "メモリ辞書内のEntry。条件、結果、版、期限、所有者、タブ、Gate。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A35",
+      "value": "Flash"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO35",
+      "value": "取得・消費"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC35",
+      "value": "主体・セッション・状態ID別のメモリ通知。GETで一度だけ取り出す。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A36",
+      "value": "HTML"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO36",
+      "value": "出力"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC36",
+      "value": "条件、候補、一覧、情報・エラー、権限別リンク。モデル内のJsonElementは公開JSON応答ではない。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A37",
+      "value": "DOM"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO37",
+      "value": "一時的な入出力"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC37",
+      "value": "未所属切替の値解除、送信中のbutton・form属性。サーバー保持条件とは別。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A38",
+      "value": "外部ファイル"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO38",
+      "value": "対応処理なし"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC38",
+      "value": "この検索入口にはCSV、帳票、取込ファイルの入出力がない。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U40",
+      "value": "〔実装根拠：sources/Infrastructure/RequestIdentity.cs:7-16、sources/Infrastructure/SearchContextStore.cs:9-15、sources/Infrastructure/FlashMessageStore.cs:6-9、sources/Web/Models/StudentSearchPageModel.cs:6-15、sources/wwwroot/js/site.js:4-7〕"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A41",
+      "value": "画面の静的投影"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U42",
+      "value": "以下はStaffの初期未検索状態の非実行投影である。共有ヘッダー、フォームの配置、一覧枠、実際に適用されるCSSセレクターを反映する。年度・クラスは実データを作らず、コードはseedの定義から表示例を抜粋する。初期画面には情報・エラー領域を出さず、発生時だけ共有MessagePanelが追加する。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U43",
+      "value": "送信先・method・遷移先は data-* に残す。すべてのbuttonは type=\"button\" とし、formの action、buttonの formaction、アプリURLへの href、JavaScriptを付けない。実行画面の撮影を示すものではない。〔投影根拠：sources/Views/_ViewStart.cshtml:1-1、sources/Views/Shared/_Layout.cshtml:1-1、sources/Views/Shared/_MessagePanel.cshtml:1-3、sources/Views/Students/Search.cshtml:3-8、sources/wwwroot/css/site.css:1-1、sources/database/002_seed.sql:19-23、sources/database/002_seed.sql:78-84〕"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U44",
+      "value": ""
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U108",
+      "value": "未所属OFFの投影では所属selectの disabled を省略する。ONの応答では3つへ disabled を付けるが、値の解除は次の状態表の経路ごとに異なる。Viewerでは新規リンクを省略し、結果行の操作文言を「参照」にする。Staff・Administratorでは「編集」である。通常結果の行リンクは本投影と同じく文書内fragmentに置き換え、元の学生IDとrouteを data-route に残す。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A109",
+      "value": "状態別表示"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A110",
+      "value": "状態・発生経路"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO110",
+      "value": "条件・一覧の扱い"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC110",
+      "value": "操作・表示の条件"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A111",
+      "value": "初期未検索"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO111",
+      "value": "在籍01・02、他条件は空またはNULL。行なし、文言「未検索」。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC111",
+      "value": "20件、学籍番号昇順、1ページ。ページ反映・前・次は非活性。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A112",
+      "value": "正常検索0件"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO112",
+      "value": "条件と0件結果を保持。文言「該当する学生はありません。」。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC112",
+      "value": "行なし、ページ操作は非活性。検索日時は結果にあるがこの枝では表示しない。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A113",
+      "value": "10000件超過"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO113",
+      "value": "Count=10001は打切り値。行を取得しない。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC113",
+      "value": "p.warning に上限文言。実総数・検索日時をこの文言に付けない。ページ操作は非活性。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A114",
+      "value": "正常検索1～10000件"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO114",
+      "value": "件数、検索日時、取得ページの行を表示する。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC114",
+      "value": "反映は活性。前はpage>1、次はpage×PageSize<countのとき活性。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A115",
+      "value": "検索のModelState不正・個別WebFault"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO115",
+      "value": "受信DTOとModelStateを再表示へ渡す。当該応答はNULL結果で、以前の保持結果を暗黙表示しない。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC115",
+      "value": "設定したstatusとエラーを使用する。後続の候補取得・描画の成功は別条件。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A116",
+      "value": "候補更新・未所属ON"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO116",
+      "value": "Controllerが年度・学年・クラスをNULLにし、対応するModelStateを除去する。保持一覧は維持する。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC116",
+      "value": "応答の3selectはdisabled。Applied・版・期限は変更しない。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A117",
+      "value": "検索拒否再表示・未所属ON"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO117",
+      "value": "Controllerは所属値とModelStateを解除しない。受信値が再表示モデルへ残る。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC117",
+      "value": "ビューは3selectをdisabledにする。サーバーの値解除とは別。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A118",
+      "value": "JavaScript初回評価・未所属change"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO118",
+      "value": "ONなら所属3項目のDOM値を空にする。OFFでは復元しない。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC118",
+      "value": "disabledを変更せず、候補通信も行わない。検索拒否画面でもスクリプト実行後にDOM値が解除され得る。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A119",
+      "value": "Viewer"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO119",
+      "value": "新規リンクなし。行リンクは参照。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC119",
+      "value": "検索・候補・ページ・クリアは配置される。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A120",
+      "value": "Staff・Administrator"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO120",
+      "value": "新規リンクと編集リンクを表示する。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC120",
+      "value": "検索画面には削除ボタンを置かない。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A121",
+      "value": "middlewareの例外応答"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "AO121",
+      "value": "検索ビューとは別のHTMLエラーとなる。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "CC121",
+      "value": "応答未開始の場合に捕捉し、WebFaultのstatusまたは一般例外503を使う。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U123",
+      "value": "_MessagePanel はエラーを message error、情報を message info、両方を aria-live=\"polite\" で出す。独立した .info セレクターはなく .message が適用される。検索上限の .warning に、共有CSSの固定配置 .dialog は適用されない。〔実装根拠：sources/Views/Students/Search.cshtml:2-8、sources/Views/Shared/_MessagePanel.cshtml:1-3、sources/wwwroot/css/site.css:1-1、sources/Web/Controllers/StudentsController.cs:13-22、sources/wwwroot/js/site.js:7-7〕"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "A124",
+      "value": "宣言されたDB関連"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U125",
+      "value": "次のER図は検索に関係する実FKを示す。コードの参照は分類と値の複合キーである。学生の class_id はNULL可で最大1クラスを参照し、クラスは0人以上の学生から参照される。ただし在籍01・02はCHECK制約により所属必須となる。"
+    },
+    {
+      "sheet": "01_概要",
+      "cell": "U161",
+      "value": "一覧は所属と3用途のコード名称をLEFT JOINし、候補コードはコード種別とINNER JOINする。FKの多重度とSQLのJOIN種別は別の事項である。履歴への検索時の追記はない。〔実装根拠：sources/database/001_schema.sql:189-198、sources/Core/SqlServerStudentService.cs:82-90、sources/Core/SqlServerStudentService.cs:203-208〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A1",
+      "value": "No"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B1",
+      "value": "グループ"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C1",
+      "value": "項目名"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D1",
+      "value": "種類"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E1",
+      "value": "入出力"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F1",
+      "value": "DB連携項目"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G1",
+      "value": "候補取得元"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H1",
+      "value": "必須"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I1",
+      "value": "形式・桁"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J1",
+      "value": "説明"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A2",
+      "value": "SRC-001"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B2",
+      "value": "検索条件"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C2",
+      "value": "学籍番号"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D2",
+      "value": "input、id=SRC-001"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E2",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F2",
+      "value": "m_student.student_no: varchar(15) NOT NULL、BIN2。前方一致。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G2",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H2",
+      "value": "任意"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I2",
+      "value": "HTML maxlength=30。raw・Trim後・FormKCと大文字化後の各上限15スカラー。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J2",
+      "value": "Criteria.StudentNo → DTO StudentNo: string →条件 StudentNo: string?。初期空。NULL・空文字は条件なし、非空の空白だけは必須検査で拒否。先頭英数字、後続英数字・ハイフン。@no: VarChar(31)。〔sources/Web/Inputs/StudentSearchInput.cs:7-22、sources/Core/StudentNormalizer.cs:59-64、sources/Core/SqlServerStudentService.cs:113-140、sources/database/001_schema.sql:9-9〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A3",
+      "value": "SRC-002"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B3",
+      "value": "検索条件"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C3",
+      "value": "氏名"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D3",
+      "value": "input、id=SRC-002"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E3",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F3",
+      "value": "検索は name_key: nvarchar(320) NOT NULL、BIN2。表示・保存原表記は student_name: nvarchar(16) NOT NULL。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G3",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H3",
+      "value": "任意"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I3",
+      "value": "HTML16、raw・Trim後8スカラー。照合キー160スカラー。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J3",
+      "value": "Criteria.Name → Name: string → StudentName: string?。初期空。Text後にFormKC、大文字化、全Unicode空白除去。空・空白だけは条件なし。@name: NVarChar(642) の部分一致。〔sources/Core/StudentNormalizer.cs:47-70、sources/Core/SqlServerStudentService.cs:114-141、sources/database/001_schema.sql:10-12、sources/database/001_schema.sql:44-46〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A4",
+      "value": "SRC-003"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B4",
+      "value": "検索条件"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C4",
+      "value": "氏名カナ"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D4",
+      "value": "input、id=SRC-003"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E4",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F4",
+      "value": "検索 kana_key、表示・保存 student_name_kana。双方 nvarchar(36) NOT NULL。キーはBIN2。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G4",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H4",
+      "value": "任意"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I4",
+      "value": "HTML72、raw・Trim後36、正規化後18スカラー。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J4",
+      "value": "Criteria.Kana → Kana: string → StudentNameKana: string?。初期空。FormKC、空白整理、限定ひらがな変換、限定カタカナ検査、18スカラー検査、検索用ASCII空白除去の順。具体的集合は補足説明。@kana: NVarChar(74)。非空の空白入力は空キーで LIKE '%%'。〔sources/Core/StudentNormalizer.cs:72-85、sources/Core/SqlServerStudentService.cs:116-142、sources/database/001_schema.sql:11-13、sources/database/001_schema.sql:45-47〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A5",
+      "value": "SRC-004"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B5",
+      "value": "検索条件"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C5",
+      "value": "年度"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D5",
+      "value": "select、id=SRC-004"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E5",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F5",
+      "value": "m_class.school_year: smallint NOT NULL。一致条件。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G5",
+      "value": "CAND-001"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H5",
+      "value": "任意"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I5",
+      "value": "DTO・条件とも int?。1900～9998と年度存在を検査。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J5",
+      "value": "Criteria.SchoolYear。初期NULL、「すべて」は未指定。原HTTP文字列の4桁検査はサービスにない。@year: SmallInt。未所属ONの応答はdisabled。〔sources/Web/Inputs/StudentSearchInput.cs:10-22、sources/Core/SqlServerStudentService.cs:109-129、sources/Core/SqlServerStudentService.cs:143-143、sources/database/001_schema.sql:64-64〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A6",
+      "value": "SRC-005"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B6",
+      "value": "検索条件"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C6",
+      "value": "学年"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D6",
+      "value": "select、id=SRC-005"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E6",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F6",
+      "value": "m_class.grade_code: varchar(2) NOT NULL。参照値は m_code.code_value: varchar(10) NOT NULL。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G6",
+      "value": "CAND-002"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H6",
+      "value": "任意"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I6",
+      "value": "DTO・条件 string?。raw・Trim後2スカラー、FormKC後ASCII数字2桁。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J6",
+      "value": "Criteria.GradeCode。初期NULL。空・空白はNULLへ正規化。GRADEの存在確認後に @grade: VarChar(2) で一致。00は学年なしという値で、未所属や未指定とは別。〔sources/Core/StudentNormalizer.cs:113-117、sources/Core/SqlServerStudentService.cs:118-144、sources/database/001_schema.sql:65-66、sources/database/002_seed.sql:78-84〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A7",
+      "value": "SRC-006"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B7",
+      "value": "検索条件"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C7",
+      "value": "クラス"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D7",
+      "value": "select、id=SRC-006"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E7",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F7",
+      "value": "学生 class_id: bigint NULL →クラス class_id: bigint IDENTITY NOT NULL、PK。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G7",
+      "value": "CAND-003"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H7",
+      "value": "任意"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I7",
+      "value": "受信 string?、条件 long?。ASCII数字19コード単位以内、正のInt64。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J7",
+      "value": "Criteria.ClassId。NULL・空は未指定。IdParserはTrim・FormKCなし。先行ゼロを一律禁止しない。変換後に実在・指定年度・正規化学年との一致を検査。@class、存在確認の @id はBigInt。〔sources/Web/Inputs/StudentSaveInput.cs:57-60、sources/Web/Inputs/StudentSearchInput.cs:12-22、sources/Core/SqlServerStudentService.cs:131-145、sources/database/001_schema.sql:28-28、sources/database/001_schema.sql:63-80〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A8",
+      "value": "SRC-007"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B8",
+      "value": "検索条件"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C8",
+      "value": "未所属のみ"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D8",
+      "value": "checkbox、id=SRC-007"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E8",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F8",
+      "value": "s.class_id IS NULL。boolの保存列なし。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G8",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H8",
+      "value": "任意"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I8",
+      "value": "Criteria.UnassignedOnly: bool →条件 bool。初期false。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J8",
+      "value": "trueかつ所属3条件のいずれか非NULLなら、正規化前にE-SRC-001で拒否。GradeCodeの空文字もこの段階では非NULL。値解除の層は概要の状態表に従う。SQLパラメータなし。〔sources/Core/SqlServerStudentService.cs:110-110、sources/Core/SqlServerStudentService.cs:146-146、sources/Web/Controllers/StudentsController.cs:22-22、sources/wwwroot/js/site.js:7-7〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A9",
+      "value": "SRC-008"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B9",
+      "value": "検索条件"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C9",
+      "value": "在籍区分"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D9",
+      "value": "checkbox群。実ビューにSRC-008のidなし。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E9",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F9",
+      "value": "m_student.enrollment_status_code: varchar(2) NOT NULL。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G9",
+      "value": "CAND-004"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H9",
+      "value": "任意"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I9",
+      "value": "Criteria.StatusCodes: string[] → EnrollmentStatusCodes: string[]。最大4、重複なし、01～04。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J9",
+      "value": "初期01・02。検索・候補更新で項目未送信なら空配列へ。空配列は状態条件なし。完全一致検査でFormKCなし。各 @status0～@status3: VarChar(2)。NULL配列は空配列と別。〔sources/Views/Students/Search.cshtml:5-5、sources/Web/Controllers/StudentsController.cs:14-22、sources/Core/SqlServerStudentService.cs:111-112、sources/Core/SqlServerStudentService.cs:151-153、sources/database/001_schema.sql:25-26〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A10",
+      "value": "SRC-009"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B10",
+      "value": "検索条件"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C10",
+      "value": "都道府県"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D10",
+      "value": "select、id=SRC-009"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E10",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F10",
+      "value": "m_student.prefecture_code: varchar(2) NOT NULL。分類列との複合FK。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G10",
+      "value": "CAND-005"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H10",
+      "value": "任意"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I10",
+      "value": "DTO・条件 string?。raw・Trim後2スカラー、FormKC後ASCII数字2桁。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J10",
+      "value": "Criteria.PrefectureCode。初期NULL。空・空白はNULLへ。PREFECTUREの存在確認後に @prefecture: VarChar(2) で一致。未指定は保存列NULLの検索を意味しない。〔sources/Core/StudentNormalizer.cs:113-117、sources/Core/SqlServerStudentService.cs:119-147、sources/database/001_schema.sql:18-19、sources/database/001_schema.sql:193-193〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A11",
+      "value": "SRC-010"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B11",
+      "value": "検索条件"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C11",
+      "value": "電話番号"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D11",
+      "value": "input、id=SRC-010"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E11",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F11",
+      "value": "本人 phone_number と緊急 emergency_phone_number。双方 varchar(16) NULL。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G11",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H11",
+      "value": "任意"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I11",
+      "value": "HTML40、raw・Trim後20スカラー、正規化後最大16文字。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J11",
+      "value": "Criteria.PhoneNumber →DTO string →条件 string?。初期空。Text、FormKC、限定記号・空白除去、電話形式検査の順。具体的集合は補足説明。本人・緊急の完全一致OR、共通 @phone: VarChar(16)。〔sources/Core/StudentNormalizer.cs:87-93、sources/Core/SqlServerStudentService.cs:117-148、sources/database/001_schema.sql:22-22、sources/database/001_schema.sql:32-32〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A12",
+      "value": "SRC-011"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B12",
+      "value": "検索条件"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C12",
+      "value": "入学日・開始"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D12",
+      "value": "input type=date、id=SRC-011"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E12",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F12",
+      "value": "m_student.admission_date: date NOT NULL の下限。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G12",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H12",
+      "value": "任意"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I12",
+      "value": "DTO・条件 string? →ローカル DateOnly? from。FormKC後厳密な yyyy-MM-dd。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J12",
+      "value": "Criteria.AdmissionFrom。初期NULL。NULL・空は制約なし。Trimなし。実在日、1900-01-01以上、日本時間業務日以下を検査。raw10文字の事前上限検査はない。>=@from: Date。〔sources/Core/JapaneseDateService.cs:52-59、sources/Core/SqlServerStudentService.cs:120-122、sources/Core/SqlServerStudentService.cs:149-149、sources/database/001_schema.sql:24-24〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A13",
+      "value": "SRC-012"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B13",
+      "value": "検索条件"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C13",
+      "value": "入学日・終了"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D13",
+      "value": "input type=date、id=SRC-012"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E13",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F13",
+      "value": "m_student.admission_date: date NOT NULL の上限。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G13",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H13",
+      "value": "任意"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I13",
+      "value": "DTO・条件 string? →ローカル DateOnly? to。開始と同じ日付検査。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J13",
+      "value": "Criteria.AdmissionTo。初期NULL。片側指定可。両端指定時の開始超過はE-STU-006。<=@to: Date。両端を含む。〔sources/Web/Inputs/StudentSearchInput.cs:17-22、sources/Core/SqlServerStudentService.cs:120-122、sources/Core/SqlServerStudentService.cs:150-150〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A14",
+      "value": "PAGE-001"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B14",
+      "value": "表示指定"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C14",
+      "value": "表示件数"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D14",
+      "value": "一覧select、検索hidden。idなし。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E14",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F14",
+      "value": "保存列なし。@size: Int。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G14",
+      "value": "CAND-006"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H14",
+      "value": "許可値が必要"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I14",
+      "value": "PageSize: int。初期20、20・50・100。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J14",
+      "value": "検索は受信値を再表示モデルにも設定。Pageは変更時1ページへ。0の拒否後も検索ビューの除算へ0が届き得る。〔sources/Views/Students/Search.cshtml:4-8、sources/Web/Controllers/StudentsController.cs:13-19、sources/Core/SqlServerStudentService.cs:107-164〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A15",
+      "value": "PAGE-002"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B15",
+      "value": "表示指定"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C15",
+      "value": "並び順"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D15",
+      "value": "一覧select、検索hidden。idなし。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E15",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F15",
+      "value": "順序列 student_no、name_key、admission_date、updated_at。保存なし。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G15",
+      "value": "CAND-007"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H15",
+      "value": "許可値が必要"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I15",
+      "value": "SortKey: string。初期 studentNo。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J15",
+      "value": "許可値を固定SQL列へ対応付ける。氏名順は原表記でなく照合キー。自由なSQL列名を受け入れない。〔sources/Core/SqlServerStudentService.cs:108-108、sources/Core/SqlServerStudentService.cs:162-162〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A16",
+      "value": "PAGE-003"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B16",
+      "value": "表示指定"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C16",
+      "value": "並び順方向"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D16",
+      "value": "select、aria-label=並び順方向。検索hidden。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E16",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F16",
+      "value": "保存列なし。主順序の方向。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G16",
+      "value": "CAND-008"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H16",
+      "value": "許可値が必要"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I16",
+      "value": "SortDirection: string。初期asc、asc・desc。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J16",
+      "value": "副順序の student_id ASC は方向指定によらず固定。〔sources/Web/Inputs/StudentSearchInput.cs:27-29、sources/Views/Students/Search.cshtml:8-8、sources/Core/SqlServerStudentService.cs:162-162〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A17",
+      "value": "PAGE-004"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B17",
+      "value": "ページ操作"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C17",
+      "value": "反映・前へ・次へ"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D17",
+      "value": "name=Page のbutton群。idなし。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E17",
+      "value": "I"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F17",
+      "value": "保存列なし。@offset: Int を算出する。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G17",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H17",
+      "value": "実行時は正数"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I17",
+      "value": "PageRequest.Page: int、既定1。送信値は1、現在−1、現在＋1。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J17",
+      "value": "先頭・最後の実コントロールはない。変更時1ページ、件数減少時の補正はページイベントで説明する。〔sources/Views/Students/Search.cshtml:8-8、sources/Infrastructure/WebStudentCoordinator.cs:12-12、sources/Core/SqlServerStudentService.cs:160-164〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A18",
+      "value": "ACT-001"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B18",
+      "value": "操作"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C18",
+      "value": "検索"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D18",
+      "value": "検索フォームのprimary button。idなし。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E18",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F18",
+      "value": "検索読取りのみ。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G18",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H18",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I18",
+      "value": "POST /students/search。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J18",
+      "value": "条件と状態・表示指定を検査し、新しい検索を実行する。〔sources/Views/Students/Search.cshtml:4-5、sources/Web/Controllers/StudentsController.cs:13-16〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A19",
+      "value": "ACT-002"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B19",
+      "value": "操作"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C19",
+      "value": "候補を更新"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D19",
+      "value": "同じ検索フォームのbutton。idなし。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E19",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F19",
+      "value": "候補読取りのみ。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G19",
+      "value": "CAND-001～005"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H19",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I19",
+      "value": "POST /students/options。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J19",
+      "value": "学生再検索はせず、編集中の所属候補と選択を整える。〔sources/Views/Students/Search.cshtml:5-5、sources/Web/Controllers/StudentsController.cs:22-22〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A20",
+      "value": "ACT-003"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B20",
+      "value": "操作"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C20",
+      "value": "クリア"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D20",
+      "value": "独立formのbutton。idなし。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E20",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F20",
+      "value": "再表示候補の読取り。業務更新なし。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G20",
+      "value": "CAND-001～005"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H20",
+      "value": "状態・版が必要"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I20",
+      "value": "POST /students/clear。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J20",
+      "value": "同じ状態IDでApplied・LastResultを解除し、版を加算する。〔sources/Views/Students/Search.cshtml:6-6、sources/Infrastructure/WebStudentCoordinator.cs:15-15〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A21",
+      "value": "ACT-004"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B21",
+      "value": "操作"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C21",
+      "value": "新規登録"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D21",
+      "value": "a。idなし。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E21",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F21",
+      "value": "遷移先で登録用候補を読む。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G21",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H21",
+      "value": "Viewer以外"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I21",
+      "value": "GET /students/new。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J21",
+      "value": "状態IDだけを復帰先として渡す。検索の業務入力を登録値へ移さない。〔sources/Views/Students/Search.cshtml:6-6、sources/Web/Controllers/StudentsController.cs:23-25〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A22",
+      "value": "OUT-001"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B22",
+      "value": "一覧"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C22",
+      "value": "学籍番号"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D22",
+      "value": "td"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E22",
+      "value": "O"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F22",
+      "value": "student_no: varchar(15) NOT NULL。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G22",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H22",
+      "value": "出力"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I22",
+      "value": "StudentRow.StudentNo: string → studentNo。業務15。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J22",
+      "value": "保存番号を表示。保存側Identifierと VarChar(15) の値であり、LIKEパターンを表示しない。〔sources/Core/StudentNormalizer.cs:124-124、sources/Core/SqlServerStudentService.cs:30-31、sources/Core/SqlServerStudentService.cs:77-85〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A23",
+      "value": "OUT-002"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B23",
+      "value": "一覧"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C23",
+      "value": "氏名"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D23",
+      "value": "td"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E23",
+      "value": "O"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F23",
+      "value": "student_name: nvarchar(16) NOT NULL。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G23",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H23",
+      "value": "出力"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I23",
+      "value": "StudentName: string → studentName。raw・Trim後8スカラー。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J23",
+      "value": "保存原表記を表示する。保存型 NVarChar(16)。照合キーは表示しない。〔sources/Core/StudentNormalizer.cs:125-145、sources/Core/SqlServerStudentService.cs:30-32、sources/Infrastructure/WebPresentation.cs:20-20〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A24",
+      "value": "OUT-003"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B24",
+      "value": "一覧"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C24",
+      "value": "氏名カナ"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D24",
+      "value": "td"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E24",
+      "value": "O"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F24",
+      "value": "student_name_kana: nvarchar(36) NOT NULL。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G24",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H24",
+      "value": "出力"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I24",
+      "value": "StudentNameKana: string。raw36、正規化後18スカラー。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J24",
+      "value": "保存時に正規化したカナを表示。保存型 NVarChar(36)。空白を除く検索キーとは別。〔sources/Core/StudentNormalizer.cs:72-85、sources/Core/StudentNormalizer.cs:126-145、sources/Core/SqlServerStudentService.cs:31-32〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A25",
+      "value": "OUT-004"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B25",
+      "value": "一覧"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C25",
+      "value": "生年月日"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D25",
+      "value": "td"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E25",
+      "value": "O"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F25",
+      "value": "birth_date: date NOT NULL。保存型Date。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G25",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H25",
+      "value": "出力"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I25",
+      "value": "BirthDate: DateOnly → BirthDateWareki: string。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J25",
+      "value": "元号境界で和暦へ変換。年1は元、月日2桁。日付に時差変換をしない。〔sources/Core/Contracts.cs:50-55、sources/Core/JapaneseDateService.cs:9-16、sources/Core/JapaneseDateService.cs:41-50、sources/database/001_schema.sql:14-14〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A26",
+      "value": "OUT-005"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B26",
+      "value": "一覧"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C26",
+      "value": "年度／学年"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D26",
+      "value": "td"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E26",
+      "value": "O"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F26",
+      "value": "m_class.school_year: smallint NOT NULL、学年の m_code.code_name: nvarchar(24) NOT NULL。結合結果NULL可。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G26",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H26",
+      "value": "出力"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I26",
+      "value": "SchoolYear: int?、GradeName: string?。名称の保存業務上限12スカラー。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J26",
+      "value": "参照値を並べて表示。未所属の「－」を生成しない。名称保存型 NVarChar(24)。〔sources/Core/SqlServerStudentService.cs:79-90、sources/Core/MasterMaintenanceService.cs:82-115、sources/database/001_schema.sql:64-66、sources/database/001_schema.sql:115-128〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A27",
+      "value": "OUT-006"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B27",
+      "value": "一覧"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C27",
+      "value": "クラス"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D27",
+      "value": "td"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E27",
+      "value": "O"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F27",
+      "value": "m_class.class_code: varchar(9) NOT NULL、class_name: nvarchar(36) NOT NULL。結合結果NULL可。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G27",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H27",
+      "value": "出力"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I27",
+      "value": "ClassCode: string?、ClassName: string?。コード9、名称18スカラー。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J27",
+      "value": "コードと名称を表示。一覧行に停止・期間外注記や未所属の代替文言を追加しない。保存型 VarChar(9)、NVarChar(36)。〔sources/Core/SqlServerStudentService.cs:79-87、sources/Core/MasterMaintenanceService.cs:33-34、sources/Core/MasterMaintenanceService.cs:73-76、sources/database/001_schema.sql:67-81〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A28",
+      "value": "OUT-007"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B28",
+      "value": "一覧"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C28",
+      "value": "在籍区分"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D28",
+      "value": "td"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E28",
+      "value": "O"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F28",
+      "value": "分類付きJOINの m_code.code_name: nvarchar(24) NOT NULL。結合結果NULL可。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G28",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H28",
+      "value": "出力"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I28",
+      "value": "EnrollmentStatusName: string? → enrollmentName。保存業務上限12スカラー。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J28",
+      "value": "学生の保存コードに対応する名称。名称NULLの代替表示を生成しない。保存型 NVarChar(24)。〔sources/Core/SqlServerStudentService.cs:80-89、sources/Infrastructure/WebPresentation.cs:20-20、sources/Core/MasterMaintenanceService.cs:82-115〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A29",
+      "value": "OUT-008"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B29",
+      "value": "一覧"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C29",
+      "value": "住所"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D29",
+      "value": "td"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E29",
+      "value": "O"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F29",
+      "value": "都道府県 code_name: nvarchar(24) NOT NULL と address_line1: nvarchar(90) NOT NULL。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G29",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H29",
+      "value": "出力"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I29",
+      "value": "Address: string → addressDisplay。名称12、住所1は45スカラーの保存上限。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J29",
+      "value": "名称NULLだけ [不整合] にし、住所1を区切りなしで連結。住所2は表示しない。保存型は名称 NVarChar(24)、住所 NVarChar(90)。〔sources/Core/SqlServerStudentService.cs:80-90、sources/Core/StudentNormalizer.cs:131-132、sources/database/001_schema.sql:20-21〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A30",
+      "value": "OUT-009"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B30",
+      "value": "一覧"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C30",
+      "value": "本人電話"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D30",
+      "value": "td"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E30",
+      "value": "O"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F30",
+      "value": "phone_number: varchar(16) NULL。保存型VarChar(16)。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G30",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H30",
+      "value": "出力"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I30",
+      "value": "PhoneNumber: string?。正規化後最大16文字。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J30",
+      "value": "NULLだけ「－」。ハイフンを再付与しない。緊急電話は検索対象でも一覧出力しない。〔sources/Core/StudentNormalizer.cs:87-93、sources/Infrastructure/WebPresentation.cs:20-20、sources/Views/Students/Search.cshtml:8-8〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A31",
+      "value": "OUT-010"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B31",
+      "value": "一覧"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C31",
+      "value": "更新日時"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D31",
+      "value": "td"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E31",
+      "value": "O"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F31",
+      "value": "updated_at: datetimeoffset(7) NOT NULL。UTCオフセット0のCHECK。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G31",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H31",
+      "value": "出力"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I31",
+      "value": "UpdatedAt: DateTimeOffset → updatedAt: string。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J31",
+      "value": "UTC+9の yyyy/MM/dd HH:mm:ss。保存値と表示文字列を分ける。〔sources/Infrastructure/WebPresentation.cs:7-7、sources/database/001_schema.sql:40-40、sources/database/001_schema.sql:57-57〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A32",
+      "value": "OUT-011"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B32",
+      "value": "一覧操作"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C32",
+      "value": "編集／参照"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D32",
+      "value": "学生IDによるa。idなし。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E32",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F32",
+      "value": "student_id: bigint IDENTITY NOT NULL、PK。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G32",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H32",
+      "value": "対象IDが必要"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I32",
+      "value": "StudentId: long →InvariantCultureの10進文字列。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J32",
+      "value": "Viewerは参照、その他は編集。行のRowVersionをURLへ渡さず、登録側が最新対象を読む。〔sources/Core/Contracts.cs:50-53、sources/Infrastructure/WebPresentation.cs:20-20、sources/Views/Students/Search.cshtml:8-8〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A33",
+      "value": "OUT-012"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B33",
+      "value": "結果表示"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C33",
+      "value": "結果状態・件数・検索日時"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D33",
+      "value": "p、上限はp.warning"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E33",
+      "value": "O"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F33",
+      "value": "算出値。業務保存列なし。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G33",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H33",
+      "value": "状態別"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I33",
+      "value": "outcome、totalCount: int?、searchedAt。日時は日本時間。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J33",
+      "value": "未検索、上限、0件、通常を分ける。通常だけ件数・日時を表示。上限10001は実総数ではない。〔sources/Core/SqlServerStudentService.cs:105-168、sources/Infrastructure/WebStudentCoordinator.cs:21-21、sources/Views/Students/Search.cshtml:7-7〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A34",
+      "value": "OUT-013"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B34",
+      "value": "メッセージ"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C34",
+      "value": "情報・エラー"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D34",
+      "value": "MessagePanelのdiv"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E34",
+      "value": "O"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F34",
+      "value": "DB列なし。ModelState、Flash、候補解除から生成。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G34",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H34",
+      "value": "発生時"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I34",
+      "value": "Message: string、ModelState。aria-live=polite。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J34",
+      "value": "情報はmessage info、エラーはmessage errorのvalidation summary。エラーFieldにCriteria接頭辞を追加しない。〔sources/Views/Shared/_MessagePanel.cshtml:1-3、sources/Web/Controllers/StudentsController.cs:15-22〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A35",
+      "value": "CTL-001"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B35",
+      "value": "状態制御"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C35",
+      "value": "検索状態ID・版・タブ"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D35",
+      "value": "各フォームのhidden。id属性なし。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E35",
+      "value": "I／O"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F35",
+      "value": "DB列なし。メモリEntryに対応。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G35",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H35",
+      "value": "既存状態操作はID・版が必要"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I35",
+      "value": "name=ContextId、ContextRevision、TabId。要求側はstring。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J35",
+      "value": "詳細は内部項目一覧。IDのNULL、空、不在、期限と、所有者・指定タブの不一致を区別する。要求タブがNULL・空なら比較しない。〔sources/Views/Students/Search.cshtml:4-8、sources/Web/Inputs/StudentSearchInput.cs:25-29、sources/Infrastructure/SearchContextStore.cs:9-14〕"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "A36",
+      "value": "CTL-002"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "B36",
+      "value": "状態制御"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "C36",
+      "value": "CSRF情報"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "D36",
+      "value": "AntiForgeryTokenのフォーム情報"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "E36",
+      "value": "I／O"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "F36",
+      "value": "DB列なし。認証基盤の検証対象。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "G36",
+      "value": "‐"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "H36",
+      "value": "POSTで検証"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "I36",
+      "value": "__RequestVerificationToken。実値長を業務桁として定義しない。"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "cell": "J36",
+      "value": "各POSTに配置。状態版・Gate・認可を代替しない。〔sources/Infrastructure/WebHostSetup.cs:15-16、sources/Views/Students/Search.cshtml:4-8〕"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "A1",
+      "value": "候補ID"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "B1",
+      "value": "使用項目・初期値"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "C1",
+      "value": "取得元・抽出条件"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "D1",
+      "value": "順序"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "E1",
+      "value": "キーと表示"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "F1",
+      "value": "選択保持・解除、停止・期間外の扱い"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "G1",
+      "value": "根拠"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "A2",
+      "value": "CAND-001"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "B2",
+      "value": "年度。初期すべて。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "C2",
+      "value": "全クラスのSchoolYearをDistinct。年度専用マスタなし。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "D2",
+      "value": "年度降順。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "E2",
+      "value": "年度数値／年度。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "F2",
+      "value": "停止・期間外クラスの年度も含む。Optionsの未所属ONで解除。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "G2",
+      "value": "sources/Views/Students/Search.cshtml:5-5、sources/Core/SqlServerStudentService.cs:206-214"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "A3",
+      "value": "CAND-002"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "B3",
+      "value": "学年。初期すべて。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "C3",
+      "value": "全コードのGRADE分類。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "D3",
+      "value": "分類、display_order、code_valueの取得順。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "E3",
+      "value": "CodeValue／CodeName。seedの00は学年なし。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "F3",
+      "value": "停止・期間外も除外・注記・選択禁止なし。名称12スカラー、DB24コード単位。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "G3",
+      "value": "sources/Core/SqlServerStudentService.cs:203-212、sources/Views/Students/Search.cshtml:5-5、sources/Core/MasterMaintenanceService.cs:82-115"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "A4",
+      "value": "CAND-003"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "B4",
+      "value": "クラス。初期すべて。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "C4",
+      "value": "全クラスから、年度未指定または一致、かつ学年未指定・空または一致をビューで抽出。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "D4",
+      "value": "年度DESC、学年コードの表示順、クラス表示順、クラスコード、クラスID。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "E4",
+      "value": "ClassId文字列／年度、クラスコード、クラス名。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "F4",
+      "value": "停止だけ「（停止）」。期間外、学年名称、人数・定員はoptionに出さない。Optionsで生の選択ID・上位条件と不適合なら解除。名称18スカラー、DB36コード単位。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "G4",
+      "value": "sources/Core/SqlServerStudentService.cs:206-214、sources/Web/Controllers/StudentsController.cs:22-22、sources/Views/Students/Search.cshtml:5-5、sources/Core/MasterMaintenanceService.cs:33-34"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "A5",
+      "value": "CAND-004"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "B5",
+      "value": "在籍区分。初期01・02。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "C5",
+      "value": "全コードのENROLLMENT_STATUS分類。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "D5",
+      "value": "コード取得順。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "E5",
+      "value": "CodeValue／CodeName。seedでは01在学、02休学、03卒業、04退学。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "F5",
+      "value": "停止・期間外も残す。全解除は検索条件なし。取得分類全件と、サービスが受け入れる01～04を区別する。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "G5",
+      "value": "sources/Core/SqlServerStudentService.cs:112-112、sources/Core/SqlServerStudentService.cs:203-212、sources/database/002_seed.sql:19-22"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "A6",
+      "value": "CAND-005"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "B6",
+      "value": "都道府県。初期すべて。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "C6",
+      "value": "全コードのPREFECTURE分類。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "D6",
+      "value": "コード取得順。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "E6",
+      "value": "CodeValue／CodeName。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "F6",
+      "value": "停止・期間外も除外・注記・選択禁止なし。名称12スカラー、DB24コード単位。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "G6",
+      "value": "sources/Views/Students/Search.cshtml:5-5、sources/Core/SqlServerStudentService.cs:203-212、sources/Core/MasterMaintenanceService.cs:82-115"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "A7",
+      "value": "CAND-006"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "B7",
+      "value": "表示件数。初期20。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "C7",
+      "value": "ビューの固定配列。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "D7",
+      "value": "20、50、100。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "E7",
+      "value": "数値／同じ数値。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "F7",
+      "value": "変更時はPageイベントで1ページ。Optionsは受信表示指定を採用せずApplied由来または20。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "G7",
+      "value": "sources/Views/Students/Search.cshtml:8-8、sources/Web/Controllers/StudentsController.cs:39-39"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "A8",
+      "value": "CAND-007"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "B8",
+      "value": "並び順。初期studentNo。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "C8",
+      "value": "ビューの固定組。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "D8",
+      "value": "学籍番号、氏名、入学日、更新日時。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "E8",
+      "value": "studentNo、name、admissionDate、updatedAt／各名称。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "F8",
+      "value": "許可列への対応は項目一覧。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "G8",
+      "value": "sources/Views/Students/Search.cshtml:8-8、sources/Core/SqlServerStudentService.cs:108-108"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "A9",
+      "value": "CAND-008"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "B9",
+      "value": "方向。初期asc。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "C9",
+      "value": "固定option。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "D9",
+      "value": "昇順、降順。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "E9",
+      "value": "asc、desc／昇順、降順。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "F9",
+      "value": "主順序に適用。IDの副順序はASC。"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "cell": "G9",
+      "value": "sources/Views/Students/Search.cshtml:8-8、sources/Core/SqlServerStudentService.cs:162-162"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "A1",
+      "value": "内部項目ID"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "B1",
+      "value": "実名・型・保持領域"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "C1",
+      "value": "初期値・取得元"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "D1",
+      "value": "更新と用途"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "E1",
+      "value": "検査・寿命"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "F1",
+      "value": "根拠"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "A2",
+      "value": "INT-001"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "B2",
+      "value": "Entry.Id: string。辞書キー、フォームContextId。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "C2",
+      "value": "32乱数バイトの小文字64桁hex。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "D2",
+      "value": "同じ検索状態を識別する。登録・復帰へ参照キーとして渡す。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "E2",
+      "value": "GetはNULLを辞書呼出し前に409へ。空・不在・期限切れも409。64桁の形式検査なし。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "F2",
+      "value": "sources/Infrastructure/SearchContextStore.cs:9-13"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "A3",
+      "value": "INT-002"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "B3",
+      "value": "Entry.Owner: string。メモリ。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "C3",
+      "value": "CurrentUser.Principal。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "D3",
+      "value": "主体所有者。フォームから更新しない。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "E3",
+      "value": "有効状態でも不一致403。認証側は空白・64Rune超過を401へ。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "F3",
+      "value": "sources/Infrastructure/SearchContextStore.cs:9-13、sources/Infrastructure/RequestIdentity.cs:7-10"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "A4",
+      "value": "INT-003"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "B4",
+      "value": "Entry.Session: string。メモリ。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "C4",
+      "value": "CurrentUser.SessionId。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "D4",
+      "value": "ログインセッションを識別する。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "E4",
+      "value": "不一致403。認証側は空白・64コード単位超過を401へ。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "F4",
+      "value": "sources/Infrastructure/SearchContextStore.cs:9-13、sources/Infrastructure/RequestIdentity.cs:7-10"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "A5",
+      "value": "INT-004"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "B5",
+      "value": "Entry.Tab: string。フォームTabId。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "C5",
+      "value": "作成引数がNULL・空なら独立した乱数キー。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "D5",
+      "value": "指定されたタブを照合する。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "E5",
+      "value": "要求tabが非空のときだけ比較。不一致403。GET復帰はNULL。RequestIdentity.TabIdはこの経路で未使用。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "F5",
+      "value": "sources/Infrastructure/SearchContextStore.cs:9-14、sources/Infrastructure/RequestIdentity.cs:12-12、sources/Web/Controllers/StudentsController.cs:8-22"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "A6",
+      "value": "INT-005"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "B6",
+      "value": "Entry.Revision: long。要求ContextRevisionはstring。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "C6",
+      "value": "1。応答はInvariantCultureの10進文字列。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "D6",
+      "value": "Search・Page・Clear・検索済みResumeで加算。学生版とは別。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "E6",
+      "value": "Gate下で完全一致。不一致・long.MaxValueは409。NULL・空・旧版・先行ゼロを補完しない。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "F6",
+      "value": "sources/Infrastructure/SearchContextStore.cs:9-14、sources/Infrastructure/WebStudentCoordinator.cs:9-15"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "A7",
+      "value": "INT-006"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "B7",
+      "value": "Entry.Expires: DateTimeOffset。メモリ。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "C7",
+      "value": "作成UTC＋30分。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "D7",
+      "value": "Useのoperation正常復帰後に現在UTC＋30分へ延長。GetだけのOptionsは延長しない。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "E7",
+      "value": "Expires<現在UTCで失効。Create時に期限切れ既存Entryを除去。DB await後の期限再確認なし。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "F7",
+      "value": "sources/Infrastructure/SearchContextStore.cs:9-14"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "A8",
+      "value": "INT-007"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "B8",
+      "value": "Entry.Applied: SearchCriteria?。メモリ。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "C8",
+      "value": "NULL。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "D8",
+      "value": "Search・Page成功後にJSON複製を保存。ClearでNULL。Resumeは元条件を維持。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "E8",
+      "value": "保存するのはバインド後文字列と型付き条件。SQL用正規化ローカル値ではない。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "F8",
+      "value": "sources/Infrastructure/SearchContextStore.cs:15-15、sources/Infrastructure/WebStudentCoordinator.cs:8-15"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "A9",
+      "value": "INT-008"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "B9",
+      "value": "Entry.LastResult: SearchResult?。メモリ。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "C9",
+      "value": "NULL。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "D9",
+      "value": "Search・Page・検索済みResume成功後に結果保存。ClearでNULL。Optionsはこの結果を投影する。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "E9",
+      "value": "Search・Page拒否応答はPresentへNULLを渡し、以前の結果を暗黙採用しない。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "F9",
+      "value": "sources/Infrastructure/WebStudentCoordinator.cs:9-15、sources/Web/Controllers/StudentsController.cs:14-22"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "A10",
+      "value": "INT-009"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "B10",
+      "value": "Entry.Gate: SemaphoreSlim(1,1)。状態別メモリ。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "C10",
+      "value": "Entryごとに生成。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "D10",
+      "value": "同一プロセスの同一検索状態操作を直列化する。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "E10",
+      "value": "ct付き待機後にGetを再実施。取得後はfinallyでRelease。待機取消は未取得Gateを解放しない。Optionsは使わない。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "F10",
+      "value": "sources/Infrastructure/SearchContextStore.cs:9-14"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "A11",
+      "value": "INT-010"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "B11",
+      "value": "no,name,kana,phone,grade,prefecture、DateOnly? from,to。サービスローカル。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "C11",
+      "value": "条件から正規化・解析。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "D11",
+      "value": "存在確認とSQLパラメータへ使用する。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "E11",
+      "value": "元条件へ書き戻さない。保存値・表示原表記と区別する。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "F11",
+      "value": "sources/Core/SqlServerStudentService.cs:113-153"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "A12",
+      "value": "INT-011"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "B12",
+      "value": "SearchResult、Presentの匿名型、モデルの Data: JsonElement。応答領域。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "C12",
+      "value": "サービス結果とEntry。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "D12",
+      "value": "当該結果から状態・件数・行・日時、Appliedからページ・ソート・条件を作る。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "E12",
+      "value": "NULL結果でAppliedを消さない。上限のtotalCountはNULL、0件は0。公開JSON APIではない。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "F12",
+      "value": "sources/Core/Contracts.cs:57-58、sources/Infrastructure/WebStudentCoordinator.cs:21-21、sources/Web/Models/StudentSearchPageModel.cs:10-15"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "A13",
+      "value": "INT-012"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "B13",
+      "value": "Flash辞書の (string Message, DateTimeOffset Expires)。メモリ。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "C13",
+      "value": "登録側Saved後のPut。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "D13",
+      "value": "主体＋NUL＋セッション＋NUL＋ContextIdをキーに一度だけ取得。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "E13",
+      "value": "UTC＋10分。TakeはTryRemoveを先に行い、期限内だけ文言を返す。表示失敗後に復元しない。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "F13",
+      "value": "sources/Infrastructure/FlashMessageStore.cs:6-9、sources/Web/Controllers/StudentsController.cs:31-38"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "A14",
+      "value": "INT-013"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "B14",
+      "value": "登録側 ReturnContextId、ReturnRevision、編集Snapshot。メモリ。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "C14",
+      "value": "検索リンクはIDだけ。登録Loadが現在検索版を読む。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "D14",
+      "value": "戻るリンクとSaved後の303復帰に使用。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "E14",
+      "value": "保存済み復帰版を最新版へ補完しない。SnapshotのGet契約を検索EntryのGetと同一視しない。"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "cell": "F14",
+      "value": "sources/Web/Controllers/StudentsController.cs:23-25、sources/Web/Controllers/StudentsController.cs:38-38、sources/Infrastructure/EditorSnapshotStore.cs:7-10"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A1",
+      "value": "イベント仕様"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A3",
+      "value": "初期表示"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A4",
+      "value": "処理概要"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U5",
+      "value": "GET /students の contextId がNULL・空の場合、新しい検索状態、初期条件、全候補を表示する。学生件数と一覧は取得しない。既存IDがある場合は「検索状態への復帰」に進む。〔実装根拠：sources/Web/Controllers/StudentsController.cs:8-11〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A6",
+      "value": "処理手順"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U7",
+      "value": "1. 認証・認可を通過し、identity.Read() でClaimから得る利用者情報を確認する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U8",
+      "value": "2. 状態指定なしの場合、NewContextがEntryを辞書へ追加する。版1、Applied・LastResultはNULL、期限UTC＋30分とする。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U9",
+      "value": "3. Present(entry, null) で未検索・空一覧を作る。初期条件は在籍01・02、Page=1、20件、studentNo昇順である。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U10",
+      "value": "4. 新しいStudentSearchInputとFlashのTake結果をSearchModelへ渡す。Takeは候補取得前に評価される。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U11",
+      "value": "5. SearchModelが LookupAsync(false, ct) で候補を取得し、利用者とJsonElementを設定する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U12",
+      "value": "6. Searchビューと共有レイアウトを描画する。必須マスタ不足を検査して検索ボタンを非活性にする分岐はない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U13",
+      "value": "〔実装根拠：sources/Infrastructure/SearchContextStore.cs:9-12、sources/Core/Contracts.cs:31-48、sources/Web/Inputs/StudentSearchInput.cs:7-18、sources/Web/Controllers/StudentsController.cs:9-11、sources/Web/Controllers/StudentsController.cs:39-39。必須マスタ検査の設計意図：reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:159-165〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A14",
+      "value": "処理フロー"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U15",
+      "value": "初期表示フロー1。正常出口は検索HTML、既存IDの出口は復帰イベントである。例外出口Mは補足説明の共通応答境界に従う。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A84",
+      "value": "SQL・テーブル関連（ER図）"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U85",
+      "value": "候補取得はコード分類・コード・クラスを読む。FKは概要ER図、実SQLの関連は次の図に対応する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A98",
+      "value": "DB操作の詳細"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U99",
+      "value": "Lookupは接続診断、SNAPSHOT開始、コードとクラスの2結果セット読取り、commitの順である。停止・期間外によるWHERE除外はなく、検索用の人数は CONVERT(int,0) で投影する。これは集計省略値であり、実測人数0を意味しない。SQLの順序と型は補足説明に定義する。〔実装根拠：sources/Core/SqlServerStudentService.cs:196-216〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A100",
+      "value": "結果・例外時の扱い"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U101",
+      "value": "描画完了時は200の検索HTMLとなる。個別catchはない。候補取得等の失敗前に作成したEntryを除去する処理もない。認証による入口拒否と、例外がmiddlewareへ届いた独立HTMLエラーを区別する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A102",
+      "value": "検索実行"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A103",
+      "value": "処理概要"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U104",
+      "value": "POST /students/search は条件と表示指定で検索し、0件・通常・上限超過を正常結果として保持する。拒否応答の一覧は空にするが、以前のApplied・LastResultをクリアする処理は行わない。〔実装根拠：sources/Web/Controllers/StudentsController.cs:13-16、sources/Infrastructure/WebStudentCoordinator.cs:7-9〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A105",
+      "value": "処理手順"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U106",
+      "value": "1. 認証・認可、CSRF検証、MVCのバインドを経てアクションへ入る。アクションは最初にFormGuardで許可名・重複・フォームメタ情報を検査する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U107",
+      "value": "2. Criteria.StatusCodes 項目自体がなければ、DTOの初期選択を空配列へ置き換える。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U108",
+      "value": "3. CurrentUserを取得し、最初のGetで状態の存在・期限・所有者・セッション・指定タブを確認する。このGetとFormGuardは個別catch外である。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U109",
+      "value": "4. 当該応答用のdataを Present(entry, null) とする。Appliedがあればページ・ソート等は保持値を使用する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U110",
+      "value": "5. ModelState不正なら422を設定してCoordinatorを呼ばない。有効なら個別tryへ進む。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U111",
+      "value": "6. CoordinatorがReadを再確認し、ToCriteriaで項目を対応付ける。ClassIdはOptionalでlong?へ変換し、Pageを1にする。この変換はUseの版検査より前である。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U112",
+      "value": "7. UseがGet、Gate待機、取得後の再Get、要求版の完全一致、long上限を順に確認する。Gate取得後の拒否もfinallyで解放する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U113",
+      "value": "8. SearchAsyncはtry外でUser、検索開始UTC時刻、日本時間業務日を取得する。try内で表示指定、年度・クラス値、未所属との排他、在籍配列、文字列・コード正規化、日付解析と範囲を順に検査する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U114",
+      "value": "9. 接続・SNAPSHOT開始後、学年・都道府県、年度、クラスと上位条件を確認する。共通述語で最大10001件の件数を取り、上限超過なら一覧を取らずcommitする。10000件以下は同じSNAPSHOTでページを取得しcommitする。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U115",
+      "value": "10. EnsureSearch成功後、条件のJSON複製をAppliedへ、結果をLastResultへ保存し、版を加算してPresentを返す。operationの正常復帰後にUseが期限を延長する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U116",
+      "value": "11. 個別try内のWebFaultはFieldまたは空キーへMessageを追加し、statusをe.Statusにする。その他の例外はこのcatchを通過する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U117",
+      "value": "12. catch外で候補を再取得する。再表示条件は受信DTOで、PageSize・SortKey・SortDirectionも受信値でモデルを上書きする。Razor描画が完了した場合に検索HTMLを返す。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U118",
+      "value": "〔実装根拠：sources/Web/Controllers/StudentsController.cs:13-16、sources/Web/Controllers/StudentsController.cs:41-41、sources/Infrastructure/WebStudentCoordinator.cs:7-9、sources/Infrastructure/SearchContextStore.cs:13-15、sources/Core/SqlServerStudentService.cs:103-170〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A119",
+      "value": "処理フロー"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U120",
+      "value": "検索フロー1は入口である。無効ModelStateの出口は、422・NULL結果・受信DTOをフロー4へ渡す。有効枝は同じ受信値をフロー2へ渡す。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U180",
+      "value": "検索フロー2はCoordinatorと状態Gateである。正常出口はGateを保持したままフロー3へ進む。例外時は、Gate取得済みならfinallyで解放し、WebFaultを個別catchへ、その他をMへ渡す。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U268",
+      "value": "検索フロー3はサービスと保持更新である。正常結果は枝ごとのCount・Items・LimitExceededを維持する。拒否結果はEnsureSearchからWebFaultとなり、NULL結果の再表示へ進む。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U391",
+      "value": "フロー3の保持更新は逐次代入である。Copyが失敗すればその代入以降へ進まない。版加算後のPresentや投影で失敗した場合は、更新済み値を戻さない。またoperationが正常復帰していなければ期限延長に到達しない。図の正常出口Nだけが結果・期限延長を確定してフロー4へ渡す。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U392",
+      "value": "検索フロー4は表示準備である。成功結果、ModelState拒否、個別WebFaultを合流させるが、各枝のstatusとresultをそのまま引き継ぐ。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A424",
+      "value": "SQL・テーブル関連（ER図）"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U425",
+      "value": "存在検査はコードとクラス、件数は学生とクラス、一覧は学年・在籍・都道府県の名称も読む。実FKは概要ER図に従う。次の図は名称取得のLEFT JOINである。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A444",
+      "value": "DB操作の詳細"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U445",
+      "value": "常設の非削除条件に指定条件をANDで加え、在籍配列内はIN、電話は本人・緊急の括弧付きORとする。存在確認、件数、ページは1接続のSNAPSHOTに属し、正常枝でcommitする。例外枝に明示RollbackAsyncはなく、await usingによる読取トランザクションの破棄へ進む。再表示候補は別接続・別SNAPSHOTである。全述語、パラメータ、取得列、ORDER BY、取消境界は補足説明に定義する。〔実装根拠：sources/Core/SqlServerStudentService.cs:123-171、sources/Web/Controllers/StudentsController.cs:39-39〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A446",
+      "value": "結果・例外時の扱い"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U447",
+      "value": "現行SearchAsyncの0件・通常・上限超過はすべてOutcome.NoChangeである。上限結果はCount=10001、Items空、LimitExceeded=trueとなり、PresentのtotalCountはNULLになる。0件はCount=0、LimitExceeded=falseで、0件でも行SQLを実行する。いずれもEnsureSearchを通り、保持条件と版を更新する。〔実装根拠：sources/Core/SqlServerStudentService.cs:156-170、sources/Infrastructure/WebStudentCoordinator.cs:20-21〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U448",
+      "value": "サービスcatchはInputValidationException、ArgumentExceptionの順である。前者はFieldError群を返し、後者はArgumentErrorで既知のエラーコードまたはE-STU-002へ変換する。SQL例外、取消、InvalidOperationException、NullReferenceExceptionはこの2catchで検索結果へ変換しない。サービスUserの処理はtry外なので、そこで起きる入力例外もこの検索catchへ入らない。〔実装根拠：sources/Core/SqlServerStudentService.cs:105-106、sources/Core/SqlServerStudentService.cs:169-170、sources/Core/StudentNormalizer.cs:162-166〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U449",
+      "value": "バインド後PageSize=0の場合、サービスまたはModelStateで拒否しても、Controllerは再表示モデルへ受信0を設定する。ビューは未検索・拒否の枝でもページ総数の除算を評価するため、二次描画例外が生じ得る。この枝を422の検索HTMLが必ず返る経路として扱わない。応答未開始の一般例外ならMで503となり、応答開始後はMのcatch対象外である。〔実装根拠：sources/Web/Controllers/StudentsController.cs:15-16、sources/Views/Students/Search.cshtml:8-8、sources/Infrastructure/WebHostSetup.cs:23-23〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A450",
+      "value": "候補更新"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A451",
+      "value": "処理概要"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U452",
+      "value": "「候補を更新」は編集中の検索条件を送信し、所属候補と選択クラスを整える。一覧はLastResultを使用し、学生を再検索しない。受信ContextRevisionと表示指定は版検査・状態更新へ使用しない。〔実装根拠：sources/Web/Controllers/StudentsController.cs:22-22〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A453",
+      "value": "処理手順"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U454",
+      "value": "1. 認証・CSRF等を通過した後、FormGuardを実行する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U455",
+      "value": "2. StatusCodes項目未送信なら空配列へ設定する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U456",
+      "value": "3. CurrentUserとGetで状態を確認する。Gate待機と版照合はしない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U457",
+      "value": "4. 未所属ONならSchoolYear・GradeCode・ClassIdをNULLにし、対応する3つの Criteria.* のModelStateを除去する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U458",
+      "value": "5. Present(entry, entry.LastResult) を作り、SearchModelで全候補を再取得する。表示指定はApplied由来、なければ初期値である。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U459",
+      "value": "6. 非空ClassIdについて、候補IDのToStringと入力文字列、指定年度、生のGradeCodeとの一致を確認する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U460",
+      "value": "7. 不適合ならClassIdをNULLにし、そのModelStateを除去して「上位条件に合わないクラスを解除しました。」を設定する。他の場合は「条件を変更しました。検索を押すと一覧に反映します。」を維持する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U461",
+      "value": "8. ビューが入力年度・学年でクラス候補を抽出して描画する。未所属ONの3selectはdisabledとなる。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U462",
+      "value": "この経路はModelState全体判定、IdParser、コード正規化を呼ばない。数値上同じ先行ゼロ付きClassIdでも候補の文字列表現と異なれば解除され、生の全角GradeCodeも検索サービスの正規化と同じ方法では比較されない。〔実装根拠：sources/Web/Controllers/StudentsController.cs:22-22、sources/Web/Controllers/StudentsController.cs:39-39、sources/Views/Students/Search.cshtml:5-5〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A463",
+      "value": "処理フロー"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U464",
+      "value": "候補フロー1。FormGuardと状態取得の間に未送信配列の補完を置く。合流後もApplied・LastResult・版・期限は変更しない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A559",
+      "value": "SQL・テーブル関連（ER図）"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U560",
+      "value": "初期表示と同じコード分類・コード・クラスの候補関連を読む。学生一覧はメモリの保持結果から取得する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A576",
+      "value": "DB操作の詳細"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U577",
+      "value": "LookupAsync(false)だけを実行する。入力年度・学年をSQLパラメータにした候補抽出ではなく、全取得後にControllerとビューで照合する。停止・期間外を含み、人数は集計しない。業務表と検索状態の書込みはない。〔実装根拠：sources/Core/SqlServerStudentService.cs:197-216〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A578",
+      "value": "結果・例外時の扱い"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U579",
+      "value": "個別catchとModelState全体の422判定はない。状態取得・候補取得・描画の失敗はMへ進む。在籍配列がNULLのまま描画へ届く場合、checkboxのContainsで例外が起こり得る。項目未送信を空配列にする処理から、項目が存在する場合のNULLも排除されるとは判断しない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U580",
+      "value": "設計意図はクラス先行選択による年度・学年反映、応答順照合、W-STU-107の解除通知を含む。現行は全HTML応答と文言通知であり、検索側の先行反映、要求連番、旧応答破棄、通知ID出力は接続されていない。〔設計意図：reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:252-273。実装根拠：sources/Web/Controllers/StudentsController.cs:22-22、sources/wwwroot/js/site.js:7-8〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A581",
+      "value": "並び替え・表示件数変更・ページ移動"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A582",
+      "value": "処理概要"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U583",
+      "value": "一覧フォームの表示指定と要求Pageを使い、最後に実行した条件でDBを再検索する。編集中のCriteriaはこのフォームに含まれない。表示指定変更時は1ページへ、件数減少時は必要に応じて最終ページへ保持条件を補正する。〔実装根拠：sources/Views/Students/Search.cshtml:8-8、sources/Infrastructure/WebStudentCoordinator.cs:11-12〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A584",
+      "value": "処理手順"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U585",
+      "value": "1. 認証・CSRF等の入口検査後、PageRequestとTabIdを対象にFormGuardを実行する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U586",
+      "value": "2. CurrentUserと最初のGetで状態を取得する。ここは個別try外で、ModelStateの有効判定はない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U587",
+      "value": "3. try内でCoordinatorがReadとUseのGet・Gate待機・再Get・版一致・版上限を確認する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U588",
+      "value": "4. Appliedがなければ409「先に検索してください。」を投げる。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U589",
+      "value": "5. Appliedを複製し、PageSize・SortKey・SortDirectionのいずれかが異なればPage=1、同じなら要求Pageを設定する。受信表示指定を複製条件へ設定する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U590",
+      "value": "6. SearchAsync、EnsureSearchを実行する。サービス内でSQL実取得ページは補正されるが、条件Pageへ書き戻されない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U591",
+      "value": "7. 非上限結果で条件Pageが件数から求めた最終ページを超えた場合、条件Pageを最終ページへ変更して、一度だけ別SNAPSHOTで再検索する。2回目の結果に同じ補正を繰り返すループはない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U592",
+      "value": "8. 必要な検索がすべて成功した後、Applied・LastResult・版を更新する。正常operation復帰で期限を延長しGateを解放する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U593",
+      "value": "9. 同じ個別try内で候補を取得し、Appliedから復元した入力と結果でモデルを作る。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U594",
+      "value": "10. try内のWebFaultはe.Status・Field・Messageを引き継ぎ、NULL結果と現在Appliedから復元した入力で再表示を試みる。catch内の候補再取得も失敗した場合は同じcatchへ戻らない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U595",
+      "value": "〔実装根拠：sources/Web/Controllers/StudentsController.cs:18-19、sources/Infrastructure/WebStudentCoordinator.cs:12-12、sources/Infrastructure/SearchContextStore.cs:14-14、sources/Core/SqlServerStudentService.cs:160-168〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A596",
+      "value": "処理フロー"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U597",
+      "value": "ページフロー1は状態検査と再検索である。正常出口は更新済みEntryと最終結果をフロー2へ渡す。検索拒否出口は更新前のEntryとWebFaultを渡す。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U717",
+      "value": "ページフロー2は候補と再表示である。状態更新後の候補WebFaultと更新前の拒否を同一の未更新状態へまとめない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A768",
+      "value": "SQL・テーブル関連（ER図）"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U769",
+      "value": "検索本体は検索実行の学生・クラス・名称コード関連、再表示候補はコード種別も参照する。複数回の検索は同じ業務関連を使うが、トランザクションは別である。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A786",
+      "value": "DB操作の詳細"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U787",
+      "value": "各SearchAsync内の存在・件数・一覧は1つのSNAPSHOTで揃う。補正再検索と候補取得は別SNAPSHOTである。検索は読取りのみで、業務表の更新・履歴追記を行わない。2回目までにDBが変化した場合、さらに保持Pageを補正するループはない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A788",
+      "value": "結果・例外時の扱い"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U789",
+      "value": "Appliedなしの409は個別catchの一覧空再表示へ進む。最初のGetによる失効409はcatch外でMへ進む。設計の「保持条件なし・失効を初期化して通知」とは異なり、自動初期化しない。〔実装根拠：sources/Web/Controllers/StudentsController.cs:19-19、sources/Infrastructure/WebStudentCoordinator.cs:12-12。設計意図：reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:303-320〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U790",
+      "value": "成功後の候補WebFaultは、このイベントではtry内なので個別catchに入る。その場合、新しいApplied・LastResult・版は保持し、当該画面の結果だけをNULLにする。SQL例外・取消等はWebFault catch対象外である。ModelState判定がないため、HTTP変換失敗後のPage等の到達値はサービス検査だけでは確定しない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A791",
+      "value": "クリア"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A792",
+      "value": "処理概要"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U793",
+      "value": "同じContextIdとTabを保ち、実行済み条件と結果を解除して初期入力・未検索へ戻す。学生の削除や更新は行わない。再表示に必要な候補はDBから読む。〔実装根拠：sources/Web/Controllers/StudentsController.cs:21-21、sources/Infrastructure/WebStudentCoordinator.cs:15-15〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A794",
+      "value": "処理手順"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U795",
+      "value": "1. 認証・CSRF等の入口検査後、ContextRequestとTabIdのFormGuardを行う。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U796",
+      "value": "2. Coordinator.ClearがRead、UseのGet・Gate待機・再Get・版一致・版上限を確認する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U797",
+      "value": "3. AppliedとLastResultをNULLにし、版を加算して未検索Presentを返す。正常operation復帰で期限を延長する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U798",
+      "value": "4. ControllerがModelStateをClearし、Getで状態を取得し直す。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U799",
+      "value": "5. 新しいStudentSearchInputとLookupAsync(false)の候補で描画する。在籍01・02、20件、studentNo昇順、Page=1へ戻る。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U800",
+      "value": "〔実装根拠：sources/Infrastructure/SearchContextStore.cs:14-14、sources/Web/Controllers/StudentsController.cs:21-21、sources/Web/Controllers/StudentsController.cs:39-39、sources/Web/Inputs/StudentSearchInput.cs:7-18〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A801",
+      "value": "処理フロー"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U802",
+      "value": "クリアフロー1。消去前の拒否と消去後の表示失敗を別の出口にする。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A865",
+      "value": "SQL・テーブル関連（ER図）"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U866",
+      "value": "解除対象はメモリEntryである。再表示では初期表示と同じ候補関連を読む。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A885",
+      "value": "DB操作の詳細"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U886",
+      "value": "学生検索SQLは呼ばず、候補SQLだけを呼ぶ。UPDATE、DELETE、履歴INSERTはない。クリア操作全体をDB非使用と記述すると、再表示候補の読取りが欠落する。〔実装根拠：sources/Web/Controllers/StudentsController.cs:21-21、sources/Web/Controllers/StudentsController.cs:39-39〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A887",
+      "value": "結果・例外時の扱い"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U888",
+      "value": "ModelState有効判定と個別catchはない。状態・版拒否はMへ進む。消去後の再Get、候補取得、描画が失敗しても、条件・結果・版を元に戻す処理はない。期限延長はoperationの正常復帰に到達した場合だけである。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A889",
+      "value": "未所属切替と送信中表示"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A890",
+      "value": "処理概要"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U891",
+      "value": "検索側JavaScriptは未所属ON時のDOM値解除と、共通submit時の送信中属性を扱う。サーバー条件、検索状態、DBを直接更新しない。〔実装根拠：sources/wwwroot/js/site.js:4-7〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A892",
+      "value": "処理手順"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U893",
+      "value": "1. SRC-007のchangeへ処理を登録し、初回にも評価する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U894",
+      "value": "2. ONならSRC-004・005・006のDOM値を空にする。OFFでは元値を復元しない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U895",
+      "value": "3. disabledを変更しない。ON応答で非活性になったselectをOFFのDOM変更だけで活性化する処理もない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U896",
+      "value": "4. 年度・学年変更による自動候補通信や、検索クラス選択による上位条件反映は行わない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U897",
+      "value": "5. 各formのsubmitで確認文言があり取消された場合はpreventDefaultする。検索フォームにはその確認文言属性がない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U898",
+      "value": "6. 通常送信では送信button以外の同フォームbuttonをdisabledにし、aria-busyをtrueにする。送信button自身は無効化せず、busy値で再入を拒否しない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U899",
+      "value": "〔実装根拠：sources/wwwroot/js/site.js:4-8、sources/Views/Students/Search.cshtml:4-8〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A900",
+      "value": "処理フロー"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U901",
+      "value": "DOMフロー1は未所属、DOMフロー2は送信である。どちらもHTTP応答やサーバー状態更新を確定しない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A963",
+      "value": "SQL・テーブル関連（ER図）"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U964",
+      "value": "DOMだけを扱うため、このイベント単体ではDBを使用せずER図は非該当である。サーバー側の検索・候補更新は別イベントとしてメモリとDBを扱う。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A965",
+      "value": "DB操作の詳細"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U966",
+      "value": "該当なし。保持先はinput・selectのDOM値、buttonのdisabled、formのaria-busyである。Applied、LastResult、Revision、DB列への代入はない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A967",
+      "value": "結果・例外時の扱い"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U968",
+      "value": "値解除と非活性化を同時の処理として保証しない。原文のREG-018、REG-016、REG-017を使うクラス連動は登録画面用であり、検索側へ適用しない。DOMの送信中表示は認可、状態版、Gate、DB排他の代わりにはならない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A969",
+      "value": "新規登録・編集・参照への遷移"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A970",
+      "value": "処理概要"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U971",
+      "value": "新規リンクと行リンクは、検索状態IDを復帰先として登録画面へ渡す。行の対象は行番号ではなく学生IDである。検索の業務入力、検索状態版、一覧で取得した学生版はリンクへ移さない。〔実装根拠：sources/Views/Students/Search.cshtml:6-8〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A972",
+      "value": "処理手順"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U973",
+      "value": "1. Viewerには新規リンクを置かず、行リンクを参照とする。それ以外は新規・編集を表示する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U974",
+      "value": "2. 新規は /students/new?returnContextId=...、既存は /students/{studentId}?returnContextId=... へGETする。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U975",
+      "value": "3. 登録側Coordinator.EditでReadと復帰状態のGetを確認する。新規だけCreateOrUpdateを確認し、Viewerを拒否する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U976",
+      "value": "4. 既存はGetAsyncで最新の非削除対象を読み、不在なら404 E-STU-103とする。新規は既存学生を読まない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U977",
+      "value": "5. 人数を含む登録用LookupAsync(ct)で候補を取得する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U978",
+      "value": "6. Controller.Loadは候補取得後に復帰状態を再取得し、現在Revisionを読む。入力原本、対象、Detail、ReturnRevisionを編集Snapshotへ保存する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U979",
+      "value": "7. 登録HTMLへ引き渡す。保存・削除の全仕様は登録詳細文書の責務であり、本書は渡す参照キーと復帰版の取得境界を定義する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U980",
+      "value": "〔実装根拠：sources/Web/Controllers/StudentsController.cs:23-25、sources/Infrastructure/WebStudentCoordinator.cs:6-6、sources/Infrastructure/WebStudentCoordinator.cs:17-17、sources/Core/SqlServerStudentService.cs:172-196、sources/Infrastructure/EditorSnapshotStore.cs:7-9〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A981",
+      "value": "処理フロー"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U982",
+      "value": "遷移フロー1。新規枝はDetailなし、既存枝は再取得Detailありのまま候補取得へ合流する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A1062",
+      "value": "SQL・テーブル関連（ER図）"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1063",
+      "value": "リンク自体はDBを使用しない。接続された遷移先では学生の単一表読取りと、登録候補の複数表読取りがある。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A1090",
+      "value": "DB操作の詳細"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1091",
+      "value": "既存読取りは student_id=@id AND is_deleted=0、パラメータはBigIntである。対象IDが正でない場合はGetAsyncがNULLを返す。登録用の引数なしLookupはtrueへ接続し、非削除・在籍01／02の人数を集計する。検索用falseの集計省略と区別する。〔実装根拠：sources/Core/SqlServerStudentService.cs:172-179、sources/Core/SqlServerStudentService.cs:196-216〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A1092",
+      "value": "結果・例外時の扱い"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1093",
+      "value": "新規リンク非表示だけに権限を依存せず、入口でもViewerを拒否する。復帰状態不正、既存対象不在、候補取得後の復帰状態再Get失敗は正常登録画面の生成を中断する。編集の基準は登録側で再取得した対象と版である。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1094",
+      "value": ""
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A1095",
+      "value": "検索状態への復帰"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A1096",
+      "value": "処理概要"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1097",
+      "value": "既存ContextIdによるGETは元条件で最新結果を取り直す。Appliedなしなら未検索を返し、学生検索は行わない。保存した学生が元条件外でも、条件をその学生へ合わせて変更しない。成功通知はFlashから一度だけ取得する。〔実装根拠：sources/Web/Controllers/StudentsController.cs:8-11、sources/Infrastructure/WebStudentCoordinator.cs:14-14〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A1098",
+      "value": "処理手順"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1099",
+      "value": "1. 登録画面の戻るリンクはReturnContextIdと保存済みReturnRevisionを送る。保存・削除のOutcome.Saved時だけReturnAfterSaveがFlashをPutし303を返す。復帰先なしなら新しい未検索状態を作り、そのID・版を使用する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1100",
+      "value": "2. IndexがReadと最初のGetを行う。GETではTabを渡さない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1101",
+      "value": "3. contextRevisionがNULLなら空文字をResumeへ渡す。最新Revisionで補完しない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1102",
+      "value": "4. ResumeのUseがGet、Gate待機、再Get、版一致、版上限を検査する。ここでもTabはNULLである。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1103",
+      "value": "5. AppliedなしならPresent(entry, null)だけを返す。LastResult代入と版加算は行わず、正常operation復帰によって期限だけ延長する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1104",
+      "value": "6. Appliedありなら元条件でSearchAsyncとEnsureSearchを実行し、LastResultを更新して版を加算する。Appliedは元のままとし、正常復帰で期限を延長する。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1105",
+      "value": "7. ControllerがAppliedから入力DTOを復元し、FlashをTakeする。その後候補取得、JSON要素化、Razor描画を行う。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1106",
+      "value": "〔実装根拠：sources/Web/Controllers/StudentsController.cs:8-11、sources/Web/Controllers/StudentsController.cs:31-40、sources/Infrastructure/WebStudentCoordinator.cs:14-14、sources/Infrastructure/FlashMessageStore.cs:6-9。戻るリンク：sources/Views/Students/Edit.cshtml:16-16〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A1107",
+      "value": "処理フロー"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1108",
+      "value": "復帰フロー1。未検索と検索済みの保持値を分け、合流後は各枝のPresent結果と現在版を引き継ぐ。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1178",
+      "value": "復帰フロー2。Flash消費後の失敗を、通知未取得の失敗へ合流させない。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A1213",
+      "value": "SQL・テーブル関連（ER図）"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1214",
+      "value": "未検索枝は候補だけ、検索済み枝は学生・クラス・名称コードの検索後に候補を読む。条件と通知はDB表ではなくメモリから得る。"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A1237",
+      "value": "DB操作の詳細"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1238",
+      "value": "検索済み枝は検索SQL契約を実行する。ResumeにはPageイベントの保持Page補正と再検索がない。サービスが実取得ページを最終ページへ補正してもApplied.Pageは元のままで、Presentも保持Pageを返す。件数減少時、表示ページと実取得ページが異なる場合がある。候補読取りは両枝で実行する。〔実装根拠：sources/Infrastructure/WebStudentCoordinator.cs:12-14、sources/Infrastructure/WebStudentCoordinator.cs:21-21、sources/Core/SqlServerStudentService.cs:160-164〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "A1239",
+      "value": "結果・例外時の扱い"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1240",
+      "value": "期限切れ409、所有者・別セッション不一致403、復帰版不一致409を初期化へ変換しない。編集開始後に検索版が進めば、保存済みReturnRevisionによる復帰は拒否される。GETではタブ比較がないため、この入口だけで別タブ分離を保証しない。〔実装根拠：sources/Infrastructure/SearchContextStore.cs:13-14、sources/Web/Controllers/StudentsController.cs:10-10、sources/Web/Controllers/StudentsController.cs:38-38。失効初期化の設計意図：reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:390-392〕"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "cell": "U1241",
+      "value": "Flashは候補取得前に消費され、後続表示失敗で復元しない。登録・削除のSavedはDB・監査のcommit後に返る。303後の復帰拒否や検索表示失敗は、その確定済み保存をrollbackする処理ではない。〔実装根拠：sources/Infrastructure/FlashMessageStore.cs:9-9、sources/Web/Controllers/StudentsController.cs:31-38、sources/Core/SqlServerStudentService.cs:306-315、sources/Core/SqlServerStudentService.cs:413-414〕"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "A1",
+      "value": "移送ID"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "B1",
+      "value": "起点・方向"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "C1",
+      "value": "移送先"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "D1",
+      "value": "加工・対応"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "E1",
+      "value": "条件と保持結果"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "F1",
+      "value": "根拠"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "A2",
+      "value": "MOVE-001"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "B2",
+      "value": "フォーム→MVC"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "C2",
+      "value": "条件DTO、状態・表示指定"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "D2",
+      "value": "Criteria接頭辞。年度int?、未所属bool、在籍string[]へバインド。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "E2",
+      "value": "FormGuardはバインド後の名前・重複検査。SearchのみModelState判定。未送信在籍はSearch・Optionsで空配列。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "F2",
+      "value": "sources/Web/Controllers/StudentsController.cs:13-22、sources/Web/Inputs/StudentSearchInput.cs:7-29"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "A3",
+      "value": "MOVE-002"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "B3",
+      "value": "DTO→検索条件"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "C3",
+      "value": "SearchCriteria"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "D3",
+      "value": "Name→StudentName、Kana→StudentNameKana、StatusCodes→EnrollmentStatusCodes。ClassIdはOptionalでlong?。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "E3",
+      "value": "Page=1、表示指定は引数。ClassId変換はUse前。文字列正規化は未実施。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "F3",
+      "value": "sources/Web/Inputs/StudentSearchInput.cs:19-22、sources/Infrastructure/WebStudentCoordinator.cs:8-9"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "A4",
+      "value": "MOVE-003"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "B4",
+      "value": "条件→照合値"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "C4",
+      "value": "サービスローカル・SQLパラメータ"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "D4",
+      "value": "番号、氏名キー、カナキー、電話、コード、DateOnly範囲を生成。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "E4",
+      "value": "正規化成功値をSQLへ渡す。元条件に書き戻さない。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "F4",
+      "value": "sources/Core/SqlServerStudentService.cs:113-153"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "A5",
+      "value": "MOVE-004"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "B5",
+      "value": "正常条件・結果→保持"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "C5",
+      "value": "Applied・LastResult・Revision"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "D5",
+      "value": "条件のJSON複製、結果保存、版＋1。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "E5",
+      "value": "EnsureSearch成功後。0件・上限も含む。後続表示失敗で戻さない。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "F5",
+      "value": "sources/Infrastructure/WebStudentCoordinator.cs:9-9、sources/Infrastructure/SearchContextStore.cs:15-15"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "A6",
+      "value": "MOVE-005"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "B6",
+      "value": "Applied→ページ条件"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "C6",
+      "value": "SearchCriteria複製"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "D6",
+      "value": "表示指定変更時Page1、それ以外は要求Page。必要時に保持Page補正。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "E6",
+      "value": "全検索のEnsureSearch成功後に保持を置換。編集途中Criteriaを混ぜない。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "F6",
+      "value": "sources/Infrastructure/WebStudentCoordinator.cs:12-12"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "A7",
+      "value": "MOVE-006"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "B7",
+      "value": "Applied→再表示入力"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "C7",
+      "value": "Controller.From"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "D7",
+      "value": "番号・氏名・カナ・電話NULLは空文字。ClassIdはInvariantCultureの10進文字列。その他を対応付ける。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "E7",
+      "value": "GET復帰、Page正常・拒否で使用。Search再表示は受信input。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "F7",
+      "value": "sources/Web/Controllers/StudentsController.cs:11-19、sources/Web/Controllers/StudentsController.cs:40-40"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "A8",
+      "value": "MOVE-007"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "B8",
+      "value": "Entry・当該result→投影"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "C8",
+      "value": "Present→JsonElement"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "D8",
+      "value": "resultから状態・件数・行・日時。Appliedまたは初期条件からページ・ソート・条件。EntryからID・版。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "E8",
+      "value": "result=NULLでLastResultを暗黙採用しない。Appliedも消さない。上限件数はNULL。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "F8",
+      "value": "sources/Infrastructure/WebStudentCoordinator.cs:21-21、sources/Web/Models/StudentSearchPageModel.cs:15-15"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "A9",
+      "value": "MOVE-008"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "B9",
+      "value": "DB行→一覧"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "C9",
+      "value": "StudentRow→WebPresentation.Row"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "D9",
+      "value": "原表記、保存カナ、和暦、JOIN名称、名称＋住所1、本人電話、日本時間日時、文字列学生ID。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "E9",
+      "value": "入学日と学生版はStudentRowまで取得するが一覧投影へ含めない。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "F9",
+      "value": "sources/Core/SqlServerStudentService.cs:77-90、sources/Infrastructure/WebPresentation.cs:20-20"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "A10",
+      "value": "MOVE-009"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "B10",
+      "value": "全候補→画面選択"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "C10",
+      "value": "ビュー・Options"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "D10",
+      "value": "分類別コード、重複除去年度、上位条件でクラス抽出。不適合選択クラスをOptionsで解除。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "E10",
+      "value": "候補集合と選択済み値は別。未所属ONはOptionsが3値とModelStateを解除。Appliedは維持。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "F10",
+      "value": "sources/Web/Controllers/StudentsController.cs:22-22、sources/Views/Students/Search.cshtml:5-5"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "A11",
+      "value": "MOVE-010"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "B11",
+      "value": "検索→登録"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "C11",
+      "value": "URLの学生ID・returnContextId"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "D11",
+      "value": "新規は状態ID、既存は学生IDと状態ID。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "E11",
+      "value": "検索入力・検索版・行版を移さず、登録側で最新対象と復帰版を取得。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "F11",
+      "value": "sources/Views/Students/Search.cshtml:6-8、sources/Web/Controllers/StudentsController.cs:23-25"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "A12",
+      "value": "MOVE-011"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "B12",
+      "value": "登録→検索"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "C12",
+      "value": "contextId・contextRevision・Flash"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "D12",
+      "value": "戻るはSnapshotの復帰版。Saved後は通知Put・303。元条件で再検索。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "E12",
+      "value": "Saved以外を成功通知にしない。復帰先なしは新しい未検索状態。確定済みDB保存と復帰表示を分ける。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "F12",
+      "value": "sources/Web/Controllers/StudentsController.cs:31-38、sources/Views/Students/Edit.cshtml:16-16"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "A13",
+      "value": "MOVE-012"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "B13",
+      "value": "Clear→初期状態"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "C13",
+      "value": "同じEntry・新DTO"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "D13",
+      "value": "Applied・LastResult NULL、版＋1。入力初期化、20件、studentNo昇順、Page1。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "E13",
+      "value": "状態・版検査成功後。再表示候補は再取得する。"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "cell": "F13",
+      "value": "sources/Infrastructure/WebStudentCoordinator.cs:15-15、sources/Web/Controllers/StudentsController.cs:21-21"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A1",
+      "value": "補足説明"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A3",
+      "value": "入力検査とバインドの境界"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U4",
+      "value": "Cookie認証はSecure、HttpOnly、SameSite=Strict、30分、有効期限のスライドを設定する。認証要求は401、アクセス拒否は403を設定し、学生ルートでは独自JSON本文を作らない。CSRFはMVC全体のAutoValidateAntiforgeryTokenで検証し、独自JSONへの失敗変換は /api 配下だけに適用する。学生フォームのCSRF拒否はアクションの個別catchより前である。〔実装根拠：sources/Infrastructure/WebHostSetup.cs:14-16、sources/Infrastructure/AntiforgeryResultFilter.cs:5-8〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U5",
+      "value": "RequestIdentityはNameIdentifier、login_session、RoleをClaimから取得する。主体の空白または64Rune超過、セッションの空白または64コード単位超過、Enum.TryParse失敗は401となる。検索のReadはCurrentUser取得である。CreateOrUpdateはViewerを拒否し、Administratorの判定は別処理である。〔実装根拠：sources/Infrastructure/RequestIdentity.cs:7-16〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U6",
+      "value": "FormGuardはDTO公開プロパティから許可名を作る。Search・OptionsはCriteria.*と状態3項目・表示3項目、PageはPageRequestとTabId、ClearはContextRequestとTabIdを許可する。CSRF項目と __Invariant も含める。許可集合は大文字小文字を区別しない。許可外名は400、同名複数値も原則400だが、末尾StatusCodes、末尾UnassignedOnly、正確な綴りの __Invariant は重複の例外である。__Invariant の値が許可名かを検査する分岐も正確な綴りによる比較で、許可集合の比較規則とは異なる。これは値の業務妥当性を認定する処理ではない。〔実装根拠：sources/Web/Controllers/StudentsController.cs:13-22、sources/Web/Controllers/StudentsController.cs:41-41〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U7",
+      "value": "受信設定はKestrel本文65536、MultipartBodyLengthLimit=65536、ValueLengthLimit=65536、ValueCountLimit=128である。MVCは非nullable参照型への暗黙Requiredを抑止する。宣言のstring・string[]や初期値、ブラウザー属性だけで受信NULLを排除する保証にはしない。原HTTP値、MVC変換後DTO、サービス引数は別段階である。SearchはModelState不正ならサービスを呼ばないが、Page・Options・Clearは同じ判定を持たない。〔実装根拠：sources/Infrastructure/WebHostSetup.cs:16-18、sources/Web/Controllers/StudentsController.cs:13-22〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U8",
+      "value": "NULLの扱いは項目ごとに異なる。TextはNULLを空文字へ、IdParser.OptionalはNULL・空文字を未指定へ、検索GetはNULLを辞書呼出し前に409へ分類する。一方、在籍配列はサービスがLengthを先に参照するため、NULLが届いた場合は独自検査前にNullReferenceExceptionとなる。OptionsのビューもContainsに依存する。欠落項目の空配列補完とNULL配列は同じ契約ではない。MVC変換失敗時の実到達値は、これら後段の分岐から逆算して保証しない。〔実装根拠：sources/Core/StudentNormalizer.cs:47-55、sources/Web/Inputs/StudentSaveInput.cs:60-60、sources/Infrastructure/SearchContextStore.cs:13-13、sources/Core/SqlServerStudentService.cs:111-112、sources/Views/Students/Search.cshtml:5-5〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U9",
+      "value": "登録連携のSnapshot.Getは検索Getとは異なり、NULLの明示検査より先にTryGetValueを呼ぶ。検索IDのNULL→409契約をSnapshotIdへ一般化しない。入力がNULLでコレクションへ到達する場合のライブラリ例外と、キー不在・期限切れの独自WebFaultは別の境界として扱う。〔実装根拠：sources/Infrastructure/EditorSnapshotStore.cs:10-10〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A10",
+      "value": "文字列正規化の具体的契約"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U11",
+      "value": "ScalarCountはサロゲート対を1スカラーとして数え、孤立した上位・下位サロゲートをArgumentExceptionにする。TextはNULL補完、raw上限、Controlカテゴリ禁止、Trim、空・必須、Trim後上限の順に検査する。この検索の単行項目では改行やタブもControlとして拒否する。HTML maxlengthはUTF-16コード単位のブラウザー制限、string.Lengthもコード単位、業務長はスカラー値であり、SQLのnvarchar容量と同一の上限ではない。〔実装根拠：sources/Core/StudentNormalizer.cs:37-57、sources/Views/Students/Search.cshtml:5-5〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U12",
+      "value": "氏名カナは次の順で処理する。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U13",
+      "value": "1. 検索のNULL・空文字はカナ条件を省略する。その他には任意Textを適用し、raw・Trim後36スカラーとControl禁止を確認する。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U14",
+      "value": "2. FormKCを適用する。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U15",
+      "value": "3. Rune.IsWhiteSpaceの連続を内部ASCII空白U+0020の1個へまとめ、先頭・末尾には残さない。Textで先に拒否されるControl空白を、この段階の除去で受け入れることはない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U16",
+      "value": "4. ひらがなU+3041～U+3096、U+309D、U+309Eだけに0x60を加える。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U17",
+      "value": "5. 変換後の文字はU+30A1～U+30FA、U+30FC、U+30FB、U+30FD、U+30FEだけを許可する。整理した区切り空白は別に追加される。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U18",
+      "value": "6. 区切り空白を含む結果の18スカラー上限を確認する。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U19",
+      "value": "7. 検索キーではASCII空白を除去し、LIKE部分一致へ渡す。非空の空白だけの入力は空キーとなり、NULLでないため LIKE '%%' が残る。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U20",
+      "value": "この範囲に含まれないカナ関連文字を、一般的な「カタカナ」の解釈で追加しない。保存側は正規化カナと空白除去キーを別のNVarChar(36)として扱う。〔実装根拠：sources/Core/StudentNormalizer.cs:72-85、sources/Core/StudentNormalizer.cs:126-145、sources/Core/SqlServerStudentService.cs:31-32、sources/Core/SqlServerStudentService.cs:116-142〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U21",
+      "value": "電話はTextでraw・Trim後20スカラーとControl禁止を確認し、空・空白だけならNULLを返す。その後FormKCを適用し、Rune.IsWhiteSpace、U+002D、U+2010、U+2011、U+2212、U+0028、U+0029を除去する。これは任意のダッシュ類を除去する規則ではない。FormKCで別表記がこれらへ変わる場合は、変換後の文字に対して除去を行う。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U22",
+      "value": "除去後は、0始まりのASCII数字10～11桁、またはU+002Bのプラスに続く非ゼロ始まりASCII数字7～15桁だけを許可する。最大長はプラスを含む16文字となる。記号除去後に空文字になった非空入力は、NULLへ再変換せず形式不正になる。本人・緊急の保存側も同じPhoneとVarChar(16)を使う。〔実装根拠：sources/Core/StudentNormalizer.cs:87-93、sources/Core/StudentNormalizer.cs:133-141、sources/Core/SqlServerStudentService.cs:34-37〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A23",
+      "value": "保存列・表示名称・日付形式"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U24",
+      "value": "学生保存側は氏名原表記とname_key、正規化カナとkana_keyを別列へ渡す。SQLパラメータは氏名NVarChar(16)、name_key NVarChar(320)、カナとkana_key NVarChar(36)、住所各NVarChar(90)、電話各VarChar(16)である。住所1・2の保存業務上限は各raw・Trim後45スカラーで、住所2はNULL可、一覧は住所1だけを使う。検索側のローカルキーをそのまま学生へ保存する経路はない。〔実装根拠：sources/Core/StudentNormalizer.cs:124-145、sources/Core/SqlServerStudentService.cs:30-37、sources/database/001_schema.sql:10-22〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U25",
+      "value": "クラス名は宣言されたSaveClassAsyncでraw・Trim後18スカラー、必須を検査し、NVarChar(36)へ渡す。クラスコードはIdentifierで9以内、VarChar(9)である。コード名称はSaveCodeAsyncでraw・Trim後12スカラー、必須を検査し、NVarChar(24)へ渡す。DDLも名称上限のCHECKを持つ。これらは検索候補とJOIN名称の属性根拠だが、Webにマスタ保守の入口やDI登録が接続されたことを意味しない。category_nameは分類名であり、候補のcode_nameとは別列である。〔実装根拠：sources/Core/MasterMaintenanceService.cs:30-37、sources/Core/MasterMaintenanceService.cs:73-76、sources/Core/MasterMaintenanceService.cs:81-115、sources/database/001_schema.sql:67-81、sources/database/001_schema.sql:115-128、sources/Infrastructure/WebHostSetup.cs:13-19〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U26",
+      "value": "JOIN名称の保存列はNOT NULLでも、LEFT JOINの結果はNULLとなり得る。現行の代替表示は都道府県名NULLの [不整合] と本人電話NULLの「－」に限定される。学年・クラス・在籍名称の欠損や停止・期間外を一律に補う表示処理はない。名称変更は参照時の表示へ影響し、学生へ保存するのは名称ではなく参照コード・クラスIDである。〔実装根拠：sources/Core/SqlServerStudentService.cs:77-90、sources/Views/Students/Search.cshtml:8-8〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U27",
+      "value": "生年月日はdateから和暦へ変換する。実装の境界は明治1900-01-01～1912-07-29、大正1912-07-30～1926-12-24、昭和1926-12-25～1989-01-07、平成1989-01-08～2019-04-30、令和2019-05-01以後である。年1は「元」、月日2桁で表示し、DateOnlyに時差変換は行わない。更新・検索日時はUTC+9の yyyy/MM/dd HH:mm:ss。検索日時はサービスの検索開始時刻、共有ヘッダーの業務日は描画時のUTCから得る日本時間日付であり、取得段階が異なる。〔実装根拠：sources/Core/JapaneseDateService.cs:9-16、sources/Core/JapaneseDateService.cs:41-50、sources/Infrastructure/WebPresentation.cs:5-7、sources/Views/Shared/_Layout.cshtml:1-1〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A28",
+      "value": "検索SQLと候補SQL"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A29",
+      "value": "接続、型付きパラメータ、取消"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U30",
+      "value": "接続文字列はEncrypt=Mandatory、TrustServerCertificate=falseへ設定する。OpenAsync後、現在DBのsnapshot_isolation_stateが1かを診断し、不一致ならInvalidOperationExceptionとなる。接続・診断失敗時は接続を破棄して再throwする。検索・候補のCommand補助はCommandTimeout=30で、診断用CreateCommandには明示Timeout設定がない。〔実装根拠：sources/Core/SqlServerStudentService.cs:39-66〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U31",
+      "value": "ParamはSqlDbTypeを指定し、Sizeが0以外なら設定する。DateOnlyはTimeOnly.MinValueのDateTimeへ、NULLはDBNull.Valueへ変換する。接続、トランザクション開始、SQL実行、reader、commitにはctを渡す。30秒のコマンド設定と要求取消は別の中断境界であり、常に入力不正へ変換されるものではない。〔実装根拠：sources/Core/SqlServerStudentService.cs:67-72、sources/Core/SqlServerStudentService.cs:123-168、sources/Core/SqlServerStudentService.cs:199-216〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A32",
+      "value": "存在・組合せの確認"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A33",
+      "value": "対象"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE33",
+      "value": "SQL条件・取得値"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI33",
+      "value": "パラメータ"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM33",
+      "value": "拒否と検査範囲"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A34",
+      "value": "学年・都道府県"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE34",
+      "value": "m_code の category_id=@category AND code_value=@value、COUNT_BIG。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI34",
+      "value": "categoryはVarChar(24)、valueはVarChar(10)。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM34",
+      "value": "件数1だけ存在。分類はGRADEまたはPREFECTURE。不在はE-STU-009。停止・期間を検査しない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A35",
+      "value": "年度"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE35",
+      "value": "m_class.school_year=@year、COUNT_BIG。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI35",
+      "value": "SmallInt。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM35",
+      "value": "0件はE-STU-014。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A36",
+      "value": "クラス"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE36",
+      "value": "m_class.class_id=@id、school_yearとgrade_code。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI36",
+      "value": "BigInt。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM36",
+      "value": "不在、指定年度との不一致、正規化学年との不一致はE-STU-014。停止・期間を検査しない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A37",
+      "value": "学籍番号"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE37",
+      "value": "検索前の完全一致存在確認なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI37",
+      "value": "検索パターン用@noだけ。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM37",
+      "value": "一意確認・同一人物候補確認は検索では行わない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U39",
+      "value": "学年確認を先に評価し、不在ならORの短絡で都道府県確認に進まず拒否する。存在確認も件数・一覧と同じSNAPSHOT内にある。〔実装根拠：sources/Core/SqlServerStudentService.cs:123-135、sources/Core/SqlServerStudentService.cs:218-222〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A40",
+      "value": "全検索述語"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A41",
+      "value": "適用条件"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO41",
+      "value": "SQL述語"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC41",
+      "value": "パラメータと値"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A42",
+      "value": "常時"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO42",
+      "value": "s.is_deleted=0"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC42",
+      "value": "論理削除を除外。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A43",
+      "value": "no非NULL"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO43",
+      "value": "s.student_no LIKE @no ESCAPE '!'"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC43",
+      "value": "VarChar(31)。エスケープ済みno＋末尾%。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A44",
+      "value": "name非NULL"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO44",
+      "value": "s.name_key LIKE @name ESCAPE '!'"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC44",
+      "value": "NVarChar(642)。エスケープ済みキーの両側に%。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A45",
+      "value": "kana非NULL"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO45",
+      "value": "s.kana_key LIKE @kana ESCAPE '!'"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC45",
+      "value": "NVarChar(74)。エスケープ済みキーの両側に%。空キーでも省略しない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A46",
+      "value": "年度非NULL"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO46",
+      "value": "c.school_year=@year"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC46",
+      "value": "SmallInt。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A47",
+      "value": "grade非NULL"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO47",
+      "value": "c.grade_code=@grade"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC47",
+      "value": "VarChar(2)。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A48",
+      "value": "クラスID非NULL"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO48",
+      "value": "s.class_id=@class"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC48",
+      "value": "BigInt。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A49",
+      "value": "未所属true"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO49",
+      "value": "s.class_id IS NULL"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC49",
+      "value": "パラメータなし。所属との排他は正規化前に検査。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A50",
+      "value": "prefecture非NULL"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO50",
+      "value": "s.prefecture_code=@prefecture"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC50",
+      "value": "VarChar(2)。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A51",
+      "value": "phone非NULL"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO51",
+      "value": "(s.phone_number=@phone OR s.emergency_phone_number=@phone)"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC51",
+      "value": "共通VarChar(16)。他条件とは括弧外でAND。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A52",
+      "value": "from非NULL"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO52",
+      "value": "s.admission_date>=@from"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC52",
+      "value": "Date。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A53",
+      "value": "to非NULL"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO53",
+      "value": "s.admission_date<=@to"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC53",
+      "value": "Date。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A54",
+      "value": "在籍配列非空"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO54",
+      "value": "s.enrollment_status_code IN (@status0,...)"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC54",
+      "value": "各VarChar(2)。空配列は述語なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U56",
+      "value": "Whereが省くのはNULLであり、空文字を一律に省かない。LIKEエスケープは !→!!、%→!%、_→!_、[→![ の順である。入力値を自由な述語として連結せず、型・サイズ付きパラメータへ渡す。〔実装根拠：sources/Core/SqlServerStudentService.cs:137-155、sources/Core/StudentNormalizer.cs:161-161〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A57",
+      "value": "件数、一覧、ページング"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U58",
+      "value": "件数SQLは次の構成である。波括弧部は上表の同一述語へ置き換えられる。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U59",
+      "value": "SELECT COUNT_BIG(*)\nFROM (\n  SELECT TOP (10001) s.student_id\n  FROM dbo.m_student s\n  LEFT JOIN dbo.m_class c ON c.class_id=s.class_id\n  {検索述語}\n) limited"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U60",
+      "value": "10000件超過では実総数を数えず、行SQLも実行しない。10000件以下は同じSNAPSHOTでRowSelectへ同じ述語・パラメータを適用する。取得列は学生ID、番号、氏名、カナ、生年月日、クラス年度・コード・名、学年名、在籍名、都道府県名、住所1、本人電話、入学日、更新日時、学生版である。RowSelectのJOINは、所属ID、学年の分類＋値、在籍の分類＋値、都道府県の分類＋値によるLEFT JOINである。〔実装根拠：sources/Core/SqlServerStudentService.cs:77-90、sources/Core/SqlServerStudentService.cs:156-168〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U61",
+      "value": "StudentRowのID・版はlong、生年月日・入学日はDateOnly、年度はint?、参照名称はstring?、更新日時はDateTimeOffsetである。一覧投影は入学日と学生版を含めず、住所2、メール、緊急連絡先、備考も出力しない。〔実装根拠：sources/Core/Contracts.cs:50-58、sources/Infrastructure/WebPresentation.cs:20-20〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A62",
+      "value": "SortKey"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO62",
+      "value": "主順序列"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC62",
+      "value": "方向・副順序"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A63",
+      "value": "studentNo"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO63",
+      "value": "s.student_no"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC63",
+      "value": "ascまたはdesc、続けて s.student_id ASC。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A64",
+      "value": "name"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO64",
+      "value": "s.name_key"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC64",
+      "value": "ascまたはdesc、続けて s.student_id ASC。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A65",
+      "value": "admissionDate"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO65",
+      "value": "s.admission_date"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC65",
+      "value": "ascまたはdesc、続けて s.student_id ASC。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A66",
+      "value": "updatedAt"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO66",
+      "value": "s.updated_at"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC66",
+      "value": "ascまたはdesc、続けて s.student_id ASC。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U68",
+      "value": "全一致集合をこの順序にしてからOFFSET/FETCHを適用する。最終ページは max(1,(count+PageSize-1)/PageSize)、実取得ページは要求Pageと最終ページの小さい方である。offsetは checked((実取得ページ-1)*PageSize)、sizeはPageSizeで、双方Int。実取得ページをSearchCriteriaへ書き戻さない。〔実装根拠：sources/Core/SqlServerStudentService.cs:107-108、sources/Core/SqlServerStudentService.cs:160-168〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A69",
+      "value": "候補SQL"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U70",
+      "value": "コードは m_code c JOIN m_code_category k ON k.category_id=c.category_id で全件を取り、category_id、display_order、code_value順に返す。IsActiveはコードと分類の両方が有効な場合だけtrueとなるが、この値や期間によるWHERE除外はない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U71",
+      "value": "クラスは m_class c LEFT JOIN m_code g ON g.category_id=c.grade_category AND g.code_value=c.grade_code で全件を取り、年度DESC、学年表示順、クラス表示順、コード、ID順に返す。検索用falseはoccupiedを整数0で投影する。登録用trueだけが非削除・在籍01／02の人数を集計する。候補の人数値を予約済み人数や保存成功の保証へ使わない。〔実装根拠：sources/Core/SqlServerStudentService.cs:196-216〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A72",
+      "value": "保持状態と確定境界"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U73",
+      "value": "UseはGate待機前のGetに加え、取得後にもGetを行い、待機中の期限切れや所有者・指定タブ不一致を再確認する。版照合と上限確認の後にoperationを呼ぶ。DB await後に所有者・期限を再確認する処理はない。期限延長はoperation正常復帰後、版加算は各operationが実施する。〔実装根拠：sources/Infrastructure/SearchContextStore.cs:14-14、sources/Infrastructure/WebStudentCoordinator.cs:9-15〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A74",
+      "value": "経路"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "Y74",
+      "value": "Applied"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AW74",
+      "value": "LastResult"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BU74",
+      "value": "版と期限"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CS74",
+      "value": "当該画面のresult"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A75",
+      "value": "Search・Page正常"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "Y75",
+      "value": "成功条件の複製へ置換。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AW75",
+      "value": "成功結果へ置換。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BU75",
+      "value": "版＋1。operation正常復帰後に期限延長。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CS75",
+      "value": "成功結果。0件・上限も含む。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A76",
+      "value": "保持更新前の検索・ページ拒否"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "Y76",
+      "value": "以前の値。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AW76",
+      "value": "以前の値。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BU76",
+      "value": "代入に至らなければ変更なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CS76",
+      "value": "個別再表示はNULL。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A77",
+      "value": "Options"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "Y77",
+      "value": "変更なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AW77",
+      "value": "変更なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BU77",
+      "value": "Gate・版検査・期限延長なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CS77",
+      "value": "LastResultを指定。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A78",
+      "value": "Clear正常"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "Y78",
+      "value": "NULL。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AW78",
+      "value": "NULL。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BU78",
+      "value": "版＋1、正常復帰で期限延長。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CS78",
+      "value": "NULL、初期条件。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A79",
+      "value": "AppliedなしResume"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "Y79",
+      "value": "NULLのまま。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AW79",
+      "value": "代入なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BU79",
+      "value": "版不変、正常復帰で期限延長。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CS79",
+      "value": "NULL。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A80",
+      "value": "AppliedありResume"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "Y80",
+      "value": "元条件を維持。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AW80",
+      "value": "再検索結果。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BU80",
+      "value": "版＋1、正常復帰で期限延長。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CS80",
+      "value": "再検索結果。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A81",
+      "value": "状態代入後の投影失敗"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "Y81",
+      "value": "到達済みの代入を戻さない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AW81",
+      "value": "到達済みの代入を戻さない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BU81",
+      "value": "版加算済みなら保持。operation未正常復帰なら延長未到達。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CS81",
+      "value": "正常HTMLを保証しない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A82",
+      "value": "Use正常復帰後の候補・描画失敗"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "Y82",
+      "value": "更新済み値を維持。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AW82",
+      "value": "更新済み値を維持。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BU82",
+      "value": "更新済み版・延長済み期限を戻さない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CS82",
+      "value": "Pageの候補WebFault再表示はNULL、その他は応答境界に従う。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U84",
+      "value": "Presentは当該resultから行・日時・件数、Appliedからページ・表示指定を作る。NULL結果へ合流したからといって保持条件やPageを1へ固定しない。ビューはNULL件数をcount=0として除算するため、保持Pageが大きい拒否・上限画面では「保持Page / 1」となる場合がある。〔実装根拠：sources/Infrastructure/WebStudentCoordinator.cs:21-21、sources/Views/Students/Search.cshtml:2-8〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U85",
+      "value": "検索状態とFlashは接続されたメモリ実装である。DDLのt_runtime_stateに暗号化payload、期限、版、consumedが宣言されていても、この検索経路から読書き、暗号化、永続化、消費する処理は接続されていない。〔実装根拠：sources/Infrastructure/SearchContextStore.cs:9-15、sources/Infrastructure/FlashMessageStore.cs:6-9、sources/Infrastructure/WebHostSetup.cs:13-19、sources/database/001_schema.sql:171-184〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A86",
+      "value": "共通応答境界M"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U87",
+      "value": "図のMは、個別catchを通過した例外がWebHostSetupのmiddlewareへ届く境界である。Response.HasStarted=falseの場合だけ捕捉する。学生ルートではWebFaultのStatus、それ以外は503を設定し、メッセージをHtmlEncodeした独立HTMLと検索画面へのリンクを返す。応答開始後の例外はこのcatch条件に合わず、同じエラーHTMLへ必ず変換される保証はない。レスポンスにはno-store、nosniff、no-referrer、self中心のCSPを設定する。〔実装根拠：sources/Infrastructure/WebHostSetup.cs:22-25〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A88",
+      "value": "段階・例外"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO88",
+      "value": "捕捉・値の引継ぎ"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC88",
+      "value": "応答が到達する範囲"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A89",
+      "value": "認証・認可の拒否"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO89",
+      "value": "Cookie設定の401・403。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC89",
+      "value": "アクション前。学生独自JSONなし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A90",
+      "value": "CSRF拒否"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO90",
+      "value": "MVC検証結果。独自JSON変換はAPI配下だけ。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC90",
+      "value": "アクション前。Search・Page個別catch外。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A91",
+      "value": "SearchのModelState不正"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO91",
+      "value": "Controllerが422を設定。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC91",
+      "value": "候補取得・描画が成功すれば検索HTML。二次例外は別。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A92",
+      "value": "サービスtry内InputValidationException"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO92",
+      "value": "先行catchが元のFieldError群を返す。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC92",
+      "value": "EnsureSearchが先頭エラーをWebFaultへ移す。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A93",
+      "value": "サービスtry内ArgumentException"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO93",
+      "value": "後段catchがArgumentErrorを返す。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC93",
+      "value": "先行catch対象をこの分類へ含めない。既知コードを継承、それ以外E-STU-002。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A94",
+      "value": "Search・Pageの個別try内WebFault"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO94",
+      "value": "e.Status・Field・Messageをそのまま使う。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC94",
+      "value": "NULL結果の再表示を試みる。FieldにCriteriaを追加しない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A95",
+      "value": "FormGuard・最初のGet等のtry外WebFault"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO95",
+      "value": "Mで固有Statusを保持する。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC95",
+      "value": "応答未開始なら独立HTML。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A96",
+      "value": "SQL例外・取消・一般例外等"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO96",
+      "value": "該当する個別catchへ入らなければM。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC96",
+      "value": "応答未開始なら503。開始後はMの捕捉対象外。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A97",
+      "value": "Pageの状態更新後候補WebFault"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO97",
+      "value": "Page個別catchへ入り、更新済み状態を保持。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC97",
+      "value": "NULL結果で再取得・再表示。catch内失敗はM。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A98",
+      "value": "Razor描画の二次例外"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO98",
+      "value": "アクションのWebFault catch外。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC98",
+      "value": "HasStartedに従う。常に入力422となるものではない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U100",
+      "value": "EnsureSearchはSavedまたはNoChangeを受け入れ、それ以外をOutcomeのHTTP対応値でWebFaultへ移す。ValidationFailed=422、Forbidden=403、NotFound=404、Conflict・ConfirmationRequired=409、その他=503である。先頭エラーがあればMessage・Field・Codeを引き継ぎ、なければ共通文言とE-COM-004を使う。現行検索の正常OutcomeはNoChangeである。〔実装根拠：sources/Infrastructure/WebStudentCoordinator.cs:20-20、sources/Infrastructure/WebPresentation.cs:23-23〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A101",
+      "value": "CRUDの責務"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A102",
+      "value": "イベント"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U102",
+      "value": "m_student"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO102",
+      "value": "m_class"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI102",
+      "value": "m_code"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC102",
+      "value": "m_code_category"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CW102",
+      "value": "メモリ操作"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A103",
+      "value": "初期表示"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U103",
+      "value": "‐"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO103",
+      "value": "R候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI103",
+      "value": "R候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC103",
+      "value": "R候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CW103",
+      "value": "Entry作成、Flash Take。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A104",
+      "value": "検索"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U104",
+      "value": "R件数・一覧"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO104",
+      "value": "R存在・JOIN・候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI104",
+      "value": "R存在・名称・候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC104",
+      "value": "R候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CW104",
+      "value": "正常時にApplied・LastResult・版・期限更新。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A105",
+      "value": "候補更新"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U105",
+      "value": "‐"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO105",
+      "value": "R候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI105",
+      "value": "R候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC105",
+      "value": "R候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CW105",
+      "value": "Entry参照。編集中DTOの解除。保持状態は変更なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A106",
+      "value": "ページ"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U106",
+      "value": "R件数・一覧"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO106",
+      "value": "R存在・JOIN・候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI106",
+      "value": "R存在・名称・候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC106",
+      "value": "R候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CW106",
+      "value": "正常時に保持条件・結果・版・期限更新。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A107",
+      "value": "クリア"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U107",
+      "value": "‐"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO107",
+      "value": "R再表示候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI107",
+      "value": "R再表示候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC107",
+      "value": "R再表示候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CW107",
+      "value": "条件・結果解除、版・期限更新。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A108",
+      "value": "復帰・未検索"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U108",
+      "value": "‐"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO108",
+      "value": "R候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI108",
+      "value": "R候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC108",
+      "value": "R候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CW108",
+      "value": "版不変、期限延長、Flash Take。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A109",
+      "value": "復帰・検索済み"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U109",
+      "value": "R件数・一覧"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO109",
+      "value": "R存在・JOIN・候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI109",
+      "value": "R存在・名称・候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC109",
+      "value": "R候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CW109",
+      "value": "元条件維持、結果・版・期限更新、Flash Take。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U111",
+      "value": "検索機能から業務表のC・U・Dやt_operation_logの追記はない。登録遷移先の保存・監査は別責務で、検索復帰がそのcommitを取り消す処理にはならない。WebのRole ClaimとDB接続主体の権限も別である。〔実装根拠：sources/Web/Controllers/StudentsController.cs:8-22、sources/Core/SqlServerStudentService.cs:103-216、sources/Core/SqlServerStudentService.cs:306-315〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A112",
+      "value": "設計意図と現行実装の対応"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A113",
+      "value": "対象"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO113",
+      "value": "設計意図"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC113",
+      "value": "現行の動作と差"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A114",
+      "value": "初期候補"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO114",
+      "value": "必須マスタ不足なら検索不可。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC114",
+      "value": "全候補取得後に描画する。必須分類・初期コード不足で検索を非活性化する検査なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A115",
+      "value": "条件連動"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO115",
+      "value": "未所属ONで解除・非活性、OFFで復元しない。クラス先行反映と旧応答破棄。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC115",
+      "value": "DOM値解除、OptionsのDTO・ModelState解除、応答時disabledは別処理。検索側の先行反映・要求連番なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A116",
+      "value": "候補表示"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO116",
+      "value": "クラスに年度・学年・コード・名称。停止・過去値を含む。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC116",
+      "value": "optionは年度・コード・名称と停止注記。学年名称・期間外・人数・定員を出さない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A117",
+      "value": "ページ失効"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO117",
+      "value": "保持条件なし・失効を初期化して通知。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC117",
+      "value": "Appliedなしは個別409、最初のGet失効はMの409。自動初期化なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A118",
+      "value": "復帰"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO118",
+      "value": "元条件で最新DB検索、期限切れ初期化、確定通知。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC118",
+      "value": "元条件検索とFlashは接続。失効409、GETタブ比較なし、Resumeの保持Page補正なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A119",
+      "value": "一覧欠損"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO119",
+      "value": "未所属の「－」、名称不整合、停止・期間外の区別。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC119",
+      "value": "都道府県名NULLだけ不整合、本人電話NULLだけ「－」。他の名称の代替や一覧注記なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A120",
+      "value": "一覧操作"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO120",
+      "value": "範囲、先頭・前・次・最後、メニュー。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC120",
+      "value": "反映・前・次が存在。範囲、先頭・最後、メニューの実コントロールなし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A121",
+      "value": "結果通知"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO121",
+      "value": "0件I-SRC-001、上限W-SRC-001。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC121",
+      "value": "対応する文言を表示するがMessageIdの画面出力なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A122",
+      "value": "raw入力"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO122",
+      "value": "不正な原入力を保持し、厳密変換成功値だけ次層へ渡す。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC122",
+      "value": "バインド後DTOと保持条件の文字列は残る。年度・bool・ページ等の原HTTP文字列は独立保持しない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A123",
+      "value": "制御値"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AO123",
+      "value": "状態版、学生版、要求連番、Busyを用途別に分ける。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CC123",
+      "value": "状態版と学生版は別。要求連番なし。submitはbusy属性を設定するが再入拒否なし。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U125",
+      "value": "〔設計意図：reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:99-147、reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:159-165、reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:256-273、reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:303-320、reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:390-392、reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:590-610。現行の対応位置は項目・イベントの実装根拠に示す。〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U126",
+      "value": "参考の画面HTMLは架空値を使う設計見本である。本書の静的投影は現行ビューと共有CSSに対応させ、設計見本の範囲表示・メニュー等を実コントロールとして追加しない。日付入力は現行type=dateとサービスのISO解析、一覧生年月日は和暦、日時は日本時間という値の経路で確認する。〔設計意図：reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:29-33、reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:99-116。実装根拠：sources/Views/Students/Search.cshtml:5-8〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A127",
+      "value": "実装・確認担当の責務"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U128",
+      "value": "実装者は項目ごとに、HTTP入力、MVC変換後DTO、サービス引数、正規化ローカル値、型付きSQLパラメータ、取得列、再表示値の往復を確認する。HTML上限、rawスカラー上限、正規化後上限、DB容量を別々に照合し、氏名原表記と照合キー、本人電話表示と二列電話検索、未指定コードと00、NULLと空配列を取り違えない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U129",
+      "value": "確認段階は、形式検査前の受信失敗、サービス検査、DB読取り後の存在不正、0件・10000件・10001件以上、保持状態の競合、保持更新後の候補・描画失敗に分ける。カナの境界文字、電話の除去対象外記号、日付両端、同順位の学生ID順、停止候補、Gate待機中の失効、同じ要求版の並行処理、Optionsの版未照合、Resumeの表示Page差を対象にする。PageSize=0の拒否後描画とNULL配列は、受信到達条件と後段分岐を別々に確認する。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U130",
+      "value": "登録との連携では、検索から渡す対象ID・復帰ID、登録側で取得する最新対象・復帰版、Saved後の303・Flash・元条件再検索を照合する。保存・監査の失敗や結果不明は登録側の結果契約として確認し、検索の共通呼出し成功や復帰表示成功から業務保存成功を推測しない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U131",
+      "value": "顧客IT担当者は、検索入力の意味、一覧の保存元と参照名称、権限差、登録との移送、状態失効・版競合・障害時の結果を確認する。設計との差を意図へ合わせるか現行動作を採用するかは、差異ごとの判断対象である。これらは確認の責務と観点であり、試験合格や顧客承認を示すものではない。〔設計意図：reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:546-550、reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:586-608〕"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A132",
+      "value": "関連文書の対応"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "U133",
+      "value": "以下は提供された文書計画との対応である。本書以外は本応答で未生成であり、リンクは予定配置を示す。未生成の参照先だけに、本書で必要な入力・分岐・確定境界の説明を委ねない。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A134",
+      "value": "文書ID"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE134",
+      "value": "kind"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI134",
+      "value": "計画の相対path"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM134",
+      "value": "責務との対応・状態"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A135",
+      "value": "CSHARP_ASPNET-BAS-STU-01"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE135",
+      "value": "basic-design"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI135",
+      "value": "基本設計書/01_学生検索画面.md"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM135",
+      "value": "検索業務、論理項目、状態別操作。未生成。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A136",
+      "value": "CSHARP_ASPNET-BAS-STU-02"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE136",
+      "value": "basic-design"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI136",
+      "value": "基本設計書/02_学生登録画面.md"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM136",
+      "value": "新規・編集・参照と保存後復帰の業務。未生成。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A137",
+      "value": "CSHARP_ASPNET-BAS-STU-03"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE137",
+      "value": "table-index"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI137",
+      "value": "基本設計書/03_テーブル仕様書.md"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM137",
+      "value": "業務表の索引・関連・保存規則。未生成。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A138",
+      "value": "CSHARP_ASPNET-BAS-STU-04"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE138",
+      "value": "code-design"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI138",
+      "value": "基本設計書/04_コード設計書.md"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM138",
+      "value": "分類、候補値、初期投入、保守契約。未生成。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A139",
+      "value": "CSHARP_ASPNET-BAS-STU-03-M_STUDENT"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE139",
+      "value": "table-definition"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI139",
+      "value": "基本設計書/テーブル/01_m_student.md"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM139",
+      "value": "検索・表示列、所属・コードFK。未生成。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A140",
+      "value": "CSHARP_ASPNET-BAS-STU-03-M_CLASS"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE140",
+      "value": "table-definition"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI140",
+      "value": "基本設計書/テーブル/02_m_class.md"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM140",
+      "value": "年度・学年・クラス候補、名称・期間属性。未生成。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A141",
+      "value": "CSHARP_ASPNET-BAS-STU-03-M_CODE_CATEGORY"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE141",
+      "value": "table-definition"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI141",
+      "value": "基本設計書/テーブル/03_m_code_category.md"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM141",
+      "value": "分類と候補利用可否への参照。未生成。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A142",
+      "value": "CSHARP_ASPNET-BAS-STU-03-M_CODE"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE142",
+      "value": "table-definition"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI142",
+      "value": "基本設計書/テーブル/04_m_code.md"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM142",
+      "value": "選択値・名称・分類付き存在確認。未生成。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A143",
+      "value": "CSHARP_ASPNET-BAS-STU-03-T_OPERATION_LOG"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE143",
+      "value": "table-definition"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI143",
+      "value": "基本設計書/テーブル/05_t_operation_log.md"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM143",
+      "value": "登録側の確定・監査。検索から読書きなし。未生成。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A144",
+      "value": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE144",
+      "value": "detailed-specification"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI144",
+      "value": "詳細仕様書/CSharp_ASPNET/01_学生検索画面.md"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM144",
+      "value": "本書。フォーム、状態、候補、SQL、HTML応答。"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "A145",
+      "value": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-002"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "AE145",
+      "value": "detailed-specification"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "BI145",
+      "value": "詳細仕様書/CSharp_ASPNET/02_学生登録画面.md"
+    },
+    {
+      "sheet": "07_補足説明",
+      "cell": "CM145",
+      "value": "保存・削除・編集Snapshot、確認情報、検索復帰の登録側詳細。未生成。"
+    }
+  ],
+  "previews": [
+    {
+      "sheet": "表紙",
+      "range": "A1:AU36"
+    },
+    {
+      "sheet": "01_概要",
+      "range": "A1:DP37"
+    },
+    {
+      "sheet": "01_概要",
+      "range": "A38:DP82"
+    },
+    {
+      "sheet": "01_概要",
+      "range": "A83:DP127"
+    },
+    {
+      "sheet": "01_概要",
+      "range": "A128:DP161"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "range": "A1:J6"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "range": "A7:J11"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "range": "A12:J20"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "range": "A21:J28"
+    },
+    {
+      "sheet": "02_項目一覧",
+      "range": "A29:J36"
+    },
+    {
+      "sheet": "03_選択候補一覧",
+      "range": "A1:G9"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "range": "A1:F12"
+    },
+    {
+      "sheet": "04_内部項目一覧",
+      "range": "A13:F14"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A1:DP45"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A46:DP90"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A91:DP135"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A136:DP180"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A181:DP225"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A226:DP270"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A271:DP315"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A316:DP360"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A361:DP405"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A406:DP450"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A451:DP495"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A496:DP540"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A541:DP585"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A586:DP630"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A631:DP675"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A676:DP720"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A721:DP765"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A766:DP810"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A811:DP855"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A856:DP900"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A901:DP945"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A946:DP990"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A991:DP1035"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A1036:DP1080"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A1081:DP1125"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A1126:DP1170"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A1171:DP1215"
+    },
+    {
+      "sheet": "05_イベント仕様",
+      "range": "A1216:DP1241"
+    },
+    {
+      "sheet": "06_項目移送仕様",
+      "range": "A1:F13"
+    },
+    {
+      "sheet": "07_補足説明",
+      "range": "A1:DP27"
+    },
+    {
+      "sheet": "07_補足説明",
+      "range": "A28:DP61"
+    },
+    {
+      "sheet": "07_補足説明",
+      "range": "A62:DP99"
+    },
+    {
+      "sheet": "07_補足説明",
+      "range": "A100:DP132"
+    },
+    {
+      "sheet": "07_補足説明",
+      "range": "A133:DP145"
+    }
+  ],
+  "documentId": "CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-001",
+  "canonicalDocumentPath": "詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+  "markdownSha256": "9a49fb5a1d22094db7c57fdaf751807dd2f69c12367973ea839bc5ff9b037696",
+  "readOnly": true,
+  "save": false,
+  "originalApplicationExecuted": false
+}

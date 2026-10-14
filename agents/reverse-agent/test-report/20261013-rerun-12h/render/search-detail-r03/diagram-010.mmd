@@ -1,0 +1,12 @@
+flowchart TD
+ A["P-成功：②から受領"] --> L["局所try内：From Applied<br/>SearchModel・候補読取・Json化"]
+ L --> V["成功dataのSearchビュー"]
+ B["P-捕捉：①または②から受領"] --> W["局所catch：元のe.Statusを設定<br/>Field・MessageをModelStateへ"]
+ L -->|WebFault| W
+ W --> N["From Appliedまたは既定条件<br/>data＝Present entry,null・保持pageを引継ぐ"]
+ N --> C["catch内SearchModel<br/>候補再取得・Json化<br/>件数・並びはAppliedまたは既定値"]
+ C --> Z["保持条件と未検索一覧のSearchビュー<br/>保持page2なら2／1になり得る"]
+ L -->|非WebFault・取消| O["共通入口②：元の例外"]
+ C -->|WebFaultを含む例外・取消| O
+ V -->|描画例外| O
+ Z -->|描画例外| O

@@ -3,7 +3,7 @@ import copy
 import json
 import unittest
 
-from contextbase.ai.validation import validate_document
+from contextbase.ai.validation import EVENT_SECTIONS, FEATURE_ITEM_COLUMNS, TABLE_COLUMNS, validate_document
 
 
 PATH = "基本設計書/機能.md"
@@ -55,6 +55,22 @@ class StructuralTests(unittest.TestCase):
 
     def test_domain_words_are_not_required_for_structure(self):
         text = document().replace("任意の責務を説明する。", "blorp")
+        self.assertEqual(set(), self.codes(text))
+
+    def test_boolean_html_attributes_preserve_browser_presence_semantics(self):
+        for markup in ('<option>未選択</option>', '<option selected>選択済み</option>',
+                       '<option selected="">選択済み</option>', '<option SELECTED="selected">選択済み</option>',
+                       '<input readonly="READONLY">', '<input data-disabled="false" aria-disabled="false">'):
+            with self.subTest(markup=markup):
+                self.assertEqual(set(), self.codes(document().replace('任意の責務を説明する。', markup)))
+        for attribute in ('selected', 'checked', 'disabled', 'readonly', 'required', 'multiple', 'hidden'):
+            for value in ('false', 'true', '0'):
+                with self.subTest(attribute=attribute, value=value):
+                    markup = f'<input {attribute}="{value}">'
+                    self.assertIn('HTML_BOOLEAN_VALUE', self.codes(document().replace('任意の責務を説明する。', markup)))
+
+    def test_boolean_html_rule_does_not_reinterpret_code_or_prose(self):
+        text = document().replace('任意の責務を説明する。', '属性の説明 selected="false"。\n\n```html\n<option selected="false">例</option>\n```')
         self.assertEqual(set(), self.codes(text))
 
     def test_bound_document_identity_accepts_exact_match_without_rewriting(self):
@@ -266,10 +282,92 @@ class StructuralTests(unittest.TestCase):
 
     def test_table_layout_explicitly_maps_two_sections_to_one_sheet(self):
         text = document(schema="spec-md/1.1", layout="TABLE", sheets=[{"sheet": "example_table"}],
-                        sections=[{"heading": "ヘッダー", "kind": "HEADER"}, {"heading": "項目詳細", "kind": "LIST", "key": ["No"]}],
-                        columns=["No", "物理名"], body="## ヘッダー\n\n| 情報 | 内容 |\n| --- | --- |\n| 名称 | 例 |\n\n## 項目詳細\n\n| No | 物理名 |\n| --- | --- |\n| 1 | example_id |\n")
+                        sections=[{"heading": "テーブルヘッダー", "kind": "HEADER"}, {"heading": "項目詳細", "kind": "LIST", "key": ["No"]}],
+                        columns=TABLE_COLUMNS, body="## テーブルヘッダー\n\n| 情報 | 内容 |\n| --- | --- |\n| 名称 | 例 |\n\n## 項目詳細\n\n| No | 論理名 | 物理名 | PK | NOT NULL | タイプ | 長さ | 初期値 | 説明 |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | 識別値 | example_id | 〇 | 〇 | bigint | 19.0 | | 人工の識別値 |\n")
         self.assertEqual(set(), self.codes(text))
-        self.assertIn("TABLE_COLUMNS", self.codes(text.replace('"columns": ["No", "物理名"]', '"columns": ["No", "別名"]')))
+        self.assertIn("TABLE_COLUMNS", self.codes(text.replace('"NOT NULL", ', '')))
+
+    def table_document(self):
+        return document(schema="spec-md/1.1", layout="TABLE", sheets=[{"sheet": "example_table"}],
+                        sections=[{"heading": "テーブルヘッダー", "kind": "HEADER"}, {"heading": "項目詳細", "kind": "LIST", "key": ["No"]}],
+                        columns=TABLE_COLUMNS, body="## テーブルヘッダー\n\n| 情報 | 内容 |\n| --- | --- |\n| 名称 | 例 |\n\n## 項目詳細\n\n| No | 論理名 | 物理名 | PK | NOT NULL | タイプ | 長さ | 初期値 | 説明 |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| 1 | 値 | value | | | varchar(16) | 8 | | 人工値 |\n")
+
+    def test_table_cannot_omit_columns_or_use_old_eight_columns(self):
+        text = self.table_document()
+        value = json.loads(text.split('spec-meta: ', 1)[1].split(' -->', 1)[0])
+        del value['columns']
+        missing = '<!-- spec-meta: ' + json.dumps(value, ensure_ascii=False) + ' -->' + text.split(' -->', 1)[1]
+        self.assertIn('TABLE_COLUMNS', self.codes(missing))
+        old = text.replace('| PK | NOT NULL | タイプ |', '| PK | タイプ |').replace(
+            '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+            '| --- | --- | --- | --- | --- | --- | --- | --- |').replace(
+            '| value | | | varchar(16) |', '| value | | varchar(16) |')
+        self.assertIn('TABLE_COLUMNS', self.codes(old))
+
+    def test_table_header_requires_a_single_two_column_table(self):
+        text = self.table_document()
+        for mutated in (text.replace('| 情報 | 内容 |\n| --- | --- |\n| 名称 | 例 |', '文章だけ'),
+                        text.replace('| 情報 | 内容 |', '| 情報 | 内容 | 余分 |').replace('| --- | --- |\n| 名称', '| --- | --- | --- |\n| 名称'),
+                        text.replace('## 項目詳細', '追加文章\n\n## 項目詳細')):
+            with self.subTest(mutated=mutated): self.assertIn('TABLE_HEADER', self.codes(mutated))
+
+    def test_table_sections_require_the_prescribed_names_and_order(self):
+        self.assertIn('TABLE_LAYOUT', self.codes(self.table_document().replace('テーブルヘッダー', 'ヘッダー')))
+
+    def feature_document(self):
+        sheets = [{"heading": heading, "kind": kind, "sheet": heading, **({'key': ['No']} if kind == 'LIST' else {})}
+                  for heading, kind in [('概要', 'GRID'), ('項目一覧', 'LIST'), ('イベント仕様', 'GRID'), ('補足説明', 'GRID')]]
+        event = '\n'.join('#### ' + heading + '\n\n人工の説明。\n' for heading in EVENT_SECTIONS)
+        items = '| ' + ' | '.join(FEATURE_ITEM_COLUMNS) + ' |\n| ' + ' | '.join(['---'] * 10) + ' |\n| 1 | 入力 | 値 | テキスト | I | 非DB | 候補なし | 任意 | 原文未確認 | 人工の説明 |'
+        body = '## 概要\n\n人工の機能。\n\n## 項目一覧\n\n' + items + '\n\n## イベント仕様\n\n### 操作\n\n' + event + '\n## 補足説明\n\n人工の補足。\n'
+        return document(sheets=sheets, body=body)
+
+    def test_bound_feature_item_columns_require_exact_names_and_order(self):
+        text = self.feature_document()
+        for mutated in (text.replace('| No | グループ |', '| グループ | No |'),
+                        text.replace('| DB連携項目 |', '| 保存先 |'),
+                        text.replace('| 候補取得元 ', '').replace('| --- ', '', 1)):
+            with self.subTest(mutated=mutated):
+                self.assertIn('FEATURE_ITEM_COLUMNS', {finding['code'] for finding in validate_document(mutated, PATH, expected_kind='basic-design')})
+        original_table = '| ' + ' | '.join(FEATURE_ITEM_COLUMNS) + ' |\n| ' + ' | '.join(['---'] * 10) + ' |\n| 1 | 入力 | 値 | テキスト | I | 非DB | 候補なし | 任意 | 原文未確認 | 人工の説明 |'
+        six = text.replace(original_table, '| No | 項目名 | 種類 | 入出力 | 形式・桁 | 説明 |\n| --- | --- | --- | --- | --- | --- |\n| 1 | 値 | テキスト | I | 原文未確認 | 人工の説明 |')
+        self.assertIn('FEATURE_ITEM_COLUMNS', {finding['code'] for finding in validate_document(six, PATH, expected_kind='detailed-specification')})
+
+    def test_feature_io_values_are_explicit_and_do_not_change_other_lists(self):
+        text = self.feature_document()
+        for value in ('I', 'O', 'I／O', '‐'):
+            self.assertEqual([], validate_document(text.replace('| I |', '| ' + value + ' |'), PATH, expected_kind='basic-design'))
+        for value in ('', '入力', 'I/O', '-'):
+            findings = validate_document(text.replace('| I |', '| ' + value + ' |'), PATH, expected_kind='detailed-specification')
+            self.assertIn('FEATURE_ITEM_IO', {finding['code'] for finding in findings})
+        self.assertEqual([], validate_document(document(), PATH, expected_kind='common'))
+        self.assertEqual([], validate_document(self.table_document(), PATH, expected_kind='table-definition'))
+
+    def test_strict_feature_structure_is_enabled_only_by_explicit_kind(self):
+        text = self.feature_document()
+        for kind in ('basic-design', 'detailed-specification'):
+            self.assertEqual([], validate_document(text, PATH, expected_kind=kind))
+            codes = {finding['code'] for finding in validate_document(document(), PATH, expected_kind=kind)}
+            self.assertTrue({'FEATURE_CHAPTERS', 'EVENT_SECTIONS'} <= codes)
+        self.assertEqual([], validate_document(document(), PATH, expected_kind='common'))
+        self.assertEqual([], validate_document(document(), PATH))
+
+    def test_every_event_requires_each_section_once_in_order(self):
+        text = self.feature_document()
+        for mutated in (text.replace('#### 処理フロー', '#### 任意の見出し'),
+                        text.replace('#### 処理概要', '#### 処理概要\n\n#### 処理概要'),
+                        text.replace('#### 処理概要', '#### 仮名').replace('#### 処理手順', '#### 処理概要').replace('#### 仮名', '#### 処理手順'),
+                        text.replace('## 補足説明', '### 別の操作\n\n#### 処理概要\n\n説明。\n\n## 補足説明')):
+            with self.subTest(mutated=mutated):
+                self.assertIn('EVENT_SECTIONS', {finding['code'] for finding in validate_document(mutated, PATH, expected_kind='basic-design')})
+
+    def test_fenced_event_examples_do_not_satisfy_real_structure(self):
+        text = self.feature_document().replace('### 操作', '```md\n### 操作').replace('\n## 補足説明', '\n```\n\n## 補足説明')
+        self.assertIn('FEATURE_EVENTS', {finding['code'] for finding in validate_document(text, PATH, expected_kind='detailed-specification')})
+
+    def test_bound_table_kind_cannot_escape_by_using_general_metadata(self):
+        self.assertIn('TABLE_LAYOUT', {finding['code'] for finding in validate_document(document(), PATH, expected_kind='table-definition')})
+        self.assertEqual([], validate_document(self.table_document(), PATH, expected_kind='table-definition'))
 
     def test_relative_links_inside_publication_root_are_valid(self):
         self.assertEqual(set(), self.codes(document() + "\n[共通](../共通/契約.md)\n![画面](assets/screen.png)\n[公式](https://example.invalid/docs)\n"))
@@ -295,6 +393,11 @@ class StructuralTests(unittest.TestCase):
                        '<form action="#local"><input></form>'):
             with self.subTest(markup=markup):
                 self.assertIn("HTML_ACTIVE", self.codes(document() + "\n" + markup + "\n"))
+
+    def test_default_and_explicit_submit_controls_are_not_static(self):
+        for markup in ('<form><button>操作</button></form>', '<button type="submit">操作</button>',
+                       '<form><input type="submit"></form>', '<input type="image" src="assets/example.png">'):
+            with self.subTest(markup=markup): self.assertIn('HTML_ACTIVE', self.codes(document() + '\n' + markup + '\n'))
 
     def test_button_override_submission_path_is_checked(self):
         self.assertIn("REFERENCE_PATH", self.codes(document() + '\n<button formaction="/remote">操作</button>\n'))

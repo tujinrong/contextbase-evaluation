@@ -1,0 +1,20 @@
+flowchart TD
+ A[検索GET] --> B[認証・検索状態取得]
+ B -- 認証不正 --> E401[401]
+ B -- ID空 --> NEW[新状態・未検索経路]
+ B -- 既存状態 --> WAIT[Gate待機]
+ WAIT -- 取消等例外 --> OUT[外側エラー]
+ WAIT -- 取得 --> CHECK[待機後の期限・所有者等再検査／版照合]
+ CHECK -- 不在期限・版不一致・版上限 --> E409[409]
+ CHECK -- 所有者等不一致 --> E403[403]
+ CHECK -- 正常 --> C{適用済み条件ありか}
+ C -- いいえ --> UNS[未検索・Revisionは加算しない]
+ C -- はい --> QUERY[DB再検索・結果置換・Revision加算]
+ QUERY -- 失敗 --> OUT
+ QUERY -- 成功 --> RESULT[0件・件数超過・該当ありを区別]
+ UNS --> END[期限更新・finallyでGate解放]
+ RESULT --> END
+ END --> MSG[通知Take・検索候補取得]
+ NEW --> MSG
+ MSG -- 成功 --> VIEW[検索画面表示]
+ MSG -- 取得・描画例外 --> OUT

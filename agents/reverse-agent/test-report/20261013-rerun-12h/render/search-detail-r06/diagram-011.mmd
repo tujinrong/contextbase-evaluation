@@ -1,0 +1,12 @@
+flowchart TD
+ A["共通POST入口"] -->|通過| F["1 FormGuard"]
+ A -->|前段拒否| Q["401・403・400<br/>該当する拒否"]
+ F --> U["2 認証・Use<br/>再確認・版検査"]
+ U --> C["3 Applied・LastResult<br/>NULL、版を増加"]
+ C --> X["4 期限延長<br/>finally解放"]
+ X --> D["C-表示<br/>②へ"]
+ A -->|例外| E["外側例外"]
+ F -->|例外| E
+ U -->|例外・取消| E
+ C -->|例外| E
+ X -->|例外| E

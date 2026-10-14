@@ -1,0 +1,118 @@
+{
+  "schema": "source-pilot-additional-source-text-audit/1",
+  "createdAt": "2026-10-13T10:38:04.986403+00:00",
+  "reviewer": "source_pilot agent, separate from the AI manuscript provider",
+  "reviewScope": "SOURCE_ONLY_ADDITIONAL_TEXT_VS_SOURCE",
+  "documentFile": "D:\\開発\\contextbase-evaluation\\test-project1\\spec-analysis\\CSharp_ASPNET\\20261013-rerun-12h\\source-only\\drafts\\search-detail-04\\詳細仕様書\\CSharp_ASPNET\\01_学生検索画面.md",
+  "documentSha256": "658617eb1367817031128eef12fbd51d50b758e04dff14f01997f14eacb1c785",
+  "snapshotManifestSha256": "2f64e2211b1fcd7850203927fc75b5a7f2ce37457cc2afe88c8065d9f931273b",
+  "sourceFiles": [
+    {
+      "path": "Core/SqlServerStudentService.cs",
+      "sha256": "610fd0fd79ad6994e9887da6622ea7e7332b8f65474f575bd4a7ccf24bca5562"
+    },
+    {
+      "path": "Web/Controllers/StudentsController.cs",
+      "sha256": "cbbf397456a0c95cd5a7e33a2faabb06826451e5f24ac48d571283c88e8e3e31"
+    },
+    {
+      "path": "Infrastructure/WebPresentation.cs",
+      "sha256": "48abd45ec17c2811bf18ba5e3a2db673240f91c2c3edba21061f50456ee5f060"
+    },
+    {
+      "path": "Views/Shared/_MessagePanel.cshtml",
+      "sha256": "3dac7b923c5a920644bfd05c6521546c6e10dc2f08469e38600cb14bb616d325"
+    }
+  ],
+  "checks": [
+    {
+      "id": "DATE_RANGE_EQUAL_ENDPOINTS",
+      "status": "SOURCE_MATCH_IN_REVIEWED_TEXT",
+      "sourceReferences": [
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 120,
+          "endLine": 122
+        }
+      ],
+      "documentEvidence": [
+        {
+          "line": 133,
+          "text": "| 11 | 検索条件 | 入学日・開始 | date input | I／O | `m_student.admission_date date NOT NULL`へ開始以上 | なし | 任意 | 要求・内部`string?`→`DateOnly? from`。NFKC後10コード単位、yyyy-MM-dd完全一致 | id=SRC-011、`asp-for=\"Criteria.AdmissionFrom\"`、同名送信。NULL・空は開始条件なし。trimせず、1900-01-01～検索開始時の日本時間業務日を許可する。開始＞終了は拒否。検索`@from Date`、サイズなし、00:00のDateTimeへ変換。保存入学日もParseIso。根拠：`sources/Core/JapaneseDateService.cs:52-59`、`sources/Core/SqlServerStudentService.cs:67-72`、`sources/Core/SqlServerStudentService.cs:120-122`、`sources/Core/SqlServerStudentService.cs:149-149`、`sources/Core/StudentNormalizer.cs:135-135`、`sources/database/001_schema.sql:24-24` |"
+        },
+        {
+          "line": 134,
+          "text": "| 12 | 検索条件 | 入学日・終了 | date input | I／O | `m_student.admission_date date NOT NULL`へ終了以下 | なし | 任意 | 要求・内部`string?`→`DateOnly? to`。形式・範囲は開始と同じ | id=SRC-012、`asp-for=\"Criteria.AdmissionTo\"`、同名送信。NULL・空は終了条件なし。終了のみ指定可能、両端指定は開始≦終了。同日指定も許可し、両端を含む。順序不正はE-STU-006。検索`@to Date`、サイズなし。卒業・退学日列とは別。根拠：`sources/Views/Students/Search.cshtml:5-5`、`sources/Core/JapaneseDateService.cs:52-59`、`sources/Core/SqlServerStudentService.cs:120-122`、`sources/Core/SqlServerStudentService.cs:150-150` |"
+        },
+        {
+          "line": 637,
+          "text": "5. 入学日期間をParseIsoで変換し、開始＞終了をE-STU-006で拒否する。片側指定と同日指定を許可する。"
+        }
+      ],
+      "assessment": "The manuscript allows equal endpoints and rejects only start > end, matching the source."
+    },
+    {
+      "id": "UNKNOWN_RECOVERY_GUIDANCE",
+      "status": "SOURCE_MATCH_IN_REVIEWED_TEXT",
+      "sourceReferences": [
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 320,
+          "endLine": 322
+        },
+        {
+          "path": "sources/Core/SqlServerStudentService.cs",
+          "startLine": 416,
+          "endLine": 416
+        },
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 30,
+          "endLine": 33
+        },
+        {
+          "path": "sources/Web/Controllers/StudentsController.cs",
+          "startLine": 37,
+          "endLine": 37
+        },
+        {
+          "path": "sources/Infrastructure/WebPresentation.cs",
+          "startLine": 24,
+          "endLine": 30
+        },
+        {
+          "path": "sources/Views/Shared/_MessagePanel.cshtml",
+          "startLine": 2,
+          "endLine": 2
+        }
+      ],
+      "documentEvidence": [
+        {
+          "line": 852,
+          "text": "結果不明は、再試行による確定を促す結果ではない。接続された保存処理のUnknownは「保存結果を確認できません。再保存の前に検索で確認してください。」というE-COM-004のFieldErrorを返す。コントローラーはこれをModelStateへ加え、503の編集再表示へ進む。候補読取と描画が完了すれば、共有検証サマリーにこの案内が表示される。保存要求を再度送る前に検索で確認する、という回復手順が実装メッセージに含まれている。"
+        },
+        {
+          "line": 854,
+          "text": "接続された削除処理のUnknownは「削除結果を確認できません。検索で確認してください。」を返す。コントローラーはエラーをModelStateへ加え、503を設定してLoadを再実行する。ただし実際には削除が確定していて対象を再読取できない場合など、Loadが404等で失敗し、当該案内の編集画面表示まで到達しない可能性がある。Unknownというサービス結果、設定した503、後続再読込の最終応答を区別する。"
+        },
+        {
+          "line": 856,
+          "text": "WebPresentation.SaveMessageには「処理結果が不明です。再送せず検索して確認してください。」というUnknown用の文言があり、WebPresentation.SaveにはretryBySearchも定義される。しかし本画面のコントローラー・ビューから同helperへの接続は確認できず、この文言やJSON属性が画面へ返るとは説明しない。実際の画面経路の根拠は、上記サービスのFieldError、コントローラーのModelStateへの追加、_MessagePanelの表示である。"
+        },
+        {
+          "line": 858,
+          "text": "根拠：`sources/Core/SqlServerStudentService.cs:320-322`、`sources/Core/SqlServerStudentService.cs:416-416`、`sources/Web/Controllers/StudentsController.cs:30-33`、`sources/Web/Controllers/StudentsController.cs:37-37`、`sources/Views/Shared/_MessagePanel.cshtml:2-2`、`sources/Infrastructure/WebPresentation.cs:24-30`。"
+        }
+      ],
+      "assessment": "The manuscript preserves save-before-resend search guidance and separate delete search guidance, conditions display on successful downstream lookup/load/render, and distinguishes the unconnected JSON helper from the controller ModelState path."
+    }
+  ],
+  "unassessedScopes": [
+    "Full text-source semantic approval",
+    "Original specification or grading rubric",
+    "Visual fidelity",
+    "Original program or database execution"
+  ],
+  "manuscriptBytesChanged": false,
+  "factsChanged": false
+}

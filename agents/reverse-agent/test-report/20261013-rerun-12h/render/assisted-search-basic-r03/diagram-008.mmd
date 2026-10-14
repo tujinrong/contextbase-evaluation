@@ -1,0 +1,10 @@
+flowchart TD
+  A[各枝から：入力・結果・Status<br/>未更新または更新済み状態] --> B[候補取得・JSON整形]
+  B -->|失敗| Q[F0：流入枝の状態を保持]
+  B -->|成功| C[要求表示指定をモデルへ代入]
+  C --> D[ビュー描画]
+  D -->|他の描画例外| Q
+  D -->|ページ数計算に到達| E{PageSizeが0}
+  E -->|はい| F[DivideByZeroException]
+  F --> Q
+  E -->|いいえ・描画成功| G[枝の結果・Statusを引き継ぐHTML]

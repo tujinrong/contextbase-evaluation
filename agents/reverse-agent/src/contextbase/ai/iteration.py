@@ -13,8 +13,8 @@ def run(snapshot: Path, plan_file: Path, document_id: str, job_root: Path,
         raise ValueError('Between one and ten critique rounds required')
     if type(reuse_analysis) is not bool:
         raise ValueError('reuse_analysis must be an explicit boolean')
-    job_root = capsule.safe_path(job_root)
-    output_root = capsule.safe_path(output_root)
+    job_root = workflow._execution_root(snapshot, job_root, 'Iteration job')
+    output_root = workflow._execution_root(snapshot, output_root, 'Iteration output')
     if job_root.exists() or output_root.exists():
         raise FileExistsError('Use new job and output roots for an iteration')
     definition = workflow.select_document(plan_file, document_id)

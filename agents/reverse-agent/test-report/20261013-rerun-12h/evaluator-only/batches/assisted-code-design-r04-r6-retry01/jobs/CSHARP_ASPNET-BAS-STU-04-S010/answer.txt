@@ -1,0 +1,1686 @@
+{
+  "schema": "independent-semantic-grades/1",
+  "documentId": "CSHARP_ASPNET-BAS-STU-04",
+  "shardId": "CSHARP_ASPNET-BAS-STU-04-S010",
+  "rows": [
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-3D07D0E258",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "ENROLLMENT_STATUSの論理名を在籍区分と明示している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 16,
+          "endLine": 16,
+          "quote": "在籍区分"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "初期分類のIDと名称に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 10,
+            "endLine": 10,
+            "quote": "('ENROLLMENT_STATUS',N'在籍区分',2,0)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-A451F93369",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "在籍区分の固定桁を2桁としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 16,
+          "endLine": 16,
+          "quote": "2桁"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "分類設定のcode_length=2に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 10,
+            "endLine": 10,
+            "quote": "('ENROLLMENT_STATUS',N'在籍区分',2,0)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-0DEB0D02E5",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "在籍区分の初期件数は4件で一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 16,
+          "endLine": 16,
+          "quote": "| 4 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "初期SQLに01～04の4定義がある。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 19,
+            "endLine": 22,
+            "quote": "('ENROLLMENT_STATUS','01',N'在学',10,1),\n('ENROLLMENT_STATUS','02',N'休学',20,1),\n('ENROLLMENT_STATUS','03',N'卒業',30,1),\n('ENROLLMENT_STATUS','04',N'退学',40,1),"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-F3E433F6AE",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "新規学生の在籍初期値を01：在学としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 16,
+          "endLine": 16,
+          "quote": "`01`：在学"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "入力DTOの初期01とマスタ名称が一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 21,
+            "endLine": 21,
+            "quote": "public string EnrollmentStatusCode { get; set; } = \"01\";"
+          },
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 19,
+            "endLine": 19,
+            "quote": "('ENROLLMENT_STATUS','01',N'在学',10,1)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-43DF29A1B2",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "在籍区分への通常追加を不可としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 16,
+          "endLine": 16,
+          "quote": "不可"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "allow_add=0と保守の追加拒否条件に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 10,
+            "endLine": 10,
+            "quote": "('ENROLLMENT_STATUS',N'在籍区分',2,0)"
+          },
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 104,
+            "endLine": 104,
+            "quote": "if(previous is null&&!allow) throw new ArgumentException"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-9F2C28AFF1",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "在籍区分の全4値を保護対象としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 16,
+          "endLine": 16,
+          "quote": "全4値"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "4定義すべてのis_protectedが1である。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 19,
+            "endLine": 22,
+            "quote": "('ENROLLMENT_STATUS','01',N'在学',10,1),\n('ENROLLMENT_STATUS','02',N'休学',20,1),\n('ENROLLMENT_STATUS','03',N'卒業',30,1),\n('ENROLLMENT_STATUS','04',N'退学',40,1),"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-407A1BD4F9",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "PREFECTUREの論理名を都道府県と明示している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 17,
+          "endLine": 17,
+          "quote": "都道府県"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "初期分類のIDと名称に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 11,
+            "endLine": 11,
+            "quote": "('PREFECTURE',N'都道府県',2,0)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-C4894132D9",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "都道府県の固定桁を2桁としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 17,
+          "endLine": 17,
+          "quote": "2桁"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "分類設定のcode_length=2に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 11,
+            "endLine": 11,
+            "quote": "('PREFECTURE',N'都道府県',2,0)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-E7005F8F61",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "都道府県の初期件数は47件で一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 17,
+          "endLine": 17,
+          "quote": "| 47 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "SQLの23～69行を確認し、01～47の47定義を数えた。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 23,
+            "endLine": 69,
+            "quote": "('PREFECTURE','47',N'沖縄県',470,1)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-8294DA1E84",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "都道府県の新規初期状態を未選択としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 17,
+          "endLine": 17,
+          "quote": "空文字：未選択"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "DTOの空文字初期値と画面の未選択に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 15,
+            "endLine": 15,
+            "quote": "public string PrefectureCode { get; set; } = \"\";"
+          },
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 9,
+            "endLine": 9,
+            "quote": "<option value=\"\">未選択</option>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-D1EACC09C3",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "都道府県への通常追加を不可としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 17,
+          "endLine": 17,
+          "quote": "不可"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "allow_add=0と保守の追加拒否条件に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 11,
+            "endLine": 11,
+            "quote": "('PREFECTURE',N'都道府県',2,0)"
+          },
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 104,
+            "endLine": 104,
+            "quote": "if(previous is null&&!allow) throw new ArgumentException"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-CBC1B23C2F",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "都道府県の全47値を保護対象としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 17,
+          "endLine": 17,
+          "quote": "全47値"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "23～69行の47定義すべてで保護フラグ1を確認した。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 23,
+            "endLine": 69,
+            "quote": "('PREFECTURE','47',N'沖縄県',470,1)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-B65BFF3677",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "RELATIONSHIPの論理名を緊急連絡先続柄としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 18,
+          "endLine": 18,
+          "quote": "緊急連絡先続柄"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "初期分類のIDと名称に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "('RELATIONSHIP',N'緊急連絡先続柄',2,1)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-78AD0404B9",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急連絡先続柄の固定桁を2桁としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 18,
+          "endLine": 18,
+          "quote": "2桁"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "分類設定のcode_length=2に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "('RELATIONSHIP',N'緊急連絡先続柄',2,1)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-6423E54858",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急連絡先続柄の初期件数は8件で一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 18,
+          "endLine": 18,
+          "quote": "| 8 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "70～77行に01～07・99の8定義がある。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 70,
+            "endLine": 77,
+            "quote": "('RELATIONSHIP','99',N'その他',990,0)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-AF99A8F05A",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "新規の続柄を値なし・画面未選択としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 18,
+          "endLine": 18,
+          "quote": "NULL。画面は未選択"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "NULL初期状態と空値の未選択optionに一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Web/Inputs/StudentSaveInput.cs",
+            "startLine": 25,
+            "endLine": 25,
+            "quote": "public string? RelationshipCode { get; set; }"
+          },
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "<option value=\"\">未選択</option>"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-9A6B12EA53",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急連絡先続柄への通常追加を可としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 18,
+          "endLine": 18,
+          "quote": "| 可 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "allow_add=1と新規追加の条件に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 12,
+            "endLine": 12,
+            "quote": "('RELATIONSHIP',N'緊急連絡先続柄',2,1)"
+          },
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 104,
+            "endLine": 104,
+            "quote": "if(previous is null&&!allow) throw new ArgumentException"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-7B0114E5F2",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "緊急連絡先続柄の保護対象をなしとしている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 18,
+          "endLine": 18,
+          "quote": "なし"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "70～77行の全8定義で保護フラグ0を確認した。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 70,
+            "endLine": 77,
+            "quote": "('RELATIONSHIP','99',N'その他',990,0)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-160A61B00E",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "GRADEの論理名を学年と明示している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 19,
+          "endLine": 19,
+          "quote": "学年"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "初期分類のIDと名称に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "('GRADE',N'学年',2,1)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-D00302541B",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学年の固定桁を2桁としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 19,
+          "endLine": 19,
+          "quote": "2桁"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "分類設定のcode_length=2に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "('GRADE',N'学年',2,1)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-E1BB1A4FC8",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学年の初期件数は7件で一致する。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 19,
+          "endLine": 19,
+          "quote": "| 7 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "78～84行に00～06の7定義がある。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 78,
+            "endLine": 84,
+            "quote": "('GRADE','06',N'6年',60,0)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-542720E2F8",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "クラス作成時00という設計意図と、現行で補完しない差分を説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 21,
+          "endLine": 21,
+          "quote": "参考設計が定めるクラス作成時の学年`00`は、現行`ClassChange`の引数を補完する実装ではない。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 25,
+          "endLine": 25,
+          "quote": "学年の`00`も「学年なし」という実コードで、クラスに設定する値である。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "作成時00の既定値は未実装。呼出し元の必須学年を検査する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 34,
+            "endLine": 34,
+            "quote": "var grade=StudentNormalizer.Code(raw.GradeCode,2,\"GradeCode\")!;"
+          },
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 66,
+            "endLine": 66,
+            "quote": "grade_code varchar(2) COLLATE Latin1_General_100_BIN2 NOT NULL"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-FB7F26F7AB",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学年への通常追加を可としている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 19,
+          "endLine": 19,
+          "quote": "| 可 |"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "allow_add=1と新規追加の条件に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 13,
+            "endLine": 13,
+            "quote": "('GRADE',N'学年',2,1)"
+          },
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 104,
+            "endLine": 104,
+            "quote": "if(previous is null&&!allow) throw new ArgumentException"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-CB7962B0DB",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "保護対象00を学年なしに対応付けている。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 19,
+          "endLine": 19,
+          "quote": "`00`"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 139,
+          "endLine": 139,
+          "quote": "`00` | 学年なし"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "00だけが保護1、01～06は保護0である。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 78,
+            "endLine": 84,
+            "quote": "('GRADE','00',N'学年なし',0,1)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-CC78F59B87",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "用途別の有効性・既存保持を具体化し、先頭代替禁止の意図と現行の保証不足も説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 222,
+          "endLine": 222,
+          "quote": "検索は停止・期間外も選択可能にする。登録の性別・都道府県・在籍・続柄は、表示時に有効な値、または読込時`Detail.Draft`と同じ値を選択可能にする。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 269,
+          "endLine": 269,
+          "quote": "合成利用状態が真、表示時日本日付が開始以上、終了NULLまたは終了以下"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 303,
+          "endLine": 303,
+          "quote": "存在しない値の先頭候補への代替禁止を定める。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 303,
+          "endLine": 303,
+          "quote": "ブラウザーがどの値を選択・送信するかを、この生成処理だけで保証しない。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 597,
+          "endLine": 597,
+          "quote": "新規・変更値は双方の利用可と両端包含の期間を要求し、同値は存在を要求する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "選択条件・同値保持は確認できるが、先頭代替禁止の保証は未観測。本文が制約を開示している。",
+        "sourceEvidence": [
+          {
+            "path": "source/Views/Students/Edit.cshtml",
+            "startLine": 8,
+            "endLine": 8,
+            "quote": "bool selectable=c.IsActive&&c.ValidFrom<=today&&(c.ValidTo is null||today<=c.ValidTo)||Model.Detail?.Draft.GenderCode==c.CodeValue;"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 203,
+            "endLine": 205,
+            "quote": "CONVERT(bit,CASE WHEN c.is_active=1 AND k.is_active=1 THEN 1 ELSE 0 END)"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 352,
+            "endLine": 354,
+            "quote": "else if(previous is null || !Equals(previous[column],value))"
+          },
+          {
+            "path": "source/Infrastructure/WebStudentCoordinator.cs",
+            "startLine": 17,
+            "endLine": 17,
+            "quote": "return(detail,StudentSaveInput.From(detail,contextId,lookup),lookup);"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-98BDB5C5C1",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "保存直前の分類付き再照合と、最新DB保存値による変更判定を具体化している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 417,
+          "endLine": 417,
+          "quote": "同値保持の比較対象はゲート下で取得した最新DB学生の保存値であり、読込時画面や送信された変更有無ではない。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 597,
+          "endLine": 597,
+          "quote": "`c.category_id=@category AND c.code_value=@value`"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 597,
+          "endLine": 597,
+          "quote": "新規・変更値は双方の利用可と両端包含の期間を要求し、同値は存在を要求する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "ゲート取得後の保存値と比較し、存在・変更時有効性を検査する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 244,
+            "endLine": 260,
+            "quote": "previous=Columns.Keys.ToDictionary(key=>key,key=>reader.IsDBNull(reader.GetOrdinal(key))?null:reader[key]);"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 349,
+            "endLine": 349,
+            "quote": "WHERE c.category_id=@category AND c.code_value=@value"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 352,
+            "endLine": 354,
+            "quote": "else if(previous is null || !Equals(previous[column],value)) {\n                if(!reader.GetBoolean(0) || !reader.GetBoolean(1) || DateOnly.FromDateTime(reader.GetDateTime(2))>day || !reader.IsDBNull(3)&&DateOnly.FromDateTime(reader.GetDateTime(3))<day)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-8B569D18FE",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "管理者保守・不変属性・保護禁止事項を説明し、意味維持は業務契約と実装検査を区別している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 632,
+          "endLine": 632,
+          "quote": "DB認証による管理者確認後にコードを追加・更新する"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 750,
+          "endLine": 750,
+          "quote": "保護値は今回の利用可を要求し、開始日の後ろ倒し、旧終了NULLから有限期限への変更、有限終了日の短縮を拒否する。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 750,
+          "endLine": 750,
+          "quote": "キー変更、保護解除、物理削除の更新項目はない。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 737,
+          "endLine": 738,
+          "quote": "`CodeName string`"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 808,
+          "endLine": 808,
+          "quote": "参考設計はキー、分類桁数・追加可否、値の意味を通常保守で変えず"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 808,
+          "endLine": 808,
+          "quote": "名称変更が意味を維持しているかを判定する処理はない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "管理者・保護制約は実装されるが、名称変更による意味維持の方針はソースから観測できない。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 23,
+            "endLine": 25,
+            "quote": "reader.GetInt32(1)!=1) throw new UnauthorizedAccessException"
+          },
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 105,
+            "endLine": 107,
+            "quote": "if(!raw.IsActive||from>oldFrom||to is not null&&(oldTo is null||to<oldTo))"
+          },
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 109,
+            "endLine": 113,
+            "quote": "UPDATE dbo.m_code SET code_name=@name,display_order=@order,is_active=@active,valid_from=@from,valid_to=@to,remarks=@remarks"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-8A3DDD1992",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "非保護値の参照保持、期間・状態検査と履歴、同一定義の無変更・差分時停止を説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 808,
+          "endLine": 808,
+          "quote": "非保護値を停止しても参照実体を残す契約を置く。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 636,
+          "endLine": 636,
+          "quote": "名称・備考・開始終了日を検査する。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 644,
+          "endLine": 644,
+          "quote": "同じトランザクションへ操作履歴を追記する。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 757,
+          "endLine": 757,
+          "quote": "| 利用不可 | 利用可 | ENABLE |"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 153,
+          "endLine": 153,
+          "quote": "既存同キーの定義が投入材料と異なる場合は停止し、運用中の名称や利用状態を上書きしない。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 163,
+          "endLine": 163,
+          "quote": "不足行がなければ既存行を変更せず終了する。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "期間逆転拒否・状態更新・遷移監査と、不足分だけ追加するseedに一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 84,
+            "endLine": 86,
+            "quote": "if(to<from) throw new ArgumentException"
+          },
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 113,
+            "endLine": 120,
+            "quote": "UPDATE dbo.m_code SET code_name=@name,display_order=@order,is_active=@active"
+          },
+          {
+            "path": "source/Core/AuditOperation.cs",
+            "startLine": 7,
+            "endLine": 7,
+            "quote": "previousActive==currentActive ? \"UPDATE\" : currentActive ? \"ENABLE\" : \"DISABLE\""
+          },
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 85,
+            "endLine": 91,
+            "quote": "BEGIN ROLLBACK; THROW 51002,N'初期コードに差分があります。既存値を上書きせず確認してください。',1; END;"
+          },
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 89,
+            "endLine": 91,
+            "quote": "WHERE NOT EXISTS(SELECT 1 FROM dbo.m_code c WHERE c.category_id=i.category_id AND c.code_value=i.code_value)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-08715E27AA",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学校付番、15スカラー・文字形式・大文字化、削除済みを含む一意性と更新不可を説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 820,
+          "endLine": 820,
+          "quote": "必須。原入力15スカラー以内を先に検査し、Trim・FormKC・大文字化後も15以内。先頭ASCII英数字、以降英数字・ハイフン"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 820,
+          "endLine": 820,
+          "quote": "削除済みを含む全学生で一意、更新不可。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 824,
+          "endLine": 824,
+          "quote": "参考設計で学校付番とする学籍番号"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "形式・不変・全行一意は確認できるが、学校付番という組織上の方針は未観測。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 59,
+            "endLine": 64,
+            "quote": "Normalize(NormalizationForm.FormKC).ToUpperInvariant()"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 124,
+            "endLine": 124,
+            "quote": "Identifier(raw.StudentNo, 15, \"StudentNo\")"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 254,
+            "endLine": 254,
+            "quote": "学籍番号は変更できません。"
+          },
+          {
+            "path": "source/Core/SqlServerStudentService.cs",
+            "startLine": 264,
+            "endLine": 266,
+            "quote": "SELECT COUNT_BIG(*) FROM dbo.m_student WHERE student_no=@no AND (@id IS NULL OR student_id<>@id)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-623FB29417",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "直前の識別子正規化を共有し、クラスコード9文字・年度内一意・登録後不変を説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 820,
+          "endLine": 820,
+          "quote": "先頭ASCII英数字、以降英数字・ハイフン"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 821,
+          "endLine": 821,
+          "quote": "必須。同じ正規化で原入力・正規化後9スカラー以内"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 821,
+          "endLine": 821,
+          "quote": "年度との組で一意。既存年度・コードの変更を保守が拒否"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "9文字のIdentifier検査、年度・コード変更拒否、一意制約に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 62,
+            "endLine": 62,
+            "quote": "\"^[A-Z0-9][A-Z0-9-]*$\""
+          },
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 33,
+            "endLine": 33,
+            "quote": "StudentNormalizer.Identifier(raw.ClassCode,9,\"ClassCode\")"
+          },
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 52,
+            "endLine": 52,
+            "quote": "年度・クラスコードは変更できません。"
+          },
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 188,
+            "endLine": 188,
+            "quote": "UNIQUE(school_year,class_code)"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-F211369679",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学生・クラスのDB自動採番を示し、連続性を保証せず欠番を認める意図も説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 822,
+          "endLine": 822,
+          "quote": "各`bigint IDENTITY(1,1)`。参考設計は連続性を保証せず欠番を認める"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "両管理番号はIDENTITYとPKで定義され、連続番号を維持する処理ではない。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 7,
+            "endLine": 43,
+            "quote": "student_id bigint IDENTITY(1,1) NOT NULL"
+          },
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 62,
+            "endLine": 80,
+            "quote": "class_id bigint IDENTITY(1,1) NOT NULL"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-6F1D35AD88",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "4月開始は原文の3月31日・4月1日の年度境界と同義である。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 838,
+          "endLine": 838,
+          "quote": "学校年度は4月開始とする。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "4月未満だけ前年を返す年度計算に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/JapaneseDateService.cs",
+            "startLine": 61,
+            "endLine": 61,
+            "quote": "day.Month < 4 ? day.Year - 1 : day.Year"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-FA52406247",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "個別識別子を業務コードから分離し、クラスをm_classで管理すると説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 7,
+          "endLine": 7,
+          "quote": "学籍番号とクラスコードは個別の識別子"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 821,
+          "endLine": 821,
+          "quote": "`m_class.class_code varchar(9) NOT NULL`"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 824,
+          "endLine": 824,
+          "quote": "学籍番号・クラスコードをコードマスタへ追加する処理はない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "識別子は各実体表の列であり、クラス保守の保存先はm_classである。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 7,
+            "endLine": 9,
+            "quote": "student_no varchar(15)"
+          },
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 62,
+            "endLine": 67,
+            "quote": "class_code varchar(9)"
+          },
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 74,
+            "endLine": 74,
+            "quote": "Save(connection,tx,\"m_class\",\"class_id\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-F45F54DBA2",
+      "judgement": "粒度不足",
+      "actualDeduction": -2,
+      "defectId": "CSHARP_ASPNET-BAS-STU-04-common-message-authority-omitted",
+      "reason": "技術値分離・サンプル非投入は説明するが、全文に共通05をチェック・文言の正本として一元管理する指定がない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 838,
+          "endLine": 838,
+          "quote": "画面モード、権限内部値、削除印、ページ件数、メッセージ番号を業務コードへ混在させない"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 153,
+          "endLine": 153,
+          "quote": "学生、クラス、操作履歴のサンプル行は投入しない。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 1,
+          "endLine": 872,
+          "quote": "## 補足説明"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "seedは分類・コードのみ投入するが、共通05を正本とする運用方針はソースから観測できない。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 2,
+            "endLine": 93,
+            "quote": "INSERT dbo.m_code_category"
+          },
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 90,
+            "endLine": 91,
+            "quote": "INSERT dbo.m_code"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-BF33AF9589",
+      "judgement": "粒度不足",
+      "actualDeduction": -2,
+      "defectId": "CSHARP_ASPNET-BAS-STU-04-shared-date-authority-omitted",
+      "reason": "和暦・元号分離と登録項目ID対応は説明するが、全文に共通07を日付・年範囲の正本とする指定がない。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 836,
+          "endLine": 836,
+          "quote": "元号は`JapaneseDateService`の固定配列とREG-005の固定optionであり、seedの分類に追加しない。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 836,
+          "endLine": 836,
+          "quote": "保存は`birth_date date NOT NULL`、表示は元号名＋年（1年は元年）＋2桁月日である。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 58,
+          "endLine": 58,
+          "quote": "性別：REG-006、`Input.GenderCode` select"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 1,
+          "endLine": 872,
+          "quote": "### 元号、学校年度、管理日時"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "共通日付処理は確認できるが、参照文書を正本とする管理方針はソース観測と区別する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/JapaneseDateService.cs",
+            "startLine": 10,
+            "endLine": 16,
+            "quote": "private static readonly Era[] Eras = ["
+          },
+          {
+            "path": "source/Core/JapaneseDateService.cs",
+            "startLine": 47,
+            "endLine": 50,
+            "quote": "public static string ToWareki(DateOnly date)"
+          },
+          {
+            "path": "source/Core/JapaneseDateService.cs",
+            "startLine": 52,
+            "endLine": 59,
+            "quote": "DateOnly.TryParseExact(text, \"yyyy-MM-dd\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-57250FA249",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "分類・値の利用可、開始1900-01-01、終了NULL、個別表示順と実投入者・日時を説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 70,
+          "endLine": 70,
+          "quote": "すべて利用可、開始1900-01-01、終了NULLを不足行追加時に設定する。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 70,
+          "endLine": 70,
+          "quote": "作成・更新情報は同じ投入時刻と実行者となる。行ごとの表示順と保護対象は一覧に示す。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 162,
+          "endLine": 162,
+          "quote": "追加行へ利用可"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "分類・コードINSERTの定数と、実行時UTC日時・ORIGINAL_LOGINに一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 7,
+            "endLine": 7,
+            "quote": "TODATETIMEOFFSET(SYSUTCDATETIME(),'+00:00'),@actor nvarchar(128)=ORIGINAL_LOGIN()"
+          },
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 89,
+            "endLine": 89,
+            "quote": "i.allow_add,1,NULL,@now,@actor,@now,@actor,1"
+          },
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 91,
+            "endLine": 91,
+            "quote": "i.display_order,1,'19000101',NULL,i.is_protected,NULL,@now,@actor,@now,@actor,1"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-F8E5EFC5B5",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "未回答0を実コードとして未設定と区別し、申告非強制と性別非依存の必須条件を説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 25,
+          "endLine": 25,
+          "quote": "性別の`0`は「未回答」という有効な実コードであり、空文字やNULLとは異なる。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 800,
+          "endLine": 800,
+          "quote": "参考設計の性別は申告を強制せず、未回答`0`を有効値として扱う。現行の所属・連絡先必須条件は性別による分岐を持たない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "未回答0が初期実コードで、所属・連絡先の条件は在籍や入力有無による。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 15,
+            "endLine": 15,
+            "quote": "('GENDER','0',N'未回答',0,1)"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 128,
+            "endLine": 128,
+            "quote": "Code(raw.GenderCode, 1, \"GenderCode\")"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 150,
+            "endLine": 158,
+            "quote": "if (status is \"01\" or \"02\" && raw.ClassId is null)"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 155,
+            "endLine": 155,
+            "quote": "values[\"phone_number\"] is null && values[\"email_address\"] is null && values[\"emergency_phone_number\"] is null"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-F3DB90DAB0",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "全値保護と通常保守の不変契約、終了区分訂正の管理者・理由、検索初期01・02と全解除を説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 800,
+          "endLine": 800,
+          "quote": "在籍4値は日付・定員・訂正権限に関係し、seedですべて保護する。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 808,
+          "endLine": 808,
+          "quote": "参考設計はキー、分類桁数・追加可否、値の意味を通常保守で変えず"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 599,
+          "endLine": 599,
+          "quote": "03・04から別コードへの訂正は管理者と理由を要求する。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 289,
+          "endLine": 289,
+          "quote": "初期01・02。全解除は空配列に補完し、全区分検索となる"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 16,
+          "endLine": 16,
+          "quote": "不可"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "意味変更禁止は業務運用の契約。名称変更の意味維持を実装が判定するものではなく、本文も差分を開示する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 109,
+            "endLine": 113,
+            "quote": "UPDATE dbo.m_code SET code_name=@name,display_order=@order,is_active=@active"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-213538E25F",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "国内住所対象、不明・海外コードを設けず郵便番号外部照合を含めない方針を説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 802,
+          "endLine": 802,
+          "quote": "都道府県の参考設計は国内住所を対象とし、不明・海外コード、郵便番号の実在や都道府県との外部照合を含めない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "47都道府県と郵便形式検査は確認できるが、国内住所限定という業務方針は未観測。",
+        "sourceEvidence": [
+          {
+            "path": "source/database/002_seed.sql",
+            "startLine": 23,
+            "endLine": 69,
+            "quote": "('PREFECTURE','47',N'沖縄県',470,1)"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 95,
+            "endLine": 100,
+            "quote": "Regex.IsMatch(value, \"^[0-9]{7}$\""
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-DDF806255C",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "未選択NULL、緊急3項目の全入力・全未入力、続柄追加後も不変の必須条件を説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 66,
+          "endLine": 66,
+          "quote": "続柄未選択では分類・値の両列をNULLにする。緊急氏名・続柄・緊急電話は全部NULLまたは全部入力済みとし、一部だけならE-STU-019で拒否する。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 802,
+          "endLine": 802,
+          "quote": "続柄の追加を許しても、緊急氏名・続柄・電話の一式入力条件は変わらない。"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "一致",
+        "reason": "続柄なしの分類NULL算定と、コード値に依存しない0件・3件の一式検査に一致する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 147,
+            "endLine": 147,
+            "quote": "values[\"relationship_category\"] = values[\"relationship_code\"] is null ? null : \"RELATIONSHIP\";"
+          },
+          {
+            "path": "source/Core/StudentNormalizer.cs",
+            "startLine": 156,
+            "endLine": 157,
+            "quote": "var emergency = new[] { values[\"emergency_contact_name\"], values[\"relationship_code\"], values[\"emergency_phone_number\"] }.Count(value => value is not null);\n        if (emergency is not (0 or 3))"
+          }
+        ]
+      }
+    },
+    {
+      "evaluationId": "CSHARP_ASPNET-BAS-STU-04-9D4A7771FE",
+      "judgement": "一致",
+      "actualDeduction": 0,
+      "defectId": null,
+      "reason": "学校種別未指定の候補例、クラス保存・学生非重複保存・自動進級なしと、作成時00の実装差を説明している。",
+      "generatedEvidence": [
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 804,
+          "endLine": 804,
+          "quote": "学年01～06は学校種別未指定下の候補例という設計であり、6年制を前提に年齢・入学日を制限しない。学年はクラスに保存し、自動進級を定義しない。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 804,
+          "endLine": 804,
+          "quote": "参考設計のクラス作成時学年00、年度開始・終了日の初期値は、現行の引数補完やDDL DEFAULTではない。"
+        },
+        {
+          "path": "generated/基本設計書/04_コード設計書.md",
+          "startLine": 63,
+          "endLine": 63,
+          "quote": "学生には保存しない。参照先は`m_class.grade_code varchar(2) NOT NULL`"
+        }
+      ],
+      "critical": false,
+      "mandatoryMissing": false,
+      "sourceFidelity": {
+        "judgement": "未観測",
+        "reason": "学年のクラス保存は確認できるが、作成時00の補完と学校種別未指定という方針は未観測。本文は実装差を明示する。",
+        "sourceEvidence": [
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 34,
+            "endLine": 34,
+            "quote": "var grade=StudentNormalizer.Code(raw.GradeCode,2,\"GradeCode\")!;"
+          },
+          {
+            "path": "source/Core/MasterMaintenanceService.cs",
+            "startLine": 65,
+            "endLine": 65,
+            "quote": "{\"grade_code\",grade}"
+          },
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 7,
+            "endLine": 43,
+            "quote": "class_id bigint NULL"
+          },
+          {
+            "path": "source/database/001_schema.sql",
+            "startLine": 66,
+            "endLine": 66,
+            "quote": "grade_code varchar(2) COLLATE Latin1_General_100_BIN2 NOT NULL"
+          }
+        ]
+      }
+    }
+  ],
+  "safetyChecks": [],
+  "limitations": [
+    "静的な本文・ソース読取りのみ。アプリ実行、テスト成功、稼働DB状態、視覚承認は確認していない。requireSafetyReview=falseのため安全性トピックの独立レビューは未実施。",
+    "source/Core/MasterMaintenanceService.cs:9,34とsource/database/001_schema.sql:66では、クラス作成時の学年00を補完しない。生成文書21・804行はこの実装差を明示する。",
+    "source/Infrastructure/WebStudentCoordinator.cs:17とsource/Views/Students/Edit.cshtml:8-13には、初期候補不足の専用案内や不存在値の先頭代替禁止を保証する処理がない。生成文書303行が制約を開示する。",
+    "source/Views/Students/Edit.cshtml:12は学年補助に全GRADE行を表示する。学生保存は学年単独のマスタ有効性を検査せず、生成文書68・293・427行が差分を開示する。",
+    "source/Core/MasterMaintenanceService.cs:79-121は名称の意味維持を自動判定しない。生成文書808・854行は業務判断の責務と区別する。",
+    "保守サービスは宣言されているが、確認したWeb入口に保守呼出しはない。生成文書632行も接続済みCLI・公開保守画面として扱っていない。",
+    "学校付番、国内住所限定、学校種別未指定、共通文書を正本とする運用方針は、参照設計の意図とソース観測を区別した。"
+  ]
+}

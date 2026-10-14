@@ -1,0 +1,16 @@
+flowchart TD
+    A[6-1の新規または検査済み旧行] --> B{6属性の差分があるか}
+    B -->|なし| C[明示rollback・NoChange・要求版]
+    B -->|あり| D[版上限検査]
+    D --> E[新規INSERTまたは比較版UPDATE]
+    E --> F{影響件数が1か}
+    F -->|いいえ| X[DBConcurrencyException]
+    F -->|はい| G[後版計算・履歴追加]
+    G --> H[commit]
+    H --> I[Saved・後版・警告false]
+    C -.->|rollback例外| Z[rollback helper・再throw]
+    D -.->|上限例外| Z
+    E -.->|SQL等の例外| Z
+    X --> Z
+    G -.->|履歴例外| Z
+    H -.->|commit例外| Z

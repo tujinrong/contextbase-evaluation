@@ -1,0 +1,21 @@
+flowchart TD
+    A[S3から正規化値・前値・前版] --> D{保存値に差分}
+    D -->|なし| RB[明示rollback]
+    RB --> NC[S6へ<br/>NoChange 200・対象IDと取得版]
+    D -->|あり| MAX{前版がlong上限}
+    MAX -->|はい| C[S6へ<br/>Conflict 409・ID版NULL]
+    MAX -->|いいえ| NO{番号が全行一意}
+    NO -->|使用済み| V[S6へ<br/>ValidationFailed 422・ID版NULL]
+    NO -->|一意| DUP[全候補取得<br/>内容・候補ハッシュ生成]
+    DUP --> TV{確認照合・Busy取得が有効}
+    TV -->|有効| R{理由あり}
+    R -->|なし| V
+    R -->|あり| W[S5へ・確認済み<br/>前版保持]
+    TV -->|無効・未指定| NEED{候補1件以上<br/>またはキー非NULL}
+    NEED -->|いいえ| W2[S5へ・確認不要<br/>前版保持]
+    NEED -->|はい| RB2[明示rollback<br/>新確認キー発行]
+    RB2 --> CR[S6へ・409<br/>要求対象ID・取得済み前版<br/>全件数・最大20件]
+    RB -. 例外 .-> SC[SCへ]
+    NO -. DB例外 .-> SC
+    DUP -. DB等例外 .-> SC
+    RB2 -. 例外 .-> SC

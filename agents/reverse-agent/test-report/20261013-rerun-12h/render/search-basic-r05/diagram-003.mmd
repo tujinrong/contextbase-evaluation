@@ -1,0 +1,16 @@
+flowchart TD
+  A["SR-A・Gate未取得"] --> B["認証再確認・ToCriteria<br/>ClassId解析・Page=1"]
+  B --> C["Useの最初のGet<br/>状態・所有者・セッション・非空Tab"]
+  B -->|例外| X0["SR-X → 3.2-5<br/>元の例外・Gate未取得"]
+  C -->|例外| X0
+  C --> D["Gate.WaitAsyncで待機"]
+  D -->|取消・例外| X0
+  D -->|取得| E["Getで待機後の再確認<br/>期限・所有者・セッション・非空Tab"]
+  E -->|例外| X1["SR-X → 3.2-5<br/>元の例外・Gate取得済み"]
+  E --> F{"受信版と<br/>現在版文字列が一致"}
+  F -->|いいえ| V1["WebFault 409<br/>状態が更新されています"]
+  V1 --> X1
+  F -->|はい| G{"Revisionが<br/>long.MaxValue未満"}
+  G -->|いいえ| V2["WebFault 409<br/>検索状態の版上限"]
+  V2 --> X1
+  G -->|はい| R["SR-B → 3.2-3<br/>Criteria・Entry・取得済みGate"]

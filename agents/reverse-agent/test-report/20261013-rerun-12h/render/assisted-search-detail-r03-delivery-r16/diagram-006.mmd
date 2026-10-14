@@ -1,0 +1,35 @@
+flowchart TD
+    A[Gate保持・条件受領] --> U[サービスUser・時刻取得<br/>サービスtry外]
+    U --> B[表示指定・年度とクラス<br/>未所属排他・在籍配列の検査]
+    B --> C[番号・氏名・カナ・電話<br/>学年・都道府県の正規化]
+    C --> D[日付解析・開始終了の検査]
+    D --> E[Open・SNAPSHOT開始]
+    E --> F[コード・年度・クラス整合確認]
+    F --> G[TOP10001の件数取得]
+    G --> H{10000件超過}
+    H -->|はい| I[一覧未取得・commit<br/>NoChange・Count10001<br/>Items空・LimitExceeded true]
+    H -->|いいえ| J[実取得ページ補正・行取得・commit<br/>NoChange・実件数・取得行<br/>LimitExceeded false]
+    I --> K[EnsureSearch]
+    J --> K
+    K --> L[Applied複製・LastResult保存<br/>Revision加算・Present]
+    L --> N[operation正常復帰で期限延長<br/>Gate解放・結果をフロー4へ]
+    B -->|例外| Q{InputValidationException}
+    C -->|例外| Q
+    D -->|例外| Q
+    E -->|例外| Q
+    F -->|例外| Q
+    G -->|例外| Q
+    I -->|commit等の例外| Q
+    J -->|取得・commit等の例外| Q
+    Q -->|はい・先行catch| V[ValidationFailed<br/>元のFieldError群]
+    Q -->|いいえ| Q2{ArgumentException}
+    Q2 -->|はい・後段catch| V2[ValidationFailed<br/>ArgumentError Search]
+    V --> K2[EnsureSearchがWebFault化]
+    V2 --> K2
+    K2 --> W[Gate解放後に個別catch<br/>e.Status等をフロー4へ]
+    Q2 -->|いいえ| R[サービス変換catch外の例外]
+    U -->|例外| R
+    L -->|例外| R
+    R --> T{WebFault}
+    T -->|はい| W
+    T -->|いいえ| M[Gate取得済みなら解放<br/>共通応答境界M]

@@ -1,0 +1,13 @@
+%%{init: {"flowchart":{"htmlLabels":true,"useMaxWidth":false,"nodeSpacing":28,"rankSpacing":30},"themeCSS":".nodeLabel,.edgeLabel{white-space:nowrap;word-break:keep-all;overflow-wrap:normal;}"}}%%
+flowchart TD
+    A["図1-2 入口検査正常"] --> L["候補・参考人数取得"]
+    L --> I["初期入力設定"]
+    I --> R{"復帰先あり"}
+    R -->|なし| N["復帰版<br/>NULL"]
+    R -->|あり| V["Context再取得<br/>取得版を保持"]
+    N --> S["対象・Detailなし<br/>Original複製<br/>新Snapshot"]
+    V --> S
+    S --> OK["200<br/>新規画面"]
+    L -. 読取例外 .-> X["外側例外処理"]
+    V -. 失効等 .-> X
+    S -. 生成・描画例外 .-> X

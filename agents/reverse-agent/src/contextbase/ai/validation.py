@@ -21,6 +21,13 @@ import tinycss2
 META = re.compile(r"<!--\s*spec-meta:\s*(.*?)-->", re.S)
 DELIMITER = re.compile(r":?-{3,}:?")
 RESERVED = re.compile(r"(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?", re.I)
+TABLE_COLUMNS = ["No", "論理名", "物理名", "PK", "NOT NULL", "タイプ", "長さ", "初期値", "説明"]
+FEATURE_KINDS = frozenset({"basic-design", "detailed-specification"})
+TABLE_KINDS = frozenset({"table-definition", "logical-table-definition", "physical-table-definition"})
+FEATURE_CHAPTERS = {"概要": "GRID", "項目一覧": "LIST", "イベント仕様": "GRID", "補足説明": "GRID"}
+FEATURE_ITEM_COLUMNS = ["No", "グループ", "項目名", "種類", "入出力", "DB連携項目", "候補取得元", "必須", "形式・桁", "説明"]
+FEATURE_IO_VALUES = frozenset({"I", "O", "I／O", "‐"})
+EVENT_SECTIONS = ["処理概要", "処理手順", "処理フロー", "SQL・テーブル関連（ER図）", "DB操作の詳細", "結果・例外時の扱い"]
 
 
 def _canonical_document_path(value: str) -> bool:
@@ -160,10 +167,16 @@ class _HtmlReferences(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.references = []
         self.active_content = False
+        self.invalid_boolean_attributes = []
         self.css = []
         self.in_style = False
 
     def handle_starttag(self, tag, attrs):
+        attributes = {name.lower(): (value or "").lower() for name, value in attrs}
+        if tag.lower() == "button" and attributes.get("type") != "button":
+            self.active_content = True
+        if tag.lower() == "input" and attributes.get("type") in {"submit", "image"}:
+            self.active_content = True
         if tag.lower() == "style":
             self.in_style = True
         if tag.lower() in {"script", "iframe", "object", "embed"}:
@@ -171,6 +184,12 @@ class _HtmlReferences(HTMLParser):
         if tag.lower() == "meta" and not _inert_header_metadata(attrs):
             self.active_content = True
         for key, value in attrs:
+            if key.lower() in {"selected", "checked", "disabled", "readonly", "required", "multiple",
+                               "autofocus", "hidden", "inert", "open", "controls", "muted", "loop",
+                               "autoplay", "novalidate", "formnovalidate", "reversed", "allowfullscreen",
+                               "async", "defer", "ismap"}:
+                if value is not None and value != "" and value.lower() != key.lower():
+                    self.invalid_boolean_attributes.append((key, value))
             if key.lower().startswith("on"):
                 self.active_content = True
             if key.lower() in {"action", "formaction"}:
@@ -193,7 +212,8 @@ class _HtmlReferences(HTMLParser):
     handle_startendtag = handle_starttag
 
 
-def validate_document(content: str, path: str, *, expected_document_id: str | None = None) -> list[dict]:
+def validate_document(content: str, path: str, *, expected_document_id: str | None = None,
+                      expected_kind: str | None = None) -> list[dict]:
     """Return severity/code/detail/location findings; never edit the input text."""
     if not isinstance(content, str):
         raise TypeError("content must be a string")
@@ -202,6 +222,11 @@ def validate_document(content: str, path: str, *, expected_document_id: str | No
             raise TypeError("expected_document_id must be a string or None")
         if not expected_document_id.strip():
             raise ValueError("expected_document_id must be nonempty")
+    if expected_kind is not None:
+        if not isinstance(expected_kind, str):
+            raise TypeError("expected_kind must be a string or None")
+        if not expected_kind.strip():
+            raise ValueError("expected_kind must be nonempty")
     path = str(path)
     findings = []
 
@@ -277,6 +302,8 @@ def validate_document(content: str, path: str, *, expected_document_id: str | No
             sheets = []
         sheet_names = []
         table_layout = meta.get("schema") == "spec-md/1.1" and meta.get("layout") == "TABLE"
+        if expected_kind in TABLE_KINDS and not table_layout:
+            add("TABLE_LAYOUT", "A bound table-definition document requires spec-md/1.1 TABLE layout")
         for sheet in sheets:
             if not isinstance(sheet, dict):
                 add("META_SHEET", "Each sheet declaration must be an object")
@@ -298,6 +325,11 @@ def validate_document(content: str, path: str, *, expected_document_id: str | No
                 add("TABLE_LAYOUT", "TABLE layout requires explicit HEADER/LIST section declarations")
             else:
                 declarations = sections
+                if [(section.get("heading"), section.get("kind")) if isinstance(section, dict) else None
+                        for section in sections] != [("テーブルヘッダー", "HEADER"), ("項目詳細", "LIST")]:
+                    add("TABLE_LAYOUT", "TABLE requires the ordered テーブルヘッダー/HEADER and 項目詳細/LIST sections")
+            if meta.get("columns") != TABLE_COLUMNS:
+                add("TABLE_COLUMNS", "TABLE requires the prescribed nine-column declaration including NOT NULL")
         for declaration in declarations:
             if not isinstance(declaration, dict) or not isinstance(declaration.get("heading"), str) or not declaration["heading"].strip():
                 add("META_HEADING", "Each chapter declaration requires a nonempty heading")
@@ -312,27 +344,58 @@ def validate_document(content: str, path: str, *, expected_document_id: str | No
         elif declared != observed:
             add("CHAPTER_ORDER", "Sheet/section declaration order must match the main chapter order")
     declaration_map = {d["heading"]: d for d in declarations if isinstance(d, dict) and isinstance(d.get("heading"), str)}
+    if expected_kind in FEATURE_KINDS:
+        observed = [chapter["heading"] for chapter in chapters]
+        if ([name for name in observed if name in FEATURE_CHAPTERS] != list(FEATURE_CHAPTERS) or
+                any(declaration_map.get(name, {}).get("kind") != kind for name, kind in FEATURE_CHAPTERS.items())):
+            add("FEATURE_CHAPTERS", "Bound feature documents require 概要/GRID, 項目一覧/LIST, イベント仕様/GRID, 補足説明/GRID in that order")
+        for index, chapter in enumerate(chapters):
+            if chapter["heading"] != "イベント仕様":
+                continue
+            end = chapters[index + 1]["index"] if index + 1 < len(chapters) else len(tokens)
+            events = [position for position in range(chapter["index"] + 3, end)
+                      if tokens[position].type == "heading_open" and tokens[position].tag == "h3" and tokens[position].level == 0]
+            if not events:
+                add("FEATURE_EVENTS", "The event chapter requires explicit h3 event headings", chapter["line"])
+            for event_number, event in enumerate(events):
+                stop = events[event_number + 1] if event_number + 1 < len(events) else end
+                headings = [_text(tokens[position + 1]) for position in range(event + 3, stop)
+                            if tokens[position].type == "heading_open" and tokens[position].tag == "h4" and tokens[position].level == 0]
+                mandatory = [heading for heading in headings if heading in EVENT_SECTIONS]
+                if mandatory != EVENT_SECTIONS:
+                    add("EVENT_SECTIONS", "Every event requires the six ordered h4 sections: " + ", ".join(EVENT_SECTIONS), tokens[event].map[0] + 1)
     for chapter_number, chapter in enumerate(chapters):
         declaration = declaration_map.get(chapter["heading"], {})
-        if declaration.get("kind") != "LIST":
+        is_header = meta is not None and meta.get("layout") == "TABLE" and declaration.get("kind") == "HEADER"
+        if declaration.get("kind") != "LIST" and not is_header:
             continue
         stop = chapters[chapter_number + 1]["start"] if chapter_number + 1 < len(chapters) else len(lines)
         token_stop = chapters[chapter_number + 1]["index"] if chapter_number + 1 < len(chapters) else len(tokens)
         section_tokens = tokens[chapter["index"] + 3:token_stop]
         tables = [token for token in section_tokens if token.type == "table_open" and token.level == 0]
         if len(tables) != 1:
-            add("LIST_TABLE_COUNT", "A LIST chapter must contain exactly one top-level Markdown table", chapter["line"])
+            add("TABLE_HEADER" if is_header else "LIST_TABLE_COUNT", "A TABLE HEADER/LIST chapter must contain exactly one top-level Markdown table", chapter["line"])
             continue
         table = tables[0]
         start, end = table.map
         if any(line.strip() for line in lines[chapter["start"] + 1:start] + lines[end:stop]):
-            add("LIST_EXTRA_CONTENT", "A LIST chapter may contain only its table and blank surrounding lines", chapter["line"])
+            add("TABLE_HEADER" if is_header else "LIST_EXTRA_CONTENT", "A TABLE HEADER/LIST chapter may contain only its table and blank surrounding lines", chapter["line"])
         rows = [_cells(line) for line in lines[start:end]]
         if len(rows) < 2 or any(not DELIMITER.fullmatch(cell) for cell in rows[1]):
             add("LIST_DELIMITER", "A Markdown table requires one valid delimiter row", start + 1)
             continue
         visible_rows = _visible_table_rows(section_tokens, table)
         headers = visible_rows[0] if visible_rows else []
+        is_feature_items = expected_kind in FEATURE_KINDS and chapter["heading"] == "項目一覧"
+        if is_feature_items and headers != FEATURE_ITEM_COLUMNS:
+            add("FEATURE_ITEM_COLUMNS", "Bound feature item lists require the ten prescribed columns in order: " + ", ".join(FEATURE_ITEM_COLUMNS), start + 1)
+        if is_feature_items and headers == FEATURE_ITEM_COLUMNS:
+            io_index = headers.index("入出力")
+            for offset, row in enumerate(visible_rows[1:], 2):
+                if len(row) == len(headers) and row[io_index] not in FEATURE_IO_VALUES:
+                    add("FEATURE_ITEM_IO", "Feature item input/output values must be I, O, I／O or ‐", start + offset + 1)
+        if is_header and len(headers) != 2:
+            add("TABLE_HEADER", "TABLE header information requires exactly two columns", start + 1)
         if not all(headers) or len(headers) != len(set(headers)):
             add("LIST_HEADERS", "Table headers must be nonempty and unique", start + 1)
         for offset, row in enumerate(rows):
@@ -345,6 +408,8 @@ def validate_document(content: str, path: str, *, expected_document_id: str | No
                 for child in inline.children or []:
                     if child.type == "image" or (child.type == "html_inline" and not re.fullmatch(r"<br\s*/?>", child.content, re.I)):
                         add("LIST_INLINE_CONTENT", "Images and HTML other than a plain br element are forbidden in LIST cells", start + offset + 1)
+        if is_header:
+            continue
         keys = declaration.get("key", [headers[0]] if headers else [])
         if not isinstance(keys, list) or not keys or any(not isinstance(key, str) or key not in headers for key in keys) or len(keys) != len(set(keys)):
             add("LIST_KEY", "LIST keys must identify one or more distinct existing header columns", start + 1)
@@ -380,6 +445,8 @@ def validate_document(content: str, path: str, *, expected_document_id: str | No
             parser.feed(fragment)
             if parser.active_content:
                 add("HTML_ACTIVE", "Published screen markup must be static, without scripts, active handlers or submission targets", line)
+            if parser.invalid_boolean_attributes:
+                add("HTML_BOOLEAN_VALUE", "HTML boolean attributes require absence for false, or empty/name values for true; string false/true values do not control their state", line)
             for value in parser.references:
                 if _unsafe_reference(value, path):
                     add("REFERENCE_PATH", "An HTML reference uses an unsafe or protected target", line)

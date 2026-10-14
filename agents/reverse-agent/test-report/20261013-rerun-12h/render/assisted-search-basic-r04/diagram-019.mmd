@@ -1,0 +1,16 @@
+%%{init: {"flowchart":{"htmlLabels":true},"themeCSS":".nodeLabel, .nodeLabel p { white-space: nowrap !important; overflow-wrap: normal !important; word-break: normal !important; }"}}%%
+flowchart TD
+  A["サブフロー1から<br/>Detail・取得済み<br/>Lookups"] --> B["StudentSaveInput.From<br/>保存値と候補から<br/>Form<br/>組立て"]
+  B -->|例外| Q["F0：<br/>Snapshot<br/>未作成"]
+  B -->|成功| C["Coordinatorから<br/>Detail・Form・Lookups<br/>返却"]
+  C --> D{"復帰IDが非空"}
+  D -->|はい| E["復帰状態を再Get<br/>現在Revision取得"]
+  E -->|拒否・例外| Q
+  E -->|成功| F["ReturnRevision=取得版"]
+  D -->|いいえ| G["ReturnRevision=NULL"]
+  F --> H["Snapshot<br/>作成<br/>枝ごとのDetail・<br/>Original<br/>複製・復帰版"]
+  G --> H
+  H -->|例外| Q
+  H -->|成功| I["新規・編集・参照HTML描画"]
+  I -->|成功| J["登録画面HTML<br/>検索条件・結果・版は維持"]
+  I -->|描画例外| K["F0：<br/>Snapshot<br/>作成済み"]

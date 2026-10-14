@@ -1,0 +1,17 @@
+flowchart TD
+  A["SV-C・書込み可能<br/>読込版と確認結果を保持"] --> B
+  subgraph TX["トランザクション内：書込み・確定"]
+    B["保存後版=読込版+1<br/>読込版なしの新規は1"] --> C{"新規か"}
+    C -->|はい| I["INSERT・手順8<br/>正規化列・固定分類・削除0<br/>作成更新情報・版1"]
+    C -->|いいえ| U["UPDATE・手順8<br/>学籍番号は対象外<br/>ID・比較版・非削除WHERE"]
+    I --> W["writeStarted=true<br/>SQL実行・返却ID確認"]
+    U --> W
+    W --> D{"取得IDあり"}
+    D -->|いいえ| E["DBConcurrencyException"]
+    D -->|はい| F["取得IDを保持<br/>同じtxへCREATE／UPDATE監査"]
+    F --> G["commitAttempted=true<br/>commit試行"]
+    G -->|成功| S["Saved<br/>取得ID・保存後版"]
+  end
+  E --> X["SV-X → 3.8-5<br/>元の例外・tx・発生時のフラグ"]
+  TX -->|枠内の例外| X
+  S --> R["SV-R → 3.8-6<br/>SavedのID・版を保持"]

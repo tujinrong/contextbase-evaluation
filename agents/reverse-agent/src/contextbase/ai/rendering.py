@@ -25,12 +25,18 @@ from PIL import Image
 import tinycss2
 
 from .validation import validate_document, _inert_header_metadata
+from .edge_label_projection import (project_flowchart_edges, reverse_projection,
+    validate_semantic_signature, validate_svg_label_rows)
+from .node_label_row_gate import prove_node_rows, bind_svg_node_ids
 
 
 SECURE_KEYS = ["secure", "securityLevel", "startOnLoad", "maxTextSize", "suppressErrorRendering", "maxEdges",
                "htmlLabels", "themeCSS", "fontFamily", "flowchart", "deterministicIds", "deterministicIDSeed"]
 STATIC_CSP = "default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'"
-BASE_STYLE = "body{margin:16px;font-family:system-ui,sans-serif}pre{white-space:pre-wrap}table[data-renderer-markdown]{border-collapse:collapse}table[data-renderer-markdown] th,table[data-renderer-markdown] td{border:1px solid #aaa;padding:6px}img[data-renderer-diagram]{max-width:100%;height:auto}"
+BASE_STYLE = "body{margin:16px;font-family:system-ui,sans-serif}pre{white-space:pre-wrap}table[data-renderer-markdown]{border-collapse:collapse;width:100%;table-layout:fixed;margin:12px 0}table[data-renderer-markdown] th,table[data-renderer-markdown] td{border:1px solid #aaa;padding:6px;vertical-align:top;overflow-wrap:anywhere}table[data-renderer-markdown] th{background:#f0f3f7}img[data-renderer-diagram]{max-width:100%;height:auto}"
+MARKDOWN_TABLE_READABILITY_STYLE = 'table[data-renderer-markdown]:not([data-renderer-columns="1"]):not([data-renderer-columns="2"]){table-layout:auto}table[data-renderer-markdown]:not([data-renderer-columns="1"]):not([data-renderer-columns="2"]) col{width:auto!important}table[data-renderer-markdown]:not([data-renderer-columns="1"]):not([data-renderer-columns="2"]) th,table[data-renderer-markdown]:not([data-renderer-columns="1"]):not([data-renderer-columns="2"]) td{overflow-wrap:normal;word-break:normal;white-space:normal}table[data-renderer-markdown]:not([data-renderer-columns="1"]):not([data-renderer-columns="2"]) code{white-space:nowrap}table[data-renderer-markdown]:not([data-renderer-columns="1"]):not([data-renderer-columns="2"]) th:last-child,table[data-renderer-markdown]:not([data-renderer-columns="1"]):not([data-renderer-columns="2"]) td:last-child{min-width:20em}'
+MERMAID_LABEL_STYLE = ".edgeLabel rect{opacity:1!important;fill:#ffffff!important}.edgeLabel .labelBkg{background-color:#ffffff!important}"
+MERMAID_LABEL_WIDTH = 400
 _RUNTIME_LOCK = threading.RLock()
 
 
@@ -149,6 +155,12 @@ def _safe_css(css, base, asset_root, removed):
                 removed.append({"kind": "css", "name": token.lower_name})
                 continue
             if token.type == "function":
+                if token.lower_name in {"image-set", "-webkit-image-set"}:
+                    # Direct string alternatives are URLs; nested type("image/png") is metadata.
+                    for index, argument in enumerate(token.arguments):
+                        if argument.type == "string":
+                            token.arguments[index] = tinycss2.parse_component_value_list(
+                                "url(" + json.dumps(argument.value) + ")")[0]
                 token.arguments = walk(token.arguments)
             elif hasattr(token, "content"):
                 token.content = walk(token.content)
@@ -265,7 +277,7 @@ def _svg_safe(svg):
 
 def _html(body, styles="", scripts=False):
     csp = STATIC_CSP if not scripts else STATIC_CSP.replace("script-src 'none'", "script-src 'unsafe-inline' 'unsafe-eval'")
-    return '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="' + html.escape(csp, quote=True) + '"><style>' + BASE_STYLE + "</style>" + styles + "</head><body>" + body + "</body></html>"
+    return '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="' + html.escape(csp, quote=True) + '"><style>' + BASE_STYLE + MARKDOWN_TABLE_READABILITY_STYLE + "</style>" + styles + "</head><body>" + body + "</body></html>"
 
 
 def _png_info(data):
@@ -288,6 +300,84 @@ def _capture(page, locator=None):
     if width <= 0 or height <= 0 or width > 16000 or height > 16000 or width * height > 40_000_000:
         raise ValueError("Artifact exceeds bounded capture dimensions; it is not cropped or declared passed")
     return locator.screenshot(animations="disabled") if locator is not None else page.screenshot(full_page=True, animations="disabled")
+
+
+def _protect_cluster_labels(page):
+    """Paint an opaque title background above crossing paths at its existing position."""
+    return page.evaluate("""() => {
+        const svg = document.querySelector('svg');
+        for (const label of [...svg.querySelectorAll('g.cluster-label')]) {
+            const box = label.getBBox();
+            const matrix = svg.getCTM().inverse().multiply(label.getCTM());
+            if (![box.x,box.y,box.width,box.height,matrix.a,matrix.b,matrix.c,matrix.d,matrix.e,matrix.f].every(Number.isFinite)) {
+                throw new Error('Invalid cluster label geometry');
+            }
+            const layer = document.createElementNS('http://www.w3.org/2000/svg','g');
+            layer.setAttribute('class','trusted-cluster-label-overlay');
+            layer.setAttribute('transform',`matrix(${matrix.a},${matrix.b},${matrix.c},${matrix.d},${matrix.e},${matrix.f})`);
+            const background = document.createElementNS('http://www.w3.org/2000/svg','rect');
+            for (const [key,value] of Object.entries({x:box.x-3,y:box.y-2,width:box.width+6,height:box.height+4})) {
+                background.setAttribute(key,String(value));
+            }
+            background.setAttribute('data-trusted-label-background','true');
+            background.setAttribute('style','fill:#ffffff!important;stroke:none!important;opacity:1!important');
+            const copy = label.cloneNode(true);
+            copy.removeAttribute('transform');
+            layer.append(background,copy);
+            label.remove();
+            svg.append(layer);
+        }
+        return svg.outerHTML;
+    }""")
+
+
+def _flowchart_svg_signature(svg):
+    """Compare meaning-bearing graph structure while allowing geometry changes."""
+    soup = BeautifulSoup(svg, "xml")
+    normalize = lambda value: ''.join(value.split())
+    node_key = lambda value: re.sub(r'^.*?flowchart-', '', value)
+    shapes = lambda node: sorted((child.name, tuple(sorted(child.get('class', '').split())))
+        for child in node.find_all(['rect', 'polygon', 'circle', 'ellipse', 'path'], recursive=False))
+    nodes = [{'id': node_key(node.get('id', '')), 'text': normalize(node.get_text()),
+              'shapes': shapes(node)} for node in soup.select('g.node')]
+    edges = [{'id': edge.get('data-id', edge.get('id', '')),
+              'endpoints': sorted(c for c in edge.get('class', '').split() if c.startswith(('LS-', 'LE-'))),
+              'connectionClasses': sorted(c for c in edge.get('class', '').split()
+                  if c.startswith(('edge-pattern-', 'edge-thickness-'))),
+              'markerStart': edge.get('marker-start'), 'markerEnd': edge.get('marker-end')}
+             for edge in soup.select('path.flowchart-link')]
+    labels = [{'id': label['data-id'], 'text': normalize(label.get_text())}
+              for label in soup.select('g.edgeLabel g.label[data-id]')]
+    clusters = [{'id': group.get('id', ''), 'shapes': shapes(group),
+                 'text': normalize(label.get_text()) if (label := group.select_one('g.cluster-label')) else ''}
+                for group in soup.select('g.cluster')]
+    return {'nodes': nodes, 'edges': edges, 'edgeLabels': labels, 'clusters': clusters}
+
+
+def _edge_label_rows(page):
+    """Read actual visible SVG rows from the inert static browser context."""
+    return page.locator('g.edgeLabel g.label[data-id]').evaluate_all("""nodes => {
+        const svg = document.querySelector('svg').getBoundingClientRect();
+        function visible(row) {
+            const box = row.getBoundingClientRect();
+            if (!(box.width > 0 && box.height > 0) || box.left < svg.left-1 ||
+                box.right > svg.right+1 || box.top < svg.top-1 || box.bottom > svg.bottom+1) return false;
+            for (let parent = row; parent instanceof Element; parent = parent.parentElement) {
+                const style = getComputedStyle(parent);
+                if (style.display === 'none' || style.visibility === 'hidden' ||
+                    style.visibility === 'collapse' || Number(style.opacity) === 0) return false;
+            }
+            const fill = getComputedStyle(row).fill;
+            return fill !== 'none' && fill !== 'transparent' && !/rgba\\([^)]*,\\s*0\\s*\\)$/.test(fill);
+        }
+        return nodes.map(node => ({id:node.dataset.id,text:node.textContent,
+            rows:[...node.querySelectorAll('tspan.text-outer-tspan')].filter(visible).map(row=>row.textContent)}));
+    }""")
+
+
+def _node_label_rows(page):
+    """Measure captured SVG node rows in the inert static browser context."""
+    return page.locator('svg').evaluate("svg => {\n  const rect = node => {\n    const r = node.getBoundingClientRect();\n    return {x:r.x,y:r.y,width:r.width,height:r.height};\n  };\n  const visible = row => {\n    const own = getComputedStyle(row);\n    const fill = own.fill.trim().toLowerCase();\n    const rgba = /^rgba\\(.*[,/]\\s*([0-9.]+)%?\\s*\\)$/.exec(fill);\n    if (fill === 'none' || fill === 'transparent' ||\n        (rgba && (!Number.isFinite(Number(rgba[1])) || Number(rgba[1]) <= 0)) ||\n        !Number.isFinite(Number(own.fillOpacity)) || Number(own.fillOpacity) <= 0) return false;\n    for (let ancestor=row; ancestor; ancestor=ancestor.parentElement) {\n      const style=getComputedStyle(ancestor);\n      if (style.display === 'none' || style.visibility !== 'visible' ||\n          !Number.isFinite(Number(style.opacity)) || Number(style.opacity) <= 0) return false;\n      if (ancestor === svg) break;\n    }\n    return true;\n  };\n  return {canvas:rect(svg),nodes:[...svg.querySelectorAll('g.node')].map(node => ({\n    id:node.id,bounds:rect(node),rows:[...node.querySelectorAll('tspan.text-outer-tspan')].map(row => ({\n      text:row.textContent,bounds:rect(row),display:getComputedStyle(row).display,\n      visibility:getComputedStyle(row).visibility,opacity:getComputedStyle(row).opacity,\n      fill:getComputedStyle(row).fill,fillOpacity:getComputedStyle(row).fillOpacity,\n      effectiveVisible:visible(row)\n    }))\n  }))};\n}\n")
 
 
 def _capture_document(page, destination, display):
@@ -322,6 +412,24 @@ def _capture_document(page, destination, display):
         raise ValueError('Blank document capture')
 
 
+def _markdown_table_open(tokens, index, options, env, renderer):
+    """Style parser-owned Markdown tables without changing embedded source-screen tables."""
+    count = 0
+    for token in tokens[index + 1:]:
+        if token.type == "thead_close":
+            break
+        if token.type == "th_open":
+            count += 1
+    if count < 1:
+        raise ValueError("Markdown table header required")
+    tokens[index].attrSet("data-renderer-markdown", "")
+    tokens[index].attrSet("data-renderer-columns", str(count))
+    widths = ([100] if count == 1 else [24, 76] if count == 2 else
+              [4] + [56 / (count - 2)] * (count - 2) + [40])
+    columns = ''.join(f'<col style="width:{width:g}%">' for width in widths)
+    return renderer.renderToken(tokens, index, options, env) + '<colgroup>' + columns + '</colgroup>\n'
+
+
 def render_document(source: Path, destination: Path, *, mermaid_package: Path | None = None,
                     chromium_executable: Path | None = None, document_path: str | None = None,
                     asset_root: Path | None = None) -> dict:
@@ -341,6 +449,8 @@ def render_document(source: Path, destination: Path, *, mermaid_package: Path | 
               "diagrams": [], "layouts": [], "artifacts": [], "semanticApproval": "NOT_ASSESSED"}
     result["structure"]["status"] = "ERROR" if result["structure"]["findings"] else "PASS"
     parser = MarkdownIt("commonmark", {"html": True}).enable("table")
+    parser.renderer.rules['table_open'] = lambda tokens, index, options, env: _markdown_table_open(
+        tokens, index, options, env, parser.renderer)
     diagrams, layout_blocks = [], []
     original_fence = parser.renderer.rules["fence"]
 
@@ -401,25 +511,85 @@ def render_document(source: Path, destination: Path, *, mermaid_package: Path | 
                     try:
                         for diagram, record in zip(diagrams, result["diagrams"]):
                             page = diagram_context.new_page()
+                            projection_receipt = None
                             try:
+                                projection = project_flowchart_edges(diagram["source"])
+                                if reverse_projection(projection) != diagram["source"]:
+                                    raise ValueError("Edge layout projection does not recover the canonical source")
+                                repeated = project_flowchart_edges(projection.text)
+                                if repeated.text != projection.text or repeated.insertions:
+                                    raise ValueError("Edge layout projection is not idempotent")
+                                projection_receipt = {"schema": "mermaid-edge-layout-projection/1", **projection.receipt(),
+                                    "canonicalMmd": diagram["id"] + ".mmd", "viewMmd": diagram["id"] + ".view.mmd",
+                                    "applied": bool(projection.insertions), "status": "NOT_RUN",
+                                    "originalSvg": diagram["id"] + ".source.svg", "viewSvg": diagram["id"] + ".view.svg",
+                                    "semanticSignatureCompared": False, "wholeVisibleTokensVerified": False}
+                                _write(destination / projection_receipt["viewMmd"], projection.text)
+                                record['layoutProjection'] = projection_receipt
                                 page.set_content(_html("", scripts=True))
                                 page.add_script_tag(path=str(bundle))
                                 config = {"startOnLoad": False, "securityLevel": "strict", "secure": SECURE_KEYS, "htmlLabels": False,
-                                          "themeCSS": "", "fontFamily": "sans-serif", "maxTextSize": 500000, "maxEdges": 10000,
+                                          "themeCSS": MERMAID_LABEL_STYLE, "fontFamily": "sans-serif", "maxTextSize": 500000, "maxEdges": 10000,
                                           "suppressErrorRendering": True, "deterministicIds": True, "deterministicIDSeed": result["sourceSha256"],
-                                          "flowchart": {"htmlLabels": False, "useMaxWidth": False}}
-                                rendered = page.evaluate("""async ({id,text,config}) => {
+                                          "flowchart": {"htmlLabels": False, "useMaxWidth": False,
+                                                        "wrappingWidth": MERMAID_LABEL_WIDTH}}
+                                rendered = page.evaluate("""async ({id,text,config,flowchart}) => {
                                     mermaid.initialize(config);
                                     const {svg}=await mermaid.render(id,text);
-                                    return {svg,securityLevel:mermaid.mermaidAPI.getConfig().securityLevel};
-                                }""", {"id": diagram["id"], "text": diagram["source"], "config": config})
+                                    let vertices=[];
+                                    if (flowchart) {
+                                        const parsed=await mermaid.mermaidAPI.getDiagramFromText(text);
+                                        vertices=[...parsed.db.getVertices().values()].map(vertex => ({
+                                            id:vertex.id,domId:vertex.domId,text:vertex.text,
+                                            labelType:vertex.labelType,icon:vertex.icon,img:vertex.img}));
+                                    }
+                                    return {svg,vertices,securityLevel:mermaid.mermaidAPI.getConfig().securityLevel};
+                                }""", {"id": diagram["id"], "text": diagram["source"], "config": config,
+                                    "flowchart": projection.supportedDiagram})
                                 if rendered["securityLevel"] != "strict":
                                     raise ValueError("Mermaid security level changed")
-                                svg = _svg_safe(rendered["svg"])
-                                _write(destination / (diagram["id"] + ".svg"), svg)
+                                record["securityLevel"] = rendered["securityLevel"]
+                                canonical_nodes = rendered["vertices"]
+                                projection_receipt.update(canonicalNodeLiterals=canonical_nodes,
+                                    canonicalNodeLiteralsSha256=_sha(json.dumps(canonical_nodes, sort_keys=True, ensure_ascii=False)),
+                                    nodeLabelWrappingWidth=MERMAID_LABEL_WIDTH,
+                                    wholeVisibleNodeTokensVerified=False)
+                                original_svg = _svg_safe(rendered["svg"])
+                                _write(destination / projection_receipt["originalSvg"], original_svg)
+                                svg = original_svg
+                                if projection.insertions:
+                                    rendered = page.evaluate("""async ({id,text,config}) => {
+                                        mermaid.initialize(config);
+                                        const {svg}=await mermaid.render(id,text);
+                                        return {svg,securityLevel:mermaid.mermaidAPI.getConfig().securityLevel};
+                                    }""", {"id": diagram["id"], "text": projection.text, "config": config})
+                                    if rendered["securityLevel"] != "strict":
+                                        raise ValueError("Mermaid security level changed during layout projection")
+                                    svg = _svg_safe(rendered["svg"])
+                                _write(destination / projection_receipt["viewSvg"], svg)
+                                projection_receipt.update(originalSvgSha256=_sha(original_svg), viewSvgSha256=_sha(svg))
+                                if projection.supportedDiagram:
+                                    signature = _flowchart_svg_signature(original_svg)
+                                    validate_semantic_signature(signature, _flowchart_svg_signature(svg))
+                                    projection_receipt.update(semanticSignatureCompared=True, semanticSignatureEqual=True,
+                                        semanticSignatureSha256=_sha(json.dumps(signature, sort_keys=True, ensure_ascii=False)))
                                 capture = static.new_page()
                                 try:
                                     capture.set_content(_html(svg), wait_until="load")
+                                    svg = _svg_safe(_protect_cluster_labels(capture))
+                                    capture.set_content(_html(svg), wait_until="load")
+                                    if projection.supportedDiagram:
+                                        measurement = _node_label_rows(capture)
+                                        bound_nodes = bind_svg_node_ids(canonical_nodes, measurement["nodes"], diagram["id"])
+                                        node_proof = prove_node_rows(bound_nodes, measurement["nodes"], measurement["canvas"])
+                                        projection_receipt.update(nodeRowMeasurement=measurement, nodeLabelProof=node_proof,
+                                            wholeVisibleNodeTokensVerified=True, nodeParserApi="mermaidAPI.getDiagramFromText/FlowDB.getVertices")
+                                    checks = validate_svg_label_rows(diagram["source"], projection, _edge_label_rows(capture))
+                                    projection_receipt.update(visibleLabelChecks=checks,
+                                        wholeVisibleTokensVerified=projection.supportedDiagram,
+                                        excludedMarkdownBaselineLabels=sum(label.markdown for label in projection.labels),
+                                        status="PASS" if projection.supportedDiagram else "UNMODIFIED_NON_FLOW_DISPLAY")
+                                    _write(destination / (diagram["id"] + ".svg"), svg)
                                     data = _capture(capture, capture.locator("svg"))
                                 finally:
                                     capture.close()
@@ -436,7 +606,14 @@ def render_document(source: Path, destination: Path, *, mermaid_package: Path | 
                                 body = str(dom)
                             except Exception as exc:
                                 record.update(status="ERROR", error=str(exc)[:1000])
+                                if projection_receipt is not None:
+                                    projection_receipt.update(status="ERROR", error=str(exc)[:1000], authorRevisionRequired=True)
                             finally:
+                                if projection_receipt is not None:
+                                    receipt_name = diagram["id"] + ".projection.json"
+                                    receipt_raw = json.dumps(projection_receipt, ensure_ascii=False, indent=2) + "\n"
+                                    _write(destination / receipt_name, receipt_raw)
+                                    record['projectionReceipt'] = {'path': receipt_name, 'sha256': _sha(receipt_raw)}
                                 page.close()
                     finally:
                         diagram_context.close()

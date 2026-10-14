@@ -1,0 +1,10 @@
+flowchart TD
+  A[try内の例外] --> B{InputValidationException}
+  B -->|はい| C[ValidationFailed<br/>元のErrors]
+  B -->|いいえ| D{ArgumentException}
+  D -->|はい| E[ValidationFailed<br/>Search向けArgumentError]
+  D -->|いいえ| Q[F0：捕捉対象外例外]
+  C --> F[EnsureSearch：422 WebFault]
+  E --> F
+  F --> G[Controller局所catch<br/>Status・項目エラー]
+  G --> H[サブフロー4へ<br/>今回未検索・保持状態未更新]

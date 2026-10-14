@@ -1,0 +1,18 @@
+flowchart TD
+  A["認証・CSRF等を経て<br/>createまたはupdate"] --> B["FormGuard・登録更新権限<br/>snapshotの所有者・セッション・対象"]
+  B --> C["復帰先確認<br/>受信IDと読込時IDの一致"]
+  B -->|拒否・例外| O["個別再表示の外・303なし<br/>元の例外を4.5へ"]
+  C -->|拒否・例外| O
+  C --> D{"ModelState有効"}
+  D -->|いいえ| V["422・result=NULL<br/>SV-V → 3.8-6"]
+  D -->|はい| E["Coordinatorで権限・復帰先再確認<br/>保存要求へ変換"]
+  E -->|WebFault| W["そのStatus・Field・Messageで<br/>エラーとHTTP状態を設定"]
+  W --> V1["result=NULL<br/>SV-V → 3.8-6"]
+  E -->|その他の未捕捉例外| X["元の例外を4.5へ・303なし"]
+  E --> F["手順4のサービス検査<br/>正規化・理由・ID版・年度学年"]
+  F -->|検証失敗等の結果| R["SaveResultを保持<br/>SV-R → 3.8-6"]
+  F -->|WebFault| W
+  F -->|未捕捉例外| X
+  F -->|通過| G["接続・ReadCommitted開始<br/>書込開始false・commit試行false"]
+  G -->|接続・開始の例外| X
+  G -->|成功| H["SV-A → 3.8-2<br/>要求・正規化値・理由・tx"]

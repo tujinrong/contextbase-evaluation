@@ -1,0 +1,23 @@
+flowchart TD
+    A[新規・行リンクのGET] --> B{認証・認可を通過}
+    B -->|拒否| X[入口検査の結果]
+    B -->|通過| C[Read・復帰状態Get]
+    C --> D{新規}
+    D -->|はい| E[CreateOrUpdate確認]
+    E --> F[新規入力・Detailなし]
+    D -->|いいえ| G[学生IDで最新非削除対象取得]
+    G -->|不在| W[404 E-STU-103]
+    G -->|取得| H[既存入力・取得Detail]
+    F --> K[登録候補取得]
+    H --> K
+    K --> L[復帰状態を再Get<br/>現在Revision取得]
+    L --> N[枝ごとの入力・Detailと復帰版を<br/>Snapshotへ保存]
+    N --> V[登録HTML描画]
+    C -->|例外| M[共通応答境界M]
+    E -->|拒否| M
+    G -->|例外| M
+    W --> M
+    K -->|例外| M
+    L -->|例外| M
+    N -->|例外| M
+    V -->|例外| M

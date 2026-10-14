@@ -1,0 +1,14 @@
+%%{init: {"flowchart":{"htmlLabels":true,"useMaxWidth":false,"nodeSpacing":28,"rankSpacing":30},"themeCSS":".nodeLabel,.edgeLabel{white-space:nowrap;word-break:keep-all;overflow-wrap:normal;}"}}%%
+flowchart TD
+    NEW["図9-2 新規入口<br/>前値・前版NULL"] --> RULE["枝ごとの前値を引継ぎ<br/>最新コード・所属検査"]
+    OLD["図9-2 更新入口<br/>前値・取得版保持"] --> NO{"学籍番号不変"}
+    NO -->|いいえ| V["S6へ<br/>ValidationFailed 422<br/>ID版NULL"]
+    NO -->|はい| END{"終了区分から<br/>別区分へ訂正"}
+    END -->|なし| RULE
+    END -->|あり| ADM{"管理者"}
+    ADM -->|いいえ| F["S6へ<br/>Forbidden 403<br/>ID版NULL"]
+    ADM -->|はい| RE{"理由あり"}
+    RE -->|なし| V
+    RE -->|あり| RULE
+    RULE -->|正常| NEXT["S4へ<br/>枝ごとの前値・前版保持"]
+    RULE -. 検証・DB等例外 .-> SC["SCへ"]

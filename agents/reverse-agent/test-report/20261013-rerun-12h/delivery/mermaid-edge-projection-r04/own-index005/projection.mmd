@@ -1,0 +1,18 @@
+flowchart TD
+    A[参照1から：認証主体確認] --> B[入力検査・正規化]
+    A -->|主体取得等の例外| X[上位例外]
+    B -->|InputValidationException<br/>又は<br/>ArgumentException| V[ValidationFailed<br/>Webでは通常422・再表示へ]
+    B -->|その他例外| X
+    B --> C[接続・SNAPSHOT開始・指定参照先検査]
+    C -->|指定不正の<br/>ArgumentException| V
+    C --> D[同じ条件でTOP 10001件を数える]
+    D --> E{10000件を超えるか}
+    E -->|はい| F[commit・NoChange<br/>一覧なし・LimitExceeded=true]
+    E -->|いいえ| G[ページ補正・行取得・commit]
+    G --> H[NoChange：0件又は通常一覧]
+    F --> I[実行条件・結果保持・状態版加算]
+    H --> I
+    C -->|DB<br/>・取消等| X
+    D -->|DB<br/>・取消等| X
+    F -->|commit<br/>例外| X
+    G -->|DB<br/>・取消等| X

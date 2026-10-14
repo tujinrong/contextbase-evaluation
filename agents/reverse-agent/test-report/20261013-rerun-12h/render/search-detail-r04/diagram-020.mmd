@@ -1,0 +1,8 @@
+flowchart TD
+ A["U-operation：②から受領"] --> G["operationをawait"]
+ G -->|正常結果| H["Expiresを現在UTC＋30分へ延長"]
+ G -->|例外| J["期限延長なし<br/>元の例外を保持"]
+ H --> K["finally：Gate.Release"]
+ B["U-失敗：②から受領<br/>再確認または版拒否"] --> K
+ J --> K
+ K --> R["呼出元へ<br/>正常結果または元の例外"]

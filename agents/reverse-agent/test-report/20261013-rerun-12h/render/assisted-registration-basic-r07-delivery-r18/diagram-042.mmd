@@ -1,0 +1,13 @@
+%%{init: {"flowchart":{"htmlLabels":true,"useMaxWidth":false,"nodeSpacing":28,"rankSpacing":30},"themeCSS":".nodeLabel,.edgeLabel{white-space:nowrap;word-break:keep-all;overflow-wrap:normal;}"}}%%
+flowchart LR
+    SNAP["Snapshot<br/>Original・Detail"] -->|取消| E["読込時入力Edit"]
+    MASTER["コード・クラス・人数"] -->|候補再取得| E
+    STUDENT["m_student<br/>最新値・版"] -->|再読込| NEW["新Snapshot・Edit"]
+    MASTER --> NEW
+    CONTEXT["Applied・Revision"] -->|Appliedあり| QUERY["学生検索<br/>名称JOIN"]
+    QUERY --> RESULT["新LastResult<br/>検索版加算"]
+    CONTEXT -->|Appliedなし| UNS["未検索・版維持"]
+    RESULT --> VIEW["検索表示"]
+    UNS --> VIEW
+    CONTEXT -->|保持Pageを表示| VIEW
+    FLASH["FlashMessageStore"] -->|一度取得| VIEW

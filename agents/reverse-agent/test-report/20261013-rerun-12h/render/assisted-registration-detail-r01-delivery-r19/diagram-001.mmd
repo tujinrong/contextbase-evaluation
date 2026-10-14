@@ -1,0 +1,17 @@
+flowchart TD
+ A[GET new・認証] --> B[Read・復帰Context確認]
+ B -->|WebFault| X[その状態で共通応答]
+ B -->|正常| C[CreateOrUpdate]
+ C -->|Viewer| Y[403]
+ C -->|許可| D[候補・人数取得]
+ D --> E[新規Input作成]
+ E --> F{復帰先あり}
+ F -->|はい| G[await後にContext再取得]
+ G -->|正常| H[取得Revisionを保持]
+ G -->|WebFault| X
+ F -->|いいえ| I[ReturnRevision NULL]
+ H --> J[新Snapshot・新規画面]
+ I --> J
+ D -->|一般例外| Z[応答未開始なら503]
+ E -->|一般例外| Z
+ J -->|一般例外| Z

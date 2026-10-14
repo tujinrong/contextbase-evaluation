@@ -1,0 +1,18 @@
+flowchart TD
+  A["SV-R：サービス結果から<br/>Outcome・ID版・Errors・確認情報を保持"] --> B["結果エラーをModelStateへ追加"]
+  B --> C{"Outcome.Saved"}
+  C -->|いいえ| N["Outcome別Statusを設定<br/>確認情報を入力へ移送<br/>ID・版・候補等の結果を保持"]
+  V["SV-V：入力不正または個別WebFault<br/>result=NULL・設定済みStatus"] --> M["入力・snapshot・復帰版を保持"]
+  N --> M
+  M --> L["編集用候補読取・編集画面表示<br/>NoChangeだけ変更なし通知"]
+  L -->|候補・表示例外| O["元の例外を4.5へ"]
+  C -->|はい| D{"復帰先が非空"}
+  D -->|はい| D1["既存復帰ID<br/>snapshotのReturnRevisionを保持"]
+  D -->|いいえ| D2["新規検索状態を作成<br/>そのID・版を保持"]
+  D1 --> E["保存しました。を通知へ格納"]
+  D2 --> E
+  E --> F["HTTP 303・検索GETのLocation"]
+  F --> G["後続の別要求：3.6 検索復帰<br/>版等を確認しAppliedがあれば再検索"]
+  D2 -->|状態作成例外| O
+  E -->|認証・通知・応答生成例外| O
+  F -->|応答生成例外| O

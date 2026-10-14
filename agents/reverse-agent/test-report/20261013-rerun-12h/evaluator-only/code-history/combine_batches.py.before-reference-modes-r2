@@ -1,0 +1,353 @@
+"""Combine explicitly selected, immutable per-document independent evaluation batches.
+
+No date glob, previous summary score, expected-answer transfer, or latest-draft guess.
+The canonical Markdown bytes must be exactly the bytes independently evaluated.
+"""
+from __future__ import annotations
+import argparse
+from datetime import datetime, timezone
+import json
+import math
+from pathlib import Path
+import sys
+import grader
+
+SAFETY_TOPICS = {'authorization', 'concurrency', 'commit-audit-atomicity', 'rollback', 'logical-deletion', 'personal-data'}
+SELECTION_SCHEMA = 'independent-evaluation-batch-selection/1'
+VISUAL_SCOPE = 'STATIC_PROJECTION_VS_SOURCE_RESOURCES'
+
+def visual_binding(entry, selection, canonical):
+    if not entry.get('visualReviewPath'):
+        return {'approvedAndBound': False, 'status': 'NOT_PERFORMED'}
+    run_root = grader.HERE.parent
+    path = relative_file(run_root, entry['visualReviewPath'])
+    review = grader.load(path)
+    if review.get('schema') != 'reverse-agent-native-visual-review/1' or review.get('documentId') != entry['documentId']:
+        raise ValueError('Visual review identity differs from selected document')
+    if review.get('reviewScope') != VISUAL_SCOPE or review.get('originalApplicationExecuted') is not False:
+        raise ValueError('Visual review scope differs from static source projection')
+    if review.get('documentSha256') != entry['canonicalSha256'] or review.get('sourceSnapshotSha256') != selection['sourceSnapshotSha256']:
+        raise ValueError('Visual review belongs to another draft or snapshot')
+    if Path(review.get('canonicalDocumentPath', '')).absolute() != canonical:
+        raise ValueError('Visual review canonical path differs')
+    if not review.get('reviewer') or not review.get('reviewedAt') or not isinstance(review.get('approved'), bool):
+        raise ValueError('Visual review metadata is incomplete')
+    datetime.fromisoformat(review['reviewedAt'].replace('Z', '+00:00'))
+    images, resources = review.get('reviewedImages'), review.get('reviewedSourceResources')
+    if not isinstance(images, list) or not isinstance(resources, list):
+        raise ValueError('Visual review image/resource pins must be explicit arrays')
+    source_root = grader.AGENT / '.tmp/20261013-rerun-12h/source-only/snapshot'
+    source_manifest = grader.load(source_root / 'manifest.json')
+    source_hashes = {record['sha256'] for record in source_manifest['files']}
+    hashes = []
+    for image in images:
+        image_path = Path(image['path']).absolute()
+        roots = (grader.AGENT, grader.REPO / 'test-project1/spec-analysis/CSharp_ASPNET')
+        if not any(image_path.is_relative_to(root) for root in roots):
+            raise ValueError('Visual image is outside the approved run/output scope')
+        grader.safe(image_path, next(root for root in roots if image_path.is_relative_to(root)))
+        if image_path.suffix.lower() not in ('.png', '.jpg', '.jpeg', '.webp'):
+            raise ValueError('Visual review requires native raster images')
+        require_file_hash(image_path, image['sha256'], 'Reviewed visual image changed')
+        hashes.append(image['sha256'])
+    for resource in resources:
+        resource_path = Path(resource['path']).absolute()
+        grader.safe(resource_path, grader.REPO)
+        require_file_hash(resource_path, resource['sha256'], 'Reviewed source resource changed')
+        if resource['sha256'] not in source_hashes:
+            raise ValueError('Reviewed resource does not belong to the fixed source snapshot')
+    modes = review.get('modesReviewed')
+    required_modes = entry.get('requiredVisualModes')
+    complete_modes = isinstance(required_modes, list) and bool(required_modes) and isinstance(modes, list) and set(required_modes).issubset(modes)
+    approved = review['approved'] and bool(images) and bool(resources) and complete_modes
+    return {'path': str(path), 'sha256': grader.digest(path), 'reviewScope': VISUAL_SCOPE,
+        'status': 'APPROVED_AND_BOUND' if approved else 'PARTIAL_OR_NOT_APPROVED', 'approvedAndBound': bool(approved),
+        'imageHashes': hashes, 'requiredModes': required_modes, 'modesReviewed': modes,
+        'originalApplicationExecuted': False}
+
+def relative_file(root, value):
+    path = Path(value)
+    return grader.safe(path if path.is_absolute() else root / path, root)
+
+def require_file_hash(path, expected, message):
+    if not path.is_file() or grader.digest(path) != expected:
+        raise ValueError(message)
+
+def raw_inference_proof(target):
+    if not (target / 'events.jsonl').is_file() or not (target / 'stderr.log').is_file():
+        raise ValueError('Independent inference raw traces are missing')
+    usage, events = grader._events(target / 'events.jsonl')
+    if events['error_events'] or events['invalid_event_lines'] or not events['usage_reported'] or events['event_types'].get('turn.completed') != 1:
+        raise ValueError('Independent inference raw traces do not show one completed inference')
+    return {'eventsSha256': grader.digest(target / 'events.jsonl'), 'stderrSha256': grader.digest(target / 'stderr.log'), 'usage': usage}
+
+def validated_normalization(batch, seal, capsule, rows, raw_hashes, mapping_path):
+    mapping = grader.load(mapping_path)
+    if mapping.get('status') != 'INDEPENDENTLY_REVIEWED' or mapping.get('batchManifestSha256') != grader.digest(batch / 'batch.json'):
+        raise ValueError('Normalization is not independently reviewed for this batch')
+    if mapping.get('rawGradingAnswers') != raw_hashes:
+        raise ValueError('Normalization is bound to different raw grades')
+    all_groups, review_records = [], []
+    row_index = {r['evaluationId']: r for r in rows}
+    for document in seal['documentIds']:
+        review = batch / 'normalization-jobs' / document
+        record = grader.load(review / 'result.json')
+        if record['status'] != 'PASSED' or record['documentId'] != document:
+            raise ValueError('Independent defect reviewer did not pass')
+        if record.get('modelSelection') != 'user_configured_default':
+            raise ValueError('Independent defect reviewer did not use the configured model')
+        raw_proof = raw_inference_proof(review)
+        require_file_hash(review / 'answer.txt', record['answerSha256'], 'Independent defect review answer drift')
+        require_file_hash(review / 'prompt.txt', record['promptSha256'], 'Independent defect review prompt drift')
+        if record.get('batchManifestSha256') != grader.digest(batch / 'batch.json'):
+            raise ValueError('Independent defect reviewer targets another batch')
+        answer = grader.load(review / 'answer.txt')
+        from normalize_defects import SCHEMA
+        from jsonschema import Draft202012Validator
+        Draft202012Validator(SCHEMA).validate(answer)
+        if answer['documentId'] != document or answer['limitations']:
+            raise ValueError('Independent defect reviewer left unresolved limitations')
+        document_rows = [r for job in seal['jobs'] if job['documentId'] == document
+            for r in grader.load(batch / 'jobs' / job['shardId'] / 'answer.txt')['rows']]
+        negative_ids = {r['evaluationId'] for r in document_rows if r['actualDeduction'] is not None and r['actualDeduction'] < 0}
+        assigned = [row_id for group in answer['groups'] for row_id in group['evaluationIds']]
+        if len(assigned) != len(set(assigned)) or set(assigned) != negative_ids:
+            raise ValueError('Defect normalization does not cover exactly the negative rows')
+        if len({g['canonicalDefectId'] for g in answer['groups']}) != len(answer['groups']):
+            raise ValueError('Different defect groups share a canonical identity')
+        for group in answer['groups']:
+            if not group['reason'].strip() or not group['evaluationIds']:
+                raise ValueError('Defect grouping lacks its reason or members')
+            all_groups.append(dict(group, documentId=document))
+        review_records.append({'documentId': document, 'answerSha256': record['answerSha256'],
+            'resultSha256': grader.digest(review / 'result.json'), 'promptSha256': record['promptSha256'], **raw_proof})
+    if mapping.get('groups') != all_groups:
+        raise ValueError('Normalization mapping differs from the independent raw reviews')
+    for group in all_groups:
+        for row_id in group['evaluationIds']:
+            row_index[row_id]['defectId'] = group['canonicalDefectId']
+    return {'path': str(mapping_path), 'sha256': grader.digest(mapping_path), 'reviews': review_records}
+
+def load_document(entry, selection, original_document):
+    """Reject stale, partial, duplicate, or differently sourced evaluation evidence."""
+    batch = relative_file(grader.HERE, entry['batchPath'])
+    seal, capsule = grader.check_capsule(batch)
+    capsule_manifest = grader.load(capsule / 'manifest.json')
+    if capsule_manifest['rubricSha256'] != selection['rubricSha256']:
+        raise ValueError('Selected batch uses another effective rubric')
+    if capsule_manifest['sourceSnapshotSha256'] != selection['sourceSnapshotSha256']:
+        raise ValueError('Selected batch uses another source snapshot')
+    if capsule_manifest.get('sourceMode') != 'source-only':
+        raise ValueError('Training-assisted batch cannot enter the source-only evaluation set')
+    document_id = entry['documentId']
+    if document_id not in seal['documentIds']:
+        raise ValueError('Selected batch does not contain its declared document')
+    canonical = Path(entry['canonicalPath']).absolute()
+    roots = (grader.AGENT, grader.REPO / 'test-project1/spec-analysis/CSharp_ASPNET')
+    if not any(canonical.is_relative_to(root) for root in roots):
+        raise ValueError('Canonical artifact is outside the approved output scope')
+    grader.safe(canonical, next(root for root in roots if canonical.is_relative_to(root)))
+    required_relative = original_document['sourcePath'].removeprefix('spec/')
+    if canonical.as_posix().split('/')[-len(Path(required_relative).parts):] != list(Path(required_relative).parts):
+        raise ValueError('Canonical artifact must use the original document filename and relative path')
+    draft_relative = 'generated/' + required_relative
+    canonical_expected = entry['canonicalSha256']
+    require_file_hash(canonical, canonical_expected, 'Canonical document changed after explicit selection')
+    draft = grader.safe(capsule / draft_relative, capsule)
+    require_file_hash(draft, canonical_expected, 'Selected evaluation belongs to a different or older draft')
+    manifest_match = [r for r in capsule_manifest['files'] if r['path'] == draft_relative and r['role'] == 'generated']
+    if len(manifest_match) != 1 or manifest_match[0]['sha256'] != canonical_expected:
+        raise ValueError('Canonical draft does not match the sealed generated manifest')
+    rows, safety, raw_hashes, provenance = [], [], [], []
+    fixed_items, _ = grader.rubric()
+    frozen_rows = {r['evaluationId']: r for d in fixed_items['documents'] for r in d['rows']}
+    document_row_ids = {d['documentId']: {r['evaluationId'] for r in d['rows']} for d in fixed_items['documents']}
+    for job in seal['jobs']:
+        target = batch / 'jobs' / job['shardId']
+        record = grader.load(target / 'result.json')
+        if record['status'] != 'PASSED':
+            raise ValueError('Selected batch has an incomplete or failed grading shard')
+        if record.get('modelSelection') != 'user_configured_default' or record.get('graderSha256') != seal['graderSha256'] or record.get('exitCode') != 0:
+            raise ValueError('Raw grader execution metadata differs from the frozen batch')
+        raw_proof = raw_inference_proof(target)
+        require_file_hash(target / 'answer.txt', record['answerSha256'], 'Raw grading answer drift')
+        require_file_hash(target / 'prompt.txt', record['promptSha256'], 'Raw grading prompt drift')
+        request = grader.load(capsule / job['requestPath'])
+        if request['documentId'] != job['documentId'] or request['shardId'] != job['shardId']:
+            raise ValueError('Grading request identity differs from its batch job')
+        if any(row != frozen_rows.get(row['evaluationId']) for row in request['rows']):
+            raise ValueError('Grading request criteria differ from the frozen effective rubric')
+        if request.get('sourceSnapshotSha256') != selection['sourceSnapshotSha256']:
+            raise ValueError('A grading request uses another source snapshot')
+        answer = grader.load(target / 'answer.txt')
+        grader.validate_answer(answer, request, capsule)
+        if set(job['evaluationIds']) != {r['evaluationId'] for r in request['rows']}:
+            raise ValueError('Batch job IDs differ from its sealed request')
+        raw_hashes.append({'shardId': job['shardId'], 'answerSha256': record['answerSha256']})
+        rows.extend(answer['rows'])
+        if job['documentId'] == document_id:
+            safety.extend(dict(check, documentId=document_id) for check in answer['safetyChecks'])
+            provenance.append({'shardId': job['shardId'], 'answerSha256': record['answerSha256'],
+                'resultSha256': grader.digest(target / 'result.json'), 'promptSha256': record['promptSha256'], **raw_proof})
+    received_ids = [r['evaluationId'] for r in rows]
+    if len(received_ids) != len(set(received_ids)):
+        raise ValueError('Selected batch grades the same evaluation ID more than once')
+    batch_expected = set().union(*(document_row_ids[d] for d in seal['documentIds']))
+    if set(received_ids) != batch_expected:
+        raise ValueError('Selected batch is partial or has unrelated evaluation rows')
+    normalization_path = relative_file(batch, entry['normalizationPath'])
+    normalization = validated_normalization(batch, seal, capsule, rows, raw_hashes, normalization_path)
+    expected_ids = {r['evaluationId'] for r in original_document['rows']}
+    selected = [r for r in rows if r['evaluationId'] in expected_ids]
+    if {r['evaluationId'] for r in selected} != expected_ids or len(selected) != len(original_document['rows']):
+        raise ValueError('Selected document has missing evaluation rows')
+    # Do not trust a prior summary. Recompute only from verified raw answers.
+    topics = [s['topic'] for s in safety]
+    if set(topics) != SAFETY_TOPICS or len(topics) != len(SAFETY_TOPICS):
+        raise ValueError('Every selected document requires exactly six distinct Safety topics')
+    audit = {'documentId': document_id, 'batchPath': str(batch), 'batchManifestSha256': grader.digest(batch / 'batch.json'),
+        'capsuleManifestSha256': grader.digest(capsule / 'manifest.json'), 'canonicalPath': str(canonical),
+        'canonicalSha256': canonical_expected, 'sourceSnapshotSha256': selection['sourceSnapshotSha256'],
+        'rubricSha256': selection['rubricSha256'], 'rawGrades': provenance, 'normalization': normalization,
+        'visualReview': visual_binding(entry, selection, canonical)}
+    return selected, safety, audit
+
+def compute_summary(items, selected_rows, safety, audits, selected_document_ids):
+    original = {r['evaluationId']: dict(r, documentId=d['documentId']) for d in items['documents'] for r in d['rows']}
+    expected_document_ids = {d['documentId'] for d in items['documents']}
+    row_ids = [r['evaluationId'] for r in selected_rows]
+    if len(row_ids) != len(set(row_ids)):
+        raise ValueError('Combined evaluation ID appears more than once')
+    if not set(row_ids).issubset(original):
+        raise ValueError('Combined evaluation contains unknown criteria')
+    if not set(selected_document_ids).issubset(expected_document_ids):
+        raise ValueError('Combined evaluation contains unknown documents')
+    all_rows_assessed = not any(r['judgement'] in ('保留', '未評価') for r in selected_rows)
+    coverage_complete = set(row_ids) == set(original) and set(selected_document_ids) == expected_document_ids
+    complete = coverage_complete and all_rows_assessed
+    total = grader.totals(selected_rows, original)
+    total.update(reviewedMaximumPoints=total['maximumPoints'], maximumPoints=sum(r['maximumPenalty'] for r in original.values()))
+    total['minimumFor95'] = math.ceil(total['maximumPoints'] * .95)
+    if not complete:
+        total.update(score=None, percentage=None, pass95=False)
+    documents = []
+    for document in items['documents']:
+        expected = {r['evaluationId'] for r in document['rows']}
+        rows = [r for r in selected_rows if r['evaluationId'] in expected]
+        report = grader.totals(rows, original)
+        done = {r['evaluationId'] for r in rows} == expected and not report['unresolvedRows']
+        report.update(documentId=document['documentId'], gradedRows=len(rows), expectedRows=len(expected), complete=done,
+            reviewedMaximumPoints=report['maximumPoints'], maximumPoints=sum(r['maximumPenalty'] for r in document['rows']))
+        report['minimumFor95'] = math.ceil(report['maximumPoints'] * .95)
+        if not done:
+            report.update(score=None, percentage=None, pass95=False)
+        documents.append(report)
+    categories = {}
+    for category in sorted({r['category'] for r in original.values()}):
+        expected = {key for key, value in original.items() if value['category'] == category}
+        rows = [r for r in selected_rows if r['evaluationId'] in expected]
+        report = grader.totals(rows, original, category)
+        done = {r['evaluationId'] for r in rows} == expected and not report['unresolvedRows']
+        report.update(expectedRows=len(expected), gradedRows=len(rows), complete=done,
+            reviewedMaximumPoints=report['maximumPoints'], maximumPoints=sum(original[k]['maximumPenalty'] for k in expected))
+        report['minimumFor95'] = math.ceil(report['maximumPoints'] * .95)
+        if not done:
+            report.update(score=None, percentage=None, pass95=False)
+        categories[category] = report
+    expected_safety = {(document, topic) for document in expected_document_ids for topic in SAFETY_TOPICS}
+    actual_safety = [(s['documentId'], s['topic']) for s in safety]
+    if len(actual_safety) != len(set(actual_safety)):
+        raise ValueError('Combined Safety assessment repeats a document/topic')
+    safety_complete = set(actual_safety) == expected_safety
+    safety_clear = safety_complete and all(s['judgement'] in ('CLEAR', 'NOT_APPLICABLE') for s in safety)
+    source_counts = {state: sum(r['sourceFidelity']['judgement'] == state for r in selected_rows) for state in grader.SOURCE_STATES}
+    critical = [r['evaluationId'] for r in selected_rows if r['critical']]
+    mandatory = [r['evaluationId'] for r in selected_rows if r['mandatoryMissing']]
+    text_gate = complete and total['pass95'] and all(d['pass95'] for d in documents)
+    text_gate = text_gate and all(c['pass95'] for c in categories.values() if c['maximumPoints']) and safety_clear and not critical and not mandatory
+    source_gate = complete and source_counts['矛盾'] == 0 and source_counts['保留'] == 0
+    required_visual_docs = {d['documentId'] for d in items['documents'] if any(r['category'] == '画面設計' and r['maximumPenalty'] > 0 for r in d['rows'])}
+    approved_visual_docs = {a['documentId'] for a in audits if a.get('visualReview', {}).get('approvedAndBound') is True}
+    visual_verified = bool(required_visual_docs) and required_visual_docs.issubset(approved_visual_docs)
+    qualified = text_gate and source_gate and visual_verified
+    return {'schema': 'independent-combined-grade-summary/1', 'status': 'QUALIFIED_STATIC_SCOPE' if qualified else 'TEXT_PASSED_SOURCE_GATE_FAILED' if text_gate and not source_gate else 'TEXT_GATES_PASSED_VISUAL_PENDING' if text_gate else 'INCOMPLETE_OR_NOT_QUALIFIED',
+        'rubricRows': len(original), 'rubricMaximumPoints': sum(r['maximumPenalty'] for r in original.values()),
+        'gradedRows': len(selected_rows), 'documentCount': len(selected_document_ids),
+        'fullSetCoverageComplete': coverage_complete, 'allRowsAssessed': all_rows_assessed,
+        'fullSetComplete': complete, 'total': total, 'documents': documents, 'categories': categories,
+        'criticalRows': critical, 'mandatoryMissingRows': mandatory, 'safetyExpectedTopics': len(expected_safety),
+        'safetyReviewedTopics': len(safety), 'safetyComplete': safety_complete, 'safetyClear': safety_clear, 'safetyChecks': safety,
+        'sourceFidelityCounts': source_counts, 'sourceFidelityPercentage': None,
+        'sourceObservationGatePassed': source_gate,
+        'sourceObservationGateReasons': ([] if source_gate else
+            (['FULL_SET_INCOMPLETE'] if not complete else []) +
+            (['OBSERVED_SOURCE_CONTRADICTIONS'] if source_counts['矛盾'] else []) +
+            (['OBSERVED_SOURCE_HOLDS'] if source_counts['保留'] else [])),
+        'textGatePassed': bool(text_gate), 'visualFidelityVerified': visual_verified, 'finalQualified': bool(qualified),
+        'visualReviewScope': VISUAL_SCOPE, 'originalApplicationExecuted': False,
+        'visualRequiredDocuments': sorted(required_visual_docs), 'visualApprovedDocuments': sorted(approved_visual_docs),
+        'visualReviewStatus': 'STATIC_SCOPE_VERIFIED' if visual_verified else 'SEPARATE_PIN_REQUIRED',
+        'categoryDeduplication': 'Within each category; total deduplicates across categories within document.',
+        'selectedBatchEvidence': audits, 'rows': selected_rows}
+
+def combine_selection(selection, items, freeze, loader=load_document):
+    if selection.get('schema') != SELECTION_SCHEMA:
+        raise ValueError('Invalid explicit selection schema')
+    if selection.get('projectId') != 'test-project1' or selection.get('profile') != 'CSharp_ASPNET':
+        raise ValueError('Evaluation selection must target test-project1 CSharp_ASPNET')
+    if selection.get('rubricSha256') != freeze['effectiveItemsSha256']:
+        raise ValueError('Explicit selection uses another frozen rubric')
+    documents = {d['documentId']: d for d in items['documents']}
+    entries = selection.get('documents')
+    if not isinstance(entries, list):
+        raise ValueError('Documents must be an explicit list; no latest glob selection')
+    ids = [entry['documentId'] for entry in entries]
+    if len(ids) != len(set(ids)):
+        raise ValueError('A document is selected more than once')
+    if not set(ids).issubset(documents):
+        raise ValueError('An unknown document is selected')
+    rows, safety, audits = [], [], []
+    for entry in entries:
+        graded, checked, audit = loader(entry, selection, documents[entry['documentId']])
+        rows.extend(graded)
+        safety.extend(checked)
+        audits.append(audit)
+    return compute_summary(items, rows, safety, audits, ids)
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--selection', type=Path, required=True)
+    parser.add_argument('--output', type=Path, required=True)
+    args = parser.parse_args()
+    selection_path = grader.safe(args.selection, grader.HERE)
+    output_path = grader.safe(args.output, grader.HERE)
+    items, freeze = grader.rubric()
+    original = [r for d in items['documents'] for r in d['rows']]
+    if len(items['documents']) != 11 or len(original) != 7079 or sum(r['maximumPenalty'] for r in original) != 8682:
+        raise ValueError('The fixed production denominator changed')
+    selection = grader.load(selection_path)
+    from jsonschema import Draft202012Validator
+    Draft202012Validator(grader.load(grader.HERE / 'batch-selection.schema.json')).validate(selection)
+    if output_path.exists() or (output_path.parent / (output_path.stem + '-tables')).exists():
+        raise ValueError('Combined output paths are immutable; select a new output filename')
+    expected_snapshot = grader.AGENT / '.tmp/20261013-rerun-12h/source-only/snapshot/manifest.json'
+    try:
+        require_file_hash(expected_snapshot, selection['sourceSnapshotSha256'], 'Selection uses another original source snapshot')
+        output = combine_selection(selection, items, freeze)
+        output.update(selectionPath=str(selection_path), selectionSha256=grader.digest(selection_path),
+            combinedAt=datetime.now(timezone.utc).isoformat(), combinerSha256=grader.digest(Path(__file__)),
+            rubricSha256=selection['rubricSha256'], sourceSnapshotSha256=selection['sourceSnapshotSha256'])
+        grader.save(output_path, output)
+        grader.render_reports(output_path.parent, items, output, output_path.stem)
+        print(json.dumps({k: v for k, v in output.items() if k not in ('rows', 'safetyChecks', 'documents', 'categories', 'selectedBatchEvidence')}, ensure_ascii=False))
+    except Exception as exc:
+        grader.save(output_path, {'schema': 'independent-combined-grade-summary/1', 'status': 'REJECTED',
+            'formalScore': None, 'total': {'score': None, 'percentage': None, 'maximumPoints': 8682},
+            'finalQualified': False, 'visualFidelityVerified': False,
+            'errorType': type(exc).__name__, 'reason': str(exc)[:400],
+            'selectionSha256': grader.digest(selection_path), 'combinerSha256': grader.digest(Path(__file__))})
+        print('Selected evaluation evidence rejected:', type(exc).__name__, file=sys.stderr)
+        raise SystemExit(1)
+
+if __name__ == '__main__':
+    main()

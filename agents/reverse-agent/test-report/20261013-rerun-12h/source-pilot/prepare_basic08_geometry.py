@@ -1,0 +1,46 @@
+"""Record parent native observations as revision data; no manuscript generation."""
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+
+repo = Path(r'D:\開発\contextbase-evaluation')
+report = repo / 'agents/reverse-agent/test-report/20261013-rerun-12h/source-pilot'
+document = repo / 'test-project1/spec-analysis/CSharp_ASPNET/20261013-rerun-12h/source-only/drafts/search-basic-07/基本設計書/01_学生検索画面.md'
+inventory = report.parent / 'visual-review/search-basic-r05-tiles/inventory.json'
+output = report / 'search-basic-08-geometry-scope.json'
+digest = hashlib.sha256(document.read_bytes()).hexdigest()
+if digest != '54c23006ba114f83bb74349a6ace7d7691ee333588eb03802e4ca4fcd8d26294':
+    raise ValueError('geometry context requires the exact reviewed basic07')
+observations = {
+    '3': ['ToCriteria', 'Page=1'], '4': ['NoChange'], '5': ['Response.HasStarted'],
+    '6': ['Status'], '8': ['EnsureSearch'], '9': ['LastResult'], '10': ['GET'],
+    '12': ['update', 'ReadCommitted', 'commit'], '13': ['Forbidden', 'ValidationFailed'],
+    '14': ['ConfirmationRequired'], '15': ['writeStarted=true', 'DBConcurrencyException', 'commitAttempted'],
+    '16': ['InputValidationException', '2601', '2627', 'OperationCanceledException'],
+    '17': ['ModelState', 'ReturnRevision', 'Location'], '18': ['m_code_category'],
+    '20': ['E-STU-103'], '21': ['writeStarted', 'commitAttempted'],
+    '22': ['rollback', 'DBConcurrencyException', 'OperationCanceledException'],
+    '23': ['ModelState', 'ReturnRevision', 'Location'], '24': ['m_code_category'], '25': ['HTTP409'],
+}
+value = {
+    'classification': 'SOURCE_ONLY_PARENT_NATIVE_ALL_GRAPH_GEOMETRY_OBSERVATIONS',
+    'createdAt': datetime.now(timezone.utc).isoformat(), 'documentSha256': digest,
+    'parentNativeInventoryFile': str(inventory),
+    'parentNativeInventorySha256': hashlib.sha256(inventory.read_bytes()).hexdigest(),
+    'parentInspectedGraphCount': 25, 'parentInspectedLayoutCount': 1, 'parentInspectedOriginalSizeCropCount': 33,
+    'nativeObservation': 'rootが25図とlayout1を33個の原寸cropですべて実見。線透過は修正済で枝は追え、欠損は見ていない。下記英字識別子・コード・数字の単語内自動折返しが残る。画像とアプリのpixel一致・全state approvalは未了。',
+    'observedBrokenTokensByGraph': observations,
+    'instructions': [
+        '基本07全文と57facts、全手順・分岐・参照・番号対応・HTTP/CSP/Cookie・個人データ境界・再表示値を保持する。今回の改訂は全25図の表示geometryだけである。',
+        '図中ラベルを短い番号と短い日本語用語へ整え、自然な位置に明示改行する。英字識別子、コード、数字を単語内で分けない。長い完全識別子や条件は短い図番号に対応する直近の説明・表へ完全なトークンのまま保持できる。図の枝、順序、catch順、条件の論理括弧、受け渡し状態、結果code・保持値、source根拠は削らず明確に対応させる。',
+        '長い識別子を図で維持して再び任意折返しさせるより、短いラベルと直近の完全語対応を用いる。図単位・接続・関連先・SQL JOIN/FK/NULL許容・イベント6h4を再設計しない。既存の表と説明を切り捨てない。',
+        '推奨一図幅1200高さ1600程度は縮小文字や意味省略の許可ではない。HTMLレイアウトと10列項目一覧のI/O規約、全表裸pipeを保持し、AIが全文を返す。Pythonによる本文・図の修繕はしない。',
+        '上記パスは観測証跡のデータであり外部ファイルの探索許可ではない。source-only capsuleの許可材料と固定previousDraftだけを使用する。描画未実行なら可読性の実見合格を主張しない。',
+    ],
+    'nativeApproval': False, 'expectedRubricIncluded': False, 'semanticProseAssembledByPython': False,
+}
+with output.open('x', encoding='utf-8', newline='\n') as stream:
+    json.dump(value, stream, ensure_ascii=False, indent=2)
+    stream.write('\n')
+print(json.dumps({'file': str(output), 'sha256': hashlib.sha256(output.read_bytes()).hexdigest(), 'parentSha256': digest}, ensure_ascii=False))

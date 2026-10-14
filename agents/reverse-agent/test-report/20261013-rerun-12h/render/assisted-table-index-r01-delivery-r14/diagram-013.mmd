@@ -1,0 +1,22 @@
+flowchart TD
+    A[削除try内例外] --> B{DBConcurrencyExceptionか}
+    B -->|はい| K[rollback試行・Conflict]
+    B -->|いいえ| C{SQL・InvalidOperation<br/>OperationCanceledの例外か}
+    C -->|いいえ| X[上位例外]
+    C -->|はい| D[rollback成否取得]
+    D --> E{書込み開始済みで<br/>commit試行済み又はrollback失敗}
+    E -->|はい| U[Unknown]
+    E -->|いいえ| S[SystemError]
+    K --> R[各結果をControllerへ返す]
+    U --> R
+    S --> R
+    N[削除1・2の通常結果] --> R
+    R --> F{Savedか}
+    F -->|はい| G[Flash・303]
+    F -->|いいえ| H[結果別状態とエラー設定<br/>最新対象・候補をLoad]
+    H -->|読込完了| I[結果別の通常画面応答]
+    H -->|対象不在| NF[後段WebFault 404]
+    H -->|その他例外| X
+    G -->|保存後Web処理例外| X
+    NF --> M[応答未開始ならmiddleware]
+    X --> M

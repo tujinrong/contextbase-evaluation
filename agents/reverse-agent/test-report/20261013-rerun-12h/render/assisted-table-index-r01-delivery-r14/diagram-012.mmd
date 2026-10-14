@@ -1,0 +1,15 @@
+flowchart TD
+    A[削除1から：接続・ReadCommitted開始] --> B[書込try・Gate取得]
+    A -->|開始失敗| X[上位例外]
+    B -->|例外| EX[削除3のcatch分類へ]
+    B --> C[最新非削除対象の版取得]
+    C -->|不在| N[NotFound・削除3へ]
+    C -->|版不一致| K[Conflict・削除3へ]
+    C -->|一致| D[削除7列だけUPDATE<br/>writeStarted=true・更新1件要求]
+    C -->|読取例外| EX
+    D -->|例外・件数不成立| EX
+    D --> E[DELETE監査追記]
+    E -->|例外| EX
+    E --> F[commitAttempted=true・commit]
+    F -->|例外| EX
+    F --> G[Saved：対象ID・版+1・削除3へ]

@@ -1,0 +1,398 @@
+{
+  "classification": "SOURCE_ONLY_RAW_PERSONAL_DATA_BOUNDARY_LOCAL_AI_SUPPLEMENT_SCOPE",
+  "createdAt": "2026-10-13T11:19:24.133392+00:00",
+  "snapshotManifestSha256": "2f64e2211b1fcd7850203927fc75b5a7f2ce37457cc2afe88c8065d9f931273b",
+  "rawSourceRecords": [
+    {
+      "path": "sources/Infrastructure/SearchContextStore.cs",
+      "sha256": "d97582965b12a1d9b6453180251ed3e3b8db9a2e9a609cfb5e7b16339e343a54",
+      "sections": [
+        {
+          "startLine": 9,
+          "endLine": 15,
+          "rawLines": [
+            {
+              "line": 9,
+              "text": "    public sealed class Entry(string owner,string session,string tab) { public string Id {get;}=Token(); public string Owner {get;}=owner; public string Session {get;}=session; public string Tab {get;}=tab; public DateTimeOffset Expires {get;set;}=DateTimeOffset.UtcNow.AddMinutes(30); public long Revision {get;set;}=1; public SearchCriteria? Applied {get;set;} public SearchResult? LastResult {get;set;} public SemaphoreSlim Gate {get;}=new(1,1); }"
+            },
+            {
+              "line": 10,
+              "text": "    private readonly ConcurrentDictionary<string,Entry> entries=new();"
+            },
+            {
+              "line": 11,
+              "text": "    public static string Token()=>Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));"
+            },
+            {
+              "line": 12,
+              "text": "    public Entry Create(CurrentUser user,string? tab=null) { foreach(var old in entries.Where(e=>e.Value.Expires<DateTimeOffset.UtcNow)) entries.TryRemove(old.Key,out _); var entry=new Entry(user.Principal,user.SessionId,string.IsNullOrEmpty(tab)?Token():tab); entries[entry.Id]=entry; return entry; }"
+            },
+            {
+              "line": 13,
+              "text": "    public Entry Get(string? id,CurrentUser user,string? tab=null) { if(id is null||!entries.TryGetValue(id,out var e)||e.Expires<DateTimeOffset.UtcNow) throw new WebFault(409,\"検索状態の期限が切れました。検索画面を開き直してください。\",messageId:\"W-SRC-002\"); if(e.Owner!=user.Principal||e.Session!=user.SessionId||(!string.IsNullOrEmpty(tab)&&e.Tab!=tab)) throw new WebFault(403,\"他の利用者・画面の検索状態は使用できません。\"); return e; }"
+            },
+            {
+              "line": 14,
+              "text": "    public async Task<T> Use<T>(ContextRequest request,CurrentUser user,string? tab,Func<Entry,Task<T>> operation,CancellationToken ct) { var e=Get(request.ContextId,user,tab); await e.Gate.WaitAsync(ct); try { Get(e.Id,user,tab); if(request.ContextRevision!=e.Revision.ToString(System.Globalization.CultureInfo.InvariantCulture)) throw new WebFault(409,\"検索状態が更新されています。画面を開き直してください。\"); if(e.Revision==long.MaxValue) throw new WebFault(409,\"検索状態の版上限です。画面を開き直してください。\"); var result=await operation(e); e.Expires=DateTimeOffset.UtcNow.AddMinutes(30); return result; } finally { e.Gate.Release(); } }"
+            },
+            {
+              "line": 15,
+              "text": "    public static SearchCriteria Copy(SearchCriteria value)=>JsonSerializer.Deserialize<SearchCriteria>(JsonSerializer.Serialize(value))!;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "sources/Views/Students/Search.cshtml",
+      "sha256": "5ad232a3079e7bceb574383913c1e5de52a0c7869191c02dba54ed6843669506",
+      "sections": [
+        {
+          "startLine": 4,
+          "endLine": 8,
+          "rawLines": [
+            {
+              "line": 4,
+              "text": "<form method=\"post\" action=\"/students/search\" data-search-form><input type=\"hidden\" name=\"ContextId\" value=\"@Model.Context.Id\"><input type=\"hidden\" name=\"ContextRevision\" value=\"@Model.Context.Revision\"><input type=\"hidden\" name=\"TabId\" value=\"@Model.Context.Tab\"><input type=\"hidden\" name=\"PageSize\" value=\"@Model.PageSize\"><input type=\"hidden\" name=\"SortKey\" value=\"@Model.SortKey\"><input type=\"hidden\" name=\"SortDirection\" value=\"@Model.SortDirection\">@Html.AntiForgeryToken()"
+            },
+            {
+              "line": 5,
+              "text": "<fieldset><legend>検索条件</legend><div class=\"fields\"><label>学籍番号<input asp-for=\"Criteria.StudentNo\" id=\"SRC-001\" maxlength=\"30\"></label><label>氏名<input asp-for=\"Criteria.Name\" id=\"SRC-002\" maxlength=\"16\"></label><label>氏名カナ<input asp-for=\"Criteria.Kana\" id=\"SRC-003\" maxlength=\"72\"></label><label>年度<select asp-for=\"Criteria.SchoolYear\" id=\"SRC-004\" disabled=\"@Model.Criteria.UnassignedOnly\"><option value=\"\">すべて</option>@foreach(var y in Model.Lookups.Classes.Select(c=>c.SchoolYear).Distinct().OrderDescending()){<option value=\"@y\">@y</option>}</select></label><label>学年<select asp-for=\"Criteria.GradeCode\" id=\"SRC-005\" disabled=\"@Model.Criteria.UnassignedOnly\"><option value=\"\">すべて</option>@foreach(var c in codes.Where(c=>c.CategoryId==\"GRADE\")){<option value=\"@c.CodeValue\">@c.CodeName</option>}</select></label><label>クラス<select asp-for=\"Criteria.ClassId\" id=\"SRC-006\" disabled=\"@Model.Criteria.UnassignedOnly\"><option value=\"\">すべて</option>@foreach(var c in Model.Lookups.Classes.Where(c=>(Model.Criteria.SchoolYear is null||c.SchoolYear==Model.Criteria.SchoolYear)&&(string.IsNullOrEmpty(Model.Criteria.GradeCode)||c.GradeCode==Model.Criteria.GradeCode))){<option value=\"@c.ClassId\">@c.SchoolYear @c.ClassCode @c.ClassName @(!c.IsActive?\"（停止）\":\"\")</option>}</select></label><label class=\"check\"><input asp-for=\"Criteria.UnassignedOnly\" id=\"SRC-007\">未所属のみ</label><fieldset><legend>在籍区分</legend>@foreach(var c in codes.Where(c=>c.CategoryId==\"ENROLLMENT_STATUS\")){<label class=\"check\"><input type=\"checkbox\" name=\"Criteria.StatusCodes\" value=\"@c.CodeValue\" checked=\"@Model.Criteria.StatusCodes.Contains(c.CodeValue)\">@c.CodeName</label>}<small>全解除はすべて</small></fieldset><label>都道府県<select asp-for=\"Criteria.PrefectureCode\" id=\"SRC-009\"><option value=\"\">すべて</option>@foreach(var c in codes.Where(c=>c.CategoryId==\"PREFECTURE\")){<option value=\"@c.CodeValue\">@c.CodeName</option>}</select></label><label>電話番号<input asp-for=\"Criteria.PhoneNumber\" id=\"SRC-010\" maxlength=\"40\"></label><label>入学日・開始<input asp-for=\"Criteria.AdmissionFrom\" id=\"SRC-011\" type=\"date\"></label><label>入学日・終了<input asp-for=\"Criteria.AdmissionTo\" id=\"SRC-012\" type=\"date\"></label></div><div class=\"actions\"><button type=\"submit\" class=\"primary\">検索</button><button type=\"submit\" formaction=\"/students/options\">候補を更新</button></div></fieldset></form>"
+            },
+            {
+              "line": 6,
+              "text": "<div class=\"actions\"><form method=\"post\" action=\"/students/clear\">@Html.AntiForgeryToken()<input type=\"hidden\" name=\"ContextId\" value=\"@Model.Context.Id\"><input type=\"hidden\" name=\"ContextRevision\" value=\"@Model.Context.Revision\"><input type=\"hidden\" name=\"TabId\" value=\"@Model.Context.Tab\"><button>クリア</button></form>@if(Model.User.Role!=Role.Viewer){<a href=\"/students/new?returnContextId=@Model.Context.Id\">新規登録</a>}</div>"
+            },
+            {
+              "line": 7,
+              "text": "@if(outcome==\"tooMany\"){<p class=\"warning\">10,000件を超えました。条件を追加してください。</p>}else if(outcome==\"empty\"){<p>該当する学生はありません。</p>}else if(outcome==\"unsearched\"){<p>未検索</p>}else{<p>検索結果 @count 件　@data.GetProperty(\"searchedAt\").GetString()</p>}"
+            },
+            {
+              "line": 8,
+              "text": "<form method=\"post\" action=\"/students/page\">@Html.AntiForgeryToken()<input type=\"hidden\" name=\"ContextId\" value=\"@Model.Context.Id\"><input type=\"hidden\" name=\"ContextRevision\" value=\"@Model.Context.Revision\"><input type=\"hidden\" name=\"TabId\" value=\"@Model.Context.Tab\"><div class=\"actions\"><label>表示件数<select name=\"PageSize\">@foreach(var n in new[]{20,50,100}){<option value=\"@n\" selected=\"@(n==Model.PageSize)\">@n</option>}</select></label><label>並び順<select name=\"SortKey\">@foreach(var s in new[]{(\"studentNo\",\"学籍番号\"),(\"name\",\"氏名\"),(\"admissionDate\",\"入学日\"),(\"updatedAt\",\"更新日時\")}){<option value=\"@s.Item1\" selected=\"@(s.Item1==Model.SortKey)\">@s.Item2</option>}</select></label><select name=\"SortDirection\" aria-label=\"並び順方向\"><option value=\"asc\" selected=\"@(Model.SortDirection==\"asc\")\">昇順</option><option value=\"desc\" selected=\"@(Model.SortDirection==\"desc\")\">降順</option></select><button name=\"Page\" value=\"1\" disabled=\"@(outcome!=\"found\")\">並び順・件数を反映</button></div><div class=\"grid\"><table><thead><tr><th>学籍番号</th><th>氏名</th><th>氏名カナ</th><th>生年月日</th><th>年度／学年</th><th>クラス</th><th>在籍区分</th><th>住所</th><th>本人電話</th><th>更新日時</th><th>操作</th></tr></thead><tbody>@foreach(var row in items.EnumerateArray()){<tr><td>@row.GetProperty(\"studentNo\").GetString()</td><td>@row.GetProperty(\"studentName\").GetString()</td><td>@row.GetProperty(\"studentNameKana\").GetString()</td><td>@row.GetProperty(\"birthDateWareki\").GetString()</td><td>@row.GetProperty(\"schoolYear\") @row.GetProperty(\"gradeName\").GetString()</td><td>@row.GetProperty(\"classCode\").GetString() @row.GetProperty(\"className\").GetString()</td><td>@row.GetProperty(\"enrollmentName\").GetString()</td><td>@row.GetProperty(\"addressDisplay\").GetString()</td><td>@(row.GetProperty(\"phoneNumber\").GetString()??\"－\")</td><td>@row.GetProperty(\"updatedAt\").GetString()</td><td><a href=\"/students/@row.GetProperty(\"studentId\").GetString()?returnContextId=@Model.Context.Id\">@(Model.User.Role==Role.Viewer?\"参照\":\"編集\")</a></td></tr>}</tbody></table></div><nav class=\"pager\"><button name=\"Page\" value=\"@(page-1)\" disabled=\"@(outcome!=\"found\"||page<=1)\">前へ</button><span>@(page) / @Math.Max(1,(count+Model.PageSize-1)/Model.PageSize)</span><button name=\"Page\" value=\"@(page+1)\" disabled=\"@(outcome!=\"found\"||page*Model.PageSize>=count)\">次へ</button></nav></form>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "sources/Views/Students/Edit.cshtml",
+      "sha256": "6a85bc626e006311509311778206d0e478813c26f11681e5a2f478c74807240a",
+      "sections": [
+        {
+          "startLine": 6,
+          "endLine": 6,
+          "rawLines": [
+            {
+              "line": 6,
+              "text": "<label>学籍番号 ※必須<input asp-for=\"Input.StudentNo\" id=\"REG-002\" maxlength=\"30\" readonly=\"@(Model.StudentId is not null)\" required></label><label>氏名 ※必須<input asp-for=\"Input.StudentName\" id=\"REG-003\" maxlength=\"16\" required><small>8文字以内</small></label><label>氏名カナ ※必須<input asp-for=\"Input.StudentNameKana\" id=\"REG-004\" maxlength=\"72\" required><small>原入力36、正規化後18文字</small></label>"
+            }
+          ]
+        },
+        {
+          "startLine": 10,
+          "endLine": 10,
+          "rawLines": [
+            {
+              "line": 10,
+              "text": "<label>住所1 ※必須<input asp-for=\"Input.AddressLine1\" id=\"REG-009\" maxlength=\"90\" required><small>45文字以内</small></label><label>住所2<input asp-for=\"Input.AddressLine2\" id=\"REG-010\" maxlength=\"90\"></label><label>本人電話<input asp-for=\"Input.PhoneNumber\" id=\"REG-011\" maxlength=\"40\"><small>原入力20、正規化後16文字</small></label><label>本人メール<input asp-for=\"Input.EmailAddress\" id=\"REG-012\" maxlength=\"120\"></label>"
+            }
+          ]
+        },
+        {
+          "startLine": 13,
+          "endLine": 13,
+          "rawLines": [
+            {
+              "line": 13,
+              "text": "<label>緊急連絡先氏名<input asp-for=\"Input.EmergencyContactName\" id=\"REG-020\" maxlength=\"16\"></label><label>緊急連絡先続柄<select asp-for=\"Input.RelationshipCode\" id=\"REG-021\"><option value=\"\">未選択</option>@foreach(var c in codes.Where(c=>c.CategoryId==\"RELATIONSHIP\")){bool selectable=c.IsActive&&c.ValidFrom<=today&&(c.ValidTo is null||today<=c.ValidTo)||Model.Detail?.Draft.RelationshipCode==c.CodeValue;<option value=\"@c.CodeValue\" disabled=\"@(!selectable)\">@c.CodeName</option>}</select></label><label>緊急連絡先電話<input asp-for=\"Input.EmergencyPhoneNumber\" id=\"REG-022\" maxlength=\"40\"></label><label class=\"full\">備考<textarea asp-for=\"Input.Remarks\" id=\"REG-023\" maxlength=\"240\"></textarea></label><label class=\"full\">確認・変更理由<textarea asp-for=\"Input.OperationReason\" id=\"REG-024\" maxlength=\"120\"></textarea></label></div><p>本人電話・メール・緊急電話のいずれか1つ以上。緊急連絡先は3項目すべて入力してください。</p>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "sources/Views/Shared/_MessagePanel.cshtml",
+      "sha256": "3dac7b923c5a920644bfd05c6521546c6e10dc2f08469e38600cb14bb616d325",
+      "sections": [
+        {
+          "startLine": 3,
+          "endLine": 3,
+          "rawLines": [
+            {
+              "line": 3,
+              "text": "@if(!string.IsNullOrEmpty(Model)){<div class=\"message info\" aria-live=\"polite\">@Model</div>}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "sources/Views/Shared/_Layout.cshtml",
+      "sha256": "30e3ab7d538348ebeb76e3a594a5b7e9b64eb3844783a386f06197e24fafbcf4",
+      "sections": [
+        {
+          "startLine": 1,
+          "endLine": 1,
+          "rawLines": [
+            {
+              "line": 1,
+              "text": "<!doctype html><html lang=\"ja\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>学生管理</title><link rel=\"stylesheet\" href=\"/css/site.css\"></head><body><header><strong>学生管理システム</strong><span>利用者 @User.Identity?.Name　業務日 @WebPresentation.BusinessDate.ToString(\"yyyy/MM/dd\")</span></header><main>@RenderBody()</main><script src=\"/js/site.js\" defer></script></body></html>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "sources/Web/Controllers/StudentsController.cs",
+      "sha256": "cbbf397456a0c95cd5a7e33a2faabb06826451e5f24ac48d571283c88e8e3e31",
+      "sections": [
+        {
+          "startLine": 38,
+          "endLine": 38,
+          "rawLines": [
+            {
+              "line": 38,
+              "text": "    private IActionResult ReturnAfterSave(string? context,string? revision,string message) {if(string.IsNullOrEmpty(context)){var entry=coordinator.NewContext();context=entry.Id;revision=entry.Revision.ToString(System.Globalization.CultureInfo.InvariantCulture);}flash.Put(identity.CurrentUser,context,message);Response.StatusCode=303;Response.Headers.Location=\"/students?contextId=\"+Uri.EscapeDataString(context)+\"&contextRevision=\"+Uri.EscapeDataString(revision??\"\");return new EmptyResult();}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "sources/Infrastructure/WebHostSetup.cs",
+      "sha256": "1304d095062127ae7cbfb107dd3c88ce1a55f3f940b49e017bff45adf9eb51f8",
+      "sections": [
+        {
+          "startLine": 23,
+          "endLine": 23,
+          "rawLines": [
+            {
+              "line": 23,
+              "text": "            try { await next(); } catch(Exception e) when(!ctx.Response.HasStarted) { var fault=e as WebFault;ctx.Response.StatusCode=fault?.Status??503; if(ctx.Request.Path.StartsWithSegments(\"/api\")) await ctx.Response.WriteAsJsonAsync(WebPresentation.Error(ctx.Response.StatusCode==401?\"unauthenticated\":ctx.Response.StatusCode==403?\"forbidden\":ctx.Response.StatusCode==409?\"conflict\":ctx.Response.StatusCode==422?\"validationFailed\":\"systemError\",fault?.Message??\"処理結果を確認できません。保存の場合は検索で確認してください。\",fault?.MessageId??\"E-COM-004\",fault?.Field is string field?[new FieldError(field,fault.MessageId,fault.Message)]:[],retry:fault is null)); else { ctx.Response.ContentType=\"text/html; charset=utf-8\";await ctx.Response.WriteAsync(\"<!doctype html><html lang=ja><meta charset=utf-8><title>学生管理 エラー</title><p>\"+System.Net.WebUtility.HtmlEncode(fault?.Message??\"処理結果を確認できません。検索で確認してください。\")+\"</p><a href=/students>検索画面を開く</a></html>\"); } }"
+            }
+          ]
+        },
+        {
+          "startLine": 27,
+          "endLine": 27,
+          "rawLines": [
+            {
+              "line": 27,
+              "text": "        app.MapPost(\"/_evaluation/session\",async (HttpContext ctx,IConfiguration config)=> { var secret=config[\"EvaluationSession:Secret\"]; if(!app.Environment.IsDevelopment()||string.IsNullOrEmpty(secret)) return Results.NotFound(); var provided=ctx.Request.Headers[\"X-Evaluation-Secret\"].ToString();if(!CryptographicOperations.FixedTimeEquals(SHA256.HashData(Encoding.UTF8.GetBytes(secret)),SHA256.HashData(Encoding.UTF8.GetBytes(provided))))return Results.Unauthorized();var user=config[\"EvaluationSession:Principal\"]??\"evaluation-user\";if(!Enum.TryParse<Role>(config[\"EvaluationSession:Role\"]??\"Viewer\",out var role))return Results.BadRequest();var session=SearchContextStore.Token();await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier,user),new Claim(ClaimTypes.Name,user),new Claim(ClaimTypes.Role,role.ToString()),new Claim(\"login_session\",session)],CookieAuthenticationDefaults.AuthenticationScheme)));return Results.Ok(new { authenticated=true }); }).AllowAnonymous();"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "sources/Core/SqlServerStudentService.cs",
+      "sha256": "610fd0fd79ad6994e9887da6622ea7e7332b8f65474f575bd4a7ccf24bca5562",
+      "sections": [
+        {
+          "startLine": 234,
+          "endLine": 234,
+          "rawLines": [
+            {
+              "line": 234,
+              "text": "            reason=StudentNormalizer.Text(request.Reason,60,60,\"Reason\",multiline:true);"
+            }
+          ]
+        },
+        {
+          "startLine": 306,
+          "endLine": 307,
+          "rawLines": [
+            {
+              "line": 306,
+              "text": "            var auditChanged=insert ? writeColumns.Concat(new[]{\"gender_category\",\"prefecture_category\",\"enrollment_category\",\"is_deleted\",\"created_at\",\"created_by\",\"updated_at\",\"updated_by\",\"row_version\"}).ToArray() : changed.Concat(new[]{\"updated_at\",\"updated_by\",\"row_version\"}).ToArray();"
+            },
+            {
+              "line": 307,
+              "text": "            await Audit(connection,tx,id,insert?\"CREATE\":\"UPDATE\",previousVersion,version,auditChanged,user.Principal,now,reason,candidates.Count>0,Guid.Parse(requestId),ct);"
+            }
+          ]
+        },
+        {
+          "startLine": 319,
+          "endLine": 322,
+          "rawLines": [
+            {
+              "line": 319,
+              "text": "        catch(Exception e) when(e is SqlException or InvalidOperationException or OperationCanceledException) {"
+            },
+            {
+              "line": 320,
+              "text": "            var rolledBack=await Rollback(tx); unknown=writeStarted&&(commitAttempted||!rolledBack);"
+            },
+            {
+              "line": 321,
+              "text": "            if(unknown && request.ConfirmationToken is { } invalid) WebConfirmations.TryRemove(invalid,out _);"
+            },
+            {
+              "line": 322,
+              "text": "            return Result(unknown?Outcome.Unknown:Outcome.SystemError,\"E-COM-004\",unknown?\"保存結果を確認できません。再保存の前に検索で確認してください。\":\"処理に失敗しました。受付番号：\"+requestId,requestId);"
+            }
+          ]
+        },
+        {
+          "startLine": 385,
+          "endLine": 390,
+          "rawLines": [
+            {
+              "line": 385,
+              "text": "    private static async Task Audit(SqlConnection connection,SqlTransaction tx,long id,string operation,long? before,long after,string[] changed,string actor,DateTimeOffset now,string? reason,bool confirmed,Guid requestId,CancellationToken ct)"
+            },
+            {
+              "line": 386,
+              "text": "    {"
+            },
+            {
+              "line": 387,
+              "text": "        await using var command=Command(connection,tx,\"INSERT INTO dbo.t_operation_log (target_table,target_key,operation_type,before_version,after_version,changed_columns,executed_by,executed_at,correlation_id,operation_reason,duplicate_confirmed) VALUES ('m_student',@id,@op,@before,@after,@changed,@actor,@now,@request,@reason,@confirmed)\");"
+            },
+            {
+              "line": 388,
+              "text": "        Param(command,\"@id\",SqlDbType.VarChar,id.ToString(CultureInfo.InvariantCulture),35); Param(command,\"@op\",SqlDbType.VarChar,operation,11); Param(command,\"@before\",SqlDbType.BigInt,before); Param(command,\"@after\",SqlDbType.BigInt,after);"
+            },
+            {
+              "line": 389,
+              "text": "        Param(command,\"@changed\",SqlDbType.NVarChar,JsonSerializer.Serialize(changed),-1); Param(command,\"@actor\",SqlDbType.NVarChar,actor,128); Param(command,\"@now\",SqlDbType.DateTimeOffset,now); Param(command,\"@request\",SqlDbType.UniqueIdentifier,requestId); Param(command,\"@reason\",SqlDbType.NVarChar,reason,120); Param(command,\"@confirmed\",SqlDbType.Bit,confirmed);"
+            },
+            {
+              "line": 390,
+              "text": "        await command.ExecuteNonQueryAsync(ct);"
+            }
+          ]
+        },
+        {
+          "startLine": 396,
+          "endLine": 396,
+          "rawLines": [
+            {
+              "line": 396,
+              "text": "        try { reason=StudentNormalizer.Text(reason,60,60,\"DeleteReason\",true,true)!; }"
+            }
+          ]
+        },
+        {
+          "startLine": 410,
+          "endLine": 416,
+          "rawLines": [
+            {
+              "line": 410,
+              "text": "                Param(command,\"@id\",SqlDbType.BigInt,id); Param(command,\"@version\",SqlDbType.BigInt,version); Param(command,\"@now\",SqlDbType.DateTimeOffset,now); Param(command,\"@actor\",SqlDbType.NVarChar,user.Principal,128); Param(command,\"@reason\",SqlDbType.NVarChar,reason,120);"
+            },
+            {
+              "line": 411,
+              "text": "                writeStarted=true; if(await command.ExecuteNonQueryAsync(ct)!=1) throw new DBConcurrencyException();"
+            },
+            {
+              "line": 412,
+              "text": "            }"
+            },
+            {
+              "line": 413,
+              "text": "            await Audit(connection,tx,id,\"DELETE\",version,version+1,[\"is_deleted\",\"deleted_at\",\"deleted_by\",\"delete_reason\",\"updated_at\",\"updated_by\",\"row_version\"],user.Principal,now,reason,false,Guid.Parse(requestId),ct);"
+            },
+            {
+              "line": 414,
+              "text": "            commitAttempted=true; await tx.CommitAsync(ct); return new(Outcome.Saved,id,version+1,[],RequestId:requestId);"
+            },
+            {
+              "line": 415,
+              "text": "        } catch(DBConcurrencyException) { await Rollback(tx); return Result(Outcome.Conflict,\"E-STU-105\",\"他の利用者が変更しています。\",requestId); }"
+            },
+            {
+              "line": 416,
+              "text": "        catch(Exception e) when(e is SqlException or InvalidOperationException or OperationCanceledException) { var rolledBack=await Rollback(tx); var unknown=writeStarted&&(commitAttempted||!rolledBack); return Result(unknown?Outcome.Unknown:Outcome.SystemError,\"E-COM-004\",unknown?\"削除結果を確認できません。検索で確認してください。\":\"削除処理に失敗しました。受付番号：\"+requestId,requestId); }"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "sources/Core/StudentNormalizer.cs",
+      "sha256": "6064479d6b76a6a5e64f71f956f181b2a12adb4bb765868a27e3da2f887835cd",
+      "sections": [
+        {
+          "startLine": 47,
+          "endLine": 57,
+          "rawLines": [
+            {
+              "line": 47,
+              "text": "    public static string? Text(string? raw, int rawMax, int savedMax, string field, bool required = false, bool multiline = false)"
+            },
+            {
+              "line": 48,
+              "text": "    {"
+            },
+            {
+              "line": 49,
+              "text": "        raw ??= \"\";"
+            },
+            {
+              "line": 50,
+              "text": "        if (ScalarCount(raw) > rawMax) Fail(field, \"E-STU-002\", $\"{Label(field)}は{rawMax}文字以内で入力してください。\");"
+            },
+            {
+              "line": 51,
+              "text": "        var value = multiline ? raw.Replace(\"\\r\\n\", \"\\n\").Replace('\\r', '\\n') : raw;"
+            },
+            {
+              "line": 52,
+              "text": "        if (value.EnumerateRunes().Any(rune => Rune.GetUnicodeCategory(rune) == UnicodeCategory.Control && !(multiline && rune.Value == 10)))"
+            },
+            {
+              "line": 53,
+              "text": "            Fail(field, \"E-STU-002\", $\"{Label(field)}に使用できない制御文字があります。\");"
+            },
+            {
+              "line": 54,
+              "text": "        value = value.Trim();"
+            },
+            {
+              "line": 55,
+              "text": "        if (value.Length == 0) { if (required) Fail(field, \"E-STU-001\", $\"{Label(field)}を入力してください。\"); return null; }"
+            },
+            {
+              "line": 56,
+              "text": "        if (ScalarCount(value) > savedMax) Fail(field, \"E-STU-002\", $\"{Label(field)}は{savedMax}文字以内で入力してください。\");"
+            },
+            {
+              "line": 57,
+              "text": "        return value;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "sources/appsettings.json",
+      "sha256": "e1cb718781dba90cd3b0d8359d19ee029b2322a4681f815789cff19fdd902857",
+      "sections": [
+        {
+          "startLine": 1,
+          "endLine": 1,
+          "rawLines": [
+            {
+              "line": 1,
+              "text": "{ \"ConnectionStrings\": { \"StudentDb\": \"\" }, \"EvaluationSession\": { \"Secret\": \"\", \"Principal\": \"evaluation-user\", \"Role\": \"Viewer\" }, \"AllowedHosts\": \"localhost\", \"Logging\": { \"LogLevel\": { \"Default\": \"Warning\", \"Microsoft.AspNetCore\": \"Warning\" } } }"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "instructions": [
+    "既存の正しい全文と完成factsを維持し、個人データの受渡し・出力・監査境界について原ソースが表す範囲を既存補足説明へAIが局所的に補足する。実行・ネットワーク・参考設計・評価期待値を使わず、固定された原source行だけを根拠に全文Markdownを返す。",
+    "検索条件のPOST受信、serverのApplied/LastResult保持、生成される学生URLのstudentIdおよびcontext鍵を追う。検索氏名・電話・住所をこれらコード生成URLや検索専用cookieに載せる処理が観測できるかを確認する。入力者が任意に作るURL、全cookie、全ルートに個人情報がないという保証へ拡張しない。SignInAsyncに渡すclaimsとの区別も保持する。",
+    "一覧、編集、共通メッセージ、共通headerが通常のRazor記法で値を出すこと、および手組エラーHTMLがメッセージへHtmlEncodeを適用する境界を確認する。必要なら全manifest rawに明示Raw出力の有無を照合する。依存frameworkや実HTMLを実行していないため、実稼働の安全性を証明した表現にしない。",
+    "監査の実メソッド、INSERT列、changed_columnsへ変更列名配列をSerializeする引数、および自由記述Reasonを追う。変更列の前後値を渡す処理と列名配列を混同せず、Reasonやactor/targetを含む監査全体に個人情報がないと保証しない。Textの長さ・制御文字・改行・trimとPII伏字は区別する。",
+    "必要ならapp-specificの通常障害ログ出力とappsettingsのログレベルを原source全体で照合する。出力処理の未観測をframework/provider/運用ログの無出力・個人情報なしへ拡張しない。固定案内と受付IDも実コードの受渡し範囲として記載する。",
+    "番号付きサブフローと対応本文、全分岐/例外/catch順/保持値/結果code、10列画面項目、同日可、Unknownの復帰案内、必須六h4とメタデータ・原文根拠を落とさない。今回の補足以外の正しい本文と図を不用意に変更しない。"
+  ],
+  "semanticProseAssembledByPython": false,
+  "expectedRubricIncluded": false,
+  "applicationOrSqlExecuted": false
+}

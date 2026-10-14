@@ -1,0 +1,12 @@
+flowchart TD
+ A[各枝の結果と読込時情報] --> B{Savedか}
+ B -- はい --> C[通知保持・303検索復帰工程]
+ C -- 工程内例外 --> OUT[外側エラー・DB確定を戻さない]
+ B -- いいえ --> D{SaveResultありか}
+ D -- はい --> E[Outcome対応Status<br>DuplicateTokenを返却確認情報へ置換]
+ D -- いいえ --> F[422またはWebFaultの固有Statusを保持]
+ E --> G[要求入力・読込時Detail・SnapshotId・復帰版を保持]
+ F --> G
+ G --> H[候補再取得]
+ H -- 成功 --> I[結果別の画面表示]
+ H -- 取得・描画例外 --> OUT

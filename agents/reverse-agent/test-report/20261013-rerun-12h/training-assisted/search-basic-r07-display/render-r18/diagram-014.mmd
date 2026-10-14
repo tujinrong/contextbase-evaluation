@@ -1,0 +1,13 @@
+flowchart TD
+  A[更新済み状態] --> B[保持条件の入力欄・候補・整形]
+  B -->|成功| C[結果別に描画]
+  B -->|WebFault| W[局所catch：そのStatus・項目エラー]
+  B -->|その他例外| Q[F0：発生段階の状態を保持]
+  C -->|成功| D[empty・tooMany・foundのHTML]
+  C -->|描画例外| Q
+  E[更新前のWebFault] --> W
+  W --> F[保持条件・今回未検索<br/>候補再取得]
+  F -->|例外| Q
+  F -->|成功| G[元Statusでエラー描画]
+  G -->|成功| H[エラーHTML・保持状態を維持]
+  G -->|描画例外| Q

@@ -1,0 +1,12 @@
+flowchart TD
+    A[検索GET] --> U{認証・参照}
+    U -->|拒否| E[401]
+    U -->|許可| C{contextId非空}
+    C -->|NULL・空| N[新Context・版1<br/>Applied・LastResultなし]
+    N --> P[未検索・Resumeなし]
+    P --> V[Flash取得・検索候補取得<br/>200 未検索表示]
+    C -->|非空| G{既存Context取得}
+    G -->|不在・期限切れ| W409[409]
+    G -->|所有者等不一致| W403[403]
+    G -->|取得| NEXT[R4-1へ<br/>Context・要求版]
+    V -. 後続例外 .-> X[外側例外処理]

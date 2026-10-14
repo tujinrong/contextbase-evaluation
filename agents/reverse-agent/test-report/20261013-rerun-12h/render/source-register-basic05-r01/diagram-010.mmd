@@ -1,0 +1,12 @@
+flowchart TD
+ A[5から・保存条件成立] --> B[新規INSERT または比較版UPDATE<br>writeStarted=true]
+ B -- OUTPUTなし --> DC[DBConcurrencyException・7へ]
+ B -- 書込み結果あり --> C[保存IDと新しい版を保持]
+ C --> D[CREATEまたはUPDATE履歴追記]
+ D --> E[commitAttempted=true・commit]
+ E -- 成功 --> F[completed=true・確認情報削除]
+ F --> G[Saved・保存ID・新しい版]
+ G --> NEXT[8へ・DB commit済み]
+ B -. try内例外 .-> EX[7へ]
+ D -. try内例外 .-> EX
+ E -. commit例外 .-> EX

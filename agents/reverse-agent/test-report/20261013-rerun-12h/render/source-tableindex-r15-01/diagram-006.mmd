@@ -1,0 +1,10 @@
+flowchart TD
+  A{"4．DB用try内の例外／catch順"}
+  A -->|"1 InputValidationException"| B["rollback試行／ValidationFailed・項目エラー"]
+  A -->|"2 SQL 2601・2627"| C["rollback試行／ValidationFailed・E-STU-101"]
+  A -->|"3 DBConcurrencyException"| D["rollback試行／Conflict・E-STU-105"]
+  A -->|"4 残るSQL・InvalidOperation・取消"| E["rollback試行・成否取得"]
+  E --> F{"writeStartedかつ／commitAttempted又はrollback失敗"}
+  F -->|"はい"| G["Unknown／E-COM-004"]
+  F -->|"いいえ"| H["SystemError／E-COM-004"]
+  A -->|"捕捉条件外"| X["呼出元へ例外"]

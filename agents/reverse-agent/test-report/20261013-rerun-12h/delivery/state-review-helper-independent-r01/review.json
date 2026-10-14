@@ -1,0 +1,227 @@
+{
+  "schema": "source-state-review-helper-code-only-audit/1",
+  "createdUtc": "2026-10-13T12:49:55.975977+00:00",
+  "status": "CHANGES_REQUIRED",
+  "helper": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\test-report\\20261013-rerun-12h\\source-pilot\\review_state_projection.py",
+  "helperSha256": "c9d0d3afdbc3af98cebdcc2bf50c768022ba661d03f63922fb23231bbd7070a9",
+  "helperUnchanged": true,
+  "cases": [
+    {
+      "case": "handoff-correct",
+      "expectedAccept": true,
+      "actualAccept": true,
+      "pass": true,
+      "error": null
+    },
+    {
+      "case": "handoff-wrong-mode",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: meaning review requires a complete exact-parent source-only projection"
+    },
+    {
+      "case": "handoff-wrong-cap",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: meaning review requires a complete exact-parent source-only projection"
+    },
+    {
+      "case": "handoff-wrong-scope",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: meaning review requires a complete exact-parent source-only projection"
+    },
+    {
+      "case": "handoff-wrong-status",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: meaning review requires a complete exact-parent source-only projection"
+    },
+    {
+      "case": "handoff-revision",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: meaning review requires a complete exact-parent source-only projection"
+    },
+    {
+      "case": "handoff-count",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: meaning review requires a complete exact-parent source-only projection"
+    },
+    {
+      "case": "raw-projection-correct",
+      "expectedAccept": true,
+      "actualAccept": true,
+      "pass": true,
+      "error": null
+    },
+    {
+      "case": "raw-projection-wrong-cap",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: raw projection does not bind exact source and parent"
+    },
+    {
+      "case": "raw-projection-wrong-parent",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: raw projection does not bind exact source and parent"
+    },
+    {
+      "case": "parent-correct",
+      "expectedAccept": true,
+      "actualAccept": true,
+      "pass": true,
+      "error": null
+    },
+    {
+      "case": "parent-caller",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: meaning review canonical differs from explicit parent SHA"
+    },
+    {
+      "case": "parent-handoff",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: meaning review canonical differs from explicit parent SHA"
+    },
+    {
+      "case": "fixed-cap-verification-state-drift-reproduction",
+      "expectedAccept": false,
+      "actualAccept": true,
+      "pass": false,
+      "error": null
+    },
+    {
+      "case": "inventory-same",
+      "expectedAccept": true,
+      "actualAccept": true,
+      "pass": true,
+      "error": null
+    },
+    {
+      "case": "inventory-added",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: Synthetic inventory drift"
+    },
+    {
+      "case": "inventory-deleted",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: Synthetic inventory drift"
+    },
+    {
+      "case": "inventory-bytes",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: Synthetic inventory drift"
+    },
+    {
+      "case": "linked-runtime-file-boundary-reproduction",
+      "expectedAccept": false,
+      "actualAccept": true,
+      "pass": false,
+      "error": null
+    },
+    {
+      "case": "review-answer-correct",
+      "expectedAccept": true,
+      "actualAccept": true,
+      "pass": true,
+      "error": null
+    },
+    {
+      "case": "review-answer-revision",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: approved review contradicts its state verdicts/findings"
+    },
+    {
+      "case": "review-answer-state",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: approved review contradicts its state verdicts/findings"
+    },
+    {
+      "case": "review-answer-finding",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: approved review contradicts its state verdicts/findings"
+    },
+    {
+      "case": "review-answer-unpropagated",
+      "expectedAccept": false,
+      "actualAccept": false,
+      "pass": true,
+      "error": "ValueError: canonical revision finding requires the top-level pause flag"
+    },
+    {
+      "case": "review-answer-pause",
+      "expectedAccept": true,
+      "actualAccept": true,
+      "pass": true,
+      "error": null
+    },
+    {
+      "case": "actual-review-schema-typed-enums-serialization",
+      "expectedAccept": true,
+      "actualAccept": true,
+      "pass": true,
+      "error": null
+    }
+  ],
+  "caseCount": 26,
+  "expectedMatches": 24,
+  "missingRejectionReproductions": 2,
+  "findings": [
+    {
+      "severity": "major",
+      "issue": "Fixed cap bytes checked only before verify. Independently verify fixed verification_state manifest SHA and fixed actual manifest bytes after collection, before provider and after provider.",
+      "syntheticReproduction": "fixed-cap-verification-state-drift-reproduction"
+    },
+    {
+      "severity": "major",
+      "issue": "inventory reads each runtime file directly without safe_path; link/reparse boundary not enforced by this enumeration.",
+      "syntheticReproduction": "linked-runtime-file-boundary-reproduction"
+    },
+    {
+      "severity": "minor",
+      "issue": "workflow import is the only checked actual module. Freeze inventory equality alone does not establish loaded capsule/provider/prompts/validation provenance. Either bind them or limit the claimed runtime scope."
+    }
+  ],
+  "staticChecks": {
+    "providerTopLevelWasNotExecuted": true,
+    "sourceOtherModeBusinessWasNotRead": true,
+    "postVerificationFixedCapCheckMissing": true,
+    "runtimeInventorySafePathPerFileMissing": true,
+    "actualImportProvenanceWorkflowOnly": true,
+    "canonicalReviewExactBytesModeParentGuardsPresent": true,
+    "fourStatesAndEvidenceAndStrictCanonicalRangeGatesPresent": true,
+    "nativeRuntimeFormalApprovalFlagsRemainFalse": true
+  },
+  "providerInvocations": 0,
+  "helperTopLevelInvocations": 0,
+  "originalSourceSpecEvalOrOtherModeBusinessRead": false,
+  "productionInputsInspected": false,
+  "completeInertnessProven": false,
+  "actualTransportProviderAcceptanceVerified": false
+}

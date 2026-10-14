@@ -1,0 +1,32 @@
+flowchart TD
+ A[共通入口：認証・CSRF・MVC] -->|通過| F[FormGuard・CurrentUser・最初のGet]
+ A -->|拒否・例外| O[共通入口の拒否または外側例外経路]
+ F --> U[局所try：identity.Read・Use]
+ U --> P{Appliedあり}
+ P -->|なし| W0[WebFault 409：先に検索]
+ P -->|あり| C[条件コピー・変更時Page1・件数と並び設定]
+ C --> S[SearchAsync・EnsureSearch]
+ S --> R{非超過かつ条件Pageが最終Page超}
+ R -->|はい| T[条件Page補正・再検索・EnsureSearch]
+ R -->|いいえ| H[Applied・LastResult・版＋1]
+ T --> H
+ H --> L[期限延長・解放後、try内SearchModel]
+ L --> V[成功dataのSearchビュー]
+ W0 --> W[局所catch：送出されたe.Statusを保持]
+ U -->|WebFault：各Status| W
+ S -->|WebFault：検証なら422等| W
+ T -->|WebFault：各Status| W
+ L -->|WebFault：各Status| W
+ W --> N[項目エラー・Present entry,null]
+ N --> B[catch内SearchModel：入力復元・候補読取・Json化]
+ B --> Z[保持条件と未検索一覧のSearchビュー]
+ F -->|例外| O
+ U -->|非WebFault・取消| O
+ C -->|非WebFault| O
+ S -->|非WebFault・取消| O
+ T -->|非WebFault・取消| O
+ H -->|非WebFault| O
+ L -->|非WebFault・取消| O
+ B -->|WebFaultを含む例外・取消| O
+ V -->|描画例外| O
+ Z -->|描画例外| O

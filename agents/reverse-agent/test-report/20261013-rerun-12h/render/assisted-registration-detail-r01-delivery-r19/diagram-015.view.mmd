@@ -1,0 +1,15 @@
+flowchart TD
+ A[削除POST・FormGuard] -->|不正| X[400・共通応答]
+ A -->|正常| B[Read・Snapshot.Get]
+ B -->|不在・期限切れ| Y[409]
+ B -->|所有者・対象等不一致| Z[403]
+ B -->|NULL<br/>キー等の別例外| W[応答未開始なら503]
+ B -->|正常| C{Original復帰先と一致}
+ C -->|いいえ| Z
+ C -->|はい| D[Administrator]
+ D -->|拒否| Z
+ D -->|許可| E[CheckReturn]
+ E -->|WebFault| V[その状態で共通応答]
+ E -->|正常| F[Confirmed・期待版Required]
+ F -->|不正| R[422 WebFault]
+ F -->|正常| G[DeleteAsyncへ]

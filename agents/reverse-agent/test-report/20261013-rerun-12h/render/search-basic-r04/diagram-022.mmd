@@ -1,0 +1,12 @@
+flowchart TD
+  A["DL-X：3.9-2または3.9-3から<br/>元の例外・tx・writeStarted・commitAttempted"] --> B{"DBConcurrencyException"}
+  B -->|はい| C["先行catchでrollback試行<br/>Conflict・E-STU-105"]
+  B -->|いいえ| D{"SqlException・InvalidOperationException<br/>OperationCanceledExceptionのいずれか"}
+  D -->|いいえ| O["内側catchの対象外<br/>元の例外を4.5へ"]
+  D -->|はい| E["一般catchへ到達<br/>rollbackを試み成否を得る"]
+  E --> F{"書込開始済み、かつ<br/>commit試行済みまたはrollback不成功"}
+  F -->|はい| U["Unknown・E-COM-004<br/>削除結果は検索で確認・303なし"]
+  F -->|いいえ| S["SystemError・E-COM-004<br/>削除処理失敗・303なし"]
+  C --> R["DL-R → 3.9-5<br/>各catchが生成した結果を保持"]
+  U --> R
+  S --> R

@@ -1,0 +1,9 @@
+flowchart TD
+  A[F0：伝播例外・理由・処理済み状態] --> B{Response.HasStartedがfalse}
+  B -->|いいえ| X[このmiddlewareのcatch対象外・最終応答は確定しない]
+  B -->|はい| C{WebFault}
+  C -->|はい| D[例外のStatus・Messageを使用]
+  C -->|いいえ| E[503・共通失敗メッセージ]
+  D --> F[students用エラーHTML・検索画面を開くリンク]
+  E --> F
+  F --> G[通常検索レイアウトを再構成しない・処理済み状態を戻さない]

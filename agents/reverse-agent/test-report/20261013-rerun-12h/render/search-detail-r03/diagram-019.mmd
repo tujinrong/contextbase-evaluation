@@ -1,0 +1,14 @@
+flowchart TD
+ A["Use開始"] --> G["①Get：要求ContextId・利用者・Tab"]
+ G -->|許可| B["Gate.WaitAsync ct"]
+ G -->|拒否| X["元の409または403を送出"]
+ B -->|取得前の取消等| C["try前の例外を送出<br/>このfinallyには入らない"]
+ B -->|取得| D["try内：①Getで再確認"]
+ D -->|拒否| E["U-失敗：③のfinallyへ<br/>元のWebFaultを保持"]
+ D -->|許可| V{"受信版文字列が現在版と一致するか"}
+ V -->|いいえ| W["409：状態更新済み"]
+ V -->|はい| L{"Revisionはlong.MaxValueか"}
+ L -->|はい| H["409：版上限"]
+ L -->|いいえ| P["U-operation：③へ<br/>Entry・取得中Gate・operation"]
+ W --> E
+ H --> E

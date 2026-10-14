@@ -1,0 +1,14 @@
+%%{init: {"flowchart":{"htmlLabels":true,"useMaxWidth":false,"nodeSpacing":28,"rankSpacing":30},"themeCSS":".nodeLabel,.edgeLabel{white-space:nowrap;word-break:keep-all;overflow-wrap:normal;}"}}%%
+flowchart TD
+    A["図20-2 対象あり・版一致"] --> W["writeStarted=true<br/>削除・更新管理7列<br/>UPDATE"]
+    W --> ROW{"件数1"}
+    ROW -->|いいえ| CC["DBConcurrencyException<br/>DCへ"]
+    ROW -->|はい| H["同じTxで<br/>DELETE履歴"]
+    H --> CM["commitAttempted=true<br/>commit"]
+    CM -->|成功| OK["D3へ<br/>Saved<br/>ID・要求版+1"]
+    W -. 対象例外 .-> DC["DCへ<br/>フラグ保持"]
+    H -. 対象例外 .-> DC
+    CM -. 対象例外 .-> DC
+    W -. 捕捉対象外 .-> X["外側例外処理"]
+    H -. 捕捉対象外 .-> X
+    CM -. 捕捉対象外 .-> X

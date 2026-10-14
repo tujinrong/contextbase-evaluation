@@ -1,0 +1,13 @@
+flowchart TD
+ A{復帰契機} -- 手動 --> B{未保存変更の確認を通過か}
+ B -- いいえ --> STOP[現画面保持]
+ B -- はい --> URL[保持ID・読込時版で検索GET]
+ A -- Saved --> C{復帰先ID非空か}
+ C -- いいえ --> NEW[新検索状態・現在版を作成]
+ C -- はい --> KEEP[保持ID・読込時版を使用]
+ NEW --> FLASH[成功通知保持・303]
+ KEEP --> FLASH
+ FLASH --> URL
+ URL --> NEXT[2へ・IDと版を保持]
+ NEW -. commit後の一般例外 .-> OUT[外側エラー・保存確定は戻さない]
+ FLASH -. commit後の一般例外 .-> OUT

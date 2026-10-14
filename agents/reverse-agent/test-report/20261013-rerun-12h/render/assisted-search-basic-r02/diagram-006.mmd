@@ -1,0 +1,10 @@
+flowchart TD
+  A[S1・S2・S3の出口：結果・Status・入力・保持状態] --> B[SearchModel：候補取得・JSON整形]
+  B -->|失敗| Q[F0へ：流入枝の状態を保持]
+  B -->|成功| C[要求PageSize・SortKey・SortDirectionをモデルへ代入]
+  C --> D[ビュー描画]
+  D -->|他の描画例外| Q
+  D -->|ページ数計算に到達| E{Model.PageSizeが0}
+  E -->|はい| F[DivideByZeroException：先行422でも再表示失敗]
+  F --> Q
+  E -->|いいえ・描画成功| G[枝の結果とStatusを引き継ぐHTML]

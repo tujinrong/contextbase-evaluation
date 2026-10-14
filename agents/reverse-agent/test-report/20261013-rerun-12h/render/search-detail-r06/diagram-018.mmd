@@ -1,0 +1,12 @@
+flowchart TD
+ A["ContextId・利用者・Tab"] --> N{"IdはNULLか"}
+ N -->|はい| W["409<br/>状態失効"]
+ N -->|いいえ| D{"辞書にキーがあるか"}
+ D -->|空・不在| W
+ D -->|あり| T{"Expiresは<br/>現在UTCより前か"}
+ T -->|はい| W
+ T -->|いいえ| O{"Owner・Sessionは<br/>不一致か"}
+ O -->|はい| F["403<br/>他状態使用拒否"]
+ O -->|いいえ| B{"非空Tabは<br/>保存Tabと不一致か"}
+ B -->|はい| F
+ B -->|いいえ| R["Entryを返す"]

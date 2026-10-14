@@ -1,0 +1,14 @@
+%%{init: {"flowchart":{"htmlLabels":true},"themeCSS":".nodeLabel, .nodeLabel p { white-space: nowrap !important; overflow-wrap: normal !important; word-break: normal !important; }"}}%%
+flowchart TD
+  A["更新済み状態"] --> B["保持条件の入力欄・<br/>候補・表示データ"]
+  B -->|WebFault| W["局所catch：その<br/>Status<br/>・項目エラー"]
+  B -->|その他例外| Q["F0：流入時の<br/>更新段階を保持"]
+  B -->|成功| C["empty・tooMany・found<br/>を引継いで描画"]
+  C -->|成功| D["正常HTML"]
+  C -->|描画例外| Q
+  E["サブフロー1・2-1のWebFault"] --> W
+  W --> F["保持条件・今回未検索<br/>候補再取得"]
+  F -->|例外| Q
+  F -->|成功| G["元Statusでエラー描画"]
+  G -->|成功| H["エラーHTML"]
+  G -->|描画例外| Q

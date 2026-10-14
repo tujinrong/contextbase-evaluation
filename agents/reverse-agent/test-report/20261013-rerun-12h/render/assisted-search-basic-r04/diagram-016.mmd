@@ -1,0 +1,15 @@
+%%{init: {"flowchart":{"htmlLabels":true},"themeCSS":".nodeLabel, .nodeLabel p { white-space: nowrap !important; overflow-wrap: normal !important; word-break: normal !important; }"}}%%
+flowchart TD
+  A["POST /students/clear"] --> B{"MVC認証・CSRF"}
+  B -->|拒否| X["MVCの拒否結果"]
+  B -->|到達・バインド後| C["FormGuard・参照確認"]
+  C -->|例外| Q["F0：消去前"]
+  C -->|受入| D["Use：Gate後再確認<br/>期待版・版上限"]
+  D -->|拒否・取消等| Q
+  D -->|受入| E["同じIDの<br/>Applied・LastResult<br/>をNULL<br/>版加算"]
+  E --> F["期限延長・Gate解放"]
+  F --> G["ModelState全消去・<br/>状態再Get"]
+  G -->|拒否・例外| P["F0：消去済み"]
+  G -->|受入| H["初期条件・候補・整形・描画"]
+  H -->|成功| I["初期条件・未検索HTML"]
+  H -->|例外| P

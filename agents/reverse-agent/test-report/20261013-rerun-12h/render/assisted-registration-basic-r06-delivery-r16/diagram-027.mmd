@@ -1,0 +1,14 @@
+%%{init: {"flowchart":{"htmlLabels":true,"useMaxWidth":false,"nodeSpacing":28,"rankSpacing":30},"themeCSS":".nodeLabel,.edgeLabel{white-space:nowrap;word-break:keep-all;overflow-wrap:normal;}"}}%%
+flowchart TD
+    A["図17-2 全候補取得済み"] --> T{"確認照合・Busy取得有効"}
+    T -->|有効| R{"理由あり"}
+    R -->|なし| F["ValidationFailed 422<br/>共通finally後S6"]
+    R -->|あり| W["S5へ<br/>確認済み"]
+    T -->|無効・未指定| NEED{"候補1件以上<br/>またはキー非NULL"}
+    NEED -->|はい| CR["rollback・新確認キー<br/>ConfirmationRequired 409<br/>対象ID・取得版<br/>全件数・最大20件"]
+    CR --> BACK["共通finally後S6<br/>再表示・C1へ"]
+    NEED -->|いいえ| W2["S5へ<br/>確認不要<br/>候補0件・キーNULL"]
+    W --> SAVE["学生・履歴書込とcommit"]
+    W2 --> SAVE
+    SAVE -->|成功| OK["Saved・指定キー除去<br/>共通finally後303"]
+    SAVE -. 例外 .-> EX["SCのcatch順・finally<br/>結果または外側伝播"]

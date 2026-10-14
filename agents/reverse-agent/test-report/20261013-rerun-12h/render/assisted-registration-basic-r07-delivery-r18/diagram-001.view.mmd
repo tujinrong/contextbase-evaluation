@@ -1,0 +1,12 @@
+%%{init: {"flowchart":{"htmlLabels":true,"useMaxWidth":false,"nodeSpacing":28,"rankSpacing":30},"themeCSS":".nodeLabel,.edgeLabel{white-space:nowrap;word-break:keep-all;overflow-wrap:normal;}"}}%%
+flowchart TD
+    A["図1-1 新規GET"] --> B{"認証情報有効"}
+    B -->|いいえ| U["401"]
+    B -->|はい| C{"非空の復帰先あり"}
+    C -->|なし| P{"作成権限"}
+    C -->|あり| D{"Context検査"}
+    D -->|不在・期限切れ| E["409"]
+    D -->|所有者等不一致| F["403"]
+    D -->|有効| P
+    P -->|Viewer| F
+    P -->|許可| NEXT["図1-2へ<br/>利用者・指定復帰先"]

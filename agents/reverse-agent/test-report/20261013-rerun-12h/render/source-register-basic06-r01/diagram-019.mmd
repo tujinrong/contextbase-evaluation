@@ -1,0 +1,11 @@
+flowchart TD
+ A[2のtry内例外と状態] --> B{DBConcurrencyExceptionか}
+ B -- はい --> CF[rollback試行・Conflict・4へ]
+ B -- いいえ --> C{残るSQL・InvalidOperation・取消例外か}
+ C -- いいえ --> OUT[外側エラー]
+ C -- はい --> D[rollback成功確認の真偽を取得]
+ D --> E{writeStarted かつ<br>commitAttempted またはrollback成功未確認か}
+ E -- はい --> UK[Unknown・4へ]
+ E -- いいえ --> SY[SystemError・4へ]
+ CF -. rollbackの捕捉対象外例外 .-> OUT
+ D -. rollbackの捕捉対象外例外 .-> OUT

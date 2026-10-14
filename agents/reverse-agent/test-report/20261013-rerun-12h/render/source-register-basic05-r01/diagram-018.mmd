@@ -1,0 +1,24 @@
+flowchart TD
+ A[1から] --> B[受付番号・利用者・UTC時刻取得]
+ B -- 捕捉対象外例外 --> OUT[外側エラー]
+ B -- 正常 --> C{管理者か}
+ C -- いいえ --> FB[Forbidden・4へ]
+ C -- はい --> D[理由の必須正規化]
+ D -- InputValidationException --> VF[ValidationFailed・4へ]
+ D -- ArgumentException等 --> OUT
+ D -- 正常 --> E{ID・版正数／版上限未到達か}
+ E -- いいえ --> VF
+ E -- はい --> F[接続・BeginTransaction]
+ F -- try外失敗 --> OUT
+ F -- 正常 --> G[共通ロック・非削除対象版再取得]
+ G -- 対象なし --> NF[NotFound・4へ]
+ G -- 版不一致 --> CF[Conflict・4へ]
+ G -- 一致 --> H[比較版論理UPDATE・writeStarted=true]
+ H -- 件数1以外 --> DC[DBConcurrencyException・3へ]
+ H -- 件数1 --> I[DELETE履歴追記]
+ I --> J[commitAttempted=true・commit]
+ J -- 成功 --> SV[Saved・対象ID・版+1・4へ]
+ G -. try内例外 .-> EX[3へ]
+ H -. try内例外 .-> EX
+ I -. try内例外 .-> EX
+ J -. commit例外 .-> EX

@@ -1,0 +1,11 @@
+flowchart TD
+ A[受付UUID・User・now取得] --> B{Viewer}
+ B -->|はい| C[Forbidden・ID版NULL]
+ B -->|いいえ| D[正規化・理由・ID版・年度・学年]
+ D -->|InputValidationException| E[ValidationFailed・元Errors]
+ D -->|ArgumentException| F[ValidationFailed・Saveの項目エラー]
+ D -->|正常| G[Open・Tx開始・書込みtry外]
+ G -->|正常| H[SF-2.2へ]
+ G -->|例外| X[共通middleware境界]
+ A -->|例外| X
+ D -->|その他例外| X

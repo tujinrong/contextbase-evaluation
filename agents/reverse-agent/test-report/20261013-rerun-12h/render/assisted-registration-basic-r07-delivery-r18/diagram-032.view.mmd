@@ -1,0 +1,15 @@
+%%{init: {"flowchart":{"htmlLabels":true,"useMaxWidth":false,"nodeSpacing":28,"rankSpacing":30},"themeCSS":".nodeLabel,.edgeLabel{white-space:nowrap;word-break:keep-all;overflow-wrap:normal;}"}}%%
+flowchart TD
+    A["図20-1 D1から<br/>対象・版・理由"] --> DB["接続・Tx開始<br/>ReadCommitted"]
+    DB -. try<br/>外例外 .-> X["外側例外処理"]
+    DB --> G["try内<br/>書込ゲート"]
+    G --> L["最新非削除対象の版<br/>SELECT"]
+    L --> E{"対象あり"}
+    E -->|なし| N["D3へ<br/>NotFound 404"]
+    E -->|あり| P{"期待版一致"}
+    P -->|いいえ| C["D3へ<br/>Conflict 409"]
+    P -->|はい| NEXT["図20-2へ<br/>対象・要求版・理由<br/>書込未開始"]
+    G -. 対象例外 .-> DC["DCへ<br/>フラグ保持"]
+    L -. SELECT<br/>対象例外 .-> DC
+    G -. 捕捉対象外 .-> X
+    L -. 捕捉対象外 .-> X

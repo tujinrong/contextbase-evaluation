@@ -1,0 +1,13 @@
+flowchart TD
+ A[削除tryの例外] --> B{DBConcurrencyException}
+ B -->|はい| C[rollback試行・Conflict]
+ B -->|いいえ| D{残る対象例外}
+ D -->|いいえ| E[catch外へ伝播]
+ D -->|はい| F[rollback成否取得]
+ F --> G{writeStarted true}
+ G -->|いいえ| S[SystemError]
+ G -->|はい| H{commitAttempted true}
+ H -->|はい| U[Unknown]
+ H -->|いいえ| I{rollback成功}
+ I -->|はい| S
+ I -->|いいえ| U

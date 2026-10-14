@@ -1,0 +1,18 @@
+flowchart TD
+    A[R4-1から取得Gate・Applied・版] --> P{Appliedあり}
+    P -->|なし| N[未検索結果<br/>検索版維持]
+    P -->|あり| S[保持条件をSearchAsyncへ]
+    S --> SQL[件数確認<br/>SQL取得ページだけ最終ページ以下へ補正]
+    SQL --> R[取得行・件数をLastResultへ<br/>検索版+1]
+    R --> HOLD[Applied.Pageを変更しない<br/>Presentのpageは保持ページ]
+    HOLD --> T[正常終了・期限延長]
+    N --> T
+    S -->|検索検証拒否| ERR[結果からWebFault]
+    S -. その他例外 .-> EX[例外保持]
+    SQL -. 取得例外 .-> EX
+    T --> L[finallyでGate解放]
+    ERR --> LE[finallyでGate解放<br/>WebFaultを外側へ]
+    EX --> LX[finallyでGate解放<br/>例外を外側へ]
+    L --> TAKE[Flash一度取得<br/>検索候補取得]
+    TAKE --> VIEW[保持ページ・最新件数・取得行を表示]
+    TAKE -. 後続例外 .-> MW[外側例外処理]

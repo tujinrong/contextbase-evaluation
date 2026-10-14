@@ -1,0 +1,9 @@
+flowchart TD
+  A["SR-X・元の例外<br/>Gate取得状態を引継ぐ"] --> B{"Gate取得済み"}
+  B -->|はい| C["UseのfinallyでGate解放<br/>元の例外を保持・期限延長なし"]
+  B -->|いいえ| D["Gate解放なし<br/>待機前・待機取消等の例外を保持"]
+  C --> E{"WebFaultか"}
+  D --> E
+  E -->|はい| F["個別catch<br/>Fieldまたは空キーへMessage追加<br/>HTTP状態はそのStatus"]
+  F --> R["SR-D → 3.2-4<br/>未検索データ・入力・Status"]
+  E -->|いいえ| X["個別catchの対象外<br/>元の例外を4.5へ"]

@@ -1,0 +1,18 @@
+flowchart TD
+  A["DL-R・各サービス結果<br/>Outcome・ID版・Errors"] --> B{"Outcome.Saved"}
+  B -->|いいえ| C["結果エラーをModelStateへ<br/>Outcome別Status・303なし"]
+  C --> D["Loadで対象再読込<br/>3.7の認証・復帰先・学生・候補確認"]
+  D -->|対象不在| N["Loadの404・E-STU-103<br/>初めのStatusを固定しない"]
+  D -->|読込成功| E["編集画面を再表示"]
+  D -->|その他例外| O["元の例外を4.5へ"]
+  B -->|はい| F{"復帰先が非空"}
+  F -->|はい| F1["既存復帰ID<br/>snapshotのReturnRevision"]
+  F -->|いいえ| F2["新規検索状態<br/>そのID・版"]
+  F1 --> G["論理削除しました。を通知へ格納"]
+  F2 --> G
+  G --> H["HTTP 303<br/>検索GETのLocation"]
+  H --> I["後続の別要求・3.6<br/>版等を確認<br/>Appliedがあれば再検索"]
+  F2 -->|状態作成例外| O
+  G -->|認証・通知等の例外| O
+  H -->|応答生成例外| O
+  E -->|表示例外| O

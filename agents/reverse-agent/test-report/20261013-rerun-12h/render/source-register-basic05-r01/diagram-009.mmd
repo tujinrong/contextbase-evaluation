@@ -1,0 +1,16 @@
+flowchart TD
+ A[4から] --> B[全候補取得・入力と候補ハッシュ作成]
+ B --> C[非NULL確認情報を所有者・対象版・期限・ハッシュ・Busyで照合]
+ C --> D{確認有効か}
+ D -- はい --> E{理由ありか}
+ E -- いいえ --> VF[ValidationFailed・8へ]
+ E -- はい --> WRITE[6へ・確認取得済み状態を保持]
+ D -- いいえ --> F{候補あり または確認情報が非NULLか}
+ F -- いいえ --> WRITE0[6へ・確認未取得のまま]
+ F -- はい --> G[明示rollback・確認情報再発行]
+ G --> H{新規か}
+ H -- はい --> QN[ConfirmationRequired<br>ID=NULL・版=NULL・8へ]
+ H -- いいえ --> QU[ConfirmationRequired<br>要求ID・取得済み版・8へ]
+ B -. try内例外 .-> EX[7へ]
+ C -. try内例外 .-> EX
+ G -. rollback・発行例外 .-> EX

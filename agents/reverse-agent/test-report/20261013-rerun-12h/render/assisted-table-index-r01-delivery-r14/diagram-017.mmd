@@ -1,0 +1,13 @@
+flowchart TD
+    A[コード1から：保存値比較] --> B{変更ありか}
+    B -->|なし| N[rollback・NoChange・既存期待版]
+    N -->|rollback例外| R[rollback試行・再throw]
+    B -->|あり| C[版上限検査]
+    C -->|上限| R
+    C --> D[コードINSERT又はUPDATE・1件要求]
+    D -->|例外・件数不成立| R
+    D --> E[監査種別判定・履歴追記]
+    E -->|例外| R
+    E --> F[commit]
+    F -->|例外| R
+    F --> G[Saved：新規1又は期待版+1]

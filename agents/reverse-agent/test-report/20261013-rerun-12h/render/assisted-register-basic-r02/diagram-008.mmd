@@ -1,0 +1,13 @@
+flowchart TD
+    A[S1からSaveRequest] --> U[受付UUID・User・開始時nowと業務日]
+    U -. User取得等の捕捉外失敗 .-> X[外側例外処理]
+    U --> P{Viewerか}
+    P -->|はい| F[S6へ・Forbidden 403・ID版NULL]
+    P -->|いいえ| N{19項目・理由・対象版・年度学年を検査}
+    N -->|入力検証・ArgumentException| V[S6へ・ValidationFailed 422・ID版NULL]
+    N -. その他例外 .-> X
+    N -->|有効| DB[接続・ReadCommitted Tx開始]
+    DB -. 保存try外の失敗 .-> X
+    DB --> G[保存try内・書込ゲート取得]
+    G -->|取得| NEXT[S3へ・正規化値と理由・Tx]
+    G -. 例外 .-> C[SCへ]

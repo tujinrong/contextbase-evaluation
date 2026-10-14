@@ -1,0 +1,19 @@
+flowchart TD
+    A[7-1の業務値・旧行] --> B{10属性の差分があるか}
+    B -->|なし| C[明示rollback・NoChange・要求版・警告false]
+    B -->|あり| D[版上限検査]
+    D --> E[同名照会・警告値を保持]
+    E --> F[INSERTまたは比較版UPDATE]
+    F --> G{SQL結果がnullか}
+    G -->|はい| H[DBConcurrencyException]
+    G -->|いいえ| I[保存ID・後版を保持]
+    I --> J[保存IDで履歴追加]
+    J --> K[commit]
+    K --> L[Saved・後版・取得した警告値]
+    C -.->|rollback例外| X[rollback helper・再throw]
+    D -.->|上限例外| X
+    E -.->|SQL例外| X
+    F -.->|一意性等のSQL例外| X
+    H --> X
+    J -.->|履歴例外| X
+    K -.->|commit例外| X

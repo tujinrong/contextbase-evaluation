@@ -1,0 +1,263 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src &#x27;none&#x27;; script-src &#x27;none&#x27;; style-src &#x27;unsafe-inline&#x27;; img-src data:; font-src &#x27;none&#x27;; connect-src &#x27;none&#x27;; frame-src &#x27;none&#x27;; form-action &#x27;none&#x27;; base-uri &#x27;none&#x27;"><style>body{margin:16px;font-family:system-ui,sans-serif}pre{white-space:pre-wrap}table[data-renderer-markdown]{border-collapse:collapse}table[data-renderer-markdown] th,table[data-renderer-markdown] td{border:1px solid #aaa;padding:6px}img[data-renderer-diagram]{max-width:100%;height:auto}</style></head><body><!-- spec-meta: {"schema":"spec-md/1.1","documentId":"CSHARP_ASPNET-BAS-STU-03-M_CODE_CATEGORY","version":"1.0","path":"基本設計書/テーブル/03_m_code_category.md","layout":"TABLE","sheets":[{"sheet":"m_code_category"}],"sections":[{"heading":"テーブルヘッダー","kind":"HEADER"},{"heading":"項目詳細","kind":"LIST","key":["No"]}],"columns":["No","論理名","物理名","PK","NOT NULL","タイプ","長さ","初期値","説明"]} -->
+<h1>コード分類マスターテーブル定義（dbo.m_code_category）</h1>
+<p>文書ID：CSHARP_ASPNET-BAS-STU-03-M_CODE_CATEGORY<br/>
+版：1.0／文書種別：table-definition／文書パス：基本設計書/テーブル/03_m_code_category.md</p>
+<h2>テーブルヘッダー</h2>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>定義・条件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>論理名・物理名</td>
+<td>論理名はコード分類マスター、物理名は <code>dbo.m_code_category</code>。分類IDによってコードの用途を識別し、分類名称、コード桁数、通常追加可否、有効状態、備考、作成・更新情報、版を保持する。全11列であり、個々のコード値・表示名称・有効期間は <code>dbo.m_code</code> が保持する。根拠：<code>database/001_schema.sql:90-134</code>。</td>
+</tr>
+<tr>
+<td>主キー・採番</td>
+<td><code>pk_m_code_category</code> は <code>category_id</code> の単一列主キー。IDENTITY列はなく、初期投入では分類IDを文字列として明示する。根拠：<code>database/001_schema.sql:90-102</code>、<code>database/002_seed.sql:8-13</code>、<code>database/002_seed.sql:88-89</code>。</td>
+</tr>
+<tr>
+<td>索引</td>
+<td>分類IDの主キー定義がある。当表に対する別の一意制約および明示的な追加索引の宣言はない。根拠：<code>database/001_schema.sql:90-110</code>、<code>database/001_schema.sql:187-212</code>。</td>
+</tr>
+<tr>
+<td>文字列の容量・照合順序</td>
+<td>分類IDは <code>Latin1_General_100_BIN2</code>、名称・備考・作成者・更新者は <code>Latin1_General_100_CS_AS_SC</code>。長さ欄の <code>varchar</code> はバイト数、<code>nvarchar</code> はUTF-16コード単位の保存容量を示す。名称12、備考120、作成者・更新者各64というUnicodeスカラー上限は別のCHECK制約である。各式は <code>nvarchar(max)</code> へ変換してSC照合順序を適用し、末尾に <code>N'#'</code> を付けたLENから1を引くため、末尾空白も計数する。空文字を拒否するCHECKはない。根拠：<code>database/001_schema.sql:91-108</code>。</td>
+</tr>
+<tr>
+<td>NULL・日時・版の制約</td>
+<td>NULLを許す列は <code>remarks</code> だけである。CHECK中の <code>IS NULL</code> は列定義のNOT NULLを解除しない。作成・更新日時はオフセット0、版は正のbigint、コード桁数は1〜10とする。日時の前後関係を比較するCHECKはない。根拠：<code>database/001_schema.sql:91-109</code>、<code>database/001_schema.sql:202-202</code>。</td>
+</tr>
+<tr>
+<td>分類集合と桁数検査の境界</td>
+<td>DDLは分類を5件に限定しない。初期投入は下記5分類を定義し、宣言された <code>SaveCodeAsync</code> はその5個の分類IDだけを受け付ける。配備検証SQLには分類行数が5であることの検査がある。コード表のCHECKは数字形式等を検査するが、<code>code_value</code> の長さと分類の <code>code_length</code> を照合しない。分類別桁数の照合はコード保守サービスが行う。根拠：<code>database/001_schema.sql:90-110</code>、<code>database/001_schema.sql:202-203</code>、<code>database/002_seed.sql:8-13</code>、<code>Core/MasterMaintenanceService.cs:81-96</code>、<code>database/004_verify_deployment.sql:97-99</code>。</td>
+</tr>
+<tr>
+<td>外部キー・利用側との関係</td>
+<td><code>fk_code_category</code> は <code>dbo.m_code.category_id → dbo.m_code_category.category_id</code> の参照を定義する。コード表の主キーは分類IDとコード値の組合せである。学生の性別・都道府県・在籍区分・続柄、クラスの学年はコード表への複合FKであり、当表への直接FKではない。FKは参照先の存在を保証する制約であり、有効状態・有効期間・分類別桁数の検査や候補取得のJOINとは役割が異なる。根拠：<code>database/001_schema.sql:113-127</code>、<code>database/001_schema.sql:189-199</code>。</td>
+</tr>
+<tr>
+<td>初期分類</td>
+<td><code>GENDER</code>：性別、コード桁数1、通常追加不可（0）。<br/><code>ENROLLMENT_STATUS</code>：在籍区分、コード桁数2、通常追加不可（0）。<br/><code>PREFECTURE</code>：都道府県、コード桁数2、通常追加不可（0）。<br/><code>RELATIONSHIP</code>：緊急連絡先続柄、コード桁数2、通常追加可（1）。<br/><code>GRADE</code>：学年、コード桁数2、通常追加可（1）。<br/>通常追加可否は分類内に新しいコード値を追加できるかを表し、分類自体の追加権限を表さない。根拠：<code>database/002_seed.sql:8-13</code>、<code>Core/MasterMaintenanceService.cs:102-104</code>。</td>
+</tr>
+<tr>
+<td>初期投入の処理順序・排他</td>
+<td>1. <code>XACT_ABORT ON</code> としてトランザクションを開始する。<br/>2. <code>test-project1:student-write</code> のExclusiveアプリケーションロックを、所有者Transaction、待機上限5000ms、DbPrincipal <code>public</code> で取得する。結果が負ならROLLBACKしてSQL例外51001を送出する。<br/>3. 初期分類・初期コードを定義し、既存値との差分を検査する。差分があればROLLBACKして51002を送出する。<br/>4. 分類IDが存在しない分類だけを追加し、続いて分類ID・コード値が存在しないコードだけを追加する。<br/>5. COMMITする。既存行の上書き、版加算、初期値以外の分類の削除は行わない。学生保存・宣言されたマスター保守と同じロック資源を使う。根拠：<code>database/002_seed.sql:2-14</code>、<code>database/002_seed.sql:85-92</code>、<code>Core/SqlServerStudentService.cs:92-101</code>。</td>
+</tr>
+<tr>
+<td>初期投入の差分拒否条件</td>
+<td>同じ分類IDを持つ既存行について、分類名称、コード桁数、通常追加可否をSQLの比較条件で照合し、有効状態が1であることも確認する。備考・作成更新情報・分類版は比較対象に含まれない。同じ処理で初期コードの名称、表示順、保護状態、有効状態1、開始日1900-01-01、終了日NULLも照合するため、コード側の差分でも分類追加へ進まず中断する。初期値の不足と既存値の差分は別の扱いである。根拠：<code>database/002_seed.sql:85-91</code>。</td>
+</tr>
+<tr>
+<td>初期投入が設定する値</td>
+<td>不足分類のINSERTは有効状態1、備考NULL、作成日時・更新日時 <code>@now</code>、作成者・更新者 <code>@actor</code>、版1を明示設定する。<code>@now</code> は <code>SYSUTCDATETIME()</code> をオフセット <code>+00:00</code> にした <code>datetimeoffset(7)</code>、<code>@actor</code> は <code>ORIGINAL_LOGIN()</code> を保持する <code>nvarchar(128)</code> である。DDLのDEFAULTは有効状態と版だけに存在するが、このINSERTは両方とも明示設定する。既存分類行の作成更新情報や版は変更しない。根拠：<code>database/001_schema.sql:95-101</code>、<code>database/002_seed.sql:7-7</code>、<code>database/002_seed.sql:88-89</code>。</td>
+</tr>
+<tr>
+<td>コード保守での分類照会</td>
+<td><code>CodeChange.CategoryId</code> は <code>string</code>。5分類との一致を接続前に検査し、TrimやNFKC変換をせず <code>raw.CategoryId</code> を <code>@category</code>（<code>SqlDbType.VarChar</code>、Size=24）へ渡す。DB接続の管理者確認、ReadCommittedトランザクション開始、共通ロック取得後、<code>WHERE category_id=@category</code> で <code>code_length,allow_add</code> を照会する。主キーにより該当は0または1行で、ページング・ORDER BYはない。行がなければ <code>ArgumentException</code>（E-MST-001）を送出する。分類名称・備考・分類版・有効状態はこの照会の取得対象ではなく、分類停止をこの保守の拒否条件にはしていない。根拠：<code>Core/MasterMaintenanceService.cs:10-10</code>、<code>Core/MasterMaintenanceService.cs:17-28</code>、<code>Core/MasterMaintenanceService.cs:79-96</code>。</td>
+</tr>
+<tr>
+<td>コード桁数の使われ方</td>
+<td><code>code_length</code> を <code>GetInt16</code> で <code>short width</code> に読み、<code>StudentNormalizer.Code</code> へ渡す。原入力をwidthスカラー以内で検査してから制御文字検査とTrimを行い、Trim後も同じ上限で検査する。NULLは空文字へ補完され、必須の空値はE-STU-001、長さ・制御文字違反はE-STU-002となる。次にNFKC変換し、UTF-16のLengthがwidthと一致するASCII数字列かを検査し、不一致はE-STU-009となる。これらは <code>InputValidationException</code>、不正なサロゲートは <code>ArgumentException</code> である。ゼロ埋めや数値化は行わず、先頭ゼロを含む文字列がコード表のキーになる。コード表の保存容量および <code>@value</code> のSize=10とは別の制約である。根拠：<code>Core/MasterMaintenanceService.cs:91-99</code>、<code>Core/StudentNormalizer.cs:37-57</code>、<code>Core/StudentNormalizer.cs:113-117</code>、<code>Core/StudentNormalizer.cs:168-168</code>、<code>database/001_schema.sql:114-114</code>。</td>
+</tr>
+<tr>
+<td>通常追加可否の判断順序</td>
+<td>分類照会とコード値正規化の後、分類ID・コード値でコード表を読む。対象なしで比較版が指定されていればNotFound、対象ありで版が比較版と一致しなければConflictを返す。新規要求の比較版NULLに対して既存行がある場合もConflictとなる。その後、対象なしで <code>allow_add=false</code> の場合にだけ <code>ArgumentException</code>（E-MST-003）で通常追加を拒否する。比較版の一致した既存コード更新は、通常追加不可だけを理由に拒否しない。判定に使う <code>bool allow</code> は <code>GetBoolean</code> で取得する。根拠：<code>Core/MasterMaintenanceService.cs:91-104</code>。</td>
+</tr>
+<tr>
+<td>分類照会後の保守結果・確定境界</td>
+<td>分類の検査を通過しても、保護コードの停止・期間短縮や版上限の検査が続く。無変更はROLLBACKしてNoChangeを返す。書込み先はコード表で、新規は版1、更新は分類ID・コード値・比較版をWHEREに持ち版を加算する。更新件数が1でなければ <code>DBConcurrencyException</code>。同じトランザクションで操作履歴を追加し、COMMIT完了後にSavedを返す。当表の更新情報・版は変更しない。保守のtry内例外はrollbackを試みて再throwし、rollback helperの成否からUnknown等の結果を作る処理はない。接続・BeginTransaction・接続前の前処理はそのcatchの外である。根拠：<code>Core/MasterMaintenanceService.cs:79-121</code>、<code>Core/MasterMaintenanceService.cs:132-135</code>、<code>Core/SqlServerStudentService.cs:329-329</code>。</td>
+</tr>
+<tr>
+<td>学生画面への候補取得</td>
+<td><code>LookupAsync</code> は利用者確認と接続後、SNAPSHOTトランザクションでコード表と当表を分類IDによりINNER JOINする。コード候補のSQLにはWHERE、TOP、ページングがなく、停止・期間外のコードも取得し、分類ID・表示順・コード値の昇順で並べる。返却する <code>CodeEntry.IsActive</code> は両表の有効状態が1の場合だけ真となり、有効期間はこの算出には含めない。読取り後のCOMMITを経て <code>LookupSet</code> を返す。各非同期DB呼出しには取消トークンを渡す。根拠：<code>Core/SqlServerStudentService.cs:196-216</code>。</td>
+</tr>
+<tr>
+<td>分類名称と候補の表示名称</td>
+<td>候補の <code>CodeEntry</code> は分類ID、コード値、コード名称、表示順、合成有効状態、開始日、NULL可能な終了日、保護状態を持つ。分類名称、分類備考、桁数、通常追加可否、分類の作成更新情報・版は含まない。選択肢の表示名称は <code>m_code.code_name</code> であり、<code>category_name</code> ではない。表示元のコード名称はNOT NULLの <code>nvarchar(24)</code>、DDLおよび宣言された保存サービスの上限は12スカラー、保存パラメータは <code>NVarChar(24)</code> である。名称の上限が同じでも、コード名称の保存契約は分類名称の保存契約ではない。根拠：<code>Core/Contracts.cs:61-65</code>、<code>Core/SqlServerStudentService.cs:203-212</code>、<code>database/001_schema.sql:115-128</code>、<code>Core/MasterMaintenanceService.cs:82-83</code>、<code>Core/MasterMaintenanceService.cs:113-115</code>。</td>
+</tr>
+<tr>
+<td>分類の選択・保存先</td>
+<td>学生画面では <code>GENDER</code> がREG-006／<code>Input.GenderCode</code>（<code>string</code>）から学生表の <code>gender_code</code>、<code>PREFECTURE</code> がREG-008／<code>Input.PrefectureCode</code>（<code>string</code>）から <code>prefecture_code</code>、<code>ENROLLMENT_STATUS</code> がREG-014／<code>Input.EnrollmentStatusCode</code>（<code>string</code>）から <code>enrollment_status_code</code>、<code>RELATIONSHIP</code> がREG-021／<code>Input.RelationshipCode</code>（<code>string?</code>）からNULL可能な <code>relationship_code</code> へ対応する。前3列はDBでもNOT NULLである。すべてselectで、選択コードを <code>StudentDraft</code> に移送する。学生新規INSERTは前3分類IDを固定設定し、続柄分類は正規化した続柄コードがNULLならNULL、それ以外なら <code>RELATIONSHIP</code> を導出する。<code>GRADE</code> はREG-017／<code>Input.GradeCode</code>（<code>string?</code>）から <code>SaveRequest.GradeCode</code> へ渡す補助・整合確認値で、学生表への学年コード保存項目ではない。分類表を編集する入力項目はない。根拠：<code>Views/Students/Edit.cshtml:8-13</code>、<code>Web/Inputs/StudentSaveInput.cs:13-42</code>、<code>database/001_schema.sql:15-31</code>、<code>Core/StudentNormalizer.cs:147-147</code>、<code>Core/SqlServerStudentService.cs:294-301</code>、<code>Core/SqlServerStudentService.cs:371-371</code>。</td>
+</tr>
+<tr>
+<td>初期選択・停止値の保持</td>
+<td>新規学生の性別0・在籍区分01は入力モデルと <code>StudentDraft</code> の初期値であり、分類表のDEFAULTではない。性別・都道府県・在籍区分・続柄の選択肢は、合成有効状態が真で当日が開始日以降かつ終了日以前（終了日NULLは終端なし）の場合、または読込済み学生の保存コードと同じ場合に選択可能となる。学年selectにはこの有効状態・期間によるdisabled条件がない。根拠：<code>Core/Contracts.cs:15-27</code>、<code>Web/Inputs/StudentSaveInput.cs:13-29</code>、<code>Web/Inputs/StudentSaveInput.cs:44-54</code>、<code>Views/Students/Edit.cshtml:8-13</code>。</td>
+</tr>
+<tr>
+<td>学生保存時の再確認</td>
+<td>学生保存の桁数は当表から動的取得せず、性別1桁、都道府県・在籍区分・続柄2桁、学年補助値2桁を処理で指定する。学生への保存パラメータも性別 <code>VarChar(1)</code>、他の保存コード <code>VarChar(2)</code> である。入力正規化、ReadCommittedトランザクションと共通ロック、既存学生・比較版等の確認後、性別・都道府県・在籍区分・続柄をコード表と当表のJOINで再照会する。述語は <code>c.category_id=@category AND c.code_value=@value</code>、パラメータは <code>VarChar(24)</code> と <code>VarChar(10)</code>。正規化値がstringでない項目は照会しない。行なしはE-STU-009。新規学生または変更したコードだけ、両表の有効状態とコードの有効期間を検査し、不適合はE-STU-011。既存の同じコードも存在確認は行うが、停止・期間外だけを理由に拒否しない。判定日は保存冒頭のUTC時刻を+09:00の日付へ変換した値で、DB待機後に取り直さない。根拠：<code>Core/StudentNormalizer.cs:128-147</code>、<code>Core/SqlServerStudentService.cs:33-37</code>、<code>Core/SqlServerStudentService.cs:44-45</code>、<code>Core/SqlServerStudentService.cs:227-260</code>、<code>Core/SqlServerStudentService.cs:347-355</code>。</td>
+</tr>
+<tr>
+<td>利用不可時の結果</td>
+<td>学生保存のコード検査は項目エラーを集め、<code>InputValidationException</code> として送出する。専用catchはrollback後にValidationFailedを返し、この経路では学生書込みへ進まない。Web保存はその結果を通常HTTP 422とし、候補を再取得して再表示する。再取得等で例外が起きれば、同じ422画面の返却は確定せず、応答未開始の場合は接続されたmiddlewareが例外を扱う。DTOの非nullable注釈やselectのrequiredだけでは受信NULLの排除を保証しない。根拠：<code>Core/SqlServerStudentService.cs:260-260</code>、<code>Core/SqlServerStudentService.cs:316-323</code>、<code>Core/SqlServerStudentService.cs:383-383</code>、<code>Web/Controllers/StudentsController.cs:26-33</code>、<code>Infrastructure/WebPresentation.cs:23-23</code>、<code>Infrastructure/WebHostSetup.cs:16-16</code>、<code>Infrastructure/WebHostSetup.cs:22-24</code>。</td>
+</tr>
+<tr>
+<td>学年分類の利用</td>
+<td>学年コードの保存元はクラス表の <code>grade_code</code>（<code>varchar(2)</code>、NOT NULL）であり、分類列は <code>GRADE</code> に固定される。宣言された <code>SaveClassAsync</code> は <code>GRADE</code> と <code>@grade</code>（<code>VarChar(2)</code>）でコード表と当表をJOINし、行なしをE-STU-009、新規クラスまたは学年変更時の停止・期間外をE-STU-011の <code>ArgumentException</code> で拒否する。既存の同じ学年では有効状態・期間検査を省略する。学生保存側の学年補助値は指定クラスの学年との一致確認に使い、前述の4分類と同じ有効状態再検査の対象にはしない。根拠：<code>database/001_schema.sql:65-66</code>、<code>database/001_schema.sql:190-197</code>、<code>Core/MasterMaintenanceService.cs:34-40</code>、<code>Core/MasterMaintenanceService.cs:59-64</code>、<code>Core/SqlServerStudentService.cs:347-355</code>、<code>Core/SqlServerStudentService.cs:371-371</code>。</td>
+</tr>
+<tr>
+<td>分類更新と保守入口の境界</td>
+<td><code>MasterMaintenanceService</code> の保存処理はクラス保存とコード保存であり、分類表を保存するメソッドはない。共通Save helperの呼出先はクラス表、コード保存の書込先はコード表と操作履歴である。Web登録は <code>IStudentService → SqlServerStudentService</code> で、確認できる学生コントローラーには分類・コード保守のアクションがない。コード・クラス保守は宣言されたサービス契約として位置付ける。分類名称・備考・有効状態等の列が存在することから、通常画面による分類編集機能や分類編集履歴を補わない。根拠：<code>Core/MasterMaintenanceService.cs:30-121</code>、<code>Core/MasterMaintenanceService.cs:124-135</code>、<code>Core/Contracts.cs:71-79</code>、<code>Infrastructure/WebHostSetup.cs:12-19</code>、<code>Web/Controllers/StudentsController.cs:5-42</code>、<code>Program.cs:2-6</code>。</td>
+</tr>
+<tr>
+<td>Web用DB権限</td>
+<td>権限SQLは <code>student_viewer</code> に当表のSELECTをGRANTし、<code>student_staff</code> をviewerのメンバー、<code>student_admin</code> をstaffのメンバーにして読取り権限を継承させる。一方、当表のINSERT・UPDATE・DELETEはadminにも明示的にDENYする。adminへのクラス表・コード表のINSERT・UPDATE許可は当表の変更許可ではない。根拠：<code>database/003_web_permissions.sql:8-22</code>。</td>
+</tr>
+<tr>
+<td>要確認の運用事項</td>
+<td>seed以外で分類設定を変更する入口・運用、および変更時の分類版比較・加算、更新情報設定、操作履歴記録の規約は要確認。確認できる保存契約に分類更新がないため、項目詳細の更新情報・版を通常Web保守で更新する項目とは位置付けない。根拠：<code>database/002_seed.sql:85-92</code>、<code>Core/MasterMaintenanceService.cs:30-135</code>、<code>database/003_web_permissions.sql:22-22</code>。</td>
+</tr>
+<tr>
+<td>関連文書：テーブル・関連定義</td>
+<td>以下は計画上の参照先で、生成状態は未確認。<br/><code>CSHARP_ASPNET-BAS-STU-03</code>／table-index／<code>基本設計書/03_テーブル仕様書.md</code>：全体のテーブル索引とFK・データ関連。<br/><code>CSHARP_ASPNET-BAS-STU-03-M_STUDENT</code>／table-definition／<code>基本設計書/テーブル/01_m_student.md</code>：用途別コードを保存する学生表。<br/><code>CSHARP_ASPNET-BAS-STU-03-M_CLASS</code>／table-definition／<code>基本設計書/テーブル/02_m_class.md</code>：学年コードを保存するクラス表。<br/><code>CSHARP_ASPNET-BAS-STU-03-M_CODE</code>／table-definition／<code>基本設計書/テーブル/04_m_code.md</code>：当表を参照し、コード値・表示名称・期間を保持する表。<br/><code>CSHARP_ASPNET-BAS-STU-03-T_OPERATION_LOG</code>／table-definition／<code>基本設計書/テーブル/05_t_operation_log.md</code>：学生・宣言されたマスター保守の履歴保存先。当表の更新履歴を記録する接続済み処理は確認できない。</td>
+</tr>
+<tr>
+<td>関連文書：利用機能</td>
+<td>以下は計画上の参照先で、生成状態は未確認。<br/><code>CSHARP_ASPNET-BAS-STU-04</code>／code-design／<code>基本設計書/04_コード設計書.md</code>：分類・コードの初期値、候補、保守契約。<br/><code>CSHARP_ASPNET-BAS-STU-02</code>／basic-design／<code>基本設計書/02_学生登録画面.md</code>：分類別候補を利用する画面の業務動作。<br/><code>CSHARP_ASPNET-DET-CSharp_ASPNET-SCR-STU-002</code>／detailed-specification／<code>詳細仕様書/CSharp_ASPNET/02_学生登録画面.md</code>：入力モデル、正規化、選択コードの保存時検査と応答。</td>
+</tr>
+</tbody>
+</table>
+<h2>項目詳細</h2>
+<table>
+<thead>
+<tr>
+<th>No</th>
+<th>論理名</th>
+<th>物理名</th>
+<th>PK</th>
+<th>NOT NULL</th>
+<th>タイプ</th>
+<th>長さ</th>
+<th>初期値</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>分類ID</td>
+<td>category_id</td>
+<td>〇</td>
+<td>〇</td>
+<td><code>varchar(24)</code></td>
+<td>24バイト</td>
+<td></td>
+<td>コードの用途を識別する保存キー。<code>Latin1_General_100_BIN2</code>。主キー <code>pk_m_code_category</code> およびコード表からのFK参照先。コード保守要求の <code>string CategoryId</code>、分類照会の <code>@category</code>（<code>VarChar</code>、Size=24）に対応する。DDLのDEFAULT・採番はなく、seedは5分類のIDを明示する。根拠：<code>database/001_schema.sql:91-102</code>、<code>database/001_schema.sql:189-189</code>、<code>Core/MasterMaintenanceService.cs:10-10</code>、<code>Core/MasterMaintenanceService.cs:81-94</code>。</td>
+</tr>
+<tr>
+<td>2</td>
+<td>分類名称</td>
+<td>category_name</td>
+<td></td>
+<td>〇</td>
+<td><code>nvarchar(24)</code></td>
+<td>24 UTF-16コード単位</td>
+<td></td>
+<td>分類の業務上の名称。<code>Latin1_General_100_CS_AS_SC</code>。<code>ck_m_code_category_category_name_scalar</code> による上限は12 Unicodeスカラーで、保存容量24とは区別する。空文字を禁止するCHECKはない。seedの値を保持し、再投入時の差分比較に使う。候補DTOには含まれず、selectの表示名称ではない。分類名称を保存するサービス引数・SQLパラメータは確認できない。根拠：<code>database/001_schema.sql:92-103</code>、<code>database/002_seed.sql:8-13</code>、<code>database/002_seed.sql:85-89</code>、<code>Core/Contracts.cs:61-65</code>。</td>
+</tr>
+<tr>
+<td>3</td>
+<td>コード桁数</td>
+<td>code_length</td>
+<td></td>
+<td>〇</td>
+<td><code>smallint</code></td>
+<td></td>
+<td></td>
+<td>分類内のコード値に要求する桁数。<code>ck_category_length</code> は1〜10を許す。コード保守は <code>GetInt16</code> で <code>short width</code> に読み、原入力・Trim後のスカラー上限とNFKC後の数字列の長さ検査へ使用する。学生保存の固定桁数とは別の契約である。DEFAULTはなく、seedの分類別値を明示設定する。根拠：<code>database/001_schema.sql:93-93</code>、<code>database/001_schema.sql:202-202</code>、<code>Core/MasterMaintenanceService.cs:91-96</code>、<code>Core/StudentNormalizer.cs:113-117</code>、<code>database/002_seed.sql:8-13</code>。</td>
+</tr>
+<tr>
+<td>4</td>
+<td>通常追加可否</td>
+<td>allow_add</td>
+<td></td>
+<td>〇</td>
+<td><code>bit</code></td>
+<td></td>
+<td></td>
+<td>0は分類内の新しいコードの通常追加を拒否し、1は追加可とする。<code>GetBoolean</code> で <code>bool allow</code> に読み、既存行・比較版の判定後、対象コードが存在しない場合に検査する。既存コード更新や分類自体の追加を許否する列ではない。DEFAULTはなく、seedで続柄・学年だけ1を設定する。根拠：<code>database/001_schema.sql:94-94</code>、<code>database/002_seed.sql:8-13</code>、<code>Core/MasterMaintenanceService.cs:91-104</code>。</td>
+</tr>
+<tr>
+<td>5</td>
+<td>有効状態</td>
+<td>is_active</td>
+<td></td>
+<td>〇</td>
+<td><code>bit</code></td>
+<td></td>
+<td>1</td>
+<td>分類としての利用可否。DDLの <code>df_m_code_category_is_active</code> はDEFAULT 1。seedも1を明示設定する。候補の合成有効状態、学生の新規・変更コードの利用可否、宣言されたクラス保守の新規・変更学年の検査に使う。既存の同じコード・学年に対する保持条件はヘッダーの各検査契約による。コード保守の桁数・追加可否照会では取得しない。根拠：<code>database/001_schema.sql:95-95</code>、<code>database/002_seed.sql:88-89</code>、<code>Core/SqlServerStudentService.cs:203-205</code>、<code>Core/SqlServerStudentService.cs:347-355</code>、<code>Core/MasterMaintenanceService.cs:59-64</code>、<code>Core/MasterMaintenanceService.cs:92-94</code>。</td>
+</tr>
+<tr>
+<td>6</td>
+<td>備考</td>
+<td>remarks</td>
+<td></td>
+<td></td>
+<td><code>nvarchar(240)</code></td>
+<td>240 UTF-16コード単位</td>
+<td></td>
+<td>分類に付随する補足。NULL可、<code>Latin1_General_100_CS_AS_SC</code>。<code>ck_m_code_category_remarks_scalar</code> の上限は120 Unicodeスカラー。DEFAULTはなく、seedはNULLを明示設定する。初期値差分検査の対象ではなく、候補DTO・コード保守の分類照会にも含めない。当表の備考を入力・更新する接続済み処理は確認できない。根拠：<code>database/001_schema.sql:96-104</code>、<code>database/002_seed.sql:85-89</code>、<code>Core/MasterMaintenanceService.cs:92-94</code>、<code>Core/Contracts.cs:61-65</code>。</td>
+</tr>
+<tr>
+<td>7</td>
+<td>作成日時</td>
+<td>created_at</td>
+<td></td>
+<td>〇</td>
+<td><code>datetimeoffset(7)</code></td>
+<td></td>
+<td></td>
+<td>分類行の作成日時。小数秒精度7。<code>ck_m_code_category_created_at_utc</code> はUTCオフセット0を要求する。DEFAULTはなく、seedの不足行追加時に <code>@now</code> を明示設定する。候補DTOには含めない。根拠：<code>database/001_schema.sql:97-105</code>、<code>database/002_seed.sql:7-7</code>、<code>database/002_seed.sql:88-89</code>、<code>Core/Contracts.cs:61-65</code>。</td>
+</tr>
+<tr>
+<td>8</td>
+<td>作成者</td>
+<td>created_by</td>
+<td></td>
+<td>〇</td>
+<td><code>nvarchar(128)</code></td>
+<td>128 UTF-16コード単位</td>
+<td></td>
+<td>分類行の作成主体。<code>Latin1_General_100_CS_AS_SC</code>。<code>ck_m_code_category_created_by_scalar</code> の上限は64 Unicodeスカラー。DEFAULTはなく、seedはDB接続の <code>ORIGINAL_LOGIN()</code> に由来する <code>@actor</code> を設定する。学生Webの利用者情報を取得して設定する処理ではない。根拠：<code>database/001_schema.sql:98-106</code>、<code>database/002_seed.sql:7-7</code>、<code>database/002_seed.sql:88-89</code>。</td>
+</tr>
+<tr>
+<td>9</td>
+<td>更新日時</td>
+<td>updated_at</td>
+<td></td>
+<td>〇</td>
+<td><code>datetimeoffset(7)</code></td>
+<td></td>
+<td></td>
+<td>分類行の更新情報として保持する日時。小数秒精度7。<code>ck_m_code_category_updated_at_utc</code> はUTCオフセット0を要求する。DEFAULTはなく、seedの新規追加時は作成日時と同じ <code>@now</code> を設定する。seedの再投入やコード保守は当表の更新日時を変更しない。根拠：<code>database/001_schema.sql:99-107</code>、<code>database/002_seed.sql:88-92</code>、<code>Core/MasterMaintenanceService.cs:113-120</code>。</td>
+</tr>
+<tr>
+<td>10</td>
+<td>更新者</td>
+<td>updated_by</td>
+<td></td>
+<td>〇</td>
+<td><code>nvarchar(128)</code></td>
+<td>128 UTF-16コード単位</td>
+<td></td>
+<td>分類行の更新主体。<code>Latin1_General_100_CS_AS_SC</code>。<code>ck_m_code_category_updated_by_scalar</code> の上限は64 Unicodeスカラー。DEFAULTはなく、seedの新規追加時は作成者と同じ <code>@actor</code> を設定する。既存分類行の更新者を書き換える通常保守契約は確認できない。根拠：<code>database/001_schema.sql:100-108</code>、<code>database/002_seed.sql:88-92</code>、<code>Core/MasterMaintenanceService.cs:30-121</code>。</td>
+</tr>
+<tr>
+<td>11</td>
+<td>版</td>
+<td>row_version</td>
+<td></td>
+<td>〇</td>
+<td><code>bigint</code></td>
+<td></td>
+<td>1</td>
+<td>分類行の版を表す正の整数。<code>df_m_code_category_row_version</code> はDEFAULT 1、<code>ck_m_code_category_row_version</code> は0以下を拒否する。SQL Serverの <code>rowversion</code> 型による自動採番ではない。seedは1を明示設定する。コード保守が比較・加算する版はコード表の版であり、当表の版比較・加算処理は確認できない。根拠：<code>database/001_schema.sql:101-109</code>、<code>database/002_seed.sql:88-89</code>、<code>Core/MasterMaintenanceService.cs:92-103</code>、<code>Core/MasterMaintenanceService.cs:113-120</code>。</td>
+</tr>
+</tbody>
+</table>
+</body></html>

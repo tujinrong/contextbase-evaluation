@@ -1,0 +1,15 @@
+flowchart TD
+    A[配備1から：serverGuard<br/>DB・配備印・ハッシュ照合] --> B{Install又はBindPrincipalで<br/>Principal指定ありか}
+    A -->|不一致| X[停止]
+    B -->|はい| C[既存Windows主体・特権分離<br/>SID・種類・直接ロール検査]
+    C -->|不整合| X
+    C --> D[USER・ロール所属追加・commit]
+    D -->|SQL失敗| S[停止・DBを残す]
+    B -->|いいえ| E[004配備検査]
+    D --> E
+    E -->|検査不一致・SQL失敗| S
+    E --> F{初期空データ検査が必要か}
+    F -->|いいえ| Z[配備情報出力]
+    F -->|はい| G[学生・クラス・履歴・補助2表が空<br/>分類5件・コード70件確認]
+    G -->|不一致・SQL失敗| S
+    G -->|一致| Z

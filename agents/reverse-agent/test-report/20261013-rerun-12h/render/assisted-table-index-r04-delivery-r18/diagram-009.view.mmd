@@ -1,0 +1,10 @@
+flowchart TD
+    A[主体・入口時刻取得] --> B{Viewerか}
+    A -->|例外| X[上位へ伝播]
+    B -->|はい| F[Forbiddenを返す]
+    B -->|いいえ| C[入力正規化・理由<br/>IDと版・年度・学年検査]
+    C -->|入力検証・<br/>ArgumentException| V[ValidationFailedを返す]
+    C -->|その他例外| X
+    C --> D[接続・ReadCommitted開始]
+    D -->|開始失敗| X
+    D --> E[保存2-Bへ]

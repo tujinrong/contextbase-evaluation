@@ -1,0 +1,11 @@
+flowchart TD
+  A[POST clear／認証・CSRF・バインド] --> B[FormGuard・参照認証]
+  B -->|拒否| X[該当する400・401／消去前]
+  B -->|受入| C[Gate後状態再確認・期待版検査]
+  C -->|拒否| Y[403・409等／消去前]
+  C -->|受入| D[Applied・LastResultをNULL／版加算・期限延長]
+  D --> E[ModelState消去・状態を再取得]
+  E -->|WebFault| Z[そのStatus／状態消去済み]
+  E -->|受入| F[初期条件の候補取得・表示構成]
+  F -->|成功| G[初期条件・未検索HTML 200]
+  F -->|未処理例外| H[共通失敗応答／状態消去済み]

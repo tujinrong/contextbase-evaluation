@@ -1,0 +1,13 @@
+flowchart TD
+    A[S1またはサービス結果] --> M{Savedか}
+    M -->|はい| C[通知保持・303・EV-REG-007 R2へ]
+    M -->|いいえ| R{SaveResultあり}
+    R -->|なし| W[ModelState不正422または局所WebFaultの状態を保持]
+    R -->|あり| V[結果別HTTP・確認キーを返却値へ差替え]
+    V --> K[確認キーのModelState旧値を除去]
+    W --> L[送信Input・読込時Detail・同じSnapshotと復帰版]
+    K --> L
+    L --> LOOK[候補を再取得]
+    LOOK --> E[結果別Edit再表示]
+    C -. 確定後処理失敗 .-> X[外側例外処理]
+    LOOK -. 取得・描画失敗 .-> X

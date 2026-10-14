@@ -1,0 +1,22 @@
+flowchart TD
+    A[D1から対象・版・理由] --> DB[接続・ReadCommitted Tx開始]
+    DB -. try外の失敗 .-> X[外側例外処理]
+    DB --> G[書込ゲート]
+    G --> E{最新非削除対象あり}
+    E -->|なし| N[D3へ・NotFound 404]
+    E -->|あり| P{期待版一致}
+    P -->|いいえ| C[D3へ・Conflict 409]
+    P -->|はい| W[writeStarted=true・削除7列UPDATE]
+    W --> ROW{件数1}
+    ROW -->|いいえ| CC[DBConcurrencyException catch・rollback試行]
+    CC --> C
+    ROW -->|はい| L[同じTxでDELETE履歴]
+    L --> CM[commitAttempted=true・commit]
+    CM -->|成功| OK[D3へ・Saved・IDと要求版+1]
+    G -. 後続catch対象例外 .-> RB[rollback試行]
+    W -. 後続catch対象例外 .-> RB
+    L -. 後続catch対象例外 .-> RB
+    CM -. 後続catch対象例外 .-> RB
+    RB --> U{書込開始済み、かつ<br/>commit試行済み、またはrollback失敗}
+    U -->|はい| UN[D3へ・Unknown 503]
+    U -->|いいえ| SE[D3へ・SystemError 503]

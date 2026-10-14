@@ -78,6 +78,17 @@ class AiCliTests(unittest.TestCase):
         with patch('contextbase.ai.workflow.plan',side_effect=RuntimeError('RuntimeErrorTimeLimit')):
             self.assertEqual(1,self.execute(self.args('plan')))
 
+    def test_reported_execution_failures_have_nonzero_cli_exit(self):
+        for status in ('FAILED', 'NOT_RUN_TIME_LIMIT'):
+            with self.subTest(status=status), patch('contextbase.ai.iteration.run', return_value={'status': status}):
+                self.assertEqual(1, self.execute(self.args('iterate') + ['--plan', str(self.plan),
+                    '--document-id', 'DOC-UNIT', '--output', str(self.output)]))
+
+    def test_revision_required_is_a_saved_draft_status_not_an_execution_failure(self):
+        with patch('contextbase.ai.iteration.run', return_value={'status': 'REQUIRES_AI_REVISION'}):
+            self.assertEqual(0, self.execute(self.args('iterate') + ['--plan', str(self.plan),
+                '--document-id', 'DOC-UNIT', '--output', str(self.output)]))
+
     def test_snapshot_remains_explicitly_mode_aware(self):
         source=self.root/'source';reference=self.root/'design'
         with patch('contextbase.ai.capsule.create',return_value={'files':[]}) as stage:

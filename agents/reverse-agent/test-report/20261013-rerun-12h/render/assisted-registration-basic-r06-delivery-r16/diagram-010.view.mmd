@@ -1,0 +1,14 @@
+%%{init: {"flowchart":{"htmlLabels":true,"useMaxWidth":false,"nodeSpacing":28,"rankSpacing":30},"themeCSS":".nodeLabel,.edgeLabel{white-space:nowrap;word-break:keep-all;overflow-wrap:normal;}"}}%%
+flowchart TD
+    A["図8 S1から<br/>SaveRequest"] --> U["受付UUID・利用者<br/>開始時now・業務日"]
+    U -. 捕捉外例外 .-> X["外側例外処理"]
+    U --> P{"Viewer"}
+    P -->|はい| F["S6へ<br/>Forbidden 403<br/>ID版NULL"]
+    P -->|いいえ| N{"事前検査<br/>手順3"}
+    N -->|入力検証・<br/>ArgumentException| V["S6へ<br/>ValidationFailed 422<br/>ID版NULL"]
+    N -. その他例外 .-> X
+    N -->|正常| DB["接続・Tx開始<br/>ReadCommitted"]
+    DB -. try外例外 .-> X
+    DB --> G["保存try内<br/>書込ゲート取得"]
+    G -->|取得| NEXT["S3へ<br/>正規化値・理由・Tx"]
+    G -. 例外 .-> SC["SCへ"]

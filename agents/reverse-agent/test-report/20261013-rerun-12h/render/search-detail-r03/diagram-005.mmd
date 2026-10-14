@@ -1,0 +1,14 @@
+flowchart TD
+ A["S-表示：①または②から受領<br/>枝別data・Status・ModelState・受信表示指定"] --> L["try外のSearchModel<br/>入力DTO・候補読取・Json化"]
+ L --> M["受信pageSize・sortKey・sortDirectionを<br/>モデルへ設定：失敗枝でも実施"]
+ M --> R["ViewResult返却後にRazor描画<br/>dataのpage・数値以外の件数は0"]
+ R --> Z{"ページ数計算時のModel.PageSizeは0か"}
+ Z -->|はい| D["整数のDivideByZeroException<br/>先行422を最終応答としない"]
+ D --> H{"応答開始前か"}
+ H -->|はい| F["外側middleware：一般例外として503設定<br/>HTMLエラー応答を行う"]
+ H -->|いいえ| X["外側catch対象外<br/>同middlewareによる503変換なし"]
+ Z -->|いいえ| V["成功dataまたは未検索dataの表示を継続<br/>枝別Statusを保持"]
+ L -->|例外・取消| O["共通入口②：元の例外"]
+ M -->|例外| O
+ R -->|他の描画例外| O
+ V -->|後続描画例外| O

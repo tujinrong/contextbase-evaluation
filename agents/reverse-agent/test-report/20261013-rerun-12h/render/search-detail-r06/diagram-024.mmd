@@ -1,0 +1,12 @@
+flowchart TD
+ A["D-catch<br/>元のtry内例外"] --> I{"InputValidationExceptionか"}
+ I -->|はい| V["FieldError保持<br/>ValidationFailed"]
+ I -->|いいえ| G{"続くArgumentExceptionか"}
+ G -->|はい| W["ArgumentError変換<br/>ValidationFailed"]
+ G -->|いいえ| O["元の例外を送出"]
+ B["D-結果<br/>通常・超過"] --> R["SearchResultを返す"]
+ V --> R
+ W --> R
+ R --> K{"SavedまたはNoChangeか"}
+ K -->|はい| P["EnsureSearch通過<br/>元の結果保持"]
+ K -->|いいえ| E["Outcome別WebFault<br/>入力失敗は422"]

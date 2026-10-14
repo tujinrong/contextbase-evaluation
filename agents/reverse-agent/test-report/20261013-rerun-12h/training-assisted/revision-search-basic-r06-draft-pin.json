@@ -1,0 +1,105 @@
+{
+  "documentId": "CSHARP_ASPNET-BAS-STU-01",
+  "canonicalMarkdown": "D:\\開発\\contextbase-evaluation\\test-project1\\spec-analysis\\CSharp_ASPNET\\20261013-rerun-12h\\training-assisted\\drafts\\revision-search-basic-r06\\基本設計書\\01_学生検索画面.md",
+  "sha256": "1c4c133b16d838a441eaae7f6f3734cd1276d679c4a250ca5e6c5d9bfce4157b",
+  "draftResult": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-rerun-12h\\training-assisted\\jobs\\revision-search-basic-r06\\draft-result.json",
+  "outputRoot": "D:\\開発\\contextbase-evaluation\\test-project1\\spec-analysis\\CSharp_ASPNET\\20261013-rerun-12h\\training-assisted\\drafts\\revision-search-basic-r06",
+  "structureStatus": "STRUCTURE_VALID",
+  "structureFindings": [],
+  "snapshot": {
+    "manifestSha256": "e76a6c40e8927011fff9145d5f5ab2fa94ad89acefc9a03bbad0cbf09b85a0e7",
+    "capsuleSchema": "reverse-ai-source-capsule/2",
+    "mode": "training-assisted",
+    "modeDerivation": "explicit-manifest-mode",
+    "scope": "sealed-manifest-and-raw-material"
+  },
+  "frozenImports": {
+    "contextbase.ai.workflow": {
+      "path": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-rerun-12h\\training-assisted\\runtime-code\\assisted-06\\src\\contextbase\\ai\\workflow.py",
+      "sha256": "226f2be26ea66b96d1e67aa59b87c6603fe57bcddafb055dcfeeb5b8fecf2738"
+    },
+    "contextbase.ai.validation": {
+      "path": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-rerun-12h\\training-assisted\\runtime-code\\assisted-06\\src\\contextbase\\ai\\validation.py",
+      "sha256": "1f5ba98fd7b3e0f9fbd33117b396a69b57ec669b38bd7a6f363a68f0cd08adce"
+    },
+    "contextbase.ai.prompts": {
+      "path": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-rerun-12h\\training-assisted\\runtime-code\\assisted-06\\src\\contextbase\\ai\\prompts.py",
+      "sha256": "388f68646c620a0420f163fde05241ac3a30f5511687ec0a2b76961805ae159b"
+    }
+  },
+  "elapsedProviderSeconds": 1493.164,
+  "analysisExecutedInThisJob": false,
+  "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-rerun-12h\\training-assisted\\jobs\\revision-search-basic-r02",
+  "factCorrections": [
+    "SRC-D03・D09の説明を補完した。参考設計はメニューからの起動とSRC-016のメニュー復帰を定義するが、現行Programのルート/は検索へのリダイレクトで、専用メニューDOM・routeはない。設計イベントとして残し、稼働機能へ拡張しなかった。根拠：reference-designs/基本設計書/01_学生検索画面.md:20-20,121-121,337-360、sources/Program.cs:6-7、sources/Views/Students/Search.cshtml:3-8。",
+    "SRC-D05の件数・表示範囲を細分化した。RangeFrom・RangeToは各非負整数5桁、検索成功時に必要、0件は0～0、未検索・上限超過は未設定という設計属性である。現行Presentに属性がないため、算出済み値や未観測の算式を追加しなかった。根拠：reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:135-137、sources/Infrastructure/WebStudentCoordinator.cs:21-21。",
+    "SRC-D03・D05・D06の初期案内と障害時責務を補完した。設計の初期案内、原入力保持、旧一覧を最新として残さないこと、受付番号案内を具体化した。/api用correlationIdを/studentsの表示保証へ流用しなかった。根拠：reference-designs/基本設計書/01_学生検索画面.md:62-69、sources/Infrastructure/WebHostSetup.cs:23-23、sources/Infrastructure/WebPresentation.cs:22-22。",
+    "SRC-D07・O27の候補表示差を明示した。設計のクラス表示は年度・学年・クラスコード・クラス名、接続された検索ビューは年度・コード・名称である。未接続WebPresentation.Lookupsの出力を現行選択肢へ適用しなかった。根拠：reference-designs/基本設計書/01_学生検索画面.md:146-146、sources/Views/Students/Search.cshtml:5-5。",
+    "SRC-D11の制御項目を補完した。IsBusyは初期falseで処理開始・終了のUI再入防止、RequestSequenceは初期0の非負要求連番で旧応答破棄・桁あふれ時採番停止という設計契約である。Gate・Revision・aria-busyが全契約を実装するとは記載しなかった。根拠：reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md:146-147、sources/Infrastructure/SearchContextStore.cs:9-14、sources/wwwroot/js/site.js:4-8。",
+    "SRC-D04・D12のraw属性と契約識別子を補完した。年度4桁、PageSize3桁、SortKey13スカラー、方向4スカラーの設計属性を、現行バインド後の範囲・許可値検査と分離した。N・CHK・DATE・EV番号とI-SRC-001、W-SRC-001、W-SRC-002の対応も保持した。根拠：reference-designs/基本設計書/01_学生検索画面.md:106-138,295-329、sources/Core/SqlServerStudentService.cs:107-112、sources/Infrastructure/SearchContextStore.cs:13-13。",
+    "SRC-O35・O55の保持方式にコメントの意図を追加した。Single-nodeはソースコメントの運用意図、Singleton辞書は観測実装として分け、実配備構成やt_runtime_stateへの永続保存・暗号化を推定しなかった。根拠：sources/Infrastructure/SearchContextStore.cs:6-15、sources/Infrastructure/WebHostSetup.cs:13-13、sources/database/001_schema.sql:171-184。",
+    "SRC-O32の30秒設定をCommand helperで作る業務SQLに限定した。Open内のsnapshot診断は直接CreateCommandであり、同じ明示タイムアウト設定を確認できない。根拠：sources/Core/SqlServerStudentService.cs:53-66。",
+    "SRC-O34・O41・O42を原文で再確認した。Searchの入力拒否後も要求PageSize=0をモデルへ戻し描画でゼロ除算に至り得ること、OptionsのDTO・ModelState消去とSearchの矛盾拒否、ビューの非活性化、JSのDOM値消去が別段階であることを本文と分割フローへ反映した。根拠：sources/Web/Controllers/StudentsController.cs:13-22、sources/Views/Students/Search.cshtml:5-8、sources/wwwroot/js/site.js:7-7、sources/Infrastructure/WebHostSetup.cs:23-23。"
+  ],
+  "helper": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261013-rerun-12h\\training-assisted\\continue_revision.py",
+  "helperSha256": "44a8f7ea74bcc7ee0bdd4c8122f30aaa5b5285635ec5461e04eaf2022b56e04b",
+  "analysisBasisCounts": {
+    "observed-source": 57,
+    "reference-design": 14
+  },
+  "sourcePathsRead": [
+    "manifest.json",
+    "sources/Program.cs",
+    "sources/StudentManagement.Web.csproj",
+    "sources/Core/StudentManagement.Core.csproj",
+    "sources/Views/Students/Search.cshtml",
+    "sources/Web/Controllers/StudentsController.cs",
+    "sources/Web/Inputs/StudentSearchInput.cs",
+    "sources/Web/Models/StudentSearchPageModel.cs",
+    "sources/Infrastructure/WebStudentCoordinator.cs",
+    "sources/Infrastructure/SearchContextStore.cs",
+    "sources/Infrastructure/FlashMessageStore.cs",
+    "sources/Infrastructure/RequestIdentity.cs",
+    "sources/Infrastructure/WebPresentation.cs",
+    "sources/Infrastructure/WebHostSetup.cs",
+    "sources/Infrastructure/AntiforgeryResultFilter.cs",
+    "sources/Infrastructure/StrictJson.cs",
+    "sources/Infrastructure/EditorSnapshotStore.cs",
+    "sources/Core/Contracts.cs",
+    "sources/Core/SqlServerStudentService.cs",
+    "sources/Core/StudentNormalizer.cs",
+    "sources/Core/JapaneseDateService.cs",
+    "sources/Core/MasterMaintenanceService.cs",
+    "sources/database/001_schema.sql",
+    "sources/database/002_seed.sql",
+    "sources/Views/_ViewImports.cshtml",
+    "sources/Views/_ViewStart.cshtml",
+    "sources/Views/Shared/_Layout.cshtml",
+    "sources/Views/Shared/_MessagePanel.cshtml",
+    "sources/wwwroot/css/site.css",
+    "sources/wwwroot/js/site.js",
+    "sources/Views/Students/Edit.cshtml",
+    "sources/Web/Inputs/StudentSaveInput.cs",
+    "sources/Web/Inputs/StudentDeleteInput.cs",
+    "sources/Web/Models/StudentEditPageModel.cs",
+    "reference-designs/基本設計書/01_学生検索画面.md",
+    "reference-designs/詳細仕様書/CSharp_ASPNET/01_学生検索画面.md",
+    "reference-designs/基本設計書/02_学生登録画面.md",
+    "reference-designs/詳細仕様書/CSharp_ASPNET/02_学生登録画面.md"
+  ],
+  "draftStatus": "AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED",
+  "draftUnresolved": [
+    "ASP.NET Coreのモデルバインダー、TagHelper、Razor結果実行の依存本体はカプセルにない。欠落・空文字・変換失敗・NULLを含む全HTTP受信形のDTO値・ModelState値・生成HTMLを実行保証として確定していない。",
+    "PageSize=0でページ数計算へ到達した場合のゼロ除算は追跡できるが、Response.HasStartedがtrueになる時点は動的境界である。最終応答は一律503とせず、応答未開始時のmiddleware処理と開始後の対象外を区別した。",
+    "Snapshot.GetのNULL引数は明示検査前にConcurrentDictionaryへ渡される。独自のキー不在409とライブラリ例外境界を分けたが、辞書依存本体とHTTPからNULLが到達する全条件は確認できない。",
+    "参考設計に参照された共通UI・チェック・日付・データアクセス・項目制約・方式別共通・DB定義・規約・適合試験一覧は許可referenceFilesに含まれない。その原文や追加条件、レビュー結果は読んでいない。本文には許可された設計資料が明記する番号・相対path・責務だけを記録した。",
+    "coverageNotes: manifestのtraining-assisted、trainingReferenceAuthorizedByUser=true、referenceSpecificationIncluded=trueとreferenceFiles列挙を確認した。manifestは読取権限・材料一覧の確認だけに使用し、業務・実装の根拠にしていない。",
+    "coverageNotes: 原文は指定カプセルのmanifest、sources、許可されたreference-designsから再読した。検索基本・詳細設計を確認し、登録設計は検索遷移・取消・確定通知・復帰に関係する範囲を確認した。親・兄弟、メモリ、外部プロジェクト、評価期待値、資格情報・秘密設定は読んでいない。",
+    "coverageNotes: rg --files・rg -nとlogin=falseのPowerShell読取りを使用した。相対pathの初期読取りは失敗したため読了に数えず、同じカプセル内の絶対pathへ切り替えた。長い出力の切れた部分を読了にせず、必要な行範囲を分けて再取得した。",
+    "coverageNotes: 原本プログラム・SQL・スクリプト・ビルド・マクロを実行、import、コンパイル、テストしていない。ファイル編集、ネットワーク、プラグイン、外部サービス、委任エージェント、Pythonによる文章組立て、モデル訓練を使用していない。",
+    "coverageNotes: 文書内のspec-metaの実HTMLコメントとJSON、宣言5章と本文h2、8イベントの六h4の順序、LISTの一意キー、項目10列・候補8列および他表の列数、表内の裸の縦棒、静的投影の送信先・boolean属性を原稿として点検した。契約11文書は対象1件と関連10件へ変更せず対応させ、契約外文書を計画していない。",
+    "coverageNotes: 静的HTML・Mermaidは非実行の本文稿である。実画面撮影、図・HTMLの原寸レンダリング、幅1200・高さ1600px程度への収まり、視覚品質の合格は確認していない。図の描画と原寸確認が残る。",
+    "coverageNotes: 接続前提と処理分岐は静的解析であり、実DB接続、配備、候補実データ、認証セッション、実装試験、顧客承認の結果ではない。独立した外部レビューも実施していない。"
+  ],
+  "semanticProseAssembledByRunner": false
+}

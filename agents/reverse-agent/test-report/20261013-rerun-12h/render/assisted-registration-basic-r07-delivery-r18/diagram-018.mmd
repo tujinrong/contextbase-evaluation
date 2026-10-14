@@ -1,0 +1,14 @@
+%%{init: {"flowchart":{"htmlLabels":true,"useMaxWidth":false,"nodeSpacing":28,"rankSpacing":30},"themeCSS":".nodeLabel,.edgeLabel{white-space:nowrap;word-break:keep-all;overflow-wrap:normal;}"}}%%
+flowchart TD
+    A["図13 S1またはサービス結果"] --> M{"Saved"}
+    M -->|はい| C["通知・303<br/>EV-REG-007 R2へ"]
+    M -->|いいえ| R{"SaveResultあり"}
+    R -->|なし| W["ModelState不正<br/>422<br/>または局所WebFaultの状態保持"]
+    R -->|あり| V["結果別HTTP<br/>返却確認キーへ差替え"]
+    V --> K["確認キーの<br/>ModelState旧値除去"]
+    W --> L["送信Input・読込時Detail<br/>同じSnapshot・復帰版"]
+    K --> L
+    L --> LOOK["候補再取得"]
+    LOOK --> E["結果別Edit再表示"]
+    C -. 確定後例外 .-> X["外側例外処理"]
+    LOOK -. 取得・描画例外 .-> X

@@ -1,0 +1,18 @@
+flowchart TD
+  A[POST /students/options] --> B{MVC認証・CSRF}
+  B -->|拒否| X[MVCの拒否結果]
+  B -->|到達| C[FormGuard・在籍省略補正・Get]
+  C -->|例外| Q[F0：状態未変更]
+  C -->|受入| D{未所属true}
+  D -->|はい| E[年度・学年・クラス<br/>DTOとModelStateを消去]
+  D -->|いいえ| F[編集中値を保持]
+  E --> G[候補取得・前回結果の整形]
+  F --> G
+  G -->|例外| Q
+  G -->|成功| H{非空ClassIdが不適合}
+  H -->|はい| I[クラス解除・解除通知]
+  H -->|いいえ| J[入力保持・未反映通知]
+  I --> K[前回結果・保持版・表示指定で描画]
+  J --> K
+  K -->|成功| L[HTML・状態未変更]
+  K -->|例外| Q

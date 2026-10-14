@@ -1,0 +1,12 @@
+flowchart TD
+ A["POST clear：共通入口①"] -->|通過| F["FormGuard"]
+ A -->|認証401・認可403・CSRF400| Q["前段拒否で終了"]
+ A -->|例外| E["共通入口②：元の例外"]
+ F --> U["identity.Read・Use<br/>Get・待機後再確認・版検査"]
+ U --> C["Applied・LastResultをNULL<br/>Revision＋1・Present entry,null"]
+ C --> X["正常時期限延長<br/>finallyでGate解放"]
+ X --> D["C-表示：②へ<br/>未検索data・要求識別値"]
+ F -->|例外| E
+ U -->|例外・取消| E
+ C -->|例外| E
+ X -->|例外| E

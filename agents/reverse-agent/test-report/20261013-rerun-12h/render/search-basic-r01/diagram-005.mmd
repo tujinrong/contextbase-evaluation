@@ -1,0 +1,27 @@
+flowchart TD
+  A[ページ操作] --> B{FormGuard・最初の状態取得}
+  B -->|拒否| X[個別再表示の外へ]
+  B -->|通過| C[認証・Useの状態排他版検査]
+  C --> D{Appliedが存在}
+  D -->|いいえ| W[WebFault 409 先に検索してください]
+  D -->|はい| E{件数・キー・方向が変更}
+  E -->|はい| F[コピー条件のPageを1]
+  E -->|いいえ| G[コピー条件へ要求Page]
+  F --> H[検索・EnsureSearch]
+  G --> H
+  H --> I{上限超過でなく要求ページが最終ページ超過}
+  I -->|はい| J[条件Pageを最終ページへ補正・再検索・EnsureSearch]
+  I -->|いいえ| K[結果を保持]
+  J --> L[Applied・LastResult更新・版加算]
+  K --> L
+  L --> M[入力復元・候補読取・結果表示]
+  C -->|WebFault| W2[そのStatusとエラーを保持]
+  H -->|WebFault| W2
+  J -->|WebFault| W2
+  M -->|try内のWebFault| W2
+  W --> N[保持条件・未検索データで候補を読み再表示]
+  W2 --> N
+  H -->|その他例外| O[3.1の外側例外経路]
+  J -->|その他例外| O
+  M -->|その他例外| O
+  N -->|再表示中の例外| O

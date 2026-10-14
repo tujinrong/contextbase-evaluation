@@ -1,0 +1,16 @@
+flowchart TD
+  A[contextId・contextRevision付きGET] --> B[参照認証・状態Get]
+  B -->|拒否| X[401・403・409の該当応答]
+  B -->|受入| C[Gate後再確認・期待版照合]
+  C -->|拒否| Y[該当Status／自動初期化しない]
+  C -->|受入| D{Appliedあり}
+  D -->|いいえ| E[未検索／版維持・LastResult代入なし]
+  D -->|はい| F[元条件で再検索・受入確認]
+  F -->|受入| G[取得結果をLastResultへ／版加算・Applied維持]
+  F -->|WebFaultまたは未処理例外| Q[共通失敗応答／Flash未取得]
+  E --> H[期限延長・Gate解放]
+  G --> H
+  H --> I[条件欄作成・Flashを一度取得]
+  I --> J[候補取得・表示整形]
+  J -->|成功| K[枝ごとの結果状態・版・通知を持つHTML]
+  J -->|未処理例外| L[共通失敗応答／通知消費済み]

@@ -1,0 +1,10 @@
+%%{init: {"flowchart":{"htmlLabels":true,"useMaxWidth":false,"nodeSpacing":28,"rankSpacing":30},"themeCSS":".nodeLabel,.edgeLabel{white-space:nowrap;word-break:keep-all;overflow-wrap:normal;}"}}%%
+flowchart TD
+    A["図21 D2のtry内例外"] --> C{"DC-1"}
+    C -->|はい| CR["rollback試行<br/>D3へ<br/>Conflict 409"]
+    C -->|いいえ| T{"DC-2"}
+    T -->|いいえ| X["外側へ伝播"]
+    T -->|はい| RB["rollback試行<br/>rolledBack保持"]
+    RB --> Q{"DC-Q"}
+    Q -->|該当| U["D3へ<br/>Unknown 503"]
+    Q -->|非該当| S["D3へ<br/>SystemError 503"]

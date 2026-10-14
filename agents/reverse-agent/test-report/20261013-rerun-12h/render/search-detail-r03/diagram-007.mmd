@@ -1,0 +1,10 @@
+flowchart TD
+ A["O-候補：①から受領"] --> L["Present entry,LastResult・SearchModel<br/>候補読取・Json化・通常通知"]
+ L --> K{"ClassId非空かつ<br/>候補ID・年度・学年と不一致か"}
+ K -->|はい| D["ClassIdをNULL・ModelState除去<br/>クラス解除通知へ変更"]
+ K -->|いいえ| V["Searchビュー<br/>保持結果と編集中条件"]
+ D --> V
+ L -->|例外・取消| E["共通入口②：元の例外"]
+ K -->|例外| E
+ D -->|例外| E
+ V -->|描画例外| E

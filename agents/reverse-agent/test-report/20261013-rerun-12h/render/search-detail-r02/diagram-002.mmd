@@ -1,0 +1,27 @@
+flowchart TD
+ A[共通入口：認証・CSRF・MVC] -->|通過| F[FormGuard・区分キー欠落補正]
+ A -->|拒否・例外| O[共通入口の拒否または外側例外経路]
+ F --> G[CurrentUser・最初のGet]
+ G --> N[dataはPresent entry,null]
+ N --> M{ModelState有効}
+ M -->|いいえ| I[422・検索しない]
+ M -->|はい| C[局所try：identity.Read・ToCriteria]
+ C --> U[Use：待機後再確認・版照合]
+ U --> S[SearchAsync・EnsureSearch]
+ S -->|成功| H[Appliedコピー・LastResult・版＋1]
+ H --> X[Use成功：期限延長・解放]
+ C -->|WebFault| W[局所catch：e.Statusと項目エラー]
+ U -->|WebFault| W
+ S -->|WebFault| W
+ I --> L[try外：候補読取・Json化]
+ W --> L
+ X --> L
+ L --> V[Searchビュー：成功dataまたは未検索data]
+ F -->|例外| O
+ G -->|例外| O
+ C -->|非WebFault| O
+ U -->|非WebFault・取消| O
+ S -->|非WebFault・取消| O
+ H -->|非WebFault| O
+ L -->|例外・取消| O
+ V -->|描画例外| O

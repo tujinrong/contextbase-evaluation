@@ -1,0 +1,14 @@
+flowchart TD
+  A["SR-C・成功<br/>結果別データ・反映後Entry"] --> C["SearchModel<br/>候補読取・表示用JSON変換"]
+  B["SR-D・検証再表示<br/>未検索データ・入力・設定済みStatus"] --> C
+  C --> D["受信件数・キー・方向をモデルへ設定<br/>受信PageSize=0もそのまま設定"]
+  D --> E{"ビューの<br/>ページ数計算"}
+  E -->|PageSizeが0| Z["整数のゼロ除算<br/>局所422で表示は完了しない"]
+  E -->|計算・描画成功| V["元のdataとStatusで画面表示<br/>既存保持ページなら2 / 1等もあり得る"]
+  C -->|候補・変換例外| X["個別catchの外<br/>元の例外と応答開始状態を保持"]
+  D -->|その他例外| X
+  E -->|その他の描画例外| X
+  Z --> X
+  X --> H{"Response.HasStarted"}
+  H -->|false| O["4.5 外側middleware<br/>ゼロ除算なら503のエラーHTML"]
+  H -->|true| P["同catchの対象外<br/>最終応答はここで確定できない"]

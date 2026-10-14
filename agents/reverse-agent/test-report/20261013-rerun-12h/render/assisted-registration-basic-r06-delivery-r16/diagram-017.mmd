@@ -1,0 +1,12 @@
+%%{init: {"flowchart":{"htmlLabels":true,"useMaxWidth":false,"nodeSpacing":28,"rankSpacing":30},"themeCSS":".nodeLabel,.edgeLabel{white-space:nowrap;word-break:keep-all;overflow-wrap:normal;}"}}%%
+flowchart TD
+    A["図12-2 先行catch非該当"] --> T{"SC-4"}
+    T -->|はい| RB["rollback試行<br/>rolledBack保持"]
+    RB --> Q{"SC-Q"}
+    Q -->|該当| U["Unknown 503<br/>指定確認キー除去"]
+    Q -->|非該当| E["SystemError 503"]
+    E --> FR["finally<br/>SC-F成立時Busy解除"]
+    U --> FR
+    FR --> R["S6へ<br/>各結果・ID版NULLを引継ぐ"]
+    T -->|捕捉対象外| FP["finally<br/>SC-F成立時Busy解除"]
+    FP --> X["元例外を外側へ伝播<br/>S6には入らない"]

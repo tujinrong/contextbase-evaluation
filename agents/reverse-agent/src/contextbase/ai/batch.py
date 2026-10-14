@@ -15,8 +15,8 @@ def run(snapshot: Path, plan_file: Path, job_root: Path, output: Path,
         independent_review=True):
     if type(workers) is not int or workers < 1 or workers > 4:
         raise ValueError('Between one and four workers required')
-    job_root = capsule.safe_path(job_root)
-    output = capsule.safe_path(output)
+    job_root = workflow._execution_root(snapshot, job_root, 'Batch job')
+    output = workflow._execution_root(snapshot, output, 'Batch output')
     if job_root.exists():
         raise ValueError('Use a new batch directory for each run')
     manifest = capsule.verify(snapshot)

@@ -1,0 +1,19 @@
+flowchart TD
+  A[POST /students/page] --> B{MVC認証・CSRF}
+  B -->|拒否| X[MVCの拒否結果]
+  B -->|到達| C[FormGuard・最初のGet]
+  C -->|例外| Q[F0：局所catch外]
+  C -->|受入| D[参照確認・U1]
+  D -->|WebFault| W[サブフロー2へ<br/>そのStatus・発生段階の状態]
+  D -->|その他例外| Q
+  D -->|受入| E{Appliedあり}
+  E -->|いいえ| N[409：先に検索]
+  N --> W
+  E -->|はい| F{表示指定が変更}
+  F -->|はい| G[複製条件Page=1]
+  F -->|いいえ| H[複製条件Page=要求Page]
+  G --> I[表示指定移送・1回目検索・受入確認]
+  H --> I
+  I -->|WebFault| W
+  I -->|その他例外| Q
+  I -->|受入| J[サブフロー1-2へ：条件・結果]

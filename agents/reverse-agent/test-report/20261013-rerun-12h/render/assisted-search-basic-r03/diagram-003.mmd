@@ -1,0 +1,11 @@
+flowchart TD
+  A[POST /students/search] --> B{MVC認証・CSRF}
+  B -->|拒否| X[MVCの拒否結果]
+  B -->|到達・バインド後| C[FormGuard]
+  C -->|例外| Q[F0：状態操作前]
+  C -->|受入| D[在籍キー省略を空配列へ]
+  D --> E[最初の状態Get<br/>所有者・セッション・Tab・期限]
+  E -->|拒否| Q
+  E -->|受入| F{ModelState正常}
+  F -->|いいえ| V[サブフロー4へ<br/>422・今回未検索・状態未更新]
+  F -->|はい| G[サブフロー2へ<br/>入力・表示指定・ID・版・Tab]
