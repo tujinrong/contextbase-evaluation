@@ -1,0 +1,141 @@
+{
+  "schema": "spec-agent-format-candidate-preparation/1",
+  "createdUtc": "2026-10-14T01:12:23.770501+00:00",
+  "scope": "CODE_ONLY_SYNTHETIC_GEOMETRY",
+  "status": "PREPARED_NOT_XLSX_AUTHORING",
+  "sourcePinsBefore": {
+    "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\test-report\\20261013-rerun-12h\\delivery\\delivery_model_r18_r02.py": "e5fb75b5dc251d0f77a8f72ae69621b3d9caf39e08cb06cb1777b06349cb5238",
+    "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\test-report\\20261013-rerun-12h\\delivery\\build_xlsx_r18.mjs": "e6f90d156975a7486c8e968ae449dfa2e329de5d082433da865709f7a87957ed"
+  },
+  "sourcePinsAfter": {
+    "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\test-report\\20261013-rerun-12h\\delivery\\delivery_model_r18_r02.py": "e5fb75b5dc251d0f77a8f72ae69621b3d9caf39e08cb06cb1777b06349cb5238",
+    "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\test-report\\20261013-rerun-12h\\delivery\\build_xlsx_r18.mjs": "e6f90d156975a7486c8e968ae449dfa2e329de5d082433da865709f7a87957ed"
+  },
+  "oldFilesUnchanged": true,
+  "mechanicalCodeChanges": [
+    {
+      "label": "explicit-format-profile",
+      "old": "SCHEMA = 'reverse-agent-delivery-model/1'",
+      "new": "SCHEMA = 'reverse-agent-delivery-model/1'\n# User-selected V2 format profile. No change to Markdown/source content.\nGRID_COLUMNS = 62\nGRID_COLUMN_WIDTH = 3\nGRID_TEXT_UNITS_PER_COLUMN = 2.75\nGRID_BODY_START_COLUMN = 2\nGRID_IMAGE_MAX_WIDTH = 1100\nFORMAT_PROFILE = {'id':'v2-62-user-selected','coverPrintArea':'O6:AU36','gridColumns':GRID_COLUMNS,'gridColumnWidth':GRID_COLUMN_WIDTH,'gridBodyStartColumn':GRID_BODY_START_COLUMN,'itemListColumns':10,'listHeaderRow':1,'literalStrings':True}"
+    },
+    {
+      "label": "normal-grid-profile-gate",
+      "old": "    if role=='table':",
+      "new": "    if role=='normal':\n        if columns != GRID_COLUMNS: raise ValueError('V2-62 normal sheet geometry mismatch')\n        sheet['gridColumnWidth']=GRID_COLUMN_WIDTH\n    if role=='table':"
+    },
+    {
+      "label": "62-column-readable-height-budget",
+      "old": "    width=sum(sheet['columnWidths'][left-1:right])*13/18 if 'columnWidths' in sheet else (right-left+1)*(2 if sheet['columns']==120 else 13)",
+      "new": "    width=(right-left+1)*GRID_TEXT_UNITS_PER_COLUMN if sheet['role']=='normal' else sum(sheet['columnWidths'][left-1:right])*13/18 if 'columnWidths' in sheet else (right-left+1)*13"
+    },
+    {
+      "label": "grid-spans-use-declared-canvas",
+      "old": "for index in range(columns): spans.append((index*120//columns+1,(index+1)*120//columns))",
+      "new": "for index in range(columns): spans.append((index*sheet['columns']//columns+1,(index+1)*sheet['columns']//columns))"
+    },
+    {
+      "label": "grid-table-role-not-magic-width",
+      "old": "grid=sheet['columns']==120",
+      "new": "grid=sheet['role']=='normal'"
+    },
+    {
+      "label": "B-to-BJ-narrative-placement",
+      "old": "1 if block['kind']=='heading' or sheet['columns']!=120 else 21",
+      "new": "1 if block['kind']=='heading' or sheet['role']!='normal' else GRID_BODY_START_COLUMN"
+    },
+    {
+      "label": "bounded-images-no-outside-frame",
+      "old": "if not 1100<=image_max_width<=1850:raise ValueError('Image projection must fit the documented GRID canvas')",
+      "new": "if not 1<=image_max_width<=GRID_IMAGE_MAX_WIDTH:raise ValueError('Image projection exceeds bounded V2-62 canvas')"
+    },
+    {
+      "label": "item-list-ten-column-gate",
+      "old": "matrix=blocks[0]['matrix']; sheet=new_sheet(decl['sheet'],'list',len(matrix[0]))",
+      "new": "matrix=blocks[0]['matrix']\n                if section['heading']=='項目一覧' and len(matrix[0])!=10: raise ValueError('Item LIST requires the declared ten-column form')\n                sheet=new_sheet(decl['sheet'],'list',len(matrix[0]))"
+    },
+    {
+      "label": "normal-62-title-and-frame",
+      "old": "sheet=new_sheet(decl['sheet'],'normal',120)\n                add_text(sheet,1,1,120,section['heading'],'title')",
+      "new": "sheet=new_sheet(decl['sheet'],'normal',GRID_COLUMNS)\n                add_text(sheet,1,1,GRID_COLUMNS,section['heading'],'title')"
+    },
+    {
+      "label": "document-format-profile-binding",
+      "old": "'title':title,'sourceMetadata':meta,'rawMarkdown':entry['rawMarkdown'], 'sheets':sheets,",
+      "new": "'title':title,'sourceMetadata':meta,'rawMarkdown':entry['rawMarkdown'], 'formatProfile':FORMAT_PROFILE, 'sheets':sheets,"
+    },
+    {
+      "label": "model-format-profile-binding",
+      "old": "'projection':{'imageMaxWidth':args.image_max_width,'previewMaxHeight':args.preview_max_height},",
+      "new": "'formatProfile':FORMAT_PROFILE,\n           'projection':{'imageMaxWidth':args.image_max_width,'previewMaxHeight':args.preview_max_height},"
+    },
+    {
+      "label": "builder-explicit-profile-gate",
+      "old": "const modelRaw=await fs.readFile(modelPath);const model=JSON.parse(modelRaw.toString('utf8'));",
+      "new": "const modelRaw=await fs.readFile(modelPath);const model=JSON.parse(modelRaw.toString('utf8'));\nif(model.formatProfile?.id!=='v2-62-user-selected'||model.formatProfile.gridColumns!==62||model.formatProfile.coverPrintArea!=='O6:AU36'||model.formatProfile.itemListColumns!==10)throw new Error('Explicit user-selected V2-62 format profile required');"
+    },
+    {
+      "label": "builder-normal-width3",
+      "old": "region.format.columnWidth=specification.columns===120?2:specification.role==='cover'?3:18;",
+      "new": "if(specification.role==='normal'&&(specification.columns!==62||specification.gridColumnWidth!==3))throw new Error('V2-62 normal sheet mismatch');\n      region.format.columnWidth=specification.role==='normal'?specification.gridColumnWidth:specification.role==='cover'?3:18;"
+    }
+  ],
+  "candidatePins": {
+    "D:\\開発\\contextbase-evaluation\\agents\\spec-agent\\.tmp\\20261014-nenkin-high-01\\delivery\\delivery_model_v2_62_r01.py": "d85cdc40ec8bcad7eadd174b15254212164aa0c129178347fe6a4838d87dfaf4",
+    "D:\\開発\\contextbase-evaluation\\agents\\spec-agent\\.tmp\\20261014-nenkin-high-01\\delivery\\build_xlsx_v2_62_r01.mjs": "d70a0eb222b68869e93e8bd33f2b4e415e6553698f75d0931f96c3fa24a8e5c8",
+    "D:\\開発\\contextbase-evaluation\\agents\\spec-agent\\.tmp\\20261014-nenkin-high-01\\delivery\\format-profile-v2-62-r01.json": "aeeffe5ce926b648ba678302340f22afc52c91775177f4b284da40a5b24e9d13"
+  },
+  "syntheticTests": [
+    {
+      "name": "BJ-is-62",
+      "pass": true
+    },
+    {
+      "name": "normal62-width3",
+      "pass": true
+    },
+    {
+      "name": "normal120-is-rejected",
+      "pass": true
+    },
+    {
+      "name": "all-literals-exact-no-coercion",
+      "pass": true
+    },
+    {
+      "name": "grid-proportional-spans-exact62",
+      "pass": true
+    },
+    {
+      "name": "narrative-B-to-BJ",
+      "pass": true
+    },
+    {
+      "name": "cell32768-rejected",
+      "pass": true
+    },
+    {
+      "name": "unrepresentable-control-rejected",
+      "pass": true
+    },
+    {
+      "name": "oversize-whole-list-token-rejected",
+      "pass": true
+    },
+    {
+      "name": "list10-header1-records-not-split-or-merged",
+      "pass": true
+    }
+  ],
+  "syntheticPassCount": 10,
+  "productionInputRead": false,
+  "providerExecuted": false,
+  "authoringMarkerStarted": false,
+  "artifactToolExecuted": false,
+  "actualXlsxCreated": false,
+  "outputModified": false,
+  "remaining": [
+    "Native artifact authoring marker must be coordinated exactly once after document plan count is fixed.",
+    "Artifact public print margins/areas/repeating-header and Excel-contained metadata API remain unverified.",
+    "Actual XLSX full literal/blank/border/geometry and original-size image review remain required."
+  ]
+}

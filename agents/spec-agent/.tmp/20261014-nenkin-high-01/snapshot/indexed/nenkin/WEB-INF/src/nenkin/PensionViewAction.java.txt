@@ -1,0 +1,13 @@
+000001 | package nenkin;
+000002 | 
+000003 | import javax.servlet.http.HttpServletRequest;
+000004 | import javax.servlet.http.HttpServletResponse;
+000005 | import nenkin.service.PensionRepository;
+000006 | 
+000007 | public class PensionViewAction extends NenkinBaseAction {
+000008 | 	public String perform(HttpServletRequest request, HttpServletResponse response) {
+000009 | 		if (!requireStaff(request)) return STAFF_JSP;
+000010 | 		setViewBean(request.getSession(), pensionBean(PensionRepository.getInstance().createEmpty(currentStaff(request.getSession())), "", false, request.getSession()));
+000011 | 		return PENSION_JSP;
+000012 | 	}
+000013 | }

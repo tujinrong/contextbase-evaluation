@@ -1,0 +1,53 @@
+000001 | /*
+000002 |  * 作成日: 2007/05/29
+000003 |  *
+000004 |  */
+000005 | package common.base;
+000006 | 
+000007 | import java.sql.Connection;
+000008 | import java.sql.SQLException;
+000009 | 
+000010 | /**
+000011 |  * データウェアハウス　業種コードテーブル検索Baseクラス
+000012 |  * 
+000013 |  * @author JSC kengo murayama
+000014 |  * 
+000015 |  * @date	H22.9.6		青木・浅見		センター集約対応
+000016 |  */
+000017 | public class SelectCodeGyosyuBase extends CommonBaseSelectCode {
+000018 | 
+000019 | 	/**
+000020 | 	 * コンストラクタ
+000021 | 	 * 
+000022 | 	 * @param connection
+000023 | 	 */
+000024 | 	public SelectCodeGyosyuBase(Connection connection) {
+000025 | 		super(connection);
+000026 | 	}
+000027 | 
+000028 | 	/**
+000029 | 	 * 
+000030 | 	 * SELECT文（コードをMap形式で取得）を実行する
+000031 | 	 * 
+000032 | 	 * @return boolean
+000033 | 	 * @throws SQLException
+000034 | 	 */
+000035 | 	public boolean select() throws SQLException {
+000036 | 
+000037 | 		try {
+000038 | 
+000039 | 			//ＳＱＬ実行
+000040 | 			executeMap("SELECT コード,項目１ FROM DB2.ＵＪ業種 ORDER BY コード");
+000041 | 
+000042 | 		} catch (SQLException e) {
+000043 | 			throw e;
+000044 | 		}
+000045 | 
+000046 | 		if (getMap() != null) {
+000047 | 			return true;
+000048 | 		} else{
+000049 | 			return false;
+000050 | 		}
+000051 | 	}
+000052 | 
+000053 | }

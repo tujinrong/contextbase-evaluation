@@ -1,0 +1,199 @@
+000001 | package webon.operation;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.util.ArrayList;
+000005 | import java.util.List;
+000006 | import java.util.Map;
+000007 | 
+000008 | import webon.WebonBase;
+000009 | import webon.WebonException;
+000010 | import webon.util.ConvertUtil;
+000011 | 
+000012 | import common.bean.LoginInfoBean;
+000013 | /**
+000014 |  * Webon汎用照会クラス　証書貸付個別明細照会管理クラス
+000015 |  * 証書貸付個別明細照会(XML)の取得とデータ管理、アクセスメソッドの提供
+000016 |  * 
+000017 |  * @author	吉津
+000018 |  * 
+000019 |  * @date	2020.05.12	新規作成
+000020 |  */
+000021 | public class ShogashiKobetsuMeisaiShokai extends CommonOperation {
+000022 | 
+000023 | 	private static final String syokaiName = "証書貸付個別明細照会";
+000024 | 	
+000025 | 	//オペレーションＩＤ
+000026 | 	private final String operationId="OP-SHGASIKO-0001";
+000027 | 	//ログイン情報
+000028 | 	LoginInfoBean loginInfo;
+000029 | 	//webon引数
+000030 | 	String woCif;
+000031 | 	String woBrno;
+000032 | 	String woSyogashiNo;
+000033 | 	
+000034 | 	//Errorレベル
+000035 | 	private static final int ERRLEVEL_ERROR=0;	//Error
+000036 | 	private static final int ERRLEVEL_WARNING=1;	//Warning
+000037 | 	//Error箇所
+000038 | 	private static final String ERRSPOT_WOGET = "0";		//取得時
+000039 | 	private static final String ERRSPOT_WOANALYZE = "1";	//解析時
+000040 | 	private static final String ERRSPOT_WOMOLD = "2";		//成型時
+000041 | 	//Erro追加情報格納用リスト
+000042 | 	List<Map<String, String>> etc = new ArrayList<Map<String,String>>();
+000043 | 	//Error有無フラグ
+000044 | 	boolean errFlg=false;
+000045 | 	
+000046 | 	//証書貸付個別明細
+000047 | 	private String 初回内入日 = "";
+000048 | 	
+000049 | 	//setter,getter
+000050 | 	public List<Map<String, String>> getEtc() {
+000051 | 		return etc;
+000052 | 	}
+000053 | 	public void setEtc(List<Map<String, String>> etc) {
+000054 | 		this.etc = etc;
+000055 | 	}
+000056 | 	public boolean isErrFlg() {
+000057 | 		return errFlg;
+000058 | 	}
+000059 | 	public void setErrFlg(boolean errFlg) {
+000060 | 		this.errFlg = errFlg;
+000061 | 	}
+000062 | 	public String get初回内入日() {
+000063 | 		return 初回内入日;
+000064 | 	}
+000065 | 	public void set初回内入日(String 初回内入日) {
+000066 | 		this.初回内入日 = 初回内入日;
+000067 | 	}
+000068 | 	
+000069 | 	/**
+000070 | 	 * 店番・顧客番号・証貸番号を元に証書貸付個別明細照会を取得する
+000071 | 	 * 
+000072 | 	 * @param cif 顧客番号
+000073 | 	 * @param br 店番
+000074 | 	 * @param syogashiNo 証貸番号
+000075 | 	 * @param loginInfo ログイン情報
+000076 | 	 * @param con
+000077 | 	 * @throws Exception
+000078 | 	 */
+000079 | 	public void getWebonByCif(String cif,String br, String syogashiNo, LoginInfoBean loginInfo, Connection con) throws Exception {
+000080 | 		try{
+000081 | 			//起動チェック 引数がセットされているか
+000082 | 			if (cif == null) {throw new Exception("顧客番号が設定されていません");}
+000083 | 			if (br == null) {throw new Exception("原店番号が設定されていません");}
+000084 | 			if (syogashiNo == null) {throw new Exception("証貸番号が設定されていません");}
+000085 | 			if (con == null) {throw new Exception("ＤＢコネクションが設定されていません");}
+000086 | 			
+000087 | 			//引数のセット
+000088 | 			this.woBrno=br;
+000089 | 			this.woCif=cif;
+000090 | 			this.woSyogashiNo=syogashiNo;
+000091 | 			this.loginInfo = loginInfo;
+000092 | 	
+000093 | 			//Webon問合せ実行
+000094 | 			getWebon(con);
+000095 | 
+000096 | 			//取得結果解析
+000097 | 			analyzeWeon();
+000098 | 
+000099 | 		}catch(WebonException e){
+000100 | 			throw e;
+000101 | 		}catch(Exception e){
+000102 | 			throw e;
+000103 | 		}
+000104 | 	}
+000105 | 
+000106 | 	/**
+000107 | 	 * Webon取得メソッド
+000108 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000109 | 	 * 
+000110 | 	 * @param req リクエスト
+000111 | 	 * @param res レスポンス
+000112 | 	 * @throws Exception 
+000113 | 	 */
+000114 | 	private void getWebon(Connection con) throws Exception {
+000115 | 		
+000116 | 		//WebonBaseの取得
+000117 | 		webonBase = new WebonBase(operationId, loginInfo, con);
+000118 | 		//設定値
+000119 | 		webonBase.put("顧客番号",woCif);
+000120 | 		webonBase.put("原店番号",woBrno);
+000121 | 		webonBase.put("証貸番号",woSyogashiNo);
+000122 | 		//問い合わせ
+000123 | 		webonBase.doQuery();
+000124 | 		
+000125 | 		//エラー処理
+000126 | 		if (!webonBase.checkResult()) {
+000127 | 			//エラーコード等をセット
+000128 | 			WebonException e = createWoException("Webon取得結果エラー", ERRLEVEL_ERROR, ERRSPOT_WOGET);
+000129 | 			//エラー処理は上位に任せる
+000130 | 			throw e;
+000131 | 		}
+000132 | 	}
+000133 | 
+000134 | 	/**
+000135 | 	 * Webon取得内容解析メソッド
+000136 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000137 | 	 * 
+000138 | 	 * @param req リクエスト
+000139 | 	 * @param res レスポンス
+000140 | 	 * @throws Exception 
+000141 | 	 * @throws Exception 
+000142 | 	 */
+000143 | 	public void analyzeWeon() throws Exception {
+000144 | 		//ＬＩＮＥデータの解析
+000145 | 		ArrayList<String> lineList = getLineByXML();
+000146 | 		//初回内入日（20行目、20～28文字）
+000147 | 		if(lineList.size()>21){
+000148 | 			String line = lineList.get(20);
+000149 | 			if(line.length()>29){
+000150 | 				set初回内入日(line.substring(19,28));
+000151 | 			}
+000152 | 		}
+000153 | 		//取得項目のチェック
+000154 | 		checkWebon();
+000155 | 		
+000156 | 		//エラーチェック(Exceptionの有無を判定する)
+000157 | 		if(errFlg){
+000158 | 			WebonException e = createWoException("Webon取得結果解析エラー", ERRLEVEL_WARNING, ERRSPOT_WOMOLD);
+000159 | 			e.setEtc(etc);
+000160 | 			//エラー処理は上位に任せる
+000161 | 			throw e;
+000162 | 		}
+000163 | 	}
+000164 | 	/**
+000165 | 	 * 取得内容チェックメソッド
+000166 | 	 */
+000167 | 	private void checkWebon(){
+000168 | 		set初回内入日(ConvertUtil.replaceJPtoAD(get初回内入日()));
+000169 | 		
+000170 | 	}
+000171 | 	//以下、ユーティリティ的メソッド
+000172 | 	/**
+000173 | 	 * エラー生成メソッド
+000174 | 	 * @param String	エラーメッセージ
+000175 | 	 * @param int		エラーレベル
+000176 | 	 * @param String	エラー箇所
+000177 | 	 */
+000178 | 	private WebonException createWoException(String msg ,int el, String es){
+000179 | 		//エラーコード等をセット
+000180 | 		WebonException e = new WebonException(msg,webonBase);
+000181 | 		//顧客を特定する情報をセット
+000182 | 		e.setOperationId(operationId);
+000183 | 		e.setBrno(woBrno);
+000184 | 		e.setCif(woCif);
+000185 | 		e.setErrStat(el);
+000186 | 		e.setErrSpot(es);
+000187 | 		//エラー処理は上位に任せる
+000188 | 		return e;
+000189 | 	}
+000190 | 	/**
+000191 | 	 * 照会名取得メソッド(Static)
+000192 | 	 * 照会名を取得する
+000193 | 	 * 
+000194 | 	 * @return String 照会名
+000195 | 	 */
+000196 | 	public static String getSyokaiName() {
+000197 | 		return syokaiName;
+000198 | 	}
+000199 | }

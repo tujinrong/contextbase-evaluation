@@ -1,0 +1,27 @@
+000001 | package nenkin;
+000002 | 
+000003 | import java.text.SimpleDateFormat;
+000004 | import java.util.Calendar;
+000005 | import java.util.Locale;
+000006 | 
+000007 | import javax.servlet.http.HttpServletRequest;
+000008 | import javax.servlet.http.HttpServletResponse;
+000009 | 
+000010 | import nenkin.bean.BatchViewBean;
+000011 | import nenkin.util.DateUtil;
+000012 | 
+000013 | public final class BatchViewAction extends NenkinBaseAction {
+000014 | 	public String perform(HttpServletRequest request, HttpServletResponse response) {
+000015 | 		if (!requireStaff(request)) return STAFF_JSP;
+000016 | 		BatchViewBean bean = new BatchViewBean();
+000017 | 		String today = DateUtil.todayIso();
+000018 | 		bean.setDailyDate(today);
+000019 | 		bean.setMonthStart(DateUtil.firstDayOfMonth(today));
+000020 | 		bean.setMonthEnd(DateUtil.lastDayOfMonth(today));
+000021 | 		Calendar cutoff = Calendar.getInstance(Locale.JAPAN);
+000022 | 		cutoff.add(Calendar.MONTH, -2);
+000023 | 		bean.setDeleteCutoffDate(new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(cutoff.getTime()));
+000024 | 		setViewBean(request.getSession(), bean);
+000025 | 		return BATCH_JSP;
+000026 | 	}
+000027 | }

@@ -1,0 +1,223 @@
+000001 | package jhkcommon;
+000002 | 
+000003 | /**
+000004 |  *
+000005 |  * HttpServletRequestのgetAttribute･setAttributeを利用し、
+000006 |  * セッション管理、ユーザーログインの実行、状態の確認を行うクラス
+000007 |  *
+000008 |  * @date	H22.8.19	青木・浅見		センター集約対応
+000009 |  *
+000010 |  */
+000011 | import java.io.IOException;
+000012 | 
+000013 | import javax.servlet.ServletContext;
+000014 | import javax.servlet.http.HttpServlet;
+000015 | import javax.servlet.http.HttpServletRequest;
+000016 | import javax.servlet.http.HttpServletResponse;
+000017 | import javax.servlet.http.HttpSession;
+000018 | 
+000019 | public class UserIdKit extends HttpServlet{
+000020 | 
+000021 | 
+000022 | //	String htmlFileName = "";
+000023 | 	
+000024 | 	/**
+000025 | 	 * ログインを行うメソッド。
+000026 | 	 * getParameterも行ここで行い、ユーザＩＤをsetAttributeする。
+000027 | 	 * HtmlPicUpからのみ実行することができる。
+000028 | 	 * 他のクラスから起動した場合はログアウト状態となる。
+000029 | 	 */
+000030 | 	public void doLogin(HttpServletRequest req,HttpServletResponse res,CifComon cCom,ServletContext sc)
+000031 | 		throws IOException
+000032 | 	{
+000033 | 
+000034 | 		String userId		="";
+000035 | 		String userIdUpper	=req.getParameter("USER_ID");
+000036 | 		String passWord		=req.getParameter("PASS_WORD");
+000037 | 		String cnPassWord   =sc.getInitParameter("CN_PASS");
+000038 | 		
+000039 | 		boolean loginStatus = false;
+000040 | 		HttpSession session = req.getSession();
+000041 | 		String backhtmlFile="PassWordErr.html";
+000042 | 		StringBuffer errMessage=new StringBuffer(20);
+000043 | 
+000044 | 		if ((userIdUpper==null)|(userIdUpper.equals(""))|(passWord==null)|(passWord.equals(""))){
+000045 | //			session.setAttribute("login","false");
+000046 | 			errMessage.append("ユーザ名・パスワードを入力してください。");
+000047 | 			loginStatus = false ;
+000048 | 		}else{
+000049 | 			userId=userIdUpper.toUpperCase();
+000050 | 			if(passWord.equals(cnPassWord)){
+000051 | 				loginStatus = true;
+000052 | 			}else{
+000053 | 				loginStatus = false;
+000054 | 				errMessage.append("ユーザ名・パスワードに誤りがあります。");
+000055 | 			}	
+000056 | 			
+000057 | 		}
+000058 | 		if(loginStatus){
+000059 | 			session.setAttribute("login","true");
+000060 | 			session.setAttribute("userId",userId);
+000061 | 			sc.log("***ログイン***"+userId);
+000062 | 		}else{
+000063 | 			HtmlDispatcher hd=new HtmlDispatcher();
+000064 | 			hd.GoHtml(req,res,backhtmlFile,cCom,errMessage.toString());
+000065 | 		}
+000066 | 	}
+000067 | 
+000068 | 	
+000069 | 	
+000070 | 	
+000071 | 
+000072 | 	/**
+000073 | 	 * ログアウトを行うメソッド。
+000074 | 	 */
+000075 | 	public void doLogOut(HttpServletRequest req,HttpServletResponse res,CifComon cCom,String backhtmlFile,ServletContext sc)
+000076 | 		throws IOException
+000077 | 	{
+000078 | 		HttpSession session = req.getSession();
+000079 | 		String userId = (String)session.getAttribute("userId");
+000080 | 		sc.log("***ログアウト***"+userId);
+000081 | 		session.setAttribute("login","false");
+000082 | 		session.setAttribute("userId","");
+000083 | //		String backhtmlFile="Ciflogin.html";
+000084 | 		HtmlDispatcher hd=new HtmlDispatcher();
+000085 | 		hd.GoHtml(req,res,backhtmlFile,cCom,"");
+000086 | 	}
+000087 | 
+000088 | 
+000089 | 
+000090 | 	/**
+000091 | 	 * ログインされているユーザＩＤを取得する。
+000092 | 	 * ユーザＩＤをgetAttributeし、戻り値としてString型のユーザＩＤを返す。
+000093 | 	 * ログインが行われていない状態で起動すると、空白「""」を返す。
+000094 | 	 */
+000095 | 	public String getUserId(HttpServletRequest req, HttpServletResponse res)
+000096 | 		throws IOException
+000097 | 	{
+000098 | 		String userId = "";
+000099 | 		HttpSession session = req.getSession();
+000100 | 		userId = (String)session.getAttribute("userId");
+000101 | 
+000102 | 		return userId;
+000103 | 	}
+000104 | 	
+000105 | 	public String getUserId(HttpServletRequest req)
+000106 | 		throws IOException
+000107 | 	{
+000108 | 		String userId = "";
+000109 | 		HttpSession session = req.getSession();
+000110 | 		userId = (String)session.getAttribute("userId");
+000111 | 
+000112 | 		return userId;
+000113 | 	}
+000114 | 	
+000115 | 	
+000116 | 	
+000117 | 	/**
+000118 | 	 * ログインされている職員番号を取得する。(８桁で返す)
+000119 | 	 * ユーザＩＤをgetAttributeし、戻り値としてString型のユーザＩＤを返す。
+000120 | 	 * ログインが行われていない状態で起動すると、空白「""」を返す。
+000121 | 	 */
+000122 | 	public String getSyokuinBango(HttpServletRequest req, HttpServletResponse res)
+000123 | 		throws IOException
+000124 | 	{
+000125 | 		String userId = "";
+000126 | 		HttpSession session = req.getSession();
+000127 | 		userId = (String)session.getAttribute("userId");
+000128 | 		
+000129 | 		String syokuinBango = userId;
+000130 | 
+000131 | 		if(userId.length() > 8){
+000132 | 			//後ろの８桁をセット
+000133 | 			syokuinBango = userId.substring(userId.length() - 8);
+000134 | 		}
+000135 | 		else {
+000136 | 			//桁を8桁に補充する
+000137 | 			while (syokuinBango.length()<8){
+000138 | 				syokuinBango = syokuinBango + " " ;
+000139 | 			}
+000140 | 		}
+000141 | 		
+000142 | 		return syokuinBango;
+000143 | 	}
+000144 | 	
+000145 | 	
+000146 | 	
+000147 | 	/**
+000148 | 	 * デバック用メソッド、使用禁止！。
+000149 | 	 */
+000150 | 	public boolean getLogin(HttpServletRequest req, HttpServletResponse res)
+000151 | 		throws IOException
+000152 | 	{
+000153 | 		String loginText = "";
+000154 | 		boolean islogin=false;
+000155 | 		HttpSession session = req.getSession();
+000156 | 		loginText = (String)session.getAttribute("login");
+000157 | 		if (loginText==null) loginText="";
+000158 | 		if (loginText.equals("true")) islogin=true;
+000159 | 		
+000160 | 		return islogin;
+000161 | 	}
+000162 | 
+000163 | 	
+000164 | 	
+000165 | 	/**
+000166 | 	 * デバック用メソッド、使用禁止！。
+000167 | 	 */
+000168 | 	public boolean checkUserId(HttpServletRequest req, HttpServletResponse res)
+000169 | 		throws IOException
+000170 | 	{
+000171 | 		String login = "";
+000172 | 		HttpSession session = req.getSession();
+000173 | 		login=(String)session.getAttribute("login");
+000174 | 		boolean islogin=false;
+000175 | 		if ((login.equals(null)) || (login.equals("")) || (login.equals("false"))){
+000176 | 			islogin=false;
+000177 | 		}else if(login.equals("true")){
+000178 | 			islogin=true;
+000179 | 		}
+000180 | 		return islogin;
+000181 | 	}
+000182 | 
+000183 | 	
+000184 | 	
+000185 | 	/**
+000186 | 	 * ログインの状態をgetAttributeして調べ、
+000187 | 	 * ログインが行われていればtrueを戻り値として返す。
+000188 | 	 * 行われていない場合falseを返す。
+000189 | 	 * ログインが行われていない場合PreaseLogin.htmlに、
+000190 | 	 * ログインが行われているが、引数のhtmlFileNameが""の場合BackMenue.htmlに
+000191 | 	 * 制御をforwardする。
+000192 | 	 * 
+000193 | 	 */
+000194 | 	public boolean checkLogin(HttpServletRequest req, HttpServletResponse res, String htmlFileName,CifComon cCom)
+000195 | 		throws IOException
+000196 | 	{
+000197 | 		String backhtmlFile = "";
+000198 | 		String logintext = "";
+000199 | 		boolean islogin=false;
+000200 | 		HttpSession session = req.getSession();
+000201 | 		logintext=(String)session.getAttribute("login");
+000202 | 		if (logintext==null) logintext="";
+000203 | 		if ((logintext.equals("")) || (logintext.equals("false"))){
+000204 | 			backhtmlFile = "PreaseLogin.html";
+000205 | 		} else {
+000206 | 			if ((htmlFileName==null) || (htmlFileName.equals(""))){
+000207 | 				backhtmlFile = "BackMenue.html";
+000208 | 			} else {
+000209 | 				backhtmlFile = htmlFileName;
+000210 | 				islogin=true;
+000211 | 			}
+000212 | 		}
+000213 | 		if (islogin==false){
+000214 | 			String s="";
+000215 | 			HtmlDispatcher hd=new HtmlDispatcher();
+000216 | 			hd.GoHtml(req,res,backhtmlFile,cCom,s);
+000217 | 		}
+000218 | 		return islogin;
+000219 | 	}
+000220 | 
+000221 | 
+000222 | }
+000223 | 

@@ -1,0 +1,124 @@
+000001 | package webon.base;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.sql.SQLException;
+000005 | 
+000006 | import common.base.CommonBaseSelect;
+000007 | 
+000008 | /**
+000009 |  * Webon汎用照会ベースクラス　稼動店舗管理マスタSelect Baseクラス
+000010 |  * 
+000011 |  * @author Minori 吉津
+000012 |  * 
+000013 |  * @date	H24.04.15	吉津			新規作成
+000014 |  * @date	2020.02.06	京極　		webonのFW化対応
+000015 |  */
+000016 | public class SelectOperationBranchMstBase extends CommonBaseSelect {
+000017 | 	//DB名
+000018 | 	final String dbname = "NAVI.ＵＪ稼動店舗管理マスタ";
+000019 | 	//DBキー
+000020 | 	public static final String DBKEY_BRANGHNO = "店番";
+000021 | 	public static final String DBKEY_TRADEBRCODE = "取引店舗コード";
+000022 | 	public static final String DBKEY_ACCESSPOINT  = "接続先";
+000023 | 	public static final String DBKEY_ACTIVEFLAG = "取引可能フラグ";
+000024 | 	
+000025 | 	/**
+000026 | 	 * コンストラクタ
+000027 | 	 * 
+000028 | 	 * @param Connection
+000029 | 	 */
+000030 | 	public SelectOperationBranchMstBase(Connection con) {
+000031 | 		super(con);
+000032 | 		// TODO Auto-generated constructor stub
+000033 | 	}
+000034 | 	/** 
+000035 | 	  * 参照ＤＢ（NAVI.ＵＪ稼動店舗管理マスタ）
+000036 | 	  * 全レコードを取得する(全項目)
+000037 | 	  *	
+000038 | 	  * @return boolean
+000039 | 	  * @throws SQLException
+000040 | 	  */
+000041 | 	public boolean selectOperationBranchNo() throws SQLException {
+000042 | 		//SQL編集
+000043 | 		StringBuffer sb = new StringBuffer();
+000044 | 		sb.append("SELECT *");
+000045 | 		sb.append(" FROM " + dbname);
+000046 | 		sb.append(" ORDER BY " + DBKEY_BRANGHNO);
+000047 | 		
+000048 | 
+000049 | 		try {
+000050 | 			execute(sb.toString());
+000051 | 		} catch (SQLException e) {
+000052 | 			throw e;
+000053 | 		}
+000054 | 
+000055 | 		if (getList() != null) {
+000056 | 			return true;
+000057 | 		} else{
+000058 | 			return false;
+000059 | 		}
+000060 | 	}
+000061 | 	/** 
+000062 | 	  * 参照ＤＢ（NAVI.ＵＪ稼動店舗管理マスタ）
+000063 | 	  * 店番をキーに該当するレコードを取得する
+000064 | 	  * @param  String 店番	
+000065 | 	  *
+000066 | 	  * @return boolean
+000067 | 	  * @throws SQLException
+000068 | 	  */
+000069 | 	public boolean selectByBrno(String brno) throws SQLException {
+000070 | 		//SQL編集
+000071 | 		StringBuffer sb = new StringBuffer();
+000072 | 		sb.append("SELECT ");
+000073 | 		sb.append(" ").append(DBKEY_BRANGHNO);
+000074 | 		sb.append(",").append(DBKEY_TRADEBRCODE);
+000075 | 		sb.append(",").append(DBKEY_ACCESSPOINT);
+000076 | 		sb.append(",").append(DBKEY_ACTIVEFLAG);
+000077 | 		sb.append(" FROM ").append(dbname);
+000078 | 		sb.append(" WHERE ").append(DBKEY_BRANGHNO).append("=").append(brno);
+000079 | 
+000080 | 		try {
+000081 | 			execute(sb.toString());
+000082 | 		} catch (SQLException e) {
+000083 | 			throw e;
+000084 | 		}
+000085 | 
+000086 | 		if (getList() != null) {
+000087 | 			return true;
+000088 | 		} else{
+000089 | 			return false;
+000090 | 		}
+000091 | 	}
+000092 | 	/** 
+000093 | 	  * 参照ＤＢ（NAVI.ＵＪ稼動店舗管理マスタ）
+000094 | 	  * 店番をキーに、取引可能店舗のレコードを取得する
+000095 | 	  * @param  String 店番	
+000096 | 	  *
+000097 | 	  * @return boolean
+000098 | 	  * @throws SQLException
+000099 | 	  */
+000100 | 	public boolean selectNotActiveByBrno(String brno) throws SQLException {
+000101 | 		//SQL編集
+000102 | 		StringBuffer sb = new StringBuffer();
+000103 | 		sb.append("SELECT ");
+000104 | 		sb.append(" ").append(DBKEY_BRANGHNO);
+000105 | 		sb.append(",").append(DBKEY_TRADEBRCODE);
+000106 | 		sb.append(",").append(DBKEY_ACCESSPOINT);
+000107 | 		sb.append(",").append(DBKEY_ACTIVEFLAG);
+000108 | 		sb.append(" FROM ").append(dbname);
+000109 | 		sb.append(" WHERE ").append(DBKEY_BRANGHNO).append("=").append(brno);
+000110 | 		sb.append(" AND ").append(DBKEY_ACTIVEFLAG).append("=").append("'1'");
+000111 | 
+000112 | 		try {
+000113 | 			execute(sb.toString());
+000114 | 		} catch (SQLException e) {
+000115 | 			throw e;
+000116 | 		}
+000117 | 
+000118 | 		if (getList() != null) {
+000119 | 			return true;
+000120 | 		} else{
+000121 | 			return false;
+000122 | 		}
+000123 | 	}
+000124 | }

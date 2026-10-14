@@ -1,0 +1,77 @@
+000001 | package webon.base;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.sql.SQLException;
+000005 | 
+000006 | import webon.util.ConvertUtil;
+000007 | 
+000008 | 
+000009 | import common.base.CommonBase;
+000010 | 
+000011 | /**
+000012 |  * Webon汎用照会ベースクラス　パス管理ステータスInsert Baseクラス
+000013 |  * 
+000014 |  * @author Minori 京極
+000015 |  * 
+000016 |  * @date	2020.02.13		京極		新規作成
+000017 |  */
+000018 | public class InsertPathMngStatBase extends CommonBase{
+000019 | 
+000020 | 	public InsertPathMngStatBase(Connection connection) {
+000021 | 		super(connection);
+000022 | 		// TODO Auto-generated constructor stub
+000023 | 	}
+000024 | 	//DB名
+000025 | 	public static final String DBNAME = "NAVI.ＵＳパス管理ステータス";
+000026 | 	//DBキー
+000027 | 	public static final String DBKEY_ACCESSPOINT="接続先";
+000028 | 	public static final String DBKEY_PATHNUM="パス使用数";
+000029 | 	public static final String DBKEY_LIMPATHNUM="制限パス使用数";
+000030 | 	public static final String DBKEY_MKDATE = "作成日";
+000031 | 	public static final String DBKEY_MKTIME = "作成時刻";
+000032 | 	public static final String DBKEY_UPDATE = "更新日";
+000033 | 	public static final String DBKEY_UPTIME = "更新時刻";
+000034 | 	public static final int DBVAL_INITPATHNUM = 0;
+000035 | 	public static final int DBVAL_INITPATHNUMLIM = 0;
+000036 | 	/** 
+000037 | 	  * レコードを新規に作成する
+000038 | 	  * 
+000039 | 	  * @param String 接続先(IPアドレス)
+000040 | 	  * @throws Exception 
+000041 | 	  */
+000042 | 	public void insertPathNo(String ip) throws Exception {
+000043 | 
+000044 | 		//SQL編集
+000045 | 		StringBuffer sb = new StringBuffer();
+000046 | 
+000047 | 		sb.append("INSERT INTO ").append(DBNAME);
+000048 | 
+000049 | 		sb.append(" (").append(DBKEY_ACCESSPOINT);
+000050 | 		sb.append(" ,").append(DBKEY_PATHNUM);
+000051 | 		sb.append(" ,").append(DBKEY_LIMPATHNUM);
+000052 | 		sb.append(" ,").append(DBKEY_MKDATE);
+000053 | 		sb.append(" ,").append(DBKEY_MKTIME);
+000054 | 		sb.append(" ,").append(DBKEY_UPDATE);
+000055 | 		sb.append(" ,").append(DBKEY_UPTIME);
+000056 | 		sb.append(" )");
+000057 | 
+000058 | 		sb.append(" VALUES");
+000059 | 		sb.append("(").append(ConvertUtil.dbMoldStr(ip, 15));
+000060 | 		sb.append(",").append(ConvertUtil.dbMoldInt(DBVAL_INITPATHNUM, 3));
+000061 | 		sb.append(",").append(ConvertUtil.dbMoldInt(DBVAL_INITPATHNUMLIM, 3));
+000062 | 		sb.append(",").append(ConvertUtil.dbGetDate());
+000063 | 		sb.append(",").append(ConvertUtil.dbGetTime());
+000064 | 		sb.append(",").append(ConvertUtil.dbGetDate());
+000065 | 		sb.append(",").append(ConvertUtil.dbGetTime());
+000066 | 		sb.append(")");
+000067 | 		
+000068 | 		try {
+000069 | 			execute(sb.toString());
+000070 | 		} catch (SQLException e) {
+000071 | 			throw e;
+000072 | 		}
+000073 | 		
+000074 | 	}
+000075 | 	
+000076 | 
+000077 | }

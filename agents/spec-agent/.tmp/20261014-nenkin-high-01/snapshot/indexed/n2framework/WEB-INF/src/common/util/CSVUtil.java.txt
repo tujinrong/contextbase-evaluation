@@ -1,0 +1,85 @@
+000001 | package common.util;
+000002 | 
+000003 | import java.io.BufferedOutputStream;
+000004 | import java.io.ByteArrayOutputStream;
+000005 | import java.util.Vector;
+000006 | 
+000007 | import javax.servlet.http.HttpServletResponse;
+000008 | 
+000009 | public class CSVUtil {
+000010 | 
+000011 | 	/**
+000012 | 	* Vector(［行数］[列数])を明細データとしてＣＳＶを作成する
+000013 | 	*
+000014 | 	* @param	res				HttpServletResponse
+000015 | 	* @param	fixedData		タイトル部格納配列　<不要な場合は、nullをセット>
+000016 | 	* @param	variableData	可変フィールド格納Vector(［行数］[列数])
+000017 | 	*
+000018 | 	* @return なし
+000019 | 	* 
+000020 | 	* @date	H22.9.6		青木・浅見		センター集約対応なし
+000021 | 	*/
+000022 | 
+000023 | 	public void writeCsv(HttpServletResponse res,String[] fixedData,Vector variableData) 
+000024 |       	throws Exception {
+000025 | 
+000026 | 
+000027 | 		StringBuffer sb = new StringBuffer ( 1024 ); 
+000028 | 
+000029 | 		//固定フィールド有無チェック
+000030 | 		//NECIKO if ( fixedData==null || fixedData[0]==""){
+000031 | 		if ( fixedData==null || fixedData[0].equals("")){
+000032 | 		} 
+000033 | 		else {
+000034 | 			// 項目名をセット
+000035 | 			for (int i = 0; i < fixedData.length; i++) {
+000036 | 				sb.append( "\"" + new String(fixedData[i].getBytes(), "Windows-31J") + "\"," );
+000037 | 			}
+000038 | 			//タイトル行の最後の","を"\r"に置換
+000039 | 			sb.replace(sb.length() - 1,sb.length(), "\r" );
+000040 | 		}
+000041 | 
+000042 | 
+000043 | 		//selectされたレコード数だけ繰り返す
+000044 | 		for(int i = 0 ; i < variableData.size(); i++){
+000045 | 			//selectされた１レコード分の項目がvecに格納されている
+000046 | 			Vector vec= (Vector)variableData.get(i);
+000047 | 			
+000048 | 			for(int ii = 0 ; ii < vec.size(); ii++){
+000049 | 
+000050 | 				sb.append( "\"" + new String(vec.get(ii).toString().getBytes(), "Windows-31J") + "\"," );
+000051 | 			
+000052 | 			}
+000053 | 			//各明細行の最後の","を"\r"に置換
+000054 | 			sb.replace(sb.length() - 1,sb.length(), "\r" );
+000055 | 			
+000056 | 		}
+000057 | 
+000058 | 		String fileName= CommonUtil.getCurrentDate("HHmmss") + ".csv";
+000059 | 		res.setContentType("application/octet-dummy-stream");
+000060 | 		res.setHeader("Content-Disposition", "attachment; filename=" + fileName);
+000061 | 
+000062 | 	    try {
+000063 | 			//バイト配列出力ストリームを新しく作成します
+000064 | 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+000065 | 
+000066 | 			byte[] data = sb.toString().getBytes();
+000067 | 			if(data != null) {
+000068 | 				baos.write(data);
+000069 | 			}	
+000070 | 			//出力ストリームのバッファリング 
+000071 | 			BufferedOutputStream bout = new BufferedOutputStream(res.getOutputStream());
+000072 | 				
+000073 | 			//バイト配列出力ストリームのすべての内容を、指定された出力ストリーム引数に書き込みます
+000074 | 			baos.writeTo(bout);
+000075 | 
+000076 | 			baos.close();
+000077 | 			bout.close();
+000078 | 
+000079 | 		} catch(Exception e){
+000080 | 			throw e;
+000081 | 			//throw new CifApplicationException("9001-02ＣＳＶ作成エラー　" +  e.getMessage());
+000082 | 		}
+000083 | 	}
+000084 | 
+000085 | }

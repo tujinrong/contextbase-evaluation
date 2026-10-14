@@ -1,0 +1,123 @@
+000001 | package webon;
+000002 | 
+000003 | import java.util.List;
+000004 | import java.util.Map;
+000005 | 
+000006 | /**
+000007 |  * Webon汎用照会　Webon汎用照会用エクセプションクラス
+000008 |  * webon照会結果のエラー情報を管理する
+000009 |  * 
+000010 |  * @author Minori 加瀬
+000011 |  * 
+000012 |  * @date	H24.11.01			新規作成
+000013 |  * @date 	R02.02.06	京極		webonのFW化対応
+000014 |  */
+000015 | public class WebonException extends Exception {
+000016 | 	
+000017 | 	private static final long serialVersionUID = 1L;
+000018 | 	
+000019 | 	//コンストラクタ
+000020 | 	public WebonException (String msg)
+000021 | 	{
+000022 | 		super(msg);
+000023 | 	}
+000024 | 	public WebonException (String msg,WebonBase wob) {
+000025 | 		super(msg);
+000026 | 		setWebonBase(wob);
+000027 | 		setResult(webonBase.getStringResult());
+000028 | 		setErrcode(webonBase.getErrCode());
+000029 | 		setErrdetail(webonBase.getErrDetail());
+000030 | 	}
+000031 | 	//フィールド
+000032 | 	//webon情報
+000033 | 	private WebonBase webonBase;
+000034 | 	private String operationId;
+000035 | 	private String errcode;			//エラーコード
+000036 | 	private String errdetail;		//詳細
+000037 | 	private String result;			//結果表示
+000038 | 	//顧客情報
+000039 | 	private String cif;
+000040 | 	private String brno;
+000041 | 	private String subcode;
+000042 | 	private String accno;
+000043 | 	//エラーステータス(0:Error、1:Warning)
+000044 | 	private int errStat;
+000045 | 	//エラー箇所(0:取得、1:解析、2:成型)
+000046 | 	private String errSpot;
+000047 | 	//追加情報　個々にエラー項目を足していく
+000048 | 	private List<Map<String, String>> etc;
+000049 | 	
+000050 | 	//getter,setter
+000051 | 	public WebonBase getWebonBase() {
+000052 | 		return webonBase;
+000053 | 	}
+000054 | 	public void setWebonBase(WebonBase webonBase) {
+000055 | 		this.webonBase = webonBase;
+000056 | 	}
+000057 | 	public String getOperationId() {
+000058 | 		return operationId;
+000059 | 	}
+000060 | 	public void setOperationId(String operationId) {
+000061 | 		this.operationId = operationId;
+000062 | 	}
+000063 | 	public String getErrcode() {
+000064 | 		return errcode;
+000065 | 	}
+000066 | 	public void setErrcode(String errcode) {
+000067 | 		this.errcode = errcode;
+000068 | 	}
+000069 | 	public String getErrdetail() {
+000070 | 		return errdetail;
+000071 | 	}
+000072 | 	public void setErrdetail(String errdetail) {
+000073 | 		this.errdetail = errdetail;
+000074 | 	}
+000075 | 	public String getResult() {
+000076 | 		return result;
+000077 | 	}
+000078 | 	public void setResult(String result) {
+000079 | 		this.result = result;
+000080 | 	}
+000081 | 	public String getCif() {
+000082 | 		return cif;
+000083 | 	}
+000084 | 	public void setCif(String cif) {
+000085 | 		this.cif = cif;
+000086 | 	}
+000087 | 	public String getBrno() {
+000088 | 		return brno;
+000089 | 	}
+000090 | 	public void setBrno(String brno) {
+000091 | 		this.brno = brno;
+000092 | 	}
+000093 | 	public String getSubcode() {
+000094 | 		return subcode;
+000095 | 	}
+000096 | 	public void setSubcode(String subcode) {
+000097 | 		this.subcode = subcode;
+000098 | 	}
+000099 | 	public String getAccno() {
+000100 | 		return accno;
+000101 | 	}
+000102 | 	public void setAccno(String accno) {
+000103 | 		this.accno = accno;
+000104 | 	}
+000105 | 	public List<Map<String, String>> getEtc() {
+000106 | 		return etc;
+000107 | 	}
+000108 | 	public void setEtc(List<Map<String, String>> etc) {
+000109 | 		this.etc = etc;
+000110 | 	}
+000111 | 	public int getErrStat() {
+000112 | 		return errStat;
+000113 | 	}
+000114 | 	public void setErrStat(int errStat) {
+000115 | 		this.errStat = errStat;
+000116 | 	}
+000117 | 	public String getErrSpot() {
+000118 | 		return errSpot;
+000119 | 	}
+000120 | 	public void setErrSpot(String errSpot) {
+000121 | 		this.errSpot = errSpot;
+000122 | 	}
+000123 | }

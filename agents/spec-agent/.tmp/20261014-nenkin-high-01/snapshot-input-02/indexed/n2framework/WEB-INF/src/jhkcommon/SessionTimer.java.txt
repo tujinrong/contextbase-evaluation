@@ -1,0 +1,121 @@
+000001 | package jhkcommon;
+000002 | 
+000003 | /**
+000004 |  * 
+000005 |  * SessionTimer.java
+000006 |  * 
+000007 |  * 	@date	H22.8.19	青木・浅見		センター集約対応なし
+000008 |  * 
+000009 |  */
+000010 | 
+000011 | /**
+000012 |  * SessionTimer
+000013 |  * 
+000014 |  * タイマー機能
+000015 |  */
+000016 | public class SessionTimer implements java.lang.Runnable {
+000017 | 	private long _time;
+000018 | 	private TimerHandler _handler;
+000019 | 	private Thread _thread;
+000020 | 	private Object _userInfo = null;
+000021 | 
+000022 | 	/**
+000023 | 	 * コンストラクタ.
+000024 | 	 */
+000025 | 	protected SessionTimer(long time, TimerHandler handler) {
+000026 | 		this.setTime(time);
+000027 | 		this.setHandler(handler);
+000028 | 	}
+000029 | 
+000030 | 	/**
+000031 | 	 * コンストラクタ.
+000032 | 	 */
+000033 | 	protected SessionTimer(TimerHandler handler) {
+000034 | 		this.setHandler(handler);
+000035 | 	}
+000036 | 
+000037 | 	/**
+000038 | 	 * タイマーを開始します。.
+000039 | 	 */
+000040 | 	protected void start() throws IllegalThreadStateException, SecurityException {
+000041 | 		this.setThread(new Thread(this));
+000042 | 		this.getThread().setDaemon(true);
+000043 | 		this.getThread().start();
+000044 | 	}
+000045 | 
+000046 | 	/**
+000047 | 	 * タイマーを再開します。.
+000048 | 	 */
+000049 | 	protected void restart() throws IllegalThreadStateException, SecurityException {
+000050 | 		this.cancel();
+000051 | 		this.start();
+000052 | 	}
+000053 | 
+000054 | 	/**
+000055 | 	 * タイマーをキャンセルします。.
+000056 | 	 */
+000057 | 	protected void cancel() {
+000058 | 		if (this.getThread() != null) {
+000059 | 			this.setThread(null);
+000060 | 		}
+000061 | 	}
+000062 | 
+000063 | 	public void run() {
+000064 | 		long toWait = this.getTime();
+000065 | 		if (toWait > 0) {
+000066 | 			try {
+000067 | 				Thread.sleep(toWait);
+000068 | 			} catch (InterruptedException e) {
+000069 | 			}
+000070 | 		}
+000071 | 		Thread thread = this.getThread();
+000072 | 		if (thread == Thread.currentThread()) {
+000073 | 			TimerHandler handler = this.getHandler();
+000074 | 			synchronized (handler) {
+000075 | 				if (thread == Thread.currentThread()) {
+000076 | 					handler.handleTimer((Object)_userInfo);
+000077 | 				} else {
+000078 | 				}
+000079 | 			}
+000080 | 			this.setThread(null);
+000081 | 		} else {
+000082 | 		}
+000083 | 	}
+000084 | 
+000085 | 	//--------------------------------------------------------------
+000086 | 	// getter / setter
+000087 | 	//--------------------------------------------------------------
+000088 | 
+000089 | 	protected long getTime() {
+000090 | 		return _time;
+000091 | 	}
+000092 | 
+000093 | 	protected void setTime(long time) {
+000094 | 		_time = time;
+000095 | 	}
+000096 | 
+000097 | 	protected TimerHandler getHandler() {
+000098 | 		return _handler;
+000099 | 	}
+000100 | 
+000101 | 	protected void setHandler(TimerHandler handler) {
+000102 | 		_handler = handler;
+000103 | 	}
+000104 | 
+000105 | 	protected Thread getThread() {
+000106 | 		return _thread;
+000107 | 	}
+000108 | 
+000109 | 	protected void setThread(Thread thread) {
+000110 | 		_thread = thread;
+000111 | 	}
+000112 | 
+000113 | 	protected Object getUserInfo() {
+000114 | 		return _userInfo;
+000115 | 	}
+000116 | 
+000117 | 	protected void setUserInfo(Object obj) {
+000118 | 		_userInfo = obj;
+000119 | 	}
+000120 | }
+000121 | 

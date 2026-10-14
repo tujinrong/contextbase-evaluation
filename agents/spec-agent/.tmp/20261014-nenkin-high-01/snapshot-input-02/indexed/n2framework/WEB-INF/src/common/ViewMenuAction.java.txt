@@ -1,0 +1,124 @@
+000001 | /*
+000002 |  * 作成日: 2017/05/15
+000003 |  *
+000004 |  */
+000005 | package common;
+000006 | 
+000007 | import java.sql.Connection;
+000008 | import java.sql.SQLException;
+000009 | import java.util.List;
+000010 | import java.util.Map;
+000011 | 
+000012 | import javax.naming.InitialContext;
+000013 | import javax.servlet.http.HttpServletRequest;
+000014 | import javax.servlet.http.HttpServletResponse;
+000015 | import javax.servlet.http.HttpSession;
+000016 | 
+000017 | import common.base.SearchLoginInfoBase;
+000018 | import common.bean.LoginInfoBean;
+000019 | import common.util.CommonConverter;
+000020 | 
+000021 | /**
+000022 |  * 代行店舗選択画面　表示共通アクションクラス
+000023 |  * （マーケティングプランナー　ログイン情報の書換え）
+000024 |  *
+000025 |  * @author Minoei 山口
+000026 |  * 
+000027 |  * @date
+000028 |  *   
+000029 |  */
+000030 | public class ViewMenuAction extends CommonAction {
+000031 | 
+000032 | 	/**
+000033 | 	 * アクション実行メソッド
+000034 | 	 * 
+000035 | 	 * @param req リクエスト
+000036 | 	 * @param res レスポンス
+000037 | 	 * @return ＪＳＰ名
+000038 | 	 */
+000039 | 	public String perform(HttpServletRequest req, HttpServletResponse res) throws Exception {
+000040 | 		HttpSession session = req.getSession();
+000041 | 
+000042 | 		//リクエスト項目の取得（取得したら上書き禁止にするため「final」宣言）
+000043 | 		final String hdn_br = CommonConverter.getAdd0String(req.getParameter("HDN_BR"),3);
+000044 | 		final String hdn_tenpo_name = req.getParameter("HDN_TENPO_NAME");
+000045 | 
+000046 | 
+000047 | 		//ログイン情報取得
+000048 | 		LoginInfoBean loginInfo = (LoginInfoBean)session.getAttribute(CommonConst.SS_LOGIN_INFO_BEAN);
+000049 | 		String applName =  loginInfo.getアプリケーション名();
+000050 | 		String sUser = loginInfo.get融資系ユーザーＩＤ();
+000051 | 		String login_br = CommonConverter.getAdd0String(loginInfo.get所属店番(),3);
+000052 | 		
+000053 | 		
+000054 | 		//支店の変更がなかった場合はメニュー画面に遷移するだけ
+000055 | 		if((login_br).equals(hdn_br)){
+000056 | 						
+000057 | 			session.removeAttribute(CommonConst.SS_JSP_BEAN);
+000058 | 			return "./JSP/MENU/Menu.jsp";			
+000059 | 			
+000060 | 		//支店の変更があった場合はLoginInfoBeanを再作成する
+000061 | 		}else{
+000062 | 
+000063 | 			//ＤＢ検索
+000064 | 			Connection con = null;
+000065 | 	
+000066 | 			try {
+000067 | 				//DB接続
+000068 | 				InitialContext ic = new InitialContext();
+000069 | 				con = getConnection(ic, CommonConst.JDBC_ORACLE_SP2NM);			
+000070 | 				
+000071 | 				String creditUserId = "J" + hdn_br + sUser.substring(4,7);
+000072 | 				
+000073 | 				//ＷＥＢログイン状況表検索データ取得
+000074 | 				SearchLoginInfoBase base = new SearchLoginInfoBase(con);
+000075 | 				base.selectＷＥＢログイン情報表(applName,creditUserId);
+000076 | 				List lsWebLogin = base.getList();
+000077 | 				
+000078 | 				loginInfo.set融資系ユーザーＩＤ(creditUserId);
+000079 | 				loginInfo.set所属店名(hdn_tenpo_name);
+000080 | 				
+000081 | 	
+000082 | 				//検索結果が０件の場合、ログインＮＧ
+000083 | 				if(lsWebLogin == null || lsWebLogin.isEmpty()){
+000084 | 	
+000085 | 					FWLog.error(this.getClass(), "ＷＥＢログイン状況表の取得に失敗");
+000086 | 					throw new Exception();
+000087 | 	
+000088 | 				} else {
+000089 | 	
+000090 | 					Map mapWebLogin = (Map)lsWebLogin.get(0);
+000091 | 	
+000092 | 					loginInfo.set融資系ユーザー名((String)mapWebLogin.get("融資系ユーザー名"));
+000093 | 					loginInfo.set所属店番(CommonConverter.getAdd0String((String)mapWebLogin.get("融資系所属店番"),3));
+000094 | 					loginInfo.set債権書類権限(CommonConverter.convertInt((String)mapWebLogin.get("債権書類権限")));
+000095 | 					loginInfo.set決算書権限(CommonConverter.convertInt((String)mapWebLogin.get("決算書権限")));
+000096 | 					loginInfo.setＣＲＤ権限(CommonConverter.convertInt((String)mapWebLogin.get("ＣＲＤ権限")));
+000097 | 					loginInfo.set格付権限(CommonConverter.convertInt((String)mapWebLogin.get("格付権限")));
+000098 | 					loginInfo.set自己査定権限(CommonConverter.convertInt((String)mapWebLogin.get("自己査定権限")));
+000099 | 	
+000100 | 				}
+000101 | 				
+000102 | 	
+000103 | 				session.removeAttribute(CommonConst.SS_JSP_BEAN);
+000104 | 				session.setAttribute(CommonConst.SS_LOGIN_INFO_BEAN, loginInfo);
+000105 | 				return "./JSP/MENU/Menu.jsp";
+000106 | 	
+000107 | 			} catch (Exception e) {
+000108 | 				try {
+000109 | 					if (con != null) con.rollback();
+000110 | 				} catch (SQLException e1) {
+000111 | 					FWLog.error(e1);
+000112 | 				}
+000113 | 				throw e;
+000114 | 			} finally {
+000115 | 				try {
+000116 | 					if (con != null) con.close();
+000117 | 					con = null;
+000118 | 				} catch (SQLException e1) {
+000119 | 					FWLog.error(e1);
+000120 | 				}
+000121 | 			}
+000122 | 		}			
+000123 | 	}	
+000124 | }

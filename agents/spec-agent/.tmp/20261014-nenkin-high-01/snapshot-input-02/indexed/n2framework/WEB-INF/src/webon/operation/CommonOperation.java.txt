@@ -1,0 +1,130 @@
+000001 | package webon.operation;
+000002 | 
+000003 | import java.util.ArrayList;
+000004 | 
+000005 | import org.w3c.dom.Node;
+000006 | 
+000007 | import webon.WebonBase;
+000008 | import webon.util.FixedValue;
+000009 | 
+000010 | /**
+000011 |  * webonオペレーションクラスのスーパークラス。
+000012 |  * 各種webon照会のオペレーションクラスは、必ずこのクラスを継承する。
+000013 |  *
+000014 |  * @author shinsuke Kyogoku
+000015 |  *
+000016 |  * @date	2020.02.13		京極		新規作成
+000017 |  */
+000018 | public abstract class CommonOperation {
+000019 | 	//webon情報
+000020 | 	protected WebonBase webonBase;
+000021 | 	
+000022 | 	//以下UTILITY
+000023 | 	//以下、ユーティリティ的メソッド
+000024 | 	/**
+000025 | 	 * Nodeの直下にあるテキストエレメントのVALUEを取得する
+000026 | 	 * 
+000027 | 	 * @param Node 親ノード
+000028 | 	 * @return String VALUE値
+000029 | 	 */
+000030 | 	protected String getChildText(Node elem) {
+000031 | 		String textValue="";
+000032 | 		Node child =elem.getFirstChild();
+000033 |         while (true) {
+000034 |         	//取得できてなかったら終わり
+000035 |         	if (child==null){break;}
+000036 | 	     	if (child.getNodeType()==Node.TEXT_NODE){
+000037 |         		textValue=child.getNodeValue();
+000038 |         		break;
+000039 |         	}
+000040 |         	//次の子ノードを取得
+000041 |         	child = child.getNextSibling();
+000042 |         }
+000043 | 		return textValue;
+000044 | 	}
+000045 | 	/**
+000046 | 	 * 次のエレメントノードを取得する
+000047 | 	 * 
+000048 | 	 * @param Node
+000049 | 	 * @return Node
+000050 | 	 */
+000051 | 	protected Node getNextElement(Node elem){
+000052 | 		while (true) {
+000053 | 			elem=elem.getNextSibling();
+000054 | 			if (elem==null) {return elem;}
+000055 | 			if (elem.getNodeType()==Node.ELEMENT_NODE){
+000056 | 				return elem;
+000057 | 			}
+000058 | 		}
+000059 | 	}
+000060 | 	/**
+000061 | 	 * 次のエレメントノードを取得する(現ノード含む)
+000062 | 	 * 
+000063 | 	 * @param Node
+000064 | 	 * @return Node
+000065 | 	 */
+000066 | 	protected Node getNextElement2(Node elem){
+000067 | 		while (true) {
+000068 | 			if (elem==null) {return elem;}
+000069 | 			if (elem.getNodeType()==Node.ELEMENT_NODE){
+000070 | 				return elem;
+000071 | 			}
+000072 | 			elem=elem.getNextSibling();
+000073 | 		}
+000074 | 	}
+000075 | 	/**
+000076 | 	 * LINE行抽出メソッド
+000077 | 	 * （webon問合せ結果のXMLからLINE行を抽出し、リストに変換する）
+000078 | 	 * @param  WebonBase webon問合せ結果
+000079 | 	 * @retrun List
+000080 | 	 * 
+000081 | 	 * @throws Exception 
+000082 | 	 */
+000083 | 	public ArrayList<String> getLineByXML() throws Exception {
+000084 | 		final String WOKEY_TSUCYO="通帳部宛";
+000085 | 		final String WOKEY_LINE="LINE";
+000086 | 		ArrayList<String> lineList = new ArrayList<String>();
+000087 | 		
+000088 | 		//出力データの取得
+000089 | 		Node output = webonBase.getOutputData();
+000090 | 
+000091 | 		//Line行の最上位ノードを取得する
+000092 | 		Node root=output.getFirstChild();
+000093 | 		for (int roopCount=0;roopCount<FixedValue.SYS_WBNUMLIMIT;roopCount++){
+000094 |         	//取得できなかったら終わり
+000095 |         	if (root==null){break;}
+000096 | 	    	if (root.getNodeType()==Node.ELEMENT_NODE) {
+000097 | 	    		//要素名の解析
+000098 | 	    		if (root.getNodeName().equals(WOKEY_TSUCYO)) {
+000099 | 	    			//rootの内容保持したままループをぬける
+000100 | 	    			break;
+000101 | 	    		}
+000102 | 	    	}
+000103 | 	    	//次のノード取得
+000104 | 	    	root = root.getNextSibling();
+000105 | 		}
+000106 | 		
+000107 | 		//Line行の取得
+000108 | 		Node line=root.getFirstChild();
+000109 | 		String lineString;
+000110 | 		//Line行を順次読み込んでいく
+000111 | 		for (int roopCount=0;roopCount<FixedValue.SYS_WBNUMLIMIT;roopCount++){
+000112 |         	//取得できなかったら終わり
+000113 |         	if (line==null){break;}
+000114 | 	    	if (line.getNodeType()==Node.ELEMENT_NODE) {
+000115 | 	    		//要素名の解析
+000116 | 	    		if (line.getNodeName().equals(WOKEY_LINE)) {
+000117 | 	    			//Line行なら、結果をリストに保管
+000118 | 	    			lineString=WebonBase.getChildText(line);
+000119 | 	    			if (lineString==null) {lineString="";}
+000120 | 	    			lineList.add(lineString);
+000121 | 	    		}
+000122 | 	    	}
+000123 | 	    	//次のノード取得
+000124 | 	    	line = line.getNextSibling();
+000125 | 		}
+000126 | 		
+000127 | 		//LINE行を格納したリストを返却
+000128 | 		return lineList;
+000129 | 	}
+000130 | }

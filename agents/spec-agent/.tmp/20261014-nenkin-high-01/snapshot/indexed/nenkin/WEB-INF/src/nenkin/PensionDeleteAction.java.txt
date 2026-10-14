@@ -1,0 +1,36 @@
+000001 | package nenkin;
+000002 | 
+000003 | import javax.servlet.http.HttpServletRequest;
+000004 | import javax.servlet.http.HttpServletResponse;
+000005 | import nenkin.model.PensionReservation;
+000006 | import nenkin.model.StaffContext;
+000007 | import nenkin.service.PensionRepository;
+000008 | 
+000009 | public final class PensionDeleteAction extends NenkinBaseAction {
+000010 | 	public String perform(HttpServletRequest request, HttpServletResponse response) {
+000011 | 		if (!requireStaff(request)) return STAFF_JSP;
+000012 | 		PensionReservation value = readReservation(request);
+000013 | 		if (!isAuthorizedMutation(request)) { setViewBean(request.getSession(), pensionBean(value, INVALID_REQUEST_MESSAGE, false, request.getSession())); return PENSION_JSP; }
+000014 | 		if (value.getBranchNo() == null) { setViewBean(request.getSession(), pensionBean(value, "店番は必ず入力してください", true, request.getSession())); return PENSION_JSP; }
+000015 | 		if (value.getKanaName().length() == 0 || value.getPhoneNumber().length() == 0) { setViewBean(request.getSession(), pensionBean(value, "削除対象がありません。既存レコードを読み込んでから削除してください。", false, request.getSession())); return PENSION_JSP; }
+000016 | 		PensionRepository repository = PensionRepository.getInstance();
+000017 | 		PensionReservation existing = repository.findByKanaAndPhone(value.getKanaName(), value.getPhoneNumber());
+000018 | 		PensionReservation original = repository.findByKanaAndPhone(request.getParameter("ORIGINAL_KANA"), request.getParameter("ORIGINAL_PHONE"));
+000019 | 		if (existing == null || !sameReservationKey(existing, original)) {
+000020 | 			setViewBean(request.getSession(), pensionBean(existing == null ? value : existing,
+000021 | 				"削除対象を参照画面またはキー入力から読み込んでください。", existing != null, request.getSession()));
+000022 | 			return PENSION_JSP;
+000023 | 		}
+000024 | 		StaffContext staff = currentStaff(request.getSession());
+000025 | 		if (isRestrictedStaff(staff)) {
+000026 | 			setViewBean(request.getSession(), pensionBean(existing,
+000027 | 				"権限が不足しています。削除を行う場合には\r\n推進役以上の方が削除してください。",
+000028 | 				true, request.getSession()));
+000029 | 			return PENSION_JSP;
+000030 | 		}
+000031 | 		boolean deleted = repository.delete(value.getKanaName(), value.getPhoneNumber(), Integer.valueOf(staff.getStaffNo()));
+000032 | 		String message = deleted ? "削除終了！" : "削除対象が見つかりません。";
+000033 | 		setViewBean(request.getSession(), pensionBean(deleted ? repository.createEmpty(staff) : value, message, !deleted, request.getSession()));
+000034 | 		return PENSION_JSP;
+000035 | 	}
+000036 | }

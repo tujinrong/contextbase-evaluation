@@ -1,0 +1,116 @@
+{
+  "schema": "spec-agent-cover-format-candidate/2",
+  "createdUtc": "2026-10-14T01:33:17.905616+00:00",
+  "status": "PREPARED_NOT_AUTHORING",
+  "oldPinsBeforeAfter": {
+    "D:\\開発\\contextbase-evaluation\\agents\\spec-agent\\.tmp\\20261014-nenkin-high-01\\delivery\\delivery_model_v2_62_r01.py": "d85cdc40ec8bcad7eadd174b15254212164aa0c129178347fe6a4838d87dfaf4",
+    "D:\\開発\\contextbase-evaluation\\agents\\spec-agent\\.tmp\\20261014-nenkin-high-01\\delivery\\build_xlsx_v2_62_r01.mjs": "d70a0eb222b68869e93e8bd33f2b4e415e6553698f75d0931f96c3fa24a8e5c8",
+    "D:\\開発\\contextbase-evaluation\\agents\\spec-agent\\.tmp\\20261014-nenkin-high-01\\delivery\\format-profile-v2-62-r01.json": "aeeffe5ce926b648ba678302340f22afc52c91775177f4b284da40a5b24e9d13"
+  },
+  "candidatePins": {
+    "D:\\開発\\contextbase-evaluation\\agents\\spec-agent\\.tmp\\20261014-nenkin-high-01\\delivery\\delivery_model_v2_62_r02.py": "95e88eeef11aac830cfb63c1b0cf2e10b1b455b0d292b7e1769524b03257e13a",
+    "D:\\開発\\contextbase-evaluation\\agents\\spec-agent\\.tmp\\20261014-nenkin-high-01\\delivery\\build_xlsx_v2_62_r02.mjs": "b73991d39d017002512672838f4544309233629cd2c26dede6b22c80d6668b6d",
+    "D:\\開発\\contextbase-evaluation\\agents\\spec-agent\\.tmp\\20261014-nenkin-high-01\\delivery\\format-profile-v2-62-r02.json": "193200245e5dc6bce591bfcb8beb94c5a7ecb86856cf3ce6b94d39d525420d0d"
+  },
+  "changes": [
+    {
+      "label": "explicit-literal-cover-mapping-and-seven-empty-frames",
+      "old": "def new_sheet(name, role, columns):",
+      "new": "\nAPPROVAL_FRAMES = ['O23:Y23','Z23:AJ23','AK23:AU23','O24:Y28','Z24:AJ28','AK24:AU28']\nCOVER_EXTRA_FRAMES = APPROVAL_FRAMES + ['O36:AU36']\ndef cover_extra_operations(entry, preamble):\n    # Explicit caller mapping references an existing Markdown preamble table cell.\n    # Never guess approval/company values from source code, names or neighboring cells.\n    bindings=entry.get('coverBindings',[])\n    if not isinstance(bindings,list):raise ValueError('Explicit cover mapping must be a list')\n    tables=[b for b in preamble if b['kind']=='table'];selected={}\n    for item in bindings:\n        if set(item)!={'range','sourceTable','sourceRow','sourceColumn'}:raise ValueError('Unknown cover source mapping fields')\n        target=item['range']\n        if target not in COVER_EXTRA_FRAMES or target in selected:raise ValueError('Unknown/duplicate cover frame target')\n        indexes=[item[k] for k in ('sourceTable','sourceRow','sourceColumn')]\n        if any(type(n) is not int or n<0 for n in indexes):raise ValueError('Cover source indexes must be explicit nonnegative integers')\n        a,b,c=indexes\n        if a>=len(tables) or b>=len(tables[a]['matrix']) or c>=len(tables[a]['matrix'][b]):raise ValueError('Cover source cell outside original preamble')\n        value=tables[a]['matrix'][b][c]\n        if not isinstance(value,str) or len(value.encode('utf-16-le'))//2>32767 or any(ord(ch)<32 and ch not in '\\t\\r\\n' for ch in value):raise ValueError('Cover literal cannot be represented')\n        selected[target]=(value,tables[a]['sourceLines'],dict(item))\n    operations=[]\n    for target in COVER_EXTRA_FRAMES:\n        value,lines,binding=selected.get(target,('',None,None))\n        operation={'range':target,'value':value,'style':'cover-company-band' if target=='O36:AU36' else 'cover-cell','sourceLines':lines,'formatOnlyBlank':binding is None}\n        if binding:operation['sourceCellBinding']=binding\n        operations.append(operation)\n    return operations\n\ndef new_sheet(name, role, columns):"
+    },
+    {
+      "label": "cover-add-seven-format-only-merges",
+      "old": "        sheets.append(cover);used.add('表紙'.casefold())",
+      "new": "        cover['operations'].extend(cover_extra_operations(entry,preamble))\n        sheets.append(cover);used.add('表紙'.casefold())"
+    },
+    {
+      "label": "item-list-explicit-flag-for-print-plan",
+      "old": "sheet=new_sheet(decl['sheet'],'list',len(matrix[0]))\n                add_matrix",
+      "new": "sheet=new_sheet(decl['sheet'],'list',len(matrix[0]))\n                sheet['itemList']=section['heading']=='項目一覧'\n                add_matrix"
+    },
+    {
+      "label": "profile-id-interpreted-v2-basis",
+      "old": "'id':'v2-62-user-selected'",
+      "new": "'id':'v2-62-preserved-reference'"
+    },
+    {
+      "label": "builder-profile-id-interpreted-v2-basis",
+      "old": "'v2-62-user-selected'",
+      "new": "'v2-62-preserved-reference'"
+    },
+    {
+      "label": "company-band-top-thin-only",
+      "old": "        else if(operation.style==='cover-title')outside(range,'double','#595959');",
+      "new": "        else if(operation.style==='cover-title')outside(range,'double','#595959');\n        else if(operation.style==='cover-company-band')range.format.borders={top:{style:'thin',color:light}};"
+    }
+  ],
+  "syntheticTests": [
+    {
+      "name": "exact-seven-reference-ranges",
+      "pass": true
+    },
+    {
+      "name": "all-seven-values-default-blank",
+      "pass": true
+    },
+    {
+      "name": "company-only-top-thin-style",
+      "pass": true
+    },
+    {
+      "name": "approval-six-thin-cover-cell-style",
+      "pass": true
+    },
+    {
+      "name": "explicit-md-cell-value-copy-only",
+      "pass": true
+    },
+    {
+      "name": "explicit-md-cell-source-lines-bound",
+      "pass": true
+    },
+    {
+      "name": "duplicate-frame-rejected",
+      "pass": true
+    },
+    {
+      "name": "outside-AU-target-rejected",
+      "pass": true
+    },
+    {
+      "name": "unknown-mapping-field-rejected",
+      "pass": true
+    },
+    {
+      "name": "out-of-source-cell-rejected",
+      "pass": true
+    },
+    {
+      "name": "bool-source-index-rejected",
+      "pass": true
+    },
+    {
+      "name": "negative-source-index-rejected",
+      "pass": true
+    },
+    {
+      "name": "nonlist-mapping-rejected",
+      "pass": true
+    },
+    {
+      "name": "too-long-cover-source-cell-rejected",
+      "pass": true
+    }
+  ],
+  "pass": 14,
+  "businessInputRead": false,
+  "providerExecuted": false,
+  "artifactExecuted": false,
+  "markerExecuted": false,
+  "actualXlsxCreated": false,
+  "selectionBasis": "62-column V2 profile derives from requested preservation of existing V2 format; no literal user 62 instruction is claimed.",
+  "remaining": [
+    "Actual cover 14 merges/borders/AV-outside neutrality and all three formats must be read back/rendered after Artifact authoring.",
+    "Any cover binding must be caller-pinned and refer only to a literal cell present in unchanged MD preamble."
+  ]
+}

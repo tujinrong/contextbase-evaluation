@@ -1,0 +1,123 @@
+000001 | /*
+000002 |  * 作成日: 2007/05/24
+000003 |  *
+000004 |  */
+000005 | package common.pdf;
+000006 | 
+000007 | /*
+000008 |  * FWSessionTimer.java
+000009 |  */
+000010 | 
+000011 | /**
+000012 |  * FWSessionTimer
+000013 |  * 
+000014 |  * タイマー機能
+000015 |  * 
+000016 |  * @date	H22.9.3		青木・浅見		センター集約対応なし
+000017 |  */
+000018 | public class FWSessionTimer implements java.lang.Runnable {
+000019 | 	private long _time;
+000020 | 	private FWTimerHandler _handler;
+000021 | 	private Thread _thread;
+000022 | 	private Object _userInfo = null;
+000023 | 
+000024 | 	/**
+000025 | 	 * コンストラクタ.
+000026 | 	 */
+000027 | 	protected FWSessionTimer(long time, FWTimerHandler handler) {
+000028 | 		this.setTime(time);
+000029 | 		this.setHandler(handler);
+000030 | 	}
+000031 | 
+000032 | 	/**
+000033 | 	 * コンストラクタ.
+000034 | 	 */
+000035 | 	protected FWSessionTimer(FWTimerHandler handler) {
+000036 | 		this.setHandler(handler);
+000037 | 	}
+000038 | 
+000039 | 	/**
+000040 | 	 * タイマーを開始します。.
+000041 | 	 */
+000042 | 	protected void start() throws IllegalThreadStateException, SecurityException {
+000043 | 		this.setThread(new Thread(this));
+000044 | 		this.getThread().setDaemon(true);
+000045 | 		this.getThread().start();
+000046 | 	}
+000047 | 
+000048 | 	/**
+000049 | 	 * タイマーを再開します。.
+000050 | 	 */
+000051 | 	protected void restart() throws IllegalThreadStateException, SecurityException {
+000052 | 		this.cancel();
+000053 | 		this.start();
+000054 | 	}
+000055 | 
+000056 | 	/**
+000057 | 	 * タイマーをキャンセルします。.
+000058 | 	 */
+000059 | 	protected void cancel() {
+000060 | 		if (this.getThread() != null) {
+000061 | 			this.setThread(null);
+000062 | 		}
+000063 | 	}
+000064 | 
+000065 | 	public void run() {
+000066 | 		long toWait = this.getTime();
+000067 | 		if (toWait > 0) {
+000068 | 			try {
+000069 | 				Thread.sleep(toWait);
+000070 | 			} catch (InterruptedException e) {
+000071 | 			}
+000072 | 		}
+000073 | 		Thread thread = this.getThread();
+000074 | 		if (thread == Thread.currentThread()) {
+000075 | 			FWTimerHandler handler = this.getHandler();
+000076 | 			synchronized (handler) {
+000077 | 				if (thread == Thread.currentThread()) {
+000078 | 					handler.handleTimer((Object)_userInfo);
+000079 | 				} else {
+000080 | 				}
+000081 | 			}
+000082 | 			this.setThread(null);
+000083 | 		} else {
+000084 | 		}
+000085 | 	}
+000086 | 
+000087 | 	//--------------------------------------------------------------
+000088 | 	// getter / setter
+000089 | 	//--------------------------------------------------------------
+000090 | 
+000091 | 	protected long getTime() {
+000092 | 		return _time;
+000093 | 	}
+000094 | 
+000095 | 	protected void setTime(long time) {
+000096 | 		_time = time;
+000097 | 	}
+000098 | 
+000099 | 	protected FWTimerHandler getHandler() {
+000100 | 		return _handler;
+000101 | 	}
+000102 | 
+000103 | 	protected void setHandler(FWTimerHandler handler) {
+000104 | 		_handler = handler;
+000105 | 	}
+000106 | 
+000107 | 	protected Thread getThread() {
+000108 | 		return _thread;
+000109 | 	}
+000110 | 
+000111 | 	protected void setThread(Thread thread) {
+000112 | 		_thread = thread;
+000113 | 	}
+000114 | 
+000115 | 	protected Object getUserInfo() {
+000116 | 		return _userInfo;
+000117 | 	}
+000118 | 
+000119 | 	protected void setUserInfo(Object obj) {
+000120 | 		_userInfo = obj;
+000121 | 	}
+000122 | }
+000123 | 

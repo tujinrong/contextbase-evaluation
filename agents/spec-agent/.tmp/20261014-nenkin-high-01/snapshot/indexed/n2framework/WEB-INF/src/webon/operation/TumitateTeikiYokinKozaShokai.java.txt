@@ -1,0 +1,442 @@
+000001 | package webon.operation;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.util.ArrayList;
+000005 | import java.util.List;
+000006 | import java.util.Map;
+000007 | 
+000008 | import org.w3c.dom.Node;
+000009 | 
+000010 | import webon.WebonBase;
+000011 | import webon.WebonException;
+000012 | import webon.util.ConvertUtil;
+000013 | 
+000014 | import common.bean.LoginInfoBean;
+000015 | 
+000016 | /**
+000017 |  * Webon汎用照会クラス　積立定期預金口座汎用照会クラス
+000018 |  * 積立定期預金口座照会(XML)の取得とデータ管理、アクセスメソッドの提供
+000019 |  * 
+000020 |  * @author 吉津
+000021 |  * 
+000022 |  * @date	2020.04.16	新規作成
+000023 |  */
+000024 | public class TumitateTeikiYokinKozaShokai extends CommonOperation{
+000025 | 	private static final String syokaiName = "積立定期預金口座照会";
+000026 | 	
+000027 | 	//オペレーションＩＤ
+000028 | 	private final String operationId="OP-TSUMITEI-0001";
+000029 | 	//ログイン情報
+000030 | 	LoginInfoBean loginInfo;
+000031 | 	//webon引数
+000032 | 	String woAccno;
+000033 | 	String woBrno;
+000034 | 	
+000035 | 	//Errorレベル
+000036 | 	private static final int ERRLEVEL_ERROR=0;	//Error
+000037 | 	private static final int ERRLEVEL_WARNING=1;	//Warning
+000038 | 	//Error箇所
+000039 | 	private static final String ERRSPOT_WOGET = "0";		//取得時
+000040 | 	//private static final String ERRSPOT_WOANALYZE = "1";	//解析時
+000041 | 	private static final String ERRSPOT_WOMOLD = "2";		//成型時
+000042 | 	//Erro追加情報格納用リスト
+000043 | 	List<Map<String, String>> etc = new ArrayList<Map<String,String>>();
+000044 | 	//Error有無フラグ
+000045 | 	boolean errFlg=false;
+000046 | 	
+000047 | 	//setter,getter
+000048 | 	public List<Map<String, String>> getEtc() {
+000049 | 		return etc;
+000050 | 	}
+000051 | 	public void setEtc(List<Map<String, String>> etc) {
+000052 | 		this.etc = etc;
+000053 | 	}
+000054 | 	public boolean isErrFlg() {
+000055 | 		return errFlg;
+000056 | 	}
+000057 | 	public void setErrFlg(boolean errFlg) {
+000058 | 		this.errFlg = errFlg;
+000059 | 	}
+000060 | 	public String getWoAccno() {
+000061 | 		return woAccno;
+000062 | 	}
+000063 | 	public void setWoAccno(String woAccno) {
+000064 | 		this.woAccno = woAccno;
+000065 | 	}
+000066 | 	public String getWoBrno() {
+000067 | 		return woBrno;
+000068 | 	}
+000069 | 	public void setWoBrno(String woBrno) {
+000070 | 		this.woBrno = woBrno;
+000071 | 	}
+000072 | 	
+000073 | 	//=== 積立定期預金口座照会 ===
+000074 | 	//取得結果
+000075 | 	String 店番="";
+000076 | 	String 顧客番号="";
+000077 | 	String 科目="";
+000078 | 	String 口座番号="";
+000079 | 	String 口座状態="";
+000080 | 	String 商品コード="";
+000081 | 	String 商品名="";
+000082 | 	String 積立残高="";
+000083 | 	String 毎月積立額="";
+000084 | 	String 契約日="";
+000085 | 	String 預入期限日="";
+000086 | 	String 満期日="";
+000087 | 	String 最終取扱日="";
+000088 | 	String マル優本人死亡日="";
+000089 | 	String 支払開始日="";
+000090 | 	String 移受管日="";
+000091 | 	String 移受管店番="";
+000092 | 	String 移受管顧客番号="";
+000093 | 	String 移受管口座番号="";
+000094 | 	
+000095 | 	//==================================================
+000096 | 	//Getter,Setter
+000097 | 	//==================================================
+000098 | 	public String get店番() {
+000099 | 		return 店番;
+000100 | 	}
+000101 | 	public void set店番(String 店番) {
+000102 | 		this.店番 = 店番;
+000103 | 	}
+000104 | 	public String get顧客番号() {
+000105 | 		return 顧客番号;
+000106 | 	}
+000107 | 	public void set顧客番号(String 顧客番号) {
+000108 | 		this.顧客番号 = 顧客番号;
+000109 | 	}
+000110 | 	public String get科目() {
+000111 | 		return 科目;
+000112 | 	}
+000113 | 	public void set科目(String 科目) {
+000114 | 		this.科目 = 科目;
+000115 | 	}
+000116 | 	public String get口座番号() {
+000117 | 		return 口座番号;
+000118 | 	}
+000119 | 	public void set口座番号(String 口座番号) {
+000120 | 		this.口座番号 = 口座番号;
+000121 | 	}
+000122 | 	public String get口座状態() {
+000123 | 		return 口座状態;
+000124 | 	}
+000125 | 	public void set口座状態(String 口座状態) {
+000126 | 		this.口座状態 = 口座状態;
+000127 | 	}
+000128 | 	public String get商品コード() {
+000129 | 		return 商品コード;
+000130 | 	}
+000131 | 	public void set商品コード(String 商品コード) {
+000132 | 		this.商品コード = 商品コード;
+000133 | 	}
+000134 | 	public String get商品名() {
+000135 | 		return 商品名;
+000136 | 	}
+000137 | 	public void set商品名(String 商品名) {
+000138 | 		this.商品名 = 商品名;
+000139 | 	}
+000140 | 	public String get積立残高() {
+000141 | 		return 積立残高;
+000142 | 	}
+000143 | 	public void set積立残高(String 積立残高) {
+000144 | 		this.積立残高 = 積立残高;
+000145 | 	}
+000146 | 	public String get毎月積立額() {
+000147 | 		return 毎月積立額;
+000148 | 	}
+000149 | 	public void set毎月積立額(String 毎月積立額) {
+000150 | 		this.毎月積立額 = 毎月積立額;
+000151 | 	}
+000152 | 	public String get契約日() {
+000153 | 		return 契約日;
+000154 | 	}
+000155 | 	public void set契約日(String 契約日) {
+000156 | 		this.契約日 = 契約日;
+000157 | 	}
+000158 | 	public String get預入期限日() {
+000159 | 		return 預入期限日;
+000160 | 	}
+000161 | 	public void set預入期限日(String 預入期限日) {
+000162 | 		this.預入期限日 = 預入期限日;
+000163 | 	}
+000164 | 	public String get満期日() {
+000165 | 		return 満期日;
+000166 | 	}
+000167 | 	public void set満期日(String 満期日) {
+000168 | 		this.満期日 = 満期日;
+000169 | 	}
+000170 | 	public String get最終取扱日() {
+000171 | 		return 最終取扱日;
+000172 | 	}
+000173 | 	public void set最終取扱日(String 最終取扱日) {
+000174 | 		this.最終取扱日 = 最終取扱日;
+000175 | 	}
+000176 | 	public String getマル優本人死亡日() {
+000177 | 		return マル優本人死亡日;
+000178 | 	}
+000179 | 	public void setマル優本人死亡日(String マル優本人死亡日) {
+000180 | 		this.マル優本人死亡日 = マル優本人死亡日;
+000181 | 	}
+000182 | 	public String get支払開始日() {
+000183 | 		return 支払開始日;
+000184 | 	}
+000185 | 	public void set支払開始日(String 支払開始日) {
+000186 | 		this.支払開始日 = 支払開始日;
+000187 | 	}
+000188 | 	public String get移受管日() {
+000189 | 		return 移受管日;
+000190 | 	}
+000191 | 	public void set移受管日(String 移受管日) {
+000192 | 		this.移受管日 = 移受管日;
+000193 | 	}
+000194 | 	public String get移受管店番() {
+000195 | 		return 移受管店番;
+000196 | 	}
+000197 | 	public void set移受管店番(String 移受管店番) {
+000198 | 		this.移受管店番 = 移受管店番;
+000199 | 	}
+000200 | 	public String get移受管顧客番号() {
+000201 | 		return 移受管顧客番号;
+000202 | 	}
+000203 | 	public void set移受管顧客番号(String 移受管顧客番号) {
+000204 | 		this.移受管顧客番号 = 移受管顧客番号;
+000205 | 	}
+000206 | 	public String get移受管口座番号() {
+000207 | 		return 移受管口座番号;
+000208 | 	}
+000209 | 	public void set移受管口座番号(String 移受管口座番号) {
+000210 | 		this.移受管口座番号 = 移受管口座番号;
+000211 | 	}
+000212 | 
+000213 | 	/**
+000214 | 	 * 口座番号・店番を元に積立定期預金口座照会を取得する
+000215 | 	 * 
+000216 | 	 * @param accno 口座番号
+000217 | 	 * @param br 店番
+000218 | 	 * @param 
+000219 | 	 * @param loginInfo ログイン情報
+000220 | 	 * @param con
+000221 | 	 * @throws Exception
+000222 | 	 */
+000223 | 	public void getWebon(String accno, String br, LoginInfoBean loginInfo, Connection con) throws Exception {
+000224 | 		try{
+000225 | 			//引数チェック 引数がセットされているか
+000226 | 			if (accno == null) {throw new Exception("口座番号が設定されていません");}
+000227 | 			if (br == null) {throw new Exception("原店番号が設定されていません");}
+000228 | 			if (con == null) {throw new Exception("ＤＢコネクションが設定されていません");}
+000229 | 			
+000230 | 			//引数のセット
+000231 | 			this.woAccno=accno;
+000232 | 			this.woBrno=br;
+000233 | 			this.loginInfo = loginInfo;
+000234 | 			
+000235 | 			//Webon問合せ実行
+000236 | 			getWebon(con);
+000237 | 			
+000238 | 			//取得結果解析
+000239 | 			analyzeWeon();
+000240 | 			
+000241 | 			//取得項目のチェック
+000242 | 			checkWebon();
+000243 | 			
+000244 | 			//エラーチェック(Exceptionの有無を判定する)
+000245 | 			if(errFlg){
+000246 | 				WebonException e = createWoException("Webon取得結果解析エラー", ERRLEVEL_WARNING, ERRSPOT_WOMOLD);
+000247 | 				e.setEtc(etc);
+000248 | 				//エラー処理は上位に任せる
+000249 | 				throw e;
+000250 | 			}
+000251 | 			
+000252 | 		}catch(WebonException e){
+000253 | 			throw e;
+000254 | 		}catch(Exception e){
+000255 | 			throw e;
+000256 | 		}
+000257 | 	}
+000258 | 	
+000259 | 	/**
+000260 | 	 * Webon取得メソッド
+000261 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000262 | 	 * 
+000263 | 	 * @param req リクエスト
+000264 | 	 * @param res レスポンス
+000265 | 	 * @throws Exception 
+000266 | 	 */
+000267 | 	private void getWebon(Connection con) throws Exception {
+000268 | 		
+000269 | 		//WebonBaseの取得
+000270 | 		webonBase = new WebonBase(operationId, loginInfo, con);
+000271 | 		//設定値
+000272 | 		webonBase.put("口座番号",woAccno);
+000273 | 		webonBase.put("原店番号",woBrno);
+000274 | 		//問い合わせ
+000275 | 		webonBase.doQuery();
+000276 | 		
+000277 | 		//エラー処理
+000278 | 		if (!webonBase.checkResult()) {
+000279 | 			//エラーコード等をセット
+000280 | 			WebonException e = createWoException("Webon取得結果エラー", ERRLEVEL_ERROR, ERRSPOT_WOGET);
+000281 | 			//エラー処理は上位に任せる
+000282 | 			throw e;
+000283 | 		}
+000284 | 	}
+000285 | 	
+000286 | 	/**
+000287 | 	 * Webon取得内容解析メソッド
+000288 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000289 | 	 * 
+000290 | 	 * @param req リクエスト
+000291 | 	 * @param res レスポンス
+000292 | 	 * @throws Exception 
+000293 | 	 * @throws Exception 
+000294 | 	 */
+000295 | 	public void analyzeWeon() throws Exception {
+000296 | 		//WEBON結果走査用固定値
+000297 | 		final String WOKEY_TSUCYO="通帳部宛";
+000298 | 		final String WOKEY_TSUMITEIKOZA="積立定期預金口座照会";
+000299 | 
+000300 | 		//結果取得
+000301 | 		Node editData = webonBase.getEditData();
+000302 | 		//結果解析
+000303 | 		//データの最上位ノードを取得
+000304 | 		Node root2=editData.getFirstChild();
+000305 | 		Node root=null;
+000306 | 		while (true) {
+000307 |         	//取得できなかったら終わり
+000308 |         	if (root2==null){break;}
+000309 | 	    	if (root2.getNodeType()==Node.ELEMENT_NODE) {
+000310 | 	    		//要素名の解析
+000311 | 	    		if (root2.getNodeName().equals(WOKEY_TSUCYO)) {
+000312 | 
+000313 | 	    			root = root2.getFirstChild();
+000314 | 	    			while (true) {
+000315 | 	    	        	//取得できなかったら終わり
+000316 | 	    	        	if (root==null){break;}
+000317 | 	    		    	if (root.getNodeType()==Node.ELEMENT_NODE) {
+000318 | 	    		    		//要素名の解析
+000319 | 	    		    		if (root.getNodeName().equals(WOKEY_TSUMITEIKOZA)) {
+000320 | 	    		    			break;
+000321 | 	    		            } 
+000322 | 	    		    	}
+000323 | 	    	        	//次の子ノードを取得
+000324 | 	    		    	root = root.getNextSibling();
+000325 | 	    			}
+000326 | 	    			break;
+000327 | 	            } 
+000328 | 	    	}
+000329 |         	//次の子ノードを取得
+000330 | 	    	root2 = root2.getNextSibling();
+000331 | 		}
+000332 | 		
+000333 | 		//全体の走査
+000334 |         Node child = root.getFirstChild();
+000335 | 		while (true) {
+000336 |         	//取得できなかったら終わり
+000337 |         	if (child==null){break;}
+000338 | 	    	if (child.getNodeType()==Node.ELEMENT_NODE) {
+000339 | 	    		//要素名の解析
+000340 | 	            if (child.getNodeName().equals("店番")){
+000341 |     				set店番(getChildText(child));
+000342 | 	            } else if (child.getNodeName().equals("顧客番号")){
+000343 |     				set顧客番号(getChildText(child));
+000344 | 	    		} else if (child.getNodeName().equals("科目")){
+000345 | 	    			set科目(getChildText(child));
+000346 | 	    		} else if (child.getNodeName().equals("口座番号")){
+000347 | 	    			set口座番号(getChildText(child));
+000348 | 	    		} else if (child.getNodeName().equals("口座状態")){
+000349 |     				set口座状態(getChildText(child));
+000350 | 	            } else if (child.getNodeName().equals("商品コード")){
+000351 |     				set商品コード(getChildText(child));
+000352 | 	    		} else if (child.getNodeName().equals("商品名")){
+000353 | 	    			set商品名(getChildText(child));
+000354 | 	    		} else if (child.getNodeName().equals("積立残高")){
+000355 | 	    			set積立残高(getChildText(child));
+000356 | 	    		} else if (child.getNodeName().equals("毎月積立額")){
+000357 | 	    			set毎月積立額(getChildText(child));
+000358 | 	    		} else if (child.getNodeName().equals("契約日")){
+000359 |     				set契約日(getChildText(child));
+000360 | 	            } else if (child.getNodeName().equals("預入期限日")){
+000361 |     				set預入期限日(getChildText(child));
+000362 | 	    		} else if (child.getNodeName().equals("満期日")){
+000363 | 	    			set満期日(getChildText(child));
+000364 | 	    		} else if (child.getNodeName().equals("マル優本人死亡日")){
+000365 | 	    			setマル優本人死亡日(getChildText(child));
+000366 | 	    		} else if (child.getNodeName().equals("支払開始日")){
+000367 |     				set支払開始日(getChildText(child));
+000368 | 	            } else if (child.getNodeName().equals("移受管日")){
+000369 |     				set移受管日(getChildText(child));
+000370 | 	    		} else if (child.getNodeName().equals("移受管店番")){
+000371 | 	    			set移受管店番(getChildText(child));
+000372 | 	    		} else if (child.getNodeName().equals("移受管顧客番号")){
+000373 | 	    			set移受管顧客番号(getChildText(child));
+000374 | 	    		} else if (child.getNodeName().equals("移受管口座番号")){
+000375 | 	    			set移受管口座番号(getChildText(child));
+000376 | 	    		}
+000377 | 	            
+000378 | 	    	}
+000379 |         	//次の子ノードを取得
+000380 |         	child = child.getNextSibling();
+000381 | 		}
+000382 | 	}
+000383 | 	
+000384 | 	/**
+000385 | 	 * 取得内容チェックメソッド
+000386 | 	 */
+000387 | 	private void checkWebon() throws Exception{
+000388 | 		
+000389 | 		set店番(ConvertUtil.chkConvertNumAdd0(get店番(), 3));
+000390 | 		set顧客番号(ConvertUtil.chkConvertNumAdd0(get顧客番号(), 7));
+000391 | 		set科目(ConvertUtil.chkConvertNumAdd0(get科目(), 2));
+000392 | 		set口座番号(ConvertUtil.chkConvertNumAdd0(get口座番号(), 7));
+000393 | 		set口座状態(ConvertUtil.chkNull(get口座状態()));
+000394 | 		set商品コード(ConvertUtil.chkConvertNumAdd0(get商品コード(),6));
+000395 | 		set商品名(ConvertUtil.chkNull(get商品名()));
+000396 | 		set積立残高(ConvertUtil.chkDelCommaAdd0(get積立残高(), 1));
+000397 | 		set毎月積立額(ConvertUtil.chkDelCommaAdd0(get毎月積立額(), 1));
+000398 | 		//【和暦処理】
+000399 | 		set契約日(ConvertUtil.chkConvertDateAdd0(get契約日()));
+000400 | 		set預入期限日(ConvertUtil.chkConvertDateAdd0(get預入期限日()));
+000401 | 		set満期日(ConvertUtil.chkConvertDateAdd0(get満期日()));
+000402 | 		set最終取扱日(ConvertUtil.chkConvertDateAdd0(get最終取扱日()));
+000403 | 		setマル優本人死亡日(ConvertUtil.chkConvertDateAdd0(getマル優本人死亡日()));
+000404 | 		set支払開始日(ConvertUtil.chkConvertDateAdd0(get支払開始日()));
+000405 | 		set移受管日(ConvertUtil.chkConvertDateAdd0(get移受管日()));
+000406 | 		
+000407 | 		set移受管店番(ConvertUtil.chkConvertNumAdd0(get移受管店番(), 3));
+000408 | 		set移受管顧客番号(ConvertUtil.chkConvertNumAdd0(get移受管顧客番号(), 7));
+000409 | 		set移受管口座番号(ConvertUtil.chkConvertNumAdd0(get移受管口座番号(), 7));
+000410 | 		
+000411 | 	}
+000412 | 	
+000413 | 	//以下UTILITY
+000414 | 	//以下、ユーティリティ的メソッド
+000415 | 	/**
+000416 | 	 * エラー生成メソッド
+000417 | 	 * @param String	エラーメッセージ
+000418 | 	 * @param int		エラーレベル
+000419 | 	 * @param String	エラー箇所
+000420 | 	 */
+000421 | 	private WebonException createWoException(String msg ,int el, String es){
+000422 | 		//エラーコード等をセット
+000423 | 		WebonException e = new WebonException(msg,webonBase);
+000424 | 		//顧客を特定する情報をセット
+000425 | 		e.setOperationId(operationId);
+000426 | 		e.setBrno(woBrno);
+000427 | 		e.setAccno(woAccno);
+000428 | 		e.setErrStat(el);
+000429 | 		e.setErrSpot(es);
+000430 | 		//エラー処理は上位に任せる
+000431 | 		return e;
+000432 | 	}
+000433 | 	/**
+000434 | 	 * 照会名取得メソッド(Static)
+000435 | 	 * 照会名を取得する
+000436 | 	 * 
+000437 | 	 * @return String 照会名
+000438 | 	 */
+000439 | 	public static String getSyokaiName() {
+000440 | 		return syokaiName;
+000441 | 	}
+000442 | }

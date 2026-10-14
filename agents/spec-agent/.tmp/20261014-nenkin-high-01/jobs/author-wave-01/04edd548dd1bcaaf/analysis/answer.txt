@@ -1,0 +1,1115 @@
+{
+  "documentId": "SCR-017",
+  "sourcePathsRead": [
+    "nenkin/JSP/NENKIN/Menu.jsp",
+    "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/bean/MenuViewBean.java",
+    "nenkin/assets/css/site.css",
+    "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+    "nenkin/WEB-INF/src/nenkin/LoginAction.java",
+    "nenkin/WEB-INF/src/nenkin/StaffViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/StaffVerifyAction.java",
+    "nenkin/WEB-INF/src/nenkin/StaffClearAction.java",
+    "nenkin/WEB-INF/src/nenkin/bean/StaffViewBean.java",
+    "nenkin/JSP/NENKIN/Staff.jsp",
+    "nenkin/WEB-INF/src/nenkin/model/StaffContext.java",
+    "nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java",
+    "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+    "nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java",
+    "nenkin/WEB-INF/src/nenkin/service/NenkinDataAccessException.java",
+    "nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java",
+    "nenkin/WEB-INF/src/nenkin/PensionViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/BatchViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/ReportViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/ExcelViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+    "nenkin/WEB-INF/src/nenkin/model/PensionReservation.java",
+    "nenkin/WEB-INF/src/nenkin/bean/PensionViewBean.java",
+    "nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java",
+    "nenkin/WEB-INF/src/nenkin/bean/ReportViewBean.java",
+    "nenkin/WEB-INF/src/nenkin/bean/ExcelViewBean.java",
+    "nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+    "nenkin/WEB-INF/web.xml",
+    "nenkin/JSP/MENU/Login.jsp",
+    "nenkin/JSP/NENKIN/Pension.jsp",
+    "nenkin/JSP/NENKIN/Batch.jsp",
+    "nenkin/JSP/NENKIN/Report.jsp",
+    "nenkin/JSP/NENKIN/Excel.jsp",
+    "nenkin/JSP/COMMON/Error.jsp",
+    "nenkin/WEB-INF/resources/db/schema.sql",
+    "n2framework/WEB-INF/src/common/ControlServlet.java",
+    "n2framework/WEB-INF/src/common/CommonConst.java",
+    "n2framework/WEB-INF/src/common/CommonAction.java",
+    "n2framework/WEB-INF/src/common/bean/LoginInfoBean.java",
+    "n2framework/WEB-INF/src/common/LogoutAction.java",
+    "n2framework/WEB-INF/src/common/OperatePermission.java",
+    "n2framework/WEB-INF/src/common/util/CommonUtil.java",
+    "n2framework/WEB-INF/src/common/CounterShift.java",
+    "n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java",
+    "n2framework/WEB-INF/src/common/base/CommonBase.java"
+  ],
+  "facts": [
+    {
+      "id": "SCR-017-F001",
+      "topic": "画面.概要と項目構成",
+      "statement": "メニューは、ログイン職員を確認して年金予約管理の各画面へ進む入口である。上部ヘッダーにシステム名とログアウト、画面内の見出しに同じシステム名とログイン職員番号・氏名を置く。その下に「新規・変更・削除」「処理データ」「印刷」「EXCEL出力」の四ボタンをこのDOM順で配置する。職員番号・氏名は出力項目、五つのボタンは操作項目であり、メニューには職員番号や予約内容を編集する入力欄、検索条件、選択候補一覧はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 6,
+          "endLine": 13
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F002",
+      "topic": "項目.ログイン職員番号",
+      "statement": "ログイン職員番号の表示先はstaff-badge内のstrongである。年金職員確認ではLoginInfoBeanのString職員番号をNULLなら空文字、その他はtrimした値にし、ASCII数字1～8桁に一致する場合にintへ変換して照会する。照会パラメータは職員番号に対するsetInt(1, staffCode)で、型・サイズ付きの文字列パラメータは使わない。取得した職員番号はStaffLookupItemのint staffCodeからStaffContextのint staffNoへ渡り、MenuViewActionがLocale.ROOTの%08dでStringへ整形してMenuViewBean.staffNoへ設定する。%08dは最小表示幅とゼロ補完の指定であり、既存StaffContext内の値を8桁へ切り詰める処理ではない。受信番号の検査にも正数条件はない。収録H2互換DDLの職員番号はDECIMAL(18,0)、NOT NULL、PRIMARY KEYであり、8桁検査・Java int・DB容量は別の制約である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 8,
+          "endLine": 8
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 57,
+          "endLine": 66
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 119,
+          "endLine": 119
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 206,
+          "endLine": 234
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java",
+          "startLine": 27,
+          "endLine": 50
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/model/StaffContext.java",
+          "startLine": 8,
+          "endLine": 28
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+          "startLine": 13,
+          "endLine": 14
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 20,
+          "endLine": 30
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F003",
+      "topic": "項目.ログイン職員氏名",
+      "statement": "ログイン職員氏名の表示先はstaff-badgeの最後のspanである。表示名は年金側の職員確認が取得するDB2.Ｕ職員名簿表の漢字氏名であり、LoginInfoBean内の別の名称項目を直接表示する処理ではない。getStringで取得した値はStaffLookupItem.staffName、StaffContext.staffName、MenuViewBean.staffNameの各Stringへ渡る。前二者のコンストラクタはNULLを空文字へ変換するため、DBの漢字氏名がNULLの場合は空欄表示となり、MenuViewBeanの「未確認」には置換されない。この経路には氏名のtrim、桁検査、切捨て、保存処理はない。H2互換DDLは漢字氏名をNULL許容のVARCHAR(40)と宣言するが、職員管理側の業務上限はこの表示処理から確定できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 8,
+          "endLine": 8
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 207,
+          "endLine": 234
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 314,
+          "endLine": 321
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java",
+          "startLine": 27,
+          "endLine": 34
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/model/StaffContext.java",
+          "startLine": 20,
+          "endLine": 24
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/bean/MenuViewBean.java",
+          "startLine": 7,
+          "endLine": 12
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 20,
+          "endLine": 30
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F004",
+      "topic": "項目.表示変換と初期値",
+      "statement": "MenuViewBeanはSerializableな表示モデルで、String staffNoの初期値は「-」、String staffNameの初期値は「未確認」である。各setterへNULLを渡した場合も同じ代替値になるが、空文字を渡した場合は空文字を保持する。Menu.jspは両値をHtmlUtil.escapeへ渡し、NULLを空文字にしたうえで&、<、>、二重引用符、単一引用符をHTML文字参照へ変換する。表示値はフォームの送信項目には含まれない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/bean/MenuViewBean.java",
+          "startLine": 5,
+          "endLine": 12
+        },
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 8,
+          "endLine": 10
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java",
+          "startLine": 11,
+          "endLine": 15
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F005",
+      "topic": "項目.送信制御値",
+      "statement": "menuFormはcontextPath配下の/Action.doへPOSTする。hiddenのFUNCTION_IDはnenkin、id=menuViewのVIEW_IDは初期値Menu、id=menuCommandのCOMMAND_IDは初期値Viewである。ログアウトは別formから同じURLへPOSTし、FUNCTION_ID=common、VIEW_ID=Logout、COMMAND_ID=空文字を送る。これらはHTTPフォームパラメータを共通受付がStringとして読む制御値であり、MenuViewBeanの職員表示値やJSON要求DTOではない。Menu.jspのフォームにはaccept-charsetの指定がない一方、JSPの出力宣言はUTF-8、共通受付の要求文字コード設定はWindows-31Jである。通常の識別値はASCII文字で構成される。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 1,
+          "endLine": 13
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 107,
+          "endLine": 124
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 243,
+          "endLine": 248
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F006",
+      "topic": "静的投影.ヘッダーと職員表示の配置",
+      "statement": "原本DOMはbody直下のheader.app-navとmain.app-shellを兄弟に置き、main内をsection.screen.surface.menu-screenとする。共有CSSのapp-navは最小高さ48px、左右をspace-betweenで配置し、余白7px 18px、濃紺背景と明るい文字色を使う。メニューのヘッダーにはapp-shellやnavbarクラスの内側ラッパーがないため、それらを条件とするナビゲーション用規則は適用対象に加えない。mainの最大幅は1440px、余白は20px 18px 52pxであり、内側screenには18pxの余白と、後段のscreen:not(.lookup-screen-popup)による最大幅1180px・左右中央配置が適用される。screen-headerは見出しと職員表示を左右に分け、staff-badgeは「ログイン職員」・番号・氏名の三列gridである。640px以下ではscreen-headerがgridへ切り替わる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 5,
+          "endLine": 12
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 1,
+          "endLine": 16
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 186,
+          "endLine": 227
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 261,
+          "endLine": 280
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 319,
+          "endLine": 375
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 1996,
+          "endLine": 2000
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 2042,
+          "endLine": 2063
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F007",
+      "topic": "静的投影.四ボタンと表示状態",
+      "statement": "menu-gridの通常規則はminmax(260px,396px)の一列、最大幅396px、間隔20px、上余白48px、左右中央配置である。後段のmedia規則により、画面幅641～960pxでは二列になり、640px以下では一列へ戻る。四ボタンはいずれもaccess-buttonだけを持ち、最小高さ42px、余白8px 18px、中央揃え、灰色系の背景と枠線で表示される。原本には四ボタンの非表示条件、disabled属性、職員所属や役職による表示分岐がない。ログアウトはヘッダー右側のnav-buttonで、最小高さ32pxである。印刷媒体では共有CSSがapp-navを非表示にするが、この指定はメニューの「印刷」ボタンによる帳票画面遷移とは別の表示規則である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 6,
+          "endLine": 10
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 219,
+          "endLine": 233
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 377,
+          "endLine": 407
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 2002,
+          "endLine": 2007
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 2042,
+          "endLine": 2069
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 2159,
+          "endLine": 2164
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F008",
+      "topic": "静的投影.非実行HTMLとCSS材料",
+      "statement": "次は原本DOMと適用CSSから作った非実行の表示材料である。{{職員番号}}と{{職員氏名}}は実データを表さない差込位置である。フォームのactionをdata-routeへ移し、元のPOSTをdata-methodへ残し、ログアウトを含む全ボタンをtype=buttonとした。JavaScriptとonclickは含めていない。\n<!DOCTYPE html>\n<html lang=\"ja\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>年金自動受取予約管理システム</title><style>\n:root{--bg:#edf1f4;--surface:#ffffff;--line:#b8c2cc;--text:#18212a;--nav:#16324a;--nav-text:#f4f8fb;--primary-dark:#0a5148;--button:#e8edf1;--button-border:#7b8792;--focus:#1a75bb;--work-screen-width:1180px}\n*,*::before,*::after{box-sizing:border-box}button,input{margin:0;font:inherit}button,[type=\"button\"]{cursor:pointer}button:focus-visible{outline:2px solid var(--focus);outline-offset:1px}html{min-height:100%}body{min-height:100vh;margin:0;color:var(--text);background:var(--bg);font-family:\"Yu Gothic UI\",\"Meiryo\",\"Segoe UI\",sans-serif}\n.app-shell{width:100%;max-width:1440px;margin-inline:auto}.app-nav{display:flex;min-height:48px;align-items:center;justify-content:space-between;gap:12px;padding:7px 18px;color:var(--nav-text);background:var(--nav);border-bottom:1px solid #0c2236}.app-nav__title{color:var(--nav-text);font-weight:800;line-height:1.25}.nav-button{min-height:32px;padding:4px 12px;color:var(--nav-text);background:#294a64;border:1px solid #8da3b5;border-radius:3px;font-weight:700}.nav-button:hover,.nav-button:focus{background:#365f7d;border-color:#ffffff}\nmain.app-shell:not(.login-shell){padding:20px 18px 52px}.surface{background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:0 1px 2px rgba(16,32,48,.08)}.screen{padding:18px}.screen-header{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--line)}.screen-header-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;justify-content:flex-end}h1{margin:0;font-size:1.45rem;font-weight:700;letter-spacing:0}.staff-badge{display:grid;grid-template-columns:auto auto auto;gap:8px;align-items:center;min-height:34px;padding:6px 10px;background:#eef7f5;border:1px solid #9fc3bc;border-radius:4px;color:var(--primary-dark)}.staff-badge strong{font-variant-numeric:tabular-nums}\n.menu-grid{display:grid;grid-template-columns:minmax(260px,396px);gap:20px;align-items:stretch;justify-content:center;max-width:396px;margin:48px auto 0}.access-button{display:inline-flex;min-height:42px;align-items:center;justify-content:center;padding:8px 18px;color:var(--text);background:var(--button);border:1px solid var(--button-border);border-radius:4px;font-weight:700;text-decoration:none;line-height:1.2}.access-button:hover,.access-button:focus{color:var(--text);background:#dce5eb;border-color:var(--focus)}.screen:not(.lookup-screen-popup){max-width:var(--work-screen-width);margin-right:auto;margin-left:auto}\n@media(max-width:960px){.menu-grid{grid-template-columns:1fr 1fr}}@media(max-width:640px){.screen-header{display:grid}.menu-grid{grid-template-columns:1fr}}@media print{@page{size:A4 landscape;margin:8mm}html,body{width:auto;min-width:0;margin:0;padding:0;background:#ffffff;color:#000000;-webkit-print-color-adjust:exact;print-color-adjust:exact}.app-nav{display:none}.app-shell{padding:0}}\n</style></head><body>\n<header class=\"app-nav\"><div class=\"app-nav__title\">年金自動受取予約管理システム</div><form data-route=\"{contextPath}/Action.do\" data-method=\"post\"><input type=\"hidden\" name=\"FUNCTION_ID\" value=\"common\"><input type=\"hidden\" name=\"VIEW_ID\" value=\"Logout\"><input type=\"hidden\" name=\"COMMAND_ID\" value=\"\"><button class=\"nav-button\" type=\"button\">ログアウト</button></form></header>\n<main class=\"app-shell\"><section class=\"screen surface menu-screen\"><div class=\"screen-header\"><h1>年金自動受取予約管理システム</h1><div class=\"screen-header-actions\"><div class=\"staff-badge\"><span>ログイン職員</span><strong>{{職員番号}}</strong><span>{{職員氏名}}</span></div></div></div><form id=\"menuForm\" data-route=\"{contextPath}/Action.do\" data-method=\"post\"><input type=\"hidden\" name=\"FUNCTION_ID\" value=\"nenkin\"><input id=\"menuView\" type=\"hidden\" name=\"VIEW_ID\" value=\"Menu\"><input id=\"menuCommand\" type=\"hidden\" name=\"COMMAND_ID\" value=\"View\"><div class=\"menu-grid\"><button class=\"access-button\" type=\"button\" data-view=\"Pension\" data-command=\"View\">新規・変更・削除</button><button class=\"access-button\" type=\"button\" data-view=\"Batch\" data-command=\"View\">処理データ</button><button class=\"access-button\" type=\"button\" data-view=\"Report\" data-command=\"View\">印刷</button><button class=\"access-button\" type=\"button\" data-view=\"Excel\" data-command=\"View\">EXCEL出力</button></div></form></section></main>\n</body></html>",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 1,
+          "endLine": 14
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 1,
+          "endLine": 42
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 119,
+          "endLine": 123
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 174,
+          "endLine": 233
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 261,
+          "endLine": 280
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 319,
+          "endLine": 407
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 1996,
+          "endLine": 2069
+        },
+        {
+          "path": "nenkin/assets/css/site.css",
+          "startLine": 2141,
+          "endLine": 2172
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F009",
+      "topic": "イベント.通常ログインからの到達",
+      "statement": "通常ログインのフォーム識別値はnenkin・Login・空コマンドであり、年金LoginActionへ対応する。年金LoginActionは既存の年金職員状態とCSRF情報を削除してから共通LoginActionを呼ぶ。共通処理がログインJSPを返した場合はその戻り値を保持し、それ以外の戻り値の場合にMenuViewActionへ処理を移譲する。したがって共通処理の戻り値だけでメニュー表示を確定せず、続く年金職員確認の結果を通す。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/MENU/Login.jsp",
+          "startLine": 22,
+          "endLine": 24
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/LoginAction.java",
+          "startLine": 6,
+          "endLine": 12
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+          "startLine": 10,
+          "endLine": 16
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F010",
+      "topic": "イベント.メニュー表示の処理手順",
+      "statement": "MenuViewActionは最初にrequireStaffを呼び、falseなら表示Beanを作らずSTAFF_JSPを返す。STAFF_JSPの実値はログインJSPである。trueなら新しいMenuViewBeanを作り、セッションからStaffContextをもう一度取得し、存在する場合に職員番号と氏名を設定する。最後にセッションのViewBeanへ格納してメニューJSPを返す。requireStaff成功後の再取得がnullとなる枝では、Beanの「-」「未確認」を保持してメニューJSPを返す実装である。この枝と、requireStaffがfalseを返してログイン画面へ戻す枝は分ける必要がある。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+          "startLine": 10,
+          "endLine": 16
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 24,
+          "endLine": 47
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/bean/MenuViewBean.java",
+          "startLine": 7,
+          "endLine": 12
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F011",
+      "topic": "イベント.職員確認の成功経路",
+      "statement": "requireStaffは、NENKIN_STAFF_CONTEXT属性がStaffContextなら既存情報を再利用し、CSRF情報を確保してtrueを返す。この枝ではLoginBeanの再判定や職員名簿の再照会を行わない。利用できるStaffContextがない場合は、LoginBeanがLoginInfoBean型でログイン可否=trueであることを確認し、職員番号を加工・検査してverifyStaffを呼ぶ。職員が取得できた場合に新しいStaffContextをセッションへ登録し、CSRF情報を確保してtrueを返す。職員名簿の更新内容や所属・役職の変更を毎回反映する処理ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 45,
+          "endLine": 67
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 230,
+          "endLine": 234
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F012",
+      "topic": "イベント.職員確認の不成立",
+      "statement": "利用できるStaffContextがなく、ログイン可のLoginInfoBeanは存在するが職員番号の書式が不正、または職員照会が0件の場合、requireStaffはLoginBeanを削除してMESSAGEに「ログイン職員番号が職員名簿に存在しません。管理者に確認してください。」を設定する。LoginInfoBeanの型・ログイン可否条件を満たさない場合はMESSAGEに「ログインしてください。」を設定する。両不成立枝は年金職員状態とCSRF情報を削除してfalseを返すが、後者にはLoginBean削除の記述がない。また、この処理ではViewBeanを削除しない。MenuViewActionはログインJSPを返し、Login.jspは非空のMESSAGE一覧をHTMLエスケープして表示した後にMESSAGEを削除する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 57,
+          "endLine": 78
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+          "startLine": 10,
+          "endLine": 11
+        },
+        {
+          "path": "nenkin/JSP/MENU/Login.jsp",
+          "startLine": 17,
+          "endLine": 19
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F013",
+      "topic": "データ操作.職員照会と店舗名補完",
+      "statement": "verifyStaffはgetStaffの結果をStaffContextへ移す。getStaffは職員名簿の照会より先に、別接続で店名テーブルの店舗ｺｰﾄﾞと店名を全件取得してMap<Integer,String>を作る。このSQLにはWHERE、ORDER BY、パラメータがない。その後、職員名簿から職員番号・漢字氏名・カナ氏名・所属店番・役職コードを、唯一の述語S.職員番号=?とsetIntで照会する。職員SQLにはJOIN、ORDER BY、停止状態の検査、SQLページング、最大件数・取消設定がなく、results.nextで先頭の一件を採用し、0件ならnullを返す。所属店番からMapで補完する店舗名はSQL JOINではなく、メニューには表示されないが、店舗名Mapの取得失敗も職員確認を中断させる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 23,
+          "endLine": 24
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 206,
+          "endLine": 234
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 289,
+          "endLine": 321
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F014",
+      "topic": "データ操作.取得値と保持情報",
+      "statement": "職員照会の結果では職員番号と所属店番をgetInt、漢字氏名・カナ氏名・役職コードをgetStringで取得する。所属店番の取得にはwasNullによる区別がなく、DB NULLを独立した未設定値としてStaffContextへ保持する実装ではない。StaffContextはint職員番号、String氏名、int所属店、String役職コードを持つメモリ上のSerializableモデルであり、表示用MenuViewBeanとは別である。メニューでは番号・氏名だけを表示し、職員名簿や店舗データを保存・更新しない。参照したH2互換DDLでは所属店番・役職コードはNULL許容のDECIMAL(18,0)である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 230,
+          "endLine": 234
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 314,
+          "endLine": 321
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/model/StaffContext.java",
+          "startLine": 5,
+          "endLine": 24
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 20,
+          "endLine": 30
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+          "startLine": 10,
+          "endLine": 16
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F015",
+      "topic": "データ操作.接続と例外境界",
+      "statement": "店舗名取得は業務用RAROA_DB、職員取得はOracle_SP2NMのDataSourceを使う。NenkinDataSourceは直接JNDI名、java:comp/env付き名の順にDataSourceを探し、取得したDataSourceを種類別のvolatile属性へ同期付きでキャッシュしてからgetConnectionを呼ぶ。lookupの失敗とgetConnectionの失敗は別の段階である。各参照処理はSQLExceptionをNenkinDataAccessExceptionへ包装し、finallyでResultSet・PreparedStatement・Connectionを順にcloseする。close helperはExceptionを捕捉して捨てるため、close失敗だけで検索結果を差し替えない。店舗名Map取得はgetStaffのtryより前にあり、その例外をgetStaffの「職員の取得」例外へ再包装しない。MenuViewActionとrequireStaffにはこれらを職員不成立へ変換するcatchがなく、反射Action実行中なら共通受付のException catchへ届く。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java",
+          "startLine": 12,
+          "endLine": 59
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java",
+          "startLine": 77,
+          "endLine": 93
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 206,
+          "endLine": 227
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 289,
+          "endLine": 311
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 375,
+          "endLine": 387
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/NenkinDataAccessException.java",
+          "startLine": 4,
+          "endLine": 8
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 332,
+          "endLine": 345
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F016",
+      "topic": "共通受付.登録と反射入口",
+      "statement": "web.xmlはcommon.ControlServletを/Action.doへ登録する。POSTはprocessへ進み、通常フォーム経路では三識別値をgetParameterで読み、FUNCTION_IDを小文字化したパッケージ名とVIEW_ID・COMMAND_IDを連結して「パッケージ.VIEW_IDCOMMAND_IDAction」を反射生成する。nenkin・Menu・Viewはnenkin.MenuViewAction、common・Logout・空コマンドはcommon.LogoutActionへ対応する。通常GETはOPKとcharCommonUIDがともにnullなら共通PDF経路へ進むため、MenuViewActionへの通常GET入口と説明できない。一方、いずれかが非nullのGETにはprocessへ進む分岐があり、MenuViewAction単体にはHTTP method拒否処理がない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/web.xml",
+          "startLine": 15,
+          "endLine": 24
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 54,
+          "endLine": 96
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 243,
+          "endLine": 248
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 309,
+          "endLine": 338
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+          "startLine": 10,
+          "endLine": 16
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F017",
+      "topic": "共通受付.先行認証と欠落値",
+      "statement": "共通受付はLogin以外の画面について、LoginBeanをLoginInfoBeanへcastし、非nullかつログイン可否=trueかを先に調べる。不成立ならErrorMsgに「ログイン時間切れです。再度ログインしてください。」を設定して共通エラーJSPを選び、年金側requireStaffには到達しない。FUNCTION_ID欠落によるtoLowerCase、VIEW_ID欠落によるequals、異型LoginBeanのcast、ログアウト前のLoginBean参照は、反射・Actionを捕捉するtryより前である。したがってrequireStaff単体の型不正拒否を、共通受付からの同じ最終応答の保証へ拡張できない。COMMAND_IDがnullの場合はクラス名連結へ文字列nullとして入り得るが、ログアウトの空文字は正しいクラス名を作る値であり、両者は区別される。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 309,
+          "endLine": 338
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 396,
+          "endLine": 403
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 57,
+          "endLine": 78
+        },
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 6,
+          "endLine": 9
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F018",
+      "topic": "共通受付.運用可否",
+      "statement": "共通認証を通過した後、反射Action実行より前にOperatePermission.checkを呼ぶ。nenkinとcommonは運用可否表を照会する業務分岐に含まれず、接続取得後の対象外枝でtrueを返す。ただし対象判定より先にjdbc/Oracle_SP2NMへ接続し、CommonUtilはautoCommit=falseを設定する。接続取得等のExceptionはOperatePermission内でログ出力され、falseへ至るため、年金メニューやログアウトもこの接続障害で拒否され得る。falseの場合のErrorMsgは「現在メンテナンス中のため画面を表示できません。」であり、職員名簿0件のMESSAGEやAction例外のメッセージとは別である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 325,
+          "endLine": 338
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/OperatePermission.java",
+          "startLine": 26,
+          "endLine": 84
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/util/CommonUtil.java",
+          "startLine": 36,
+          "endLine": 43
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F019",
+      "topic": "セッション.CSRF情報とメニュー操作",
+      "statement": "職員確認の成功時、NENKIN_CSRF_TOKENが非空Stringなら再利用し、そうでなければUUID文字列を作ってセッションへ登録する。メニューの二つのフォームにはCSRF_TOKEN送信欄がなく、MenuViewActionおよび四つのViewActionは変更受付用isAuthorizedMutationを呼ばない。共通LogoutActionもこの年金用検査を呼ばない。CSRF情報の確保、POSTフォームの使用、後続の保存・削除に対するPOSTとトークン比較は別の処理であり、メニュー表示・画面移動・ログアウトに比較検査を追加して説明できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 50,
+          "endLine": 94
+        },
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 6,
+          "endLine": 13
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+          "startLine": 10,
+          "endLine": 16
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/PensionViewAction.java",
+          "startLine": 8,
+          "endLine": 11
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/BatchViewAction.java",
+          "startLine": 14,
+          "endLine": 25
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/ReportViewAction.java",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/ExcelViewAction.java",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/LogoutAction.java",
+          "startLine": 26,
+          "endLine": 33
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F020",
+      "topic": "イベント.四ボタン共通の送信手順",
+      "statement": "四ボタンはtype=buttonであり、クリック時のgo(view,command)がmenuViewへ遷移先画面名、menuCommandへViewを設定し、その後menuForm.submitを呼ぶ。FUNCTION_IDはnenkinのまま保持される。送信されるのはhidden制御値であり、ボタン表示文字列や職員表示値ではない。ブラウザー側にはこの処理の入力検査、確認ダイアログ、二重送信抑止、失敗応答処理は記述されていない。共通受付に到達した後の認証・運用可否・反射・各ViewActionの職員確認を経て、遷移先JSPの戻り値が決まる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 9,
+          "endLine": 13
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 309,
+          "endLine": 345
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F021",
+      "topic": "イベント.新規・変更・削除への導線",
+      "statement": "「新規・変更・削除」はVIEW_ID=Pension、COMMAND_ID=ViewでPensionViewActionを呼ぶ。職員確認が不成立ならログインJSPを返す。成立時はcreateEmpty(StaffContext)から新しい空のPensionReservationを得て、メッセージ空文字、existing=false、職員表示情報を持つPensionViewBeanをViewBeanへ設定し、年金予約JSPを返す。createEmptyは職員引数を使わず、所属店や担当者を予約モデルへ自動設定しない。このメニュー操作自体は登録・変更・削除を実行せず、その操作画面を開く。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 10,
+          "endLine": 13
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/PensionViewAction.java",
+          "startLine": 8,
+          "endLine": 11
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 78,
+          "endLine": 84
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/model/PensionReservation.java",
+          "startLine": 13,
+          "endLine": 41
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 191,
+          "endLine": 201
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F022",
+      "topic": "イベント.処理データへの導線",
+      "statement": "「処理データ」はVIEW_ID=Batch、COMMAND_ID=ViewでBatchViewActionを呼ぶ。職員確認後に新しいBatchViewBeanを作り、日次対象日をサーバー上の当日、月次期間を当月の月初・月末、削除基準日をCalendarで2か月戻した日付に設定して、処理データJSPを返す。職員指定は空文字、三つの出力区分選択はfalseの初期値である。このViewActionにはデータ整理、区分別検索、ブック生成、ダウンロード送信はない。職員確認不成立はログインJSPへ戻る。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 10,
+          "endLine": 13
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/BatchViewAction.java",
+          "startLine": 14,
+          "endLine": 25
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java",
+          "startLine": 7,
+          "endLine": 15
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+          "startLine": 114,
+          "endLine": 136
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F023",
+      "topic": "イベント.印刷への導線",
+      "statement": "「印刷」はVIEW_ID=Report、COMMAND_ID=ViewでReportViewActionを呼ぶ。職員確認後に新しいReportViewBeanをViewBeanへ設定して登録内容印刷JSPを返す。Beanの初期状態は店舗範囲指定なし、範囲の文字列は空、sortType=1、preview=false、明細Listは空である。メニューのクリックで印刷対象を取得したり、window.printや共通PDF処理を実行したりする入口ではない。職員確認不成立はログインJSPへ戻る。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 10,
+          "endLine": 13
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/ReportViewAction.java",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/bean/ReportViewBean.java",
+          "startLine": 10,
+          "endLine": 16
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 24,
+          "endLine": 30
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F024",
+      "topic": "イベント.EXCEL出力への導線",
+      "statement": "「EXCEL出力」はVIEW_ID=Excel、COMMAND_ID=ViewでExcelViewActionを呼ぶ。職員確認後に店番・店名・メッセージが空文字の新しいExcelViewBeanをViewBeanへ設定し、店舗別Excel出力JSPを返す。メニューでは店番を送らず、予約検索やExcelExportActionによるファイル送信も行わない。職員確認不成立はログインJSPへ戻る。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 10,
+          "endLine": 13
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/ExcelViewAction.java",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/bean/ExcelViewBean.java",
+          "startLine": 7,
+          "endLine": 9
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 24,
+          "endLine": 31
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F025",
+      "topic": "セッション.画面モデルと戻る導線",
+      "statement": "メニューと四つの遷移先は、画面ごとのBeanを同じセッション属性ViewBeanへ上書きする。表示モデルは永続DB、LoginBean、年金職員状態とは別の保持領域である。各画面の戻る処理は識別値をMenu・Viewへ変更してフォーム送信し、MenuViewActionが新しいメニュー用Beanを設定する経路へ接続する。したがって戻るときに遷移先BeanをMenuViewBeanとしてそのまま再利用する処理ではない。同じセッションの複数画面操作には、最後に設定した画面Beanが共通属性を上書きする境界がある。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/CommonConst.java",
+          "startLine": 31,
+          "endLine": 37
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 37,
+          "endLine": 47
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+          "startLine": 12,
+          "endLine": 16
+        },
+        {
+          "path": "nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 58,
+          "endLine": 58
+        },
+        {
+          "path": "nenkin/JSP/NENKIN/Batch.jsp",
+          "startLine": 93,
+          "endLine": 93
+        },
+        {
+          "path": "nenkin/JSP/NENKIN/Report.jsp",
+          "startLine": 107,
+          "endLine": 107
+        },
+        {
+          "path": "nenkin/JSP/NENKIN/Excel.jsp",
+          "startLine": 10,
+          "endLine": 10
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F026",
+      "topic": "イベント.ログアウト",
+      "statement": "ログアウトのPOSTは共通受付の認証確認を通り、削除前のLoginBeanから利用記録用職員番号を取得し、運用可否確認後にcommon.LogoutActionへ到達する。LogoutActionはセッションのViewBeanとLoginBeanだけを削除し、ログインJSPを返す。session.invalidateはなく、NENKIN_STAFF_CONTEXT、NENKIN_CSRF_TOKEN、SubWindowBean、OtherUserBean、MESSAGE、ErrorMsgを削除する記述もない。認証拒否や運用可否拒否でActionへ到達しなければ、この削除は実行されない。残存する年金職員状態をrequireStaff単体が再利用する実装と、次の通常/Action.do要求をLoginBean不在により共通受付が拒否する実装は別の層である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 6,
+          "endLine": 6
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 313,
+          "endLine": 338
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/LogoutAction.java",
+          "startLine": 26,
+          "endLine": 33
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/CommonConst.java",
+          "startLine": 31,
+          "endLine": 49
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 33,
+          "endLine": 54
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 396,
+          "endLine": 403
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F027",
+      "topic": "結果と例外.共通応答の到達範囲",
+      "statement": "反射生成とAction.performの実行中にExceptionが発生すると、共通受付はログ出力後、ErrorMsgにアプリケーションエラーを設定して共通エラーJSPを選ぶ。このcatchはAction内の職員確認・DB取得の例外を含むが、先行認証や識別値処理、catch後のLoginBean取得、利用記録、JSPへのforwardとその表示処理を同じ範囲で捕捉しない。Actionの戻り値がnull・PDF・CSV以外なら、共通受付はHTML応答設定とキャッシュ抑止ヘッダーを設定してその戻り値へforwardする。メニュー等のJSPはUTF-8を宣言し、受付側はforward前にWindows-31Jを設定するため、最終応答の文字コード・HTTP状態・表示成功は配備環境での確認境界として残る。エラーJSPはErrorMsgをエスケープして表示し、ログイン画面へのリンクを置く。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 309,
+          "endLine": 383
+        },
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 1,
+          "endLine": 4
+        },
+        {
+          "path": "nenkin/JSP/COMMON/Error.jsp",
+          "startLine": 1,
+          "endLine": 8
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F028",
+      "topic": "データ操作.共通利用記録",
+      "statement": "共通受付はAction実行または拒否経路の後、機能ID・画面ID・コマンドID・連結したAction ID・記録用JSP・職員番号をMapにしてCounterShiftへ渡す。ログアウトだけはAction前に取得した職員番号を使い、その他は処理後のLoginBeanから取得する。MESSAGEが残っている場合、記録用JSP名をSubMessage.jspにするが、実際のforward先strUrlは変更しない。CounterShiftは別接続で利用記録INSERTとcommitを行い、Exception時は可能ならrollbackしてログ出力し、再送や失敗結果の返却を行わず終了する。メニューの表示・画面移動・ログアウトには業務データ更新トランザクションがなく、この利用記録commitはセッション属性変更を確定する仕組みでもない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 319,
+          "endLine": 323
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 349,
+          "endLine": 383
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/CounterShift.java",
+          "startLine": 25,
+          "endLine": 53
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F029",
+      "topic": "データ操作.利用記録SQLの契約",
+      "statement": "利用記録のINSERT対象はDB2.Ｕカウンターシフトのアクセス日付・アクセス時刻・機能ＩＤ・画面ＩＤ・コマンドＩＤ・アクションＩＤ・ＪＳＰ名・ユーザーＩＤの八列である。日時は処理時にyyyyMMddとHHmmssSSSで生成する。SQLは文字列連結してStatement.executeUpdateへ渡し、SQLパラメータの型・サイズ指定、WHERE、版比較、更新件数の成功検査はない。五つの識別・名称項目はnullまたは空文字をSQL NULLへ組み立てる一方、ユーザーＩＤは別に引用符付きで連結し、Mapのnullが同じSQL NULL処理へ入る実装ではない。CommonBaseはSQLExceptionを再throwし、finallyのStatement.close例外も上位へ届き得る。CounterShiftのcatchへ届いた場合はその例外処理に従い、commit失敗時のDB確定状態をこのソースだけで成功・未保存のどちらかに確定できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java",
+          "startLine": 34,
+          "endLine": 88
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/base/CommonBase.java",
+          "startLine": 44,
+          "endLine": 63
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/CounterShift.java",
+          "startLine": 29,
+          "endLine": 53
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F030",
+      "topic": "フロー.表示と拒否経路の図材料",
+      "statement": "メニュー表示の図は、共通受付の「識別値取得→先行ログイン確認→運用可否→反射Action実行」と、MenuViewActionの職員確認サブフローを分けて構成できる。先行ログイン不成立は時間切れErrorMsgと共通エラーJSP、運用可否falseはメンテナンスErrorMsgと共通エラーJSP、反射・Action内ExceptionはアプリケーションエラーErrorMsgと共通エラーJSPへ進む。職員確認サブフローは、既存StaffContextありなら再利用、なしならLoginInfoBean・ログイン可否・加工後職員番号・店舗名Map取得・職員照会を順に判定する。職員取得成功はStaffContext登録とCSRF確保、不成立は理由別MESSAGEと属性削除を経てログインJSP、DB取得例外は共通Action例外経路へ進む。職員確認trueの後はStaffContext再取得の非null枝だけが職員表示値を設定し、null枝はBean初期値を保持する。各枝のstrUrlとメッセージを保持して利用記録・forwardへ接続し、合流点で理由、表示値、戻り先、HTTP状態を一つの固定値へ統合しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 309,
+          "endLine": 383
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+          "startLine": 10,
+          "endLine": 16
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 45,
+          "endLine": 86
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 206,
+          "endLine": 234
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 289,
+          "endLine": 311
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F031",
+      "topic": "フロー.画面移動とログアウトの図材料",
+      "statement": "画面移動の図は、クリック→VIEW_ID・COMMAND_ID設定→POST→共通認証・運用可否→対象ViewAction→職員確認とし、確認成立時は対象画面の新しいBean設定と各JSP戻り値、不成立時はログインJSP戻り値、Action内Exception時は共通エラー戻り値へ分岐させる。登録、検索、帳票出力、ファイル生成をメニュークリックの共通成功節点へ置かない。ログアウトの図は、POST→共通認証→削除前職員番号取得→運用可否→ViewBean・LoginBean削除→ログインJSP戻り値→削除前番号による利用記録→forwardとする。Action到達前の拒否枝にはセッション属性削除を置かず、forward後の例外には削除を戻す処理を追加しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 6,
+          "endLine": 13
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/PensionViewAction.java",
+          "startLine": 8,
+          "endLine": 11
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/BatchViewAction.java",
+          "startLine": 14,
+          "endLine": 25
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/ReportViewAction.java",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/ExcelViewAction.java",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/LogoutAction.java",
+          "startLine": 26,
+          "endLine": 33
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 313,
+          "endLine": 383
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F032",
+      "topic": "補足.互換入口と残存職員画面",
+      "statement": "StaffViewAction・StaffVerifyAction・StaffClearActionはいずれもMenuViewActionへそのまま移譲する互換入口である。これらのActionにはSTAFF_NOの読取り、新たな手入力職員認証、Clearによる年金職員状態の削除はない。残存Staff.jspはセッションViewBeanをStaffViewBean型で参照してSTAFF_NO入力を持つ。StaffViewBeanには旧セッション互換用で画面では使用しないというコメントがあるが、JSPの実参照は存在する。通常ログインとメニューの確認した導線からStaff.jspへ進む処理は見つからず、残存JSP・互換Action・コメント意図を独立した稼働職員認証機能としてまとめることはできない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/StaffViewAction.java",
+          "startLine": 6,
+          "endLine": 9
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/StaffVerifyAction.java",
+          "startLine": 6,
+          "endLine": 9
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/StaffClearAction.java",
+          "startLine": 6,
+          "endLine": 9
+        },
+        {
+          "path": "nenkin/JSP/NENKIN/Staff.jsp",
+          "startLine": 1,
+          "endLine": 14
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/bean/StaffViewBean.java",
+          "startLine": 5,
+          "endLine": 13
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/LoginAction.java",
+          "startLine": 7,
+          "endLine": 12
+        },
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 6,
+          "endLine": 13
+        }
+      ]
+    },
+    {
+      "id": "SCR-017-F033",
+      "topic": "補足.JSP表示と動的境界",
+      "statement": "Menu.jspはsessionスコープのjsp:useBeanでMenuViewBeanを参照するが、JSP自身にはログイン確認やrequireStaffの呼出しがない。通常Action経由では表示前に正しいBeanを設定する一方、Actionを経ないJSP処理、異型ViewBeanが残る状態、並行要求による属性上書きは別の境界である。メニューJSPの職員表示には日付算術や数値変換はないが、Beanの型参照・getter・セッション利用を含むforward後の表示成功はAction戻り値だけでは保証されない。収録web.xmlにはこのJSPに対するfilterやsecurity-constraintの宣言がないものの、実配備での直アクセス可否やコンテナの例外応答は確認できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 1,
+          "endLine": 14
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+          "startLine": 10,
+          "endLine": 16
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 37,
+          "endLine": 47
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 375,
+          "endLine": 383
+        },
+        {
+          "path": "nenkin/WEB-INF/web.xml",
+          "startLine": 1,
+          "endLine": 29
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "実配備のcontextPath、JNDI登録、接続先製品・実DDL・権限、DataSourceおよびJDBCドライバーの実体、接続成功は確認していない。H2互換DDLを本番職員名簿の物理属性へ適用できない。",
+    "職員名簿の管理・保存入口と氏名の業務上限は確認できない。収録Java・JSPに対する職員名簿INSERT・UPDATE・DELETEの文字列検索では一致を検出していないが、外部管理処理の不存在までは確定できない。",
+    "稼働classes・FW.jarと収録ソースの一致は未確認である。反射入口の記述はソースとServlet登録に基づく対応であり、実行到達や正常応答の確認結果ではない。",
+    "共通認証の全SQL・他アプリ連携の内部処理は本メニュー文書の再収録対象として解析していない。通常ログインからMenuViewActionへの移譲、LoginBean参照、年金職員確認の境界を確認した。",
+    "Action捕捉tryより前の例外、catch後の処理の例外、forward先JSPの型・表示例外について、実環境の最終HTTP状態・文字コード・エラーページは未確認である。共通ログ処理の外部ライブラリーも実行確認していない。",
+    "並行要求、セッション失効、ブラウザー履歴復元によるStaffContext再取得・ViewBean型・表示内容の具体的な発生結果は未確認である。ソース中の再取得と条件分岐を、競合試験済みの結果として扱っていない。",
+    "静的HTML/CSS投影は表示材料として記録したが、ブラウザーでの描画、原寸配置、フォント差、狭幅時の実表示は未確認である。",
+    "SCR-017および関連文書のMarkdown本文、spec-meta、表、図、Excel納品物はこのジョブでは生成・検査していない。計画内の文書リンクは生成済みではない。"
+  ],
+  "coverageNotes": [
+    "manifest.jsonを材料・権限確認のために読んだ。現manifestはmode=source-only、trainingReferenceAuthorizedByUser=false、referenceSpecificationIncluded=false、referenceFiles=[]、files=179件、omitted=166件である。参考設計、原仕様、期待値、workspace外の資料は読んでいない。manifestを業務・実装factの根拠には使っていない。",
+    "sourcePathsReadとfacts.references.pathはmanifest.files[].pathのPOSIX原ソース相対パスで記録した。capsule内の実体はsources/<path>、行番号付き読取り材料はmanifestのindexedに列挙されたindexed/<path>.txtである。indexedの000001等は原ソース行番号として扱った。",
+    "開始点のMenu.jspは1～15行、MenuViewActionは1～18行、MenuViewBeanは1～14行を確認した。site.cssは全体への関連セレクター検索後、1～80、106～130、169～443、1990～2080、2141～2190行を範囲表示して、通常規則・後段上書き・media条件を照合した。CSS全2260行を同一深度で解析したとはしていない。",
+    "年金側の閉包はNenkinBaseActionの23～99、119～125、191～202行、ReferenceDataServiceの21～39、206～235、289～326、374～389行、StaffContext全58行、StaffLookupItem全92行、NenkinDataSourceの1～59・77～95行、NenkinDataAccessException全10行を中心に確認した。メニュー表示が使うHtmlUtil.escapeの11～15行を確認した。",
+    "四つのViewAction、年金LoginAction、三つのStaff互換Actionは入口から戻り値まで確認した。各表示Beanの宣言・初期値、PensionReservationの1～42行、PensionRepository.createEmptyの69～85行、Batch初期日付に関係するDateUtilの10～71、114～179、180～218行を確認した。各機能の保存・削除・出力処理全体は本メニュー文書へ再収録していない。",
+    "共通受付はControlServletの54～141、243～248、285～405行を範囲表示し、外部連携の分岐条件は137・169・191行等の検索で確認した。外部連携内部の値や認証値は取得対象に加えなかった。CommonConstの31～49行、CommonAction全51行、LoginInfoBeanのログイン可否・職員番号宣言とgetter/setter、LogoutAction全35行を確認した。",
+    "到達する共通依存としてOperatePermissionの26～84行、CommonUtil.getConnectionの36～43行、CounterShiftの25～53行、InsertCounterShiftBaseの26～88行、CommonBaseの20～76行を確認した。SQL実行・commit・rollback・closeの原文を読んだが、実行していない。対象外framework業務を年金の独立機能として展開していない。",
+    "web.xml全29行、Login.jspのメッセージ処理17～19行と識別値22～24行、Error.jsp全8行、Staff.jspの1～15行、StaffViewBean全14行を確認した。四つの遷移先JSPはメニューへ戻る該当行を検索確認した。通常導線の検索範囲は収録nenkinのJava・JSPであり、未検出を外部利用の不存在へ拡張していない。",
+    "表示職員のDB対応としてschema.sqlの20～30行と、補完店舗の96～99行を確認した。職員・店舗データの管理側上限をDB容量で補わず、H2互換宣言と実配備属性を分けた。",
+    "初期のmanifest検索、複数ファイル表示、一部Bean表示には出力切れがあった。必要な原文は対象ファイル・行範囲を分割して再取得し、切れた出力や範囲表示の空出力を読了根拠に使っていない。一部相対パス読取り失敗も、許可workspace内の対応実体を指定して再取得した。",
+    "対象は計画ID=SCR-017、path=basic/menu.md、title=メニュー 基本設計書、kind=basic-designである。直接の関連先はSCR-017-DETAIL（detail/menu.md）とIDX-NENKIN（index.md）。画面導線はSCR-018（basic/pension.md）、SCR-014（basic/batch.md）、SCR-019（basic/report.md）、SCR-015（basic/excel.md）、ログイン復帰はSCR-013（basic/login.md）へ対応する。すべて計画上の関連先であり未生成リンクとして扱う。",
+    "共通境界の関連先はCOM-012（common/http-dispatch.md）、COM-015（common/authentication.md）、COM-111（common/session-and-mutation.md）、COM-013（common/access-log.md）、COM-138（common/database-connections.md）、COM-146（common/reference-data.md）、COM-151（common/browser-and-layout.md）。表示材料の確認状態はANL-COVERAGE（analysis/coverage-and-limitations.md）、互換入口と残存JSPの分類はANL-TRACEABILITY（analysis/identity-reachability-and-differences.md）へ対応する。これらも生成済みとは扱わない。",
+    "入力のstable identityはMenuViewAction=COM-110、MenuViewBean=COM-125、StaffClearAction=COM-119、StaffVerifyAction=COM-120、StaffViewAction=COM-121、LogoutAction=COM-017の対応として保持する。過去hash一致・不一致のフラグは現在の動作証拠にせず、今回読んだcapsule原文だけをfactsの根拠とした。",
+    "IDX-NENKINの文書契約は今回のジョブ入力から受けた作成条件であり、ソース観測factには混ぜていない。後続本文ではspec-md/1.0の実HTMLコメントspec-meta、文書属性、概要・項目一覧・イベント仕様・補足説明とsheets順序、GRID/LIST区分を適用する。項目一覧は指定10列・一意No・前行継承なしとし、表示項目、操作項目、hidden制御項目、DB連携項目、候補取得元を分ける。",
+    "後続のイベント本文にはイベントごとの処理概要、処理手順、処理フロー、SQL・テーブル関連（ER図）、DB操作の詳細、結果・例外時の扱いの六節を置く。メニュー固有の業務DB更新がないイベントでも、実際のセッション変更、条件付き参照SQL、共通利用記録を説明する。図では拒否理由・戻り先・枝別代入を保つ。SQL JOINがないMap補完へFKや多重度を追加しない。",
+    "この成果物は根拠付きJSON解析材料である。ファイル編集、入力プログラムの実行・import・評価・コンパイル・テスト、SQL実行、DB接続、ネットワーク、外部サービス、プラグイン、委任、モデル訓練を行っていない。静的投影を描画済み・承認済みとは扱わず、認証値や秘密値の実値を記録していない。"
+  ]
+}

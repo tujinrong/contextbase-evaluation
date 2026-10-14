@@ -1,0 +1,704 @@
+{
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "reverse-ai-plan-review/1"
+    },
+    "referenceMode": {
+      "type": "string",
+      "enum": [
+        "source-only",
+        "training-assisted"
+      ]
+    },
+    "approved": {
+      "type": "boolean"
+    },
+    "sourcePathsRead": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0
+    },
+    "subjects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "observed-source",
+              "reference-design"
+            ]
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "startLine": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "endLine": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "path",
+                "startLine",
+                "endLine"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "sourcePaths": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "documentIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "basis",
+          "references",
+          "sourcePaths",
+          "documentIds"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "documentCoverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "covered",
+              "partial",
+              "missing",
+              "unknown",
+              "not-applicable"
+            ]
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "observed-source",
+              "reference-design",
+              "plan-structure"
+            ]
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "startLine": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "endLine": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "path",
+                "startLine",
+                "endLine"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "documentId",
+          "path",
+          "subjectIds",
+          "status",
+          "basis",
+          "rationale",
+          "references"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "reachability": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "entryPoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "basis": {
+                  "type": "string",
+                  "enum": [
+                    "observed-source",
+                    "reference-design"
+                  ]
+                },
+                "references": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "startLine": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "endLine": {
+                        "type": "integer",
+                        "minimum": 1
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "startLine",
+                      "endLine"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "name",
+                "basis",
+                "references"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          },
+          "callers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "basis": {
+                  "type": "string",
+                  "enum": [
+                    "observed-source",
+                    "reference-design"
+                  ]
+                },
+                "references": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "startLine": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "endLine": {
+                        "type": "integer",
+                        "minimum": 1
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "startLine",
+                      "endLine"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "name",
+                "basis",
+                "references"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          },
+          "registrations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "basis": {
+                  "type": "string",
+                  "enum": [
+                    "observed-source",
+                    "reference-design"
+                  ]
+                },
+                "references": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "startLine": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "endLine": {
+                        "type": "integer",
+                        "minimum": 1
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "startLine",
+                      "endLine"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "name",
+                "basis",
+                "references"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          },
+          "searchScope": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "declaration-only",
+              "not-found-in-included-scope",
+              "unknown"
+            ]
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "observed-source",
+              "reference-design",
+              "plan-structure"
+            ]
+          },
+          "explanation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "startLine": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "endLine": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "path",
+                "startLine",
+                "endLine"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "id",
+          "subjectIds",
+          "entryPoints",
+          "callers",
+          "registrations",
+          "searchScope",
+          "status",
+          "basis",
+          "explanation",
+          "references"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "major",
+              "minor"
+            ]
+          },
+          "documentIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          },
+          "subjectIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          },
+          "location": {
+            "type": "string",
+            "minLength": 1
+          },
+          "defect": {
+            "type": "string",
+            "minLength": 1
+          },
+          "repairDirection": {
+            "type": "string",
+            "minLength": 1
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "observed-source",
+              "reference-design",
+              "plan-structure"
+            ]
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "startLine": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "endLine": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "path",
+                "startLine",
+                "endLine"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "id",
+          "severity",
+          "documentIds",
+          "subjectIds",
+          "location",
+          "defect",
+          "repairDirection",
+          "basis",
+          "references"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "blockingUnresolved": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "question": {
+            "type": "string",
+            "minLength": 1
+          },
+          "documentIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          },
+          "subjectIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "observed-source",
+              "reference-design",
+              "plan-structure"
+            ]
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "startLine": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "endLine": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "path",
+                "startLine",
+                "endLine"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "id",
+          "question",
+          "documentIds",
+          "subjectIds",
+          "basis",
+          "references"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "scopeLimits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "limitation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourcePaths": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          },
+          "documentIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "observed-source",
+              "reference-design",
+              "plan-structure"
+            ]
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "startLine": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "endLine": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "path",
+                "startLine",
+                "endLine"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "id",
+          "limitation",
+          "sourcePaths",
+          "documentIds",
+          "basis",
+          "references"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    }
+  },
+  "required": [
+    "schema",
+    "referenceMode",
+    "approved",
+    "sourcePathsRead",
+    "subjects",
+    "documentCoverage",
+    "reachability",
+    "findings",
+    "blockingUnresolved",
+    "scopeLimits"
+  ],
+  "additionalProperties": false
+}

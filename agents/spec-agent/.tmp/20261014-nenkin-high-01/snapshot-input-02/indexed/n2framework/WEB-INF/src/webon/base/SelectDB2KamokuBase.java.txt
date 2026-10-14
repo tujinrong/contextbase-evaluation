@@ -1,0 +1,86 @@
+000001 | package webon.base;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.sql.SQLException;
+000005 | 
+000006 | import webon.util.ConvertUtil;
+000007 | 
+000008 | import common.base.CommonBaseSelect;
+000009 | 
+000010 | /**
+000011 |  * Webon汎用照会ベースクラス　DB2.ＵＪ科目　SelectBaseクラス
+000012 |  * 
+000013 |  * @author Minori 吉津
+000014 |  * 
+000015 |  * @date	H26.02.24			新規作成
+000016 |  * @date	2020.02.06	京極　	webonのFW化対応
+000017 |  */
+000018 | public class SelectDB2KamokuBase extends CommonBaseSelect {
+000019 | 
+000020 | 	public SelectDB2KamokuBase(Connection con) {
+000021 | 		super(con);
+000022 | 		// TODO Auto-generated constructor stub
+000023 | 	}
+000024 | 	//DB名
+000025 | 	public static final String DBNAME = "DB2.ＵＪ科目";
+000026 | 	//DBキー
+000027 | 	public static final String DBKEY_CODE="コード";
+000028 | 	public static final String DBKEY_KOUMOKU1="項目１";
+000029 | 	
+000030 | 	/** 
+000031 | 	  * コードをキーに、項目１（科目名称）を取得
+000032 | 	  * 
+000033 | 	  * @param  code	科目コード 
+000034 | 	  * @return boolean 取得結果
+000035 | 	  * @throws Exception 
+000036 | 	  */
+000037 | 	public boolean selectKamokuNameByCode(String code) throws Exception{
+000038 | 
+000039 | 		//SQL編集
+000040 | 		StringBuilder sb = new StringBuilder();
+000041 | 		sb.append("SELECT * FROM ").append(DBNAME);
+000042 | 		sb.append(" WHERE ").append(DBKEY_CODE).append("=").append(ConvertUtil.dbMoldStr(code,2)).append("");
+000043 | 		
+000044 | 		//SQL実行
+000045 | 		try {
+000046 | 			execute(sb.toString());
+000047 | 		} catch (SQLException e) {
+000048 | 			throw e;
+000049 | 		}
+000050 | 
+000051 | 		//結果返却
+000052 | 		if (getList() != null) {
+000053 | 			return true;
+000054 | 		} else{
+000055 | 			return false;
+000056 | 		}
+000057 | 	}
+000058 | 	/** 
+000059 | 	  * 項目１（科目名称）をキーに、コードを取得
+000060 | 	  * 
+000061 | 	  * @param  name	科目名称
+000062 | 	  * @return boolean 取得結果
+000063 | 	  * @throws Exception 
+000064 | 	  */
+000065 | 	public boolean selectCodeByKamokuName(String name) throws Exception{
+000066 | 
+000067 | 		//SQL編集
+000068 | 		StringBuilder sb = new StringBuilder();
+000069 | 		sb.append("SELECT * FROM ").append(DBNAME);
+000070 | 		sb.append(" WHERE ").append(DBKEY_KOUMOKU1).append("='").append(name).append("'");
+000071 | 		
+000072 | 		//SQL実行
+000073 | 		try {
+000074 | 			execute(sb.toString());
+000075 | 		} catch (SQLException e) {
+000076 | 			throw e;
+000077 | 		}
+000078 | 
+000079 | 		//結果返却
+000080 | 		if (getList() != null) {
+000081 | 			return true;
+000082 | 		} else{
+000083 | 			return false;
+000084 | 		}
+000085 | 	}
+000086 | }

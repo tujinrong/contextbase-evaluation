@@ -1,0 +1,29 @@
+000001 | package nenkin;
+000002 | 
+000003 | import java.io.PrintWriter;
+000004 | import javax.servlet.http.HttpServletRequest;
+000005 | import javax.servlet.http.HttpServletResponse;
+000006 | import nenkin.model.PensionReservation;
+000007 | import nenkin.service.PensionRepository;
+000008 | import nenkin.util.DateUtil;
+000009 | import nenkin.util.HtmlUtil;
+000010 | 
+000011 | public final class PensionLookupAction extends NenkinBaseAction {
+000012 | 	public String perform(HttpServletRequest request, HttpServletResponse response) throws Exception {
+000013 | 		if (!requireStaff(request)) return STAFF_JSP;
+000014 | 		if (!"POST".equalsIgnoreCase(request.getMethod())) {
+000015 | 			response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+000016 | 			return "CSV";
+000017 | 		}
+000018 | 		PensionReservation value;
+000019 | 		if ("key".equals(request.getParameter("LOOKUP_MODE"))) value=PensionRepository.getInstance().findByKanaAndPhone(request.getParameter("KANA_NAME"),request.getParameter("PHONE_NUMBER"));
+000020 | 		else { Integer branch=integerOrNull(request.getParameter("BRANCH_NO")),customer=integerOrNull(request.getParameter("CUSTOMER_NO")); value=branch==null||customer==null?null:PensionRepository.getInstance().findByCustomer(branch.intValue(),customer.intValue()); }
+000021 | 		response.setCharacterEncoding("UTF-8"); response.setContentType("application/json; charset=UTF-8");
+000022 | 		PrintWriter out=response.getWriter(); out.write(value==null?"{\"found\":false}":"{\"found\":true,\"reservation\":"+toJson(value)+"}"); out.flush();
+000023 | 		return "CSV";
+000024 | 	}
+000025 | 	private String toJson(PensionReservation x) {
+000026 | 		StringBuilder b=new StringBuilder("{"); append(b,"branchNo",x.getBranchNo());append(b,"branchName",x.getBranchName());append(b,"customerNo",x.getCustomerNo());append(b,"staffCode",x.getStaffCode());append(b,"customerName",x.getCustomerName());append(b,"kanaName",x.getKanaName());append(b,"gender",x.getGender());append(b,"address",x.getAddress());append(b,"phoneNumber",x.getPhoneNumber());append(b,"birthDate",x.getBirthDate());append(b,"birthDateDisplay",DateUtil.toWarekiDisplay(x.getBirthDate()));append(b,"claimStatus",x.getClaimStatus());append(b,"claimScheduledDate",x.getClaimScheduledDate());append(b,"claimScheduledDateDisplay",DateUtil.toGregorianDisplay(x.getClaimScheduledDate()));append(b,"plannedAge",x.getPlannedAge());append(b,"reservationRequestDate",x.getReservationRequestDate());append(b,"reservationRequestDateDisplay",DateUtil.toGregorianDisplay(x.getReservationRequestDate()));append(b,"dataUpdateDate",x.getDataUpdateDate());append(b,"dataUpdateDateDisplay",DateUtil.toGregorianDisplay(x.getDataUpdateDate()));append(b,"notes",x.getNotes());append(b,"spouseName",x.getSpouseName());append(b,"hasBenefit",x.getHasBenefit());append(b,"spouseBirthDate",x.getSpouseBirthDate());append(b,"spouseBirthDateDisplay",DateUtil.toWarekiDisplay(x.getSpouseBirthDate()));append(b,"pensionType",x.getPensionType());append(b,"nationalPension",Boolean.valueOf(x.isNationalPension()));append(b,"employeePension",Boolean.valueOf(x.isEmployeePension()));append(b,"mutualAidPension",Boolean.valueOf(x.isMutualAidPension()));append(b,"employeePensionFund",Boolean.valueOf(x.isEmployeePensionFund()));append(b,"nationalPensionFund",Boolean.valueOf(x.isNationalPensionFund()));append(b,"sixMonthCheck",Boolean.valueOf(x.isSixMonthCheck()));b.append('}');return b.toString();
+000027 | 	}
+000028 | 	private void append(StringBuilder b,String name,Object value){if(b.length()>1)b.append(',');b.append('"').append(name).append("\":");if(value==null)b.append("null");else if(value instanceof Number||value instanceof Boolean)b.append(value);else b.append('"').append(HtmlUtil.json(String.valueOf(value))).append('"');}
+000029 | }

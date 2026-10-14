@@ -1,0 +1,503 @@
+000001 | package webon.operation;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.util.ArrayList;
+000005 | import java.util.Collections;
+000006 | import java.util.Comparator;
+000007 | import java.util.HashMap;
+000008 | import java.util.Iterator;
+000009 | import java.util.LinkedHashSet;
+000010 | import java.util.List;
+000011 | import java.util.Map;
+000012 | import java.util.Set;
+000013 | 
+000014 | import org.w3c.dom.Node;
+000015 | 
+000016 | import webon.WebonBase;
+000017 | import webon.WebonException;
+000018 | import webon.util.ConvertUtil;
+000019 | import webon.util.FixedValue;
+000020 | 
+000021 | import common.FWLog;
+000022 | import common.bean.LoginInfoBean;
+000023 | 
+000024 | /**
+000025 |  * Webon汎用照会クラス　名寄せ情報照会（統一顧客番号による照会）クラス
+000026 |  * 
+000027 |  * @author	Minori 岡野
+000028 |  * 
+000029 |  * @date	2020.04.10	岡野		webonのFW化対応
+000030 |  *
+000031 |  */
+000032 | public class NayoseJohoShokaiCif extends CommonOperation{
+000033 | 
+000034 | 	private static final String syokaiName = "名寄せ情報照会（統一顧客番号による照会）";
+000035 | 	
+000036 | 	//webon情報
+000037 | 	WebonBase webonBase;
+000038 | 	//オペレーションＩＤ
+000039 | 	private final String operationId="OP-UNAYOSEJ-0001";
+000040 | 	//ログイン情報
+000041 | 	LoginInfoBean loginInfo;
+000042 | 	//webon引数
+000043 | 	String woToitsuCif;
+000044 | 	
+000045 | 	//Errorレベル
+000046 | 	private static final int ERRLEVEL_ERROR=0;	//Error
+000047 | 	private static final int ERRLEVEL_WARNING=1;	//Warning
+000048 | 	//Error箇所
+000049 | 	private static final String ERRSPOT_WOGET = "0";		//取得時
+000050 | 	private static final String ERRSPOT_WOANALYZE = "1";	//解析時
+000051 | 	private static final String ERRSPOT_WOMOLD = "2";		//成型時
+000052 | 	//Erro追加情報格納用リスト
+000053 | 	List<Map<String, String>> etc = new ArrayList<Map<String,String>>();
+000054 | 	//Error有無フラグ
+000055 | 	boolean errFlg=false;
+000056 | 	
+000057 | 	//名寄せ情報照会リスト
+000058 | 	List<NayoseJohoBean> nayoseJohoList = new ArrayList<NayoseJohoBean>();
+000059 | 
+000060 | 	//==================================================
+000061 | 	//顧客結合照会
+000062 | 	public class NayoseJohoBean{
+000063 | 		
+000064 | 		//顧客情報
+000065 | 		private String 統一顧客番号="";
+000066 | 		private String 統一カナ氏名 ="";
+000067 | 		private String 統一生年月日="";
+000068 | 		private String 統一電話番号="";
+000069 | 		private String 統一人格Ｃ ="";
+000070 | 		private String 店番="";
+000071 | 		private String 顧客番号="";
+000072 | 		private String 活口座 = "";
+000073 | 		private String 抹消予定 = "";
+000074 | 		
+000075 | 		public String get統一顧客番号() {
+000076 | 			return 統一顧客番号;
+000077 | 		}
+000078 | 		public void set統一顧客番号(String 統一顧客番号) {
+000079 | 			this.統一顧客番号 = 統一顧客番号;
+000080 | 		}
+000081 | 		public String get統一カナ氏名() {
+000082 | 			return 統一カナ氏名;
+000083 | 		}
+000084 | 		public void set統一カナ氏名(String 統一カナ氏名) {
+000085 | 			this.統一カナ氏名 = 統一カナ氏名;
+000086 | 		}
+000087 | 		public String get統一生年月日() {
+000088 | 			return 統一生年月日;
+000089 | 		}
+000090 | 		public void set統一生年月日(String 統一生年月日) {
+000091 | 			this.統一生年月日 = 統一生年月日;
+000092 | 		}
+000093 | 		public String get統一電話番号() {
+000094 | 			return 統一電話番号;
+000095 | 		}
+000096 | 		public void set統一電話番号(String 統一電話番号) {
+000097 | 			this.統一電話番号 = 統一電話番号;
+000098 | 		}
+000099 | 		public String get統一人格Ｃ() {
+000100 | 			return 統一人格Ｃ;
+000101 | 		}
+000102 | 		public void set統一人格Ｃ(String 統一人格ｃ) {
+000103 | 			統一人格Ｃ = 統一人格ｃ;
+000104 | 		}
+000105 | 		public String get店番() {
+000106 | 			return 店番;
+000107 | 		}
+000108 | 		public void set店番(String 店番) {
+000109 | 			this.店番 = 店番;
+000110 | 		}
+000111 | 		public String get顧客番号() {
+000112 | 			return 顧客番号;
+000113 | 		}
+000114 | 		public void set顧客番号(String 顧客番号) {
+000115 | 			this.顧客番号 = 顧客番号;
+000116 | 		}
+000117 | 		public String get活口座() {
+000118 | 			return 活口座;
+000119 | 		}
+000120 | 		public void set活口座(String 活口座) {
+000121 | 			this.活口座 = 活口座;
+000122 | 		}
+000123 | 		public String get抹消予定() {
+000124 | 			return 抹消予定;
+000125 | 		}
+000126 | 		public void set抹消予定(String 抹消予定) {
+000127 | 			this.抹消予定 = 抹消予定;
+000128 | 		}
+000129 | 	}
+000130 | 	
+000131 | 	//setter,getter
+000132 | 	public List<Map<String, String>> getEtc() {
+000133 | 		return etc;
+000134 | 	}
+000135 | 	public void setEtc(List<Map<String, String>> etc) {
+000136 | 		this.etc = etc;
+000137 | 	}
+000138 | 	public boolean isErrFlg() {
+000139 | 		return errFlg;
+000140 | 	}
+000141 | 	public void setErrFlg(boolean errFlg) {
+000142 | 		this.errFlg = errFlg;
+000143 | 	}
+000144 | 	public WebonBase getWebonBase() {
+000145 | 		return webonBase;
+000146 | 	}
+000147 | 	public void setWebonBase(WebonBase webonBase) {
+000148 | 		this.webonBase = webonBase;
+000149 | 	}
+000150 | 	public LoginInfoBean getLoginInfo() {
+000151 | 		return loginInfo;
+000152 | 	}
+000153 | 	public void setLoginInfo(LoginInfoBean loginInfo) {
+000154 | 		this.loginInfo = loginInfo;
+000155 | 	}
+000156 | 	public String getWoToitsuCif() {
+000157 | 		return woToitsuCif;
+000158 | 	}
+000159 | 	public void setWoToitsuCif(String woToitsuCif) {
+000160 | 		this.woToitsuCif = woToitsuCif;
+000161 | 	}
+000162 | 	public List<NayoseJohoBean> getNayoseJohoList() {
+000163 | 		return nayoseJohoList;
+000164 | 	}
+000165 | 	public void setNayoseJohoList(List<NayoseJohoBean> nayoseJohoList) {
+000166 | 		this.nayoseJohoList = nayoseJohoList;
+000167 | 	}
+000168 | 
+000169 | 	/**
+000170 | 	 * 指定店番・重複を除いた店番のリストを取得
+000171 | 	 * （ソートは実施済み）
+000172 | 	 * 
+000173 | 	 * @return
+000174 | 	 */
+000175 | 	public List<String> getNayoseBrList(String br){
+000176 | 		List<String> uniequeBrList = new ArrayList<String>();
+000177 | 		Set<String> set = new LinkedHashSet<String>();
+000178 | 		//店番の重複排除
+000179 | 		for(NayoseJohoBean njb : getNayoseJohoList()){
+000180 | 			if(!br.equals(njb.get店番())){
+000181 | 				set.add(njb.get店番());	
+000182 | 			}
+000183 | 		}
+000184 | 		//重複排除後の店番をセット
+000185 | 		for(Iterator<String> i = set.iterator();i.hasNext();){
+000186 | 			uniequeBrList.add(i.next());
+000187 | 		}
+000188 | 		return uniequeBrList;
+000189 | 	}
+000190 | 	/**
+000191 | 	 * 指定店番・重複を除いた店番のリストを取得
+000192 | 	 * （抹消予定のレコードは除く）
+000193 | 	 * （ソートは実施済み）
+000194 | 	 * 
+000195 | 	 * @return	
+000196 | 	 */
+000197 | 	public List<String> getNayoseActiveBrList(String br){
+000198 | 		List<String> uniequeBrList = new ArrayList<String>();
+000199 | 		Set<String> set = new LinkedHashSet<String>();
+000200 | 		//店番の重複排除
+000201 | 		for(NayoseJohoBean njb : getNayoseJohoList()){
+000202 | 			if(!br.equals(njb.get店番())){
+000203 | 				FWLog.debug("抹消予定："+njb.get抹消予定()+"活口座:"+njb.get活口座());
+000204 | 				if(njb.get抹消予定().equals("0")&&njb.get活口座().equals("1")){
+000205 | 					set.add(njb.get店番());
+000206 | 				}
+000207 | 			}
+000208 | 		}
+000209 | 		//重複排除後の店番をセット
+000210 | 		for(Iterator<String> i = set.iterator();i.hasNext();){
+000211 | 			uniequeBrList.add(i.next());
+000212 | 		}
+000213 | 		return uniequeBrList;
+000214 | 	}
+000215 | 	
+000216 | 	/**
+000217 | 	 * オーバライドクラス
+000218 | 	 * (NayoseJohoBeanの店番（昇順）・顧客番号（昇順）でソート)
+000219 | 	 * @author Minori 米持
+000220 | 	 * 
+000221 | 	 * @date	H25.08.28	新規作成
+000222 | 	 */
+000223 | 	public class NayoseComparator implements Comparator<NayoseJohoBean> {
+000224 | 	  public int compare(NayoseJohoBean b1, NayoseJohoBean b2) {
+000225 | 		  NayoseJohoBean bean1 = (NayoseJohoBean) b1;
+000226 | 		  NayoseJohoBean bean2 = (NayoseJohoBean) b2;
+000227 | 
+000228 | 		  if(bean1.get店番().equals(bean2.get店番())){
+000229 | 			  return bean1.get顧客番号().compareTo(bean2.get顧客番号());
+000230 | 		  }else{
+000231 | 			  return bean1.get店番().compareTo((bean2.get顧客番号()));
+000232 | 		  }
+000233 | 	  }
+000234 | 	}
+000235 | 	
+000236 | 	/**
+000237 | 	 * 統一顧客番号を元に名寄せ情報照会を取得する
+000238 | 	 * 
+000239 | 	 * @param cif 統一顧客番号
+000240 | 	 * @param loginInfo ログイン情報
+000241 | 	 * @param con
+000242 | 	 * @throws Exception
+000243 | 	 */
+000244 | 	public void getWebon(String cif, LoginInfoBean loginInfo, Connection con) throws Exception {
+000245 | 		try{
+000246 | 			//引数チェック 引数がセットされているか
+000247 | 			if (cif == null) {throw new Exception("顧客番号が設定されていません");}
+000248 | 			if (con == null) {throw new Exception("ＤＢコネクションが設定されていません");}
+000249 | 			
+000250 | 			//引数のセット
+000251 | 			this.woToitsuCif = cif;
+000252 | 			this.loginInfo = loginInfo;
+000253 | 	
+000254 | 			//Webon問合せ実行
+000255 | 			getWebon(con);
+000256 | 
+000257 | 			//取得結果解析
+000258 | 			analyzeWeon();
+000259 | 
+000260 | 		}catch(WebonException e){
+000261 | 			throw e;
+000262 | 		}catch(Exception e){
+000263 | 			throw e;
+000264 | 		}
+000265 | 	}
+000266 | 
+000267 | 	/**
+000268 | 	 * Webon取得メソッド
+000269 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000270 | 	 * 
+000271 | 	 * @param req リクエスト
+000272 | 	 * @param res レスポンス
+000273 | 	 * @throws Exception 
+000274 | 	 */
+000275 | 	private void getWebon(Connection con) throws Exception {
+000276 | 		
+000277 | 		//WebonBaseの取得
+000278 | 		webonBase = new WebonBase(operationId, loginInfo, con);
+000279 | 		//設定値
+000280 | 		webonBase.put("統一顧客番号",woToitsuCif);
+000281 | 		//問い合わせ
+000282 | 		webonBase.doQuery();
+000283 | 		
+000284 | 		//エラー処理
+000285 | 		if (!webonBase.checkResult()) {
+000286 | 			//エラーコード等をセット
+000287 | 			WebonException e = createWoException("Webon取得結果エラー", ERRLEVEL_ERROR, ERRSPOT_WOGET);
+000288 | 			//エラー処理は上位に任せる
+000289 | 			throw e;
+000290 | 		}
+000291 | 	}
+000292 | 
+000293 | 	/**
+000294 | 	 * Webon取得内容解析メソッド
+000295 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000296 | 	 * 
+000297 | 	 * @param req リクエスト
+000298 | 	 * @param res レスポンス
+000299 | 	 * @throws Exception 
+000300 | 	 * @throws Exception 
+000301 | 	 */
+000302 | 	public void analyzeWeon() throws Exception {
+000303 | 		//WEBON結果走査用固定値
+000304 | 		final String WOKEY_TSUCYO="通帳部宛";		//これがroot
+000305 | 		final String WOKEY_NAYOSE="統一顧客名寄せ情報照会";	//これがroot2
+000306 | 		final String WOKEY_ROOP="店番顧客番号行";
+000307 | 		
+000308 | 		//結果取得
+000309 | 		Node editData = webonBase.getEditData();
+000310 | 		//結果解析
+000311 | 		//データの最上位ノードを取得(もうちょっと精査要)
+000312 | 		Node root=editData.getFirstChild();
+000313 | 		Node root2=null;
+000314 | //		while (true) {
+000315 | 		for (int roopCount=0;roopCount<FixedValue.SYS_WBNUMLIMIT;roopCount++){
+000316 |         	//取得できなかったら終わり
+000317 |         	if (root==null){break;}
+000318 | 	    	if (root.getNodeType()==Node.ELEMENT_NODE) {
+000319 | 	    		//要素名の解析
+000320 | 	    		if (root.getNodeName().equals(WOKEY_TSUCYO)) {
+000321 | 	    			root2 = root.getFirstChild();
+000322 | //	    			while (true) {
+000323 | 	    			for (int roopCount2=0;roopCount2<FixedValue.SYS_WBNUMLIMIT;roopCount2++){
+000324 | 	    	        	//取得できなかったら終わり
+000325 | 	    	        	if (root2==null){break;}
+000326 | 	    		    	if (root2.getNodeType()==Node.ELEMENT_NODE) {
+000327 | 	    		    		//要素名の解析
+000328 | 	    		    		if (root2.getNodeName().equals(WOKEY_NAYOSE)) {
+000329 | 	    		    			break;
+000330 | 	    		            }
+000331 | 	    		    	}
+000332 | 	    	        	//次の子ノードを取得
+000333 | 	    		    	root2 = root.getNextSibling();
+000334 | 	    			}
+000335 | 	    			break;
+000336 | 	            } 
+000337 | 	    	}
+000338 |         	//次の子ノードを取得
+000339 | 	    	root = root.getNextSibling();
+000340 | 		}
+000341 | 		//全体の走査
+000342 |         Node child = root2.getFirstChild();
+000343 |         List<Node> loopNodes = new ArrayList<Node>();
+000344 |         String woCif	=null;
+000345 |         String woJinkaku=null;
+000346 |         String woKana	=null;
+000347 |         String woBirthday	=null;
+000348 |         String woTel	=null;
+000349 | //		while (true) {
+000350 | 		for (int roopCount=0;roopCount<FixedValue.SYS_WBNUMLIMIT;roopCount++){
+000351 |         	//取得できなかったら終わり
+000352 |         	if (child==null){break;}
+000353 | 	    	if (child.getNodeType()==Node.ELEMENT_NODE) {
+000354 | 	    		//要素名の解析
+000355 | 	    		//ループ対象行
+000356 | 	    		if (child.getNodeName().equals(WOKEY_ROOP)) {
+000357 | 	    			loopNodes.add(child);
+000358 | 	            //ループ対象行以外
+000359 | 	            } else if (child.getNodeName().equals("統一顧客番号")){
+000360 | 	    			//必須チェック
+000361 | 	    			if(!getChildText(child).equals("")){
+000362 | 	    				woCif = getChildText(child);
+000363 | 	    			}else{
+000364 | 	    				WebonException e = createWoException("Webon取得結果解析エラー", ERRLEVEL_ERROR, ERRSPOT_WOANALYZE);
+000365 | 	    				//エラー項目のセット
+000366 | 	    				Map<String, String>map = new HashMap<String, String>();
+000367 | 	    				map.put("店番", null);
+000368 | 	    				etc.add(map);
+000369 | 	    				e.setEtc(etc);
+000370 | 	    				//エラー処理は上位に任せる
+000371 | 	    				throw e;
+000372 | 	    			}
+000373 | 	            } else if (child.getNodeName().equals("統一人格C")){
+000374 | 	            	woJinkaku=getChildText(child);
+000375 | 	            } else if (child.getNodeName().equals("統一カナ氏名")){
+000376 | 	            	woKana=getChildText(child);
+000377 | 	            } else if (child.getNodeName().equals("統一生年月日")){
+000378 | 	            	woBirthday=getChildText(child);
+000379 | 	            } else if (child.getNodeName().equals("統一電話番号")){
+000380 | 	            	woTel=getChildText(child);
+000381 | 	            }
+000382 | 	    	}
+000383 |         	//次の子ノードを取得
+000384 |         	child = getNextElement(child);
+000385 | 		}
+000386 | 		//ループ行の走査＆値のセット
+000387 | 		for (int i=0; i<loopNodes.size(); i++ ) {
+000388 | 			//ループの要素を取り出し
+000389 | 			Node elem=loopNodes.get(i).getFirstChild();
+000390 | //			while (true) {
+000391 | 			for (int roopCount=0;roopCount<FixedValue.SYS_WBNUMLIMIT;roopCount++){
+000392 | 				if (elem==null){break;}
+000393 | 		    	if (elem.getNodeType()==Node.ELEMENT_NODE && elem.getNodeName().equals("名寄せ店番")) {
+000394 | 		    		Node elemBr  =elem;	//名寄せ店番
+000395 | 		    		Node elemCif =getNextElement(elem);	//名寄せ顧客
+000396 | 
+000397 | 		    		//問合せ結果の取得
+000398 | 			    	//店番と顧客番号を並行して走査していく
+000399 | 			    	//順番が入れ替わっていないこと、ノード数が同じである事が前提
+000400 | //		    		FWLog.debug("店番タグ："+elemBr+"ＣＩＦタグ："+elemCif);
+000401 | 					if(elemBr.hasChildNodes()&&elemCif.hasChildNodes()){
+000402 | 						Node child1 = elemBr.getFirstChild();	//店番
+000403 | 						Node child2 = elemCif.getFirstChild();	//顧客番号
+000404 | 			    		//while (true) {
+000405 | 			    		for (int roopCount2=0;roopCount2<FixedValue.SYS_WBNUMLIMIT;roopCount2++){
+000406 | //			    			FWLog.debug("店番："+child1+"ＣＩＦ："+child2);
+000407 | 			    			if(child1.hasChildNodes()&&child2.hasChildNodes()){
+000408 | 				    			//最深階層にてBeanをセットしていく
+000409 | 			    				//データ格納用ビーンの生成
+000410 | 			    				NayoseJohoBean bean = new NayoseJohoBean();
+000411 | 			    				bean.set統一顧客番号(woCif);
+000412 | 			    				bean.set統一人格Ｃ(woJinkaku);
+000413 | 			    				bean.set統一カナ氏名(woKana);
+000414 | 			    				bean.set統一生年月日(woBirthday);
+000415 | 			    				bean.set統一電話番号(woTel);
+000416 | 
+000417 | 				    			if (child1.getNodeType()==Node.ELEMENT_NODE && child1.getNodeName().equals("店番")) {
+000418 | 				    				bean.set店番(getChildText(child1));
+000419 | 				    	    	}
+000420 | 
+000421 | 				    	    	if (child2.getNodeType()==Node.ELEMENT_NODE && child2.getNodeName().equals("顧客番号")) {
+000422 | 				    	    		bean.set顧客番号(getChildText(child2));
+000423 | 				    	    	}
+000424 | 				    	    	nayoseJohoList.add(bean);
+000425 | 			    			}
+000426 | 
+000427 | 			    	    	//次の子ノードを取得
+000428 | 			    			child1  = child1.getNextSibling();	
+000429 | 			    	    	child2  = child2.getNextSibling();	
+000430 | 			            	//取得できなかったら終わり
+000431 | 			            	if (child1 ==null){break;}
+000432 | 			            	if (child2==null){break;}
+000433 | 			    		}
+000434 | 			    	}
+000435 | 		    	}
+000436 | 				elem = getNextElement(elem);
+000437 | 			}
+000438 | 		}
+000439 | 		//取得項目のチェック
+000440 | 		checkWebon();
+000441 | 		
+000442 | 		//エラーチェック(Exceptionの有無を判定する)
+000443 | 		if(errFlg){
+000444 | 			WebonException e = createWoException("Webon取得結果解析エラー", ERRLEVEL_WARNING, ERRSPOT_WOMOLD);
+000445 | 			e.setEtc(etc);
+000446 | 			//エラー処理は上位に任せる
+000447 | 			throw e;
+000448 | 		}
+000449 | 	}
+000450 | 	/**
+000451 | 	 * 取得内容チェックメソッド
+000452 | 	 */
+000453 | 	private void checkWebon(){
+000454 | 		//項目チェック
+000455 | 		Iterator<NayoseJohoBean> it = nayoseJohoList.iterator();
+000456 | 
+000457 | 		//項目チェック
+000458 | 		while(it.hasNext()){
+000459 | 			NayoseJohoBean njb = it.next();
+000460 | 
+000461 | 			njb.set統一顧客番号(ConvertUtil.chkConvertNumAdd0(njb.get統一顧客番号(),9));
+000462 | 			njb.set統一人格Ｃ(ConvertUtil.chkConvertNumAdd0(njb.get統一人格Ｃ(),2));
+000463 | 			njb.set統一カナ氏名(ConvertUtil.chkNull(njb.get統一カナ氏名()));
+000464 | 			//【和暦処理】
+000465 | 			njb.set統一生年月日(ConvertUtil.chkConvertGengoDateAdd0(njb.get統一生年月日()));
+000466 | 			njb.set統一電話番号(ConvertUtil.chkConvertTel(njb.get統一電話番号()));
+000467 | 			njb.set店番(ConvertUtil.chkConvertNumAdd0(njb.get店番(),3));
+000468 | 			njb.set顧客番号(ConvertUtil.chkConvertNumAdd0(njb.get顧客番号(),7));
+000469 | 		}
+000470 | 
+000471 | 		//ソートして使用することが多いので店番（昇順）顧客番号（昇順）
+000472 | 		Collections.sort(nayoseJohoList, this.new NayoseComparator());
+000473 | 	}
+000474 | 
+000475 | 	//以下UTILITY
+000476 | 	//以下、ユーティリティ的メソッド
+000477 | 	/**
+000478 | 	 * エラー生成メソッド
+000479 | 	 * @param String	エラーメッセージ
+000480 | 	 * @param int		エラーレベル
+000481 | 	 * @param String	エラー箇所
+000482 | 	 */
+000483 | 	private WebonException createWoException(String msg ,int el, String es){
+000484 | 		//エラーコード等をセット
+000485 | 		WebonException e = new WebonException(msg,webonBase);
+000486 | 		//顧客を特定する情報をセット
+000487 | 		e.setOperationId(operationId);
+000488 | 		e.setErrStat(el);
+000489 | 		e.setErrSpot(es);
+000490 | 		//エラー処理は上位に任せる
+000491 | 		return e;
+000492 | 	}
+000493 | 	
+000494 | 	/**
+000495 | 	 * 照会名取得メソッド(Static)
+000496 | 	 * 照会名を取得する
+000497 | 	 * 
+000498 | 	 * @return String 照会名
+000499 | 	 */
+000500 | 	public static String getSyokaiName() {
+000501 | 		return syokaiName;
+000502 | 	}
+000503 | }

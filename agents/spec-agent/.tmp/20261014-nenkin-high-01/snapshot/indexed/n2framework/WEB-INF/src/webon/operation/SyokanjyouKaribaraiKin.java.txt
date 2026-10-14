@@ -1,0 +1,374 @@
+000001 | package webon.operation;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.util.ArrayList;
+000005 | import java.util.List;
+000006 | import java.util.Map;
+000007 | 
+000008 | import webon.WebonBase;
+000009 | import webon.WebonException;
+000010 | 
+000011 | import common.FWLog;
+000012 | import common.bean.LoginInfoBean;
+000013 | /**
+000014 |  * Webon汎用照会クラス　
+000015 |  * 諸勘定内訳照会 (IN-00750N-99105.xml)の取得とデータ管理、アクセスメソッドの提供
+000016 |  * 
+000017 |  * @author	Minori山口
+000018 |  * 
+000019 |  * @date	R03.02.08	新規作成
+000020 |  */
+000021 | public class SyokanjyouKaribaraiKin extends CommonOperation {
+000022 | 	
+000023 | 	private static final String syokaiName = "諸勘定内訳全照会";
+000024 | 	
+000025 | 	//オペレーションＩＤ
+000026 | 	private final String operationId="OP-SYOKANJYOU-01";
+000027 | 	//ログイン情報
+000028 | 	LoginInfoBean loginInfo;
+000029 | 	//webon引数
+000030 | 	String woKamoku;
+000031 | 	String wokubun;
+000032 | 	String woNenetu;
+000033 | 	String woGetenBr;
+000034 | 	
+000035 | 	String hukuten1;
+000036 | 	String hukuten2;
+000037 | 	String hukuten3;
+000038 | 	
+000039 | 	//Errorレベル
+000040 | 	private static final int ERRLEVEL_ERROR=0;	//Error
+000041 | 	private static final int ERRLEVEL_WARNING=1;	//Warning
+000042 | 	//Error箇所
+000043 | 	private static final String ERRSPOT_WOGET = "0";		//取得時
+000044 | 	private static final String ERRSPOT_WOANALYZE = "1";	//解析時
+000045 | 	private static final String ERRSPOT_WOMOLD = "2";		//成型時
+000046 | 	//Erro追加情報格納用リスト
+000047 | 	List<Map<String, String>> etc = new ArrayList<Map<String,String>>();
+000048 | 	//Error有無フラグ
+000049 | 	boolean errFlg=false;
+000050 | 
+000051 | 	//日計作成
+000052 | 	private String 照会日 = "";
+000053 | 	private String 処理日 = "";
+000054 | 	private String 処理時間 = "";
+000055 | 
+000056 | 
+000057 | 	public String get照会日() {
+000058 | 		return 照会日;
+000059 | 	}
+000060 | 	public void set照会日(String 照会日) {
+000061 | 		this.照会日 = 照会日;
+000062 | 	}
+000063 | 	public String get処理日() {
+000064 | 		return 処理日;
+000065 | 	}
+000066 | 	public void set処理日(String 処理日) {
+000067 | 		this.処理日 = 処理日;
+000068 | 	}
+000069 | 	public String get処理時間() {
+000070 | 		return 処理時間;
+000071 | 	}
+000072 | 	public void set処理時間(String 処理時間) {
+000073 | 		this.処理時間 = 処理時間;
+000074 | 	}
+000075 | 	//諸勘定内訳全照会仮払金明細一覧
+000076 | 	List<SyokanjyouKaribaraikinBean> SyokanjyoKaribaraikinBeanList = new ArrayList<SyokanjyouKaribaraikinBean>();
+000077 | 	
+000078 | 	
+000079 |     //諸勘定内訳全照会仮払金明細
+000080 | 	public class SyokanjyouKaribaraikinBean{
+000081 | 		String 残高 = "";
+000082 | 				
+000083 | 		
+000084 | 		//setter,getter
+000085 | 		public String get残高() {
+000086 | 			return 残高;
+000087 | 		}
+000088 | 		public void set残高(String 残高) {
+000089 | 			this.残高 = 残高;
+000090 | 		}
+000091 | 	}
+000092 | 	
+000093 | 	//setter,getter
+000094 | 
+000095 | 	public List<SyokanjyouKaribaraikinBean> getSyokanjyoKaribaraikinBeanList() {
+000096 | 		return SyokanjyoKaribaraikinBeanList;
+000097 | 	}
+000098 | 	public void setSyokanjyoKaribaraikinBeanList(
+000099 | 			List<SyokanjyouKaribaraikinBean> syokanjyoKaribaraikinBeanList) {
+000100 | 		SyokanjyoKaribaraikinBeanList = syokanjyoKaribaraikinBeanList;
+000101 | 	}	
+000102 | 	public List<Map<String, String>> getEtc() {
+000103 | 		return etc;
+000104 | 	}
+000105 | 
+000106 | 	public void setEtc(List<Map<String, String>> etc) {
+000107 | 		this.etc = etc;
+000108 | 	}
+000109 | 	public boolean isErrFlg() {
+000110 | 		return errFlg;
+000111 | 	}
+000112 | 	public void setErrFlg(boolean errFlg) {
+000113 | 		this.errFlg = errFlg;
+000114 | 	}
+000115 | 	
+000116 | 	
+000117 |   	
+000118 | 	/**
+000119 | 	 * 諸勘定科目番号・内訳照会区分・原店番号を元に諸勘定内訳（仮払金　14900）照会を取得する
+000120 | 	 * 
+000121 | 	 * @param kamoku		諸勘定科目番号
+000122 | 	 * @param kubun			内訳照会区分
+000123 | 	 * @param gentenBr		原店番号
+000124 | 	 * @param loginInfo		ログイン情報
+000125 | 	 * @param con
+000126 | 	 * @throws Exception
+000127 | 	 */
+000128 | 	public void getWebonSyokanjyou(String kamoku, String kubun, String gentenBr,String hukuten1, String hukuten2, String hukuten3, LoginInfoBean loginInfo, Connection con) throws Exception {
+000129 | 		try{
+000130 | 			//起動チェック 引数がセットされているか
+000131 | 			if (kamoku == null) {throw new Exception("諸勘定科目番号が設定されていません");}
+000132 | 			if (kubun == null) {throw new Exception("内訳照会区分が設定されていません");}
+000133 | 			if (gentenBr == null) {throw new Exception("原店番号が設定されていません");}
+000134 | 			if (con == null) {throw new Exception("ＤＢコネクションが設定されていません");}
+000135 | 			
+000136 | 			//引数のセット
+000137 | 			this.woKamoku=kamoku;
+000138 | 			this.wokubun=kubun;
+000139 | 			this.woGetenBr=gentenBr;
+000140 | 			this.loginInfo = loginInfo;
+000141 | 			
+000142 | 			this.hukuten1 = hukuten1;
+000143 | 			this.hukuten2 = hukuten2;
+000144 | 			this.hukuten3 = hukuten3;
+000145 | 	
+000146 | 			//Webon問合せ実行
+000147 | 			getWebon(con);
+000148 | 
+000149 | 			//取得結果解析
+000150 | 			analyzeWeon(woKamoku);
+000151 | 
+000152 | 		}catch(WebonException e){
+000153 | 			throw e;
+000154 | 		}catch(Exception e){
+000155 | 			throw e;
+000156 | 		}
+000157 | 	}
+000158 | 
+000159 | 	/**
+000160 | 	 * Webon取得メソッド
+000161 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000162 | 	 * 
+000163 | 	 * @param req リクエスト
+000164 | 	 * @param res レスポンス
+000165 | 	 * @throws Exception 
+000166 | 	 */
+000167 | 	private void getWebon(Connection con) throws Exception {
+000168 | 		
+000169 | 		//WebonBaseの取得
+000170 | 		webonBase = new WebonBase(operationId, loginInfo, con);
+000171 | 		//設定値
+000172 | 		webonBase.put("諸勘定科目番号",woKamoku);
+000173 | 		webonBase.put("内訳照会区分",wokubun);
+000174 | 		webonBase.put("原店番号",woGetenBr);
+000175 | 		//問い合わせ
+000176 | 		webonBase.doQuery();
+000177 | 	
+000178 | 
+000179 | 		//結果識別を判定（正常：LINEデータをＤＢに格納、正常以外：エラーをＤＢに格納）
+000180 | 		if (webonBase.checkResult()) {
+000181 | 
+000182 | 			//問合せ結果からLINE行を抽出
+000183 | 			ArrayList<String> lineList = getLineByXML();
+000184 | 			for(String line:lineList){
+000185 | 				FWLog.debug(line);
+000186 | 			}
+000187 | 		}else{
+000188 | 
+000189 | 			//問合せ結果からエラー情報抽出
+000190 | 			StringBuffer sb=new StringBuffer();
+000191 | 			sb.append(webonBase.getErrMessage());
+000192 | 			String msg=sb.toString();
+000193 | 			FWLog.error(getClass(), msg);
+000194 | 		}
+000195 | 				
+000196 | 		//エラー処理
+000197 | 		if (!webonBase.checkResult()) {
+000198 | 			//エラーコード等をセット
+000199 | 			WebonException e = createWoException("Webon取得結果エラー", ERRLEVEL_ERROR, ERRSPOT_WOGET);
+000200 | 			//エラー処理は上位に任せる
+000201 | 			throw e;
+000202 | 		}
+000203 | 	}
+000204 | 
+000205 | 	/**
+000206 | 	 * Webon取得内容解析メソッド
+000207 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000208 | 	 * 
+000209 | 	 * @param req リクエスト
+000210 | 	 * @param res レスポンス
+000211 | 	 * @throws Exception 
+000212 | 	 * @throws Exception 
+000213 | 	 */
+000214 | 	public void analyzeWeon(String woSyubetu) throws Exception {
+000215 | 		//ＬＩＮＥデータの解析
+000216 | 		ArrayList<String> lineList = getLineByXML();
+000217 | 				
+000218 | 		
+000219 | 		
+000220 | 		/**
+000221 | 		*明細を作成する
+000222 | 		*※０行から始まる
+000223 | 		*０行目⇒店番、照会日、処理日、処理時間
+000224 | 		*１行目⇒項目名
+000225 | 		*２行目のデータから明細を作成する
+000226 | 		* 
+000227 | 		*/
+000228 | 
+000229 | 		FWLog.debug(getClass(), "☆★=====ＬＩＮＥデータの解析　スタート　00750N-99203.xml=====★☆");				
+000230 | 		for(int i = 0; i < lineList.size(); i++) {
+000231 | 			
+000232 | 			//明細情報Bean作成
+000233 | 			SyokanjyouKaribaraikinBean Bean = new SyokanjyouKaribaraikinBean();
+000234 | 			String line = lineList.get(i);
+000235 | 
+000236 | 			//01出納不足金口　　
+000237 | 			if(i == 2){
+000238 | 				Bean.set残高((line.substring(32,49)));					
+000239 | 				FWLog.debug(getClass(), "★★★★01 出納不足金口　　★"+(line.substring(32,49))+"★");
+000240 | 				//明細リストにビーンを追加
+000241 | 				getSyokanjyoKaribaraikinBeanList().add(Bean);
+000242 | 			}
+000243 | 				
+000244 | 			//******** 母店 ********
+000245 | 			//20 雑口　
+000246 | 			if(i == 21){
+000247 | 				Bean.set残高((line.substring(32,49)));
+000248 | 				FWLog.debug(getClass(), "★★★★20 雑口　　　　　　★"+(line.substring(32,49))+"★");
+000249 | 				//明細リストにビーンを追加
+000250 | 				getSyokanjyoKaribaraikinBeanList().add(Bean);
+000251 | 			}
+000252 | 			
+000253 | 			//21 違算金口
+000254 | 			if(i == 22){
+000255 | 				Bean.set残高((line.substring(32,49)));
+000256 | 				FWLog.debug(getClass(), "★★★★21 違算金口　　　　★"+(line.substring(32,49))+"★");
+000257 | 				//明細リストにビーンを追加
+000258 | 				getSyokanjyoKaribaraikinBeanList().add(Bean);
+000259 | 			}
+000260 | 			
+000261 | 			
+000262 | 			
+000263 | 			//27 出張所雑口　　
+000264 | 			if(i == 28){				
+000265 | 				//******** 出張所１ ********
+000266 | 				if("1".equals(hukuten1)){
+000267 | 					Bean.set残高((line.substring(32,49)));
+000268 | 					FWLog.debug(getClass(), "★★★★27 出張所雑口　　　★"+(line.substring(32,49))+"★");
+000269 | 					//明細リストにビーンを追加
+000270 | 					getSyokanjyoKaribaraikinBeanList().add(Bean);
+000271 | 				}
+000272 | 				
+000273 | 			}
+000274 | 				
+000275 | 			//28 出張所違算金口
+000276 | 			if(i == 29){
+000277 | 				//******** 出張所１ ********
+000278 | 				if("1".equals(hukuten1)){
+000279 | 					Bean.set残高((line.substring(32,49)));
+000280 | 					FWLog.debug(getClass(), "★★★★28 出張所違算金口　★"+(line.substring(32,49))+"★");
+000281 | 					//明細リストにビーンを追加
+000282 | 					getSyokanjyoKaribaraikinBeanList().add(Bean);
+000283 | 				}
+000284 | 			}	
+000285 | 						
+000286 | 		
+000287 | 				
+000288 | 			//58 出張所雑口２　　
+000289 | 			if(i == 61){
+000290 | 				//******** 主張所２ ********
+000291 | 				if("2".equals(hukuten2)){
+000292 | 					Bean.set残高((line.substring(32,49)));
+000293 | 					FWLog.debug(getClass(), "★★★★58 出張所雑口２　　★"+(line.substring(32,49))+"★");
+000294 | 					//明細リストにビーンを追加
+000295 | 					getSyokanjyoKaribaraikinBeanList().add(Bean);
+000296 | 				}					
+000297 | 			}
+000298 | 		
+000299 | 			//59 出張所違算金口２
+000300 | 			if(i == 62){
+000301 | 				//******** 主張所２ ********
+000302 | 				if("2".equals(hukuten2)){			
+000303 | 					Bean.set残高((line.substring(32,49)));
+000304 | 					FWLog.debug(getClass(), "★★★★59 出張所違算金口２★"+(line.substring(32,49))+"★");
+000305 | 					//明細リストにビーンを追加
+000306 | 					getSyokanjyoKaribaraikinBeanList().add(Bean);
+000307 | 				}
+000308 | 			}							
+000309 | 	
+000310 | 			//66 出張所雑口３
+000311 | 			if(i == 69){
+000312 | 				if("3".equals(hukuten3)){
+000313 | 					Bean.set残高((line.substring(32,49)));
+000314 | 					FWLog.debug(getClass(), "★★★★66 出張所雑口３　　★"+(line.substring(32,49))+"★");
+000315 | 					//明細リストにビーンを追加
+000316 | 					getSyokanjyoKaribaraikinBeanList().add(Bean);
+000317 | 				}
+000318 | 			}
+000319 | 			
+000320 | 			//67 出張所違算金口３
+000321 | 			if(i == 70){
+000322 | 				if("3".equals(hukuten3)){
+000323 | 					Bean.set残高((line.substring(32,49)));
+000324 | 					FWLog.debug(getClass(), "★★★★67 出張所違算金口３★"+(line.substring(32,49))+"★");
+000325 | 					//明細リストにビーンを追加
+000326 | 					getSyokanjyoKaribaraikinBeanList().add(Bean);
+000327 | 			
+000328 | 				}
+000329 | 			}
+000330 | 		}
+000331 | 		
+000332 | 		FWLog.debug(getClass(), "★======ＬＩＮＥデータの解析　エンド============★");
+000333 | 
+000334 | 
+000335 | 		//エラーチェック(Exceptionの有無を判定する)
+000336 | 		if(errFlg){
+000337 | 			WebonException e = createWoException("Webon取得結果解析エラー", ERRLEVEL_WARNING, ERRSPOT_WOMOLD);
+000338 | 			e.setEtc(etc);
+000339 | 			//エラー処理は上位に任せる
+000340 | 			throw e;
+000341 | 		}
+000342 | 	}
+000343 | 	
+000344 | 
+000345 | 
+000346 | 	//以下、ユーティリティ的メソッド
+000347 | 	/**
+000348 | 	 * エラー生成メソッド
+000349 | 	 * @param String	エラーメッセージ
+000350 | 	 * @param int		エラーレベル
+000351 | 	 * @param String	エラー箇所
+000352 | 	 */
+000353 | 	private WebonException createWoException(String msg ,int el, String es){
+000354 | 		//エラーコード等をセット
+000355 | 		WebonException e = new WebonException(msg,webonBase);
+000356 | 		//顧客を特定する情報をセット
+000357 | 		e.setOperationId(operationId);
+000358 | 		e.setBrno("");
+000359 | 		e.setCif("");
+000360 | 		e.setErrStat(el);
+000361 | 		e.setErrSpot(es);
+000362 | 		//エラー処理は上位に任せる
+000363 | 		return e;
+000364 | 	}
+000365 | 	/**
+000366 | 	 * 照会名取得メソッド(Static)
+000367 | 	 * 照会名を取得する
+000368 | 	 * 
+000369 | 	 * @return String 照会名
+000370 | 	 */
+000371 | 	public static String getSyokaiName() {
+000372 | 		return syokaiName;
+000373 | 	}
+000374 | }

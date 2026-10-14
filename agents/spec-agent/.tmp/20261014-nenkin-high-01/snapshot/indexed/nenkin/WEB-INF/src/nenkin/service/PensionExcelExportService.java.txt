@@ -1,0 +1,73 @@
+000001 | package nenkin.service;
+000002 | 
+000003 | import java.util.ArrayList;
+000004 | import java.util.Arrays;
+000005 | import java.util.List;
+000006 | 
+000007 | import nenkin.model.PensionReservation;
+000008 | import nenkin.util.DateUtil;
+000009 | import nenkin.util.OpenXmlWorkbookWriter;
+000010 | 
+000011 | /** Access 年金データ Excel 出力の Open XML 置換。 */
+000012 | public final class PensionExcelExportService {
+000013 |     public static final String CONTENT_TYPE =
+000014 |             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+000015 | 
+000016 |     private static final PensionExcelExportService INSTANCE =
+000017 |             new PensionExcelExportService(PensionRepository.getInstance());
+000018 | 
+000019 |     private final PensionRepository repository;
+000020 | 
+000021 |     public PensionExcelExportService() {
+000022 |         this(PensionRepository.getInstance());
+000023 |     }
+000024 | 
+000025 |     public PensionExcelExportService(PensionRepository repository) {
+000026 |         if (repository == null) {
+000027 |             throw new IllegalArgumentException("repositoryはnullにできません。");
+000028 |         }
+000029 |         this.repository = repository;
+000030 |     }
+000031 | 
+000032 |     public static PensionExcelExportService getInstance() {
+000033 |         return INSTANCE;
+000034 |     }
+000035 | 
+000036 |     public PensionExcelExportResult buildByBranch(int branchNo) {
+000037 |         List<PensionReservation> reservations = repository.listByBranch(branchNo);
+000038 |         if (reservations.isEmpty()) {
+000039 |             return new PensionExcelExportResult("", new byte[0], 0);
+000040 |         }
+000041 | 
+000042 |         List<String> headers = Arrays.asList(
+000043 |                 "顧客番号", "担\n当", "顧客氏名", "ふりがな", "性\n別", "住所",
+000044 |                 "電話番号", "生年月日", "年金種類", "裁定\n請求", "受給\n有無",
+000045 |                 "請求予定日", "予定\n年齢", "配偶者名", "配偶者\n生年月日",
+000046 |                 "予約徴求日", "備考", "６ヶ月先\n確認");
+000047 |         List<Object[]> rows = new ArrayList<Object[]>();
+000048 |         for (int i = 0; i < reservations.size(); i++) {
+000049 |             PensionReservation row = reservations.get(i);
+000050 |             rows.add(new Object[] {
+000051 |                 row.getCustomerNo(), row.getStaffCode(), row.getCustomerName(), row.getKanaName(),
+000052 |                 row.getGender(), row.getAddress(), row.getPhoneNumber(), row.getBirthDate(),
+000053 |                 row.getPensionType(), row.getClaimStatus(), row.getHasBenefit(),
+000054 |                 row.getClaimScheduledDate(), row.getPlannedAge(), row.getSpouseName(),
+000055 |                 row.getSpouseBirthDate(), row.getReservationRequestDate(), row.getNotes(),
+000056 |                 row.isSixMonthCheck() ? "確" : ""
+000057 |             });
+000058 |         }
+000059 | 
+000060 |         String compactDate = DateUtil.todayIso().replace("-", "");
+000061 |         String fileName = "年金データ_" + threeDigits(branchNo) + "_" + compactDate + ".xlsx";
+000062 |         byte[] content = OpenXmlWorkbookWriter.buildWorkbook("年金ﾃﾞｰﾀ", headers, rows);
+000063 |         return new PensionExcelExportResult(fileName, content, rows.size());
+000064 |     }
+000065 | 
+000066 |     private static String threeDigits(int value) {
+000067 |         String text = Integer.toString(value);
+000068 |         while (text.length() < 3) {
+000069 |             text = "0" + text;
+000070 |         }
+000071 |         return text;
+000072 |     }
+000073 | }

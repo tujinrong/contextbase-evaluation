@@ -1,0 +1,1554 @@
+000001 | package webon.operation;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.util.ArrayList;
+000005 | import java.util.HashMap;
+000006 | import java.util.List;
+000007 | import java.util.Map;
+000008 | 
+000009 | import webon.WebonBase;
+000010 | import webon.WebonException;
+000011 | import webon.util.ConvertUtil;
+000012 | import webon.util.FixedValue;
+000013 | import org.w3c.dom.Node;
+000014 | import common.FWLog;
+000015 | import common.bean.LoginInfoBean;
+000016 | 
+000017 | /**
+000018 |  * Webon汎用照会クラス　顧客総合情報照会管理クラス
+000019 |  * 顧客総合情報照会(XML)の取得とデータ管理、アクセスメソッドの提供
+000020 |  * 
+000021 |  * @author 京極
+000022 |  * 
+000023 |  * @date	2020.02.12	京極			webonのFW化対応
+000024 |  */
+000025 | public class KokyakuSogoJohoShokai extends CommonOperation {
+000026 | 
+000027 | 	//オペレーションＩＤ
+000028 | 	private final String operationId="OP-SOGOJOHO-0001";
+000029 | 	//ログイン情報
+000030 | 	LoginInfoBean loginInfo;
+000031 | 	//webon引数
+000032 | 	String woCif;
+000033 | 	String woBrno;
+000034 | 	String woKamoku;
+000035 | 	String woKoza;
+000036 | 	
+000037 | 	//Errorレベル
+000038 | 	private static final int ERRLEVEL_ERROR=0;	//Error
+000039 | 	private static final int ERRLEVEL_WARNING=1;	//Warning
+000040 | 	//Error箇所
+000041 | 	private static final String ERRSPOT_WOGET = "0";		//取得時
+000042 | 	private static final String ERRSPOT_WOANALYZE = "1";	//解析時
+000043 | 	private static final String ERRSPOT_WOMOLD = "2";		//成型時
+000044 | 	//Erro追加情報格納用リスト
+000045 | 	List<Map<String, String>> etc = new ArrayList<Map<String,String>>();
+000046 | 	//Error有無フラグ
+000047 | 	boolean errFlg=false;
+000048 | 	
+000049 | 	//顧客総合情報照会
+000050 | 	private String 店舗番号 = "";
+000051 | 	private String 顧客番号 = "";
+000052 | 	private String カナ氏名 = "";
+000053 | 	private String 漢字氏名 = "";
+000054 | 	private String 活口座 = "";
+000055 | 	private String 抹消予定 = "";
+000056 | 	private String 人格 = "";
+000057 | 	private String 元号生設立年月日 = "";
+000058 | 	private String 預金保険カナ氏名 = "";
+000059 | 	private String 統一カナ氏名 = "";
+000060 | 	private String 業種コード = "";
+000061 | 	private String 統一顧客番号 = "";
+000062 | 	private String 統一顧客人格 = "";
+000063 | 	private String 統一顧客元号生設立年月日 = "";
+000064 | 	private String 統一顧客電話番号 = "";
+000065 | 	private String 統一顧客関連情報名寄件数 = "";
+000066 | 	private String 統一顧客データ整備済コード = "";
+000067 | 	private String 国籍情報 = "";
+000068 | 	private String 担当者 = "";
+000069 | 	private String 店舗担当地区 = "";
+000070 | 	private String 移管事由 = "";
+000071 | 	private String 移受管店番顧客番号 = "";
+000072 | 	private String 移受管日 = "";
+000073 | 	private String 代表者資格 = "";
+000074 | 	private String 勤務先電話番号 = "";
+000075 | 	private String 付属名称 = "";
+000076 | 	private String 電話番号 = "";
+000077 | 	private String 携帯電話番号 = "";
+000078 | 	private String 第二電話番号 = "";
+000079 | 	private String 住所印字 = "";
+000080 | 	private String 訪問先 = "";
+000081 | 	private String 住所コード = "";
+000082 | 	private String 第二住所コード = "";
+000083 | 	private String 郵便番号 = "";
+000084 | 	private String 住所一行目 = "";
+000085 | 	private String 住所二行目 = "";
+000086 | 	private String 第二住所郵便番号 = "";
+000087 | 	private String 第二住所一行目 = "";
+000088 | 	private String 第二住所二行目 = "";
+000089 | 	private String カナ補助住所 = "";
+000090 | 	private String 家族取引数 = "";
+000091 | 	private String 関連顧客数 = "";
+000092 | 	private String 出資基本 = "";
+000093 | 	private String 会員 = "";
+000094 | 	private String 活口座数当座 = "";
+000095 | 	private String 活口座数普通 = "";
+000096 | 	private String 活口座数貯蓄 = "";
+000097 | 	private String 活口座数定期 = "";
+000098 | 	private String 活口座数通知 = "";
+000099 | 	private String 活口座数定積 = "";
+000100 | 	private String 活口座数積定 = "";
+000101 | 	private String 活口座数別段 = "";
+000102 | 	private String 活口座数債券 = "";
+000103 | 	private String 活口座数納税 = "";
+000104 | 	private String 活口座数職員 = "";
+000105 | 	private String 時効解約口座数 = "";
+000106 | 	private String SW件数 = "";
+000107 | 	private String 総合口座 = "";
+000108 | 	private String 投信契約有 = "";
+000109 | 	private String 特定口座契約有 = "";
+000110 | 	private String 預金マル優申告額千円 = "";
+000111 | 	private String 債券マル優申告額千円 = "";
+000112 | 	private String マル財申告額千円 = "";
+000113 | 	private String マル特申告額千円 = "";
+000114 | 	private String 投信マル優申告額千円 = "";
+000115 | 	private String 融資基本 = "";
+000116 | 	private String 融資抹消 = "";
+000117 | 	private String 割手 = "";
+000118 | 	private String 手貸 = "";
+000119 | 	private String 証貸 = "";
+000120 | 	private String 代理貸 = "";
+000121 | 	private String 債務保証 = "";
+000122 | 	private String 住公契約 = "";
+000123 | 	private String 当貸契約 = "";
+000124 | 	private String 個人CL = "";		
+000125 | 	private String 事業者CL = "";		
+000126 | 	private String IP電話番号 = "";
+000127 | 	private String 第二IP電話番号 = "";
+000128 | 	private String 電債決済口座数 = "";
+000129 | 	private String 定例発行契約自動発行 = "";
+000130 | 	private String 振込登録件数 = "";
+000131 | 	private String 為替自動振込件数 = "";
+000132 | 	private String 貸金庫 = "";
+000133 | 	private String 夜間金庫 = "";
+000134 | 	private String 諸届け = "";
+000135 | 	private String 外為 = "";
+000136 | 	private String 共有名義 = "";
+000137 | 	private String 金庫任意一 = "";
+000138 | 	private String 金庫任意二 = "";
+000139 | 	private String 金庫任意三 = "";
+000140 | 	private String 給振件数 = "";
+000141 | 	private String 給与振込 = "";
+000142 | 	private String 給与最新振込日 = "";
+000143 | 	private String 年金件数 = "";
+000144 | 	private String 年金振込 = "";
+000145 | 	private String 年金最新振込日 = "";
+000146 | 	private String FB契約 = "";
+000147 | 	private String WEBFB契約 = "";
+000148 | 	private String HB契約数 = "";
+000149 | 	private String ANS代表 = "";
+000150 | 	private String ANS照会数 = "";
+000151 | 	private String ANS通知数 = "";
+000152 | 	private String コール契約 = "";
+000153 | 	private String IB代表店番 = "";
+000154 | 	private String IB代表科目口座番号 = "";
+000155 | 	private String AA契約口座数 = "";
+000156 | 	private String サークル一 = "";
+000157 | 	private String サークル二 = "";
+000158 | 	private String サークル三 = "";
+000159 | 	private String サークル四 = "";
+000160 | 	private String サークル五 = "";
+000161 | 	private String サークル六 = "";
+000162 | 	private String サークル七 = "";
+000163 | 	private String サークル八 = "";
+000164 | 	private String サークル九 = "";
+000165 | 	private String サークル十 = "";
+000166 | 	private String サークル十一 = "";
+000167 | 	private String サークル十二 = "";
+000168 | 	private String サークル十三 = "";
+000169 | 	private String サークル十四 = "";
+000170 | 	private String サークル十五 = "";
+000171 | 	
+000172 | 	//setter,getter
+000173 | 	public String get店舗番号() {
+000174 | 		return 店舗番号;
+000175 | 	}
+000176 | 	public void set店舗番号(String 店舗番号) {
+000177 | 		this.店舗番号 = 店舗番号;
+000178 | 	}
+000179 | 	public String get顧客番号() {
+000180 | 		return 顧客番号;
+000181 | 	}
+000182 | 	public void set顧客番号(String 顧客番号) {
+000183 | 		this.顧客番号 = 顧客番号;
+000184 | 	}
+000185 | 	public String getカナ氏名() {
+000186 | 		return カナ氏名;
+000187 | 	}
+000188 | 	public void setカナ氏名(String カナ氏名) {
+000189 | 		this.カナ氏名 = カナ氏名;
+000190 | 	}
+000191 | 	public String get漢字氏名() {
+000192 | 		return 漢字氏名;
+000193 | 	}
+000194 | 	public void set漢字氏名(String 漢字氏名) {
+000195 | 		this.漢字氏名 = 漢字氏名;
+000196 | 	}
+000197 | 	public String get活口座() {
+000198 | 		return 活口座;
+000199 | 	}
+000200 | 	public void set活口座(String 活口座) {
+000201 | 		this.活口座 = 活口座;
+000202 | 	}
+000203 | 	public String get抹消予定() {
+000204 | 		return 抹消予定;
+000205 | 	}
+000206 | 	public void set抹消予定(String 抹消予定) {
+000207 | 		this.抹消予定 = 抹消予定;
+000208 | 	}
+000209 | 	public String get人格() {
+000210 | 		return 人格;
+000211 | 	}
+000212 | 	public void set人格(String 人格) {
+000213 | 		this.人格 = 人格;
+000214 | 	}
+000215 | 	public String get元号生設立年月日() {
+000216 | 		return 元号生設立年月日;
+000217 | 	}
+000218 | 	public void set元号生設立年月日(String 元号生設立年月日) {
+000219 | 		this.元号生設立年月日 = 元号生設立年月日;
+000220 | 	}
+000221 | 	public String get預金保険カナ氏名() {
+000222 | 		return 預金保険カナ氏名;
+000223 | 	}
+000224 | 	public void set預金保険カナ氏名(String 預金保険カナ氏名) {
+000225 | 		this.預金保険カナ氏名 = 預金保険カナ氏名;
+000226 | 	}
+000227 | 	public String get統一顧客関連情報名寄件数() {
+000228 | 		return 統一顧客関連情報名寄件数;
+000229 | 	}
+000230 | 	public void set統一顧客関連情報名寄件数(String 統一顧客関連情報名寄件数) {
+000231 | 		this.統一顧客関連情報名寄件数 = 統一顧客関連情報名寄件数;
+000232 | 	}
+000233 | 	public String get国籍情報() {
+000234 | 		return 国籍情報;
+000235 | 	}
+000236 | 	public void set国籍情報(String 国籍情報) {
+000237 | 		this.国籍情報 = 国籍情報;
+000238 | 	}
+000239 | 	public String get住所印字() {
+000240 | 		return 住所印字;
+000241 | 	}
+000242 | 	public void set住所印字(String 住所印字) {
+000243 | 		this.住所印字 = 住所印字;
+000244 | 	}
+000245 | 	public String get郵便番号() {
+000246 | 		return 郵便番号;
+000247 | 	}
+000248 | 	public void set郵便番号(String 郵便番号) {
+000249 | 		this.郵便番号 = 郵便番号;
+000250 | 	}
+000251 | 	public String get第二住所郵便番号() {
+000252 | 		return 第二住所郵便番号;
+000253 | 	}
+000254 | 	public void set第二住所郵便番号(String 第二住所郵便番号) {
+000255 | 		this.第二住所郵便番号 = 第二住所郵便番号;
+000256 | 	}
+000257 | 	public String get家族取引数() {
+000258 | 		return 家族取引数;
+000259 | 	}
+000260 | 	public void set家族取引数(String 家族取引数) {
+000261 | 		this.家族取引数 = 家族取引数;
+000262 | 	}
+000263 | 	public String get関連顧客数() {
+000264 | 		return 関連顧客数;
+000265 | 	}
+000266 | 	public void set関連顧客数(String 関連顧客数) {
+000267 | 		this.関連顧客数 = 関連顧客数;
+000268 | 	}
+000269 | 	public String get統一カナ氏名() {
+000270 | 		return 統一カナ氏名;
+000271 | 	}
+000272 | 	public void set統一カナ氏名(String 統一カナ氏名) {
+000273 | 		this.統一カナ氏名 = 統一カナ氏名;
+000274 | 	}
+000275 | 	public String get業種コード() {
+000276 | 		return 業種コード;
+000277 | 	}
+000278 | 	public void set業種コード(String 業種コード) {
+000279 | 		this.業種コード = 業種コード;
+000280 | 	}
+000281 | 	public String get統一顧客番号() {
+000282 | 		return 統一顧客番号;
+000283 | 	}
+000284 | 	public void set統一顧客番号(String 統一顧客番号) {
+000285 | 		this.統一顧客番号 = 統一顧客番号;
+000286 | 	}
+000287 | 	public String get統一顧客人格() {
+000288 | 		return 統一顧客人格;
+000289 | 	}
+000290 | 	public void set統一顧客人格(String 統一顧客人格) {
+000291 | 		this.統一顧客人格 = 統一顧客人格;
+000292 | 	}
+000293 | 	public String get統一顧客元号生設立年月日() {
+000294 | 		return 統一顧客元号生設立年月日;
+000295 | 	}
+000296 | 	public void set統一顧客元号生設立年月日(String 統一顧客元号生設立年月日) {
+000297 | 		this.統一顧客元号生設立年月日 = 統一顧客元号生設立年月日;
+000298 | 	}
+000299 | 	public String get統一顧客電話番号() {
+000300 | 		return 統一顧客電話番号;
+000301 | 	}
+000302 | 	public void set統一顧客電話番号(String 統一顧客電話番号) {
+000303 | 		this.統一顧客電話番号 = 統一顧客電話番号;
+000304 | 	}
+000305 | 	public String get統一顧客データ整備済コード() {
+000306 | 		return 統一顧客データ整備済コード;
+000307 | 	}
+000308 | 	public void set統一顧客データ整備済コード(String 統一顧客データ整備済コード) {
+000309 | 		this.統一顧客データ整備済コード = 統一顧客データ整備済コード;
+000310 | 	}
+000311 | 	public String get担当者() {
+000312 | 		return 担当者;
+000313 | 	}
+000314 | 	public void set担当者(String 担当者) {
+000315 | 		this.担当者 = 担当者;
+000316 | 	}
+000317 | 	public String get店舗担当地区() {
+000318 | 		return 店舗担当地区;
+000319 | 	}
+000320 | 	public void set店舗担当地区(String 店舗担当地区) {
+000321 | 		this.店舗担当地区 = 店舗担当地区;
+000322 | 	}
+000323 | 	public String get移管事由() {
+000324 | 		return 移管事由;
+000325 | 	}
+000326 | 	public void set移管事由(String 移管事由) {
+000327 | 		this.移管事由 = 移管事由;
+000328 | 	}
+000329 | 	public String get移受管店番顧客番号() {
+000330 | 		return 移受管店番顧客番号;
+000331 | 	}
+000332 | 	public void set移受管店番顧客番号(String 移受管店番顧客番号) {
+000333 | 		this.移受管店番顧客番号 = 移受管店番顧客番号;
+000334 | 	}
+000335 | 	public String get移受管日() {
+000336 | 		return 移受管日;
+000337 | 	}
+000338 | 	public void set移受管日(String 移受管日) {
+000339 | 		this.移受管日 = 移受管日;
+000340 | 	}
+000341 | 	public String get代表者資格() {
+000342 | 		return 代表者資格;
+000343 | 	}
+000344 | 	public void set代表者資格(String 代表者資格) {
+000345 | 		this.代表者資格 = 代表者資格;
+000346 | 	}
+000347 | 	public String get勤務先電話番号() {
+000348 | 		return 勤務先電話番号;
+000349 | 	}
+000350 | 	public void set勤務先電話番号(String 勤務先電話番号) {
+000351 | 		this.勤務先電話番号 = 勤務先電話番号;
+000352 | 	}
+000353 | 	public String get付属名称() {
+000354 | 		return 付属名称;
+000355 | 	}
+000356 | 	public void set付属名称(String 付属名称) {
+000357 | 		this.付属名称 = 付属名称;
+000358 | 	}
+000359 | 	public String get電話番号() {
+000360 | 		return 電話番号;
+000361 | 	}
+000362 | 	public void set電話番号(String 電話番号) {
+000363 | 		this.電話番号 = 電話番号;
+000364 | 	}
+000365 | 	public String get携帯電話番号() {
+000366 | 		return 携帯電話番号;
+000367 | 	}
+000368 | 	public void set携帯電話番号(String 携帯電話番号) {
+000369 | 		this.携帯電話番号 = 携帯電話番号;
+000370 | 	}
+000371 | 	public String get第二電話番号() {
+000372 | 		return 第二電話番号;
+000373 | 	}
+000374 | 	public void set第二電話番号(String 第二電話番号) {
+000375 | 		this.第二電話番号 = 第二電話番号;
+000376 | 	}
+000377 | 	public String get訪問先() {
+000378 | 		return 訪問先;
+000379 | 	}
+000380 | 	public void set訪問先(String 訪問先) {
+000381 | 		this.訪問先 = 訪問先;
+000382 | 	}
+000383 | 	public String get住所コード() {
+000384 | 		return 住所コード;
+000385 | 	}
+000386 | 	public void set住所コード(String 住所コード) {
+000387 | 		this.住所コード = 住所コード;
+000388 | 	}
+000389 | 	public String get第二住所コード() {
+000390 | 		return 第二住所コード;
+000391 | 	}
+000392 | 	public void set第二住所コード(String 第二住所コード) {
+000393 | 		this.第二住所コード = 第二住所コード;
+000394 | 	}
+000395 | 	public String get住所一行目() {
+000396 | 		return 住所一行目;
+000397 | 	}
+000398 | 	public void set住所一行目(String 住所一行目) {
+000399 | 		this.住所一行目 = 住所一行目;
+000400 | 	}
+000401 | 	public String get住所二行目() {
+000402 | 		return 住所二行目;
+000403 | 	}
+000404 | 	public void set住所二行目(String 住所二行目) {
+000405 | 		this.住所二行目 = 住所二行目;
+000406 | 	}
+000407 | 	public String get第二住所一行目() {
+000408 | 		return 第二住所一行目;
+000409 | 	}
+000410 | 	public void set第二住所一行目(String 第二住所一行目) {
+000411 | 		this.第二住所一行目 = 第二住所一行目;
+000412 | 	}
+000413 | 	public String get第二住所二行目() {
+000414 | 		return 第二住所二行目;
+000415 | 	}
+000416 | 	public void set第二住所二行目(String 第二住所二行目) {
+000417 | 		this.第二住所二行目 = 第二住所二行目;
+000418 | 	}
+000419 | 	public String getカナ補助住所() {
+000420 | 		return カナ補助住所;
+000421 | 	}
+000422 | 	public void setカナ補助住所(String カナ補助住所) {
+000423 | 		this.カナ補助住所 = カナ補助住所;
+000424 | 	}
+000425 | 	public String get出資基本() {
+000426 | 		return 出資基本;
+000427 | 	}
+000428 | 	public void set出資基本(String 出資基本) {
+000429 | 		this.出資基本 = 出資基本;
+000430 | 	}
+000431 | 	public String get会員() {
+000432 | 		return 会員;
+000433 | 	}
+000434 | 	public void set会員(String 会員) {
+000435 | 		this.会員 = 会員;
+000436 | 	}
+000437 | 	public String get活口座数当座() {
+000438 | 		return 活口座数当座;
+000439 | 	}
+000440 | 	public void set活口座数当座(String 活口座数当座) {
+000441 | 		this.活口座数当座 = 活口座数当座;
+000442 | 	}
+000443 | 	public String get活口座数普通() {
+000444 | 		return 活口座数普通;
+000445 | 	}
+000446 | 	public void set活口座数普通(String 活口座数普通) {
+000447 | 		this.活口座数普通 = 活口座数普通;
+000448 | 	}
+000449 | 	public String get活口座数貯蓄() {
+000450 | 		return 活口座数貯蓄;
+000451 | 	}
+000452 | 	public void set活口座数貯蓄(String 活口座数貯蓄) {
+000453 | 		this.活口座数貯蓄 = 活口座数貯蓄;
+000454 | 	}
+000455 | 	public String get活口座数定期() {
+000456 | 		return 活口座数定期;
+000457 | 	}
+000458 | 	public void set活口座数定期(String 活口座数定期) {
+000459 | 		this.活口座数定期 = 活口座数定期;
+000460 | 	}
+000461 | 	public String get活口座数通知() {
+000462 | 		return 活口座数通知;
+000463 | 	}
+000464 | 	public void set活口座数通知(String 活口座数通知) {
+000465 | 		this.活口座数通知 = 活口座数通知;
+000466 | 	}
+000467 | 	public String get活口座数定積() {
+000468 | 		return 活口座数定積;
+000469 | 	}
+000470 | 	public void set活口座数定積(String 活口座数定積) {
+000471 | 		this.活口座数定積 = 活口座数定積;
+000472 | 	}
+000473 | 	public String get活口座数積定() {
+000474 | 		return 活口座数積定;
+000475 | 	}
+000476 | 	public void set活口座数積定(String 活口座数積定) {
+000477 | 		this.活口座数積定 = 活口座数積定;
+000478 | 	}
+000479 | 	public String get活口座数別段() {
+000480 | 		return 活口座数別段;
+000481 | 	}
+000482 | 	public void set活口座数別段(String 活口座数別段) {
+000483 | 		this.活口座数別段 = 活口座数別段;
+000484 | 	}
+000485 | 	public String get活口座数債券() {
+000486 | 		return 活口座数債券;
+000487 | 	}
+000488 | 	public void set活口座数債券(String 活口座数債券) {
+000489 | 		this.活口座数債券 = 活口座数債券;
+000490 | 	}
+000491 | 	public String get活口座数納税() {
+000492 | 		return 活口座数納税;
+000493 | 	}
+000494 | 	public void set活口座数納税(String 活口座数納税) {
+000495 | 		this.活口座数納税 = 活口座数納税;
+000496 | 	}
+000497 | 	public String get活口座数職員() {
+000498 | 		return 活口座数職員;
+000499 | 	}
+000500 | 	public void set活口座数職員(String 活口座数職員) {
+000501 | 		this.活口座数職員 = 活口座数職員;
+000502 | 	}
+000503 | 	public String get時効解約口座数() {
+000504 | 		return 時効解約口座数;
+000505 | 	}
+000506 | 	public void set時効解約口座数(String 時効解約口座数) {
+000507 | 		this.時効解約口座数 = 時効解約口座数;
+000508 | 	}
+000509 | 	public String getSW件数() {
+000510 | 		return SW件数;
+000511 | 	}
+000512 | 	public void setSW件数(String sW件数) {
+000513 | 		SW件数 = sW件数;
+000514 | 	}
+000515 | 	public String get総合口座() {
+000516 | 		return 総合口座;
+000517 | 	}
+000518 | 	public void set総合口座(String 総合口座) {
+000519 | 		this.総合口座 = 総合口座;
+000520 | 	}
+000521 | 	public String get投信契約有() {
+000522 | 		return 投信契約有;
+000523 | 	}
+000524 | 	public void set投信契約有(String 投信契約有) {
+000525 | 		this.投信契約有 = 投信契約有;
+000526 | 	}
+000527 | 	public String get特定口座契約有() {
+000528 | 		return 特定口座契約有;
+000529 | 	}
+000530 | 	public void set特定口座契約有(String 特定口座契約有) {
+000531 | 		this.特定口座契約有 = 特定口座契約有;
+000532 | 	}
+000533 | 	public String get預金マル優申告額千円() {
+000534 | 		return 預金マル優申告額千円;
+000535 | 	}
+000536 | 	public void set預金マル優申告額千円(String 預金マル優申告額千円) {
+000537 | 		this.預金マル優申告額千円 = 預金マル優申告額千円;
+000538 | 	}
+000539 | 	public String get債券マル優申告額千円() {
+000540 | 		return 債券マル優申告額千円;
+000541 | 	}
+000542 | 	public void set債券マル優申告額千円(String 債券マル優申告額千円) {
+000543 | 		this.債券マル優申告額千円 = 債券マル優申告額千円;
+000544 | 	}
+000545 | 	public String getマル財申告額千円() {
+000546 | 		return マル財申告額千円;
+000547 | 	}
+000548 | 	public void setマル財申告額千円(String マル財申告額千円) {
+000549 | 		this.マル財申告額千円 = マル財申告額千円;
+000550 | 	}
+000551 | 	public String getマル特申告額千円() {
+000552 | 		return マル特申告額千円;
+000553 | 	}
+000554 | 	public void setマル特申告額千円(String マル特申告額千円) {
+000555 | 		this.マル特申告額千円 = マル特申告額千円;
+000556 | 	}
+000557 | 	public String get投信マル優申告額千円() {
+000558 | 		return 投信マル優申告額千円;
+000559 | 	}
+000560 | 	public void set投信マル優申告額千円(String 投信マル優申告額千円) {
+000561 | 		this.投信マル優申告額千円 = 投信マル優申告額千円;
+000562 | 	}
+000563 | 	public String get融資基本() {
+000564 | 		return 融資基本;
+000565 | 	}
+000566 | 	public void set融資基本(String 融資基本) {
+000567 | 		this.融資基本 = 融資基本;
+000568 | 	}
+000569 | 	public String get融資抹消() {
+000570 | 		return 融資抹消;
+000571 | 	}
+000572 | 	public void set融資抹消(String 融資抹消) {
+000573 | 		this.融資抹消 = 融資抹消;
+000574 | 	}
+000575 | 	public String get割手() {
+000576 | 		return 割手;
+000577 | 	}
+000578 | 	public void set割手(String 割手) {
+000579 | 		this.割手 = 割手;
+000580 | 	}
+000581 | 	public String get手貸() {
+000582 | 		return 手貸;
+000583 | 	}
+000584 | 	public void set手貸(String 手貸) {
+000585 | 		this.手貸 = 手貸;
+000586 | 	}
+000587 | 	public String get証貸() {
+000588 | 		return 証貸;
+000589 | 	}
+000590 | 	public void set証貸(String 証貸) {
+000591 | 		this.証貸 = 証貸;
+000592 | 	}
+000593 | 	public String get代理貸() {
+000594 | 		return 代理貸;
+000595 | 	}
+000596 | 	public void set代理貸(String 代理貸) {
+000597 | 		this.代理貸 = 代理貸;
+000598 | 	}
+000599 | 	public String get債務保証() {
+000600 | 		return 債務保証;
+000601 | 	}
+000602 | 	public void set債務保証(String 債務保証) {
+000603 | 		this.債務保証 = 債務保証;
+000604 | 	}
+000605 | 	public String get住公契約() {
+000606 | 		return 住公契約;
+000607 | 	}
+000608 | 	public void set住公契約(String 住公契約) {
+000609 | 		this.住公契約 = 住公契約;
+000610 | 	}
+000611 | 	public String get当貸契約() {
+000612 | 		return 当貸契約;
+000613 | 	}
+000614 | 	public void set当貸契約(String 当貸契約) {
+000615 | 		this.当貸契約 = 当貸契約;
+000616 | 	}
+000617 | 	public String get個人CL() {
+000618 | 		return 個人CL;
+000619 | 	}
+000620 | 	public void set個人CL(String 個人cl) {
+000621 | 		個人CL = 個人cl;
+000622 | 	}
+000623 | 	public String get事業者CL() {
+000624 | 		return 事業者CL;
+000625 | 	}
+000626 | 	public void set事業者CL(String 事業者cl) {
+000627 | 		事業者CL = 事業者cl;
+000628 | 	}
+000629 | 	public String getIP電話番号() {
+000630 | 		return IP電話番号;
+000631 | 	}
+000632 | 	public void setIP電話番号(String iP電話番号) {
+000633 | 		IP電話番号 = iP電話番号;
+000634 | 	}
+000635 | 	public String get第二IP電話番号() {
+000636 | 		return 第二IP電話番号;
+000637 | 	}
+000638 | 	public void set第二IP電話番号(String 第二ip電話番号) {
+000639 | 		第二IP電話番号 = 第二ip電話番号;
+000640 | 	}
+000641 | 	public String get電債決済口座数() {
+000642 | 		return 電債決済口座数;
+000643 | 	}
+000644 | 	public void set電債決済口座数(String 電債決済口座数) {
+000645 | 		this.電債決済口座数 = 電債決済口座数;
+000646 | 	}
+000647 | 	public String get定例発行契約自動発行() {
+000648 | 		return 定例発行契約自動発行;
+000649 | 	}
+000650 | 	public void set定例発行契約自動発行(String 定例発行契約自動発行) {
+000651 | 		this.定例発行契約自動発行 = 定例発行契約自動発行;
+000652 | 	}
+000653 | 	public String get振込登録件数() {
+000654 | 		return 振込登録件数;
+000655 | 	}
+000656 | 	public void set振込登録件数(String 振込登録件数) {
+000657 | 		this.振込登録件数 = 振込登録件数;
+000658 | 	}
+000659 | 	public String get為替自動振込件数() {
+000660 | 		return 為替自動振込件数;
+000661 | 	}
+000662 | 	public void set為替自動振込件数(String 為替自動振込件数) {
+000663 | 		this.為替自動振込件数 = 為替自動振込件数;
+000664 | 	}
+000665 | 	public String get貸金庫() {
+000666 | 		return 貸金庫;
+000667 | 	}
+000668 | 	public void set貸金庫(String 貸金庫) {
+000669 | 		this.貸金庫 = 貸金庫;
+000670 | 	}
+000671 | 	public String get夜間金庫() {
+000672 | 		return 夜間金庫;
+000673 | 	}
+000674 | 	public void set夜間金庫(String 夜間金庫) {
+000675 | 		this.夜間金庫 = 夜間金庫;
+000676 | 	}
+000677 | 	public String get諸届け() {
+000678 | 		return 諸届け;
+000679 | 	}
+000680 | 	public void set諸届け(String 諸届け) {
+000681 | 		this.諸届け = 諸届け;
+000682 | 	}
+000683 | 	public String get外為() {
+000684 | 		return 外為;
+000685 | 	}
+000686 | 	public void set外為(String 外為) {
+000687 | 		this.外為 = 外為;
+000688 | 	}
+000689 | 	public String get共有名義() {
+000690 | 		return 共有名義;
+000691 | 	}
+000692 | 	public void set共有名義(String 共有名義) {
+000693 | 		this.共有名義 = 共有名義;
+000694 | 	}
+000695 | 	public String get金庫任意一() {
+000696 | 		return 金庫任意一;
+000697 | 	}
+000698 | 	public void set金庫任意一(String 金庫任意一) {
+000699 | 		this.金庫任意一 = 金庫任意一;
+000700 | 	}
+000701 | 	public String get金庫任意二() {
+000702 | 		return 金庫任意二;
+000703 | 	}
+000704 | 	public void set金庫任意二(String 金庫任意二) {
+000705 | 		this.金庫任意二 = 金庫任意二;
+000706 | 	}
+000707 | 	public String get金庫任意三() {
+000708 | 		return 金庫任意三;
+000709 | 	}
+000710 | 	public void set金庫任意三(String 金庫任意三) {
+000711 | 		this.金庫任意三 = 金庫任意三;
+000712 | 	}
+000713 | 	public String get給振件数() {
+000714 | 		return 給振件数;
+000715 | 	}
+000716 | 	public void set給振件数(String 給振件数) {
+000717 | 		this.給振件数 = 給振件数;
+000718 | 	}
+000719 | 	public String get給与振込() {
+000720 | 		return 給与振込;
+000721 | 	}
+000722 | 	public void set給与振込(String 給与振込) {
+000723 | 		this.給与振込 = 給与振込;
+000724 | 	}
+000725 | 	public String get給与最新振込日() {
+000726 | 		return 給与最新振込日;
+000727 | 	}
+000728 | 	public void set給与最新振込日(String 給与最新振込日) {
+000729 | 		this.給与最新振込日 = 給与最新振込日;
+000730 | 	}
+000731 | 	public String get年金件数() {
+000732 | 		return 年金件数;
+000733 | 	}
+000734 | 	public void set年金件数(String 年金件数) {
+000735 | 		this.年金件数 = 年金件数;
+000736 | 	}
+000737 | 	public String get年金振込() {
+000738 | 		return 年金振込;
+000739 | 	}
+000740 | 	public void set年金振込(String 年金振込) {
+000741 | 		this.年金振込 = 年金振込;
+000742 | 	}
+000743 | 	public String get年金最新振込日() {
+000744 | 		return 年金最新振込日;
+000745 | 	}
+000746 | 	public void set年金最新振込日(String 年金最新振込日) {
+000747 | 		this.年金最新振込日 = 年金最新振込日;
+000748 | 	}
+000749 | 	public String getFB契約() {
+000750 | 		return FB契約;
+000751 | 	}
+000752 | 	public void setFB契約(String fB契約) {
+000753 | 		FB契約 = fB契約;
+000754 | 	}
+000755 | 	public String getWEBFB契約() {
+000756 | 		return WEBFB契約;
+000757 | 	}
+000758 | 	public void setWEBFB契約(String wEBFB契約) {
+000759 | 		WEBFB契約 = wEBFB契約;
+000760 | 	}
+000761 | 	public String getHB契約数() {
+000762 | 		return HB契約数;
+000763 | 	}
+000764 | 	public void setHB契約数(String hB契約数) {
+000765 | 		HB契約数 = hB契約数;
+000766 | 	}
+000767 | 	public String getANS代表() {
+000768 | 		return ANS代表;
+000769 | 	}
+000770 | 	public void setANS代表(String aNS代表) {
+000771 | 		ANS代表 = aNS代表;
+000772 | 	}
+000773 | 	public String getANS照会数() {
+000774 | 		return ANS照会数;
+000775 | 	}
+000776 | 	public void setANS照会数(String aNS照会数) {
+000777 | 		ANS照会数 = aNS照会数;
+000778 | 	}
+000779 | 	public String getANS通知数() {
+000780 | 		return ANS通知数;
+000781 | 	}
+000782 | 	public void setANS通知数(String aNS通知数) {
+000783 | 		ANS通知数 = aNS通知数;
+000784 | 	}
+000785 | 	public String getコール契約() {
+000786 | 		return コール契約;
+000787 | 	}
+000788 | 	public void setコール契約(String コール契約) {
+000789 | 		this.コール契約 = コール契約;
+000790 | 	}
+000791 | 	public String getIB代表店番() {
+000792 | 		return IB代表店番;
+000793 | 	}
+000794 | 	public void setIB代表店番(String iB代表店番) {
+000795 | 		IB代表店番 = iB代表店番;
+000796 | 	}
+000797 | 	public String getIB代表科目口座番号() {
+000798 | 		return IB代表科目口座番号;
+000799 | 	}
+000800 | 	public void setIB代表科目口座番号(String iB代表科目口座番号) {
+000801 | 		IB代表科目口座番号 = iB代表科目口座番号;
+000802 | 	}
+000803 | 	public String getAA契約口座数() {
+000804 | 		return AA契約口座数;
+000805 | 	}
+000806 | 	public void setAA契約口座数(String aA契約口座数) {
+000807 | 		AA契約口座数 = aA契約口座数;
+000808 | 	}
+000809 | 	public String getサークル一() {
+000810 | 		return サークル一;
+000811 | 	}
+000812 | 	public void setサークル一(String サークル一) {
+000813 | 		this.サークル一 = サークル一;
+000814 | 	}
+000815 | 	public String getサークル二() {
+000816 | 		return サークル二;
+000817 | 	}
+000818 | 	public void setサークル二(String サークル二) {
+000819 | 		this.サークル二 = サークル二;
+000820 | 	}
+000821 | 	public String getサークル三() {
+000822 | 		return サークル三;
+000823 | 	}
+000824 | 	public void setサークル三(String サークル三) {
+000825 | 		this.サークル三 = サークル三;
+000826 | 	}
+000827 | 	public String getサークル四() {
+000828 | 		return サークル四;
+000829 | 	}
+000830 | 	public void setサークル四(String サークル四) {
+000831 | 		this.サークル四 = サークル四;
+000832 | 	}
+000833 | 	public String getサークル五() {
+000834 | 		return サークル五;
+000835 | 	}
+000836 | 	public void setサークル五(String サークル五) {
+000837 | 		this.サークル五 = サークル五;
+000838 | 	}
+000839 | 	public String getサークル六() {
+000840 | 		return サークル六;
+000841 | 	}
+000842 | 	public void setサークル六(String サークル六) {
+000843 | 		this.サークル六 = サークル六;
+000844 | 	}
+000845 | 	public String getサークル七() {
+000846 | 		return サークル七;
+000847 | 	}
+000848 | 	public void setサークル七(String サークル七) {
+000849 | 		this.サークル七 = サークル七;
+000850 | 	}
+000851 | 	public String getサークル八() {
+000852 | 		return サークル八;
+000853 | 	}
+000854 | 	public void setサークル八(String サークル八) {
+000855 | 		this.サークル八 = サークル八;
+000856 | 	}
+000857 | 	public String getサークル九() {
+000858 | 		return サークル九;
+000859 | 	}
+000860 | 	public void setサークル九(String サークル九) {
+000861 | 		this.サークル九 = サークル九;
+000862 | 	}
+000863 | 	public String getサークル十() {
+000864 | 		return サークル十;
+000865 | 	}
+000866 | 	public void setサークル十(String サークル十) {
+000867 | 		this.サークル十 = サークル十;
+000868 | 	}
+000869 | 	public String getサークル十一() {
+000870 | 		return サークル十一;
+000871 | 	}
+000872 | 	public void setサークル十一(String サークル十一) {
+000873 | 		this.サークル十一 = サークル十一;
+000874 | 	}
+000875 | 	public String getサークル十二() {
+000876 | 		return サークル十二;
+000877 | 	}
+000878 | 	public void setサークル十二(String サークル十二) {
+000879 | 		this.サークル十二 = サークル十二;
+000880 | 	}
+000881 | 	public String getサークル十三() {
+000882 | 		return サークル十三;
+000883 | 	}
+000884 | 	public void setサークル十三(String サークル十三) {
+000885 | 		this.サークル十三 = サークル十三;
+000886 | 	}
+000887 | 	public String getサークル十四() {
+000888 | 		return サークル十四;
+000889 | 	}
+000890 | 	public void setサークル十四(String サークル十四) {
+000891 | 		this.サークル十四 = サークル十四;
+000892 | 	}
+000893 | 	public String getサークル十五() {
+000894 | 		return サークル十五;
+000895 | 	}
+000896 | 	public void setサークル十五(String サークル十五) {
+000897 | 		this.サークル十五 = サークル十五;
+000898 | 	}
+000899 | 	//getter(編集値)
+000900 | 	public String get住所() {
+000901 | 		return 住所一行目+住所二行目;
+000902 | 	}
+000903 | 	public String get第2住所() {
+000904 | 		return 第二住所一行目+第二住所二行目;
+000905 | 	}
+000906 | 	public String get金庫任意() {
+000907 | 		return 金庫任意一+金庫任意二+金庫任意三;
+000908 | 	}
+000909 | 	public String getIB代表科目() {
+000910 | 		//代表科目口座番号の桁数チェック、9桁無ければエンプティを返す。
+000911 | 		if(9<=getIB代表科目口座番号().length()){
+000912 | 			return getIB代表科目口座番号().substring(0,2);		//IB代表科目口座番号の上2桁;
+000913 | 		}else{
+000914 | 			return "";
+000915 | 		}
+000916 | 	}
+000917 | 	public String getIB代表口座番号() {
+000918 | 		//代表科目口座番号の桁数チェック、9桁無ければエンプティを返す。
+000919 | 		if(9<=getIB代表科目口座番号().length()){
+000920 | 			return getIB代表科目口座番号().substring(2,9);//IB代表科目口座番号の下7桁
+000921 | 		}else{
+000922 | 			return "";
+000923 | 		}
+000924 | 	}
+000925 | 	public String getサークル() {
+000926 | 		return サークル一+サークル二+サークル三+サークル四+サークル五+サークル六+サークル七+サークル八
+000927 | 		+サークル九+サークル十+サークル十一+サークル十二+サークル十三+サークル十四+サークル十五;
+000928 | 	}
+000929 | 	
+000930 | 	/**
+000931 | 	 * 顧客番号・店番を元に総合情報照会を取得する
+000932 | 	 * 
+000933 | 	 * @param cif 顧客番号
+000934 | 	 * @param brno 店番
+000935 | 	 * @param loginInfo ログイン情報
+000936 | 	 * @param con
+000937 | 	 * @throws WebonException
+000938 | 	 * @throws Exception
+000939 | 	 */
+000940 | 	public void getWebonByCif(String cif, String brno, LoginInfoBean loginInfo, Connection con) throws WebonException, Exception{
+000941 | 		try{
+000942 | 			//引数チェック 引数がセットされているか
+000943 | 			if (cif == null) {throw new Exception("顧客番号が設定されていません");}
+000944 | 			if (brno == null) {throw new Exception("原店番号が設定されていません");}
+000945 | 			if (con == null) {throw new Exception("ＤＢコネクションが設定されていません");}
+000946 | 			
+000947 | 			//引数のセット
+000948 | 			this.woCif=cif;
+000949 | 			this.woBrno=brno;
+000950 | 			this.loginInfo = loginInfo;
+000951 | 
+000952 | 			//Webon問合せ実行
+000953 | 			getWebon(con);
+000954 | 
+000955 | 			//取得結果解析
+000956 | 			analyzeWeon();
+000957 | 
+000958 | 		}catch(WebonException e){
+000959 | 			throw e;
+000960 | 		}catch(Exception e){
+000961 | 			throw e;
+000962 | 		}
+000963 | 	}
+000964 | 
+000965 | 	/**
+000966 | 	 * 店番・科目・口座番号を元に総合情報照会を取得する
+000967 | 	 * 
+000968 | 	 * @param brno	 店番
+000969 | 	 * @param kamoku 科目コード
+000970 | 	 * @param koza	 口座番号
+000971 | 	 * @param loginInfo ログイン情報
+000972 | 	 * @param con
+000973 | 	 * @throws WebonException
+000974 | 	 * @throws Exception
+000975 | 	 */
+000976 | 	public void getWebonByAcc(String brno, String kamoku, String koza, LoginInfoBean loginInfo, Connection con) throws WebonException, Exception{
+000977 | 		try{
+000978 | 			
+000979 | 			//引数チェック 引数がセットされているか
+000980 | 			if (brno == null) {throw new Exception("原店番号が設定されていません");}
+000981 | 			if (kamoku == null) {throw new Exception("科目コードが設定されていません");}
+000982 | 			if (koza == null) {throw new Exception("口座番号が設定されていません");}
+000983 | 			if (con == null) {throw new Exception("ＤＢコネクションが設定されていません");}
+000984 | 			
+000985 | 			//引数のセット
+000986 | 			this.woBrno=brno;
+000987 | 			this.woKamoku=kamoku;
+000988 | 			this.woKoza=koza;
+000989 | 			this.loginInfo = loginInfo;
+000990 | 
+000991 | 			//Webon問合せ実行
+000992 | 			getWebon(con);
+000993 | 
+000994 | 			//取得結果解析
+000995 | 			analyzeWeon();
+000996 | 
+000997 | 		}catch(WebonException e){
+000998 | 			throw e;
+000999 | 		}catch(Exception e){
+001000 | 			throw e;
+001001 | 		}
+001002 | 	}
+001003 | 
+001004 | 	/**
+001005 | 	 * Webon取得メソッド
+001006 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+001007 | 	 * 
+001008 | 	 * @param req リクエスト
+001009 | 	 * @param res レスポンス
+001010 | 	 * @throws Exception 
+001011 | 	 */
+001012 | 	private void getWebon(Connection con) throws Exception {
+001013 | 		
+001014 | 		//WebonBaseの取得
+001015 | 		webonBase = new WebonBase(operationId, loginInfo, con);
+001016 | 
+001017 | 		//設定値（必須項目は事前チェックしてあることが前提）
+001018 | 		if (woCif != null) {webonBase.put("顧客番号",woCif);}
+001019 | 		if (woBrno != null) {webonBase.put("原店番号",woBrno);}
+001020 | 		if (woKamoku != null) {webonBase.put("科目コード",woKamoku);}
+001021 | 		if (woKoza != null) {webonBase.put("口座番号",woKoza);}
+001022 | 
+001023 | 		//問い合わせ
+001024 | 		webonBase.doQuery();
+001025 | 		
+001026 | 		//エラー処理
+001027 | 		if (!webonBase.checkResult()) {
+001028 | 			//エラーコード等をセット
+001029 | 			WebonException e = createWoException("Webon取得結果エラー", ERRLEVEL_ERROR, ERRSPOT_WOGET);
+001030 | 			//エラー処理は上位に任せる
+001031 | 			throw e;
+001032 | 		}
+001033 | 	}
+001034 | 	/**
+001035 | 	 * Webon取得内容解析メソッド
+001036 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+001037 | 	 * 
+001038 | 	 * @param req リクエスト
+001039 | 	 * @param res レスポンス
+001040 | 	 * @throws Exception 
+001041 | 	 * @throws Exception 
+001042 | 	 */
+001043 | 	private void analyzeWeon() throws Exception {
+001044 | 		//WEBON結果走査用固定値
+001045 | 		final String WOKEY_TSUCYO="通帳部宛";
+001046 | 		final String WOKEY_SOGOJOHO="顧客総合情報照会";
+001047 | 		
+001048 | 		//起動チェック、webonが取得されているか
+001049 | 		if (webonBase==null) {
+001050 | 			StringBuilder errmsg=new StringBuilder();
+001051 | 			errmsg.append("Webonの結果が未取得です");
+001052 | 			throw new Exception(errmsg.toString());
+001053 | 		}
+001054 | 		
+001055 | 		//結果取得
+001056 | 		Node editData = webonBase.getEditData();
+001057 | 		//データの最上位ノードを取得(もうちょっと精査要)
+001058 | 		Node root=null;
+001059 | 		Node root2=editData.getFirstChild(); //通帳部ノード
+001060 | //		while (true) {
+001061 | 		for (int roopCount=0;roopCount<FixedValue.SYS_WBNUMLIMIT;roopCount++){
+001062 |         	//取得できなかったら終わり
+001063 |         	if (root2==null){break;}
+001064 | 	    	if (root2.getNodeType()==Node.ELEMENT_NODE) {
+001065 | 	    		//要素名の解析
+001066 | 	    		if (root2.getNodeName().equals(WOKEY_TSUCYO)) {
+001067 | 	    			root=root2.getFirstChild();	//総合情報照会ノード
+001068 | //	    			while (true) {
+001069 |     				for (int roopCount2=0;roopCount2<FixedValue.SYS_WBNUMLIMIT;roopCount2++){
+001070 | 	    	        	//取得できなかったら終わり
+001071 | 	    	        	if (root==null){break;}
+001072 | 	    	        	if (root.getNodeType()==Node.ELEMENT_NODE) {
+001073 | 	    		    		if (root.getNodeName().equals(WOKEY_SOGOJOHO)) {
+001074 | 	    		    			break; 
+001075 | 	    		    		}
+001076 | 	    	        	}
+001077 | 	    	        	//次の子ノードを取得
+001078 | 	    	        	root=root.getNextSibling();
+001079 | 	    			}
+001080 | 	    			break;
+001081 | 	            }
+001082 | 	    	}
+001083 |         	//次の子ノードを取得
+001084 | 	    	root2 = root2.getNextSibling();
+001085 | 		}
+001086 | 		
+001087 | 		//全体の走査
+001088 |         Node child = root.getFirstChild();	//顧客情報ノード（先頭は店舗番号のはず）
+001089 | 
+001090 | //		while (true) {
+001091 | 		for (int roopCount=0;roopCount<FixedValue.SYS_WBNUMLIMIT;roopCount++){
+001092 |         	//取得できなかったら終わり
+001093 |         	if (child==null){break;}
+001094 | 	    	if (child.getNodeType()==Node.ELEMENT_NODE) {
+001095 | 	    		//要素名の解析
+001096 | 	    		if(child.getNodeName().equals("店舗番号")){
+001097 | 	    			//必須チェック
+001098 | 	    			if(!getChildText(child).equals("")){
+001099 | 	    				set店舗番号(getChildText(child));
+001100 | 	    			}else{
+001101 | 	    				WebonException e = createWoException("Webon取得結果解析エラー　店舗番号："+child.getNodeValue(), ERRLEVEL_ERROR, ERRSPOT_WOANALYZE);
+001102 | 	    				//エラー項目のセット
+001103 | 	    				Map<String, String>map = new HashMap<String, String>();
+001104 | 	    				map.put("店舗番号", "");
+001105 | 	    				etc.add(map);
+001106 | 	    				e.setEtc(etc);
+001107 | 	    				//エラー処理は上位に任せる
+001108 | 	    				throw e;
+001109 | 	    			}
+001110 | 		    	}else if(child.getNodeName().equals("顧客番号")){
+001111 | 	    			//必須チェック
+001112 | 	    			if(!getChildText(child).equals("")){
+001113 | 	    				set顧客番号(getChildText(child));
+001114 | 	    			}else{
+001115 | 	    				WebonException e = createWoException("Webon取得結果解析エラー　顧客番号："+child.getNodeValue(), ERRLEVEL_ERROR, ERRSPOT_WOANALYZE);
+001116 | 	    				//エラー項目のセット
+001117 | 	    				Map<String, String>map = new HashMap<String, String>();
+001118 | 	    				map.put("顧客番号", "");
+001119 | 	    				etc.add(map);
+001120 | 	    				e.setEtc(etc);
+001121 | 	    				//エラー処理は上位に任せる
+001122 | 	    				throw e;
+001123 | 	    			}
+001124 | 	    		}else if(child.getNodeName().equals("カナ氏名")){
+001125 | 	    			setカナ氏名(getChildText(child));
+001126 | 	    		}else if(child.getNodeName().equals("漢字氏名")){
+001127 | 	    			set漢字氏名(getChildText(child));
+001128 | 	    		}else if(child.getNodeName().equals("活口座")){
+001129 | 	    			set活口座(getChildText(child));
+001130 | 	    		}else if(child.getNodeName().equals("抹消予定")){
+001131 | 	    			set抹消予定(getChildText(child));
+001132 | 	    		}else if(child.getNodeName().equals("人格")){
+001133 | 	    			set人格(getChildText(child));
+001134 | 	    		}else if(child.getNodeName().equals("元号生設立年月日")){
+001135 | 	    			set元号生設立年月日(getChildText(child));
+001136 | 	    		}else if(child.getNodeName().equals("預金保険カナ氏名")){
+001137 | 	    			set預金保険カナ氏名(getChildText(child));
+001138 | 	    		}else if(child.getNodeName().equals("統一カナ氏名")){
+001139 | 	    			set統一カナ氏名(getChildText(child));
+001140 | 	    		}else if(child.getNodeName().equals("業種コード")){
+001141 | 	    			set業種コード(getChildText(child));
+001142 | 	    		}else if(child.getNodeName().equals("統一顧客番号")){
+001143 | 	    			set統一顧客番号(getChildText(child));
+001144 | 	    		}else if(child.getNodeName().equals("統一顧客人格")){
+001145 | 	    			set統一顧客人格(getChildText(child));
+001146 | 	    		}else if(child.getNodeName().equals("統一顧客元号生設立年月日")){
+001147 | 	    			set統一顧客元号生設立年月日(getChildText(child));
+001148 | 	    		}else if(child.getNodeName().equals("統一顧客電話番号")){
+001149 | 	    			set統一顧客電話番号(getChildText(child));
+001150 | 	    		}else if(child.getNodeName().equals("統一顧客名寄件数")){
+001151 | 	    			set統一顧客関連情報名寄件数(getChildText(child));
+001152 | 	    		}else if(child.getNodeName().equals("統一顧客データ整備済コード")){
+001153 | 	    			set統一顧客データ整備済コード(getChildText(child));
+001154 | 	    		}else if(child.getNodeName().equals("国籍情報")){
+001155 | 	    			set国籍情報(getChildText(child));
+001156 | 	    		}else if(child.getNodeName().equals("担当者")){
+001157 | 	    			set担当者(getChildText(child));
+001158 | 	    		}else if(child.getNodeName().equals("店舗担当地区")){
+001159 | 	    			set店舗担当地区(getChildText(child));
+001160 | 	    		}else if(child.getNodeName().equals("移管事由")){
+001161 | 	    			set移管事由(getChildText(child));
+001162 | 	    		}else if(child.getNodeName().equals("移受管店番顧客番号")){
+001163 | 	    			set移受管店番顧客番号(getChildText(child));
+001164 | 	    		}else if(child.getNodeName().equals("移受管日")){
+001165 | 	    			set移受管日(getChildText(child));
+001166 | 	    		}else if(child.getNodeName().equals("代表者資格")){
+001167 | 	    			set代表者資格(getChildText(child));
+001168 | 	    		}else if(child.getNodeName().equals("勤務先電話番号")){
+001169 | 	    			set勤務先電話番号(getChildText(child));
+001170 | 	    		}else if(child.getNodeName().equals("付属名称")){
+001171 | 	    			set付属名称(getChildText(child));
+001172 | 	    		}else if(child.getNodeName().equals("電話番号")){
+001173 | 	    			set電話番号(getChildText(child));
+001174 | 	    		}else if(child.getNodeName().equals("携帯電話番号")){
+001175 | 	    			set携帯電話番号(getChildText(child));
+001176 | 	    		}else if(child.getNodeName().equals("第二電話番号")){
+001177 | 	    			set第二電話番号(getChildText(child));
+001178 | 	    		}else if(child.getNodeName().equals("住所印字")){
+001179 | 	    			set住所印字(getChildText(child));
+001180 | 	    		}else if(child.getNodeName().equals("訪問先")){
+001181 | 	    			set訪問先(getChildText(child));
+001182 | 	    		}else if(child.getNodeName().equals("住所コード")){
+001183 | 	    			set住所コード(getChildText(child));
+001184 | 	    		}else if(child.getNodeName().equals("第二住所コード")){
+001185 | 	    			set第二住所コード(getChildText(child));
+001186 | 	    		}else if(child.getNodeName().equals("郵便番号")){
+001187 | 	    			set郵便番号(getChildText(child));
+001188 | 	    		}else if(child.getNodeName().equals("住所一行目")){
+001189 | 	    			set住所一行目(getChildText(child));
+001190 | 	    		}else if(child.getNodeName().equals("住所二行目")){
+001191 | 	    			set住所二行目(getChildText(child));
+001192 | 	    		}else if(child.getNodeName().equals("第二住所郵便番号")){
+001193 | 	    			set第二住所郵便番号(getChildText(child));
+001194 | 	    		}else if(child.getNodeName().equals("第二住所一行目")){
+001195 | 	    			set第二住所一行目(getChildText(child));
+001196 | 	    		}else if(child.getNodeName().equals("第二住所二行目")){
+001197 | 	    			set第二住所二行目(getChildText(child));
+001198 | 	    		}else if(child.getNodeName().equals("カナ補助住所")){
+001199 | 	    			setカナ補助住所(getChildText(child));
+001200 | 	    		}else if(child.getNodeName().equals("家族取引数")){
+001201 | 	    			set家族取引数(getChildText(child));
+001202 | 	    		}else if(child.getNodeName().equals("関連顧客数")){
+001203 | 	    			set関連顧客数(getChildText(child));
+001204 | 	    		}else if(child.getNodeName().equals("出資基本")){
+001205 | 	    			set出資基本(getChildText(child));
+001206 | 	    		}else if(child.getNodeName().equals("会員")){
+001207 | 	    			set会員(getChildText(child));
+001208 | 	    		}else if(child.getNodeName().equals("活口座数当座")){
+001209 | 	    			set活口座数当座(getChildText(child));
+001210 | 	    		}else if(child.getNodeName().equals("活口座数普通")){
+001211 | 	    			set活口座数普通(getChildText(child));
+001212 | 	    		}else if(child.getNodeName().equals("活口座数貯蓄")){
+001213 | 	    			set活口座数貯蓄(getChildText(child));
+001214 | 	    		}else if(child.getNodeName().equals("活口座数定期")){
+001215 | 	    			set活口座数定期(getChildText(child));
+001216 | 	    		}else if(child.getNodeName().equals("活口座数通知")){
+001217 | 	    			set活口座数通知(getChildText(child));
+001218 | 	    		}else if(child.getNodeName().equals("活口座数定積")){
+001219 | 	    			set活口座数定積(getChildText(child));
+001220 | 	    		}else if(child.getNodeName().equals("活口座数積定")){
+001221 | 	    			set活口座数積定(getChildText(child));
+001222 | 	    		}else if(child.getNodeName().equals("活口座数別段")){
+001223 | 	    			set活口座数別段(getChildText(child));
+001224 | 	    		}else if(child.getNodeName().equals("活口座数債券")){
+001225 | 	    			set活口座数債券(getChildText(child));
+001226 | 	    		}else if(child.getNodeName().equals("活口座数納税")){
+001227 | 	    			set活口座数納税(getChildText(child));
+001228 | 	    		}else if(child.getNodeName().equals("活口座数職員")){
+001229 | 	    			set活口座数職員(getChildText(child));
+001230 | 	    		}else if(child.getNodeName().equals("時効解約口座数")){
+001231 | 	    			set時効解約口座数(getChildText(child));
+001232 | 	    		}else if(child.getNodeName().equals("SW件数")){
+001233 | 	    			setSW件数(getChildText(child));
+001234 | 	    		}else if(child.getNodeName().equals("総合口座")){
+001235 | 	    			set総合口座(getChildText(child));
+001236 | 	    		}else if(child.getNodeName().equals("投信契約有")){
+001237 | 	    			set投信契約有(getChildText(child));
+001238 | 	    		}else if(child.getNodeName().equals("特定口座契約有")){
+001239 | 	    			set特定口座契約有(getChildText(child));
+001240 | 	    		}else if(child.getNodeName().equals("預金マル優申告額千円")){
+001241 | 	    			set預金マル優申告額千円(getChildText(child));
+001242 | 	    		}else if(child.getNodeName().equals("債券マル優申告額千円")){
+001243 | 	    			set債券マル優申告額千円(getChildText(child));
+001244 | 	    		}else if(child.getNodeName().equals("マル財申告額千円")){
+001245 | 	    			setマル財申告額千円(getChildText(child));
+001246 | 	    		}else if(child.getNodeName().equals("マル特申告額千円")){
+001247 | 	    			setマル特申告額千円(getChildText(child));
+001248 | 	    		}else if(child.getNodeName().equals("投信マル優申告額千円")){
+001249 | 	    			set投信マル優申告額千円(getChildText(child));
+001250 | 	    		}else if(child.getNodeName().equals("融資基本")){
+001251 | 	    			set融資基本(getChildText(child));
+001252 | 	    		}else if(child.getNodeName().equals("融資抹消")){
+001253 | 	    			set融資抹消(getChildText(child));
+001254 | 	    		}else if(child.getNodeName().equals("割手")){
+001255 | 	    			set割手(getChildText(child));
+001256 | 	    		}else if(child.getNodeName().equals("手貸")){
+001257 | 	    			set手貸(getChildText(child));
+001258 | 	    		}else if(child.getNodeName().equals("証貸")){
+001259 | 	    			set証貸(getChildText(child));
+001260 | 	    		}else if(child.getNodeName().equals("代理貸")){
+001261 | 	    			set代理貸(getChildText(child));
+001262 | 	    		}else if(child.getNodeName().equals("債務保証")){
+001263 | 	    			set債務保証(getChildText(child));
+001264 | 	    		}else if(child.getNodeName().equals("住公契約")){
+001265 | 	    			set住公契約(getChildText(child));
+001266 | 	    		}else if(child.getNodeName().equals("当貸契約")){
+001267 | 	    			set当貸契約(getChildText(child));
+001268 | 	    		}else if(child.getNodeName().equals("個人CL")){
+001269 | 	    			set個人CL(getChildText(child));
+001270 | 	    		}else if(child.getNodeName().equals("事業者CL")){
+001271 | 	    			set事業者CL(getChildText(child));
+001272 | 	    		}else if(child.getNodeName().equals("IP電話番号")){
+001273 | 	    			setIP電話番号(getChildText(child));
+001274 | 	    		}else if(child.getNodeName().equals("第二IP電話番号")){
+001275 | 	    			set第二IP電話番号(getChildText(child));
+001276 | 	    		}else if(child.getNodeName().equals("電債決済口座数")){
+001277 | 	    			set電債決済口座数(getChildText(child));
+001278 | 	    		}else if(child.getNodeName().equals("定例発行契約自動発行")){
+001279 | 	    			set定例発行契約自動発行(getChildText(child));
+001280 | 	    		}else if(child.getNodeName().equals("振込登録件数")){
+001281 | 	    			set振込登録件数(getChildText(child));
+001282 | 	    		}else if(child.getNodeName().equals("為替自動振込件数")){
+001283 | 	    			set為替自動振込件数(getChildText(child));
+001284 | 	    		}else if(child.getNodeName().equals("貸金庫")){
+001285 | 	    			set貸金庫(getChildText(child));
+001286 | 	    		}else if(child.getNodeName().equals("夜間金庫")){
+001287 | 	    			set夜間金庫(getChildText(child));
+001288 | 	    		}else if(child.getNodeName().equals("諸届け")){
+001289 | 	    			set諸届け(getChildText(child));
+001290 | 	    		}else if(child.getNodeName().equals("外為")){
+001291 | 	    			set外為(getChildText(child));
+001292 | 	    		}else if(child.getNodeName().equals("共有名義")){
+001293 | 	    			set共有名義(getChildText(child));
+001294 | 	    		}else if(child.getNodeName().equals("金庫任意一")){
+001295 | 	    			set金庫任意一(getChildText(child));
+001296 | 	    		}else if(child.getNodeName().equals("金庫任意二")){
+001297 | 	    			set金庫任意二(getChildText(child));
+001298 | 	    		}else if(child.getNodeName().equals("金庫任意三")){
+001299 | 	    			set金庫任意三(getChildText(child));
+001300 | 	    		}else if(child.getNodeName().equals("給振件数")){
+001301 | 	    			set給振件数(getChildText(child));
+001302 | 	    		}else if(child.getNodeName().equals("給与振込")){
+001303 | 	    			set給与振込(getChildText(child));
+001304 | 	    		}else if(child.getNodeName().equals("給与最新振込日")){
+001305 | 	    			set給与最新振込日(getChildText(child));
+001306 | 	    		}else if(child.getNodeName().equals("年金件数")){
+001307 | 	    			set年金件数(getChildText(child));
+001308 | 	    		}else if(child.getNodeName().equals("年金振込")){
+001309 | 	    			set年金振込(getChildText(child));
+001310 | 	    		}else if(child.getNodeName().equals("年金最新振込日")){
+001311 | 	    			set年金最新振込日(getChildText(child));
+001312 | 	    		}else if(child.getNodeName().equals("FB契約")){
+001313 | 	    			setFB契約(getChildText(child));
+001314 | 	    		}else if(child.getNodeName().equals("WEBFB契約")){
+001315 | 	    			setWEBFB契約(getChildText(child));
+001316 | 	    		}else if(child.getNodeName().equals("HB契約数")){
+001317 | 	    			setHB契約数(getChildText(child));
+001318 | 	    		}else if(child.getNodeName().equals("ANS代表")){
+001319 | 	    			setANS代表(getChildText(child));
+001320 | 	    		}else if(child.getNodeName().equals("ANS照会数")){
+001321 | 	    			setANS照会数(getChildText(child));
+001322 | 	    		}else if(child.getNodeName().equals("ANS通知数")){
+001323 | 	    			setANS通知数(getChildText(child));
+001324 | 	    		}else if(child.getNodeName().equals("コール契約")){
+001325 | 	    			setコール契約(getChildText(child));
+001326 | 	    		}else if(child.getNodeName().equals("IB代表店番")){
+001327 | 	    			setIB代表店番(getChildText(child));
+001328 | 	    		}else if(child.getNodeName().equals("IB代表科目口座番号")){
+001329 | 	    			setIB代表科目口座番号(getChildText(child));
+001330 | 	    		}else if(child.getNodeName().equals("AA契約口座数")){
+001331 | 	    			setAA契約口座数(getChildText(child));
+001332 | 	    		}else if(child.getNodeName().equals("サークル一")){
+001333 | 	    			setサークル一(getChildText(child));
+001334 | 	    		}else if(child.getNodeName().equals("サークル二")){
+001335 | 	    			setサークル二(getChildText(child));
+001336 | 	    		}else if(child.getNodeName().equals("サークル三")){
+001337 | 	    			setサークル三(getChildText(child));
+001338 | 	    		}else if(child.getNodeName().equals("サークル四")){
+001339 | 	    			setサークル四(getChildText(child));
+001340 | 	    		}else if(child.getNodeName().equals("サークル五")){
+001341 | 	    			setサークル五(getChildText(child));
+001342 | 	    		}else if(child.getNodeName().equals("サークル六")){
+001343 | 	    			setサークル六(getChildText(child));
+001344 | 	    		}else if(child.getNodeName().equals("サークル七")){
+001345 | 	    			setサークル七(getChildText(child));
+001346 | 	    		}else if(child.getNodeName().equals("サークル八")){
+001347 | 	    			setサークル八(getChildText(child));
+001348 | 	    		}else if(child.getNodeName().equals("サークル九")){
+001349 | 	    			setサークル九(getChildText(child));
+001350 | 	    		}else if(child.getNodeName().equals("サークル十")){
+001351 | 	    			setサークル十(getChildText(child));
+001352 | 	    		}else if(child.getNodeName().equals("サークル十一")){
+001353 | 	    			setサークル十一(getChildText(child));
+001354 | 	    		}else if(child.getNodeName().equals("サークル十二")){
+001355 | 	    			setサークル十二(getChildText(child));
+001356 | 	    		}else if(child.getNodeName().equals("サークル十三")){
+001357 | 	    			setサークル十三(getChildText(child));
+001358 | 	    		}else if(child.getNodeName().equals("サークル十四")){
+001359 | 	    			setサークル十四(getChildText(child));
+001360 | 	    		}else if(child.getNodeName().equals("サークル十五")){
+001361 | 	    			setサークル十五(getChildText(child));
+001362 | 	    		}
+001363 | 	    	}
+001364 |         	//次の子ノードを取得
+001365 |         	child = child.getNextSibling();
+001366 |     	}
+001367 | 		
+001368 | 		//取得項目のチェック
+001369 | 		checkWebon();
+001370 | 		
+001371 | 		//エラーチェック(Exceptionの有無を判定する)
+001372 | 		if(errFlg){
+001373 | 			WebonException e = createWoException("Webon取得結果解析エラー", ERRLEVEL_WARNING, ERRSPOT_WOMOLD);
+001374 | 			e.setEtc(etc);
+001375 | 			//エラー処理は上位に任せる
+001376 | 			throw e;
+001377 | 		}
+001378 | 	}
+001379 | 	/**
+001380 | 	 * 取得内容チェックメソッド
+001381 | 	 * @throws Exception 
+001382 | 	 */
+001383 | 	private void checkWebon() throws Exception{
+001384 | 		
+001385 | 		set店舗番号(ConvertUtil.chkConvertNumAdd0(get店舗番号(), 3));
+001386 | 		set顧客番号(ConvertUtil.chkConvertNumAdd0(get顧客番号(), 7));
+001387 | 		setカナ氏名(ConvertUtil.chkNull(getカナ氏名()));
+001388 | 		set漢字氏名(ConvertUtil.chkNull(get漢字氏名()));
+001389 | 		set活口座(ConvertUtil.chkConvertFlag(get活口座()));
+001390 | 		set抹消予定(ConvertUtil.chkConvertFlag(get抹消予定()));
+001391 | 		set人格(ConvertUtil.chkConvertNumAdd0(get人格(), 2));
+001392 | 		//【和暦処理】
+001393 | 		set元号生設立年月日(ConvertUtil.chkConvertGengoDateAdd0(get元号生設立年月日()));
+001394 | 		set預金保険カナ氏名(ConvertUtil.chkNull(get預金保険カナ氏名()));
+001395 | 		set統一カナ氏名(ConvertUtil.chkNull(get統一カナ氏名()));
+001396 | 		set業種コード(ConvertUtil.chkConvertNumAdd0(get業種コード(), 6));
+001397 | 		set統一顧客番号(ConvertUtil.chkConvertNumAdd0(get統一顧客番号(), 9));
+001398 | 		set統一顧客人格(ConvertUtil.chkConvertNumAdd0(get統一顧客人格(), 2));
+001399 | 		//【和暦処理】
+001400 | 		set統一顧客元号生設立年月日(ConvertUtil.chkConvertGengoDateAdd0(get統一顧客元号生設立年月日()));
+001401 | 		set統一顧客電話番号(ConvertUtil.chkConvertTel(get統一顧客電話番号()));
+001402 | 		set統一顧客関連情報名寄件数(ConvertUtil.chkConvertNumAdd0(get統一顧客関連情報名寄件数(),1));
+001403 | 		set統一顧客データ整備済コード(ConvertUtil.chkNull(get統一顧客データ整備済コード()));
+001404 | 		set国籍情報(ConvertUtil.chkNull(get国籍情報()));
+001405 | 		set担当者(ConvertUtil.chkConvertNumAdd0(get担当者(), 2));
+001406 | 		set店舗担当地区(ConvertUtil.chkConvertNumAdd0(get店舗担当地区(), 4));
+001407 | 		set移管事由(ConvertUtil.chkNull(get移管事由()));
+001408 | 		set移受管店番顧客番号(ConvertUtil.chkDelHyphenAdd0(get移受管店番顧客番号(), 10));
+001409 | 		//【和暦処理】
+001410 | 		set移受管日(ConvertUtil.chkConvertDateAdd0(get移受管日()));
+001411 | 		//set代表者資格(changeRecepCode(get代表者資格()));	//暫定的にコードのみ取得中、名称を合わせて取得に変更要
+001412 | 		set代表者資格(ConvertUtil.chkNull(get代表者資格()));
+001413 | 		set勤務先電話番号(ConvertUtil.chkConvertTel(get勤務先電話番号()));
+001414 | 		set付属名称(ConvertUtil.chkNull(get付属名称()));
+001415 | 		set電話番号(ConvertUtil.chkConvertTel(get電話番号()));
+001416 | 		set携帯電話番号(ConvertUtil.chkConvertTel(get携帯電話番号()));
+001417 | 		set第二電話番号(ConvertUtil.chkConvertTel(get第二電話番号()));
+001418 | 		set住所印字(ConvertUtil.chkConvertNumAdd0(get住所印字(),1));
+001419 | 		set訪問先(ConvertUtil.chkNull(get訪問先()));
+001420 | 		set住所コード(ConvertUtil.chkDelHyphen(get住所コード()));
+001421 | 		set第二住所コード(ConvertUtil.chkDelHyphen(get第二住所コード()));
+001422 | 		set郵便番号(ConvertUtil.chkDelHyphen(get郵便番号()));
+001423 | 		set住所一行目(ConvertUtil.chkNull(get住所一行目()));
+001424 | 		set住所二行目(ConvertUtil.chkNull(get住所二行目()));
+001425 | 		set第二住所郵便番号(ConvertUtil.chkDelHyphen(get第二住所郵便番号()));
+001426 | 		set第二住所一行目(ConvertUtil.chkNull(get第二住所一行目()));
+001427 | 		set第二住所二行目(ConvertUtil.chkNull(get第二住所二行目()));
+001428 | 		setカナ補助住所(ConvertUtil.chkNull(getカナ補助住所()));
+001429 | 		set家族取引数(ConvertUtil.chkConvertNumAdd0(get家族取引数(),1));
+001430 | 		set関連顧客数(ConvertUtil.chkConvertNumAdd0(get関連顧客数(),1));
+001431 | 		set出資基本(ConvertUtil.chkConvertFlag(get出資基本()));
+001432 | 		set会員(ConvertUtil.chkConvertFlag(get会員()));
+001433 | 		set活口座数当座(ConvertUtil.chkConvertNumAdd0(get活口座数当座(), 1));
+001434 | 		set活口座数普通(ConvertUtil.chkConvertNumAdd0(get活口座数普通(), 1));
+001435 | 		set活口座数貯蓄(ConvertUtil.chkConvertNumAdd0(get活口座数貯蓄(), 1));
+001436 | 		set活口座数定期(ConvertUtil.chkConvertNumAdd0(get活口座数定期(), 1));
+001437 | 		set活口座数通知(ConvertUtil.chkConvertNumAdd0(get活口座数通知(), 1));
+001438 | 		set活口座数定積(ConvertUtil.chkConvertNumAdd0(get活口座数定積(), 1));
+001439 | 		set活口座数積定(ConvertUtil.chkConvertNumAdd0(get活口座数積定(), 1));
+001440 | 		set活口座数別段(ConvertUtil.chkConvertNumAdd0(get活口座数別段(), 1));
+001441 | 		set活口座数債券(ConvertUtil.chkConvertNumAdd0(get活口座数債券(), 1));
+001442 | 		set活口座数納税(ConvertUtil.chkConvertNumAdd0(get活口座数納税(), 1));
+001443 | 		set活口座数職員(ConvertUtil.chkConvertNumAdd0(get活口座数職員(), 1));
+001444 | 		set時効解約口座数(ConvertUtil.chkConvertNumAdd0(get時効解約口座数(), 1));
+001445 | 		setSW件数(ConvertUtil.chkConvertNumAdd0(getSW件数(), 1));
+001446 | 		set総合口座(ConvertUtil.chkConvertFlag(get総合口座()));
+001447 | 		set投信契約有(ConvertUtil.chkConvertFlag(get投信契約有()));
+001448 | 		set特定口座契約有(ConvertUtil.chkConvertFlag(get特定口座契約有()));
+001449 | 		set預金マル優申告額千円(ConvertUtil.chkDelCommaAdd0(get預金マル優申告額千円(), 1));
+001450 | 		set債券マル優申告額千円(ConvertUtil.chkDelCommaAdd0(get債券マル優申告額千円(), 1));
+001451 | 		setマル財申告額千円(ConvertUtil.chkDelCommaAdd0(getマル財申告額千円(), 1));
+001452 | 		setマル特申告額千円(ConvertUtil.chkDelCommaAdd0(getマル特申告額千円(), 1));
+001453 | 		set投信マル優申告額千円(ConvertUtil.chkDelCommaAdd0(get投信マル優申告額千円(), 1));
+001454 | 		set融資基本(ConvertUtil.chkConvertFlag(get融資基本()));
+001455 | 		set融資抹消(ConvertUtil.chkConvertFlag(get融資抹消()));
+001456 | 		set割手(ConvertUtil.chkConvertFlag(get割手()));
+001457 | 		set手貸(ConvertUtil.chkConvertFlag(get手貸()));
+001458 | 		set証貸(ConvertUtil.chkConvertFlag(get証貸()));
+001459 | 		set代理貸(ConvertUtil.chkConvertFlag(get代理貸()));
+001460 | 		set債務保証(ConvertUtil.chkConvertFlag(get債務保証()));
+001461 | 		set住公契約(ConvertUtil.chkConvertFlag(get住公契約()));
+001462 | 		set当貸契約(ConvertUtil.chkConvertFlag(get当貸契約()));
+001463 | 		set個人CL(ConvertUtil.chkConvertFlag(get個人CL()));
+001464 | 		set事業者CL(ConvertUtil.chkConvertFlag(get事業者CL()));
+001465 | 		setIP電話番号(ConvertUtil.chkConvertTel(getIP電話番号()));
+001466 | 		set第二IP電話番号(ConvertUtil.chkConvertTel(get第二IP電話番号()));
+001467 | 		set電債決済口座数(ConvertUtil.chkConvertNumAdd0(get電債決済口座数(), 1));
+001468 | 		set定例発行契約自動発行(ConvertUtil.chkNull(get定例発行契約自動発行()));
+001469 | 		set振込登録件数(ConvertUtil.chkConvertNumAdd0(get振込登録件数(), 1));
+001470 | 		set為替自動振込件数(ConvertUtil.chkConvertNumAdd0(get為替自動振込件数(), 1));
+001471 | 		set貸金庫(ConvertUtil.chkConvertFlag(get貸金庫()));
+001472 | 		set夜間金庫(ConvertUtil.chkConvertFlag(get夜間金庫()));
+001473 | 		set諸届け(ConvertUtil.chkConvertFlag(get諸届け()));
+001474 | 		set外為(ConvertUtil.chkConvertFlag(get外為()));
+001475 | 		set共有名義(ConvertUtil.chkConvertFlag(get共有名義()));
+001476 | 		set金庫任意一(ConvertUtil.chkConvertNumAdd0(get金庫任意一(), 5));
+001477 | 		set金庫任意二(ConvertUtil.chkConvertNumAdd0(get金庫任意二(), 5));
+001478 | 		set金庫任意三(ConvertUtil.chkConvertNumAdd0(get金庫任意三(), 5));
+001479 | 		set給振件数(ConvertUtil.chkConvertNumAdd0(get給振件数(), 1));
+001480 | 		set給与振込(ConvertUtil.chkConvertFlag(get給与振込()));
+001481 | 		//【和暦処理】
+001482 | 		set給与最新振込日(ConvertUtil.chkConvertDateAdd0(get給与最新振込日()));
+001483 | 		set年金件数(ConvertUtil.chkConvertNumAdd0(get年金件数(), 1));
+001484 | 		set年金振込(ConvertUtil.chkConvertFlag(get年金振込()));
+001485 | 		//【和暦処理】
+001486 | 		set年金最新振込日(ConvertUtil.chkConvertDateAdd0(get年金最新振込日()));
+001487 | 		setFB契約(ConvertUtil.chkConvertFlag(getFB契約()));
+001488 | 		setWEBFB契約(ConvertUtil.chkConvertFlag(getWEBFB契約()));
+001489 | 		setHB契約数(ConvertUtil.chkConvertNumAdd0(getHB契約数(), 2));
+001490 | 		setANS代表(ConvertUtil.chkConvertFlag(getANS代表()));
+001491 | 		setANS照会数(ConvertUtil.chkConvertNumAdd0(getANS照会数(), 1));
+001492 | 		setANS通知数(ConvertUtil.chkConvertNumAdd0(getANS通知数(), 1));
+001493 | 		setコール契約(ConvertUtil.chkConvertFlag(getコール契約()));
+001494 | 		setIB代表店番(ConvertUtil.chkConvertNumAdd0(getIB代表店番(), 3));
+001495 | 		setIB代表科目口座番号(ConvertUtil.chkDelHyphenAdd0(getIB代表科目口座番号(), 9));
+001496 | 		setAA契約口座数(ConvertUtil.chkConvertNumAdd0(getAA契約口座数(), 1));
+001497 | 		setサークル一(ConvertUtil.chkConvertNumAdd0(getサークル一(), 2));
+001498 | 		setサークル二(ConvertUtil.chkConvertNumAdd0(getサークル二(), 2));
+001499 | 		setサークル三(ConvertUtil.chkConvertNumAdd0(getサークル三(), 2));
+001500 | 		setサークル四(ConvertUtil.chkConvertNumAdd0(getサークル四(), 2));
+001501 | 		setサークル五(ConvertUtil.chkConvertNumAdd0(getサークル五(), 2));
+001502 | 		setサークル六(ConvertUtil.chkConvertNumAdd0(getサークル六(), 2));
+001503 | 		setサークル七(ConvertUtil.chkConvertNumAdd0(getサークル七(), 2));
+001504 | 		setサークル八(ConvertUtil.chkConvertNumAdd0(getサークル八(), 2));
+001505 | 		setサークル九(ConvertUtil.chkConvertNumAdd0(getサークル九(), 2));
+001506 | 		setサークル十(ConvertUtil.chkConvertNumAdd0(getサークル十(), 2));
+001507 | 		setサークル十一(ConvertUtil.chkConvertNumAdd0(getサークル十一(), 2));
+001508 | 		setサークル十二(ConvertUtil.chkConvertNumAdd0(getサークル十二(), 2));
+001509 | 		setサークル十三(ConvertUtil.chkConvertNumAdd0(getサークル十三(), 2));
+001510 | 		setサークル十四(ConvertUtil.chkConvertNumAdd0(getサークル十四(), 2));
+001511 | 		setサークル十五(ConvertUtil.chkConvertNumAdd0(getサークル十五(), 2));
+001512 | 		
+001513 | 	}
+001514 | 	
+001515 | 	/**
+001516 | 	 * エラー生成メソッド
+001517 | 	 * @param String	エラーメッセージ
+001518 | 	 * @param int		エラーレベル
+001519 | 	 * @param String	エラー箇所
+001520 | 	 */
+001521 | 	private WebonException createWoException(String msg ,int el, String es){
+001522 | 		//エラーコード等をセット
+001523 | 		WebonException e = new WebonException(msg,webonBase);
+001524 | 		//顧客を特定する情報をセット
+001525 | 		e.setOperationId(operationId);
+001526 | 		e.setBrno(woBrno);
+001527 | 		e.setCif(woCif);
+001528 | 		e.setErrStat(el);
+001529 | 		e.setErrSpot(es);
+001530 | 		//エラー処理は上位に任せる
+001531 | 		return e;
+001532 | 	}
+001533 | 	//以下UTILITY
+001534 | 	//以下、ユーティリティ的メソッド
+001535 | 	/**
+001536 | 	 * 代表者資格変換要メソッド（暫定版）修正後削除
+001537 | 	 * @throws Exception 
+001538 | 	 */
+001539 | 	public String changeRecepCode(String code) throws Exception{
+001540 | 		try{
+001541 | 			FWLog.debug("代表者資格"+code+" 文字列の長さ："+code.length());
+001542 | 			//空白かNULLの場合[00]を返す
+001543 | 			if(code==null || code.isEmpty() || code.length()<3){
+001544 | 				return "00";
+001545 | 			}else{
+001546 | 				//それ以外は、先頭2桁を返す
+001547 | 				return code.substring(0,2);
+001548 | 			}
+001549 | 		}catch(Exception e){
+001550 | 			FWLog.error("代表者資格のコード削除時エラー⇒⇒"+e);
+001551 | 			throw e;
+001552 | 		}
+001553 | 	}
+001554 | }

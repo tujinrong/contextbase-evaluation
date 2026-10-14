@@ -1,0 +1,299 @@
+000001 | package nenkin.util;
+000002 | 
+000003 | import java.io.ByteArrayOutputStream;
+000004 | import java.io.IOException;
+000005 | import java.nio.charset.Charset;
+000006 | import java.util.List;
+000007 | import java.util.Locale;
+000008 | import java.util.zip.ZipEntry;
+000009 | import java.util.zip.ZipOutputStream;
+000010 | 
+000011 | /**
+000012 |  * 外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成する。
+000013 |  */
+000014 | public final class OpenXmlWorkbookWriter {
+000015 |     private static final Charset UTF8 = Charset.forName("UTF-8");
+000016 |     private static final String SPREADSHEET_NS =
+000017 |             "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+000018 |     private static final String RELATIONSHIP_NS =
+000019 |             "http://schemas.openxmlformats.org/package/2006/relationships";
+000020 |     private static final String OFFICE_RELATIONSHIP_NS =
+000021 |             "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+000022 | 
+000023 |     private OpenXmlWorkbookWriter() {
+000024 |     }
+000025 | 
+000026 |     public static byte[] buildWorkbook(String sheetName, List<String> headers,
+000027 |             List<Object[]> rows) {
+000028 |         return buildWorkbook(sheetName, headers, rows, null, null, 100);
+000029 |     }
+000030 | 
+000031 |     /**
+000032 |      * ヘッダーより前にタイトル等を置く帳票用レイアウト。
+000033 |      * leadingRows の要素数がそのまま上部行数になる。
+000034 |      */
+000035 |     public static byte[] buildWorkbook(String sheetName, List<String> headers,
+000036 |             List<Object[]> rows, List<Object[]> leadingRows, List<String> mergedRanges,
+000037 |             int printScale) {
+000038 |         if (headers == null || headers.isEmpty()) {
+000039 |             throw new IllegalArgumentException("ヘッダーは1列以上必要です。");
+000040 |         }
+000041 |         if (rows == null) {
+000042 |             throw new IllegalArgumentException("明細リストはnullにできません。");
+000043 |         }
+000044 | 
+000045 |         ByteArrayOutputStream output = new ByteArrayOutputStream();
+000046 |         ZipOutputStream zip = new ZipOutputStream(output);
+000047 |         try {
+000048 |             write(zip, "[Content_Types].xml", contentTypes());
+000049 |             write(zip, "_rels/.rels", rootRelationships());
+000050 |             write(zip, "xl/workbook.xml", workbookXml(sanitizeSheetName(sheetName)));
+000051 |             write(zip, "xl/_rels/workbook.xml.rels", workbookRelationships());
+000052 |             write(zip, "xl/styles.xml", stylesXml());
+000053 |             write(zip, "xl/worksheets/sheet1.xml",
+000054 |                     sheetXml(headers, rows, leadingRows, mergedRanges, printScale));
+000055 |             zip.finish();
+000056 |             return output.toByteArray();
+000057 |         } catch (IOException e) {
+000058 |             throw new IllegalStateException("Excelファイルの生成に失敗しました。", e);
+000059 |         } finally {
+000060 |             try {
+000061 |                 zip.close();
+000062 |             } catch (IOException e) {
+000063 |                 // ByteArrayOutputStream の close 失敗は発生しない。
+000064 |             }
+000065 |         }
+000066 |     }
+000067 | 
+000068 |     private static String contentTypes() {
+000069 |         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+000070 |                 + "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
+000071 |                 + "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
+000072 |                 + "<Default Extension=\"xml\" ContentType=\"application/xml\"/>"
+000073 |                 + "<Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/>"
+000074 |                 + "<Override PartName=\"/xl/worksheets/sheet1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
+000075 |                 + "<Override PartName=\"/xl/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\"/>"
+000076 |                 + "</Types>";
+000077 |     }
+000078 | 
+000079 |     private static String rootRelationships() {
+000080 |         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+000081 |                 + "<Relationships xmlns=\"" + RELATIONSHIP_NS + "\">"
+000082 |                 + "<Relationship Id=\"rId1\" Type=\"" + OFFICE_RELATIONSHIP_NS
+000083 |                 + "/officeDocument\" Target=\"xl/workbook.xml\"/>"
+000084 |                 + "</Relationships>";
+000085 |     }
+000086 | 
+000087 |     private static String workbookXml(String sheetName) {
+000088 |         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+000089 |                 + "<workbook xmlns=\"" + SPREADSHEET_NS + "\" xmlns:r=\""
+000090 |                 + OFFICE_RELATIONSHIP_NS + "\"><sheets><sheet name=\""
+000091 |                 + xml(sheetName) + "\" sheetId=\"1\" r:id=\"rId1\"/></sheets></workbook>";
+000092 |     }
+000093 | 
+000094 |     private static String workbookRelationships() {
+000095 |         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+000096 |                 + "<Relationships xmlns=\"" + RELATIONSHIP_NS + "\">"
+000097 |                 + "<Relationship Id=\"rId1\" Type=\"" + OFFICE_RELATIONSHIP_NS
+000098 |                 + "/worksheet\" Target=\"worksheets/sheet1.xml\"/>"
+000099 |                 + "<Relationship Id=\"rId2\" Type=\"" + OFFICE_RELATIONSHIP_NS
+000100 |                 + "/styles\" Target=\"styles.xml\"/>"
+000101 |                 + "</Relationships>";
+000102 |     }
+000103 | 
+000104 |     private static String stylesXml() {
+000105 |         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+000106 |                 + "<styleSheet xmlns=\"" + SPREADSHEET_NS + "\">"
+000107 |                 + "<fonts count=\"4\"><font><sz val=\"10\"/><name val=\"メイリオ\"/></font>"
+000108 |                 + "<font><b/><sz val=\"10\"/><name val=\"メイリオ\"/></font>"
+000109 |                 + "<font><b/><sz val=\"22\"/><name val=\"メイリオ\"/></font>"
+000110 |                 + "<font><sz val=\"16\"/><name val=\"メイリオ\"/></font></fonts>"
+000111 |                 + "<fills count=\"3\"><fill><patternFill patternType=\"none\"/></fill>"
+000112 |                 + "<fill><patternFill patternType=\"gray125\"/></fill>"
+000113 |                 + "<fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFFF96\"/>"
+000114 |                 + "<bgColor indexed=\"64\"/></patternFill></fill></fills>"
+000115 |                 + "<borders count=\"2\"><border><left/><right/><top/><bottom/><diagonal/></border>"
+000116 |                 + "<border><left style=\"thin\"/><right style=\"thin\"/><top style=\"thin\"/>"
+000117 |                 + "<bottom style=\"thin\"/><diagonal/></border></borders>"
+000118 |                 + "<cellStyleXfs count=\"1\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\"/></cellStyleXfs>"
+000119 |                 + "<cellXfs count=\"5\">"
+000120 |                 + "<xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"1\" xfId=\"0\" applyBorder=\"1\"/>"
+000121 |                 + "<xf numFmtId=\"0\" fontId=\"1\" fillId=\"2\" borderId=\"1\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf>"
+000122 |                 + "<xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"1\" xfId=\"0\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\" vertical=\"top\"/></xf>"
+000123 |                 + "<xf numFmtId=\"0\" fontId=\"2\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyFont=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf>"
+000124 |                 + "<xf numFmtId=\"0\" fontId=\"3\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyFont=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf>"
+000125 |                 + "</cellXfs><cellStyles count=\"1\"><cellStyle name=\"Normal\" xfId=\"0\" builtinId=\"0\"/></cellStyles>"
+000126 |                 + "</styleSheet>";
+000127 |     }
+000128 | 
+000129 |     private static String sheetXml(List<String> headers, List<Object[]> rows,
+000130 |             List<Object[]> leadingRows, List<String> mergedRanges, int printScale) {
+000131 |         StringBuilder xml = new StringBuilder(4096 + rows.size() * headers.size() * 40);
+000132 |         int leadingCount = leadingRows == null ? 0 : leadingRows.size();
+000133 |         int headerRow = leadingCount + 1;
+000134 |         int lastRow = rows.size() + headerRow;
+000135 |         String lastColumn = columnName(headers.size());
+000136 |         xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+000137 |         xml.append("<worksheet xmlns=\"").append(SPREADSHEET_NS).append("\">");
+000138 |         xml.append("<dimension ref=\"A1:").append(lastColumn).append(lastRow).append("\"/>");
+000139 |         xml.append("<sheetViews><sheetView workbookViewId=\"0\"><pane ySplit=\"")
+000140 |                 .append(headerRow).append("\" topLeftCell=\"A").append(headerRow + 1)
+000141 |                 .append("\" activePane=\"bottomLeft\" state=\"frozen\"/></sheetView></sheetViews>");
+000142 |         appendColumns(xml, headers, rows);
+000143 |         xml.append("<sheetData>");
+000144 |         if (leadingRows != null) {
+000145 |             for (int rowIndex = 0; rowIndex < leadingRows.size(); rowIndex++) {
+000146 |                 int excelRow = rowIndex + 1;
+000147 |                 Object[] row = leadingRows.get(rowIndex);
+000148 |                 xml.append("<row r=\"").append(excelRow).append("\"");
+000149 |                 if (excelRow == 1) {
+000150 |                     xml.append(" ht=\"28\" customHeight=\"1\"");
+000151 |                 }
+000152 |                 xml.append('>');
+000153 |                 if (row != null) {
+000154 |                     for (int column = 0; column < Math.min(headers.size(), row.length); column++) {
+000155 |                         Object value = row[column];
+000156 |                         if (value != null) {
+000157 |                             appendTextCell(xml, columnName(column + 1) + excelRow,
+000158 |                                     String.valueOf(value), excelRow == 1 ? 3 : 4);
+000159 |                         }
+000160 |                     }
+000161 |                 }
+000162 |                 xml.append("</row>");
+000163 |             }
+000164 |         }
+000165 |         xml.append("<row r=\"").append(headerRow)
+000166 |                 .append("\" ht=\"45\" customHeight=\"1\">");
+000167 |         for (int column = 0; column < headers.size(); column++) {
+000168 |             appendTextCell(xml, columnName(column + 1) + headerRow, headers.get(column), 1);
+000169 |         }
+000170 |         xml.append("</row>");
+000171 | 
+000172 |         for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+000173 |             int excelRow = rowIndex + headerRow + 1;
+000174 |             Object[] row = rows.get(rowIndex);
+000175 |             xml.append("<row r=\"").append(excelRow).append("\">");
+000176 |             for (int column = 0; column < headers.size(); column++) {
+000177 |                 Object value = row != null && column < row.length ? row[column] : null;
+000178 |                 String reference = columnName(column + 1) + excelRow;
+000179 |                 if (value instanceof Number) {
+000180 |                     appendNumberCell(xml, reference, (Number) value);
+000181 |                 } else {
+000182 |                     appendTextCell(xml, reference, value == null ? "" : String.valueOf(value), 0);
+000183 |                 }
+000184 |             }
+000185 |             xml.append("</row>");
+000186 |         }
+000187 | 
+000188 |         xml.append("</sheetData><autoFilter ref=\"A").append(headerRow).append(':')
+000189 |                 .append(lastColumn).append(lastRow).append("\"/>");
+000190 |         if (mergedRanges != null && !mergedRanges.isEmpty()) {
+000191 |             xml.append("<mergeCells count=\"").append(mergedRanges.size()).append("\">");
+000192 |             for (int i = 0; i < mergedRanges.size(); i++) {
+000193 |                 xml.append("<mergeCell ref=\"").append(xml(mergedRanges.get(i))).append("\"/>");
+000194 |             }
+000195 |             xml.append("</mergeCells>");
+000196 |         }
+000197 |         xml.append("<printOptions horizontalCentered=\"1\"/>")
+000198 |                 .append("<pageMargins left=\"0\" right=\"0\" top=\"0.3937\" bottom=\"0.3937\" header=\"0.1181\" footer=\"0.1181\"/>")
+000199 |                 .append("<pageSetup paperSize=\"9\" orientation=\"portrait\" scale=\"")
+000200 |                 .append(Math.max(10, Math.min(400, printScale))).append("\"/>")
+000201 |                 .append("</worksheet>");
+000202 |         return xml.toString();
+000203 |     }
+000204 | 
+000205 |     private static void appendColumns(StringBuilder xml, List<String> headers, List<Object[]> rows) {
+000206 |         xml.append("<cols>");
+000207 |         for (int column = 0; column < headers.size(); column++) {
+000208 |             int width = displayLength(headers.get(column)) + 2;
+000209 |             int inspectCount = Math.min(rows.size(), 100);
+000210 |             for (int row = 0; row < inspectCount; row++) {
+000211 |                 Object[] values = rows.get(row);
+000212 |                 Object value = values != null && column < values.length ? values[column] : null;
+000213 |                 width = Math.max(width, displayLength(value == null ? "" : String.valueOf(value)) + 2);
+000214 |             }
+000215 |             width = Math.max(5, Math.min(40, width));
+000216 |             xml.append("<col min=\"").append(column + 1).append("\" max=\"")
+000217 |                     .append(column + 1).append("\" width=\"").append(width)
+000218 |                     .append("\" customWidth=\"1\"/>");
+000219 |         }
+000220 |         xml.append("</cols>");
+000221 |     }
+000222 | 
+000223 |     private static void appendTextCell(StringBuilder xml, String reference, String value, int style) {
+000224 |         String clean = validXmlText(value);
+000225 |         xml.append("<c r=\"").append(reference).append("\" s=\"").append(style)
+000226 |                 .append("\" t=\"inlineStr\"><is><t");
+000227 |         if (clean.length() > 0
+000228 |                 && (Character.isWhitespace(clean.charAt(0))
+000229 |                         || Character.isWhitespace(clean.charAt(clean.length() - 1)))) {
+000230 |             xml.append(" xml:space=\"preserve\"");
+000231 |         }
+000232 |         xml.append(">").append(xml(clean)).append("</t></is></c>");
+000233 |     }
+000234 | 
+000235 |     private static void appendNumberCell(StringBuilder xml, String reference, Number value) {
+000236 |         xml.append("<c r=\"").append(reference).append("\" s=\"2\"><v>")
+000237 |                 .append(String.format(Locale.ROOT, "%s", value)).append("</v></c>");
+000238 |     }
+000239 | 
+000240 |     private static int displayLength(String value) {
+000241 |         int length = 0;
+000242 |         for (int offset = 0; offset < value.length();) {
+000243 |             int codePoint = value.codePointAt(offset);
+000244 |             length += codePoint <= 0x7f ? 1 : 2;
+000245 |             offset += Character.charCount(codePoint);
+000246 |         }
+000247 |         return length;
+000248 |     }
+000249 | 
+000250 |     private static String columnName(int column) {
+000251 |         StringBuilder name = new StringBuilder();
+000252 |         int value = column;
+000253 |         while (value > 0) {
+000254 |             value--;
+000255 |             name.insert(0, (char) ('A' + value % 26));
+000256 |             value /= 26;
+000257 |         }
+000258 |         return name.toString();
+000259 |     }
+000260 | 
+000261 |     private static String sanitizeSheetName(String value) {
+000262 |         String name = value == null || value.trim().length() == 0 ? "Sheet1" : value.trim();
+000263 |         name = name.replaceAll("[\\\\/\\?\\*\\[\\]:]", "_");
+000264 |         if (name.length() > 31) {
+000265 |             name = name.substring(0, 31);
+000266 |         }
+000267 |         return name;
+000268 |     }
+000269 | 
+000270 |     private static String validXmlText(String value) {
+000271 |         StringBuilder result = new StringBuilder(value == null ? 0 : value.length());
+000272 |         String source = value == null ? "" : value;
+000273 |         for (int offset = 0; offset < source.length();) {
+000274 |             int codePoint = source.codePointAt(offset);
+000275 |             if (codePoint == 0x9 || codePoint == 0xA || codePoint == 0xD
+000276 |                     || (codePoint >= 0x20 && codePoint <= 0xD7FF)
+000277 |                     || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
+000278 |                     || (codePoint >= 0x10000 && codePoint <= 0x10FFFF)) {
+000279 |                 result.appendCodePoint(codePoint);
+000280 |             }
+000281 |             offset += Character.charCount(codePoint);
+000282 |         }
+000283 |         return result.toString();
+000284 |     }
+000285 | 
+000286 |     private static String xml(String value) {
+000287 |         return value.replace("&", "&amp;").replace("<", "&lt;")
+000288 |                 .replace(">", "&gt;").replace("\"", "&quot;")
+000289 |                 .replace("'", "&apos;");
+000290 |     }
+000291 | 
+000292 |     private static void write(ZipOutputStream zip, String path, String content) throws IOException {
+000293 |         ZipEntry entry = new ZipEntry(path);
+000294 |         entry.setTime(0L);
+000295 |         zip.putNextEntry(entry);
+000296 |         zip.write(content.getBytes(UTF8));
+000297 |         zip.closeEntry();
+000298 |     }
+000299 | }

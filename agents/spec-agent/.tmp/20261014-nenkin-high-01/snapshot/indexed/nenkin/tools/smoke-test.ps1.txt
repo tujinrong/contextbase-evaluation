@@ -1,0 +1,185 @@
+000001 | param([int]$Port = 8089)
+000002 | $ErrorActionPreference = "Stop"
+000003 | $Base = "http://127.0.0.1:$Port/n2nenkin"
+000004 | $Registered = -join ([char[]](0x767B,0x9332,0x7D42,0x4E86))
+000005 | $LoadedExisting = -join ([char[]](0x65E2,0x5B58,0x30C7,0x30FC,0x30BF,0x3092,0x8AAD,0x307F,0x8FBC,0x307F,0x307E,0x3057,0x305F))
+000006 | $PermissionPrefix = -join ([char[]](0x6A29,0x9650,0x304C,0x4E0D,0x8DB3,0x3057,0x3066,0x3044,0x307E,0x3059,0x3002))
+000007 | $Changed = -join ([char[]](0x5909,0x66F4))
+000008 | $Deleted = -join ([char[]](0x524A,0x9664))
+000009 | $DeleteCompleted = $Deleted + (-join ([char[]](0x7D42,0x4E86)))
+000010 | 
+000011 | function Invoke-Form([hashtable]$Body) {
+000012 |     return Invoke-WebRequest -UseBasicParsing "$Base/Action.do" -WebSession $Session -Method Post -Body $Body -TimeoutSec 20
+000013 | }
+000014 | 
+000015 | function Invoke-FormAs($WebSession, [hashtable]$Body) {
+000016 |     return Invoke-WebRequest -UseBasicParsing "$Base/Action.do" -WebSession $WebSession -Method Post -Body $Body -TimeoutSec 20
+000017 | }
+000018 | 
+000019 | function Assert-Contains($Response, [string]$Pattern, [string]$Message) {
+000020 |     if ($Response.Content -notmatch $Pattern) { throw $Message }
+000021 | }
+000022 | 
+000023 | $Login = Invoke-WebRequest -UseBasicParsing "$Base/" -SessionVariable Session -TimeoutSec 10
+000024 | if ($Login.StatusCode -ne 200 -or $Login.Content -notmatch 'DWH_USER_ID') { throw "Login page check failed." }
+000025 | 
+000026 | $Auth = Invoke-Form @{
+000027 |     APPL_NAME='unify'; FUNCTION_ID='nenkin'; VIEW_ID='Login'; COMMAND_ID=''; UNIFY_FLG='0';
+000028 |     DWH_USER_ID='00001234'; DWH_PASS_WORD='samplepass'
+000029 | }
+000030 | Assert-Contains $Auth 'menuForm' "N2 login and automatic staff verification check failed."
+000031 | if ($Auth.Content -match 'staffForm') { throw "Manual staff input screen must not be displayed after login." }
+000032 | 
+000033 | $LegacyStaffRoute = Invoke-Form @{
+000034 |     FUNCTION_ID='nenkin'; VIEW_ID='Staff'; COMMAND_ID='View'
+000035 | }
+000036 | Assert-Contains $LegacyStaffRoute 'menuForm' "Legacy staff route redirect check failed."
+000037 | if ($LegacyStaffRoute.Content -match 'staffForm') { throw "Legacy staff route exposed the removed input screen." }
+000038 | 
+000039 | $UnknownStaffLoginPage = Invoke-WebRequest -UseBasicParsing "$Base/" -SessionVariable UnknownStaffSession -TimeoutSec 10
+000040 | $UnknownStaffAuth = Invoke-FormAs $UnknownStaffSession @{
+000041 |     APPL_NAME='unify'; FUNCTION_ID='nenkin'; VIEW_ID='Login'; COMMAND_ID=''; UNIFY_FLG='0';
+000042 |     DWH_USER_ID='99999999'; DWH_PASS_WORD='samplepass'
+000043 | }
+000044 | Assert-Contains $UnknownStaffAuth 'DWH_USER_ID' "Unknown staff login rejection check failed."
+000045 | if ($UnknownStaffAuth.Content -match 'menuForm') { throw "Unknown staff must not enter the business menu." }
+000046 | 
+000047 | $PensionPage = Invoke-Form @{
+000048 |     FUNCTION_ID='nenkin'; VIEW_ID='Pension'; COMMAND_ID='View'
+000049 | }
+000050 | Assert-Contains $PensionPage 'pensionForm' "Pension screen check failed."
+000051 | $TokenMatch = [regex]::Match($PensionPage.Content, 'name="CSRF_TOKEN" value="([^"]+)"')
+000052 | if (-not $TokenMatch.Success) { throw "CSRF token check failed." }
+000053 | $CsrfToken = $TokenMatch.Groups[1].Value
+000054 | 
+000055 | $GetKey = "GETSMOKE" + [DateTime]::UtcNow.ToString('yyyyMMddHHmmssfff')
+000056 | $GetPhone = "080" + (Get-Random -Minimum 10000000 -Maximum 99999999)
+000057 | $GetMutation = "$Base/Action.do?charCommonUID=smoke&FUNCTION_ID=nenkin&VIEW_ID=Pension&COMMAND_ID=Save&CSRF_TOKEN=$CsrfToken&BRANCH_NO=12&KANA_NAME=$GetKey&PHONE_NUMBER=$GetPhone"
+000058 | Invoke-WebRequest -UseBasicParsing $GetMutation -WebSession $Session -Method Get -TimeoutSec 20 | Out-Null
+000059 | $GetMutationCheck = Invoke-Form @{
+000060 |     FUNCTION_ID='nenkin'; VIEW_ID='Pension'; COMMAND_ID='Lookup'; LOOKUP_MODE='key';
+000061 |     KANA_NAME=$GetKey; PHONE_NUMBER=$GetPhone
+000062 | }
+000063 | Assert-Contains $GetMutationCheck '"found":false' "GET mutation guard check failed."
+000064 | 
+000065 | $Pension = Invoke-Form @{
+000066 |     FUNCTION_ID='nenkin'; VIEW_ID='Pension'; COMMAND_ID='Lookup'; LOOKUP_MODE='customer';
+000067 |     BRANCH_NO='75'; CUSTOMER_NO='4900'
+000068 | }
+000069 | Assert-Contains $Pension '"found":true' "JNDI pension database read failed."
+000070 | 
+000071 | $CustomerMasterOnly = Invoke-Form @{
+000072 |     FUNCTION_ID='nenkin'; VIEW_ID='Pension'; COMMAND_ID='Lookup'; LOOKUP_MODE='customer';
+000073 |     BRANCH_NO='75'; CUSTOMER_NO='4999'
+000074 | }
+000075 | Assert-Contains $CustomerMasterOnly '"found":true' "N2 customer master read failed."
+000076 | Assert-Contains $CustomerMasterOnly '"customerNo":4999' "Customer-master-only source check failed."
+000077 | 
+000078 | $Lookup = Invoke-Form @{
+000079 |     FUNCTION_ID='nenkin'; VIEW_ID='Lookup'; COMMAND_ID='View'; TARGET='customer'; BRANCH_NO='75'; PAGE='1'
+000080 | }
+000081 | Assert-Contains $Lookup 'data-kana-name=' "Exact-key lookup screen check failed."
+000082 | 
+000083 | $Report = Invoke-Form @{
+000084 |     FUNCTION_ID='nenkin'; VIEW_ID='Report'; COMMAND_ID='Preview'; USE_BRANCH_RANGE='1'; BRANCH_FROM='75'; SORT_TYPE='1'
+000085 | }
+000086 | Assert-Contains $Report 'report-ledger' "Report preview check failed."
+000087 | if ([regex]::Matches($Report.Content, '<tr>').Count -lt 2) { throw "Single-branch report semantics check failed." }
+000088 | 
+000089 | $Excel = Invoke-Form @{
+000090 |     FUNCTION_ID='nenkin'; VIEW_ID='Excel'; COMMAND_ID='Export'; BRANCH_NO='75'
+000091 | }
+000092 | if ($Excel.RawContentLength -lt 1000 -or $Excel.Headers['Content-Type'] -notmatch 'spreadsheetml') { throw "Excel export check failed." }
+000093 | 
+000094 | $Key = "SMOKE" + [DateTime]::UtcNow.ToString('yyyyMMddHHmmssfff')
+000095 | $Phone = "070" + (Get-Random -Minimum 10000000 -Maximum 99999999)
+000096 | $Created = $false
+000097 | try {
+000098 |     $Save = Invoke-Form @{
+000099 |         FUNCTION_ID='nenkin'; VIEW_ID='Pension'; COMMAND_ID='Save'; CSRF_TOKEN=$CsrfToken;
+000100 |         BRANCH_NO='12'; CUSTOMER_NO='9999999'; STAFF_CODE='2234'; CUSTOMER_NAME='Smoke Test';
+000101 |         KANA_NAME=$Key; PHONE_NUMBER=$Phone; GENDER=''; ADDRESS=''; BIRTH_DATE='';
+000102 |         CLAIM_STATUS=''; CLAIM_SCHEDULED_DATE=''; PLANNED_AGE=''; RESERVATION_REQUEST_DATE='';
+000103 |         DATA_UPDATE_DATE=''; NOTES=''; SPOUSE_NAME=''; HAS_BENEFIT=''; SPOUSE_BIRTH_DATE='';
+000104 |         ORIGINAL_KANA=''; ORIGINAL_PHONE=''
+000105 |     }
+000106 |     Assert-Contains $Save $Registered "Pension insert check failed."
+000107 |     $Created = $true
+000108 | 
+000109 |     $Load = Invoke-Form @{
+000110 |         FUNCTION_ID='nenkin'; VIEW_ID='Pension'; COMMAND_ID='Load'; LOOKUP_KANA=$Key; LOOKUP_PHONE=$Phone
+000111 |     }
+000112 |     Assert-Contains $Load $LoadedExisting "Exact-key pension load check failed."
+000113 | 
+000114 |     $Update = Invoke-Form @{
+000115 |         FUNCTION_ID='nenkin'; VIEW_ID='Pension'; COMMAND_ID='Save'; CSRF_TOKEN=$CsrfToken;
+000116 |         BRANCH_NO='12'; CUSTOMER_NO='9999999'; STAFF_CODE='2234'; CUSTOMER_NAME='Smoke Updated';
+000117 |         KANA_NAME=$Key; PHONE_NUMBER=$Phone; GENDER=''; ADDRESS=''; BIRTH_DATE='';
+000118 |         CLAIM_STATUS=''; CLAIM_SCHEDULED_DATE=''; PLANNED_AGE=''; RESERVATION_REQUEST_DATE='';
+000119 |         DATA_UPDATE_DATE=''; NOTES=''; SPOUSE_NAME=''; HAS_BENEFIT=''; SPOUSE_BIRTH_DATE='';
+000120 |         ORIGINAL_KANA=$Key; ORIGINAL_PHONE=$Phone
+000121 |     }
+000122 |     Assert-Contains $Update $Registered "Pension update check failed."
+000123 | 
+000124 |     $LowRoleLoginPage = Invoke-WebRequest -UseBasicParsing "$Base/" -SessionVariable LowRoleSession -TimeoutSec 10
+000125 |     $LowRoleMenu = Invoke-FormAs $LowRoleSession @{
+000126 |         APPL_NAME='unify'; FUNCTION_ID='nenkin'; VIEW_ID='Login'; COMMAND_ID=''; UNIFY_FLG='0';
+000127 |         DWH_USER_ID='00001235'; DWH_PASS_WORD='samplepass'
+000128 |     }
+000129 |     Assert-Contains $LowRoleMenu 'menuForm' "Low-role automatic staff verification check failed."
+000130 |     $LowRolePension = Invoke-FormAs $LowRoleSession @{
+000131 |         FUNCTION_ID='nenkin'; VIEW_ID='Pension'; COMMAND_ID='View'
+000132 |     }
+000133 |     $LowTokenMatch = [regex]::Match($LowRolePension.Content, 'name="CSRF_TOKEN" value="([^"]+)"')
+000134 |     if (-not $LowTokenMatch.Success) { throw "Low-role CSRF token check failed." }
+000135 |     $LowCsrfToken = $LowTokenMatch.Groups[1].Value
+000136 |     $DeniedUpdate = Invoke-FormAs $LowRoleSession @{
+000137 |         FUNCTION_ID='nenkin'; VIEW_ID='Pension'; COMMAND_ID='Save'; CSRF_TOKEN=$LowCsrfToken;
+000138 |         BRANCH_NO='12'; CUSTOMER_NO='9999999'; STAFF_CODE='2234'; CUSTOMER_NAME='Must Not Update';
+000139 |         KANA_NAME=$Key; PHONE_NUMBER=$Phone; GENDER=''; ADDRESS=''; BIRTH_DATE='';
+000140 |         CLAIM_STATUS=''; CLAIM_SCHEDULED_DATE=''; PLANNED_AGE=''; RESERVATION_REQUEST_DATE='';
+000141 |         DATA_UPDATE_DATE=''; NOTES=''; SPOUSE_NAME=''; HAS_BENEFIT=''; SPOUSE_BIRTH_DATE='';
+000142 |         ORIGINAL_KANA=$Key; ORIGINAL_PHONE=$Phone
+000143 |     }
+000144 |     Assert-Contains $DeniedUpdate ($PermissionPrefix + $Changed) "Branch 75 change permission check failed."
+000145 |     $DeniedDelete = Invoke-FormAs $LowRoleSession @{
+000146 |         FUNCTION_ID='nenkin'; VIEW_ID='Pension'; COMMAND_ID='Delete'; CSRF_TOKEN=$LowCsrfToken;
+000147 |         BRANCH_NO='12'; KANA_NAME=$Key; PHONE_NUMBER=$Phone;
+000148 |         ORIGINAL_KANA=$Key; ORIGINAL_PHONE=$Phone
+000149 |     }
+000150 |     Assert-Contains $DeniedDelete ($PermissionPrefix + $Deleted) "Branch 75 delete permission check failed."
+000151 | 
+000152 |     $Batch = Invoke-Form @{
+000153 |         FUNCTION_ID='nenkin'; VIEW_ID='Batch'; COMMAND_ID='Daily'; CSRF_TOKEN=$CsrfToken;
+000154 |         STAFF_NO=''; INCLUDE_NEW='1'; INCLUDE_CHANGED='1'; INCLUDE_DELETED='1';
+000155 |         DAILY_DATE=(Get-Date).ToString('yyyy/MM/dd');
+000156 |         DELETE_CUTOFF_DATE=(Get-Date).AddMonths(-2).ToString('yyyy-MM-dd')
+000157 |     }
+000158 |     if ($Batch.RawContentLength -lt 1000 -or $Batch.Headers['Content-Type'] -notmatch 'zip|spreadsheetml') { throw "Batch export check failed." }
+000159 | 
+000160 |     $Delete = Invoke-Form @{
+000161 |         FUNCTION_ID='nenkin'; VIEW_ID='Pension'; COMMAND_ID='Delete'; CSRF_TOKEN=$CsrfToken;
+000162 |         BRANCH_NO='12'; KANA_NAME=$Key; PHONE_NUMBER=$Phone;
+000163 |         ORIGINAL_KANA=$Key; ORIGINAL_PHONE=$Phone
+000164 |     }
+000165 |     Assert-Contains $Delete $DeleteCompleted "Pension delete check failed."
+000166 |     $Created = $false
+000167 | 
+000168 |     $Missing = Invoke-Form @{
+000169 |         FUNCTION_ID='nenkin'; VIEW_ID='Pension'; COMMAND_ID='Lookup'; LOOKUP_MODE='key';
+000170 |         KANA_NAME=$Key; PHONE_NUMBER=$Phone
+000171 |     }
+000172 |     Assert-Contains $Missing '"found":false' "Pension delete persistence check failed."
+000173 | } finally {
+000174 |     if ($Created) {
+000175 |         try {
+000176 |             Invoke-Form @{
+000177 |                 FUNCTION_ID='nenkin'; VIEW_ID='Pension'; COMMAND_ID='Delete'; CSRF_TOKEN=$CsrfToken;
+000178 |                 BRANCH_NO='12'; KANA_NAME=$Key; PHONE_NUMBER=$Phone;
+000179 |                 ORIGINAL_KANA=$Key; ORIGINAL_PHONE=$Phone
+000180 |             } | Out-Null
+000181 |         } catch { }
+000182 |     }
+000183 | }
+000184 | 
+000185 | Write-Host "Smoke test passed (login/automatic staff/exact Access tables/lookup/report/xlsx/CRUD/batch): $Base/"

@@ -1,0 +1,401 @@
+000001 | package nenkin.service;
+000002 | 
+000003 | import java.io.ByteArrayOutputStream;
+000004 | import java.io.IOException;
+000005 | import java.nio.charset.Charset;
+000006 | import java.util.ArrayList;
+000007 | import java.util.Arrays;
+000008 | import java.util.Collections;
+000009 | import java.util.Comparator;
+000010 | import java.util.List;
+000011 | import java.util.Locale;
+000012 | import java.util.zip.ZipEntry;
+000013 | import java.util.zip.ZipOutputStream;
+000014 | 
+000015 | import nenkin.model.AuditType;
+000016 | import nenkin.model.PensionAuditRecord;
+000017 | import nenkin.model.PensionReservation;
+000018 | import nenkin.util.DateUtil;
+000019 | import nenkin.util.OpenXmlWorkbookWriter;
+000020 | 
+000021 | /** Access form処理データの日次・月次 Excel 出力。 */
+000022 | public final class PensionBatchExportService {
+000023 |     public static final String EXCEL_CONTENT_TYPE =
+000024 |             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+000025 |     public static final String ZIP_CONTENT_TYPE = "application/zip";
+000026 | 
+000027 |     private static final Charset UTF8 = Charset.forName("UTF-8");
+000028 |     private static final List<String> NEW_HEADERS = Arrays.asList(
+000029 |             "No", "予約徴求日", "カナ氏名", "漢字氏名", "性\n別", "住所", "生年月日",
+000030 |             "電話番号", "年金\n種類", "予定\n年齢", "請求予定日", "備考", "配偶者名",
+000031 |             "配偶者\n生年月日", "店番", "顧客番号", "担\n当");
+000032 |     private static final List<String> CHANGE_DELETE_HEADERS = Arrays.asList(
+000033 |             "No", "店番", "顧客番号", "漢字氏名", "カナ氏名", "性\n別", "住所",
+000034 |             "電話番号", "生年月日", "年金\n種類", "裁定\n請求", "請求予定日",
+000035 |             "予定\n年齢", "配偶者名", "配偶者\n生年月日", "受給\n有無",
+000036 |             "予約徴求日", "担\n当", "備考", "６ヶ月\n先確認");
+000037 | 
+000038 |     private static final PensionBatchExportService INSTANCE =
+000039 |             new PensionBatchExportService(PensionRepository.getInstance());
+000040 | 
+000041 |     private final PensionRepository repository;
+000042 | 
+000043 |     public PensionBatchExportService() {
+000044 |         this(PensionRepository.getInstance());
+000045 |     }
+000046 | 
+000047 |     public PensionBatchExportService(PensionRepository repository) {
+000048 |         if (repository == null) {
+000049 |             throw new IllegalArgumentException("repositoryはnullにできません。");
+000050 |         }
+000051 |         this.repository = repository;
+000052 |     }
+000053 | 
+000054 |     public static PensionBatchExportService getInstance() {
+000055 |         return INSTANCE;
+000056 |     }
+000057 | 
+000058 |     public PensionBatchExportResult build(PensionBatchExportRequest request) {
+000059 |         if (request == null) {
+000060 |             throw new IllegalArgumentException("出力条件がありません。");
+000061 |         }
+000062 |         if (!request.isIncludeNew() && !request.isIncludeChanged()
+000063 |                 && !request.isIncludeDeleted()) {
+000064 |             throw new IllegalArgumentException(
+000065 |                     "新規分、変更分、削除分のいずれかを選択してください。");
+000066 |         }
+000067 | 
+000068 |         DateRange range = resolveRange(request);
+000069 |         Integer updatedBy = parseStaffNo(request.getStaffNo());
+000070 |         if (request.getDeleteCutoffDate().trim().length() > 0) {
+000071 |             repository.purgeDeletedAuditsThrough(request.getDeleteCutoffDate());
+000072 |         }
+000073 | 
+000074 |         List<ExportSpec> specs = selectedSpecs(request, updatedBy != null);
+000075 |         List<GeneratedFile> generated = new ArrayList<GeneratedFile>();
+000076 |         List<String> messages = new ArrayList<String>();
+000077 |         for (int i = 0; i < specs.size(); i++) {
+000078 |             ExportSpec spec = specs.get(i);
+000079 |             List<PensionAuditRecord> audits = repository.findAuditRecords(spec.type,
+000080 |                     range.from, range.to, updatedBy);
+000081 |             if (audits.isEmpty()) {
+000082 |                 messages.add(emptyMessage(spec.type, request.getRunMode(), updatedBy != null));
+000083 |                 continue;
+000084 |             }
+000085 |             sortAudits(audits);
+000086 |             List<String> headers = spec.type == AuditType.NEW
+000087 |                     ? NEW_HEADERS : CHANGE_DELETE_HEADERS;
+000088 |             List<Object[]> rows = toRows(audits, spec.type);
+000089 |             WorkbookLayout layout = buildLayout(spec, request, range, headers.size());
+000090 |             byte[] content = OpenXmlWorkbookWriter.buildWorkbook(spec.sheetName, headers, rows,
+000091 |                     layout.leadingRows, layout.mergedRanges, layout.printScale);
+000092 |             generated.add(new GeneratedFile(spec, rows.size(), content));
+000093 |         }
+000094 | 
+000095 |         List<PensionBatchExportFileResult> files = toFileResults(generated);
+000096 |         PensionBatchExportResult result;
+000097 |         if (generated.isEmpty()) {
+000098 |             result = new PensionBatchExportResult("", EXCEL_CONTENT_TYPE, new byte[0],
+000099 |                     files, messages);
+000100 |         } else if (generated.size() == 1) {
+000101 |             GeneratedFile file = generated.get(0);
+000102 |             result = new PensionBatchExportResult(file.spec.fileName, EXCEL_CONTENT_TYPE,
+000103 |                     file.content, files, messages);
+000104 |         } else {
+000105 |             String zipName = request.getRunMode() == PensionBatchRunMode.DAILY
+000106 |                     ? "年金予約データ明細リスト（日次）.zip"
+000107 |                     : "年金予約データ明細リスト（月次）.zip";
+000108 |             result = new PensionBatchExportResult(zipName, ZIP_CONTENT_TYPE,
+000109 |                     buildZip(generated, messages), files, messages);
+000110 |         }
+000111 | 
+000112 |         return result;
+000113 |     }
+000114 | 
+000115 |     private static DateRange resolveRange(PensionBatchExportRequest request) {
+000116 |         if (request.getRunMode() == null) {
+000117 |             throw new IllegalArgumentException("日次または月次を指定してください。");
+000118 |         }
+000119 |         if (request.getRunMode() == PensionBatchRunMode.DAILY) {
+000120 |             String day = requiredDate(request.getDailyDate(), "年月日を入力してください。");
+000121 |             return new DateRange(day, day);
+000122 |         }
+000123 |         String from = requiredDate(request.getMonthStart(), "月初日を入力してください。");
+000124 |         String to = requiredDate(request.getMonthEnd(), "月末日を入力してください。");
+000125 |         if (from.compareTo(to) > 0) {
+000126 |             throw new IllegalArgumentException("月初日は月末日以前で指定してください。");
+000127 |         }
+000128 |         return new DateRange(from, to);
+000129 |     }
+000130 | 
+000131 |     private static String requiredDate(String value, String message) {
+000132 |         if (value == null || value.trim().length() == 0) {
+000133 |             throw new IllegalArgumentException(message);
+000134 |         }
+000135 |         return DateUtil.toIsoDate(value);
+000136 |     }
+000137 | 
+000138 |     private static Integer parseStaffNo(String value) {
+000139 |         String text = value == null ? "" : value.trim();
+000140 |         if (text.length() == 0 || "ALL".equalsIgnoreCase(text)) {
+000141 |             return null;
+000142 |         }
+000143 |         try {
+000144 |             return Integer.valueOf(text);
+000145 |         } catch (NumberFormatException e) {
+000146 |             throw new IllegalArgumentException("職員番号は数値で入力してください。", e);
+000147 |         }
+000148 |     }
+000149 | 
+000150 |     private static List<ExportSpec> selectedSpecs(PensionBatchExportRequest request,
+000151 |             boolean staffSpecified) {
+000152 |         List<ExportSpec> specs = new ArrayList<ExportSpec>();
+000153 |         if (request.isIncludeNew()) {
+000154 |             specs.add(buildSpec(AuditType.NEW, request.getRunMode(), staffSpecified));
+000155 |         }
+000156 |         if (request.isIncludeChanged()) {
+000157 |             specs.add(buildSpec(AuditType.CHANGED, request.getRunMode(), staffSpecified));
+000158 |         }
+000159 |         if (request.isIncludeDeleted()) {
+000160 |             specs.add(buildSpec(AuditType.DELETED, request.getRunMode(), staffSpecified));
+000161 |         }
+000162 |         return specs;
+000163 |     }
+000164 | 
+000165 |     private static ExportSpec buildSpec(AuditType type, PensionBatchRunMode mode,
+000166 |             boolean staffSpecified) {
+000167 |         int base;
+000168 |         if (mode == PensionBatchRunMode.DAILY) {
+000169 |             base = staffSpecified ? 10 : 40;
+000170 |         } else {
+000171 |             base = staffSpecified ? 70 : 100;
+000172 |         }
+000173 |         int queryNumber = base + (type == AuditType.NEW ? 0
+000174 |                 : type == AuditType.CHANGED ? 10 : 20);
+000175 |         String number = queryNumber < 100 ? "0" + queryNumber : Integer.toString(queryNumber);
+000176 |         String category = type.getDisplayName();
+000177 |         String queryName = "Q" + number + "_Excel出力_年金予約_" + category
+000178 |                 + "_データ明細リスト";
+000179 |         String scope = staffSpecified ? "担当者別" : "全担当者";
+000180 |         String period = mode == PensionBatchRunMode.DAILY ? "日次" : "月次";
+000181 |         String fileName = "年金予約【" + category + "】データ明細リスト（"
+000182 |                 + scope + period + "）.xlsx";
+000183 |         return new ExportSpec(type, queryName, fileName, category + "分データ",
+000184 |                 "年金予約【" + category + "】データ明細リスト");
+000185 |     }
+000186 | 
+000187 |     private static String emptyMessage(AuditType type, PensionBatchRunMode mode,
+000188 |             boolean staffSpecified) {
+000189 |         String period = mode == PensionBatchRunMode.DAILY ? "日次" : "月次";
+000190 |         if (staffSpecified) {
+000191 |             return "入力した担当者の【" + type.getDisplayName() + "分（" + period
+000192 |                     + "）】の該当明細はありませんでした";
+000193 |         }
+000194 |         String dateText = mode == PensionBatchRunMode.DAILY ? "入力年月日の" : "入力年月の";
+000195 |         return dateText + "【" + type.getDisplayName() + "分（" + period
+000196 |                 + "）】の該当明細はありませんでした";
+000197 |     }
+000198 | 
+000199 |     private static void sortAudits(List<PensionAuditRecord> audits) {
+000200 |         Collections.sort(audits, new Comparator<PensionAuditRecord>() {
+000201 |             public int compare(PensionAuditRecord left, PensionAuditRecord right) {
+000202 |                 PensionReservation a = left.getReservation();
+000203 |                 PensionReservation b = right.getReservation();
+000204 |                 int branch = compareInteger(a.getBranchNo(), b.getBranchNo());
+000205 |                 if (branch != 0) {
+000206 |                     return branch;
+000207 |                 }
+000208 |                 int customer = compareInteger(a.getCustomerNo(), b.getCustomerNo());
+000209 |                 return customer != 0 ? customer : Long.valueOf(left.getAuditId())
+000210 |                         .compareTo(Long.valueOf(right.getAuditId()));
+000211 |             }
+000212 |         });
+000213 |     }
+000214 | 
+000215 |     private static int compareInteger(Integer left, Integer right) {
+000216 |         if (left == null) {
+000217 |             return right == null ? 0 : -1;
+000218 |         }
+000219 |         return right == null ? 1 : left.compareTo(right);
+000220 |     }
+000221 | 
+000222 |     private static List<Object[]> toRows(List<PensionAuditRecord> audits, AuditType type) {
+000223 |         List<Object[]> rows = new ArrayList<Object[]>();
+000224 |         for (int i = 0; i < audits.size(); i++) {
+000225 |             PensionReservation row = audits.get(i).getReservation();
+000226 |             if (type == AuditType.NEW) {
+000227 |                 rows.add(new Object[] {
+000228 |                     Integer.valueOf(i + 1), wareki(row.getReservationRequestDate()),
+000229 |                     row.getKanaName(), row.getCustomerName(), row.getGender(), row.getAddress(),
+000230 |                     wareki(row.getBirthDate()), row.getPhoneNumber(), row.getPensionType(),
+000231 |                     row.getPlannedAge(), wareki(row.getClaimScheduledDate()), row.getNotes(),
+000232 |                     row.getSpouseName(), wareki(row.getSpouseBirthDate()), row.getBranchNo(),
+000233 |                     row.getCustomerNo(), staffCode(row.getStaffCode())
+000234 |                 });
+000235 |             } else {
+000236 |                 rows.add(new Object[] {
+000237 |                     Integer.valueOf(i + 1), row.getBranchNo(), row.getCustomerNo(),
+000238 |                     row.getCustomerName(), row.getKanaName(), row.getGender(), row.getAddress(),
+000239 |                     row.getPhoneNumber(), wareki(row.getBirthDate()), row.getPensionType(),
+000240 |                     row.getClaimStatus(), wareki(row.getClaimScheduledDate()), row.getPlannedAge(),
+000241 |                     row.getSpouseName(), wareki(row.getSpouseBirthDate()), row.getHasBenefit(),
+000242 |                     wareki(row.getReservationRequestDate()), staffCode(row.getStaffCode()),
+000243 |                     row.getNotes(), row.isSixMonthCheck() ? "確" : ""
+000244 |                 });
+000245 |             }
+000246 |         }
+000247 |         return rows;
+000248 |     }
+000249 | 
+000250 |     private static WorkbookLayout buildLayout(ExportSpec spec,
+000251 |             PensionBatchExportRequest request, DateRange range, int columnCount) {
+000252 |         List<Object[]> leadingRows = new ArrayList<Object[]>();
+000253 |         for (int i = 0; i < 7; i++) {
+000254 |             leadingRows.add(new Object[columnCount]);
+000255 |         }
+000256 |         List<String> mergedRanges = new ArrayList<String>();
+000257 |         String period = request.getRunMode() == PensionBatchRunMode.DAILY
+000258 |                 ? wareki(range.from) : wareki(range.from) + "～" + wareki(range.to);
+000259 |         String staff = request.getStaffNo() == null || request.getStaffNo().trim().length() == 0
+000260 |                 ? "ALL" : request.getStaffNo().trim();
+000261 | 
+000262 |         Object[] titleRow = leadingRows.get(0);
+000263 |         Object[] metaRow = leadingRows.get(4);
+000264 |         if (spec.type == AuditType.NEW) {
+000265 |             titleRow[3] = spec.title;
+000266 |             metaRow[3] = "処理日";
+000267 |             metaRow[5] = period;
+000268 |             metaRow[9] = "職員番号";
+000269 |             metaRow[11] = staff;
+000270 |             mergedRanges.add("D1:M3");
+000271 |             mergedRanges.add("D5:E6");
+000272 |             mergedRanges.add(request.getRunMode() == PensionBatchRunMode.DAILY
+000273 |                     ? "F5:H6" : "F5:I6");
+000274 |             mergedRanges.add("J5:K6");
+000275 |             mergedRanges.add("L5:M6");
+000276 |         } else {
+000277 |             titleRow[4] = spec.title;
+000278 |             metaRow[4] = "処理日";
+000279 |             metaRow[6] = period;
+000280 |             metaRow[11] = "職員番号";
+000281 |             metaRow[13] = staff;
+000282 |             mergedRanges.add("E1:P3");
+000283 |             mergedRanges.add("E5:F6");
+000284 |             mergedRanges.add(request.getRunMode() == PensionBatchRunMode.DAILY
+000285 |                     ? "G5:H6" : "G5:I6");
+000286 |             mergedRanges.add("L5:M6");
+000287 |             mergedRanges.add("N5:P6");
+000288 |         }
+000289 |         return new WorkbookLayout(leadingRows, mergedRanges,
+000290 |                 spec.type == AuditType.NEW ? 70 : 60);
+000291 |     }
+000292 | 
+000293 |     private static String wareki(String value) {
+000294 |         return value == null || value.trim().length() == 0 ? "" : DateUtil.toAccessWareki(value);
+000295 |     }
+000296 | 
+000297 |     private static String staffCode(Integer value) {
+000298 |         return value == null ? "" : String.format(Locale.ROOT, "%02d", value);
+000299 |     }
+000300 | 
+000301 |     private static List<PensionBatchExportFileResult> toFileResults(
+000302 |             List<GeneratedFile> generated) {
+000303 |         List<PensionBatchExportFileResult> results =
+000304 |                 new ArrayList<PensionBatchExportFileResult>();
+000305 |         for (int i = 0; i < generated.size(); i++) {
+000306 |             GeneratedFile file = generated.get(i);
+000307 |             results.add(new PensionBatchExportFileResult(file.spec.queryName,
+000308 |                     file.spec.fileName, file.spec.type.getDisplayName(), file.rowCount));
+000309 |         }
+000310 |         return results;
+000311 |     }
+000312 | 
+000313 |     private static byte[] buildZip(List<GeneratedFile> files, List<String> messages) {
+000314 |         ByteArrayOutputStream output = new ByteArrayOutputStream();
+000315 |         ZipOutputStream zip = new ZipOutputStream(output);
+000316 |         try {
+000317 |             for (int i = 0; i < files.size(); i++) {
+000318 |                 GeneratedFile file = files.get(i);
+000319 |                 writeZipEntry(zip, file.spec.fileName, file.content);
+000320 |             }
+000321 |             if (!messages.isEmpty()) {
+000322 |                 StringBuilder text = new StringBuilder();
+000323 |                 for (int i = 0; i < messages.size(); i++) {
+000324 |                     text.append(messages.get(i)).append("\r\n");
+000325 |                 }
+000326 |                 writeZipEntry(zip, "出力結果.txt", text.toString().getBytes(UTF8));
+000327 |             }
+000328 |             zip.finish();
+000329 |             return output.toByteArray();
+000330 |         } catch (IOException e) {
+000331 |             throw new IllegalStateException("ZIPファイルの生成に失敗しました。", e);
+000332 |         } finally {
+000333 |             try {
+000334 |                 zip.close();
+000335 |             } catch (IOException e) {
+000336 |                 // ByteArrayOutputStream では close 失敗しない。
+000337 |             }
+000338 |         }
+000339 |     }
+000340 | 
+000341 |     private static void writeZipEntry(ZipOutputStream zip, String name, byte[] content)
+000342 |             throws IOException {
+000343 |         ZipEntry entry = new ZipEntry(name);
+000344 |         entry.setTime(0L);
+000345 |         zip.putNextEntry(entry);
+000346 |         zip.write(content);
+000347 |         zip.closeEntry();
+000348 |     }
+000349 | 
+000350 |     private static final class DateRange {
+000351 |         private final String from;
+000352 |         private final String to;
+000353 | 
+000354 |         private DateRange(String from, String to) {
+000355 |             this.from = from;
+000356 |             this.to = to;
+000357 |         }
+000358 |     }
+000359 | 
+000360 |     private static final class ExportSpec {
+000361 |         private final AuditType type;
+000362 |         private final String queryName;
+000363 |         private final String fileName;
+000364 |         private final String sheetName;
+000365 |         private final String title;
+000366 | 
+000367 |         private ExportSpec(AuditType type, String queryName, String fileName,
+000368 |                 String sheetName, String title) {
+000369 |             this.type = type;
+000370 |             this.queryName = queryName;
+000371 |             this.fileName = fileName;
+000372 |             this.sheetName = sheetName;
+000373 |             this.title = title;
+000374 |         }
+000375 |     }
+000376 | 
+000377 |     private static final class WorkbookLayout {
+000378 |         private final List<Object[]> leadingRows;
+000379 |         private final List<String> mergedRanges;
+000380 |         private final int printScale;
+000381 | 
+000382 |         private WorkbookLayout(List<Object[]> leadingRows, List<String> mergedRanges,
+000383 |                 int printScale) {
+000384 |             this.leadingRows = leadingRows;
+000385 |             this.mergedRanges = mergedRanges;
+000386 |             this.printScale = printScale;
+000387 |         }
+000388 |     }
+000389 | 
+000390 |     private static final class GeneratedFile {
+000391 |         private final ExportSpec spec;
+000392 |         private final int rowCount;
+000393 |         private final byte[] content;
+000394 | 
+000395 |         private GeneratedFile(ExportSpec spec, int rowCount, byte[] content) {
+000396 |             this.spec = spec;
+000397 |             this.rowCount = rowCount;
+000398 |             this.content = content;
+000399 |         }
+000400 |     }
+000401 | }

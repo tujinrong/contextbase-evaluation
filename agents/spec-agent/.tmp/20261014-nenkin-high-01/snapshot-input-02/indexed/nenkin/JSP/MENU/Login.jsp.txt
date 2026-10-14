@@ -1,0 +1,34 @@
+000001 | <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" import="java.util.List,nenkin.util.HtmlUtil" %>
+000002 | <!DOCTYPE html>
+000003 | <html lang="ja">
+000004 | <head>
+000005 | 	<meta charset="UTF-8">
+000006 | 	<meta name="viewport" content="width=device-width, initial-scale=1">
+000007 | 	<meta http-equiv="Cache-Control" content="no-store">
+000008 | 	<title>年金自動受取予約管理システム - ログイン</title>
+000009 | 	<link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/site.css">
+000010 | </head>
+000011 | <% boolean localDb=Boolean.parseBoolean(System.getProperty("n2nenkin.localDb","false")); %>
+000012 | <body class="login-page">
+000013 | 	<header class="app-nav"><div class="app-nav__title">年金自動受取予約管理システム</div><div class="app-nav__meta">N2 Framework</div></header>
+000014 | 	<main class="login-shell">
+000015 | 		<section class="screen surface login-card">
+000016 | 			<h1>ログイン</h1>
+000017 | 			<% List messages=(List)session.getAttribute("MESSAGE"); if(messages!=null&&!messages.isEmpty()){ %>
+000018 | 			<div class="message error"><% for(int i=0;i<messages.size();i++){ %><div><%=HtmlUtil.escape(messages.get(i))%></div><% } session.removeAttribute("MESSAGE"); %></div>
+000019 | 			<% } %>
+000020 | 			<form name="form0" action="<%= request.getContextPath() %>/Action.do" method="post" accept-charset="Windows-31J">
+000021 | 				<input type="hidden" name="APPL_NAME" value="unify">
+000022 | 				<input type="hidden" name="FUNCTION_ID" value="nenkin">
+000023 | 				<input type="hidden" name="VIEW_ID" value="Login">
+000024 | 				<input type="hidden" name="COMMAND_ID" value="">
+000025 | 				<input type="hidden" name="UNIFY_FLG" value="0">
+000026 | 				<div class="field-row"><label for="loginUser">職員番号</label><input id="loginUser" class="form-control code-input" name="DWH_USER_ID" maxlength="8" value="<%=localDb?"00001234":""%>" inputmode="numeric" autocomplete="username"></div>
+000027 | 				<div class="field-row"><label for="loginPassword">パスワード</label><input id="loginPassword" class="form-control" type="password" name="DWH_PASS_WORD" maxlength="20" value="<%=localDb?"samplepass":""%>" autocomplete="current-password"></div>
+000028 | 				<div class="button-row"><button class="access-button primary" type="submit">ログイン</button></div>
+000029 | 			</form>
+000030 | 			<% if(localDb){ %><p class="hint">ローカル確認用：職員番号 00001234 ／ パスワード samplepass</p><% } %>
+000031 | 		</section>
+000032 | 	</main>
+000033 | </body>
+000034 | </html>

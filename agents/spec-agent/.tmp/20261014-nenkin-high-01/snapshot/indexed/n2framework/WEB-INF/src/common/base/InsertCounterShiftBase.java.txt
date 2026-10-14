@@ -1,0 +1,89 @@
+000001 | /*
+000002 |  * 作成日: 2007/05/22
+000003 |  *
+000004 |  */
+000005 | package common.base;
+000006 | 
+000007 | import java.sql.Connection;
+000008 | import java.sql.SQLException;
+000009 | import java.text.SimpleDateFormat;
+000010 | import java.util.Date;
+000011 | import java.util.Map;
+000012 | 
+000013 | /**
+000014 |  * データウェアハウス　カウンターシフト登録Baseクラス
+000015 |  * 
+000016 |  * @author JSC kengo murayama
+000017 |  * 
+000018 |  * @date	H22.9.3		青木・浅見		センター集約対応
+000019 |  */
+000020 | public class InsertCounterShiftBase extends CommonBase {
+000021 | 
+000022 | 	private static final String comma = " , ";
+000023 | 	private StringBuffer sb = new StringBuffer();
+000024 | 
+000025 | 	/**
+000026 | 	 * コンストラクタ
+000027 | 	 * 
+000028 | 	 * @param connection
+000029 | 	 */
+000030 | 	public InsertCounterShiftBase(Connection connection) {
+000031 | 		super(connection);
+000032 | 	}
+000033 | 
+000034 | 	public void insert(Map map) throws SQLException/*,NamingException*/{
+000035 | 		try {
+000036 | 
+000037 | 			sb.append("insert into DB2.Ｕカウンターシフト ");
+000038 | 			sb.append("(アクセス日付,アクセス時刻,機能ＩＤ,画面ＩＤ,コマンドＩＤ,アクションＩＤ,");
+000039 | 			sb.append("ＪＳＰ名,ユーザーＩＤ) ");
+000040 | 			sb.append(" values ");
+000041 | 
+000042 | 			sb.append("(");
+000043 | 
+000044 | 			//アクセス日付
+000045 | 			Date date = new Date();
+000046 | 			SimpleDateFormat gSDFDate = new SimpleDateFormat("yyyyMMdd");
+000047 | 			sb.append(gSDFDate.format(date) + ",");
+000048 | 
+000049 | 			//アクセス時刻
+000050 | 			SimpleDateFormat gSDFTime = new SimpleDateFormat("HHmmssSSS");
+000051 | 			sb.append(gSDFTime.format(date));
+000052 | 
+000053 | 
+000054 | 			setColumun(map,"機能ＩＤ",true);
+000055 | 			setColumun(map,"画面ＩＤ",true);
+000056 | 			setColumun(map,"コマンドＩＤ",true);
+000057 | 			setColumun(map,"アクションＩＤ",true);
+000058 | 			setColumun(map,"ＪＳＰ名",true);
+000059 | 
+000060 | 			//ＰＫ項目のnull対応
+000061 | 			sb.append(",'").append(map.get("ユーザーＩＤ")).append("'");
+000062 | 
+000063 | 			sb.append(")");
+000064 | 
+000065 | 			execute(sb.toString());
+000066 | 
+000067 | 		} catch (SQLException e) {
+000068 | 			throw e;
+000069 | 		}
+000070 | 	}
+000071 | 
+000072 | 	/**
+000073 | 	 * 
+000074 | 	 * @param columun
+000075 | 	 * @param map
+000076 | 	 * @param varchar
+000077 | 	 */
+000078 | 	private void setColumun(Map map, String columun, boolean isChar){
+000079 | 		sb.append(comma);
+000080 | 		if(map.get(columun) != null && !"".equals(map.get(columun))){
+000081 | 			if(isChar) sb.append("'");
+000082 | 			sb.append(map.get(columun));
+000083 | 			if(isChar) sb.append("'");
+000084 | 		} else {
+000085 | 			sb.append("null");
+000086 | 		}
+000087 | 		//comma = " , ";
+000088 | 	}
+000089 | }

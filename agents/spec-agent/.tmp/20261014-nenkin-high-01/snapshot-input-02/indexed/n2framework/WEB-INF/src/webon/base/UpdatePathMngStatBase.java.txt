@@ -1,0 +1,92 @@
+000001 | package webon.base;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.sql.SQLException;
+000005 | 
+000006 | import webon.util.ConvertUtil;
+000007 | 
+000008 | import common.base.CommonBase;
+000009 | 
+000010 | /**
+000011 |  * Webon汎用照会ベースクラス　パス管理ステータスUpdate Baseクラス
+000012 |  * 
+000013 |  * @author Minori 加瀬
+000014 |  * 
+000015 |  * @date	H25.12.30	加瀬		新規作成
+000016 |  * @date	2020.02.06	京極　	webonのFW化対応
+000017 |  */
+000018 | public class UpdatePathMngStatBase  extends CommonBase{
+000019 | 
+000020 | 	public UpdatePathMngStatBase(Connection connection) {
+000021 | 		super(connection);
+000022 | 		// TODO Auto-generated constructor stub
+000023 | 	}
+000024 | 	//DB名
+000025 | 	public static final String DBNAME = "NAVI.ＵＳパス管理ステータス";
+000026 | 	//DBキー
+000027 | 	public static final String DBKEY_ACCESSPOINT="接続先";
+000028 | 	public static final String DBKEY_PATHNUM="パス使用数";
+000029 | 	public static final String DBKEY_LIMPATHNUM="制限パス使用数";
+000030 | 	public static final String DBKEY_MKDATE = "作成日";
+000031 | 	public static final String DBKEY_MKTIME = "作成時刻";
+000032 | 	public static final String DBKEY_UPDATE = "更新日";
+000033 | 	public static final String DBKEY_UPTIME = "更新時刻";
+000034 | 	/** 
+000035 | 	  * 参照・更新用のレコードを更新する
+000036 | 	  * 
+000037 | 	  * @param String 接続先
+000038 | 	  * @param int パス使用数
+000039 | 	  * @throws SQLException
+000040 | 	  */
+000041 | 	public void updatePathNo(String ip,int pathNum) throws SQLException {
+000042 | 
+000043 | 		//SQL編集
+000044 | 		StringBuffer sb = new StringBuffer();
+000045 | 
+000046 | 		sb.append("UPDATE ").append(DBNAME);
+000047 | 
+000048 | 		sb.append(" SET");
+000049 | 		sb.append(" ").append(DBKEY_PATHNUM).append("=").append(pathNum);
+000050 | 		sb.append(",").append(DBKEY_UPDATE).append("=").append(ConvertUtil.dbGetDate());
+000051 | 		sb.append(",").append(DBKEY_UPTIME).append("=").append(ConvertUtil.dbGetTime());
+000052 | 
+000053 | 		sb.append(" WHERE ").append(DBKEY_ACCESSPOINT).append("='").append(ip).append("'");
+000054 | 
+000055 | 		try {
+000056 | 			execute(sb.toString());
+000057 | 		} catch (SQLException e) {
+000058 | 			throw e;
+000059 | 		}
+000060 | 		
+000061 | 	}
+000062 | 	/** 
+000063 | 	  * 参照・更新用のレコードを更新する
+000064 | 	  * 
+000065 | 	  * @param String 接続先
+000066 | 	  * @param int パス使用数
+000067 | 	  * @param int 制限パス使用数
+000068 | 	  * @throws SQLException
+000069 | 	  */
+000070 | 	public void updatePathNo(String ip,int pathNum,int pathNumLim) throws SQLException {
+000071 | 
+000072 | 		//SQL編集
+000073 | 		StringBuffer sb = new StringBuffer();
+000074 | 
+000075 | 		sb.append("UPDATE ").append(DBNAME);
+000076 | 
+000077 | 		sb.append(" SET");
+000078 | 		sb.append(" ").append(DBKEY_PATHNUM).append("=").append(pathNum);
+000079 | 		sb.append(",").append(DBKEY_LIMPATHNUM).append("=").append(pathNumLim);
+000080 | 		sb.append(",").append(DBKEY_UPDATE).append("=").append(ConvertUtil.dbGetDate());
+000081 | 		sb.append(",").append(DBKEY_UPTIME).append("=").append(ConvertUtil.dbGetTime());
+000082 | 
+000083 | 		sb.append(" WHERE ").append(DBKEY_ACCESSPOINT).append("='").append(ip).append("'");
+000084 | 
+000085 | 		try {
+000086 | 			execute(sb.toString());
+000087 | 		} catch (SQLException e) {
+000088 | 			throw e;
+000089 | 		}
+000090 | 		
+000091 | 	}
+000092 | }

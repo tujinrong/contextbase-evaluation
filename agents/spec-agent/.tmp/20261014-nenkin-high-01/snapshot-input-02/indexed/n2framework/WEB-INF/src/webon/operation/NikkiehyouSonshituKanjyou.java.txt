@@ -1,0 +1,391 @@
+000001 | package webon.operation;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.util.ArrayList;
+000005 | import java.util.List;
+000006 | import java.util.Map;
+000007 | 
+000008 | import webon.WebonBase;
+000009 | import webon.WebonException;
+000010 | 
+000011 | import common.FWLog;
+000012 | import common.bean.LoginInfoBean;
+000013 | /**
+000014 |  * Webon汎用照会クラス　
+000015 |  * 日計表照会（損失勘定）(IN-00750N-99203.xml)の取得とデータ管理、アクセスメソッドの提供
+000016 |  * 
+000017 |  * @author	Minori山口
+000018 |  * 
+000019 |  * @date	R03.01.07	新規作成
+000020 |  */
+000021 | public class NikkiehyouSonshituKanjyou extends CommonOperation {
+000022 | 	
+000023 | 	private static final String syokaiName = "日計表ＤＢ作成";
+000024 | 	
+000025 | 	//オペレーションＩＤ
+000026 | 	private final String operationId="OP-NIKKEI-03";
+000027 | 	//ログイン情報
+000028 | 	LoginInfoBean loginInfo;
+000029 | 	//webon引数
+000030 | 	String woSyubetu;
+000031 | 	String wokubun;
+000032 | 	String woNenetu;
+000033 | 	String woGetenBr;
+000034 | 	
+000035 | 	//Errorレベル
+000036 | 	private static final int ERRLEVEL_ERROR=0;	//Error
+000037 | 	private static final int ERRLEVEL_WARNING=1;	//Warning
+000038 | 	//Error箇所
+000039 | 	private static final String ERRSPOT_WOGET = "0";		//取得時
+000040 | 	private static final String ERRSPOT_WOANALYZE = "1";	//解析時
+000041 | 	private static final String ERRSPOT_WOMOLD = "2";		//成型時
+000042 | 	//Erro追加情報格納用リスト
+000043 | 	List<Map<String, String>> etc = new ArrayList<Map<String,String>>();
+000044 | 	//Error有無フラグ
+000045 | 	boolean errFlg=false;
+000046 | 
+000047 | 	//日計作成
+000048 | 	private String 照会日 = "";
+000049 | 	private String 処理日 = "";
+000050 | 	private String 処理時間 = "";
+000051 | 
+000052 | 
+000053 | 	public String get照会日() {
+000054 | 		return 照会日;
+000055 | 	}
+000056 | 	public void set照会日(String 照会日) {
+000057 | 		this.照会日 = 照会日;
+000058 | 	}
+000059 | 	public String get処理日() {
+000060 | 		return 処理日;
+000061 | 	}
+000062 | 	public void set処理日(String 処理日) {
+000063 | 		this.処理日 = 処理日;
+000064 | 	}
+000065 | 	public String get処理時間() {
+000066 | 		return 処理時間;
+000067 | 	}
+000068 | 	public void set処理時間(String 処理時間) {
+000069 | 		this.処理時間 = 処理時間;
+000070 | 	}
+000071 | 	//日計表資産勘定明細リスト
+000072 | 	List<NikkeihyouSonshituBean> NikkeihyouSonshituBeanList = new ArrayList<NikkeihyouSonshituBean>();
+000073 | 	
+000074 | 	
+000075 |     //日計表勘定照会明細
+000076 | 	public class NikkeihyouSonshituBean{
+000077 | 		String 出金額 = "";
+000078 | 		String 入金額 = "";
+000079 | 		String 残高 = "";
+000080 | 		String 月中平残 = "";
+000081 | 		String 期中平残 = "";
+000082 | 				
+000083 | 		
+000084 | 		//setter,getter
+000085 | 		public String get出金額() {
+000086 | 			return 出金額;
+000087 | 		}
+000088 | 		public void set出金額(String 出金額) {
+000089 | 			this.出金額 = 出金額;
+000090 | 		}
+000091 | 		public String get入金額() {
+000092 | 			return 入金額;
+000093 | 		}
+000094 | 		public void set入金額(String 入金額) {
+000095 | 			this.入金額 = 入金額;
+000096 | 		}
+000097 | 		public String get残高() {
+000098 | 			return 残高;
+000099 | 		}
+000100 | 		public void set残高(String 残高) {
+000101 | 			this.残高 = 残高;
+000102 | 		}
+000103 | 		public String get月中平残() {
+000104 | 			return 月中平残;
+000105 | 		}
+000106 | 		public void set月中平残(String 月中平残) {
+000107 | 			this.月中平残 = 月中平残;
+000108 | 		}
+000109 | 		public String get期中平残() {
+000110 | 			return 期中平残;
+000111 | 		}
+000112 | 		public void set期中平残(String 期中平残) {
+000113 | 			this.期中平残 = 期中平残;
+000114 | 		}
+000115 | 	}
+000116 | 	
+000117 | 	//setter,getter
+000118 | 	public List<NikkeihyouSonshituBean> getNikkeihyouSonshituBeanList() {
+000119 | 		return NikkeihyouSonshituBeanList;
+000120 | 	}
+000121 | 	public void setNikkeihyouSonshituBeanList(
+000122 | 			List<NikkeihyouSonshituBean> nikkeihyouSonshituBeanList) {
+000123 | 		NikkeihyouSonshituBeanList = nikkeihyouSonshituBeanList;
+000124 | 	}
+000125 | 	public List<Map<String, String>> getEtc() {
+000126 | 		return etc;
+000127 | 	}
+000128 | 	public void setEtc(List<Map<String, String>> etc) {
+000129 | 		this.etc = etc;
+000130 | 	}
+000131 | 	public boolean isErrFlg() {
+000132 | 		return errFlg;
+000133 | 	}
+000134 | 	public void setErrFlg(boolean errFlg) {
+000135 | 		this.errFlg = errFlg;
+000136 | 	}
+000137 | 	
+000138 | 	
+000139 |   	
+000140 | 	/**
+000141 | 	 * 種別コード・周期区分コード・指定年月日・原店番号を元に日計表（損失勘定）照会を取得する
+000142 | 	 * 
+000143 | 	 * @param syubetu		種別コード
+000144 | 	 * @param kubun			周期区分コード
+000145 | 	 * @param nengetu		指定年月日
+000146 | 	 * @param gentenBr		原店番号
+000147 | 	 * @param loginInfo		ログイン情報
+000148 | 	 * @param con
+000149 | 	 * @throws Exception
+000150 | 	 */
+000151 | 	public void getWebonSonshitu(String syubetu, String kubun, String nengetu, String gentenBr, LoginInfoBean loginInfo, Connection con) throws Exception {
+000152 | 		try{
+000153 | 			//起動チェック 引数がセットされているか
+000154 | 			if (syubetu == null) {throw new Exception("照会種別コードが設定されていません");}
+000155 | 			if (kubun == null) {throw new Exception("周期区分コードが設定されていません");}
+000156 | 			if (nengetu == null) {throw new Exception("指定年月日が設定されていません");}
+000157 | 			if (gentenBr == null) {throw new Exception("原店番号が設定されていません");}
+000158 | 			if (con == null) {throw new Exception("ＤＢコネクションが設定されていません");}
+000159 | 			
+000160 | 			//引数のセット
+000161 | 			this.woSyubetu=syubetu;
+000162 | 			this.wokubun=kubun;
+000163 | 			this.woNenetu=nengetu;
+000164 | 			this.woGetenBr=gentenBr;
+000165 | 			this.loginInfo = loginInfo;
+000166 | 	
+000167 | 			//Webon問合せ実行
+000168 | 			getWebon(con);
+000169 | 
+000170 | 			//取得結果解析
+000171 | 			analyzeWeon(woSyubetu);
+000172 | 
+000173 | 		}catch(WebonException e){
+000174 | 			throw e;
+000175 | 		}catch(Exception e){
+000176 | 			throw e;
+000177 | 		}
+000178 | 	}
+000179 | 
+000180 | 	/**
+000181 | 	 * Webon取得メソッド
+000182 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000183 | 	 * 
+000184 | 	 * @param req リクエスト
+000185 | 	 * @param res レスポンス
+000186 | 	 * @throws Exception 
+000187 | 	 */
+000188 | 	private void getWebon(Connection con) throws Exception {
+000189 | 		
+000190 | 		//WebonBaseの取得
+000191 | 		webonBase = new WebonBase(operationId, loginInfo, con);
+000192 | 		//設定値
+000193 | 		webonBase.put("照会種別コード",woSyubetu);
+000194 | 		webonBase.put("周期区分コード",wokubun);
+000195 | 		webonBase.put("指定年月日",woNenetu);
+000196 | 		webonBase.put("原店番号",woGetenBr);
+000197 | 		//問い合わせ
+000198 | 		webonBase.doQuery();
+000199 | 	
+000200 | 
+000201 | 		//結果識別を判定（正常：LINEデータをＤＢに格納、正常以外：エラーをＤＢに格納）
+000202 | 		if (webonBase.checkResult()) {
+000203 | 
+000204 | 			//問合せ結果からLINE行を抽出
+000205 | 			ArrayList<String> lineList = getLineByXML();
+000206 | 			for(String line:lineList){
+000207 | 				FWLog.debug(line);
+000208 | 			}
+000209 | 		}else{
+000210 | 
+000211 | 			//問合せ結果からエラー情報抽出
+000212 | 			StringBuffer sb=new StringBuffer();
+000213 | 			sb.append(webonBase.getErrMessage());
+000214 | 			String msg=sb.toString();
+000215 | 			FWLog.error(getClass(), msg);
+000216 | 		}
+000217 | 				
+000218 | 		//エラー処理
+000219 | 		if (!webonBase.checkResult()) {
+000220 | 			//エラーコード等をセット
+000221 | 			WebonException e = createWoException("Webon取得結果エラー", ERRLEVEL_ERROR, ERRSPOT_WOGET);
+000222 | 			//エラー処理は上位に任せる
+000223 | 			throw e;
+000224 | 		}
+000225 | 	}
+000226 | 
+000227 | 	/**
+000228 | 	 * Webon取得内容解析メソッド
+000229 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000230 | 	 * 
+000231 | 	 * @param req リクエスト
+000232 | 	 * @param res レスポンス
+000233 | 	 * @throws Exception 
+000234 | 	 * @throws Exception 
+000235 | 	 */
+000236 | 	public void analyzeWeon(String woSyubetu) throws Exception {
+000237 | 		//ＬＩＮＥデータの解析
+000238 | 		ArrayList<String> lineList = getLineByXML();
+000239 | 				
+000240 | 		
+000241 | 		
+000242 | 		/**
+000243 | 		*明細を作成する
+000244 | 		*※０行から始まる
+000245 | 		*０行目⇒店番、照会日、処理日、処理時間
+000246 | 		*１行目⇒項目名
+000247 | 		*２行目のデータから明細を作成する
+000248 | 		* 
+000249 | 		*/
+000250 | 
+000251 | 		FWLog.debug(getClass(), "☆★=====ＬＩＮＥデータの解析　スタート　00750N-99203.xml=====★☆");				
+000252 | 	
+000253 | 		for(int i = 2; i < lineList.size(); i++) {
+000254 | 			
+000255 | 			if(i == 74){
+000256 | 				
+000257 | 				break;
+000258 | 				
+000259 | 			}else{
+000260 | 						
+000261 | 				//明細情報Bean作成
+000262 | 				NikkeihyouSonshituBean Bean = new NikkeihyouSonshituBean();
+000263 | 				String line = lineList.get(i);
+000264 | 				//種別⇒１：残高
+000265 | 				if("1".equals(woSyubetu)){		
+000266 | 
+000267 | 					if(line.length()>0){
+000268 | 
+000269 | 						//出金額（13～33文字目）
+000270 | 						if("                    ".equals(line.substring(13,33))){
+000271 | 							Bean.set出金額("0");								
+000272 | 							
+000273 | 						}else{						
+000274 | 							Bean.set出金額((line.substring(13,33)));
+000275 | 						}
+000276 | 
+000277 | 
+000278 | 						//入金額（34～64文字目）
+000279 | 						if("                    ".equals(line.substring(44,64))){
+000280 | 							Bean.set入金額("0");								
+000281 | 
+000282 | 						}else{
+000283 | 					
+000284 | 							Bean.set入金額((line.substring(44,64)));
+000285 | 						}
+000286 | 
+000287 | 
+000288 | 						//残高（64～84文字目）
+000289 | 						if("                    ".equals(line.substring(64,84))){
+000290 | 							Bean.set残高("0");								
+000291 | 
+000292 | 						}else{					
+000293 | 							Bean.set残高((line.substring(64,84)));
+000294 | 						}
+000295 | 												
+000296 | 					}else{
+000297 | 
+000298 | 						//使用していない項目のため０をセット
+000299 | 						Bean.set出金額("0");
+000300 | 						Bean.set入金額("0");
+000301 | 						Bean.set残高("0");
+000302 | 						
+000303 | 					}
+000304 | 
+000305 | 				//種別⇒２：平残
+000306 | 				}else if("2".equals(woSyubetu)){
+000307 | 					
+000308 | 					
+000309 | 					if(line.length()>0){
+000310 | 						
+000311 | 						//月中平残（34～64文字目）
+000312 | 						if("                    ".equals(line.substring(44,64))){
+000313 | 							Bean.set月中平残("0");									
+000314 | 
+000315 | 						}else{
+000316 | 					
+000317 | 							Bean.set月中平残((line.substring(44,64)));
+000318 | 						}
+000319 | 
+000320 | 
+000321 | 						//期中平残（64～84文字目）
+000322 | 						if("                    ".equals(line.substring(64,84))){
+000323 | 							Bean.set期中平残("0");								
+000324 | 
+000325 | 						}else{
+000326 | 					
+000327 | 							Bean.set期中平残((line.substring(64,84)));
+000328 | 						}																				
+000329 | 					}else{
+000330 | 						
+000331 | 						//使用していない項目のため０をセット
+000332 | 						Bean.set月中平残("0");
+000333 | 						Bean.set期中平残("0");
+000334 | 					}
+000335 | 				}
+000336 | 		
+000337 | 				//明細リストにビーンを追加
+000338 | 				getNikkeihyouSonshituBeanList().add(Bean);
+000339 | 									
+000340 | 				//１ページ目が終ったら２ページ目の見出しの２行を足す
+000341 | 				if(i== 45){
+000342 | 					
+000343 | 					i =i + 2;
+000344 | 				}
+000345 | 			}
+000346 | 		}
+000347 | 
+000348 | 		
+000349 | 		FWLog.debug(getClass(), "★======ＬＩＮＥデータの解析　エンド============★");
+000350 | 
+000351 | 
+000352 | 		//エラーチェック(Exceptionの有無を判定する)
+000353 | 		if(errFlg){
+000354 | 			WebonException e = createWoException("Webon取得結果解析エラー", ERRLEVEL_WARNING, ERRSPOT_WOMOLD);
+000355 | 			e.setEtc(etc);
+000356 | 			//エラー処理は上位に任せる
+000357 | 			throw e;
+000358 | 		}
+000359 | 	}
+000360 | 	
+000361 | 
+000362 | 
+000363 | 	//以下、ユーティリティ的メソッド
+000364 | 	/**
+000365 | 	 * エラー生成メソッド
+000366 | 	 * @param String	エラーメッセージ
+000367 | 	 * @param int		エラーレベル
+000368 | 	 * @param String	エラー箇所
+000369 | 	 */
+000370 | 	private WebonException createWoException(String msg ,int el, String es){
+000371 | 		//エラーコード等をセット
+000372 | 		WebonException e = new WebonException(msg,webonBase);
+000373 | 		//顧客を特定する情報をセット
+000374 | 		e.setOperationId(operationId);
+000375 | 		e.setBrno("");
+000376 | 		e.setCif("");
+000377 | 		e.setErrStat(el);
+000378 | 		e.setErrSpot(es);
+000379 | 		//エラー処理は上位に任せる
+000380 | 		return e;
+000381 | 	}
+000382 | 	/**
+000383 | 	 * 照会名取得メソッド(Static)
+000384 | 	 * 照会名を取得する
+000385 | 	 * 
+000386 | 	 * @return String 照会名
+000387 | 	 */
+000388 | 	public static String getSyokaiName() {
+000389 | 		return syokaiName;
+000390 | 	}
+000391 | }

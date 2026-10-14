@@ -1,0 +1,111 @@
+000001 | /*
+000002 |  * 作成日: 2007/05/29
+000003 |  *
+000004 |  */
+000005 | package common.base;
+000006 | 
+000007 | import java.sql.Connection;
+000008 | import java.sql.ResultSet;
+000009 | import java.sql.SQLException;
+000010 | import java.sql.Statement;
+000011 | import java.util.HashMap;
+000012 | import java.util.Map;
+000013 | 
+000014 | import common.FWLog;
+000015 | 
+000016 | /**
+000017 |  * データウェアハウス　コード検索Baseのスーパークラス
+000018 |  * 各コード検索Baseクラスは、必ずこのクラスを継承する。
+000019 |  * 
+000020 |  * @author JSC kengo murayama
+000021 |  * 
+000022 |  * @date	H22.9.6		青木・浅見		センター集約対応なし
+000023 |  */
+000024 | public abstract class CommonBaseSelectCode extends CommonBaseSelect {
+000025 | 
+000026 | 	/** 検索結果Map */
+000027 | 	private Map map = null;
+000028 | 
+000029 | 	/**
+000030 | 	 * コンストラクタ
+000031 | 	 * 
+000032 | 	 * @param connection
+000033 | 	 */
+000034 | 	public CommonBaseSelectCode(Connection connection) {
+000035 | 		super(connection);
+000036 | 	}
+000037 | 
+000038 | 	/**
+000039 | 	 * SQLのSELECT文を実行する。
+000040 | 	 * 
+000041 | 	 * @param sql ＳＱＬ文
+000042 | 	 */
+000043 | 	public void executeMap(String sql) throws SQLException{
+000044 | 
+000045 | 		Statement stmt = null;
+000046 | 		ResultSet rs = null;
+000047 | 
+000048 | 		try {
+000049 | 			stmt = getConnection().createStatement();
+000050 | 			rs = stmt.executeQuery(sql);
+000051 | 
+000052 | 			//ＳＱＬ実行が正常終了したら、debug ログ出力
+000053 | 			if(FWLog.isDebug()){
+000054 | 				FWLog.debug(this.getClass(), sql);
+000055 | 			}
+000056 | 
+000057 | 			setMap(convertResultSetToMap(rs));
+000058 | 
+000059 | 		} catch (SQLException e) {
+000060 | 			FWLog.error(sql);
+000061 | 			throw e;
+000062 | 
+000063 | 		} finally {
+000064 | 			if (rs != null) rs.close();
+000065 | 			if (stmt != null) stmt.close();
+000066 | 			rs = null;
+000067 | 			stmt = null;
+000068 | 		}
+000069 | 	}
+000070 | 
+000071 | 	/**
+000072 | 	 * 
+000073 | 	 * ResultSetをList(Map)の配列に変換する。
+000074 | 	 * 
+000075 | 	 * @param	rs	ResultSet
+000076 | 	 * @return ls	変換されたList(Map)形式のデータ
+000077 | 	 */
+000078 | 	private Map convertResultSetToMap(ResultSet rs) throws SQLException{
+000079 | 
+000080 | 		Map mapRS = new HashMap();
+000081 | 
+000082 | 		while (rs.next()) {
+000083 | 
+000084 | 			String code = rs.getString(1);
+000085 | 			String value = rs.getString(2);
+000086 | 			
+000087 | 			if(value == null){
+000088 | 				mapRS.put(code,"");
+000089 | 			} else {
+000090 | 				mapRS.put(code,value.trim());
+000091 | 			}
+000092 | 		}
+000093 | 
+000094 | 		return mapRS;
+000095 | 	}
+000096 | 
+000097 | 	/**
+000098 | 	 * @return map を戻します。
+000099 | 	 */
+000100 | 	public Map getMap() {
+000101 | 		return map;
+000102 | 	}
+000103 | 
+000104 | 	/**
+000105 | 	 * @param map 設定する map。
+000106 | 	 */
+000107 | 	private void setMap(Map map) {
+000108 | 		this.map = map;
+000109 | 	}
+000110 | 
+000111 | }

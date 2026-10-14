@@ -1,0 +1,82 @@
+000001 | package nenkin.util;
+000002 | 
+000003 | import java.text.ParseException;
+000004 | import java.text.SimpleDateFormat;
+000005 | import java.util.Calendar;
+000006 | import java.util.Date;
+000007 | 
+000008 | public final class HtmlUtil {
+000009 | 	private HtmlUtil() { }
+000010 | 
+000011 | 	public static String escape(Object value) {
+000012 | 		String text = value == null ? "" : String.valueOf(value);
+000013 | 		return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+000014 | 			.replace("\"", "&quot;").replace("'", "&#39;");
+000015 | 	}
+000016 | 
+000017 | 	public static String value(Object value) { return value == null ? "" : String.valueOf(value); }
+000018 | 	public static String checked(boolean value) { return value ? " checked" : ""; }
+000019 | 	public static String selected(String actual, String expected) { return expected.equals(actual) ? " selected" : ""; }
+000020 | 	public static String selected(int actual, int expected) { return actual == expected ? " selected" : ""; }
+000021 | 
+000022 | 	public static String formatWesternDate(String value) {
+000023 | 		Date date = parseIso(value);
+000024 | 		return date == null ? value(value) : new SimpleDateFormat("yyyy/MM/dd").format(date);
+000025 | 	}
+000026 | 
+000027 | 	public static String formatJapaneseDate(String value) {
+000028 | 		Date date = parseIso(value);
+000029 | 		if (date == null) return value(value);
+000030 | 		Calendar target = Calendar.getInstance();
+000031 | 		target.setTime(date);
+000032 | 		int year = target.get(Calendar.YEAR);
+000033 | 		int month = target.get(Calendar.MONTH) + 1;
+000034 | 		int day = target.get(Calendar.DAY_OF_MONTH);
+000035 | 		String symbol;
+000036 | 		int eraYear;
+000037 | 		if (!date.before(parseIso("2019-05-01"))) { symbol = "R"; eraYear = year - 2018; }
+000038 | 		else if (!date.before(parseIso("1989-01-08"))) { symbol = "H"; eraYear = year - 1988; }
+000039 | 		else if (!date.before(parseIso("1926-12-25"))) { symbol = "S"; eraYear = year - 1925; }
+000040 | 		else if (!date.before(parseIso("1912-07-30"))) { symbol = "T"; eraYear = year - 1911; }
+000041 | 		else if (!date.before(parseIso("1868-09-08"))) { symbol = "M"; eraYear = year - 1867; }
+000042 | 		else return formatWesternDate(value);
+000043 | 		return symbol + " " + two(eraYear) + "/" + two(month) + "/" + two(day);
+000044 | 	}
+000045 | 
+000046 | 	/** Access帳票の g ee. mm. dd に近い短い和暦表示。 */
+000047 | 	public static String formatReportDate(String value) {
+000048 | 		return formatJapaneseDate(value).replace("/", ". ");
+000049 | 	}
+000050 | 
+000051 | 	public static String json(String value) {
+000052 | 		if (value == null) return "";
+000053 | 		StringBuilder result = new StringBuilder();
+000054 | 		for (int i = 0; i < value.length(); i++) {
+000055 | 			char c = value.charAt(i);
+000056 | 			switch (c) {
+000057 | 			case '\\': result.append("\\\\"); break;
+000058 | 			case '"': result.append("\\\""); break;
+000059 | 			case '\r': result.append("\\r"); break;
+000060 | 			case '\n': result.append("\\n"); break;
+000061 | 			case '\t': result.append("\\t"); break;
+000062 | 			case '\b': result.append("\\b"); break;
+000063 | 			case '\f': result.append("\\f"); break;
+000064 | 			case '<': result.append("\\u003c"); break;
+000065 | 			case '>': result.append("\\u003e"); break;
+000066 | 			default:
+000067 | 				if (c < 0x20 || c == '\u2028' || c == '\u2029') result.append(String.format("\\u%04x", Integer.valueOf(c)));
+000068 | 				else result.append(c);
+000069 | 			}
+000070 | 		}
+000071 | 		return result.toString();
+000072 | 	}
+000073 | 
+000074 | 	private static Date parseIso(String value) {
+000075 | 		if (value == null || value.trim().length() == 0) return null;
+000076 | 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+000077 | 		format.setLenient(false);
+000078 | 		try { return format.parse(value.trim()); } catch (ParseException e) { return null; }
+000079 | 	}
+000080 | 
+000081 | 	private static String two(int value) { return value < 10 ? "0" + value : String.valueOf(value); }
+000082 | }

@@ -1,0 +1,33 @@
+000001 | package nenkin.service;
+000002 | 
+000003 | import java.io.Serializable;
+000004 | import java.util.ArrayList;
+000005 | import java.util.Collections;
+000006 | import java.util.List;
+000007 | 
+000008 | public class PensionBatchExportResult implements Serializable {
+000009 |     private static final long serialVersionUID = 1L;
+000010 | 
+000011 |     private final String fileName;
+000012 |     private final String contentType;
+000013 |     private final byte[] content;
+000014 |     private final List<PensionBatchExportFileResult> files;
+000015 |     private final List<String> messages;
+000016 | 
+000017 |     public PensionBatchExportResult(String fileName, String contentType, byte[] content,
+000018 |             List<PensionBatchExportFileResult> files, List<String> messages) {
+000019 |         this.fileName = fileName == null ? "" : fileName;
+000020 |         this.contentType = contentType == null ? "" : contentType;
+000021 |         this.content = content == null ? new byte[0] : content.clone();
+000022 |         this.files = Collections.unmodifiableList(
+000023 |                 new ArrayList<PensionBatchExportFileResult>(files));
+000024 |         this.messages = Collections.unmodifiableList(new ArrayList<String>(messages));
+000025 |     }
+000026 | 
+000027 |     public String getFileName() { return fileName; }
+000028 |     public String getContentType() { return contentType; }
+000029 |     public byte[] getContent() { return content.clone(); }
+000030 |     public List<PensionBatchExportFileResult> getFiles() { return files; }
+000031 |     public List<String> getMessages() { return messages; }
+000032 |     public boolean hasContent() { return content.length > 0; }
+000033 | }

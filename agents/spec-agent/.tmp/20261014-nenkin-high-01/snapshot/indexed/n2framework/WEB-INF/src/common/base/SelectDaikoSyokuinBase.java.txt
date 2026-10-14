@@ -1,0 +1,63 @@
+000001 | /*
+000002 |  * 作成日: 2017/05/16
+000003 |  *
+000004 |  */
+000005 | package common.base;
+000006 | 
+000007 | 
+000008 | import java.sql.Connection;
+000009 | import java.sql.SQLException;
+000010 | 
+000011 | import common.base.CommonBaseSelect;
+000012 | 
+000013 | /**
+000014 |  * フレームワーク　ログイン情報検索Baseクラス
+000015 |  * 
+000016 |  * @author Minori 山口
+000017 |  * 
+000018 |  * @date
+000019 |  */
+000020 | public class SelectDaikoSyokuinBase extends CommonBaseSelect {
+000021 | 
+000022 | 	/**
+000023 | 	 * コンストラクタ
+000024 | 	 * 
+000025 | 	 * @param connection
+000026 | 	 */
+000027 | 	public SelectDaikoSyokuinBase(Connection connection) {
+000028 | 		super(connection);
+000029 | 	}
+000030 | 
+000031 | 	/**
+000032 | 
+000033 | 	/**
+000034 | 	 * Ｕ代行可能職員名簿表の検索を実行する
+000035 | 	 * 
+000036 | 	 * @param shokuinNo
+000037 | 	 * @return
+000038 | 	 * @throws SQLException
+000039 | 	 */
+000040 | 	public boolean selectCredit代行(String shokuinNo) throws SQLException {
+000041 | 
+000042 | 		try {
+000043 | 
+000044 | 			StringBuffer sb = new StringBuffer();
+000045 | 
+000046 | 			sb.append("select *");
+000047 | 			sb.append(" from DB2.Ｕ代行可能職員名簿表");
+000048 | 			sb.append(" where 職員番号 = ").append(shokuinNo);
+000049 | 			sb.append(" and credit権限 = 1");
+000050 | 
+000051 | 			execute(sb.toString());
+000052 | 
+000053 | 		} catch (SQLException e) {
+000054 | 			throw e;
+000055 | 		}
+000056 | 
+000057 | 		if (getList() != null) {
+000058 | 			return true;
+000059 | 		} else{
+000060 | 			return false;
+000061 | 		}
+000062 | 	}
+000063 | }

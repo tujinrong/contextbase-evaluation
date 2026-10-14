@@ -1,0 +1,537 @@
+000001 | package jhkcommon;
+000002 | 
+000003 | /**
+000004 |  *
+000005 |  * OjiServletPdf
+000006 |  *
+000007 |  * @date	H22.9.7		青木			センター集約対応
+000008 |  *
+000009 |  */
+000010 |   
+000011 | import java.io.ByteArrayOutputStream;
+000012 | import java.io.DataOutputStream;
+000013 | import java.io.File;
+000014 | import java.io.IOException;
+000015 | import java.io.InputStream;
+000016 | import java.io.PrintWriter;
+000017 | import java.net.SocketException;
+000018 | import java.util.Vector;
+000019 | 
+000020 | import javax.servlet.ServletConfig;
+000021 | import javax.servlet.ServletException;
+000022 | import javax.servlet.ServletOutputStream;
+000023 | import javax.servlet.http.HttpServletRequest;
+000024 | import javax.servlet.http.HttpServletResponse;
+000025 | import javax.servlet.http.HttpSession;
+000026 | 
+000027 | import com.canon.iw.fm.common.exception.FMPrintException;
+000028 | import com.canon.iw.fm.common.exception.FMPropertyException;
+000029 | import com.canon.iw.fm.common.exception.FMSystemException;
+000030 | import com.canon.iw.fm.common.message.FMResponse;
+000031 | import com.canon.iw.fm.common.message.FMResponseOperator;
+000032 | import com.canon.iw.fm.server.FMJob;
+000033 | 
+000034 | /** CifアプリケーションのテンプレートになるServlet */
+000035 | public abstract class OjiServletPdf extends OjiServlet implements TimerHandler{
+000036 | //public class OjiServletPdf extends OjiServlet implements TimerHandler{
+000037 | 
+000038 | 	
+000039 | 	
+000040 | 	//Pdf
+000041 | 	private Object _sessionLock = new Object();		// セッションカウント用
+000042 | 	private static long _timeout = 180000;			// セッションタイムアウトの長さ（ミリ秒）
+000043 | 	private static final String AGENTNAME = "FcwAgent";	// セッションへの値設定で使用するキー文字列
+000044 | 	private static final String FAKEFILE_CALLBACK_PDF = "/callback.pdf?";
+000045 | 	private static final String FAKEFILE_PDF = ".pdf";
+000046 | 	private static final String RETRIEVE = "fcw-retrieve";
+000047 | 	private static final int FCW_GET = 0;
+000048 | 	private static final int FCW_POST = 1;
+000049 | //	private static final int STATUS_OK = 0;
+000050 | 	private static final int STATUS_ERROR = 9999999;
+000051 | 	//Pdf
+000052 | 
+000053 | 
+000054 | 	/** イニシャライズ */
+000055 | 	public void init(ServletConfig config) throws ServletException {
+000056 | 		// HttpServletのinitメソッドを起動
+000057 | 		super.init(config);
+000058 | 	}
+000059 | 
+000060 | 
+000061 | 
+000062 | 	/**
+000063 | 	 * GET の処理。
+000064 | 	 */
+000065 | 	public void doGet(HttpServletRequest req, HttpServletResponse res)
+000066 | 	{
+000067 | 		try {
+000068 | 			String fcw = req.getParameter(RETRIEVE);
+000069 | 			if (fcw == null){
+000070 | 				cifServletMain(req, res, FCW_POST);
+000071 | 			}else{
+000072 | 				cifServletMain(req, res, FCW_GET);
+000073 | 			}
+000074 | 		} catch (Exception e) {
+000075 | 			errorControl(e,req,res);
+000076 | 		}
+000077 | 	}
+000078 | 
+000079 | 	/**
+000080 | 	 * POST の処理。
+000081 | 	 */
+000082 | 	public void doPost(HttpServletRequest req, HttpServletResponse res)
+000083 | 	{
+000084 | 		try {
+000085 | 			cifServletMain(req, res, FCW_POST);
+000086 | 		} catch (Exception e) {
+000087 | 			errorControl(e,req,res);
+000088 | 		}
+000089 | 	}
+000090 | 
+000091 | 	
+000092 | 	/** CifServletのメインコントロール*/
+000093 | 	private void cifServletMain(HttpServletRequest req, HttpServletResponse res, int method)
+000094 | 	{
+000095 | 		try{
+000096 | 
+000097 | 
+000098 | 			if(method==FCW_POST){
+000099 | 				startMain();
+000100 | 				mainControl(req,res,method);
+000101 | 			}else{
+000102 | 				String koteidata[][]={};
+000103 | 				Vector data=new Vector();
+000104 | 				pdfControl(req,res,koteidata,data,0,"",method);
+000105 | 			}
+000106 | 			exitMain();
+000107 | 			
+000108 | 		}
+000109 | 		catch (Exception e){
+000110 | 			errorControl(e,req,res);
+000111 | 		}
+000112 | 	}
+000113 | 	
+000114 | 	
+000115 | 	public void mainControl(HttpServletRequest req, HttpServletResponse res)
+000116 | 		throws Exception
+000117 | 	{
+000118 | 
+000119 | 	}
+000120 | 	
+000121 | 	
+000122 | 
+000123 | 	/** cifServletMainから呼ばれるオーバーライド専用メソッド
+000124 | 	    アプリケーションはこのメソッドをオーバーライドする。*/
+000125 | 	public abstract void mainControl(HttpServletRequest req, HttpServletResponse res,int method)throws Exception;
+000126 | 	
+000127 | //	public void mainControl(HttpServletRequest req, HttpServletResponse res,int method)
+000128 | //		throws Exception
+000129 | //	{
+000130 | 	
+000131 | 	
+000132 | 	
+000133 | //	}
+000134 | 	
+000135 | 	
+000136 | 	
+000137 | 	
+000138 | 	/** initから呼ばれるオーバーライド専用メソッド
+000139 | 	    アプリケーションはこのメソッドをオーバーライドする。*/
+000140 | 	public abstract void setProperties();
+000141 | 	
+000142 | 	
+000143 | 
+000144 | 
+000145 | 
+000146 | 
+000147 | 
+000148 | 
+000149 | 
+000150 | 
+000151 | 
+000152 | 
+000153 | 
+000154 | 
+000155 | 
+000156 | 
+000157 | 
+000158 | 
+000159 | 
+000160 | 	public void pdfControl(HttpServletRequest request,HttpServletResponse response,String koteidata[][],Vector data,int vectorCount,String formatFileName,int method) throws Exception{
+000161 | 		SessionAgent agent = null;	// エージェント
+000162 | 		HttpSession session = null;	// セッション
+000163 | 
+000164 | 		// 処理を開始します
+000165 | 		while (agent == null) {
+000166 | 			// セッション（HttpSession）を獲得します。
+000167 | 			session = request.getSession(true);
+000168 | 			if (session == null) {
+000169 | 				// セッションオブジェクトは得られない場合、致命的なエラー。
+000170 | 				this.returnHttpErrorResponse(response, null, "INTERNAL ERROR (session tracking error).", STATUS_ERROR);
+000171 | 				return;
+000172 | 			}
+000173 | 
+000174 | 			//--------------------------------------------------------------
+000175 | 			// エージェントを獲得します。
+000176 | 			// セッション単位でエージェントオブジェクトを１個ずつ持ちます。
+000177 | 			//--------------------------------------------------------------
+000178 | 			try {
+000179 | 				// キー AGENTNAME で SessionAgent オブジェクトを保持しています。
+000180 | 				agent = (SessionAgent)session.getAttribute(AGENTNAME);
+000181 | 				if (agent == null) {		// 新規セッションの場合
+000182 | 					synchronized (_sessionLock) {
+000183 | 						// 新規に SessionAgent インスタンスを生成します。
+000184 | 						agent = new SessionAgent(session.getId(), null, null);
+000185 | 					}
+000186 | 
+000187 | 					if (_timeout > 0) {
+000188 | 						// セッションタイマーをセットします。
+000189 | 						agent.setSessionTimer(_timeout, this, session);
+000190 | 					}
+000191 | 
+000192 | 					// このセッションで作成したエージェントを保持します。
+000193 | 					
+000194 | 					session.setAttribute(AGENTNAME, agent);
+000195 | 				} else {			// 継続セッションの場合
+000196 | 					agent.stopTimer();	// タイマーを止めます。
+000197 | 				}
+000198 | 			} catch (FMSystemException e) {
+000199 | 				throw e;
+000200 | 			} catch (FMPropertyException e) {
+000201 | 				int code = e.getStatusCode();
+000202 | 				this.returnHttpErrorResponse(response, null, e.getMessage(), code);
+000203 | 				if (session != null) {
+000204 | 					session.invalidate();
+000205 | 				}
+000206 | 				return;
+000207 | 			} catch (IllegalStateException e) {
+000208 | 				if (session != null) {
+000209 | 					session.invalidate();
+000210 | 				}
+000211 | 				agent = null;
+000212 | 				continue;
+000213 | 			}
+000214 | 
+000215 | 			synchronized (agent) {
+000216 | 				// エージェントを獲得・ロックしたので、セッションの正当性を再確認します。
+000217 | 				if (agent != (SessionAgent)session.getAttribute(AGENTNAME)) {
+000218 | 					throw new IllegalStateException();
+000219 | 				}
+000220 | 				FMResponse result = null;	// オーバレイの結果
+000221 | //				boolean canOverlay = false;	// オーバレイの準備ができたかどうか
+000222 | 
+000223 | 				try {
+000224 | 					// request 中のパラメータを読みこみます。
+000225 | 					agent.parseParameters(request);
+000226 | 
+000227 | 					if(!agent.isCallback()) {
+000228 | 						agent.clear();		// 既存Jobのクリア(temp削除)
+000229 | 						agent.setFMParameters(koteidata,data,vectorCount,formatFileName);
+000230 | 					}
+000231 | 				} catch (Exception e) {
+000232 | 					throw e;
+000233 | 				}
+000234 | 
+000235 | 				//---------------------------------------------------------
+000236 | 				// オーバレイの実行
+000237 | 				//---------------------------------------------------------
+000238 | 				try {
+000239 | 					//---------------------------------------------------------
+000240 | 					// Internet Explorer の変な動作に対応するための処理
+000241 | 					//---------------------------------------------------------
+000242 | 					if (method == FCW_GET && agent.isCallback()) {
+000243 | 						//---------------------------------------------------------
+000244 | 						// GET リクエストで、かつ、プログラムが発行したコールバックである場合。
+000245 | 						// セッションで蓄えておいたレスポンスを再度返します。
+000246 | 						//---------------------------------------------------------
+000247 | 						result = agent.getLastResponse();
+000248 | 						if (result == null) {
+000249 | 							throw new FMPrintException("Session may have timed out.", STATUS_ERROR);
+000250 | 						}
+000251 | 					} else {
+000252 | 						// 明示的なオーバレイ実行命令があった
+000253 | 						if (agent.canOverlay()) {
+000254 | 							result = agent.overlay();
+000255 | 							if (result == null) {		// 使用できるコンポーザがありません。
+000256 | 								throw new FMPrintException("Request failed because no composer is available at this time. Call system manager.", STATUS_ERROR);
+000257 | 							}
+000258 | 						} else {
+000259 | 							// オーバレイを実施できるだけのパラメータがそろっていない。
+000260 | 							String msg = agent.getMessage();
+000261 | 							throw new FMPropertyException(msg, STATUS_ERROR);
+000262 | 						}
+000263 | 					}
+000264 | 				} catch (FMPrintException e) {
+000265 | 					int code = e.getStatusCode();
+000266 | 					this.returnHttpErrorResponse(response, null, e.getMessage(), code);
+000267 | 					agent.startTimer();	// startTimer() します。
+000268 | 					return;
+000269 | 				} catch (FMSystemException e) {
+000270 | 					throw e;
+000271 | 				} catch (FMPropertyException e) {
+000272 | 					int code = e.getStatusCode();
+000273 | 					this.returnHttpErrorResponse(response, null, e.getMessage(), code);
+000274 | 					agent.startTimer();	// startTimer() します。
+000275 | 					return;
+000276 | 				}
+000277 | 				
+000278 | 				//---------------------------------------------------------
+000279 | 				// 結果の処理
+000280 | 				//---------------------------------------------------------
+000281 | 				try {
+000282 | 					this.returnHttpResponse(response, agent, result, method);
+000283 | 				} catch (FMSystemException e) {
+000284 | 					throw e;
+000285 | 				} catch (Exception e) {
+000286 | 					throw e;
+000287 | 				}
+000288 | 				agent.startTimer();
+000289 | 				return;	// while を抜ける
+000290 | 			} // synchronized (agent)
+000291 | 		} /* while */
+000292 | 	}
+000293 | 
+000294 | 
+000295 | 
+000296 | 
+000297 | 
+000298 | 
+000299 | 
+000300 | 
+000301 | 
+000302 | 
+000303 | 
+000304 | 
+000305 | 
+000306 | 
+000307 | 
+000308 | 
+000309 | 
+000310 | 
+000311 | 
+000312 | 
+000313 | 
+000314 | 
+000315 | 
+000316 | 
+000317 | 	//--------------------------------------------------------------
+000318 | 	// タイマー関連
+000319 | 	//--------------------------------------------------------------
+000320 | 
+000321 | 	/**
+000322 | 	 * エージェントのタイマー機能で呼び出されるハンドラです。
+000323 | 	 * IE の場合、PDF取得が、何度か失敗する可能性があるため、
+000324 | 	 * 生成結果をすぐにクリアするわけにはいきません。
+000325 | 	 * セッションタイムアウト時に、クリアします。
+000326 | 	 */
+000327 | 	public synchronized void handleTimer(Object userInfo) {
+000328 | 		try {
+000329 | 			HttpSession session = (HttpSession)userInfo;	// セッション
+000330 | 			if (session != null) {
+000331 | 				SessionAgent agent = (SessionAgent)session.getAttribute(AGENTNAME);
+000332 | 				if (agent != null) {
+000333 | 					// agent オブジェクトに対して何か呼び出している最中はロックがかかるようにする。
+000334 | 					synchronized (agent) {
+000335 | 						agent.invalidate();
+000336 | 					}
+000337 | 				}
+000338 | 				session.removeAttribute(AGENTNAME);
+000339 | 				//session.invalidate();
+000340 | 			}
+000341 | 		} catch (IllegalStateException  e) {
+000342 | 			e.printStackTrace();
+000343 | 		}
+000344 | 	}
+000345 | 
+000346 | 	//--------------------------------------------------------------
+000347 | 	// レスポンス関連
+000348 | 	//--------------------------------------------------------------
+000349 | 
+000350 | 	/**
+000351 | 	 * FcwResponseオブジェクトの内容を用いて、サーブレットからのレスポンスを構成するためのメソッドです。.
+000352 | 	 */
+000353 | 	private void returnHttpResponse(HttpServletResponse response, SessionAgent agent,
+000354 | 	                                FMResponse result, int method)
+000355 | 	                                throws FMSystemException, IOException {
+000356 | 		boolean returnGet = false;
+000357 | 		boolean useFrame = false;
+000358 | 
+000359 | 		long dateVal = System.currentTimeMillis();
+000360 | 		response.setHeader("Pragma", "no-cache");
+000361 | 		response.setDateHeader("Expires", (long)0);
+000362 | 		response.setDateHeader("Date", dateVal);
+000363 | 
+000364 | 		if (!agent.isCallback()) {
+000365 | 			returnGet = true;
+000366 | 			useFrame = true;
+000367 | 		}
+000368 | 
+000369 | 		//NECIKO if (result.getStatus() == STATUS_OK) {
+000370 | 		if ( ((Integer)result.get("fm-status")).intValue() == 0){
+000371 | 			if ((method == FCW_POST && returnGet) || useFrame) {	// 新規のオーバレイリクエストの場合
+000372 | 				try {
+000373 | 					// データ取得用の GET ページを作成して返します
+000374 | 					this.returnCallback(response, agent, result);
+000375 | 				} catch (FMSystemException e) {
+000376 | 					throw e;
+000377 | 				} catch (IOException e) {
+000378 | 					throw e;
+000379 | 				}
+000380 | 			} else {						// コールバックによるPDF要求の場合
+000381 | 				try {
+000382 | 					// PDF データを出力します
+000383 | 					this.returnPDF(response, agent, result);
+000384 | 				} catch (SocketException e) {
+000385 | 				} catch (IOException e) {
+000386 | 					throw e;
+000387 | 				}
+000388 | 			}
+000389 | 		} else {
+000390 | 			//NECIKO this.returnHttpErrorResponse(response, agent, result.getMessage(), result.getStatus());
+000391 | 			this.returnHttpErrorResponse(response, agent, (String)result.get("fm-message"),
+000392 | 			                             ((Integer)result.get("fm-status")).intValue());
+000393 | 		}
+000394 | 	}
+000395 | 
+000396 | 
+000397 | 	/**
+000398 | 	 * データ取得用の GET ページを作成して返します。.
+000399 | 	 */
+000400 | 	private void returnCallback(HttpServletResponse response, SessionAgent agent, FMResponse result)
+000401 | 	             throws FMSystemException, SocketException, IOException {
+000402 | 		ServletOutputStream servletOut = null;
+000403 | 		try {
+000404 | //			agent.resetOutputStream(null);
+000405 | 			ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+000406 | 			DataOutputStream out = new DataOutputStream(byteOut);
+000407 | 			String url;
+000408 | 			response.setContentType("text/html");
+000409 | 			String uid = agent.getUniqueId();
+000410 | 			url = "http://" + agent.getRequestHost() + agent.getRequestUri() + FAKEFILE_CALLBACK_PDF + RETRIEVE + "=" + uid + FAKEFILE_PDF;
+000411 | 
+000412 | 			out.write("<HTML><FRAMESET rows=\"0,*\" border=0 framespacing=0>".getBytes("Shift_JIS"));
+000413 | 			out.write(("<FRAME marginheight=1 marginwidth=1 noresize scrolling=\"no\" src=\"http://" + agent.getRequestHostIP() + "/n2fcw/blank.html\">").getBytes("Shift_JIS"));
+000414 | 			out.write(("<FRAME marginheight=0 marginwidth=0 noresize scrolling=\"no\" name=\"PDFView\" src=\"" + url + "\">").getBytes("Shift_JIS"));
+000415 | 			out.write("</FRAMESET></HTML>".getBytes("Shift_JIS"));
+000416 | 			out.flush();
+000417 | 			byte[] buf = byteOut.toByteArray();
+000418 | 			response.setContentLength(buf.length);
+000419 | 			servletOut = response.getOutputStream();
+000420 | 			servletOut.write(buf);
+000421 | 			try {
+000422 | 				servletOut.flush();
+000423 | 				out.flush();
+000424 | 				byteOut.flush();
+000425 | 				out.close();
+000426 | 				byteOut.close();
+000427 | 			} catch (Exception e2) {
+000428 | 			}
+000429 | 		} catch (FMSystemException e) {
+000430 | 			throw e;
+000431 | 		} catch (SocketException e) {
+000432 | 			throw e;
+000433 | 		} catch (IOException  e) {
+000434 | 			throw e;
+000435 | 		} finally {
+000436 | 			if (servletOut != null) {
+000437 | 				servletOut.flush();
+000438 | //				agent.resetOutputStream(servletOut);
+000439 | 			}
+000440 | 		}
+000441 | 	}
+000442 | 
+000443 | 	/**
+000444 | 	 * PDF データを出力します。.
+000445 | 	 */
+000446 | 	private void returnPDF(HttpServletResponse response, SessionAgent agent, FMResponse result)
+000447 | 	             throws SocketException, IOException {
+000448 | 		InputStream in = null;
+000449 | 		ServletOutputStream servletOut = null;
+000450 | 		int outSize = 0;
+000451 | 		try {
+000452 | //			agent.resetOutputStream(null);
+000453 | 			response.setStatus(HttpServletResponse.SC_OK);
+000454 | 			response.setContentType("application/pdf");
+000455 | 			//NECIKO response.setContentLength((int)result.length());
+000456 | 			//  Content-Length ヘッダーの設定はメソッド化
+000457 | 			setContentLength(response, result);
+000458 | 			//NECIKO in = result.getInputStream();
+000459 | 			//  FMResponseクラスからgetInputStreamメソッドが無くなった。
+000460 | 			//  jobクラスからFMResponseOperatorクラスを生成してInputStreamを取得するよう変更
+000461 | 			FMJob job = agent.getJob();
+000462 | 			FMResponseOperator resOpe = job.getResponseOperator();
+000463 | 			in = resOpe.getInputStream();
+000464 | 
+000465 | 			outSize = 0;
+000466 | 			servletOut = response.getOutputStream();
+000467 | 			byte [] buf = new byte[2048];
+000468 | 			int nread;
+000469 | 			while ((nread = in.read(buf)) != -1) {
+000470 | 				servletOut.write(buf, 0, nread);
+000471 | 				outSize += nread;
+000472 | 			}
+000473 | 			servletOut.flush();
+000474 | 		} catch (SocketException e) {
+000475 | //			agent.resetOutputStream(servletOut);
+000476 | 			servletOut = null;
+000477 | 			throw e;
+000478 | 		} catch (IOException e) {
+000479 | 			e.printStackTrace();
+000480 | 			throw e;
+000481 | 		} finally {
+000482 | 			if (in != null) {
+000483 | 				in.close();
+000484 | 			}
+000485 | 			if (servletOut != null) {
+000486 | 				servletOut.flush();
+000487 | //				agent.resetOutputStream(servletOut);
+000488 | 			}
+000489 | 		}
+000490 | 	}
+000491 | 
+000492 | 	/**
+000493 | 	 * NECIKO
+000494 | 	 *
+000495 | 	 * Content-Length ヘッダーを設定する。
+000496 | 	 */
+000497 | 	private void setContentLength(HttpServletResponse response, FMResponse overlayRes) {
+000498 | 		// レスポンスには、"fm-databytes" or "fm-datafile" のどちらかが必ず設定されている。
+000499 | 		long length = 0;
+000500 | 		byte[] data = (byte[]) overlayRes.get("fm-databytes");
+000501 | 		if (data != null) {
+000502 | 			length = data.length;
+000503 | 		} else {
+000504 | 			File file = (File) overlayRes.get("fm-datafile");
+000505 | 			length = file.length();
+000506 | 		}
+000507 | 
+000508 | 		// long値対応
+000509 | 		// response.setContentLength((int) length);
+000510 | 		response.setHeader("Content-Length", Long.toString(length));
+000511 | 	}
+000512 | 
+000513 | 	/**
+000514 | 	 * エラー画面を出力します。.
+000515 | 	 */
+000516 | 	private void returnHttpErrorResponse(HttpServletResponse response, SessionAgent agent, String message, int code) {
+000517 | 		try {
+000518 | 			response.setContentType("text/html");
+000519 | 			PrintWriter errout = response.getWriter();
+000520 | 			errout.println("<HTML>");
+000521 | 			errout.println("<HEAD><TITLE>ERROR</TITLE>");
+000522 | 			errout.println("</HEAD>");
+000523 | 			errout.println("<BODY>");
+000524 | 			errout.println("<H2>Error Message : " + message +"</H2>");
+000525 | 			errout.println("<H2>Error Code    : " + code +"</H2>");
+000526 | 			errout.println("</BODY>");
+000527 | 			errout.println("</HTML>");
+000528 | 			errout.flush();
+000529 | 			errout.close();
+000530 | 		} catch (IOException e) {
+000531 | 			e.printStackTrace();
+000532 | 		}
+000533 | 	}
+000534 | }
+000535 | 
+000536 | 
+000537 | 

@@ -1,0 +1,94 @@
+000001 | /*
+000002 |  * 作成日: 2005/06/01
+000003 |  *
+000004 |  */
+000005 | package common.base;
+000006 | 
+000007 | import java.sql.Connection;
+000008 | import java.sql.SQLException;
+000009 | import java.sql.Statement;
+000010 | 
+000011 | import common.FWLog;
+000012 | 
+000013 | /**
+000014 |  * データウェアハウス　Baseクラスのスーパークラス。
+000015 |  * 各Baseクラスは、必ずこのクラスを継承する。
+000016 |  * 
+000017 |  * @author JSC kengo murayama
+000018 |  *
+000019 |  * @date	H22.9.3		青木・浅見		センター集約対応なし
+000020 |  */
+000021 | public abstract class CommonBase {
+000022 | 
+000023 | 	/** ＤＢコネクション */
+000024 | 	private Connection connection;
+000025 | 
+000026 | 	/** 処理件数 */
+000027 | 	private int count;
+000028 | 
+000029 | 	/**
+000030 | 	 * コンストラクタ
+000031 | 	 * 
+000032 | 	 * @param connection
+000033 | 	 */
+000034 | 	public CommonBase(Connection connection) {
+000035 | 		this.connection = connection;
+000036 | 		this.count = 0;
+000037 | 	}
+000038 | 
+000039 | 	/**
+000040 | 	 * 
+000041 | 	 * SQLのINSERT文、UPDATE文、DELETE文を実行する。
+000042 | 	 * 
+000043 | 	 */
+000044 | 	public void execute(String sql) throws SQLException{
+000045 | 		Statement stmt = null;
+000046 | 		stmt = getConnection().createStatement();
+000047 | 
+000048 | 		try {
+000049 | 			count = stmt.executeUpdate(sql);
+000050 | 
+000051 | 			//ＳＱＬ実行が正常終了したら、debug ログ出力
+000052 | 			if(FWLog.isDebug()){
+000053 | 				FWLog.debug(this.getClass(), sql);
+000054 | 			}
+000055 | 
+000056 | 		} catch (SQLException e) {
+000057 | 			FWLog.error(sql);
+000058 | 			throw e;
+000059 | 
+000060 | 		} finally {
+000061 | 			if (stmt != null) stmt.close();
+000062 | 			stmt = null;
+000063 | 		}
+000064 | 	}
+000065 | 
+000066 | 	/**
+000067 | 	 * @return
+000068 | 	 */
+000069 | 	protected Connection getConnection() {
+000070 | 		return connection;
+000071 | 	}
+000072 | 
+000073 | 	/**
+000074 | 	 * @param connection
+000075 | 	 */
+000076 | 	protected void setConnection(Connection connection) {
+000077 | 		this.connection = connection;
+000078 | 	}
+000079 | 
+000080 | 	/**
+000081 | 	 * @return
+000082 | 	 */
+000083 | 	public int getCount() {
+000084 | 		return count;
+000085 | 	}
+000086 | 
+000087 | 	/**
+000088 | 	 * @param i
+000089 | 	 */
+000090 | 	public void setCount(int i) {
+000091 | 		count = i;
+000092 | 	}
+000093 | 
+000094 | }

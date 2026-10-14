@@ -1,0 +1,51 @@
+000001 | /*
+000002 |  * 作成日: 2007/05/14
+000003 |  *
+000004 |  */
+000005 | package common;
+000006 | 
+000007 | import java.sql.Connection;
+000008 | import java.sql.SQLException;
+000009 | 
+000010 | import javax.naming.InitialContext;
+000011 | import javax.naming.NamingException;
+000012 | import javax.servlet.http.HttpServletRequest;
+000013 | import javax.servlet.http.HttpServletResponse;
+000014 | 
+000015 | import common.util.CommonUtil;
+000016 | 
+000017 | /**
+000018 |  * アクションクラスのスーパークラス。
+000019 |  * 各業務ロジックのアクションクラスは、必ずこのクラスを継承する。
+000020 |  *
+000021 |  * @author JSC kengo murayama
+000022 |  *
+000023 |  * @date	H22.9.3		青木・浅見		センター集約対応なし
+000024 |  */
+000025 | public abstract class CommonAction {
+000026 | 
+000027 | 	/**
+000028 | 	 * (前提)認証チェック済み
+000029 | 	 * (役割)入力データチェック(DB等を使わない)
+000030 | 	 * (役割)データ引き渡して結果をSessionに登録
+000031 | 	 * (役割)次ページのＪＳＰ名を返す
+000032 | 	 * @param req
+000033 | 	 * @param res
+000034 | 	 * @return	ＪＳＰ名
+000035 | 	 */
+000036 | 	public abstract String perform(HttpServletRequest req, HttpServletResponse res) throws Exception;
+000037 | 
+000038 | 	/**
+000039 | 	 * 
+000040 | 	 * @param ic		InitialContext
+000041 | 	 * @param strDS	ＪＤＢＣ名
+000042 | 	 * @return
+000043 | 	 * @throws NamingException
+000044 | 	 * @throws SQLException
+000045 | 	 */
+000046 | 	protected Connection getConnection(InitialContext ic, String strDS)
+000047 | 		throws NamingException, SQLException {
+000048 | 
+000049 | 		return CommonUtil.getConnection(ic, strDS);
+000050 | 	}
+000051 | }

@@ -1,0 +1,302 @@
+000001 | <!-- H29.05.10	Minori山口  新規作成 -->
+000002 | <%@ page language="java" 
+000003 | 	contentType="text/html; charset=Windows-31J"
+000004 | 	import="java.util.List,common.CommonConst,common.util.CommonConverter,common.bean.TenpoListBean" %>
+000005 | 
+000006 | <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+000007 | 
+000008 | <jsp:useBean id="LoginBean" class="common.bean.LoginInfoBean" scope="session"/>
+000009 | <jsp:useBean id="ViewBean" class="common.bean.DaikoBean" scope="session"/>
+000010 | 
+000011 | <HTML>
+000012 | <HEAD>
+000013 | 	<META http-equiv="Content-Type" content="text/html; charset=Windows-31J">
+000014 | 	<TITLE>代行店舗選択</TITLE>
+000015 | 	<SCRIPT LANGUAGE ="JavaScript">
+000016 | 	<!---
+000017 | 		//二重実行制御フラグ
+000018 | 		var DoubleSubmitFlag = true;
+000019 | 
+000020 | 		<!-- ＴＯＰメニューへ戻る -->
+000021 | 		function p1(w1){ window.open(w1,"_main")}
+000022 | 
+000023 | 		//ボタン実行
+000024 | 		function doAction(commandId){
+000025 | 			//二重実行制御フラグがfalseの場合はSubmitさせない
+000026 | 			if(DoubleSubmitFlag == true){
+000027 | 				//二重実行フラグを立てる
+000028 | 				DoubleSubmitFlag = false;
+000029 | 		
+000030 | 				document.form0.COMMAND_ID.value = commandId;
+000031 | 				document.form0.submit();
+000032 | 			}
+000033 | 		}
+000034 | 		
+000035 | 
+000036 | 		var _wkbr = "";
+000037 | 		var _wktenpo = "";
+000038 | 		
+000039 | 		
+000040 | 		//選択した店舗を保持
+000041 | 		function tenpoSelect(_br,_tenpo){			
+000042 | 			_wkbr = _br;			
+000043 | 			_wktenpo = _tenpo;
+000044 | 		}
+000045 | 		
+000046 | 		
+000047 | 		//【選択中の店舗に変更】ボタン押下
+000048 | 		function doActionSelect(){
+000049 | 			
+000050 | 			if(_wkbr == "" && _wktenpo == ""){
+000051 | 				alert("代行店舗を選択してください！");
+000052 | 				return false;
+000053 | 				
+000054 | 			}else{
+000055 | 				var _loginBr = "<%= LoginBean.get所属店番() %>";
+000056 | 				
+000057 | 				//店番を変更しない場合
+000058 | 				if(_wkbr == _loginBr){
+000059 | 					
+000060 | 					if(window.confirm("支店の変更はありません。　よろしいですか？")){	
+000061 | 						document.form0.HDN_BR.value = _wkbr;
+000062 | 						document.form0.HDN_TENPO_NAME.value = _wktenpo;
+000063 | 						
+000064 | 						//サブミット処理
+000065 | 						doAction('Select');
+000066 | 						
+000067 | 					}else{
+000068 | 						return false;
+000069 | 					}	
+000070 | 						
+000071 | 				//変更する店番を選択した場合	
+000072 | 				}else{
+000073 | 			
+000074 | 					if(window.confirm("【 "+_wkbr + "  " +  _wktenpo + " 】に変更します。　よろしいですか？")){	
+000075 | 						
+000076 | 						document.form0.HDN_BR.value = _wkbr;
+000077 | 						document.form0.HDN_TENPO_NAME.value = _wktenpo;
+000078 | 						
+000079 | 						//サブミット処理
+000080 | 						doAction('Select');	
+000081 | 						
+000082 | 					}else{
+000083 | 						return false;
+000084 | 					}
+000085 | 				}
+000086 | 			}
+000087 | 		}
+000088 | 
+000089 | 
+000090 | 		<!-- ロード時の初期化処理 -->
+000091 | 		function init(){
+000092 | 			
+000093 | 			//login店番と、店舗名を取得
+000094 | 			_wkbr = "<%= LoginBean.get所属店番() %>"			
+000095 | 			_wktenpo = "<%= LoginBean.get所属店名() %>"	
+000096 | 		}
+000097 | 		
+000098 | 	//--->
+000099 | 	</SCRIPT>
+000100 | 
+000101 | 	<STYLE type="text/css">
+000102 | 	<!--
+000103 | 	-->
+000104 | 	.T00 {
+000105 | 		BACKGROUND-COLOR: #cccccc;
+000106 | 		BORDER-BOTTOM: #999999 2px double;
+000107 | 		BORDER-LEFT: #c8c0ff 3px double;
+000108 | 		BORDER-RIGHT: #999999 2px double;
+000109 | 		BORDER-TOP: #c8c0ff 3px double;
+000110 | 		COLOR: #000000;
+000111 | 		FONT-SIZE: 12px;
+000112 | 		width: 80px;
+000113 | 		text-align: center;
+000114 | 		clip: rect(   );
+000115 | 		cursor: hand;
+000116 | 		line-height: 120%;
+000117 | 		border: 3px #ffffff outset;
+000118 | 	}
+000119 | 
+000120 | 
+000121 | 		/*--- 全体のエリア---*/
+000122 | 		#id_Main_Area {
+000123 | 			width: 1000px;
+000124 | 			height: 575px;
+000125 | 			text-align: center;
+000126 | 		}
+000127 | 
+000128 | 		/*--- ヘッダーエリア---*/
+000129 | 		#id_Header_Area {
+000130 | 			top: 20px;
+000131 | 			width: 980px;
+000132 | 			height: 50px;
+000133 | 			text-align: left;
+000134 | 		}
+000135 | 
+000136 | 		/*---タイトルエリア---*/
+000137 | 		#id_Taitolu_Area {
+000138 | 			width: 975px;
+000139 | 			height: 46px;
+000140 | 			text-align: left;
+000141 | 		}
+000142 | 
+000143 | 		/*--- 店舗選択エリア---*/
+000144 | 		#id_SelectArea {
+000145 | 			background-color: #ffffff;
+000146 | 			border: 1px solid #888888;
+000147 | 			width: 975px;
+000148 | 			height: 417px;
+000149 | 			overflow: auto;
+000150 | 		}
+000151 | 		
+000152 | 		/*--- 終了エリア---*/
+000153 | 		#id_END_Area {
+000154 | 			width: 980px;
+000155 | 			height: 30px;
+000156 | 		}
+000157 | 		
+000158 | 	</STYLE>
+000159 | </HEAD>
+000160 | 
+000161 | <BODY bgcolor="#ececec" onLoad="init()" style="text-align: center;">
+000162 | 	<FORM name="form0" action="./Action.do" method="post">
+000163 | 	<!-- アクションクラス起動パラメータ -->
+000164 | 	<INPUT type="hidden" name="FUNCTION_ID" value="common">
+000165 | 	<INPUT type="hidden" name="VIEW_ID" value="Daiko">
+000166 | 	<INPUT type="hidden" name="COMMAND_ID" value="">
+000167 | 	<INPUT type="hidden" name="HDN_BR" value="">
+000168 | 	<INPUT type="hidden" name="HDN_TENPO_NAME" value="">
+000169 | 
+000170 | 	<DIV id="id_Main_Area">
+000171 | 		<DIV id="id_Header_Area">
+000172 | 			<TABLE width="980" border="0" cellspacing="0">
+000173 | 				<TR style="background-color: #666666;">
+000174 | 					<TD width="620">
+000175 | 						<DIV style="font-size: 10pt;color: #ffffff;"><STRONG>　＜＜ 代行店舗選択 ＞＞</STRONG></DIV>
+000176 | 					</TD>
+000177 | 					<TD width="360">
+000178 | 						<TABLE width="360" border="1" bordercolor="#666666" cellspacing="0" style="font-size: 10pt;">
+000179 | 							<TR style="background-color: #ffffff;" align="center">
+000180 | 								<TD width="120" ><%= LoginBean.get所属店名() %><BR></TD>
+000181 | 								<TD width="140" ><%= LoginBean.get融資系ユーザー名() %><BR></TD>
+000182 | 								<TD width="100" ><%= LoginBean.get職員氏名() %><BR></TD>
+000183 | 							</TR>
+000184 | 						</TABLE>
+000185 | 					</TD>
+000186 | 				</TR>
+000187 | 				<TR height="40">
+000188 | 					<TD colspan="2" style="text-align: center;vertical-align: bottom;">
+000189 | 						<DIV style="font-size: 20pt;"><STRONG>代行店舗選択画面</STRONG></DIV>
+000190 | 					</TD>
+000191 | 				</TR>
+000192 | 			</TABLE>
+000193 | 			<HR width="980">
+000194 | 		</DIV>
+000195 | 
+000196 | 
+000197 | 		<DIV id="id_Taitolu_Area">
+000198 | 			<TABLE width="975px" height="44px" border= "0" cellspacing="0" style="font-size:10pt;text-align: left;">
+000199 | 				<TR><TH style="text-indent:3px;">現在の店舗：<%= LoginBean.get所属店名()%></TH></TR>
+000200 | 				<TR>
+000201 | 					<TD style=" text-indent:3px; background-color: #A4C6FF; color:#000000; ">店舗を選択してください　　
+000202 | 						<INPUT type="button" name="BTN_END" value="選択中の店舗に変更" onClick="doActionSelect('')" style="width: 150px;">
+000203 | 					</TD>
+000204 | 				</TR>
+000205 | 			</TABLE>
+000206 | 		</DIV>
+000207 | 
+000208 | 		<DIV id="id_SelectArea">
+000209 | 		
+000210 | <%		List lsMeisai1 = ViewBean.get店舗一覧１();%>
+000211 | <%		if(lsMeisai1 != null && !lsMeisai1.isEmpty()){%>		
+000212 | 		
+000213 | 			<TABLE width="180px"  border= "0" cellspacing="0" style="position:absolute; top:2px;left:10px;font-size:10pt">
+000214 | <%          for(int i=0; i<lsMeisai1.size(); i++){
+000215 | 			TenpoListBean beanList = (TenpoListBean)lsMeisai1.get(i);%>				
+000216 | 				<TR>
+000217 | 					<TD height="24"><input type="radio" id="id_Main_rdo_idou" name="RDO_IDOU" value="<%=beanList.get店舗番号() %>"
+000218 | 					onClick="tenpoSelect('<%=beanList.get店舗番号() %>','<%=beanList.get店舗名() %>')" <%if(beanList.get店舗番号().equals(LoginBean.get所属店番())){ %> checked<% } %>><%=beanList.get店舗() %></TD>
+000219 | 				</TR>
+000220 | <%          } %>			
+000221 | 			</TABLE>
+000222 | <%     } %>
+000223 | 
+000224 | 
+000225 | 
+000226 | <%		List lsMeisai2 = ViewBean.get店舗一覧２();%>
+000227 | <%		if(lsMeisai2 != null && !lsMeisai2.isEmpty()){%>
+000228 | 			<TABLE width="180px" border= "0" cellspacing="0" style="position:absolute; top:2px;left:200px;font-size:10pt">
+000229 | 
+000230 | <%          for(int i=0; i<lsMeisai2.size(); i++){
+000231 | 			TenpoListBean beanList = (TenpoListBean)lsMeisai2.get(i);%>				
+000232 | 				<TR>
+000233 | 					<TD height="24"><input type="radio" id="id_Main_rdo_idou" name="RDO_IDOU" value="<%=beanList.get店舗番号() %>"
+000234 | 					 onClick="tenpoSelect('<%=beanList.get店舗番号() %>','<%=beanList.get店舗名() %>')" <%if(beanList.get店舗番号().equals(LoginBean.get所属店番())){ %> checked<% } %>><%=beanList.get店舗() %></TD>
+000235 | 				</TR>
+000236 | <%          } %>			
+000237 | 			</TABLE>
+000238 | <%     } %>
+000239 | 
+000240 | 
+000241 | 
+000242 | <%		List lsMeisai3 = ViewBean.get店舗一覧３();%>
+000243 | <%		if(lsMeisai3 != null && !lsMeisai3.isEmpty()){%>
+000244 | 			<TABLE width="180px" border= "0" cellspacing="0" style="position:absolute; top:2px;left:390px;font-size:10pt">
+000245 | 
+000246 | <%          for(int i=0; i<lsMeisai3.size(); i++){
+000247 | 			TenpoListBean beanList = (TenpoListBean)lsMeisai3.get(i);%>
+000248 | 				<TR>
+000249 | 					<TD height="24px"><input type="radio" id="id_Main_rdo_idou" name="RDO_IDOU" value="<%=beanList.get店舗番号() %>"
+000250 | 					 onClick="tenpoSelect('<%=beanList.get店舗番号() %>','<%=beanList.get店舗名() %>')" <%if(beanList.get店舗番号().equals(LoginBean.get所属店番())){ %> checked<% } %>><%=beanList.get店舗() %></TD>
+000251 | 				</TR>
+000252 | <%          } %>			
+000253 | 			</TABLE>
+000254 | <%     } %>
+000255 | 
+000256 | 
+000257 | 
+000258 | <%		List lsMeisai4 = ViewBean.get店舗一覧４();%>
+000259 | <%		if(lsMeisai4 != null && !lsMeisai4.isEmpty()){%>
+000260 | 			<TABLE width="180px" border= "0" cellspacing="0" style="position:absolute; top:2px;left:580px;font-size:10pt">
+000261 | 
+000262 | <%          for(int i=0; i<lsMeisai4.size(); i++){
+000263 | 			TenpoListBean beanList = (TenpoListBean)lsMeisai4.get(i);%>
+000264 | 				<TR>
+000265 | 					<TD height="24px"><input type="radio" id="id_Main_rdo_idou" name="RDO_IDOU" value="<%=beanList.get店舗番号() %>"
+000266 | 					 onClick="tenpoSelect('<%=beanList.get店舗番号() %>','<%=beanList.get店舗名() %>')" <%if(beanList.get店舗番号().equals(LoginBean.get所属店番())){ %> checked<% } %>><%=beanList.get店舗() %></TD>
+000267 | 				</TR>
+000268 | <%          } %>			
+000269 | 			</TABLE>
+000270 | <%     } %>
+000271 | 
+000272 | 
+000273 | 
+000274 | <%		List lsMeisai5 = ViewBean.get店舗一覧５();%>
+000275 | <%		if(lsMeisai5 != null && !lsMeisai5.isEmpty()){%>
+000276 | 			<TABLE width="180px" border= "0" cellspacing="0" style="position:absolute; top:2px;left:770px;font-size:10pt">
+000277 | 
+000278 | <%          for(int i=0; i<lsMeisai5.size(); i++){
+000279 | 			TenpoListBean beanList = (TenpoListBean)lsMeisai5.get(i);%>
+000280 | 				<TR>
+000281 | 					<TD height="24px"><input type="radio" id="id_Main_rdo_idou" name="RDO_IDOU" value="<%=beanList.get店舗番号() %>"
+000282 | 					 onClick="tenpoSelect('<%=beanList.get店舗番号() %>','<%=beanList.get店舗名() %>')" <%if(beanList.get店舗番号().equals(LoginBean.get所属店番())){ %> checked<% } %>><%=beanList.get店舗() %></TD>
+000283 | 				</TR>
+000284 | <%          } %>			
+000285 | 			</TABLE>
+000286 | <%     } %>
+000287 | 		</DIV>
+000288 | 
+000289 | 
+000290 | 		<DIV id="id_END_Area">
+000291 | 			<TABLE width="975px" border="0" cellspacing="0">
+000292 | 				<TR align="right">
+000293 | 					<TD width="970px">
+000294 | 						<INPUT type="button" name="BTN_END" value="終　了" onClick="p1('http://intra.dntsv01.johokubank.co.jp/')" class="T00">
+000295 | 					</TD>
+000296 | 				</TR>
+000297 | 			</TABLE>
+000298 | 		</DIV>
+000299 | 	</DIV>
+000300 | 	</FORM>
+000301 | </BODY>
+000302 | </HTML>

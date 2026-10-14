@@ -1,0 +1,70 @@
+000001 | package webon.util;
+000002 | 
+000003 | import java.sql.SQLException;
+000004 | import java.util.ArrayList;
+000005 | import java.util.HashMap;
+000006 | import java.util.Iterator;
+000007 | import java.util.List;
+000008 | import java.util.Map;
+000009 | import java.util.Set;
+000010 | 
+000011 | /**
+000012 |  * webon汎用照会　キャストユーティリティ
+000013 |  * 
+000014 |  * @author Minori 京極
+000015 |  * 
+000016 |  * @date	2020.02.13		京極		新規作成
+000017 |  */
+000018 | public class CastUtil {
+000019 | 	/** 
+000020 | 	  * DBから取得したList<?>をArrayList<HashMap<String, String>>)の形式にCastする
+000021 | 	  * @param	List<?> DBから取得したlist
+000022 | 	  * @return ArrayList<HashMap<String, String>> Cast変換後の戻り値
+000023 | 	  * @throws SQLException
+000024 | 	  */
+000025 | 	public static ArrayList<HashMap<String, String>> genelicToStringList (List<?> list) {
+000026 | 		ArrayList<HashMap<String,String>> resultList=new ArrayList<HashMap<String,String>>();
+000027 | 		for (int i=0; i<list.size(); i++) {
+000028 | 			HashMap<String,String> resultMap = new HashMap<String,String>();
+000029 | 			resultMap=genelicToStringMap((Map<?,?>)list.get(i));
+000030 | 			resultList.add(resultMap);
+000031 | 		}
+000032 | 		return resultList;
+000033 | 	}
+000034 | 	public static HashMap<String, String> genelicToStringMap (Map<?,?> map) {
+000035 | 		HashMap<String,String> resultMap = new HashMap<String,String>();
+000036 | 		Set<?> keys=map.keySet();
+000037 | 		for (Iterator<?> it = keys.iterator(); it.hasNext();) {
+000038 | 			String key = (String)it.next();
+000039 | 			String value = (String)map.get(key);
+000040 | 			resultMap.put(key, value);
+000041 | 		}
+000042 | 		return resultMap;
+000043 | 	}
+000044 | 	/** 
+000045 | 	  * DBから取得したList<?>をList<Map<String, String>>)の形式にCastする
+000046 | 	  * @param	List<?> DBから取得したlist
+000047 | 	  * @return List<Map<String, String>> Cast変換後の戻り値
+000048 | 	  * @throws SQLException
+000049 | 	  */
+000050 | 	public static List<Map<String, String>> genelicToStringList2 (List<?> list) {
+000051 | 		List<Map<String,String>> resultList=new ArrayList<Map<String,String>>();
+000052 | 		for (int i=0; i<list.size(); i++) {
+000053 | 			Map<String,String> resultMap = new HashMap<String,String>();
+000054 | 			resultMap=genelicToStringMap2((Map<?,?>)list.get(i));
+000055 | 			resultList.add(resultMap);
+000056 | 		}
+000057 | 		return resultList;
+000058 | 	}
+000059 | 	public static Map<String, String> genelicToStringMap2 (Map<?,?> map) {
+000060 | 		Map<String,String> resultMap = new HashMap<String,String>();
+000061 | 		Set<?> keys=map.keySet();
+000062 | 		for (Iterator<?> it = keys.iterator(); it.hasNext();) {
+000063 | 			String key = (String)it.next();
+000064 | 			String value = (String)map.get(key);
+000065 | 			resultMap.put(key, value);
+000066 | 		}
+000067 | 		return resultMap;
+000068 | 	}
+000069 | 
+000070 | }

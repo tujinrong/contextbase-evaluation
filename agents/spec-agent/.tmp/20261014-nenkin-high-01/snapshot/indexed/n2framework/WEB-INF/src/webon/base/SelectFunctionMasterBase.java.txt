@@ -1,0 +1,81 @@
+000001 | package webon.base;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.sql.SQLException;
+000005 | 
+000006 | import common.base.CommonBaseSelect;
+000007 | 
+000008 | /**
+000009 |  * Webon汎用照会ベースクラス　機能マスタSelect Baseクラス
+000010 |  * 
+000011 |  * @author Minori 加瀬
+000012 |  * 
+000013 |  * @date	H24.10.30	加瀬		新規作成
+000014 |  * @date	2020.02.06	京極　	webonのFW化対応
+000015 |  */
+000016 | public class SelectFunctionMasterBase extends CommonBaseSelect{
+000017 | 
+000018 | 	/**
+000019 | 	 * コンストラクタ
+000020 | 	 * 
+000021 | 	 * @param Connection
+000022 | 	 */
+000023 | 	
+000024 | 	public SelectFunctionMasterBase(Connection connection) {
+000025 | 		super(connection);
+000026 | 	}
+000027 | 	/** 
+000028 | 	  * 参照ＤＢ（NAVI.ＵＪ機能マスタ）
+000029 | 	  * 機能名をキーにレコードを取得する(全項目)
+000030 | 	  *
+000031 | 	  * @param	String		機能名
+000032 | 	  * @param	String		キー名
+000033 | 	  *	
+000034 | 	  * @return boolean
+000035 | 	  * @throws SQLException
+000036 | 	  */
+000037 | 	
+000038 | 	
+000039 | 	public boolean selectValueByFunctionIdAndKey (String functionId,String key) throws SQLException {
+000040 | 		try {
+000041 | 			// ＳＱＬ編集
+000042 | 			StringBuffer sb = new StringBuffer();
+000043 | 			sb.append("select 値 from NAVI.ＵＭ機能マスタ ");
+000044 | 			sb.append("where 機能名='"+ functionId +"'");
+000045 | 			sb.append("and キー名='"+ key +"'");
+000046 | 			
+000047 | 			execute(sb.toString());
+000048 | 			
+000049 | 		} catch (SQLException e) {
+000050 | 			throw e;
+000051 | 		}
+000052 | 
+000053 | 		if (getList() != null) {
+000054 | 			return true;
+000055 | 		} else{
+000056 | 			return false;
+000057 | 		}
+000058 | 	}
+000059 | 	
+000060 | 	public boolean selectByFunctionId (String functionId) throws SQLException {
+000061 | 		try {
+000062 | 			// ＳＱＬ編集
+000063 | 			StringBuffer sb = new StringBuffer();
+000064 | 			sb.append("select * from NAVI.ＵＪ機能マスタ ");
+000065 | 			sb.append("where 機能名='"+ functionId +"'");
+000066 | 
+000067 | 			execute(sb.toString());
+000068 | 			
+000069 | 		} catch (SQLException e) {
+000070 | 			throw e;
+000071 | 		}
+000072 | 
+000073 | 		if (getList() != null) {
+000074 | 			return true;
+000075 | 		} else{
+000076 | 			return false;
+000077 | 		}
+000078 | 	}
+000079 | 	
+000080 | 
+000081 | }

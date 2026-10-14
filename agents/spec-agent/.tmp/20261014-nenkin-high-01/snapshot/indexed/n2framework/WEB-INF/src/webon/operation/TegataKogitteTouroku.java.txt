@@ -1,0 +1,235 @@
+000001 | package webon.operation;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.util.ArrayList;
+000005 | import java.util.List;
+000006 | import java.util.Map;
+000007 | 
+000008 | import webon.WebonBase;
+000009 | import webon.WebonException;
+000010 | 
+000011 | import common.bean.LoginInfoBean;
+000012 | /**
+000013 |  * 01702N-発行手形・小切手登録
+000014 |  * 
+000015 |  * @author Minori 山口
+000016 |  * 
+000017 |  * @date	R03.03.02	新規作成
+000018 |  */
+000019 | public class TegataKogitteTouroku {
+000020 | 	
+000021 | 	//webon情報
+000022 | 	WebonBase webonBase;
+000023 | 	//オペレーションＩＤ
+000024 | 	private final String operationId="OP-HAKKOUTEGATA";
+000025 | 	//ログイン情報
+000026 | 	LoginInfoBean loginInfo;
+000027 | 	
+000028 | 	//webon引数
+000029 | 	String woKozaNo;			//口座番号
+000030 | 	String woTegataNo;      	//手形小切手番号
+000031 | 	String woTegataSyurui;  	//手形小切手種類
+000032 | 	String woMaisu;         	//手形小切手枚数
+000033 | 	String woKubun;         	//手数料徴求区分
+000034 | 	String woTesuryou;      	//手数料
+000035 | 	String woTesuryoJidou;  	//手数料自動徴求
+000036 | 	String woUchiake;       	//手数料内訳
+000037 | 	String woJuyoSyurui;    	//重要印刷物種類
+000038 | 	String woTorikesiNo;    	//取消手形番号
+000039 | 	String woTorikeshiSyurui;	//取消手形種類C
+000040 | 	String woKisanbi;        	//起算日
+000041 | 	String woGentenBr;       	//原店番号
+000042 | 
+000043 | 	
+000044 | 	//Errorレベル
+000045 | 	private static final int ERRLEVEL_ERROR=0;	//Error
+000046 | 	private static final int ERRLEVEL_WARNING=1;	//Warning
+000047 | 	//Error箇所
+000048 | 	private static final String ERRSPOT_WOGET = "0";		//取得時
+000049 | //	private static final String ERRSPOT_WOANALYZE = "1";	//解析時
+000050 | 	private static final String ERRSPOT_WOMOLD = "2";		//成型時
+000051 | 	//Error追加情報格納用リスト
+000052 | 	List<Map<String, String>> etc = new ArrayList<Map<String,String>>();
+000053 | 	//Error有無フラグ
+000054 | 	boolean errFlg=false;
+000055 | 	
+000056 | 	private ArrayList<String> lineList = new ArrayList<String>();
+000057 | 	private ArrayList<String> alertList = new ArrayList<String>();
+000058 | 	private String alertMessage;
+000059 | 	
+000060 | 	//setter,getter
+000061 | 	public WebonBase getWebonBase() {
+000062 | 		return webonBase;
+000063 | 	}
+000064 | 	public void setWebonBase(WebonBase webonBase) {
+000065 | 		this.webonBase = webonBase;
+000066 | 	}
+000067 | 	public List<Map<String, String>> getEtc() {
+000068 | 		return etc;
+000069 | 	}
+000070 | 	public void setEtc(List<Map<String, String>> etc) {
+000071 | 		this.etc = etc;
+000072 | 	}
+000073 | 	public boolean isErrFlg() {
+000074 | 		return errFlg;
+000075 | 	}
+000076 | 	public void setErrFlg(boolean errFlg) {
+000077 | 		this.errFlg = errFlg;
+000078 | 	}
+000079 | 	public ArrayList<String> getLineList() {
+000080 | 		return lineList;
+000081 | 	}
+000082 | 	public void setLineList(ArrayList<String> lineList) {
+000083 | 		this.lineList = lineList;
+000084 | 	}
+000085 | 	public ArrayList<String> getAlertList() {
+000086 | 		return alertList;
+000087 | 	}
+000088 | 	public void setAlertList(ArrayList<String> alertList) {
+000089 | 		this.alertList = alertList;
+000090 | 	}
+000091 | 	public String getAlertMessage() {
+000092 | 		return alertMessage;
+000093 | 	}
+000094 | 	public void setAlertMessage(String alertMessage) {
+000095 | 		this.alertMessage = alertMessage;
+000096 | 	}
+000097 | 
+000098 |  /**
+000099 |  * 以下の情報を元に手形小切手登録を行う 
+000100 |  * 
+000101 |  * @param  kozaNo		     口座番号
+000102 |  * @param  tegataNo         手形小切手番号
+000103 |  * @param  tegataSyurui     手形小切手種類
+000104 |  * @param  maisu            手形小切手枚数
+000105 |  * @param  kubbun           手数料徴求区分
+000106 |  * @param  tesuryou         手数料
+000107 |  * @param  tesuryoJidou     手数料自動徴求
+000108 |  * @param  uchiake          手数料内訳
+000109 |  * @param  juyoSyurui       重要印刷物種類
+000110 |  * @param  torikesiNo       取消手形番号
+000111 |  * @param  torikeshiSyurui  取消手形種類C
+000112 |  * @param  kisanbi          起算日
+000113 |  * @param  gentenBr         原店番号
+000114 |  * @param  con
+000115 |  * @throws Exception
+000116 |  */
+000117 | 	public void setWebon(	String kozaNo,
+000118 | 							String tegataNo,
+000119 | 							String tegataSyurui,
+000120 | 							String maisu,
+000121 | 							String kubun,
+000122 | 							String tesuryou,
+000123 | 							String tesuryoJidou,
+000124 | 							String uchiake,
+000125 | 							String juyoSyurui,
+000126 | 							String torikesiNo,
+000127 | 							String torikeshiSyurui,
+000128 | 							String kisanbi,
+000129 | 							String gentenBr,
+000130 | 							
+000131 | 							LoginInfoBean loginInfo,
+000132 | 							
+000133 | 							Connection con) throws Exception {
+000134 | 		//引数のセット	
+000135 | 		this.woKozaNo          = kozaNo;
+000136 | 		this.woTegataNo        = tegataNo;
+000137 | 		this.woTegataSyurui    = tegataSyurui;
+000138 | 		this.woMaisu           = maisu;
+000139 | 		this.woKubun           = kubun;
+000140 | 		this.woTesuryou        = tesuryou;
+000141 | 		this.woTesuryoJidou    = tesuryoJidou;
+000142 | 		this.woUchiake         = uchiake;
+000143 | 		this.woJuyoSyurui      = juyoSyurui;
+000144 | 		this.woTorikesiNo      = torikesiNo;
+000145 | 		this.woTorikeshiSyurui = torikeshiSyurui;
+000146 | 		this.woKisanbi         = kisanbi;
+000147 | 		this.woGentenBr        = gentenBr;
+000148 | 			
+000149 | 		this.loginInfo			=loginInfo;
+000150 | 			
+000151 | 			setWebon(con);
+000152 | 			
+000153 | 	}
+000154 | 	/**
+000155 | 	 * 以下の情報を元に手形小切手登録を行う
+000156 | 	 * 各パラメータは事前に設定要
+000157 | 	 * 
+000158 | 	 * @param con
+000159 | 	 * @throws Exception
+000160 | 	 */
+000161 | 	public void setWebon(Connection con) throws Exception {
+000162 | 		
+000163 | 		//起動チェック 必須項目がセットされているか
+000164 | 		if (woKozaNo == null) {throw new Exception("口座番号が設定されていません");}
+000165 | 		if (woTegataNo == null) {throw new Exception("手形小切手種類が設定されていません");}
+000166 | 		if (operationId == null) {throw new Exception("オペレーションＩＤが設定されていません");}
+000167 | 		if (con == null) {throw new Exception("ＤＢコネクションが設定されいません");}
+000168 | 		if (loginInfo == null) {throw new Exception("ログイン情報が設定されていません");}
+000169 | 		
+000170 | 		//Webon問合せ実行
+000171 | 		getWebon(con);
+000172 | 	}
+000173 | 
+000174 | 	/**
+000175 | 	 * Webon取得メソッド
+000176 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000177 | 	 * 
+000178 | 	 * @param req リクエスト
+000179 | 	 * @param res レスポンス
+000180 | 	 * @throws Exception 
+000181 | 	 */
+000182 | 	private void getWebon(Connection con) throws Exception {
+000183 | 		
+000184 | 		//WebonBaseの取得
+000185 | 		webonBase = new WebonBase(operationId, loginInfo, con);
+000186 | 		//設定値
+000187 | 		if(woKozaNo != null){webonBase.put("口座番号",woKozaNo);}
+000188 | 		if(woTegataNo != null){webonBase.put("手形小切手番号",woTegataNo);}
+000189 | 		if(woTegataSyurui != null){webonBase.put("手形小切手種類",woTegataSyurui);}
+000190 | 		if(woMaisu != null){webonBase.put("手形小切手枚数",woMaisu);}
+000191 | 		if(woKubun != null){webonBase.put("手数料徴求区分",woMaisu);}
+000192 | 		if(woKubun != null){webonBase.put("手数料",woKubun);}
+000193 | 		if(woTesuryou != null){webonBase.put("手数料自動徴求",woTesuryou);}
+000194 | 		if(woTesuryoJidou != null){webonBase.put("手数料内訳",woTesuryoJidou);}
+000195 | 		if(woUchiake != null){webonBase.put("重要印刷物種類",woUchiake);}
+000196 | 		if(woTorikeshiSyurui != null){webonBase.put("取消手形番号",woTorikeshiSyurui);}
+000197 | 		if(woTorikesiNo != null){webonBase.put("取消手形種類C",woTorikesiNo);}
+000198 | 		if(woKisanbi != null){webonBase.put("起算日",woKisanbi);}
+000199 | 		if(woGentenBr != null){webonBase.put("原店番号",woGentenBr);}
+000200 | 		//問い合わせ
+000201 | 		webonBase.doQuery();
+000202 | 		
+000203 | 		//エラー処理
+000204 | 		if (!webonBase.checkResult()) {
+000205 | 			//エラーコード等をセット
+000206 | 			WebonException e = createWoException("発行手形・小切手登録エラー", ERRLEVEL_ERROR, ERRSPOT_WOGET);
+000207 | 			//エラー処理は上位に任せる
+000208 | 			throw e;
+000209 | 		}
+000210 | 	}
+000211 | 
+000212 | 
+000213 | 
+000214 | 	//以下UTILITY
+000215 | 	//以下、ユーティリティ的メソッド
+000216 | 	/**
+000217 | 	 * エラー生成メソッド
+000218 | 	 * @param String	エラーメッセージ
+000219 | 	 * @param int		エラーレベル
+000220 | 	 * @param String	エラー箇所
+000221 | 	 */
+000222 | 	private WebonException createWoException(String msg ,int el, String es){
+000223 | 		//エラーコード等をセット
+000224 | 		WebonException e = new WebonException(msg,webonBase);
+000225 | 		//顧客を特定する情報をセット
+000226 | 		e.setOperationId(operationId);
+000227 | 	//	e.setBrno(woBrno);
+000228 | 	//	e.setCif(woCif);
+000229 | 		e.setErrStat(el);
+000230 | 		e.setErrSpot(es);
+000231 | 		//エラー処理は上位に任せる
+000232 | 		return e;
+000233 | 	}
+000234 | 
+000235 | }

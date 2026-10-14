@@ -1,0 +1,161 @@
+000001 | /*
+000002 |  * 作成日: 2014/02/20
+000003 |  *
+000004 |  */
+000005 | package common.util;
+000006 | 
+000007 | import java.sql.Connection;
+000008 | import java.sql.SQLException;
+000009 | import java.util.ArrayList;
+000010 | import java.util.Calendar;
+000011 | import java.util.List;
+000012 | import java.util.Map;
+000013 | 
+000014 | import javax.naming.InitialContext;
+000015 | 
+000016 | import common.CommonConst;
+000017 | import common.FWLog;
+000018 | import common.base.SelectSaijitsuBase;
+000019 | 
+000020 | /**
+000021 |  * 日付計算クラス
+000022 |  *
+000023 |  * @author Minori米持
+000024 |  *
+000025 |  */
+000026 | public class DateArithmetic {
+000027 | 
+000028 | 	/** このクラスのシングルトンオブジェクト */
+000029 | 	private static final DateArithmetic da = new DateArithmetic();
+000030 | 
+000031 | 	/**
+000032 | 	 *  休日リスト（※土日は含まない
+000033 | 	 *  例：「2014/05/03」は祝日だが土曜のため、リストにはない
+000034 | 	 */
+000035 | 	private List lsSaijitsu;
+000036 | 
+000037 | 	/**
+000038 | 	 * コンストラクタ
+000039 | 	 * 祭日を取得して保持する。
+000040 | 	 */
+000041 | 	private DateArithmetic(){
+000042 | 		Connection con = null;
+000043 | 		List ls = new ArrayList();
+000044 | 
+000045 | 		try {
+000046 | 			//Connectionの取得
+000047 | 			con = CommonUtil.getConnection(new InitialContext(), CommonConst.JDBC_ORACLE_SP2NM);
+000048 | 
+000049 | 			//祭日の取得
+000050 | 			SelectSaijitsuBase base = new SelectSaijitsuBase(con);
+000051 | 			base.select();
+000052 | 			for(int i=0;i<base.getList().size();i++){
+000053 | 				Map map = (Map)base.getList().get(i);
+000054 | 				ls.add((String)map.get("日付"));
+000055 | 			}
+000056 | 			setLsSaijitsu(ls);
+000057 | 			
+000058 | 		} catch (Exception e) {
+000059 | 			FWLog.error(e);
+000060 | 		} finally {
+000061 | 			try {
+000062 | 				if (con != null) con.close();
+000063 | 				con = null;
+000064 | 			} catch (SQLException e1) {
+000065 | 				FWLog.error(e1);
+000066 | 			}
+000067 | 		}
+000068 | 	}
+000069 | 
+000070 | 	private List getLsSaijitsu() {
+000071 | 		return lsSaijitsu;
+000072 | 	}
+000073 | 	public void setLsSaijitsu(List lsSaijitsu) {
+000074 | 		this.lsSaijitsu = lsSaijitsu;
+000075 | 	}
+000076 | 
+000077 | 	/**
+000078 | 	 * 営業日の計算をして、日付を返却する。
+000079 | 	 * ※正しく判定する為には、「DB2.Ｕ祭日」の日付の登録が必須
+000080 | 	 * 
+000081 | 	 * @param code 基準日付(YYYYMMDD)
+000082 | 	 * @param niti	計算値
+000083 | 	 * 				 1 → 基準日付の翌営業日
+000084 | 	 * 			 	-3 → 基準日付の３営業日前
+000085 | 	 * 
+000086 | 	 * @return 計算結果日付
+000087 | 	 */
+000088 | 	public static String calcEigyoDate(String date , int niti){
+000089 | 
+000090 | 		//計算値が０の場合は""を返却
+000091 | 		if(niti == 0) {return "";}
+000092 | 
+000093 | 		//日付に妥当性がない場合は""を返却
+000094 | 		if(!CommonConverter.checkDate(date)) {return "";}
+000095 | 
+000096 | 		boolean bSaijitu = false;
+000097 | 		String yyyy = "";
+000098 | 		String mm = "";
+000099 | 		String dd = "";
+000100 | 		String yyyyMMdd = "";
+000101 | 		int count = niti;
+000102 | 		
+000103 | 		Calendar cal = Calendar.getInstance();
+000104 | 		int sysYear = CommonConverter.convertInt(date.substring(0,4));
+000105 | 		int sysMonth = CommonConverter.convertInt(date.substring(4,6));
+000106 | 		int sysDate = CommonConverter.convertInt(date.substring(6,8));
+000107 | 		cal.set(sysYear,sysMonth-1,sysDate);
+000108 | 
+000109 | 		//正の数の場合
+000110 | 		if(count > 0){
+000111 | 			while(count > 0){
+000112 | 				cal.add(Calendar.DAY_OF_MONTH, 1);
+000113 | 
+000114 | 				yyyy = String.valueOf(cal.get(Calendar.YEAR));
+000115 | 				mm = CommonConverter.getAdd0String(String.valueOf(cal.get(Calendar.MONTH)+1),2);
+000116 | 				dd = CommonConverter.getAdd0String(String.valueOf(cal.get(Calendar.DATE)),2);
+000117 | 				yyyyMMdd = yyyy + mm + dd;
+000118 | 				
+000119 | 				//土日の判定
+000120 | 				if(Calendar.SUNDAY != cal.get(Calendar.DAY_OF_WEEK) && Calendar.SATURDAY != cal.get(Calendar.DAY_OF_WEEK)){
+000121 | 
+000122 | 					//休日の判定（休日はtrue）
+000123 | 					bSaijitu = false;
+000124 | 					for(int i=0;i < da.getLsSaijitsu().size();i++){
+000125 | 						if(yyyyMMdd.equals((String)da.getLsSaijitsu().get(i))){bSaijitu = true;}
+000126 | 					}
+000127 | 					if(!bSaijitu){
+000128 | 						count--;
+000129 | 					}
+000130 | 				}			
+000131 | 			}
+000132 | 
+000133 | 		//負の数の場合
+000134 | 		}else{
+000135 | 			while(count < 0){
+000136 | 				cal.add(Calendar.DAY_OF_MONTH, -1);
+000137 | 
+000138 | 				yyyy = String.valueOf(cal.get(Calendar.YEAR));
+000139 | 				mm = CommonConverter.getAdd0String(String.valueOf(cal.get(Calendar.MONTH)+1),2);
+000140 | 				dd = CommonConverter.getAdd0String(String.valueOf(cal.get(Calendar.DATE)),2);
+000141 | 				yyyyMMdd = yyyy + mm + dd;
+000142 | 
+000143 | 				//土日の判定
+000144 | 				if(Calendar.SUNDAY != cal.get(Calendar.DAY_OF_WEEK) && Calendar.SATURDAY != cal.get(Calendar.DAY_OF_WEEK)){
+000145 | 
+000146 | 					//休日の判定（休日はtrue）
+000147 | 					bSaijitu = false;
+000148 | 					for(int i=0;i < da.getLsSaijitsu().size();i++){
+000149 | 						if(yyyyMMdd.equals((String)da.getLsSaijitsu().get(i))){bSaijitu = true;}
+000150 | 					}
+000151 | 					if(!bSaijitu){
+000152 | 						count++;
+000153 | 					}
+000154 | 				}			
+000155 | 			}
+000156 | 		}
+000157 | 		
+000158 | 		return yyyyMMdd;
+000159 | 	}
+000160 | 
+000161 | }

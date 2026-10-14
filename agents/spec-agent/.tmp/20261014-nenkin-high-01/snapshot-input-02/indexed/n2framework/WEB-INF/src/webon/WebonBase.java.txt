@@ -1,0 +1,1066 @@
+000001 | package webon;
+000002 | 
+000003 | import java.io.BufferedInputStream;
+000004 | import java.io.IOException;
+000005 | import java.io.StringWriter;
+000006 | import java.io.UnsupportedEncodingException;
+000007 | import java.net.HttpURLConnection;
+000008 | import java.net.URL;
+000009 | import java.net.URLDecoder;
+000010 | import java.net.URLEncoder;
+000011 | import java.sql.Connection;
+000012 | import java.sql.SQLException;
+000013 | import java.util.ArrayList;
+000014 | import java.util.HashMap;
+000015 | import java.util.Iterator;
+000016 | import java.util.List;
+000017 | import java.util.Map;
+000018 | import java.util.Set;
+000019 | 
+000020 | import javax.naming.InitialContext;
+000021 | import javax.naming.NamingException;
+000022 | import javax.xml.parsers.DocumentBuilder;
+000023 | import javax.xml.parsers.DocumentBuilderFactory;
+000024 | import javax.xml.parsers.ParserConfigurationException;
+000025 | import javax.xml.transform.Transformer;
+000026 | import javax.xml.transform.TransformerException;
+000027 | import javax.xml.transform.TransformerFactory;
+000028 | import javax.xml.transform.dom.DOMSource;
+000029 | import javax.xml.transform.stream.StreamResult;
+000030 | 
+000031 | import org.w3c.dom.Document;
+000032 | import org.w3c.dom.Node;
+000033 | import org.xml.sax.SAXException;
+000034 | 
+000035 | import webon.base.InsertPathMngStatBase;
+000036 | import webon.base.SelectFunctionMasterBase;
+000037 | import webon.base.SelectOnlineOperationMastBase;
+000038 | import webon.base.SelectPathMngMstBase;
+000039 | import webon.base.SelectPathMngStatBase;
+000040 | import webon.base.UpdatePathMngStatBase;
+000041 | import webon.util.CastUtil;
+000042 | import webon.base.SelectOperationBranchMstBase;
+000043 | import common.CommonConst;
+000044 | import common.FWLog;
+000045 | import common.bean.LoginInfoBean;
+000046 | import common.util.CommonConverter;
+000047 | import common.util.CommonUtil;
+000048 | 
+000049 | public class WebonBase {
+000050 | 	/**
+000051 | 	* Webon汎用照会　Webon接続用モジュール (ダミー)
+000052 | 	* 
+000053 | 	* @author Minori 加瀬
+000054 | 	* 
+000055 | 	* @date	H24.11.01			新規作成
+000056 | 	* @date R02.02.06	京極		webonのFW化対応
+000057 | 	* 
+000058 | 	* 使い方①
+000059 | 	* 1.インスタンスを取得(getInstance)
+000060 | 	* 2.入力項目を設定(put)
+000061 | 	* 4.問い合わせを実施(doQuery,doQueryPdf)
+000062 | 	* 5.各種結果を取得(getResult～)
+000063 | 	* 
+000064 | 	* 使い方②
+000065 | 	* 1.インスタンス生成(new WebonBase、引数あり)
+000066 | 	* 2.入力項目を設定(put)
+000067 | 	* 4.問い合わせを実施(doQuery,doQueryPdf)
+000068 | 	* 5.各種結果を取得(getResult～)
+000069 | 	* 
+000070 | 	* 使い方③
+000071 | 	* 1.インスタンス生成(new WebonBase、引数なし)
+000072 | 	* 2.クエリ雛形生成(setQuery)
+000073 | 	* 3.入力項目を設定(put)
+000074 | 	* 4.問い合わせを実施(doQuery,doQueryPdf)
+000075 | 	* 5.各種結果を取得(getResult～)
+000076 | 	* 
+000077 | 	*/
+000078 | 	//メンバ変数
+000079 | 	protected String operationId = "";											//オペレーションID
+000080 | 	protected HashMap<String, String> query = new HashMap<String, String>();	//検索用クエリ
+000081 | 	protected String serverUrl = "";											//WEBONサーバのURL文字
+000082 | 	protected String serverUrlHead = "http://";									//WEBONサーバの接頭URL文字
+000083 | 	protected String serverUrlTail = "/woadp/DealFacade?";						//WEBONサーバの接尾URL文字【スケルトンなし】
+000084 | 	protected String serverUrlTailSkelton = "/woadp/DealFacadeSkeleton?";		//WEBONサーバの接尾URL文字【スケルトンあり】
+000085 | 	protected String encodedQueries = "";										//クエリ文字列
+000086 | 	protected HashMap<String, String> result = new HashMap<String, String>();	//戻り値
+000087 | 	public Node outputData=null;												//以下、結果
+000088 | 	public Node editData=null;
+000089 | 	public Node resultId=null;
+000090 | 	public Node message=null;
+000091 | 	public Node opeCode=null;
+000092 | 	public Node tradeName=null;
+000093 | 	public Node uplinkData=null;
+000094 | 	protected BufferedInputStream stream;			//XML生データ＆PDF結果データ
+000095 | 	protected Map<String, List<String>> headers;
+000096 | 	protected boolean XmlFlag=false;				//XML取得＆解析フラグ
+000097 | 
+000098 | 	protected String serverAddress;	//Webonサーバ
+000099 | 	protected String passBrno;			//取引店舗コード
+000100 | 	
+000101 | 	protected boolean BackGroundFlag = false;	//バックグラウンド(子スレッドで取得)の時trueにする
+000102 | 	
+000103 | 	//定数
+000104 | 	private static int RETRY_MAX_ROOT=100;			//無限ループ回避
+000105 | 	//パス取得時のパラメータ
+000106 | 	private static int RETRY_MAX_PATHGET=10;
+000107 | 	private static int RETRY_INTERVAL_PATHGET=5000;	//ミリ秒
+000108 | 	//輻輳タイムアウトエラー時のパラメータ
+000109 | 	private static int RETRY_MAX_TIMEOUTERR=5;
+000110 | 	private static int RETRY_INTERVAL_TIMEOUTERR=1000;	//ミリ秒
+000111 | 	
+000112 | 	/**
+000113 | 	 * コンストラクタ
+000114 | 	 * 
+000115 | 	 * @param Connection
+000116 | 	 */
+000117 | 	public WebonBase (){
+000118 | 	}
+000119 | 	/**
+000120 | 	 * コンストラクタ
+000121 | 	 * 
+000122 | 	 * @param String	オペレーションＩＤ
+000123 | 	 * @param LoginInfoBean		ログイン情報
+000124 | 	 * @param Connection	DB接続
+000125 | 	 */
+000126 | 	public WebonBase (String oid, LoginInfoBean loginInfo, Connection con) throws Exception {
+000127 | 		setQuery (oid, loginInfo, con);
+000128 | 	}
+000129 | 	/**
+000130 | 	 * メンバ変数のqueryからURLエンコードされたクエリを作成し、
+000131 | 	 * encodedQueriesにセットする
+000132 | 	 * 
+000133 | 	 * @throws UnsupportedEncodingException エンコード失敗時
+000134 | 	 */
+000135 | 	public void encodeQuery () throws UnsupportedEncodingException {
+000136 | 		//クエリが空だったら、そのまま復帰
+000137 | 		if (query.isEmpty()) {
+000138 | 			FWLog.warn(getClass(), "クエリがセットされていません");
+000139 | 			return;
+000140 | 		}
+000141 | 		StringBuilder queries = new StringBuilder();
+000142 | 		StringBuilder logQueries = new StringBuilder();
+000143 | 		
+000144 | 		Iterator<String> it = query.keySet().iterator();
+000145 | 		while (it.hasNext()) {
+000146 | 			String key = it.next();
+000147 | 			String value = query.get(key);
+000148 | 			//FWLog.debug(getClass(),"★★★WEBONクエリエンコード　キー："+key+" 値："+value);
+000149 | 			//ログ出力用文字列作成
+000150 | 			logQueries.append(key+"="+value+"&");
+000151 | 			//エンコード実施
+000152 | 			String encKey;
+000153 | 			String encValue;
+000154 | 			try {
+000155 | 				encKey = URLEncoder.encode(key, "UTF-8");
+000156 | 				encValue = URLEncoder.encode(value, "UTF-8");
+000157 | 			} catch (UnsupportedEncodingException e) {
+000158 | 				FWLog.error("URLエンコードに失敗しました 文字列：" + key + " " + value);
+000159 | 				throw e;
+000160 | 			}
+000161 | 			queries.append(encKey+"="+encValue+"&");
+000162 | 		}
+000163 | 		
+000164 | 		//ログ出力
+000165 | 		FWLog.info(getClass(), "Webon問い合わせクエリ(エンコード前)："+ serverUrl + logQueries.toString());		
+000166 | 		//フィールドにセット
+000167 | 		encodedQueries = queries.toString();
+000168 | 		return;
+000169 | 	}
+000170 | 	/**
+000171 | 	 * 与えられたエンコード済みクエリをデコードする
+000172 | 	 * 
+000173 | 	 * @param String URLエンコード済みクエリ
+000174 | 	 * @return String デコード済みクエリ
+000175 | 	 * @throws Exception 
+000176 | 	 */
+000177 | 	public HashMap<String,String> decodeQuery (String encodedQuery) throws Exception {
+000178 | 		String decodedQuery = "";
+000179 | 		HashMap<String,String> query = new HashMap<String,String>();
+000180 | 
+000181 | 		try {
+000182 | 			decodedQuery = URLDecoder.decode(encodedQuery, "UTF-8");
+000183 | 		} catch (UnsupportedEncodingException e) {
+000184 | 			FWLog.error("URLデコードに失敗しました");
+000185 | 			throw e;
+000186 | 		}
+000187 | 		
+000188 | 		//文字列を分割 「&」で分割→「=」で分割
+000189 | 		String[] queries = decodedQuery.split("&");
+000190 | 		for (int i=0; i<queries.length; i++) {
+000191 | 			String[] elements = queries[i].split("=");
+000192 | 			if (elements.length>2) {
+000193 | 				throw new Exception("クエリ分割失敗(分割文字が複数) 文字列:"+queries[i]);
+000194 | 			} else if (elements.length<2) {
+000195 | 				throw new Exception("クエリ分割失敗(分割文字が無い) 文字列:"+queries[i]);
+000196 | 			}
+000197 | 			query.put(elements[0], elements[1]);
+000198 | 		}
+000199 | 		return query;
+000200 | 	}
+000201 | 	/**
+000202 | 	 * Webonに指定されたクエリで問い合わせを行う(非推奨)
+000203 | 	 *  
+000204 | 	 * @throws Exception 
+000205 | 	 */
+000206 | 	public void doQuery () throws Exception {
+000207 | 
+000208 | 		//PDF取得との共通のため、どうするか？
+000209 | 		doQueryPdf();
+000210 | 		
+000211 | 		return;
+000212 | 	}
+000213 | 	/**
+000214 | 	 * Webonに指定されたクエリで問い合わせを行う
+000215 | 	 * パス輻輳によるタイムアウトが発生した場合はリトライを行う
+000216 | 	 *  
+000217 | 	 * @throws Exception 
+000218 | 	 */
+000219 | 	public void doQueryPdf () throws Exception {
+000220 | 		
+000221 | 		for (int i=1;i<RETRY_MAX_ROOT;i++){		//無限ループ回避用
+000222 | 		
+000223 | 			//制限数分リトライチェック
+000224 | 			if (RETRY_MAX_TIMEOUTERR!=0 && i>RETRY_MAX_TIMEOUTERR) {
+000225 | 				//リトライオーバーのエラー処理
+000226 | 				StringBuilder sb = new StringBuilder();
+000227 | 				sb.append("輻輳により、Webonへの問い合わせが完了しませんでした。");
+000228 | 				sb.append(" 接続先：").append(serverAddress);
+000229 | 				sb.append(" 取引店舗コード：").append(passBrno);
+000230 | 				sb.append(" リトライ回数：").append(i-1);
+000231 | 				throw new Exception(sb.toString());
+000232 | 			}
+000233 | 			//結果判定 輻輳エラーが出手いなければループを抜ける
+000234 | 			//輻輳エラーの場合はリトライ続行
+000235 | 
+000236 | 			//問い合わせ本体
+000237 | 			doQueryExecute();
+000238 | 			
+000239 | 			if (!checkFukusoErr()) {
+000240 | 				break;
+000241 | 			}
+000242 | 			//５秒SLEEP
+000243 | 			retrySleep(RETRY_INTERVAL_TIMEOUTERR);
+000244 | 		
+000245 | 		}
+000246 | 		return;
+000247 | 	}
+000248 | 	/**
+000249 | 	 * Webonに指定されたクエリで問い合わせを行う(XML、PDF兼用)
+000250 | 	 *  
+000251 | 	 * @throws IOException 
+000252 | 	 * @throws Exception 
+000253 | 	 */
+000254 | 	public void doQueryExecute () throws Exception {
+000255 | 
+000256 | 		//コネクションを独自に取得
+000257 | 		InitialContext ic = new InitialContext();
+000258 | 		Connection con=getConnection(ic, CommonConst.JDBC_ORACLE_SP2NM);
+000259 | 
+000260 | 		//コネクションを独自に取得しているので、エラー処理も独自に行う
+000261 | 		try{
+000262 | 			
+000263 | 			//WEBONサーバのパスが使用可能かどうかを取得する
+000264 | 			for (int i=1;i<RETRY_MAX_ROOT;i++){		//無限ループ回避用
+000265 | 				if (getWebonPath(serverAddress,con)) {
+000266 | 					//パスが取得できたらループを抜ける
+000267 | 					break;
+000268 | 				}
+000269 | 				
+000270 | 				//リトライチェック
+000271 | 				if (RETRY_MAX_PATHGET!=0 && i>RETRY_MAX_PATHGET) {
+000272 | 					//リトライオーバーのエラー処理
+000273 | 					StringBuilder sb = new StringBuilder();
+000274 | 					sb.append("WEBONサーバへの接続パスが取得できませんでした。");
+000275 | 					sb.append(" 接続先：").append(serverAddress);
+000276 | 					sb.append(" 取引店舗コード：").append(passBrno);
+000277 | 					sb.append(" リトライ回数：").append(i-1);
+000278 | 					throw new Exception(sb.toString());
+000279 | 				}
+000280 | 				//５秒SLEEP
+000281 | 				retrySleep(RETRY_INTERVAL_PATHGET);
+000282 | 			}
+000283 | 			
+000284 | 			//WEBONパス取得後のエラー処理
+000285 | 			//エラー発生時は必ずパスを開放する
+000286 | 			try {
+000287 | 			
+000288 | 				//クエリのエンコードを実施
+000289 | 				encodeQuery();
+000290 | 				
+000291 | 				URL url = new URL(serverUrl + encodedQueries);
+000292 | 				//HTTPコネクションを実施
+000293 | 				HttpURLConnection httpCon = (HttpURLConnection)url.openConnection();
+000294 | 				httpCon.setRequestMethod("GET");
+000295 | 				httpCon.setInstanceFollowRedirects(false);
+000296 | 				httpCon.setRequestProperty("Accept-Language", "ja");
+000297 | 				FWLog.info(getClass(), "Webon問合せ："+ serverUrl + encodedQueries);
+000298 | 				httpCon.connect();
+000299 | 				
+000300 | 				//ヘッダ情報の取得
+000301 | 				headers = httpCon.getHeaderFields(); 
+000302 | 				FWLog.info(getClass(), "結果Content-type："+getContentType());
+000303 | 				//結果のInputStreamを取得
+000304 | 				stream = new BufferedInputStream(httpCon.getInputStream());
+000305 | 				
+000306 | 				//結果がXMLだったら、解析する
+000307 | 				if (getContentType().startsWith("application/xml")) {
+000308 | 					analyzeXml();
+000309 | 					XmlFlag=true;
+000310 | 				} else {
+000311 | 					XmlFlag=false;
+000312 | 				}
+000313 | 	
+000314 | 			}catch (Exception e){
+000315 | 				throw e;
+000316 | 			} finally {
+000317 | 				//パス管理を開放する
+000318 | 				releasWebonPath(serverAddress,con);
+000319 | 			}
+000320 | 			//パス管理取得後のエラー処理ここまで
+000321 | 		
+000322 | 		} catch (Exception e) {
+000323 | 			try {
+000324 | 				if (con != null) con.rollback();
+000325 | 			} catch (SQLException e1) {
+000326 | 				FWLog.error(e1);
+000327 | 			}
+000328 | 			throw e;
+000329 | 		} finally {
+000330 | 			try {
+000331 | 				if (con != null) con.close();
+000332 | 				con = null;
+000333 | 			} catch (SQLException e1) {
+000334 | 				FWLog.error(e1);
+000335 | 			}
+000336 | 		}
+000337 | 		//コネクション取得後のエラー処理ここまで
+000338 | 		
+000339 | 	}
+000340 | 	/**
+000341 | 	 * Webonに指定されたクエリで問い合わせを行う
+000342 | 	 *  
+000343 | 	 * @return CustomerInfoBean 検索結果
+000344 | 	 * @throws IOException 
+000345 | 	 * @throws ParserConfigurationException 
+000346 | 	 * @throws SAXException 
+000347 | 	 */
+000348 | 	public void analyzeXml() throws IOException, ParserConfigurationException, SAXException {
+000349 | 
+000350 | 		//ドキュメントの生成
+000351 | 		DocumentBuilder builder = null;
+000352 | 		try {
+000353 |             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+000354 |             builder = factory.newDocumentBuilder();
+000355 |         } catch (ParserConfigurationException e) {
+000356 |             throw e;
+000357 |         }
+000358 |         Document document = null;
+000359 |         try {
+000360 |             document = builder.parse( stream );
+000361 |         } catch (SAXException e) {
+000362 |             throw e;
+000363 |         } 
+000364 |         Node root=document.getDocumentElement();
+000365 |         Node child = root.getFirstChild();
+000366 |         //子ノードのノード名により、それぞれメンバに振分
+000367 |         while (true) {
+000368 |         	//取得できなかったら終わり
+000369 |         	if (child==null){break;}
+000370 |        	if (child.getNodeName().equals("出力データ")) {
+000371 |         		outputData=child;
+000372 |         	} else if (child.getNodeName().equals("編集データ")) {
+000373 |         		editData=child;
+000374 |         	} else if (child.getNodeName().equals("結果識別")) {
+000375 |         		resultId=child;
+000376 |         	} else if (child.getNodeName().equals("メッセージ")) {
+000377 |         		message=child;
+000378 |         	} else if (child.getNodeName().equals("オペコード")) {
+000379 |         		opeCode=child;
+000380 |         	} else if (child.getNodeName().equals("取引名")) {
+000381 |         		tradeName=child;
+000382 |         	} else if (child.getNodeName().equals("上りデータ")) {
+000383 |         		uplinkData=child;
+000384 |         	}
+000385 |         	//次の子ノードを取得
+000386 |         	child = child.getNextSibling();
+000387 |         }
+000388 | 		
+000389 | 		return;
+000390 | 	}
+000391 | 	/**
+000392 | 	 * クエリの雛形を作成する
+000393 | 	 * 
+000394 | 	 * @param String オペレーションＩＤ
+000395 | 	 * @param LoginInfoBean ログイン情報
+000396 | 	 * @param Connection DBコネクション
+000397 | 	 * @throws Exception 
+000398 | 	 */
+000399 | 	public void setQuery(String oid, LoginInfoBean loginInfo, Connection con)	throws Exception{
+000400 | 			//オペレーションIDを設定
+000401 | 			operationId = oid;
+000402 | 			
+000403 | 		try{
+000404 | 			//NAVI.ＵＭ機能マスタから開発機か本番機かの判定用フラグを取得
+000405 | 			SelectFunctionMasterBase baseSelectFunctionMaster = new SelectFunctionMasterBase(con);
+000406 | 			baseSelectFunctionMaster.selectValueByFunctionIdAndKey("NAVICOMMON","本番切替フラグ");
+000407 | 			List<Map<String,String>> lsFunctionMaster = CastUtil.genelicToStringList2(baseSelectFunctionMaster.getList());
+000408 | 			
+000409 | 			Map<String,String> mapFunctionMaster = lsFunctionMaster.get(0);
+000410 | 			String modeFlg = mapFunctionMaster.get("値");
+000411 | 			
+000412 | 			//所属店番
+000413 | 			String branchNo = CommonConverter.getAdd0String(loginInfo.get所属店番(),3);
+000414 | 			
+000415 | 			//ユーザの所属店番をキーに、稼動店舗マスタＤＢからサーバのＩＰアドレスと取引店舗コードを取得する。
+000416 | 			SelectOperationBranchMstBase base = new SelectOperationBranchMstBase(con);
+000417 | 			base.selectByBrno(branchNo);
+000418 | 			List<Map<String, String>>list = CastUtil.genelicToStringList2(base.getList());
+000419 | 			
+000420 | 			//取引店舗コードとサーバのアドレスを取得
+000421 | //			String passBrno = "";
+000422 | //			String serverAddress="";
+000423 | 			StringBuilder sbUrl = new StringBuilder();
+000424 | 			if(0<list.size()){
+000425 | 				Map<String, String>map=list.get(0);
+000426 | 				//取引店舗コード
+000427 | 				passBrno=map.get("取引店舗コード");
+000428 | 				//WEBONサーバーＩＰアドレス
+000429 | 				serverAddress=map.get("接続先");
+000430 | 				
+000431 | 				//開発機か本番機かの判定用フラグを元にスケルトンの有無を判定する。
+000432 | 				if(modeFlg.equals("1")){
+000433 | 					//開発機
+000434 | 					//FWLog.debug(getClass(),"★☆★新規開発モード");
+000435 | 					//FWLog.debug(getClass(),"webon－URL:"+sbUrl.append(serverUrlHead).append(serverAddress).append(serverUrlTailSkelton).toString());
+000436 | 					//sbUrl=new StringBuilder();
+000437 | 					sbUrl.append(serverUrlHead).append(serverAddress).append(serverUrlTailSkelton);
+000438 | 					serverUrl=sbUrl.toString();
+000439 | 				}else{
+000440 | 					//本番機
+000441 | 					//FWLog.debug(getClass(),"☆★☆新規本番モード");
+000442 | 					//FWLog.debug(getClass(),"webon－URL:"+sbUrl.append(serverUrlHead).append(serverAddress).append(serverUrlTail).toString());
+000443 | 					//sbUrl=new StringBuilder();
+000444 | 					sbUrl.append(serverUrlHead).append(serverAddress).append(serverUrlTail);
+000445 | 					serverUrl=sbUrl.toString();
+000446 | 				}
+000447 | 			}else{
+000448 | 				StringBuilder sb = new StringBuilder();
+000449 | 				sb.append("ログインしているユーザの所属店番は、稼動店舗マスタＤＢに登録されていません。");
+000450 | 				sb.append(" 所属店番：").append(branchNo);
+000451 | 				String msg = sb.toString();
+000452 | 				FWLog.error(getClass(), msg);
+000453 | 				throw new Exception(msg);
+000454 | 			}
+000455 | 			
+000456 | 			//設定系ＯＰ本番ＵＲＬ変換（一部勘定連動しない設定系ＯＰについては開発機の場合、スケルトンをはずす）
+000457 | 			//統一名寄せ情報照会、諸届証跡照会、残高証明書作成照会、定期解約試算照会、証書貸付返済予定表作成照会
+000458 | 			if(modeFlg.equals("1")){
+000459 | 				if (oid.equals("OP-UNAYOSEJ-0001") || oid.equals("OP-UNAYOSEJ-0002") || oid.equals("OP-UNAYOSEJ-0003") || oid.equals("OP-UNAYOSEJ-0004")
+000460 | 						|| oid.equals("OP-SYOTODOPDF-01") || oid.equals("OP-ZANDAKA-0001") || oid.equals("OP-TEIKIKAI-0001") || oid.equals("OP-SHGASIHE-0001")) {
+000461 | 					StringBuilder sbUrl2 = new StringBuilder();
+000462 | 					sbUrl2.append(serverUrlHead).append(serverAddress).append(serverUrlTail);
+000463 | 					serverUrl=sbUrl2.toString();
+000464 | 					FWLog.info(getClass(), "＊＊＊＊＊統一顧客照会、諸届証跡照会のため、ServerUrlを書き換えます＊＊＊＊＊");
+000465 | 					FWLog.info(getClass(), "(試験)書き換え後のURL："+serverUrl);
+000466 | 				}
+000467 | 			}
+000468 | 			
+000469 | 			//オンラインＯＰマスタＤＢから、オペレーションＩＤをキーに必要項目を取得
+000470 | 			SelectOnlineOperationMastBase base1 = new SelectOnlineOperationMastBase(con);
+000471 | 			base1.selectByOperationId(operationId);
+000472 | 			ArrayList<HashMap<String, String>> list1 = new ArrayList<HashMap<String,String>>();
+000473 | 			list1 = CastUtil.genelicToStringList(base1.getList());
+000474 | 			
+000475 | 			//件数チェック
+000476 | 			if (list1.size()<1){
+000477 | 				StringBuilder sb = new StringBuilder();
+000478 | 				sb.append("該当するオペレーションＩＤがありません。");
+000479 | 				sb.append(" オペレーションＩＤ：").append(operationId);
+000480 | 				String msg = sb.toString();
+000481 | 				FWLog.error(getClass(), msg);
+000482 | 				throw new Exception(msg);
+000483 | 			}
+000484 | 			
+000485 | 			//1件目をクエリ（マップ）の結果として取得
+000486 | 			query = list1.get(0);
+000487 | 			//不要項目を削除
+000488 | 			query.remove("オペレーションＩＤ");
+000489 | 			query.remove("コメント");
+000490 | 			
+000491 | 			//職員コードを取得
+000492 | 			String staffCode = loginInfo.get職員番号();
+000493 | 			query.put("職員コード", staffCode);
+000494 | 
+000495 | 			//取引店舗を取得
+000496 | 			//=====================================本番用=========================================//
+000497 | 			query.put("取引店舗コード", passBrno);
+000498 | 			//====================================================================================//
+000499 | 			
+000500 | 			//====================================試験用==========================================//
+000501 | 			//query.put("取引店舗コード", FixedValue.WEBON_BRNO);				//試験用固定値
+000502 | 			//====================================================================================//
+000503 | 			
+000504 | 		} catch (Exception e) {
+000505 | 			FWLog.error(getClass(), "クエリ作成に失敗しました。");
+000506 | 			throw e;
+000507 | 		}
+000508 | 		
+000509 | 		return;
+000510 | 	}
+000511 | 	/**
+000512 | 	 * クエリに項目を追加する
+000513 | 	 * 
+000514 | 	 * @param String 項目名
+000515 | 	 * @param String 項目にセットする内容
+000516 | 	 * @throws Exception 設定できないキー項目が指定された場合
+000517 | 	 */
+000518 | 	public void put(String key, String value) throws Exception{
+000519 | 		//クエリに項目を追加
+000520 | 		query.put(key, value);
+000521 | 		//FWLog.debug(getClass(),"★★★WEBON項目値設定　キー："+key+" 値："+value);
+000522 | 
+000523 | 		//原店番号チェック
+000524 | 		//原店番号が、取引店舗コードと同一だった場合は、原店番号を設定しない
+000525 | 		if (key.equals("原店番号")){
+000526 | 			if (query.get("原店番号").equals(query.get("取引店舗コード"))) {
+000527 | 				FWLog.debug(getClass(), "原店番号=取引店舗コードのため、原店番号の設定をはずします。");
+000528 | 				query.put("原店番号","");
+000529 | 			}
+000530 | 		}
+000531 | 		
+000532 | 	}
+000533 | 	/**
+000534 | 	 * クエリの項目を参照する
+000535 | 	 * 
+000536 | 	 * @param String 項目名
+000537 | 	 * @return String クエリにセットされている内容、未設定の場合Null
+000538 | 	 */
+000539 | 	public String get(String key) {
+000540 | 		if (query.containsKey(key)) {
+000541 | 			return query.get(key);
+000542 | 		} else {
+000543 | 			return null;
+000544 | 		}
+000545 | 	}
+000546 | 	/**
+000547 | 	 * クエリに項目を追加する
+000548 | 	 * 
+000549 | 	 * @param HashMap<String,String> 項目名と内容のセット
+000550 | 	 * @throws Exception 設定できないキー項目が指定された場合
+000551 | 	 */
+000552 | 	public void put(HashMap<String,String> map) throws Exception{
+000553 | 		String key;
+000554 | 		String value;
+000555 | 		Set<String> ks = map.keySet();
+000556 | 		for (Iterator<String> ksIt = ks.iterator(); ksIt.hasNext();) {
+000557 | 			key=ksIt.next();
+000558 | 			value=map.get(key);
+000559 | 			this.put(key,value);
+000560 | 		}
+000561 | 	}
+000562 | 	/**
+000563 | 	 * 取得結果を返却する
+000564 | 	 *  
+000565 | 	 * @return HashMap<String, String> Webonへの問い合わせ結果
+000566 | 	 */
+000567 | 	public HashMap<String, String> getResult() {
+000568 | 		return result;
+000569 | 	}
+000570 | 	/**
+000571 | 	 * クエリ雛形設定済みインスタンスを生成する
+000572 | 	 * 
+000573 | 	 * @param String オペレーションＩＤ
+000574 | 	 * @param LLoginInfoBean ログイン情報
+000575 | 	 * @param Connection DBコネクション
+000576 | 	 * @return WebonBase 生成したインスタンス
+000577 | 	 * @throws Exception 
+000578 | 	 */
+000579 | 	public static WebonBase getInstance(String operationId, LoginInfoBean loginInfo, Connection con)	throws Exception{
+000580 | 		WebonBase wob = new WebonBase(operationId, loginInfo, con);
+000581 | 		return wob;
+000582 | 	}
+000583 | 	/**
+000584 | 	 * 結果取得用ゲッタ
+000585 | 	 * 
+000586 | 	 * @return Node XML解析結果
+000587 | 	 */
+000588 | 	public Node getOutputData() {
+000589 | 		return outputData;
+000590 | 	}
+000591 | 	public Node getEditData() {
+000592 | 		return editData;
+000593 | 	}
+000594 | 	public Node getResultId() {
+000595 | 		return resultId;
+000596 | 	}
+000597 | 	public Node getMessage() {
+000598 | 		return message;
+000599 | 	}
+000600 | 	public Node getOpeCode() {
+000601 | 		return opeCode;
+000602 | 	}
+000603 | 	public Node getTradeName() {
+000604 | 		return tradeName;
+000605 | 	}
+000606 | 	public Node getUplinkData() {
+000607 | 		return uplinkData;
+000608 | 	}
+000609 | 	/**
+000610 | 	 * 結果の成否
+000611 | 	 * 
+000612 | 	 * @return boolean XML取得結果
+000613 | 	 */
+000614 | 	public boolean checkResult() {
+000615 | 		boolean res=false;
+000616 | 		if (resultId!=null){
+000617 | 			if (resultId.getFirstChild().getNodeValue().equals("正常")){
+000618 | 				res=true;
+000619 | 			}
+000620 | 		}
+000621 | 		return res;
+000622 | 	}
+000623 | 	/**
+000624 | 	 * 結果の取得
+000625 | 	 * @return String 結果のString
+000626 | 	 */
+000627 | 	public String getStringResult(){
+000628 | 		return getChildText(resultId);
+000629 | 	}
+000630 | 	/**
+000631 | 	 * WEBONメッセージ項目をStringで取得
+000632 | 	 * 
+000633 | 	 * @return String エラーメッセージ(正常値)
+000634 | 	 * 
+000635 | 	 */
+000636 | 	public String getErrMessage(){
+000637 | 		String result=null;
+000638 | 		String code=null;
+000639 | 		String detail=null;
+000640 | 		//結果識別解析
+000641 | 		result=getChildText(resultId);
+000642 |         //メッセージ解析
+000643 | //        Node child = message.getFirstChild();
+000644 | //        //子ノードのノード名により、それぞれメンバに振分
+000645 | //        while (true) {
+000646 | //        	//取得できなかったら終わり
+000647 | //        	if (child==null){break;}
+000648 | //        	if (child.getNodeName().equals("コード")) {
+000649 | //        		code=getChildText(child);
+000650 | //        		if (code==null) { code="";}
+000651 | //        	} else if (child.getNodeName().equals("詳細")) {
+000652 | //        		detail=getChildText(child);
+000653 | //        		if (detail==null) { detail="";}
+000654 | //        	}
+000655 | //        	//次の子ノードを取得
+000656 | //        	child = child.getNextSibling();
+000657 | //        }
+000658 | 		//それぞれ個別メソッド化(2014.01.06)
+000659 | 		code=getErrCode();
+000660 | 		detail=getErrDetail();
+000661 |         
+000662 | 		StringBuilder sb = new StringBuilder();
+000663 | 		sb.append(" 結果識別：").append(result);
+000664 | 		sb.append(" コード：").append(code);
+000665 | 		sb.append(" 詳細：").append(detail);
+000666 | 		
+000667 | 		return sb.toString();
+000668 | 	}
+000669 | 	/**
+000670 | 	 * WEBONエラーコードを取得
+000671 | 	 * 
+000672 | 	 * @return String エラーメッセージ詳細
+000673 | 	 */
+000674 | 	public String getErrCode(){
+000675 | 		String code=null;
+000676 |         //メッセージ解析
+000677 |         Node child = message.getFirstChild();
+000678 |         //子ノードのノード名により、それぞれメンバに振分
+000679 |         while (true) {
+000680 |         	//取得できなかったら終わり
+000681 |         	if (child==null){break;}
+000682 |            	if (child.getNodeName().equals("コード")) {
+000683 |         		code=getChildText(child);
+000684 |         		if (code==null) { code="";}
+000685 |          	}
+000686 |         	//次の子ノードを取得
+000687 |         	child = child.getNextSibling();
+000688 |         }
+000689 | 		return code;
+000690 | 	}
+000691 | 	/**
+000692 | 	 * WEBONエラーの詳細を取得
+000693 | 	 * 
+000694 | 	 * @return String エラーメッセージ詳細
+000695 | 	 */
+000696 | 	public String getErrDetail(){
+000697 | 		String detail=null;
+000698 |         //メッセージ解析
+000699 |         Node child = message.getFirstChild();
+000700 |         //子ノードのノード名により、それぞれメンバに振分
+000701 |         while (true) {
+000702 |         	//取得できなかったら終わり
+000703 |         	if (child==null){break;}
+000704 |         	if (child.getNodeName().equals("詳細")) {
+000705 |         		detail=getChildText(child);
+000706 |         		if (detail==null) { detail="";}
+000707 |         	}
+000708 |         	//次の子ノードを取得
+000709 |         	child = child.getNextSibling();
+000710 |         }
+000711 | 		return detail;
+000712 | 	}
+000713 | 	/**
+000714 | 	 * ＰＤＦ結果の取得
+000715 | 	 * 
+000716 | 	 * @return BufferedInputStream ＰＤＦ等取得結果
+000717 | 	 */
+000718 | 	public BufferedInputStream getStream() {
+000719 | 		return stream;
+000720 | 	}
+000721 | 	/**
+000722 | 	 * ヘッダー情報の取得
+000723 | 	 * 
+000724 | 	 * @return Map<String, List<String>> ＰＤＦ等取得結果
+000725 | 	 */
+000726 | 	public Map<String, List<String>> getHeaders() {
+000727 | 		return headers;
+000728 | 	}
+000729 | 	/**
+000730 | 	 * Content-type(ヘッダー情報)の取得
+000731 | 	 * 
+000732 | 	 * @return Map<String, List<String>> ＰＤＦ等取得結果
+000733 | 	 */
+000734 | 	public String getContentType() {
+000735 | 		return headers.get("Content-Type").get(0);
+000736 | 	}
+000737 | 
+000738 | 	/**
+000739 | 	 * Nodeの直下にあるテキストエレメントのVALUEを取得する
+000740 | 	 * 
+000741 | 	 * @param Node 親ノード
+000742 | 	 * @return String VALUE値
+000743 | 	 */
+000744 | 	public static String getChildText(Node elem) {
+000745 | 		String textValue="";
+000746 | 		Node child =elem.getFirstChild();
+000747 |         while (true) {
+000748 |         	//取得できてなかったら終わり
+000749 |         	if (child==null){break;}
+000750 | 	     	if (child.getNodeType()==Node.TEXT_NODE){
+000751 |         		textValue=child.getNodeValue();
+000752 |         		break;
+000753 |         	}
+000754 |         	//次の子ノードを取得
+000755 |         	child = child.getNextSibling();
+000756 |         }
+000757 | 		return textValue;
+000758 | 	}
+000759 | 	/**
+000760 | 	 * 未編集のXMLデータをStringWriterとして取得
+000761 | 	 * @return StringWriter 未編集XMLをテキスト変換したソース
+000762 | 	 */
+000763 |     public StringWriter getSourceWriter() throws TransformerException {
+000764 |         Node srcNode = outputData;
+000765 |         
+000766 |         StringWriter writer = new StringWriter();
+000767 |         
+000768 |         Transformer transformer = TransformerFactory.newInstance().newTransformer();
+000769 |         transformer.transform(new DOMSource(srcNode), new StreamResult(writer));
+000770 |         
+000771 |         //FWLog.info(getClass(),writer.toString() );
+000772 |         return writer;
+000773 |     }
+000774 | 	/**
+000775 | 	 * サーバパス管理ＤＢから、接続可能かどうかを判定・パスの取得を行う
+000776 | 	 * @param String 接続先WEBONサーバＩＰアドレス
+000777 | 	 * @return boolean パスの取得結果
+000778 | 	 * @throws Exception 
+000779 | 	 */
+000780 |     private boolean getWebonPath(String ip,Connection con) throws Exception {
+000781 |     	
+000782 |     	boolean result = false;	//パスの取得成功
+000783 |     	
+000784 |     	//パス管理マスタから、該当店舗の最大パス数を取得する
+000785 | 		SelectPathMngMstBase base1 = new SelectPathMngMstBase(con);
+000786 | 		base1.selectPathMax(ip);
+000787 | 		List<Map<String, String>>list1 = CastUtil.genelicToStringList2(base1.getList());
+000788 |    	
+000789 |     	if (list1.size()!=1) {
+000790 | 			StringBuilder sb = new StringBuilder();
+000791 | 			sb.append("データベース レコード数異常");
+000792 | 			sb.append(" ＤＢ名：").append(SelectPathMngMstBase.DBNAME);
+000793 | 			sb.append(" 接続先：").append(ip);
+000794 | 			sb.append(" レコード数：").append(list1.size());
+000795 | 			throw new SQLException(sb.toString());
+000796 |     	}
+000797 |     	
+000798 |     	Map<String,String> map1 = list1.get(0);
+000799 |     	int pathMax = Integer.parseInt(map1.get(SelectPathMngMstBase.DBKEY_PATHMAX));
+000800 |     	int pathMaxLim = Integer.parseInt(map1.get(SelectPathMngMstBase.DBKEY_LIMPATHMAX));
+000801 |     	
+000802 |     	//パス管理ステータスからロックを取得し、現在の使用パス数を取得する
+000803 |     	//トランザクション開始（ここからロック取得する）
+000804 |     	con.setAutoCommit(false);	//自動コミットOFF
+000805 |     	
+000806 | 		SelectPathMngStatBase sbase = new SelectPathMngStatBase(con);
+000807 | 		InsertPathMngStatBase ibase = new InsertPathMngStatBase(con);
+000808 | 		UpdatePathMngStatBase ubase = new UpdatePathMngStatBase(con);
+000809 | 		try {  	
+000810 | 			//ステータスＤＢのレコード存在チェック
+000811 | 			//データが存在しない場合は挿入する
+000812 | 			boolean check = sbase.checkPathNo(ip);
+000813 | 			if (!check) {
+000814 | 				try {
+000815 | 					ibase.insertPathNo(ip);
+000816 | 				} catch(SQLException e) {
+000817 | 					//既に挿入されていた場合はそのまま次へ
+000818 | 					int errCode = e.getErrorCode();
+000819 | 					if (errCode==1) {
+000820 | 						StringBuilder sb = new StringBuilder();
+000821 | 						sb.append("既にレコードが挿入されています。");
+000822 | 						sb.append(" ＤＢ名：").append(InsertPathMngStatBase.DBNAME);
+000823 | 						sb.append(" 接続先：").append(ip);
+000824 | 						sb.append(" ORACLEエラーコード：").append(errCode);
+000825 | 						FWLog.warn(getClass(), sb.toString());
+000826 | 					} else {
+000827 | 						throw (e);
+000828 | 					}
+000829 | 				}
+000830 | 			}
+000831 | 			//パス数取得（ForUpdate）
+000832 | 			try {
+000833 | 				sbase.selectPathNoForUp(ip);
+000834 | 			} catch (SQLException e) {
+000835 | 				int errCode = e.getErrorCode();
+000836 | 				if (errCode==1) {
+000837 | 					StringBuilder sb = new StringBuilder();
+000838 | 					sb.append("データベースがビジー状態です。");
+000839 | 					sb.append(" ＤＢ名：").append(InsertPathMngStatBase.DBNAME);
+000840 | 					sb.append(" 接続先：").append(ip);
+000841 | 					sb.append(" ORACLEエラーコード：").append(errCode);
+000842 | 					FWLog.error(getClass(), sb.toString());
+000843 | 					throw (e);
+000844 | 				} else {
+000845 | 					throw (e);
+000846 | 				}
+000847 | 			}
+000848 | 			//結果取得
+000849 | 			List<HashMap<String, String>> list2 = CastUtil.genelicToStringList(sbase.getList());
+000850 | 	    	if (list2.size()!=1) {
+000851 | 				StringBuilder sb = new StringBuilder();
+000852 | 				sb.append("データベース レコード数異常");
+000853 | 				sb.append(" ＤＢ名：").append(InsertPathMngStatBase.DBNAME);
+000854 | 				sb.append(" 接続先：").append(ip);
+000855 | 				sb.append(" レコード数：").append(list2.size());
+000856 | 				throw new SQLException(sb.toString());
+000857 | 	    	}
+000858 | 	    	//現在のパス数取得
+000859 | 	    	Map<String,String> map2 = list2.get(0);
+000860 | 	    	int pathNum = Integer.parseInt(map2.get(SelectPathMngStatBase.DBKEY_PATHNUM));
+000861 | 	    	int pathNumLim = Integer.parseInt(map2.get(SelectPathMngStatBase.DBKEY_LIMPATHNUM));
+000862 | 			
+000863 | 			//パスの取得成否確認
+000864 | 	    	if (pathNum<pathMax) {
+000865 | 	    		//パス取得成功なら、パス数をインクリメントしてＤＢ反映
+000866 | 	    		pathNum++;
+000867 | 	    		
+000868 | 	    		//バックグラウンドの場合は更に制限パスの取得も行う
+000869 | 	    		if (BackGroundFlag) {
+000870 | 	    			if (pathNumLim<pathMaxLim){
+000871 | 	    				pathNumLim++;
+000872 | 			    		//ＤＢ反映
+000873 | 			    		ubase.updatePathNo(ip, pathNum,pathNumLim);
+000874 | 			    		result=true;	//パス取得成功
+000875 | 	    			}
+000876 | 	    		} else {
+000877 | 		    		//ＤＢ反映
+000878 | 		    		ubase.updatePathNo(ip, pathNum);
+000879 | 	    			//メイン処理の場合は、そのままパス取得成功
+000880 | 		    		result=true;	//パス取得成功
+000881 | 	    		}
+000882 | 	    		
+000883 | 	    	}
+000884 | 			//コミット（ロック開放）
+000885 | 			con.commit();
+000886 | 
+000887 | 			//ログ出力(INFOレベル)
+000888 | 			StringBuilder sb=new StringBuilder();
+000889 | 			if (result) {
+000890 | 				sb.append("WEBONパス取得成功 WEBONサーバアドレス：").append(ip);
+000891 | 				sb.append(" パス数：").append(pathNum).append("/").append(pathMax);
+000892 | 				sb.append(" 制限パス数：").append(pathNumLim).append("/").append(pathMaxLim);
+000893 | 				sb.append(" BackGroundFlag：").append(BackGroundFlag);
+000894 | 			} else {
+000895 | 				sb.append("WEBONパス取得失敗 WEBONサーバアドレス：").append(ip);
+000896 | 				sb.append(" パス数：").append(pathNum).append("/").append(pathMax);
+000897 | 				sb.append(" 制限パス数：").append(pathNumLim).append("/").append(pathMaxLim);
+000898 | 				sb.append(" BackGroundFlag：").append(BackGroundFlag);
+000899 | 			}
+000900 | 			FWLog.info(getClass(),sb.toString());
+000901 |     	
+000902 | 		} catch (Exception e) {
+000903 | 			try {
+000904 | 				if (con != null) con.rollback();
+000905 | 			} catch (SQLException e1) {
+000906 | 				FWLog.error(e1);
+000907 | 			}
+000908 | 			throw e;
+000909 | 		} finally {
+000910 | 			try {
+000911 | 				if (con != null) {
+000912 | 					con.setAutoCommit(true);
+000913 | 				}
+000914 | 				con = null;
+000915 | 			} catch (SQLException e1) {
+000916 | 				FWLog.error(e1);
+000917 | 			}
+000918 | 		}
+000919 |     	
+000920 |     	return result;
+000921 |     }
+000922 | 	/**
+000923 | 	 * サーバパス管理ＤＢのパスを開放する
+000924 | 	 * @param String 接続先WEBONサーバＩＰアドレス
+000925 | 	 * @return boolean パスの開放結果
+000926 | 	 * @throws Exception 
+000927 | 	 */
+000928 |     private boolean releasWebonPath(String ip,Connection con) throws Exception {
+000929 |     	
+000930 |     	boolean result=false;
+000931 |     	
+000932 |     	//パス管理ステータスからロックを取得し、現在の使用パス数を取得する
+000933 |     	//トランザクション開始（ここからロック取得する）
+000934 |     	con.setAutoCommit(false);	//自動コミットOFF
+000935 |     	
+000936 | 		SelectPathMngStatBase sbase = new SelectPathMngStatBase(con);
+000937 | 		UpdatePathMngStatBase ubase = new UpdatePathMngStatBase(con);
+000938 | 		try {  	
+000939 | 			//パス数取得（ForUpdate）
+000940 | 			try {
+000941 | 				sbase.selectPathNoForUp(ip);
+000942 | 			} catch (SQLException e) {
+000943 | 				int errCode = e.getErrorCode();
+000944 | 				if (errCode==1) {
+000945 | 					StringBuilder sb = new StringBuilder();
+000946 | 					sb.append("データベースがビジー状態です。");
+000947 | 					sb.append(" ＤＢ名：").append(InsertPathMngStatBase.DBNAME);
+000948 | 					sb.append(" 接続先：").append(ip);
+000949 | 					sb.append(" ORACLEエラーコード：").append(errCode);
+000950 | 					FWLog.error(getClass(), sb.toString());
+000951 | 					throw (e);
+000952 | 				} else {
+000953 | 					throw (e);
+000954 | 				}
+000955 | 			}
+000956 | 			//結果取得
+000957 | 			List<HashMap<String, String>> list2 = CastUtil.genelicToStringList(sbase.getList());
+000958 | 	    	if (list2.size()!=1) {
+000959 | 				StringBuilder sb = new StringBuilder();
+000960 | 				sb.append("データベース レコード数異常");
+000961 | 				sb.append(" ＤＢ名：").append(InsertPathMngStatBase.DBNAME);
+000962 | 				sb.append(" 接続先：").append(ip);
+000963 | 				sb.append(" レコード数：").append(list2.size());
+000964 | 				throw new SQLException(sb.toString());
+000965 | 	    	}
+000966 | 	    	//現在のパス数取得
+000967 | 	    	Map<String,String> map2 = list2.get(0);
+000968 | 	    	int pathNum = Integer.parseInt(map2.get(InsertPathMngStatBase.DBKEY_PATHNUM));
+000969 | 	    	int pathNumLim = Integer.parseInt(map2.get(InsertPathMngStatBase.DBKEY_LIMPATHNUM));
+000970 | 			
+000971 |     		//パス取得成功なら、パス数をインクリメントしてＤＢ反映
+000972 |     		pathNum--;
+000973 |     		
+000974 |     		//バックグラウンドだったら、制限パス数もデクリメント
+000975 |     		if (BackGroundFlag){
+000976 |     			//バックグラウンド時の処理
+000977 |     			pathNumLim--;
+000978 |         		//ＤＢ反映
+000979 |         		ubase.updatePathNo(ip, pathNum,pathNumLim);
+000980 |         		result=true;	//パス取得成功
+000981 |     		} {
+000982 |     			//主処理の時の処理
+000983 |         		//ＤＢ反映
+000984 |         		ubase.updatePathNo(ip, pathNum);
+000985 |         		result=true;	//パス取得成功
+000986 |     		}
+000987 |     		
+000988 | 			//コミット（ロック開放）
+000989 | 			con.commit();
+000990 |     	
+000991 | 			//成功ログ出力(INFOレベル)
+000992 | 			StringBuilder sb=new StringBuilder();
+000993 | 			sb.append("WEBONパス解放 WEBONサーバアドレス：").append(ip);
+000994 | 			sb.append(" パス数：").append(pathNum);
+000995 | 			sb.append(" 制限パス数：").append(pathNumLim);
+000996 | 			sb.append(" BackGroundFlag：").append(BackGroundFlag);
+000997 | 			FWLog.info(getClass(),sb.toString());
+000998 |     	
+000999 | 		} catch (Exception e) {
+001000 | 			try {
+001001 | 				if (con != null) con.rollback();
+001002 | 			} catch (SQLException e1) {
+001003 | 				FWLog.error(e1);
+001004 | 			}
+001005 | 			throw e;
+001006 | 		} finally {
+001007 | 			try {
+001008 | 				if (con != null) {
+001009 | 					con.setAutoCommit(true);
+001010 | 				}
+001011 | 				con = null;
+001012 | 			} catch (SQLException e1) {
+001013 | 				FWLog.error(e1);
+001014 | 			}
+001015 | 		}
+001016 |     	
+001017 |     	return result;
+001018 |     }
+001019 |     /**
+001020 | 	 * 与えられた秒数(msec)分SLEEPする
+001021 | 	 * @param long SLEEPする時間（msec）
+001022 | 	 */
+001023 |     private static void retrySleep(long msec) {
+001024 | 		try{
+001025 | 			Thread.sleep(msec);
+001026 | 		}catch(InterruptedException e){}
+001027 | 		return;
+001028 |     }
+001029 | 	/**
+001030 | 	 * コネクションの取得
+001031 | 	 * 
+001032 | 	 * @param ic		InitialContext
+001033 | 	 * @param strDS	ＪＤＢＣ名
+001034 | 	 * @return
+001035 | 	 * @throws NamingException
+001036 | 	 * @throws SQLException
+001037 | 	 */
+001038 | 	protected Connection getConnection(InitialContext ic, String strDS)
+001039 | 		throws NamingException, SQLException {
+001040 | 
+001041 | 		return CommonUtil.getConnection(ic, strDS);
+001042 | 	}
+001043 | 	/**
+001044 | 	 * 輻輳タイムアウト(MWON50)によるエラーチェック
+001045 | 	 *  
+001046 | 	 * @return boolean チェック結果(true:輻輳エラーあり、false:輻輳エラーなし) 
+001047 | 	 */
+001048 | 	private boolean checkFukusoErr(){
+001049 | 		
+001050 | 		//結果がXMLであった場合のみチェック
+001051 | 		if (XmlFlag) {
+001052 | 			//Webonの取得成功している場合はFalse復帰
+001053 | 			if (checkResult()){
+001054 | 				FWLog.debug("★★★輻輳チェック　Webon取得成功");
+001055 | 				return false;
+001056 | 			}
+001057 | 			//エラーコードMWON50は輻輳エラー
+001058 | 			if (getErrCode().equals("MWON50")){
+001059 | 				FWLog.debug("★★★輻輳チェック　輻輳エラー！！！");
+001060 | 				return true;
+001061 | 			}
+001062 | 		}
+001063 | 		
+001064 | 		return false;
+001065 | 	}
+001066 | }

@@ -1,0 +1,477 @@
+000001 | package webon.operation;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.util.ArrayList;
+000005 | import java.util.Iterator;
+000006 | import java.util.List;
+000007 | import java.util.Map;
+000008 | 
+000009 | import org.w3c.dom.Node;
+000010 | import common.bean.LoginInfoBean;
+000011 | 
+000012 | import webon.WebonBase;
+000013 | import webon.WebonException;
+000014 | import webon.util.FixedValue;
+000015 | import webon.util.ConvertUtil;
+000016 | 
+000017 | /**
+000018 |  * Webon汎用照会クラス　定期預金入金明細照会管理クラス
+000019 |  * 定期預金入金明細照会(XML)の取得とデータ管理、アクセスメソッドの提供
+000020 |  * 
+000021 |  * @author	富永
+000022 |  * 
+000023 |  * @date	2020.04.02	新規作成
+000024 |  */
+000025 | public class TeikiYokinNyukinMeisaiShokai extends CommonOperation {
+000026 | 
+000027 | 	private static final String syokaiName = "定期預金入金明細照会";
+000028 | 	
+000029 | 	//オペレーションＩＤ(未設定)
+000030 | 	private final String operationId="OP-TEKMESAI-0001";
+000031 | 	//ログイン情報
+000032 | 	LoginInfoBean loginInfo;
+000033 | 	//webon引数
+000034 | 	String woAccno;
+000035 | 	String woShokaiDay;
+000036 | 	String woBrno;
+000037 | 	
+000038 | 	//Errorレベル
+000039 | 	private static final int ERRLEVEL_ERROR=0;	//Error
+000040 | 	private static final int ERRLEVEL_WARNING=1;	//Warning
+000041 | 	//Error箇所
+000042 | 	private static final String ERRSPOT_WOGET = "0";		//取得時
+000043 | 	//private static final String ERRSPOT_WOANALYZE = "1";	//解析時
+000044 | 	private static final String ERRSPOT_WOMOLD = "2";		//成型時
+000045 | 	//Erro追加情報格納用リスト
+000046 | 	List<Map<String, String>> etc = new ArrayList<Map<String,String>>();
+000047 | 	//Error有無フラグ
+000048 | 	boolean errFlg=false;
+000049 | 	
+000050 | 	//getter,setter
+000051 | 	public LoginInfoBean getLoginInfo() {
+000052 | 		return loginInfo;
+000053 | 	}
+000054 | 	public void setLoginInfo(LoginInfoBean loginInfo) {
+000055 | 		this.loginInfo = loginInfo;
+000056 | 	}
+000057 | 	public String getWoAccno() {
+000058 | 		return woAccno;
+000059 | 	}
+000060 | 	public void setWoAccno(String woAccno) {
+000061 | 		this.woAccno = woAccno;
+000062 | 	}
+000063 | 	public String getWoShokaiDay() {
+000064 | 		return woShokaiDay;
+000065 | 	}
+000066 | 	public void setWoShokaiDay(String woShokaiDay) {
+000067 | 		this.woShokaiDay = woShokaiDay;
+000068 | 	}
+000069 | 	public String getWoBrno() {
+000070 | 		return woBrno;
+000071 | 	}
+000072 | 	public void setWoBrno(String woBrno) {
+000073 | 		this.woBrno = woBrno;
+000074 | 	}
+000075 | 	public List<Map<String, String>> getEtc() {
+000076 | 		return etc;
+000077 | 	}
+000078 | 	public void setEtc(List<Map<String, String>> etc) {
+000079 | 		this.etc = etc;
+000080 | 	}
+000081 | 	public boolean isErrFlg() {
+000082 | 		return errFlg;
+000083 | 	}
+000084 | 	public void setErrFlg(boolean errFlg) {
+000085 | 		this.errFlg = errFlg;
+000086 | 	}
+000087 | 	
+000088 | 	//=== 定期預金入金明細照会 ===
+000089 | 
+000090 | 	//定期預金入金明細（共通項目）
+000091 | 	String 店舗番号="";
+000092 | 	String 顧客番号="";
+000093 | 	String 科目="";
+000094 | 	String 口座番号="";
+000095 | 	String 口座状態="";
+000096 | 	String 元帳残高="";
+000097 | 	
+000098 | 	//定期預金入金明細リスト(保持するのみ)
+000099 | 	List<TeikiYokinBean> teikiYokinList = new ArrayList<TeikiYokinBean>();
+000100 | 	
+000101 | 	//setter,getter
+000102 | 	public List<TeikiYokinBean> getTeikiYokinList() {
+000103 | 		return teikiYokinList;
+000104 | 	}
+000105 | 	public void setTeikiYokinList(List<TeikiYokinBean> teikiYokinList) {
+000106 | 		this.teikiYokinList = teikiYokinList;
+000107 | 	}
+000108 | 	public String get店舗番号() {
+000109 | 		return 店舗番号;
+000110 | 	}
+000111 | 	public void set店舗番号(String 店舗番号) {
+000112 | 		this.店舗番号 = 店舗番号;
+000113 | 	}
+000114 | 	public String get顧客番号() {
+000115 | 		return 顧客番号;
+000116 | 	}
+000117 | 	public void set顧客番号(String 顧客番号) {
+000118 | 		this.顧客番号 = 顧客番号;
+000119 | 	}
+000120 | 	public String get科目() {
+000121 | 		return 科目;
+000122 | 	}
+000123 | 	public void set科目(String 科目) {
+000124 | 		this.科目 = 科目;
+000125 | 	}
+000126 | 	public String get口座番号() {
+000127 | 		return 口座番号;
+000128 | 	}
+000129 | 	public void set口座番号(String 口座番号) {
+000130 | 		this.口座番号 = 口座番号;
+000131 | 	}
+000132 | 	public String get口座状態() {
+000133 | 		return 口座状態;
+000134 | 	}
+000135 | 	public void set口座状態(String 口座状態) {
+000136 | 		this.口座状態 = 口座状態;
+000137 | 	}
+000138 | 	public String get元帳残高() {
+000139 | 		return 元帳残高;
+000140 | 	}
+000141 | 	public void set元帳残高(String 元帳残高) {
+000142 | 		this.元帳残高 = 元帳残高;
+000143 | 	}
+000144 | 	
+000145 | 	//定期預金入金明細（個別項目）
+000146 | 	public class TeikiYokinBean{
+000147 | 		//預入情報
+000148 | 		String 入金番号="";
+000149 | 		String 解約残高="";
+000150 | 		String 現在残高="";
+000151 | 		String 預入日="";
+000152 | 		String 満期日="";
+000153 | 		//値は取得するが、ＤＢには格納・保持しない項目
+000154 | 		String 解約日ハイフン="";
+000155 | 		String 預入日ハイフン="";
+000156 | 		String 子定期金額="";
+000157 | 		
+000158 | 		//getter,setter
+000159 | 		public String get入金番号() {
+000160 | 			return 入金番号;
+000161 | 		}
+000162 | 		public void set入金番号(String 入金番号) {
+000163 | 			this.入金番号 = 入金番号;
+000164 | 		}
+000165 | 		public String get解約残高() {
+000166 | 			return 解約残高;
+000167 | 		}
+000168 | 		public void set解約残高(String 解約残高) {
+000169 | 			this.解約残高 = 解約残高;
+000170 | 		}
+000171 | 		public String get現在残高() {
+000172 | 			return 現在残高;
+000173 | 		}
+000174 | 		public void set現在残高(String 現在残高) {
+000175 | 			this.現在残高 = 現在残高;
+000176 | 		}
+000177 | 		public String get預入日() {
+000178 | 			return 預入日;
+000179 | 		}
+000180 | 		public void set預入日(String 預入日) {
+000181 | 			this.預入日 = 預入日;
+000182 | 		}
+000183 | 		public String get満期日() {
+000184 | 			return 満期日;
+000185 | 		}
+000186 | 		public void set満期日(String 満期日) {
+000187 | 			this.満期日 = 満期日;
+000188 | 		}
+000189 | 		public String get解約日ハイフン() {
+000190 | 			return 解約日ハイフン;
+000191 | 		}
+000192 | 		public void set解約日ハイフン(String 解約日ハイフン) {
+000193 | 			this.解約日ハイフン = 解約日ハイフン;
+000194 | 		}
+000195 | 		public String get預入日ハイフン() {
+000196 | 			return 預入日ハイフン;
+000197 | 		}
+000198 | 		public void set預入日ハイフン(String 預入日ハイフン) {
+000199 | 			this.預入日ハイフン = 預入日ハイフン;
+000200 | 		}
+000201 | 		public String get子定期金額() {
+000202 | 			return 子定期金額;
+000203 | 		}
+000204 | 		public void set子定期金額(String 子定期金額) {
+000205 | 			this.子定期金額 = 子定期金額;
+000206 | 		}
+000207 | 	}
+000208 | 	
+000209 | 	/**
+000210 | 	 * 預入番号・口座番号・店番を元に定期預金口座照会を取得する
+000211 | 	 * 
+000212 | 	 * @param accno 口座番号
+000213 | 	 * @param startDay 照会開始日		
+000214 | 	 * @param br 店番
+000215 | 	 * @param loginInfo ログイン情報
+000216 | 	 * @param con
+000217 | 	 * @throws Exception
+000218 | 	 */
+000219 | 	public void getWebon(String accno, String shokaiDay, String br, LoginInfoBean loginInfo, Connection con) throws Exception {
+000220 | 		try{
+000221 | 			//引数チェック 引数がセットされているか
+000222 | 			if (accno == null) {throw new Exception("口座番号が設定されていません");}
+000223 | 			if (shokaiDay == null) {throw new Exception("照会日が設定されていません");}
+000224 | 			if (br == null) {throw new Exception("原店番号が設定されていません");}
+000225 | 			if (con == null) {throw new Exception("ＤＢコネクションが設定されていません");}
+000226 | 			this.woAccno=accno;
+000227 | 			this.woShokaiDay=shokaiDay;
+000228 | 			this.woBrno=br;
+000229 | 			this.loginInfo = loginInfo;
+000230 | 			
+000231 | 			//Webon問合せ実行
+000232 | 			getWebon(con);
+000233 | 			
+000234 | 			//取得結果解析
+000235 | 			analyzeWeon();
+000236 | 			
+000237 | 		}catch(WebonException e){
+000238 | 			throw e;
+000239 | 		}catch(Exception e){
+000240 | 			throw e;
+000241 | 		}
+000242 | 	}
+000243 | 	/**
+000244 | 	 * Webon取得メソッド
+000245 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000246 | 	 * 
+000247 | 	 * @param req リクエスト
+000248 | 	 * @param res レスポンス
+000249 | 	 * @throws Exception 
+000250 | 	 */
+000251 | 	private void getWebon(Connection con) throws Exception {
+000252 | 		
+000253 | 		//WebonBaseの取得
+000254 | 		webonBase = new WebonBase(operationId, loginInfo, con);
+000255 | 		//設定値
+000256 | 		webonBase.put("口座番号",woAccno);
+000257 | 		webonBase.put("照会開始日",woShokaiDay);
+000258 | 		webonBase.put("原店番号",woBrno);
+000259 | 		//問い合わせ
+000260 | 		webonBase.doQuery();
+000261 | 		
+000262 | 		//エラー処理
+000263 | 		if (!webonBase.checkResult()) {
+000264 | 			//エラーコード等をセット
+000265 | 			WebonException e = createWoException("Webon取得結果エラー", ERRLEVEL_ERROR, ERRSPOT_WOGET);
+000266 | 			//エラー処理は上位に任せる
+000267 | 			throw e;
+000268 | 		}
+000269 | 	}
+000270 | 	
+000271 | 	/**
+000272 | 	 * Webon取得内容解析メソッド
+000273 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000274 | 	 * 
+000275 | 	 * @param req リクエスト
+000276 | 	 * @param res レスポンス
+000277 | 	 * @throws Exception 
+000278 | 	 * @throws Exception 
+000279 | 	 */
+000280 | 	public void analyzeWeon() throws Exception {
+000281 | 		//WEBON結果走査用固定値
+000282 | 		final String WOKEY_TSUCYO="通帳部宛";
+000283 | 		final String WOKEY_TEIKIMEISAI="定期預金入金明細照会";
+000284 | 		final String WOKEY_ROOP="預入明細";
+000285 | 
+000286 | 		//結果取得
+000287 | 		Node editData = webonBase.getEditData();
+000288 | 		//結果解析
+000289 | 		//データの最上位ノードを取得
+000290 | 		Node root2=editData.getFirstChild();
+000291 | 		Node root=null;
+000292 | 		//while (true) {
+000293 | 		for (int roopCount=0;roopCount<FixedValue.SYS_WBNUMLIMIT;roopCount++){
+000294 |         	//取得できなかったら終わり
+000295 |         	if (root2==null){break;}
+000296 | 	    	if (root2.getNodeType()==Node.ELEMENT_NODE) {
+000297 | 	    		//要素名の解析
+000298 | 	    		if (root2.getNodeName().equals(WOKEY_TSUCYO)) {
+000299 | 
+000300 | 	    			root = root2.getFirstChild();
+000301 | 	    			while (true) {
+000302 | 	    	        	//取得できなかったら終わり
+000303 | 	    	        	if (root==null){break;}
+000304 | 	    		    	if (root.getNodeType()==Node.ELEMENT_NODE) {
+000305 | 	    		    		//要素名の解析
+000306 | 	    		    		if (root.getNodeName().equals(WOKEY_TEIKIMEISAI)) {
+000307 | 	    		    			break;
+000308 | 	    		            }
+000309 | 	    		    	}
+000310 | 	    	        	//次の子ノードを取得
+000311 | 	    		    	root = root.getNextSibling();
+000312 | 	    			}
+000313 | 	    			break;
+000314 | 	            } 
+000315 | 	    	}
+000316 |         	//次の子ノードを取得
+000317 | 	    	root2 = root2.getNextSibling();
+000318 | 		}
+000319 | 		
+000320 | 		//全体の走査
+000321 |         ArrayList<Node> loopNodes = new ArrayList<Node>();
+000322 |         Node child = root.getFirstChild();
+000323 | //			while (true) {
+000324 | 		for (int roopCount=0;roopCount<FixedValue.SYS_WBNUMLIMIT;roopCount++){
+000325 |         	//取得できなかったら終わり
+000326 |         	if (child==null){break;}
+000327 | 	    	if (child.getNodeType()==Node.ELEMENT_NODE) {
+000328 | 	    		//要素名の解析
+000329 | 	    		//ループ対象行
+000330 | 	    		if (child.getNodeName().equals(WOKEY_ROOP)) {
+000331 | 	    			loopNodes.add(child);
+000332 | 	            //ループ対象行以外
+000333 | 	            } else if (child.getNodeName().equals("店舗番号")){
+000334 | 	            	set店舗番号(getChildText(child));
+000335 | 	            } else if (child.getNodeName().equals("顧客番号")){
+000336 | 	            	set顧客番号(getChildText(child));
+000337 | 	            } else if (child.getNodeName().equals("科目")){
+000338 | 	            	set科目(getChildText(child));
+000339 | 	            } else if (child.getNodeName().equals("口座番号")){
+000340 | 	            	set口座番号(getChildText(child));
+000341 | 	            } else if (child.getNodeName().equals("口座状態")){
+000342 | 	            	set口座状態(getChildText(child));
+000343 | 	            } else if (child.getNodeName().equals("元帳残高")){
+000344 | 	            	set元帳残高(getChildText(child));
+000345 | 	            }
+000346 | 	        }
+000347 |         	//次の子ノードを取得
+000348 |         	child = child.getNextSibling();
+000349 | 		}
+000350 | 		
+000351 | 		//ループ行の走査＆値のセット
+000352 | 		for (int j=0; j<loopNodes.size(); j++ ) {
+000353 | 			//ループの要素を取り出し
+000354 | 			Node elem=loopNodes.get(j).getFirstChild();
+000355 | 			//データ格納用ビーンの生成
+000356 | 			TeikiYokinBean bean = new TeikiYokinBean();
+000357 | 			//while (true) {
+000358 | 			for (int roopCount=0;roopCount<FixedValue.SYS_WBNUMLIMIT;roopCount++){
+000359 | 		       	if (elem==null){break;}
+000360 | 		    	if (elem.getNodeType()==Node.ELEMENT_NODE) {
+000361 | 		    		//ノードの情報を取得
+000362 | 					if(elem.getNodeName().equals("入金番号")){
+000363 | 						bean.set入金番号(getChildText(elem));
+000364 | 					}else if(elem.getNodeName().equals("解約残高")){
+000365 | 						bean.set解約残高(getChildText(elem));						
+000366 | 					}else if(elem.getNodeName().equals("現在残高")){
+000367 | 						bean.set現在残高(getChildText(elem));						
+000368 | 					}else if(elem.getNodeName().equals("預入日")){
+000369 | 						bean.set預入日(getChildText(elem));					
+000370 | 					}else if(elem.getNodeName().equals("満期日")){
+000371 | 						bean.set満期日(getChildText(elem));
+000372 | 					}else if(elem.getNodeName().equals("解約日ハイフン")){
+000373 | 						bean.set解約日ハイフン(getChildText(elem));						
+000374 | 					}else if(elem.getNodeName().equals("預入日ハイフン")){
+000375 | 						bean.set預入日ハイフン(getChildText(elem));						
+000376 | 					}else if(elem.getNodeName().equals("子定期金額")){
+000377 | 						bean.set子定期金額(getChildText(elem));					
+000378 | 					}
+000379 | 		    	}
+000380 | 	        	//次の子ノードを取得
+000381 | 		    	elem = elem.getNextSibling();
+000382 | 			}
+000383 | 			//メンバにセット
+000384 | 			teikiYokinList.add(bean);
+000385 | 		}
+000386 | 		
+000387 | 		//取得項目のチェック
+000388 | 		checkWebon();
+000389 | 		
+000390 | 		//エラーチェック(Exceptionの有無を判定する)
+000391 | 		if(errFlg){
+000392 | 			WebonException e = createWoException("Webon取得結果解析エラー", ERRLEVEL_WARNING, ERRSPOT_WOMOLD);
+000393 | 			e.setEtc(etc);
+000394 | 			//エラー処理は上位に任せる
+000395 | 			throw e;
+000396 | 		}
+000397 | 	}
+000398 | 	
+000399 | 	/**
+000400 | 	 * 取得内容チェックメソッド
+000401 | 	 */
+000402 | 	private void checkWebon(){
+000403 | 		
+000404 | 		//共通項目をチェック
+000405 | 		set店舗番号(ConvertUtil.chkConvertNumAdd0(get店舗番号(), 3));
+000406 | 		set顧客番号(ConvertUtil.chkConvertNumAdd0(get顧客番号(), 7));
+000407 | 		set科目(ConvertUtil.chkConvertNumAdd0(get科目(), 2));
+000408 | 		set口座番号(ConvertUtil.chkConvertNumAdd0(get口座番号(), 7));
+000409 | 		
+000410 | 		//取得した情報分チェックする
+000411 | 		Iterator<TeikiYokinBean> it = teikiYokinList.iterator();
+000412 | 		while(it.hasNext()){
+000413 | 			TeikiYokinBean tyb = it.next();
+000414 | 
+000415 | 			//入金番号チェック
+000416 | 			boolean deleteFlag = false;
+000417 | 			
+000418 | 			//項目が取得できていなかったらNG
+000419 | 			tyb.set入金番号(ConvertUtil.chkNull(tyb.get入金番号()));
+000420 | 			
+000421 | 			//重複チェック　同一レコードがあったら、NG
+000422 | 			Iterator<TeikiYokinBean> it2 = teikiYokinList.iterator();
+000423 | 			TeikiYokinBean tyb2;
+000424 | 			int dupCount=0;
+000425 | 			while (it2.hasNext()){
+000426 | 				tyb2 = it2.next();
+000427 | 				//キー項目がどれかひとつでも違っていれば重複ではない
+000428 | 				if (tyb.get入金番号().equals(tyb2.get入金番号())){
+000429 | 					dupCount++;
+000430 | 				}
+000431 | 			}
+000432 | 			//重複レコードだったらNG
+000433 | 			if(dupCount>1){deleteFlag = true;}
+000434 | 			
+000435 | 			//チェックに引っかかったら削除
+000436 | 			if(deleteFlag){
+000437 | 				it.remove();
+000438 | 			} else {
+000439 | 				//チェックに引っかからなければ、残りの項目の変換
+000440 | 				tyb.set入金番号(tyb.get入金番号());
+000441 | 				tyb.set解約残高(ConvertUtil.chkConvertFlag(tyb.get解約残高()));
+000442 | 				tyb.set現在残高(ConvertUtil.delComma(ConvertUtil.delAsterisk(tyb.get現在残高())));
+000443 | 				tyb.set預入日(ConvertUtil.chkConvertDateAdd0(tyb.get預入日()));
+000444 | 				tyb.set満期日(ConvertUtil.chkConvertDateAdd0(tyb.get満期日()));
+000445 | 			}
+000446 | 		}
+000447 | 	}
+000448 | 	/**
+000449 | 	 * 照会名取得メソッド(Static)
+000450 | 	 * 照会名を取得する
+000451 | 	 * 
+000452 | 	 * @return String 照会名
+000453 | 	 */
+000454 | 	public static String getSyokaiName() {
+000455 | 		return syokaiName;
+000456 | 	}
+000457 | 	//以下UTILITY
+000458 | 	//以下、ユーティリティ的メソッド
+000459 | 	/**
+000460 | 	 * エラー生成メソッド
+000461 | 	 * @param String	エラーメッセージ
+000462 | 	 * @param int		エラーレベル
+000463 | 	 * @param String	エラー箇所
+000464 | 	 */
+000465 | 	private WebonException createWoException(String msg ,int el, String es){
+000466 | 		//エラーコード等をセット
+000467 | 		WebonException e = new WebonException(msg,webonBase);
+000468 | 		//顧客を特定する情報をセット
+000469 | 		e.setOperationId(operationId);
+000470 | 		e.setBrno(woBrno);
+000471 | 		e.setAccno(woAccno);
+000472 | 		e.setErrStat(el);
+000473 | 		e.setErrSpot(es);
+000474 | 		//エラー処理は上位に任せる
+000475 | 		return e;
+000476 | 	}
+000477 | }

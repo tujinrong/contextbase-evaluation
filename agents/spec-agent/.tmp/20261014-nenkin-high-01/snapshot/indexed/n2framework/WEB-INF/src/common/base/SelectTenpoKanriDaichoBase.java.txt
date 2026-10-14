@@ -1,0 +1,65 @@
+000001 | /*
+000002 |  * 作成日: 2017/05/15
+000003 |  */
+000004 | package common.base;
+000005 | 
+000006 | import java.sql.Connection;
+000007 | import java.sql.SQLException;
+000008 | 
+000009 | import common.base.CommonBaseSelect;
+000010 | 
+000011 | /**
+000012 |  * DB2.ＵＪ店舗管理台帳　検索Baseクラス
+000013 | *
+000014 |  * @author Minoei 山口
+000015 |  * 
+000016 |  * @date
+000017 |  *   
+000018 |  */
+000019 | public class SelectTenpoKanriDaichoBase extends CommonBaseSelect {
+000020 | 
+000021 | 	/**
+000022 | 	 * コンストラクタ
+000023 | 	 * 
+000024 | 	 * @param connection
+000025 | 	 */
+000026 | 	public SelectTenpoKanriDaichoBase(Connection connection) {
+000027 | 		super(connection);
+000028 | 	}
+000029 | 	
+000030 | 
+000031 | 	/**
+000032 | 	 * 
+000033 | 	 * 店舗名一覧を取得。
+000034 | 	 * （副店番 = 0 , 状態 = 0）
+000035 | 	 *
+000036 | 	 * @return boolean
+000037 | 	 * @throws SQLException
+000038 | 	 */
+000039 | 	public boolean selectTenpoIchiran() throws SQLException {
+000040 | 
+000041 | 		try {
+000042 | 			StringBuffer sb = new StringBuffer();
+000043 | 
+000044 | 			sb.append("SELECT");
+000045 | 			sb.append(" 店番,");
+000046 | 			sb.append(" TRIM('　' from 漢字店名) AS 漢字店名");
+000047 | 			sb.append(" FROM DB2.ＵＪ店舗管理台帳");
+000048 | 			sb.append(" WHERE 副店番 = 0");
+000049 | 			sb.append(" AND 状態 = 0");
+000050 | 			sb.append(" AND 店番 > 10");
+000051 | 			sb.append(" ORDER BY 店番");
+000052 | 
+000053 | 			execute(sb.toString());
+000054 | 
+000055 | 		} catch (SQLException e) {
+000056 | 			throw e;
+000057 | 		}
+000058 | 		if (getList() != null) {
+000059 | 			return true;
+000060 | 		} else{
+000061 | 			return false;
+000062 | 		}
+000063 | 	}
+000064 | 
+000065 | }

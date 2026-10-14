@@ -1,0 +1,2248 @@
+000001 | package jhkcommon;
+000002 | 
+000003 | /**
+000004 |  *
+000005 |  * 顧客基本情報　共通メソッド
+000006 |  *
+000007 |  * Copyright 王子信用金庫 2001
+000008 |  *
+000009 |  * @date	H22.8.19	青木・浅見		センター集約対応
+000010 |  * @date	H28.9.13	宮田		　　　 全角カナ→半角カナの変換にハイフンと長音を追加
+000011 |  * @date	H28.12.19	吉津		　　　 数値カンマ編集（LONG型）を追加
+000012 |  */
+000013 | 
+000014 | //CifComon.java
+000015 | //
+000016 | //
+000017 | //	顧客基本情報　共通メソッド
+000018 | //
+000019 | //
+000020 | //	Copyright 王子信用金庫 2001
+000021 | //
+000022 | //
+000023 | 
+000024 | import java.io.FileInputStream;
+000025 | import java.io.InputStreamReader;
+000026 | import java.io.PrintWriter;
+000027 | import java.sql.ResultSet;
+000028 | import java.sql.ResultSetMetaData;
+000029 | import java.sql.SQLException;
+000030 | import java.text.NumberFormat;
+000031 | import java.text.SimpleDateFormat;
+000032 | import java.util.Calendar;
+000033 | import java.util.GregorianCalendar;
+000034 | import java.util.TimeZone;
+000035 | 
+000036 | 
+000037 | /** 
+000038 |   * 顧客情報システム共通クラス
+000039 |   */
+000040 | 
+000041 | 
+000042 | public class CifComon {
+000043 | 
+000044 | 	private String gsSFilePath;
+000045 | 
+000046 | 								// 元号 | 自年月日 | 至年月日
+000047 | 	private String [][]gengoTable= 
+000048 | 							{
+000049 | 								{"平成","19890108","99999999"},
+000050 | 								{"昭和","19261225","19890107"},
+000051 | 								{"大正","19120730","19261224"},
+000052 | 								{"明治","18680908","19120729"},
+000053 | 								{"不明","00000000","18680907"}
+000054 | 							};
+000055 | 	int giCnt;
+000056 | 	public String s;
+000057 | 
+000058 | 
+000059 | 	SimpleDateFormat gSDFDate = new SimpleDateFormat("yyyyMMdd");
+000060 | 	SimpleDateFormat gSDFTime = new SimpleDateFormat("HHmmss");
+000061 | 	Calendar cal = new GregorianCalendar();
+000062 | 
+000063 | 	public CifComon(String sSFilePath,String sDBServ,String sDBUser,String sDBPass)
+000064 | 	{
+000065 | 
+000066 | 		gsSFilePath = sSFilePath;
+000067 | 
+000068 | 	}
+000069 | 
+000070 | 	//YYYYMMDD->和暦（年号X年XX月XX日）
+000071 | 	public String getWareki(String seireki)throws Exception
+000072 | 	{
+000073 | 		//８桁ＣＨＥＣＫ	
+000074 | 		if(seireki.length() != 8){
+000075 | 			if(seireki.length() != 10){
+000076 | 				throw new CifApplicationException("1008-02" +"西暦８or10桁を入力して下さい" + seireki);
+000077 | 			}else{
+000078 | 				if(seireki.substring(4,5).equals("-")&&seireki.substring(7,8).equals("-")){
+000079 | 					StringBuffer sbDate=new StringBuffer(seireki);
+000080 | 					sbDate.delete(7,8);
+000081 | 					sbDate.delete(4,5);
+000082 | 					seireki=sbDate.toString();
+000083 | 				}else{
+000084 | 					throw new CifApplicationException("1008-02" +"西暦10桁を入力して下さい" + seireki);
+000085 | 				}
+000086 | 			}
+000087 | 		}
+000088 | 		//ニューメリックＣＨＥＣＫ
+000089 | 		try{
+000090 | 			int wk =  Integer.parseInt(seireki);
+000091 | 		}
+000092 | 		catch(NumberFormatException nfe){
+000093 | 			throw new CifApplicationException("1007-02" + seireki);
+000094 | 		}
+000095 | 		if(!checkDate(seireki)){
+000096 | 			throw new CifApplicationException("1008-02" +"暦上日を入力して下さい" + seireki);
+000097 | 		}
+000098 | 		
+000099 | 		int i = 0;
+000100 | 		for(  ; i < gengoTable.length;i++){
+000101 | 			if(Integer.parseInt(seireki) >= Integer.parseInt(gengoTable[i][1]) && Integer.parseInt(seireki) <= Integer.parseInt(gengoTable[i][2])){
+000102 | 				break;
+000103 | 			}
+000104 | 		}
+000105 | 		if (gengoTable[i][0].equals("不明")){
+000106 | 			throw new CifApplicationException("1008-02"+":明治元年より過去の日付が入力された"+ seireki);
+000107 | 		}
+000108 | 		
+000109 | 		String wareki = "";
+000110 | 		wareki = gengoTable[i][0];
+000111 | 		int year =Integer.parseInt(seireki.substring(0,4)) - Integer.parseInt(gengoTable[i][1].substring(0,4)) + 1 ;
+000112 | 		if(year < 10 ){
+000113 | 			wareki = wareki + "0";
+000114 | 		}
+000115 | 		wareki = wareki + Integer.toString(year) + "年" + seireki.substring(4,6) + "月" + seireki.substring(6,8) + "日"; 
+000116 | 		
+000117 | 		return wareki;
+000118 | 		 
+000119 | 	}
+000120 | 	
+000121 | 	
+000122 | 
+000123 | 	/**
+000124 | 	 * 西暦（YYYYMMDD）⇒ 和暦（年号X年XX月XX日）の変換
+000125 | 	 * 
+000126 | 	 * @param seireki 編集前の数字
+000127 | 	 * @return 編集後の結果<br>
+000128 | 	 * null又は８桁以外の場合、空文字を返す
+000129 | 	 */
+000130 | 	//YYYYMMDD->和暦（年号X年XX月XX日）
+000131 | 	public String getWarekiHenkan(String seireki)throws Exception
+000132 | 	{
+000133 | 		//８桁ＣＨＥＣＫ	
+000134 | 		if(seireki == null || (seireki.length() != 8)){
+000135 | 			return "";
+000136 | 		}
+000137 | 
+000138 | 		//ニューメリックＣＨＥＣＫ
+000139 | 		try{
+000140 | 			int wk =  Integer.parseInt(seireki);
+000141 | 		}
+000142 | 		catch(NumberFormatException nfe){
+000143 | 			throw new CifApplicationException("1007-02" + seireki);
+000144 | 		}
+000145 | 		
+000146 | 		int i = 0;
+000147 | 		for(  ; i < gengoTable.length;i++){
+000148 | 			if(Integer.parseInt(seireki) >= Integer.parseInt(gengoTable[i][1]) && Integer.parseInt(seireki) <= Integer.parseInt(gengoTable[i][2])){
+000149 | 				break;
+000150 | 			}
+000151 | 		}
+000152 | 		if (gengoTable[i][0].equals("不明")){
+000153 | 			throw new CifApplicationException("1008-02"+":明治元年より過去の日付が入力された"+ seireki);
+000154 | 		}
+000155 | 		
+000156 | 		String wareki = "";
+000157 | 		wareki = gengoTable[i][0];
+000158 | 		int year =Integer.parseInt(seireki.substring(0,4)) - Integer.parseInt(gengoTable[i][1].substring(0,4)) + 1 ;
+000159 | 		if(year < 10 ){
+000160 | 			wareki = wareki + "0";
+000161 | 		}
+000162 | 		wareki = wareki + Integer.toString(year) + "年" + seireki.substring(4,6) + "月"; 		
+000163 | 		return wareki;		 
+000164 | 	}
+000165 | 	
+000166 | 	
+000167 | 	/**
+000168 |      * 西暦8桁yyyymmddもしくは西暦10桁yyyy-mm-ddのString引数から
+000169 |      * “－“を削除した形式に編集してから和暦に返還しString型の和暦を返す。
+000170 |      * @param  eDate   西暦8桁のStringもしくは“－“を削除したい西暦10桁のString
+000171 |      *
+000172 |      * @return 和暦 平成yy年mm月dd日フォーマット
+000173 |      */
+000174 | 	public String get49Wareki(String eDate)throws Exception{
+000175 | 		StringBuffer sbDate;
+000176 | 		
+000177 | 		if(eDate.length()==10){
+000178 | 			if(eDate.substring(4,5).equals("-")&eDate.substring(7,8).equals("-")){
+000179 | 				sbDate=new StringBuffer(getWareki(edit49Date(eDate)));
+000180 | 			}else{
+000181 | 				sbDate=new StringBuffer("dateError in CifComn");
+000182 | 			}
+000183 | 		}else{
+000184 | 			sbDate=new StringBuffer(getWareki(eDate));
+000185 | 		}
+000186 | 		return sbDate.toString();
+000187 | 	}
+000188 | 	
+000189 | 		
+000190 | 	/**
+000191 |      * 西暦8桁yyyymmddもしくは西暦10桁yyyy-mm-ddのString引数から
+000192 |      * “－“を削除した形式に編集してから和暦に返還しString型の和暦を返す。
+000193 |      * @param  eDate   西暦8桁のStringもしくは“－“を削除したい西暦10桁のString
+000194 |      *
+000195 |      * @return 和暦 "yymmdd"フォーマット
+000196 |      */
+000197 | 	public String getSimpleWareki(String eDate)throws Exception{
+000198 | 		StringBuffer sbDate=new StringBuffer(get49Wareki(eDate));
+000199 | 		sbDate.delete(10,11);
+000200 | 		sbDate.delete(7,8);
+000201 | 		sbDate.delete(4,5);
+000202 | 		sbDate.delete(0,2);
+000203 | 		return sbDate.toString();
+000204 | 	}
+000205 | 	
+000206 | 	
+000207 | 	
+000208 | 	/**
+000209 |      * 西暦8桁yyyymmddもしくは西暦10桁yyyy-mm-ddのString引数から
+000210 |      * “－“を削除した形式に編集してから和暦に返還しString型の和暦を返す。
+000211 |      * @param  eDate   西暦8桁のStringもしくは“－“を削除したい西暦10桁のString
+000212 |      *
+000213 |      * @return 和暦 元号"H"or"S"or"T"+yymmdd"フォーマット
+000214 |      */
+000215 | 	public String getSimpleGengoWareki(String eDate)throws Exception{
+000216 | 		StringBuffer sbDate;
+000217 | 		if(eDate==null){
+000218 | 			sbDate=new StringBuffer("");
+000219 | 		}else{
+000220 | 			sbDate=new StringBuffer(get49Wareki(eDate));
+000221 | 			sbDate.delete(10,11);
+000222 | 			sbDate.delete(7,8);
+000223 | 			sbDate.delete(4,5);
+000224 | 			if(sbDate.substring(0,2).equals("平成")){
+000225 | 				sbDate.replace(0,2,"H");
+000226 | 			}else if(sbDate.substring(0,2).equals("昭和")){
+000227 | 				sbDate.replace(0,2,"S");
+000228 | 			}else if(sbDate.substring(0,2).equals("大正")){
+000229 | 				sbDate.replace(0,2,"T");
+000230 | 			}else if(sbDate.substring(0,2).equals("明治")){
+000231 | 				sbDate.replace(0,2,"M");
+000232 | 			}else{
+000233 | 				sbDate.delete(0,2);
+000234 | 			}
+000235 | 		}
+000236 | 		return sbDate.toString();
+000237 | 	}
+000238 | 	
+000239 | 
+000240 | 
+000241 | 
+000242 | 	/**
+000243 | 	  * 本日日付取得（YYYYMMDD）
+000244 | 	  */
+000245 | 	public String getToday()
+000246 | 	{
+000247 | 		gSDFDate.setTimeZone(TimeZone.getTimeZone("JST"));
+000248 | 		return gSDFDate.format(new java.util.Date());
+000249 | 	}
+000250 | 
+000251 | 
+000252 | 
+000253 | 	/**
+000254 | 	  * 現在時間取得（HHMMSS）
+000255 | 	  */
+000256 | 	public String getTime()
+000257 | 	{
+000258 | 		gSDFTime.setTimeZone(TimeZone.getTimeZone("JST"));
+000259 | 		return gSDFTime.format(new java.util.Date());
+000260 | 	}
+000261 | 
+000262 | 
+000263 | 
+000264 | 
+000265 | 	/**
+000266 | 	  * 月末日の取得
+000267 | 	  * String(yyyymmdd)をセットすると、その日付の属する月の
+000268 | 	  * 月末日をString(yyyymmdd)で返す。
+000269 | 	  */
+000270 | 	public String getLastMonthDate(String inDate)
+000271 | 	{
+000272 | 		TimeZone tz=TimeZone.getTimeZone("JST");
+000273 | 		Calendar cal=new GregorianCalendar(tz);
+000274 | 		int yyyy=Integer.parseInt(inDate.substring(0,4));
+000275 | 		int mm=Integer.parseInt(inDate.substring(4,6));
+000276 | 		int dd=Integer.parseInt(inDate.substring(6));
+000277 | 		
+000278 | 		cal.set(yyyy,mm-1,dd);
+000279 | 		Integer lastDay=new Integer(cal.getActualMaximum(Calendar.DAY_OF_MONTH));
+000280 | 		String lastDate=inDate.substring(0,6);
+000281 | 		lastDate+=lastDay.toString();
+000282 | 		return lastDate;
+000283 | 	}
+000284 | 
+000285 | 
+000286 | 	/**
+000287 | 	 * ローカルデータの読込み
+000288 | 	 */
+000289 | 	public String CifComonRead(String sFilePath) throws Exception
+000290 | 	{
+000291 | 		String sBuffer = "";
+000292 | 		FileInputStream cFIS;
+000293 | 		InputStreamReader cISR = null;
+000294 | 
+000295 | 		cFIS = new FileInputStream(sFilePath);
+000296 | 		//NECIKO	cISR = new InputStreamReader(cFIS,"x-sjis");
+000297 | 		cISR = new InputStreamReader(cFIS, "Windows-31J");
+000298 | 
+000299 | 		char[] cBuf = new char[4096];
+000300 | 		int iLen = 0;
+000301 | 
+000302 | 		while((iLen = cISR.read(cBuf)) != -1){
+000303 | 			String sWk = new String(cBuf, 0, iLen);
+000304 | 			sBuffer = sBuffer + sWk;
+000305 | 		}
+000306 | 
+000307 | 		if(cISR != null){
+000308 | 			cISR.close();
+000309 | 		}
+000310 | 
+000311 | 		return sBuffer;
+000312 | 	}
+000313 | 
+000314 | 
+000315 | 
+000316 | 	/** 
+000317 | 	  * 指定されたテンプレートのHtmlファイルを読込み、
+000318 | 	  * <SERVLETLINE>に指定された文字列を差込み結果を戻す。
+000319 | 	  * 引数は（テンプレートのHtmlファイル,差し込みたい文字列）
+000320 | 	  */
+000321 | 	public String CifComonHTMLRead(String htmlFileName,String addHtmlData) 
+000322 | 		throws Exception
+000323 | 	{
+000324 | 		String sFilePath = gsSFilePath + "\\" + htmlFileName;
+000325 | 		String sBuffer = "";
+000326 | 		String sReturn = "";
+000327 | 
+000328 | 
+000329 | 
+000330 | 		sBuffer = "<!--INPUT FILE:" + sFilePath + "-->\n";
+000331 | 		try {
+000332 | 			sBuffer = CifComonRead(sFilePath);
+000333 | 			int iHit = sBuffer.indexOf("SERVLETLINE");
+000334 | 			StringBuffer sbScr = new StringBuffer(sBuffer);
+000335 | 			if(iHit > -1){
+000336 | 				sbScr.insert(iHit + 14,"\n" + addHtmlData);
+000337 | 			}
+000338 | 			sReturn = sbScr.toString();
+000339 | 		}
+000340 | 		catch (Exception e) {
+000341 | 			throw new CifApplicationException("9002-02"+sFilePath);
+000342 | 		/**
+000343 | 			sReturn += "<BODY BGCOLOR='#d0d0d0'>";
+000344 | 			sReturn += "<H1>画面表示ができません<BR>\n";
+000345 | 			sReturn += "<!-- Error : SubMenu File Cannot Read\n";
+000346 | 			sReturn += e.getMessage() + " -->\n";
+000347 | 			sReturn += "<BR>\n";
+000348 | 			sReturn += "<BR>\n";
+000349 | 			sReturn += "<a href="+sFilePath+"/Ciflogin.html>ログインへ</a>\n";
+000350 | 		*/
+000351 | 		}
+000352 | 		return sReturn;
+000353 | 	}
+000354 | 	
+000355 | 	/** 
+000356 | 	  * String引数１のString引数２を検索し、直後にString引数３を
+000357 | 	　* insertしてString型の文字列として返す。
+000358 | 	　*	
+000359 | 	　* @param  baseString insertする元のString
+000360 |     	　*
+000361 | 		* @param tag 挿入する位置を決定する検索文字列String
+000362 | 		* @param addString 挿入する文字列String
+000363 | 		* @return 挿入後のString
+000364 | 	  */
+000365 | 	public String insertTag(String baseString,String tag,String addString){
+000366 | 		
+000367 | 		int i=baseString.indexOf(tag);
+000368 | 		StringBuffer sb = new StringBuffer(baseString);
+000369 | 		if(i>-1){
+000370 | 			sb.insert(i+tag.length(),"\n"+addString);
+000371 | 		}
+000372 | 		return sb.toString();
+000373 | 	}
+000374 | 
+000375 | 
+000376 | 
+000377 | 	/** 
+000378 | 	  * 半角カナの拗音を半角カナの対応する文字に変換する。
+000379 | 	  * またカナの長音をハイフンに変換する。
+000380 | 	  * String型の変換したい文字列を引数にセットすると
+000381 | 	  * 変換後のString型の文字列をもどす。
+000382 | 	  * 「"ｧ","ｨ","ｩ","ｪ","ｫ","ｬ","ｭ","ｮ","ｯ","ｰ"」
+000383 | 	  */
+000384 | 	public String decodeSmallKana(String argCheckData){
+000385 | 	
+000386 | 		String[][] smallKana = {
+000387 | 			{"ｧ","ｨ","ｩ","ｪ","ｫ","ｬ","ｭ","ｮ","ｯ","ｰ"},
+000388 | 			{"ｱ","ｲ","ｳ","ｴ","ｵ","ﾔ","ﾕ","ﾖ","ﾂ","-"}
+000389 | 		};
+000390 | 		String checkString="";
+000391 | 		checkString=argCheckData;
+000392 | 		int count=0;
+000393 | 		for (;count<smallKana[0].length;count++){
+000394 | 			int index=0;
+000395 | 			while (index!=-1){
+000396 | 				index=checkString.indexOf(smallKana[0][count]);
+000397 | 				
+000398 | 				if (index>-1){
+000399 | 					StringBuffer checkStringBuffer = new StringBuffer(checkString);
+000400 | 					checkStringBuffer.replace(index,index+1,smallKana[1][count]);
+000401 | 					checkString=checkStringBuffer.toString();
+000402 | 				}
+000403 | 				s=s+" in="+index+" co="+count;
+000404 | 			}
+000405 | 		}
+000406 | 		return checkString;
+000407 | 	}
+000408 | 	
+000409 | 	
+000410 | 	/** 
+000411 | 	  * 全角かな文字を半角カナ文字に変換する。
+000412 | 	  * 全角長音、ハイフンを半角に変換する。
+000413 | 	  * String型の変換したい文字列を引数にセット
+000414 | 	  * 変換後のString型の文字列をもどす。
+000415 | 	  */
+000416 | 	public String zenKanamojiHenkan(String argCheckData){
+000417 | 	
+000418 | 		String[][] Kananmoji = {
+000419 | 			{"あ","い","う","え","お","か","き","く","け","こ","さ","し","す","せ","そ","た","ち","つ","て","と","な","に","ぬ","ね","の"
+000420 | 			,"は","ひ","ふ","へ","ほ","ま","み","む","め","も","や","ゆ","よ","ら","り","る","れ","ろ","わ","を","ん"
+000421 | 			,"が","ぎ","ぐ","げ","ご","ざ","じ","ず","ぜ","ぞ","だ","ぢ","づ","で","ど","ば","び","ぶ","べ","ぼ","ぱ","ぴ","ぷ","ぺ","ぽ","ー","－"},
+000422 | 			{"ｱ","ｲ","ｳ","ｴ","ｵ","ｶ","ｷ","ｸ","ｹ","ｺ","ｻ","ｼ","ｽ","ｾ","ｿ","ﾀ","ﾁ","ﾂ","ﾃ","ﾄ","ﾅ","ﾆ","ﾇ","ﾈ","ﾉ"
+000423 | 			,"ﾊ","ﾋ","ﾌ","ﾍ","ﾎ","ﾏ","ﾐ","ﾑ","ﾒ","ﾓ","ﾔ","ﾕ","ﾖ","ﾗ","ﾘ","ﾙ","ﾚ","ﾛ","ﾜ","ｦ","ﾝ"
+000424 | 			,"ｶﾞ","ｷﾞ","ｸﾞ","ｹﾞ","ｺﾞ","ｻﾞ","ｼﾞ","ｽﾞ","ｾﾞ","ｿﾞ","ﾀﾞ","ﾁﾞ","ﾂﾞ","ﾃﾞ","ﾄﾞ","ﾊﾞ","ﾋﾞ","ﾌﾞ","ﾍﾞ","ﾎﾞ","ﾊﾟ","ﾋﾟ","ﾌﾟ","ﾍﾟ","ﾎﾟ","ｰ","-"},
+000425 | 		};
+000426 | 		String checkString="";
+000427 | 		checkString=argCheckData;
+000428 | 		int count=0;
+000429 | 		for (;count<Kananmoji[0].length;count++){
+000430 | 			int index=0;
+000431 | 			while (index!=-1){
+000432 | 				index=checkString.indexOf(Kananmoji[0][count]);
+000433 | 				
+000434 | 				if (index>-1){
+000435 | 					StringBuffer checkStringBuffer = new StringBuffer(checkString);
+000436 | 					checkStringBuffer.replace(index,index+1,Kananmoji[1][count]);
+000437 | 					checkString=checkStringBuffer.toString();
+000438 | 				}
+000439 | 				s=s+" in="+index+" co="+count;
+000440 | 			}
+000441 | 		}
+000442 | 		return checkString;
+000443 | 	}
+000444 | 	
+000445 | 	/** 
+000446 | 	  * 全角カナ文字を半角カナ文字に変換する。
+000447 | 	  * String型の変換したい文字列を引数にセット
+000448 | 	  * 変換後のString型の文字列をもどす。
+000449 | 	  */
+000450 | 	public String zenKataKanamojiHenkan(String argCheckData){
+000451 | 	
+000452 | 		String[][] Kananmoji = {
+000453 | 			{"ア","イ","ウ","エ","オ","カ","キ","ク","ケ","コ","サ","シ","ス","セ","ソ","タ","チ","ツ","テ","ト","ナ","ニ","ヌ","ネ","ノ"
+000454 | 			,"ハ","ヒ","フ","ヘ","ホ","マ","ミ","ム","メ","モ","ヤ","ユ","ヨ","ラ","リ","ル","レ","ロ","ワ","ヲ","ン"
+000455 | 			,"ガ","ギ","グ","ゲ","ゴ","ザ","ジ","ズ","ゼ","ゾ","ダ","ヂ","ヅ","デ","ド","バ","ビ","ブ","ベ","ボ","パ","ピ","プ","ペ","ポ","ー","－"},
+000456 | 			{"ｱ","ｲ","ｳ","ｴ","ｵ","ｶ","ｷ","ｸ","ｹ","ｺ","ｻ","ｼ","ｽ","ｾ","ｿ","ﾀ","ﾁ","ﾂ","ﾃ","ﾄ","ﾅ","ﾆ","ﾇ","ﾈ","ﾉ"
+000457 | 			,"ﾊ","ﾋ","ﾌ","ﾍ","ﾎ","ﾏ","ﾐ","ﾑ","ﾒ","ﾓ","ﾔ","ﾕ","ﾖ","ﾗ","ﾘ","ﾙ","ﾚ","ﾛ","ﾜ","ｦ","ﾝ"
+000458 | 			,"ｶﾞ","ｷﾞ","ｸﾞ","ｹﾞ","ｺﾞ","ｻﾞ","ｼﾞ","ｽﾞ","ｾﾞ","ｿﾞ","ﾀﾞ","ﾁﾞ","ﾂﾞ","ﾃﾞ","ﾄﾞ","ﾊﾞ","ﾋﾞ","ﾌﾞ","ﾍﾞ","ﾎﾞ","ﾊﾟ","ﾋﾟ","ﾌﾟ","ﾍﾟ","ﾎﾟ","ｰ","-"},
+000459 | 		};
+000460 | 		String checkString="";
+000461 | 		checkString=argCheckData;
+000462 | 		int count=0;
+000463 | 		for (;count<Kananmoji[0].length;count++){
+000464 | 			int index=0;
+000465 | 			while (index!=-1){
+000466 | 				index=checkString.indexOf(Kananmoji[0][count]);
+000467 | 				
+000468 | 				if (index>-1){
+000469 | 					StringBuffer checkStringBuffer = new StringBuffer(checkString);
+000470 | 					checkStringBuffer.replace(index,index+1,Kananmoji[1][count]);
+000471 | 					checkString=checkStringBuffer.toString();
+000472 | 				}
+000473 | 				s=s+" in="+index+" co="+count;
+000474 | 			}
+000475 | 		}
+000476 | 		return checkString;
+000477 | 	}
+000478 | 	
+000479 | 	
+000480 | 	/** 
+000481 | 	  * 半角カナ文字を全角カナ文字に変換する。
+000482 | 	  * String型の変換したい文字列を引数にセット
+000483 | 	  * 変換後のString型の文字列をもどす。
+000484 | 	  */
+000485 | 	public String zenkakumokiHenkan(String argCheckData){
+000486 | 	
+000487 | 		String[][] Kananmoji = {
+000488 | 			{"ｱ","ｲ","ｳ","ｴ","ｵ","ｶ","ｷ","ｸ","ｹ","ｺ","ｻ","ｼ","ｽ","ｾ","ｿ","ﾀ","ﾁ","ﾂ","ﾃ","ﾄ","ﾅ","ﾆ","ﾇ","ﾈ","ﾉ"
+000489 | 			,"ﾊ","ﾋ","ﾌ","ﾍ","ﾎ","ﾏ","ﾐ","ﾑ","ﾒ","ﾓ","ﾔ","ﾕ","ﾖ","ﾗ","ﾘ","ﾙ","ﾚ","ﾛ","ﾜ","ｦ","ﾝ"},
+000490 | 			{"ア","イ","ウ","エ","オ","カ","キ","ク","ケ","コ","サ","シ","ス","セ","ソ","タ","チ","ツ","テ","ト","ナ","ニ","ヌ","ネ","ノ"
+000491 | 			,"ハ","ヒ","フ","ヘ","ホ","マ","ミ","ム","メ","モ","ヤ","ユ","ヨ","ラ","リ","ル","レ","ロ","ワ","ヲ","ン"},
+000492 | 		};
+000493 | 		String checkString="";
+000494 | 		checkString=argCheckData;
+000495 | 		int count=0;
+000496 | 		for (;count<Kananmoji[0].length;count++){
+000497 | 			int index=0;
+000498 | 			while (index!=-1){
+000499 | 				index=checkString.indexOf(Kananmoji[0][count]);
+000500 | 				
+000501 | 				if (index>-1){
+000502 | 					StringBuffer checkStringBuffer = new StringBuffer(checkString);
+000503 | 					checkStringBuffer.replace(index,index+1,Kananmoji[1][count]);
+000504 | 					checkString=checkStringBuffer.toString();
+000505 | 				}
+000506 | 				s=s+" in="+index+" co="+count;
+000507 | 			}
+000508 | 		}
+000509 | 		return checkString;
+000510 | 	}
+000511 | 	
+000512 | 	
+000513 | 	/** 
+000514 | 	  * 全角平仮名の小文字を半角カナ大文字文字に変換する。
+000515 | 	  * String型の変換したい文字列を引数にセットすると
+000516 | 	  * 変換後のString型の文字列をもどす。
+000517 | 	  */
+000518 | 	public String decodeSmallzenKana(String argCheckData){
+000519 | 	
+000520 | 		String[][] smallzenKana = {
+000521 | 			{"ぁ","ぃ","ぅ","ぇ","ぉ","ゃ","ゅ","ょ","っ"},
+000522 | 			{"ｱ","ｲ","ｳ","ｴ","ｵ","ﾔ","ﾕ","ﾖ","ﾂ"}
+000523 | 		};
+000524 | 		String checkString="";
+000525 | 		checkString=argCheckData;
+000526 | 		int count=0;
+000527 | 		for (;count<smallzenKana[0].length;count++){
+000528 | 			int index=0;
+000529 | 			while (index!=-1){
+000530 | 				index=checkString.indexOf(smallzenKana[0][count]);
+000531 | 				
+000532 | 				if (index>-1){
+000533 | 					StringBuffer checkStringBuffer = new StringBuffer(checkString);
+000534 | 					checkStringBuffer.replace(index,index+1,smallzenKana[1][count]);
+000535 | 					checkString=checkStringBuffer.toString();
+000536 | 				}
+000537 | 				s=s+" in="+index+" co="+count;
+000538 | 			}
+000539 | 		}
+000540 | 		return checkString;
+000541 | 	}
+000542 | 	
+000543 | 
+000544 | 	/** 
+000545 | 	  * 全角カナの小文字を半角カナ大文字文字に変換する。
+000546 | 	  * String型の変換したい文字列を引数にセットすると
+000547 | 	  * 変換後のString型の文字列をもどす。
+000548 | 	  */
+000549 | 	public String decodeSmallkatakana(String argCheckData){
+000550 | 	
+000551 | 		String[][] smallzenKana = {
+000552 | 			{"ァ","ィ","ゥ","ェ","ォ","ャ","ュ","ョ","ッ"},
+000553 | 			{"ｱ","ｲ","ｳ","ｴ","ｵ","ﾔ","ﾕ","ﾖ","ﾂ"}
+000554 | 		};
+000555 | 		String checkString="";
+000556 | 		checkString=argCheckData;
+000557 | 		int count=0;
+000558 | 		for (;count<smallzenKana[0].length;count++){
+000559 | 			int index=0;
+000560 | 			while (index!=-1){
+000561 | 				index=checkString.indexOf(smallzenKana[0][count]);
+000562 | 				
+000563 | 				if (index>-1){
+000564 | 					StringBuffer checkStringBuffer = new StringBuffer(checkString);
+000565 | 					checkStringBuffer.replace(index,index+1,smallzenKana[1][count]);
+000566 | 					checkString=checkStringBuffer.toString();
+000567 | 				}
+000568 | 				s=s+" in="+index+" co="+count;
+000569 | 			}
+000570 | 		}
+000571 | 		return checkString;
+000572 | 	}	
+000573 | 	
+000574 | 	
+000575 | 	
+000576 | 	/** 
+000577 | 	  * 全角小文字のアルファベット文字を全角大文字のアルファベット文字に変換する。
+000578 | 	  * String型の変換したい文字列を引数にセットすると
+000579 | 	  * 変換後のString型の文字列をもどす。
+000580 | 	  */
+000581 | 	public String alphabetZenHenkan(String argCheckData){
+000582 | 	
+000583 | 		String[][] alphabet = {
+000584 | 			{"ａ","ｂ","ｃ","ｄ","ｅ","ｆ","ｇ","ｈ","ｉ","ｊ","ｋ","ｌ","ｍ","ｎ","ｏ","ｐ","ｑ","ｒ","ｓ","ｔ","ｕ","ｖ","ｗ","ｘ","ｙ","ｚ"},
+000585 | 			{"Ａ","Ｂ","Ｃ","Ｄ","Ｅ","Ｆ","Ｇ","Ｈ","Ｉ","Ｊ","Ｋ","Ｌ","Ｍ","Ｎ","Ｏ","Ｐ","Ｑ","Ｒ","Ｓ","Ｔ","Ｕ","Ｖ","Ｗ","Ｘ","Ｙ","Ｚ"},
+000586 | 		};
+000587 | 		String checkString="";
+000588 | 		checkString=argCheckData;
+000589 | 		int count=0;
+000590 | 		for (;count<alphabet[0].length;count++){
+000591 | 			int index=0;
+000592 | 			while (index!=-1){
+000593 | 				index=checkString.indexOf(alphabet[0][count]);
+000594 | 				
+000595 | 				if (index>-1){
+000596 | 					StringBuffer checkStringBuffer = new StringBuffer(checkString);
+000597 | 					checkStringBuffer.replace(index,index+1,alphabet[1][count]);
+000598 | 					checkString=checkStringBuffer.toString();
+000599 | 				}
+000600 | 				s=s+" in="+index+" co="+count;
+000601 | 			}
+000602 | 		}
+000603 | 		return checkString;
+000604 | 	}	
+000605 | 	
+000606 | 	
+000607 | 	
+000608 | 	
+000609 | 	
+000610 | 	
+000611 | 	
+000612 | 	
+000613 | 
+000614 | 
+000615 | 	/** 
+000616 | 	  * 全角文字中の半角"?"を全角"－"に変換する。
+000617 | 	  */
+000618 | 	public String decodeLongMinus(String argCheckData){
+000619 | 		String checkString;
+000620 | 		try{
+000621 | 			checkString=new String(argCheckData.getBytes());
+000622 | 		}
+000623 | 		catch(Exception e){
+000624 | 			checkString=argCheckData;
+000625 | 		}
+000626 | 		String q="－";
+000627 | 		while (checkString.indexOf("?")!=-1){
+000628 | 			int index=checkString.indexOf("?");
+000629 | 			StringBuffer checkStringBuffer = new StringBuffer(checkString);
+000630 | 			checkStringBuffer.replace(index,index+1,q);
+000631 | 			giCnt=index;
+000632 | 			checkString=checkStringBuffer.toString();
+000633 | 		}
+000634 | 		return checkString;
+000635 | 	}
+000636 | 
+000637 | 
+000638 | 	/** 
+000639 | 	  * Stringの引数の改行文字を２バイトの空白文字１文字に返還し、
+000640 | 	　* String型の文字列として返す。
+000641 | 	　*	
+000642 | 	　* @param  input   改行文字を削除したいString
+000643 |       *
+000644 |       * @return String型の文字列
+000645 | 	  */
+000646 | 	public String editNewLine(String input){
+000647 | 		String s=input;
+000648 | 		while(s.indexOf("\r\n")!=-1){
+000649 | 			int index=s.indexOf("\r\n");
+000650 | 			StringBuffer sb=new StringBuffer(s);
+000651 | 			sb.replace(index,index+2,"　");
+000652 | 			s=sb.toString();
+000653 | 		}
+000654 | 		return s;
+000655 | 	 }
+000656 | 
+000657 | 	/** 
+000658 | 	  * long引数を３桁ごとのカンマを付与した形式に編集し、
+000659 | 	　* String型の文字列として返す。
+000660 | 	　*	
+000661 | 	　* @param  kingaku   カンマを付与したいlong
+000662 |    	　*
+000663 |    	　* @return ３桁ごとのカンマを付与した形式のString
+000664 | 	  */
+000665 | 	public String editKanma(long kingaku){
+000666 | 
+000667 | 		return NumberFormat.getInstance().format(kingaku);
+000668 | 	 }
+000669 | 
+000670 | 	/** 
+000671 | 	  * int引数を３桁ごとのカンマを付与した形式に編集し、
+000672 | 	　* String型の文字列として返す。
+000673 | 	　*	
+000674 | 	　* @param  kingaku   カンマを付与したいint
+000675 |      	　*
+000676 |      	　* @return ３桁ごとのカンマを付与した形式のString
+000677 | 	  */
+000678 | 	public String editKanma(int kingaku){
+000679 | 
+000680 | 		return NumberFormat.getInstance().format(kingaku);
+000681 | 	 }
+000682 | 
+000683 | 	/** 
+000684 | 	* String引数を３桁ごとのカンマを付与した形式に編集し、
+000685 | 	* String型の文字列として返す。（先頭のゼロは除去する）
+000686 | 	* なお、先頭の１文字が数字でなければ、記号とみなし反映する。
+000687 | 	* 　　　２文字目以降に数字以外があれば、"PARAMERR"を返す。
+000688 | 	*
+000689 | 	* @param  kingaku   カンマを付与したいString
+000690 |      	*
+000691 |      	* @return ３桁ごとのカンマを付与した形式のString（先頭のゼロは除去する）
+000692 | 	*/
+000693 | 	public String editKanma(String kingaku)throws Exception{
+000694 | 
+000695 | 		String editKingaku = kingaku;
+000696 | 
+000697 | 		//先頭１文字目が数字以外の場合、最後に付加する処理
+000698 | 		String fugou  ="";
+000699 | 		try{
+000700 | 			int top =  Integer.parseInt(editKingaku.substring(0,1));
+000701 | 		}
+000702 | 		catch(NumberFormatException nfe){
+000703 | 			fugou = editKingaku.substring(0,1);
+000704 | 			editKingaku = editKingaku.substring(1,editKingaku.length());
+000705 | 		}
+000706 | 
+000707 | 		//２文字目以降のニューメリックＣＨＥＣＫ
+000708 | 		int startPoint;
+000709 | 		int endPoint;
+000710 | 		for( int cnt =editKingaku.length(); cnt > 0 ; cnt = cnt - 9 ){
+000711 | 			endPoint = cnt;
+000712 | 			if(cnt > 9){
+000713 | 				startPoint = cnt - 9;
+000714 | 			}
+000715 | 			else{
+000716 | 				startPoint = 0;
+000717 | 			}
+000718 | 
+000719 | 			try{
+000720 | 				int top =  Integer.parseInt(editKingaku.substring(startPoint,endPoint));
+000721 | 			}
+000722 | 			catch(NumberFormatException nfe){
+000723 | 				throw new CifApplicationException("9000-02"+nfe.toString());
+000724 | 			}
+000725 | 		}
+000726 | 
+000727 | 
+000728 | 	//先頭ゼロの除去
+000729 | 	for(int cnt  =editKingaku.length(); cnt > 1 ; cnt = cnt - 1 ){
+000730 | 		
+000731 | 		if(editKingaku.substring(0,1).compareTo("0") == 0){
+000732 | 			editKingaku = editKingaku.substring(1,cnt);
+000733 | 		}
+000734 | 		else{
+000735 | 			cnt = 0;
+000736 | 		}
+000737 | 
+000738 | 	}
+000739 | 
+000740 | 		//カンマを付加
+000741 | 		int leng = editKingaku.length();
+000742 | 		int setCount = (leng -1 ) / 3;
+000743 | 		int setPoint = leng % 3 ;
+000744 | 		if( setPoint == 0 ){
+000745 | 			setPoint = setPoint + 3;
+000746 | 		}
+000747 | 
+000748 | 		for( ; setCount > 0 ; setCount-- ){
+000749 | 			editKingaku = editKingaku.substring(0,setPoint) + "," + editKingaku.substring(setPoint,leng);
+000750 | 			setPoint = setPoint + 4;
+000751 | 			leng++;
+000752 | 		}  
+000753 | 
+000754 | 		//NECIKO if(fugou != ""){
+000755 | 		if(!fugou.equals("")){
+000756 | 			editKingaku = fugou + editKingaku;
+000757 | 		} 
+000758 | 
+000759 | 		return editKingaku;
+000760 | 	 }
+000761 | 
+000762 | 	/** 
+000763 | 	* String引数に、下記の通りにハイフンを付与した形式に編集し、
+000764 | 	* String型の文字列として返す。
+000765 | 	*	引数が１０桁　→　携帯電話：０９０ＸＸＸＸ－ＸＸＸＸ	
+000766 | 	*	引数が９桁　　→　固定電話：　ＸＸＸＸＸＸーＸＸＸＸ
+000767 | 	*	引数の先頭がゼロ　→　空白
+000768 | 	* @param  telphone   ハイフンを付与したいString
+000769 |      	*
+000770 |      	* @return ３桁ごとのカンマを付与した形式のString
+000771 | 	*/
+000772 | 	public String editTelphone(String telphone){
+000773 | 
+000774 | 		String editTel = "";
+000775 | 		//M,Aoki 2008-11-25 エラー対応
+000776 | 		if(telphone == null) {
+000777 | 			return editTel;
+000778 | 		}
+000779 | 		if(telphone.substring(0,1) != "0"){
+000780 | 			switch (telphone.length() ){
+000781 | 				case 10:
+000782 | 					telphone = "0" + telphone;
+000783 | 					editTel = telphone.substring(0,7) + "-" + telphone.substring(7,11);
+000784 | 					break;
+000785 | 				case 9:
+000786 | 					telphone = "0" + telphone;
+000787 | 					editTel = telphone.substring(0,6) + "-" + telphone.substring(6,10);
+000788 | 					break;
+000789 | 			}
+000790 | 		}
+000791 | 		return  editTel;
+000792 | 	}
+000793 | 
+000794 | 	/** 
+000795 | 	* int引数に、下記の通りにハイフンを付与した形式に編集し、
+000796 | 	* int型の文字列として返す。
+000797 | 	*	引数が１０桁　→　携帯電話使用不可（int型の桁が足りない為）	
+000798 | 	*	引数が９桁　　→　固定電話：　ＸＸＸＸＸＸーＸＸＸＸ
+000799 | 	*	引数の先頭がゼロ　→　空白
+000800 | 	* @param  telphone   ハイフンを付与したいint
+000801 |      	*
+000802 |      	* @return ３桁ごとのカンマを付与した形式のString
+000803 | 	*/
+000804 | 	public String editTelphone(int telphone){
+000805 | 		
+000806 | 		return editTelphone(Integer.toString(telphone));
+000807 | 	}
+000808 | 
+000809 |     /**
+000810 |      * 西暦８桁又は和暦６桁のString引数を“－“を付与した形式に編集し
+000811 |      * String型の文字列として返す。
+000812 |      * @param  eDate   “－“を付与したいString
+000813 |      *
+000814 |      * @return “－“を付与した形式のString
+000815 |      */
+000816 | 	public String editDate(String eDate){
+000817 | 		if(eDate.length() == 8){
+000818 | 			String dateString="";
+000819 | 			StringBuffer dateStringBuffer = new StringBuffer(eDate);
+000820 | 			dateStringBuffer.insert(4,"-");
+000821 | 			dateStringBuffer.insert(7,"-");
+000822 | 			dateString = dateStringBuffer.toString();
+000823 | 			return dateString;
+000824 | 		}
+000825 | 		else if(eDate.length() == 6){
+000826 | 			String dateString="";
+000827 | 			StringBuffer dateStringBuffer = new StringBuffer(eDate);
+000828 | 			dateStringBuffer.insert(2,"-");
+000829 | 			dateStringBuffer.insert(5,"-");
+000830 | 			dateString = dateStringBuffer.toString();
+000831 | 			return dateString;
+000832 | 		}
+000833 | 		else{
+000834 | 			return eDate;
+000835 | 		}
+000836 | 	}
+000837 | 	
+000838 | 	
+000839 | 	
+000840 | 	/**
+000841 |      * 西暦10桁yyyy-mm-ddのString引数から“－“を削除した形式に編集し
+000842 |      * String型の文字列として返す。
+000843 |      * @param  eDate   “－“を削除したいString
+000844 |      *
+000845 |      * @return “－“を削除した形式のString
+000846 |      */
+000847 | 	public String edit49Date(String eDate){
+000848 | 		StringBuffer sbDate=new StringBuffer(eDate);
+000849 | 		sbDate.delete(7,8);
+000850 | 		sbDate.delete(4,5);
+000851 | 		return sbDate.toString();
+000852 | 	}
+000853 | 	
+000854 | 	
+000855 | 	
+000856 |     /**
+000857 |      * ６桁のString引数を２桁ごとに“：“を付与した形式に編集し
+000858 |      * String型の文字列として返す。
+000859 |      * @param  eTime   “：“を付与したいString
+000860 |      *
+000861 |      * @return “：“を付与した形式のString
+000862 |      */
+000863 | 	public String editTime(String eTime){
+000864 | 		if(eTime.length() == 6){
+000865 | 			String timeString ="";
+000866 | 			StringBuffer timeStringBuffer = new StringBuffer(eTime);
+000867 | 			timeStringBuffer.insert(2,":");
+000868 | 			timeStringBuffer.insert(5,":");
+000869 | 			timeString = timeStringBuffer.toString();
+000870 | 			return timeString;
+000871 | 		}
+000872 | 		else{
+000873 | 			return eTime;
+000874 | 		}
+000875 | 	}
+000876 | 
+000877 |     /**
+000878 |      * データベースの検索結果をHTTPクライアント(Webブラウザ)
+000879 |      * に出力する。
+000880 |      *
+000881 |      * @param  rs   データベースの検索結果（ResultSet型の変数名）
+000882 |      * @param  out  検索結果の出力先（PrintWriter型の変数名）
+000883 |      *
+000884 |      * @return なし
+000885 |      */
+000886 | 
+000887 |     public void display(ResultSet rs, PrintWriter out) {
+000888 | 
+000889 |         try {
+000890 |             // ResultSetオブジェクトがnullでなければ、検索結果を表示する
+000891 |             if (rs != null) {
+000892 |                 out.println(
+000893 |                     "<h2>サーブレットによるサンプルデータベースの検索結果</h2>"
+000894 |                 );
+000895 |                 out.println("<table border>");
+000896 |                 out.print("<tr>");
+000897 |                 // 検索結果1行のカラム(列)数を取得する
+000898 |                 ResultSetMetaData rsmd = rs.getMetaData();
+000899 |                 int    columns = rsmd.getColumnCount();
+000900 |                 // 検索結果の各カラム(列)名称を表示する
+000901 |                 for(int i = 1; i <= columns; i++)   {
+000902 |                     out.print("<th>" + rsmd.getColumnName(i) + "</th>");
+000903 |                 }
+000904 |                 out.println("</tr>");
+000905 |                 // 検索結果の各カラム(列)タイプを表示する
+000906 |                 for(int i = 1; i <= columns; i++)   {
+000907 |                     out.print("<th>" + rsmd.getColumnTypeName(i) + "</th>");
+000908 |                 }
+000909 |                 out.println("</tr>");
+000910 |                 // 検索結果が1行以上存在する場合は、それを表示する。
+000911 |                 if (rs.next()) {
+000912 |                     // 検索結果の行数を初期化する
+000913 |                     int row = 0;
+000914 |                     // 検索結果の行数分だけ以下を繰り返す
+000915 |                     do  {
+000916 |                         out.print("<tr>");
+000917 |                         // 検索結果1行分のデータを表示する
+000918 |                         for(int i = 1; i <= columns; i++)   {
+000919 |                             // 検索結果のi番目のカラムの内容を取得する
+000920 |                             String data = rs.getString(i);
+000921 |                             // 検索結果がNULLだった場合は"--NULL--"に変換する
+000922 |                             if ( data == null ) data = "<b>--NULL--</b>";
+000923 |                             // 検索結果を表示する
+000924 |                             out.print("<td>" + data + "</td>");
+000925 |                         }
+000926 |                         out.println("</tr>");
+000927 |                         // 検索結果の行数を1ずつカウントアップする
+000928 |                         row++;
+000929 |                     } while(rs.next());
+000930 |                     out.println("</table>");
+000931 |                     // 検索結果の行数を表示する
+000932 |                     out.println(row + "件のデータが見つかりました。");
+000933 |                 } else {
+000934 |                     out.println("</table>");
+000935 |                     // 検索結果が1行も無い場合はメッセージを表示して終了する
+000936 |                     out.println(
+000937 |                         "検索条件に適合するデータは見つかりませんでした。"
+000938 |                     );
+000939 |                 }
+000940 |             }
+000941 |         } catch(SQLException ex) {
+000942 | 
+000943 |             // データベースへのアクセス時にエラーが発生した場合は
+000944 |             // エラーメッセージを表示する
+000945 |             out.println(ex.getMessage());
+000946 |             out.println("</tr></table>");
+000947 |         }
+000948 |     }	
+000949 | 
+000950 | 	/** 
+000951 | 	　* 引数７桁　元号表示"H"or"S"or"T" + 和暦ＹＹＭＭＤＤとみなし、西暦ＹＹＹＹＭＭＤＤで返す。
+000952 | 	  * 引数６桁　和暦ＹＹＭＭＤＤとみなし、西暦ＹＹＹＹＭＭＤＤで返す。
+000953 | 	　* 　　　　　　ただし、指定の年月日が存在していれば、"PARAMERR"を返す。
+000954 | 	　* 引数４桁　和暦ＹＹＭＭとみなし、西暦ＹＹＹＹＭＭで返す。
+000955 | 	　* 引数２桁　和暦ＹＹとみなし、西暦ＹＹＹＹで返す。
+000956 |      	　* 以外　　、"PARAMERR"を返す。
+000957 | 	  *
+000958 | 	  * @param  wareki  和暦日付（String型）
+000959 | 	  *
+000960 | 	  */
+000961 | 
+000962 | 	public String getSeireki(String wareki)throws Exception{
+000963 | 
+000964 | 
+000965 | 		String seirekiDate = "";
+000966 | 
+000967 | 		String gengo="";
+000968 | 		String warekiYear = "";
+000969 | 		String warekiMonth = "";
+000970 | 		String warekiDay = "";
+000971 | 
+000972 | 		int seirekiYear;
+000973 | 		int seirekiMonth;
+000974 | 		int seirekiDay;
+000975 | 
+000976 | 		
+000977 | 		if(wareki.length() == 7){
+000978 | 			gengo       =wareki.substring(0,1);
+000979 | 			warekiYear  =wareki.substring(1,3);
+000980 | 			warekiMonth =wareki.substring(3,5);
+000981 | 			warekiDay   =wareki.substring(5,7);
+000982 | 			if(gengo.equals("H")){
+000983 | 				seirekiYear = 1988 + Integer.parseInt(warekiYear);
+000984 | 			}else if(gengo.equals("S")){
+000985 | 				seirekiYear = 1925 + Integer.parseInt(warekiYear);
+000986 | 			}else if(gengo.equals("T")){
+000987 | 				seirekiYear = 1911 + Integer.parseInt(warekiYear);
+000988 | 			}else if(gengo.equals("M")){
+000989 | 				seirekiYear = 1867 + Integer.parseInt(warekiYear);
+000990 | 			}else{
+000991 | 				seirekiYear = 1988 + Integer.parseInt(warekiYear);
+000992 | 			}
+000993 | 			seirekiDate = Integer.toString(seirekiYear) + warekiMonth + warekiDay;
+000994 | 			seirekiMonth = Integer.parseInt(warekiMonth) ;
+000995 | 			seirekiDay = Integer.parseInt(warekiDay);
+000996 | 		}else{
+000997 | 			//ニューメリックＣＨＥＣＫ
+000998 | 			try{
+000999 | 				int wk =  Integer.parseInt(wareki);
+001000 | 			}
+001001 | 			catch(NumberFormatException nfe){
+001002 | 				throw new CifApplicationException("9000-02"+nfe.toString());
+001003 | 			}
+001004 | 			if(wareki.length() == 6){
+001005 | 				warekiYear = wareki.substring(0,2);
+001006 | 				warekiMonth = wareki.substring(2,4);
+001007 | 				warekiDay = wareki.substring(4,6);
+001008 | 
+001009 | 				seirekiYear = 1988 + Integer.parseInt(warekiYear);
+001010 | 				seirekiDate = Integer.toString(seirekiYear) + warekiMonth + warekiDay;
+001011 | 				seirekiMonth = Integer.parseInt(warekiMonth) ;
+001012 | 				seirekiDay = Integer.parseInt(warekiDay);
+001013 | 			}
+001014 | 			else if(wareki.length() == 4){
+001015 | 				warekiYear = wareki.substring(0,2);
+001016 | 				warekiMonth = wareki.substring(2,4);
+001017 | 
+001018 | 				seirekiYear = 1988 + Integer.parseInt(warekiYear);
+001019 | 				seirekiDate = Integer.toString(seirekiYear) + warekiMonth;
+001020 | 				seirekiMonth = Integer.parseInt(warekiMonth) ;
+001021 | 				seirekiDay = 10;//平成１年１月１日は存在しない為「１０」セット
+001022 | 			}
+001023 | 			else if(wareki.length() == 2){
+001024 | 				warekiYear = wareki.substring(0,2);
+001025 | 
+001026 | 				seirekiYear = 1988 + Integer.parseInt(warekiYear);
+001027 | 				seirekiDate = Integer.toString(seirekiYear);
+001028 | 				seirekiMonth = 1;
+001029 | 				seirekiDay = 10;//平成１年１月１日は存在しない為「１０」セット
+001030 | 			}
+001031 | 			else{
+001032 | 				return "PARAMERR";
+001033 | 			}
+001034 | 			
+001035 | 		}
+001036 | 
+001037 | 		//存在する暦上日なら、trueを返す。存在しない暦上日なら、falseを返す。
+001038 | 		boolean check = checkDate(seirekiYear,seirekiMonth,seirekiDay);
+001039 | 		if(check == false){
+001040 | 			return "PARAMERR";
+001041 | 		}
+001042 | 		return seirekiDate ;
+001043 | 	}
+001044 | 
+001045 | 
+001046 | 	/** 
+001047 | 	　* 指定の西暦年月日が存在するなら、trueを返す。
+001048 | 	　* 指定の西暦年月日が存在しなければ、falseを返す。
+001049 | 	　* 引数が４桁以下なら、falseを返す。
+001050 | 	　* 
+001051 | 	  * @param  seireki  西暦日付（int型）
+001052 | 	  */
+001053 | 	public boolean checkDate(int seireki ){
+001054 | 
+001055 | 		return checkDate(Integer.toString(seireki));
+001056 | 
+001057 | 	}
+001058 | 	/** 
+001059 | 	　* 指定の西暦年月日が存在するなら、trueを返す。
+001060 | 	　* 指定の西暦年月日が存在しなければ、falseを返す。
+001061 | 	　* 引数が４桁以下なら、falseを返す。
+001062 | 	　* 
+001063 | 	  * @param  seireki  西暦日付（String型）
+001064 | 	  */
+001065 | 	public boolean checkDate(String seireki ){
+001066 | 
+001067 | 		if(seireki.length() < 5){
+001068 | 			return false;
+001069 | 		} 
+001070 | 
+001071 | 		String year = seireki.substring(0,seireki.length() - 4 );
+001072 | 		String month = seireki.substring(seireki.length() - 4,seireki.length() - 2 );
+001073 | 		String day = seireki.substring(seireki.length() - 2,seireki.length() );
+001074 | 		return checkDate(Integer.parseInt(year),Integer.parseInt(month),Integer.parseInt(day));
+001075 | 	}
+001076 | 
+001077 | 
+001078 | 	/** 
+001079 | 	　* 指定の西暦年月日が存在するなら、trueを返す。
+001080 | 	　* 指定の西暦年月日が存在しなければ、falseを返す。
+001081 | 	　* 
+001082 | 	  * @param  year   西暦年（String型）
+001083 | 	  * @param  month  西暦月（String型）
+001084 | 	  * @param  day    西暦日（String型）
+001085 | 	  */
+001086 | 	public boolean checkDate(String year,String month,String day ){
+001087 | 
+001088 | 		return checkDate(Integer.parseInt(year),Integer.parseInt(month),Integer.parseInt(day));
+001089 | 	}
+001090 | 
+001091 | 	/** 
+001092 | 	　* 指定の西暦年月日が存在するなら、trueを返す。
+001093 | 	　* 指定の西暦年月日が存在しなければ、falseを返す。
+001094 | 	　* 
+001095 | 	  * @param  year   西暦年（int型）
+001096 | 	  * @param  month  西暦月（int型）
+001097 | 	  * @param  day    西暦日（int型）
+001098 | 	  */
+001099 | 
+001100 | 	public boolean checkDate(int year,int month,int day ){
+001101 | 
+001102 | 		boolean check = true;
+001103 | 		//日付/時刻の解釈を厳密に行う設定にする
+001104 | 		cal.setLenient( false );
+001105 | 		//年、月、日付のフィールドに値を設定（Month 値は 0 から始まる。つまり、0 は 1 月）
+001106 | 		cal.set(year, month -1, day);
+001107 | 	  
+001108 | 		try {
+001109 | 			//Calendar の現在時刻を取得
+001110 | 			java.util.Date ud = cal.getTime();
+001111 | 
+001112 | 			//不正な引数、または不適切な引数をメソッドに渡したことを示すためにスローされます
+001113 | 		} catch (IllegalArgumentException iae) {
+001114 | 			check = false;
+001115 | 		}
+001116 | 		return check;
+001117 | 	}
+001118 | 	
+001119 | 	
+001120 | 	
+001121 | 	/** 
+001122 | 	　* 指定の和暦年月日が存在するなら、trueを返す。
+001123 | 	　* 指定の和暦年月日が存在しなければ、falseを返す。
+001124 | 	　* 引数が６桁ならyymmdd、７桁なら"H"or"S"or"T" + 和暦yymmdd。
+001125 | 	　* 
+001126 | 	  * @param  wareki  和暦日付（String型）
+001127 | 	  */
+001128 | 	public boolean checkWarekiDate(String wareki)throws Exception{
+001129 | 
+001130 | 		boolean status=false;
+001131 | 		String date;
+001132 | 		if(wareki.length()==6){
+001133 | 			date=new String(wareki);
+001134 | 		}else if(wareki.length()==7){
+001135 | 			String gengo=new String(wareki.substring(0,1));
+001136 | 			if(gengo.equals("H")|gengo.equals("S")|gengo.equals("T")|gengo.equals("M")){
+001137 | 				date=new String(wareki.substring(1,7));
+001138 | 			}else{
+001139 | 				return status;
+001140 | 			}
+001141 | 		}else{
+001142 | 			return status;
+001143 | 		}
+001144 | 		try{
+001145 | 			int wk=Integer.parseInt(date);
+001146 | 		}
+001147 | 		catch(NumberFormatException nfe){
+001148 | 			return status;
+001149 | 		}
+001150 | 		if(!getSeireki(wareki).equals("PARAMERR")){
+001151 | 			status=true;
+001152 | 		}
+001153 | 		return status;
+001154 | 	}
+001155 | 
+001156 | 	
+001157 | 	
+001158 | 
+001159 | 	
+001160 | 	/** 
+001161 | 	　* ２つの指定された西暦年月日の差日数を求め、int型で返す。
+001162 | 	　* 指定の西暦年月日が存在しなければ、CifApplicationExceptionにthrow する。
+001163 | 	　* 
+001164 | 	  * @param  startYear   開始西暦年（int型）
+001165 | 	  * @param  startMonth  開始西暦月（int型）
+001166 | 	  * @param  startDay    開始西暦日（int型）
+001167 | 	  * @param  endYear     終了西暦年（int型）
+001168 | 	  * @param  endMonth    終了西暦月（int型）
+001169 | 	  * @param  endDay      終了西暦日（int型）
+001170 | 	  */
+001171 | 
+001172 | 	public int getSanissu(int startYear,int startMonth,int startDay,int endYear,int endMonth,int endDay)throws Exception {
+001173 | 		
+001174 | 		boolean check = true;
+001175 | 		check = checkDate( startYear, startMonth, startDay);
+001176 | 		if(check ==false){
+001177 | 			throw new CifApplicationException("1008-02:"+Integer.toString(startYear)+Integer.toString(startMonth)+Integer.toString(startDay));
+001178 | 		}
+001179 | 		check = checkDate( endYear, endMonth, endDay);
+001180 | 		if(check ==false){
+001181 | 			throw new CifApplicationException("1008-02:"+Integer.toString(endYear)+Integer.toString(endMonth)+Integer.toString(endDay));
+001182 | 		}
+001183 | 		
+001184 | 		cal.clear();
+001185 | 		cal.set(startYear, startMonth - 1, startDay);    /* 年月日をセット */
+001186 | 		long startTime= (cal.getTime()).getTime();  /* ミリ秒数取り出し */
+001187 | 	
+001188 | 		cal.clear();
+001189 | 		cal.set( endYear, endMonth - 1, endDay);    /* 年月日をセット */
+001190 | 		long endTime  = (cal.getTime()).getTime();  /* ミリ秒数取り出し */
+001191 | 
+001192 | 		long nissu = (endTime - startTime)/(1000*60*60*24);
+001193 | 
+001194 | 		return (int)nissu;
+001195 | 		
+001196 | 	}	
+001197 | 	/** 
+001198 | 	　* ２つの指定された西暦年月日の差日数を求め、int型で返す。
+001199 | 	　* 指定の西暦年月日が存在しなければ、CifApplicationExceptionにthrow する。
+001200 | 	　* 
+001201 | 	  * @param  startYear   開始西暦年（String型）
+001202 | 	  * @param  startMonth  開始西暦月（String型）
+001203 | 	  * @param  startDay    開始西暦日（String型）
+001204 | 	  * @param  endYear     終了西暦年（String型）
+001205 | 	  * @param  endMonth    終了西暦月（String型）
+001206 | 	  * @param  endDay      終了西暦日（String型）
+001207 | 	  */
+001208 | 
+001209 | 	public int getSanissu(String startYear,String startMonth,String startDay,String endYear,String endMonth,String endDay)throws Exception {
+001210 | 
+001211 | 		//ニューメリックＣＨＥＣＫ
+001212 | 		try{
+001213 | 			int wk =  Integer.parseInt(startYear);
+001214 | 			wk =  Integer.parseInt(startMonth);
+001215 | 			wk =  Integer.parseInt(startDay);
+001216 | 		}
+001217 | 		catch(NumberFormatException nfe){
+001218 | 			throw new CifApplicationException("1008-02:" + startYear + startMonth + startDay);
+001219 | 		}
+001220 | 
+001221 | 		//ニューメリックＣＨＥＣＫ
+001222 | 		try{
+001223 | 			int wk =  Integer.parseInt(endYear);
+001224 | 			wk =  Integer.parseInt(endMonth);
+001225 | 			wk =  Integer.parseInt(endDay);
+001226 | 		}
+001227 | 		catch(NumberFormatException nfe){
+001228 | 			throw new CifApplicationException("1008-02:" + endYear + endMonth + endDay);
+001229 | 		}
+001230 | 
+001231 | 		return getSanissu(Integer.parseInt(startYear),Integer.parseInt(startMonth),Integer.parseInt(startDay),Integer.parseInt(endYear),Integer.parseInt(endMonth),Integer.parseInt(endDay));
+001232 | 	}
+001233 | 
+001234 | 	/** 
+001235 | 	　* ２つの指定された西暦年月日の差日数を求め、int型で返す。
+001236 | 	　* 指定の西暦年月日が存在しなければ、CifApplicationExceptionにthrow する。
+001237 | 	　* 
+001238 | 	  * @param  startDate   開始西暦年月日（String型）
+001239 | 	  * @param  endDate     終了西暦年月日（String型）
+001240 | 	  */
+001241 | 
+001242 | 	public int getSanissu(String startDate,String endDate)throws Exception {
+001243 | 		
+001244 | 		if(startDate.length() != 8){
+001245 | 			throw new CifApplicationException("1008-02:"+startDate);
+001246 | 		} 
+001247 | 
+001248 | 		if(endDate.length() != 8){
+001249 | 			throw new CifApplicationException("1008-02:"+endDate);
+001250 | 		} 
+001251 | 
+001252 | 		String startYear = startDate.substring(0,startDate.length() - 4 );
+001253 | 		String startMonth = startDate.substring(startDate.length() - 4,startDate.length() - 2 );
+001254 | 		String startDay = startDate.substring(startDate.length() - 2,startDate.length() );
+001255 | 		String endYear = endDate.substring(0,endDate.length() - 4 );
+001256 | 		String endMonth = endDate.substring(endDate.length() - 4,endDate.length() - 2 );
+001257 | 		String endDay = endDate.substring(endDate.length() - 2,endDate.length() );
+001258 | 		
+001259 | 		return getSanissu(startYear,startMonth,startDay,endYear,endMonth,endDay);
+001260 | 		
+001261 | 	}
+001262 | 
+001263 | 	/** 
+001264 | 	　* ２つの指定された西暦年月日の差日数を求め、int型で返す。
+001265 | 	　* 指定の西暦年月日が存在しなければ、CifApplicationExceptionにthrow する。
+001266 | 	　* 
+001267 | 	  * @param  startDate   開始西暦年月日（int型）
+001268 | 	  * @param  endDate     終了西暦年月日（int型）
+001269 | 	  */
+001270 | 
+001271 | 	public int getSanissu(int startDate,int endDate)throws Exception {
+001272 | 		
+001273 | 		String startDate8keta = Integer.toString(startDate);
+001274 | 		while (startDate8keta.length() < 8){
+001275 | 			startDate8keta = "0"+ startDate8keta;
+001276 | 		}
+001277 | 		String endDate8keta = Integer.toString(endDate);
+001278 | 		while (endDate8keta.length() < 8){
+001279 | 			endDate8keta = "0"+ endDate8keta;
+001280 | 		}
+001281 | 		
+001282 | 		return getSanissu(startDate8keta,endDate8keta);
+001283 | 		
+001284 | 	}
+001285 | 	
+001286 | 	
+001287 | 	/** 
+001288 | 	　* ２つの指定された西暦年月日の差年数を求め、int型で返す。
+001289 | 	　* 指定の西暦年月日が存在しなければ、CifApplicationExceptionにthrow する。
+001290 | 	　* 以下の場合、CifApplicationExceptionにthrow する。
+001291 | 	　*		①引数が暦上日でなければ、エラー画面出力
+001292 | 	　*		②引数の開始日付　＞　引数の終了日付　ならエラー画面出力
+001293 | 	　* 	　* 
+001294 | 	  * @param  startDate   開始西暦年月日（int型）
+001295 | 	  * @param  endDate     終了西暦年月日（int型）
+001296 | 	  */
+001297 | 
+001298 | 	public int getAge(int startDate,int endDate)throws Exception {
+001299 | 		
+001300 | 		String startDate8keta = Integer.toString(startDate);
+001301 | 		while (startDate8keta.length() < 8){
+001302 | 			startDate8keta = "0"+ startDate8keta;
+001303 | 		}
+001304 | 		String endDate8keta = Integer.toString(endDate);
+001305 | 		while (endDate8keta.length() < 8){
+001306 | 			endDate8keta = "0"+ endDate8keta;
+001307 | 		}
+001308 | 		
+001309 | 		return getAge(startDate8keta,endDate8keta);
+001310 | 		
+001311 | 	}
+001312 | 		/** 
+001313 | 	　* ２つの指定された西暦年月日の差年数を求め、int型で返す。
+001314 | 	　* 以下の場合、CifApplicationExceptionにthrow する。
+001315 | 	　*		①引数が８桁でなければ、エラー画面出力
+001316 | 	　*		②引数がニューメリックでなければ、エラー画面出力
+001317 | 	　*		③引数が暦上日でなければ、エラー画面出力
+001318 | 	　*		④引数の開始日付　＞　引数の終了日付　ならエラー画面出力
+001319 | 	　*  
+001320 | 	  * @param  startDate   開始西暦年月日（String型）
+001321 | 	  * @param  endDate     終了西暦年月日（String型）
+001322 | 	  */
+001323 | 
+001324 | 	public int getAge(String startDate,String endDate)throws Exception {
+001325 | 		
+001326 | 		if(startDate.length() != 8){
+001327 | 			throw new CifApplicationException("1008-02:"+startDate);
+001328 | 		} 
+001329 | 
+001330 | 		if(endDate.length() != 8){
+001331 | 			throw new CifApplicationException("1008-02:"+endDate);
+001332 | 		} 
+001333 | 
+001334 | 		String startYear = startDate.substring(0,startDate.length() - 4 );
+001335 | 		String startMonth = startDate.substring(startDate.length() - 4,startDate.length() - 2 );
+001336 | 		String startDay = startDate.substring(startDate.length() - 2,startDate.length() );
+001337 | 		String endYear = endDate.substring(0,endDate.length() - 4 );
+001338 | 		String endMonth = endDate.substring(endDate.length() - 4,endDate.length() - 2 );
+001339 | 		String endDay = endDate.substring(endDate.length() - 2,endDate.length() );
+001340 | 		
+001341 | 		return getAge(startYear,startMonth,startDay,endYear,endMonth,endDay);
+001342 | 		
+001343 | 	}
+001344 | 	
+001345 | 	/** 
+001346 | 	　* ２つの指定された西暦年月日の差年数を求め、int型で返す。
+001347 | 	　* 以下の場合、CifApplicationExceptionにthrow する。
+001348 | 	　*		①引数がニューメリックでなければ、エラー画面出力
+001349 | 	　*		②引数が暦上日でなければ、エラー画面出力
+001350 | 	　*		③引数の開始日付　＞　引数の終了日付　ならエラー画面出力
+001351 | 	　* 
+001352 | 	  * @param  startYear   開始西暦年（String型）
+001353 | 	  * @param  startMonth  開始西暦月（String型）
+001354 | 	  * @param  startDay    開始西暦日（String型）
+001355 | 	  * @param  endYear     終了西暦年（String型）
+001356 | 	  * @param  endMonth    終了西暦月（String型）
+001357 | 	  * @param  endDay      終了西暦日（String型）
+001358 | 	  */
+001359 | 
+001360 | 	public int getAge(String startYear,String startMonth,String startDay,String endYear,String endMonth,String endDay)throws Exception {
+001361 | 
+001362 | 		//ニューメリックＣＨＥＣＫ
+001363 | 		try{
+001364 | 			int wk =  Integer.parseInt(startYear);
+001365 | 			wk =  Integer.parseInt(startMonth);
+001366 | 			wk =  Integer.parseInt(startDay);
+001367 | 		}
+001368 | 		catch(NumberFormatException nfe){
+001369 | 			throw new CifApplicationException("1008-02:" + startYear + startMonth + startDay);
+001370 | 		}
+001371 | 
+001372 | 		//ニューメリックＣＨＥＣＫ
+001373 | 		try{
+001374 | 			int wk =  Integer.parseInt(endYear);
+001375 | 			wk =  Integer.parseInt(endMonth);
+001376 | 			wk =  Integer.parseInt(endDay);
+001377 | 		}
+001378 | 		catch(NumberFormatException nfe){
+001379 | 			throw new CifApplicationException("1008-02:" + endYear + endMonth + endDay);
+001380 | 		}
+001381 | 
+001382 | 		return getAge(Integer.parseInt(startYear),Integer.parseInt(startMonth),Integer.parseInt(startDay),Integer.parseInt(endYear),Integer.parseInt(endMonth),Integer.parseInt(endDay));
+001383 | 	}
+001384 | 	
+001385 | 	/** 
+001386 | 	　* ２つの指定された西暦年月日の差年数を求め、int型で返す。
+001387 | 	　* 以下の場合、CifApplicationExceptionにthrow する。
+001388 | 	　*		①引数が８桁でなければ、エラー画面出力
+001389 | 	　*		②引数がニューメリックでなければ、エラー画面出力
+001390 | 	　*		③引数が暦上日でなければ、エラー画面出力
+001391 | 	　*		④引数の開始日付　＞　引数の終了日付　ならエラー画面出力
+001392 | 	　* 
+001393 | 	  * @param  startYear   開始西暦年（int型）
+001394 | 	  * @param  startMonth  開始西暦月（int型）
+001395 | 	  * @param  startDay    開始西暦日（int型）
+001396 | 	  * @param  endYear     終了西暦年（int型）
+001397 | 	  * @param  endMonth    終了西暦月（int型）
+001398 | 	  * @param  endDay      終了西暦日（int型）
+001399 | 	  */
+001400 | 
+001401 | 	public int getAge(int startYear,int startMonth,int startDay,int endYear,int endMonth,int endDay)throws Exception {
+001402 | 		
+001403 | 		
+001404 | 		String startYear8keta = Integer.toString(startYear);
+001405 | 		while (startYear8keta.length() < 4){
+001406 | 			startYear8keta = "0"+ startYear8keta;
+001407 | 		}
+001408 | 		String startMonth8keta = Integer.toString(startMonth);
+001409 | 		while (startMonth8keta.length() < 2){
+001410 | 			startMonth8keta = "0"+ startMonth8keta;
+001411 | 		}
+001412 | 		String startDay8keta = Integer.toString(startDay);
+001413 | 		while (startDay8keta.length() < 2){
+001414 | 			startDay8keta = "0"+ startDay8keta;
+001415 | 		}
+001416 | 		String endYear8keta = Integer.toString(endYear);
+001417 | 		while (endYear8keta.length() < 4){
+001418 | 			endYear8keta = "0"+ endYear8keta;
+001419 | 		}
+001420 | 		String endMonth8keta = Integer.toString(endMonth);
+001421 | 		while (endMonth8keta.length() < 2){
+001422 | 			endMonth8keta = "0"+ endMonth8keta;
+001423 | 		}
+001424 | 		String endDay8keta = Integer.toString(endDay);
+001425 | 		while (endDay8keta.length() < 2){
+001426 | 			endDay8keta = "0"+ endDay8keta;
+001427 | 		}
+001428 | 		
+001429 | 		boolean check = true;
+001430 | 		check = checkDate( startYear, startMonth, startDay);
+001431 | 		if(check ==false){
+001432 | 			throw new CifApplicationException("1008-02:"+startYear8keta + startMonth8keta + startDay8keta);
+001433 | 		}
+001434 | 		check = checkDate( endYear, endMonth, endDay);
+001435 | 		if(check ==false){
+001436 | 			throw new CifApplicationException("1008-02:"+ endYear8keta + endMonth8keta + endDay8keta);
+001437 | 		}
+001438 | 		
+001439 | 				
+001440 | 		if(endYear < startYear){
+001441 | 			throw new CifApplicationException("1000-02"+":日付（自）より大きな日付を日付（至）に入力して下さい。（自）" + startYear8keta + startMonth8keta + startDay8keta + "（至）" + endYear8keta + endMonth8keta + endDay8keta);
+001442 | 		} else if(startYear == endYear){
+001443 | 			if(endMonth < startMonth){
+001444 | 			throw new CifApplicationException("1000-02"+":日付（自）より大きな日付を日付（至）に入力して下さい。（自）" + startYear8keta + startMonth8keta + startDay8keta + "（至）" + endYear8keta + endMonth8keta + endDay8keta);
+001445 | 			} else if(endMonth == startMonth){
+001446 | 				if(endDay < startDay){
+001447 | 					throw new CifApplicationException("1000-02"+":日付（自）より大きな日付を日付（至）に入力して下さい。（自）" + startYear8keta + startMonth8keta + startDay8keta + "（至）" + endYear8keta + endMonth8keta + endDay8keta);
+001448 | 				}
+001449 | 			}
+001450 | 		}
+001451 | 			
+001452 | 		int age = endYear - startYear ;
+001453 | 		
+001454 | 		if(endMonth < startMonth){
+001455 | 			age-- ;
+001456 | 		} else if(endMonth == startMonth){
+001457 | 			if(endDay < startDay){
+001458 | 					age-- ;
+001459 | 			}
+001460 | 		}
+001461 | 		
+001462 | 		return age;
+001463 | 		
+001464 | 	}
+001465 | 	
+001466 | 	
+001467 | 	/** 
+001468 | 	　* 指定の西暦年月日が営業日なら、trueを返す。
+001469 | 	　* 指定の西暦年月日が非営業日または存在しなければ、falseを返す。
+001470 | 	　* 以下の場合、CifApplicationExceptionにthrow する。
+001471 | 	　*		①引数が８桁でなければ、エラー画面出力
+001472 | 	　*		②引数がニューメリックでなければ、エラー画面出力
+001473 | 	　* 
+001474 | 	  * @param  seireki   西暦年月日（int 型）
+001475 | 	  */
+001476 | 
+001477 | 	public boolean checkEigyobi(int seireki )throws Exception {
+001478 | 		
+001479 | 		return checkEigyobi(Integer.toString(seireki));
+001480 | 	}
+001481 | 	
+001482 | 	/** 
+001483 | 	　* 指定の西暦年月日が営業日なら、trueを返す。
+001484 | 	　* 指定の西暦年月日が非営業日または存在しなければ、falseを返す。
+001485 | 	　* 以下の場合、CifApplicationExceptionにthrow する。
+001486 | 	　*		①引数が８桁でなければ、エラー画面出力
+001487 | 	　*		②引数がニューメリックでなければ、エラー画面出力
+001488 | 	　* 
+001489 | 	  * @param  seireki   西暦年月日（String 型）
+001490 | 	  */
+001491 | 
+001492 | 	public boolean checkEigyobi(String seireki )throws Exception {
+001493 | 
+001494 | 		if(seireki.length() != 8){
+001495 | 			throw new CifApplicationException("1008-02:"+ seireki);
+001496 | 		}
+001497 | 		//ニューメリックＣＨＥＣＫ
+001498 | 		try {
+001499 | 			int wk =  Integer.parseInt(seireki);
+001500 | 		}
+001501 | 		catch(NumberFormatException nfe){
+001502 | 			throw new CifApplicationException("1008-02:" + seireki);
+001503 | 		}
+001504 | 		
+001505 | 		//暦上日チェック		
+001506 | 		if(!checkDate( seireki )){
+001507 | 			throw new CifApplicationException("1008-02:" + seireki);
+001508 | 		}
+001509 | 		
+001510 | 		//土・日以外の祝日チェック
+001511 | 		if(RqsDbSearch.checkHoliday( seireki)){
+001512 | 			return false;
+001513 | 		}
+001514 | 		
+001515 | 		int year = Integer.parseInt(seireki.substring(0,seireki.length() - 4 ));
+001516 | 		int month = Integer.parseInt(seireki.substring(seireki.length() - 4,seireki.length() - 2 ));
+001517 | 		int day = Integer.parseInt(seireki.substring(seireki.length() - 2,seireki.length() ));
+001518 | 
+001519 | 		//日付/時刻の解釈を厳密に行う設定にする
+001520 | 		cal.setLenient( false );
+001521 | 		//年、月、日付のフィールドに値を設定（Month 値は 0 から始まる。つまり、0 は 1 月）
+001522 | 		cal.set(year, month -1, day);
+001523 | 	  
+001524 | 		int youbi= cal.get(Calendar.DAY_OF_WEEK);  /* 曜日ＧＥＴ */
+001525 | 		
+001526 | 		if(youbi == 1 || youbi == 7){
+001527 | 			return false;	
+001528 | 		}
+001529 | 		
+001530 | 		return true;
+001531 | 	}
+001532 | 	
+001533 | 	
+001534 | 	/** 
+001535 | 	　* 指定された西暦年月日のＸ日前またはＸ日後をString 型で返す。
+001536 | 	　* Ｘ日前を求めるには、第２引数に負の数
+001537 | 	　* Ｘ日後を求めるには、第２引数に正の数をセットする
+001538 | 	　* ( 第２引数に "0" をセットすると、第１引数をそのまま返す）
+001539 | 	　* 以下の場合、CifApplicationExceptionにthrow する。
+001540 | 	　*		①引数が８桁でなければ、エラー画面出力
+001541 | 	　*		②引数がニューメリックでなければ、エラー画面出力
+001542 | 	　*		③引数が暦上日でなければ、エラー画面出力
+001543 | 	　* 
+001544 | 	  * @param  seireki    基準西暦年（int型）
+001545 | 	  * @param  sanissu    差日数（int型）
+001546 | 	  */
+001547 | 
+001548 | 	public String getSanissuDate(int seireki,int sanissu)throws Exception {
+001549 | 	
+001550 | 		return getSanissuDate(Integer.toString(seireki),sanissu);
+001551 | 	}
+001552 | 	
+001553 | 	
+001554 | 	/** 
+001555 | 	　* 指定された西暦年月日のＸ日前またはＸ日後をString 型で返す。
+001556 | 	　* Ｘ日前を求めるには、第２引数に負の数
+001557 | 	　* Ｘ日後を求めるには、第２引数に正の数をセットする
+001558 | 	　* ( 第２引数に "0" をセットすると、第１引数をそのまま返す）
+001559 | 	　* 以下の場合、CifApplicationExceptionにthrow する。
+001560 | 	　*		①引数が８桁でなければ、エラー画面出力
+001561 | 	　*		②引数がニューメリックでなければ、エラー画面出力
+001562 | 	　*		③引数が暦上日でなければ、エラー画面出力
+001563 | 	　* 
+001564 | 	  * @param  seireki    基準西暦年（String型）
+001565 | 	  * @param  sanissu    差日数（int型）
+001566 | 	  */
+001567 | 
+001568 | 	public String getSanissuDate(String seireki,int sanissu)throws Exception {
+001569 | 		
+001570 | 		if(seireki.length() != 8){
+001571 | 			throw new CifApplicationException("1008-02:"+ seireki);
+001572 | 		}
+001573 | 		//ニューメリックＣＨＥＣＫ
+001574 | 		try {
+001575 | 			int wk =  Integer.parseInt(seireki);
+001576 | 		}
+001577 | 		catch(NumberFormatException nfe){
+001578 | 			throw new CifApplicationException("1008-02:" + seireki);
+001579 | 		}
+001580 | 		
+001581 | 		//暦上日チェック		
+001582 | 		if(!checkDate( seireki )){
+001583 | 			throw new CifApplicationException("1008-02:" + seireki);
+001584 | 		}
+001585 | 		
+001586 | 		if(sanissu == 0 ){
+001587 | 			return seireki;
+001588 | 		}
+001589 | 		
+001590 | 		int year = Integer.parseInt(seireki.substring(0,seireki.length() - 4 ));
+001591 | 		int month = Integer.parseInt(seireki.substring(seireki.length() - 4,seireki.length() - 2 ));
+001592 | 		int day = Integer.parseInt(seireki.substring(seireki.length() - 2,seireki.length() ));
+001593 | 		
+001594 | 		
+001595 | 		//日付/時刻の解釈を厳密に行う設定にする
+001596 | 		cal.setLenient( false );
+001597 | 		//年、月、日付のフィールドに値を設定（Month 値は 0 から始まる。つまり、0 は 1 月）
+001598 | 		cal.set(year, month -1, day);
+001599 | 
+001600 | 		cal.add(Calendar.DATE,sanissu);
+001601 | 		year  = cal.get(Calendar.YEAR);
+001602 | 		month  = cal.get(Calendar.MONTH);
+001603 | 		day  = cal.get(Calendar.DATE);
+001604 | 		//（Month 値は 1少ない値が返される為の調整）
+001605 | 		month++;
+001606 | 		
+001607 | 		String SanissuDateYear = Integer.toString(year);
+001608 | 		String SanissuDateMonth = Integer.toString(month);
+001609 | 		String SanissuDateDay = Integer.toString(day);
+001610 | 		while (SanissuDateMonth.length() < 2){
+001611 | 			SanissuDateMonth = "0" + SanissuDateMonth;
+001612 | 		}
+001613 | 		while (SanissuDateDay.length() < 2){
+001614 | 			SanissuDateDay = "0" + SanissuDateDay;
+001615 | 		}
+001616 | 		
+001617 | 		return SanissuDateYear +SanissuDateMonth +SanissuDateDay ; 
+001618 | 	}
+001619 | 	
+001620 | 	/** 
+001621 | 	　* 指定された西暦年月日のＸ営業日前またはＸ営業日後をString 型で返す。
+001622 | 	　* Ｘ営業日前を求めるには、第２引数に負の数
+001623 | 	　* Ｘ営業日後を求めるには、第２引数に正の数をセットする
+001624 | 	　* ( 第２引数に "0" をセットすると、第１引数をそのまま返す）
+001625 | 	　* 以下の場合、CifApplicationExceptionにthrow する。
+001626 | 	　*		①引数が８桁でなければ、エラー画面出力
+001627 | 	　*		②引数がニューメリックでなければ、エラー画面出力
+001628 | 	　*		③引数が暦上日でなければ、エラー画面出力
+001629 | 	　* 
+001630 | 	  * @param  seireki    基準西暦年（int型）
+001631 | 	  * @param  saeigyoubisu    差営業日数（int型）
+001632 | 	  */
+001633 | 
+001634 | 	public String getSaeigyoubi(int seireki,int saeigyoubisu)throws Exception {
+001635 | 	
+001636 | 		return getSaeigyoubi(Integer.toString(seireki),saeigyoubisu);
+001637 | 	}
+001638 | 
+001639 | 	
+001640 | 	
+001641 | 	/** 
+001642 | 	　* 指定された西暦年月日のＸ営業日前またはＸ営業日後をString 型で返す。
+001643 | 	　* Ｘ営業日前を求めるには、第２引数に負の数
+001644 | 	　* Ｘ営業日後を求めるには、第２引数に正の数をセットする
+001645 | 	　* ( 第２引数に "0" をセットすると、第１引数をそのまま返す）
+001646 | 	　* 以下の場合、CifApplicationExceptionにthrow する。
+001647 | 	　*		①引数が８桁でなければ、エラー画面出力
+001648 | 	　*		②引数がニューメリックでなければ、エラー画面出力
+001649 | 	　*		③引数が暦上日でなければ、エラー画面出力
+001650 | 	　* 
+001651 | 	  * @param  seireki    基準西暦年（String型）
+001652 | 	  * @param  saeigyoubisu    差営業日数（int型）
+001653 | 	  */
+001654 | 
+001655 | 	public String getSaeigyoubi(String seireki,int saeigyoubisu)throws Exception {
+001656 | 		
+001657 | 		if(seireki.length() != 8){
+001658 | 			throw new CifApplicationException("1008-02:"+ seireki);
+001659 | 		}
+001660 | 		//ニューメリックＣＨＥＣＫ
+001661 | 		try {
+001662 | 			int wk =  Integer.parseInt(seireki);
+001663 | 		}
+001664 | 		catch(NumberFormatException nfe){
+001665 | 			throw new CifApplicationException("1008-02:" + seireki);
+001666 | 		}
+001667 | 		
+001668 | 		//暦上日チェック		
+001669 | 		if(!checkDate( seireki )){
+001670 | 			throw new CifApplicationException("1008-02:" + seireki);
+001671 | 		}
+001672 | 		
+001673 | 		if(saeigyoubisu == 0 ){
+001674 | 			return seireki;
+001675 | 		}
+001676 | 		
+001677 | 		int eigyoubiCheckCounter = saeigyoubisu;		/* for loop 用カウンター */
+001678 | 		int sanissuParameter = 1 ;						/* 1:翌日を求めるパラメーター、-1:前日を求めるパラメーター */
+001679 | 		String saeigyoubi = seireki ;                     	/* 算出した差営業日 */
+001680 | 		
+001681 | 		if(saeigyoubisu < 0) {
+001682 | 			eigyoubiCheckCounter = eigyoubiCheckCounter * -1 ;
+001683 | 			sanissuParameter = -1 ;
+001684 | 		}
+001685 | 
+001686 | 		//Ｘ営行日前（後）を算出するforループ
+001687 | 		for(int i = 0; i < eigyoubiCheckCounter ; i++)   {
+001688 | 			
+001689 | 			//前（翌）営業日を算出するdoループ
+001690 | 			do {
+001691 | 				//前（翌）日を算出する
+001692 | 				saeigyoubi = getSanissuDate( saeigyoubi , sanissuParameter );
+001693 | 			} while ( !checkEigyobi(saeigyoubi) ); /* 非営業日なら繰り返す */
+001694 | 		
+001695 | 		}
+001696 | 		
+001697 | 		return saeigyoubi ;
+001698 | 
+001699 | 		}
+001700 | 	
+001701 | 	
+001702 | 	/**
+001703 | 	 * 和暦（GGyy年MM月dd日）⇒西暦（yyyyMMdd）変換
+001704 | 	 * 
+001705 | 	 * @param wareki
+001706 | 	 * @return
+001707 | 	 * @throws Exception
+001708 | 	 */
+001709 | 	public String getSeirekiForWareki(String wareki){
+001710 | 		try {
+001711 | 			if(wareki != null && wareki.length() == 11){
+001712 | 				String gengo = wareki.substring(0,2);
+001713 | 				String nen = wareki.substring(2,4);
+001714 | 				String tuki = wareki.substring(5,7);
+001715 | 				String niti = wareki.substring(8,10);
+001716 | 				
+001717 | 				int date = Integer.parseInt(nen + tuki + niti);
+001718 | 				
+001719 | //				int date = Integer.parseInt(wareki.substring(1));				
+001720 | 
+001721 | 				//00年の入力は不可
+001722 | 				if(date < 10000){
+001723 | 					return "";
+001724 | 				}
+001725 | 
+001726 | 				String seireki;
+001727 | 				if(gengo.equals("明治")){
+001728 | 					//明治
+001729 | 					seireki = String.valueOf(18670000 + date);
+001730 | 				}else if(gengo.equals("大正")){
+001731 | 					//大正
+001732 | 					seireki = String.valueOf(19110000 + date);
+001733 | 				}else if(gengo.equals("昭和")){
+001734 | 					//昭和
+001735 | 					seireki = String.valueOf(19250000 + date);
+001736 | 				}else if(gengo.equals("平成")){
+001737 | 					//平成
+001738 | 					seireki = String.valueOf(19880000 + date);
+001739 | 				}else{
+001740 | 					//その他の元号は変換不可
+001741 | 					seireki = "";
+001742 | 				}
+001743 | 
+001744 | 				//和暦の整合性が取れない（平成元年１月１日など）場合、変換不可
+001745 | //				if(wareki.equals(convertSimpleWareki(seireki))){
+001746 | 					return seireki;
+001747 | //				} else {
+001748 | //					return "";
+001749 | //				}
+001750 | 			} else {
+001751 | 				return "";
+001752 | 			}
+001753 | 		} catch (NumberFormatException e) {
+001754 | 			//数値以外が日付部分に入っていたら空文字で返す。
+001755 | 			return "";
+001756 | 		}
+001757 | 	}
+001758 | 	
+001759 | 	
+001760 | 	
+001761 | 	/************************* 元号対応後　*************************/
+001762 | 
+001763 | 	/** 元号 | 自年月日 | 至年月日 */
+001764 | 	private static final String [][]gengoTable2= {
+001765 | 		{"令和","20190501","99999999"},
+001766 | 		{"平成","19890108","20190430"},
+001767 | 		{"昭和","19261225","19890107"},
+001768 | 		{"大正","19120730","19261224"},
+001769 | 		{"明治","18680908","19120729"},
+001770 | 		{"不明","00000000","18680907"}
+001771 | 	};
+001772 | 
+001773 | 	/**
+001774 | 	 * 西暦（YYYYMMDD）⇒ 和暦（年号X年XX月XX日）の変換
+001775 | 	 * 
+001776 | 	 * @param seireki 編集前の数字
+001777 | 	 * @return 編集後の結果<br>
+001778 | 	 * null又は８桁以外の場合、空文字を返す
+001779 | 	 */
+001780 | 	public static String convertWareki2(String seireki){
+001781 | 		//８桁ＣＨＥＣＫ	
+001782 | 		if(seireki == null || (seireki.length() != 8)){
+001783 | 			return "";
+001784 | 		}
+001785 | 
+001786 | 		//ニューメリックＣＨＥＣＫ
+001787 | 		try{
+001788 | 			Integer.parseInt(seireki);
+001789 | 		}
+001790 | 		catch(NumberFormatException nfe){
+001791 | 			return "";
+001792 | 		}
+001793 | 
+001794 | //		if(!checkDate(seireki)){
+001795 | //			throw new CifApplicationException("1008-02" +"暦上日を入力して下さい" + seireki);
+001796 | //		}
+001797 | 		
+001798 | 		int i = 0;
+001799 | 		for(  ; i < gengoTable2.length;i++){
+001800 | 			if(Integer.parseInt(seireki) >= Integer.parseInt(gengoTable2[i][1]) && Integer.parseInt(seireki) <= Integer.parseInt(gengoTable2[i][2])){
+001801 | 				break;
+001802 | 			}
+001803 | 		}
+001804 | 		if (gengoTable2[i][0].equals("不明")){
+001805 | 			return "";
+001806 | 		}
+001807 | 		
+001808 | 		String wareki = "";
+001809 | 		wareki = gengoTable2[i][0];
+001810 | 		int year =Integer.parseInt(seireki.substring(0,4)) - Integer.parseInt(gengoTable2[i][1].substring(0,4)) + 1 ;
+001811 | 		if(year < 10 ){
+001812 | 			wareki = wareki + "0";
+001813 | 		}
+001814 | 		wareki = wareki + Integer.toString(year) + "年" + seireki.substring(4,6) + "月" + seireki.substring(6,8) + "日"; 
+001815 | 		
+001816 | 		return wareki;
+001817 | 		 
+001818 | 	}
+001819 | 	
+001820 | 	
+001821 | 	/**
+001822 |      * 西暦8桁yyyymmddのString引数から和暦に返還しString型の和暦を返す。
+001823 |      * @param  seireki   西暦8桁のString
+001824 |      *
+001825 |      * @return 和暦 元号"H"or"S"or"T"+yymmdd"フォーマット
+001826 |      */
+001827 | 	public static String convertSimpleWareki2(String seireki){
+001828 | 		try {
+001829 | 			StringBuffer sbDate;
+001830 | 
+001831 | 			if(seireki==null){
+001832 | 				sbDate=new StringBuffer("");
+001833 | 			}else{
+001834 | 				sbDate=new StringBuffer(convertWareki2(seireki));
+001835 | 				sbDate.delete(10,11);
+001836 | 				sbDate.delete(7,8);
+001837 | 				sbDate.delete(4,5);
+001838 | 				if(sbDate.substring(0,2).equals("令和")){
+001839 | 					sbDate.replace(0,2,"R");
+001840 | 				}else if(sbDate.substring(0,2).equals("平成")){
+001841 | 					sbDate.replace(0,2,"H");	
+001842 | 				}else if(sbDate.substring(0,2).equals("昭和")){
+001843 | 					sbDate.replace(0,2,"S");
+001844 | 				}else if(sbDate.substring(0,2).equals("大正")){
+001845 | 					sbDate.replace(0,2,"T");
+001846 | 				}else if(sbDate.substring(0,2).equals("明治")){
+001847 | 					sbDate.replace(0,2,"M");
+001848 | 				}else{
+001849 | 					return "";
+001850 | 				}
+001851 | 			}
+001852 | 
+001853 | 			return sbDate.toString();
+001854 | 
+001855 | 		} catch (Exception e) {
+001856 | 			//和暦変換ができない場合は空文字で返す。
+001857 | 			return "";
+001858 | 		}
+001859 | 	}
+001860 | 
+001861 | 
+001862 | 	/**
+001863 | 	 * 和暦（GyyMMdd）⇒西暦（yyyyMMdd）変換
+001864 | 	 * 
+001865 | 	 * @param wareki
+001866 | 	 * @return
+001867 | 	 * @throws Exception
+001868 | 	 */
+001869 | 	public static String convertSeireki2(String wareki){
+001870 | 		try {
+001871 | 			if(wareki != null && wareki.length() == 7){
+001872 | 				String gengo = wareki.substring(0,1);
+001873 | 				int date = Integer.parseInt(wareki.substring(1));
+001874 | 
+001875 | 				//00年の入力は不可
+001876 | 				if(date < 10000){
+001877 | 					return "";
+001878 | 				}
+001879 | 				
+001880 | 				String seireki;
+001881 | 				if(gengo.equals("M")){
+001882 | 					//明治
+001883 | 					seireki = String.valueOf(18670000 + date);
+001884 | 				}else if(gengo.equals("T")){
+001885 | 					//大正
+001886 | 					seireki = String.valueOf(19110000 + date);
+001887 | 				}else if(gengo.equals("S")){
+001888 | 					//昭和
+001889 | 					seireki = String.valueOf(19250000 + date);
+001890 | 				}else if(gengo.equals("H")){
+001891 | 					//平成
+001892 | 					seireki = String.valueOf(19880000 + date);
+001893 | 				}else if(gengo.equals("R")){
+001894 | 					//**
+001895 | 					seireki = String.valueOf(20180000 + date);	
+001896 | 				}else{
+001897 | 					//その他の元号は変換不可
+001898 | 					seireki = "";
+001899 | 				}
+001900 | 
+001901 | 				//和暦の整合性が取れない（平成元年１月１日など）場合、変換不可
+001902 | 				if(wareki.equals(convertSimpleWareki2(seireki))){
+001903 | 					return seireki;
+001904 | 				} else {
+001905 | 					return "";
+001906 | 				}
+001907 | 			} else {
+001908 | 				return "";
+001909 | 			}
+001910 | 		} catch (NumberFormatException e) {
+001911 | 			//数値以外が日付部分に入っていたら空文字で返す。
+001912 | 			return "";
+001913 | 		}
+001914 | 	}
+001915 | 
+001916 | 	/**
+001917 | 	 * 和暦（GGyy年MM月dd日）⇒西暦（yyyyMMdd）変換
+001918 | 	 * 
+001919 | 	 * @param wareki
+001920 | 	 * @return
+001921 | 	 * @throws Exception
+001922 | 	 */
+001923 | 	public static String getSeirekiForWareki2(String wareki){
+001924 | 		try {
+001925 | 						
+001926 | 			if(wareki != null && wareki.length() == 11){
+001927 | 				String gengo = wareki.substring(0,2);
+001928 | 				String nen = wareki.substring(2,4);
+001929 | 				String tuki = wareki.substring(5,7);
+001930 | 				String niti = wareki.substring(8,10);
+001931 | 				
+001932 | 				int date = Integer.parseInt(nen + tuki + niti);
+001933 | 				
+001934 | //				int date = Integer.parseInt(wareki.substring(1));				
+001935 | 
+001936 | 				//00年の入力は不可
+001937 | 				if(date < 10000){
+001938 | 					return "";
+001939 | 				}
+001940 | 
+001941 | 				String seireki;
+001942 | 
+001943 | 				if(gengo.equals("明治")){
+001944 | 					//明治
+001945 | 					seireki = String.valueOf(18670000 + date);
+001946 | 				}else if(gengo.equals("大正")){
+001947 | 					//大正
+001948 | 					seireki = String.valueOf(19110000 + date);
+001949 | 				}else if(gengo.equals("昭和")){
+001950 | 					//昭和
+001951 | 					seireki = String.valueOf(19250000 + date);
+001952 | 				}else if(gengo.equals("平成")){
+001953 | 					//平成
+001954 | 					seireki = String.valueOf(19880000 + date);
+001955 | 				}else if(gengo.equals("令和")){
+001956 | 					//令和
+001957 | 					seireki = String.valueOf(20180000 + date);	
+001958 | 					
+001959 | 				}else{
+001960 | 					//その他の元号は変換不可
+001961 | 					seireki = "";
+001962 | 				}
+001963 | 
+001964 | 				//和暦の整合性が取れない（平成元年１月１日など）場合、変換不可
+001965 | //				if(wareki.equals(convertSimpleWareki(seireki))){
+001966 | 				
+001967 | 					return seireki;
+001968 | //				} else {
+001969 | //					return "";
+001970 | //				}
+001971 | 			} else {
+001972 | 				return "";
+001973 | 			}
+001974 | 		} catch (NumberFormatException e) {
+001975 | 			//数値以外が日付部分に入っていたら空文字で返す。
+001976 | 			return "";
+001977 | 		}
+001978 | 	}
+001979 | 	
+001980 | 	
+001981 | 	/**
+001982 |      * 西暦8桁yyyymmddもしくは西暦10桁yyyy-mm-ddのString引数から
+001983 |      * “－“を削除した形式に編集してから和暦に返還しString型の和暦を返す。
+001984 |      * @param  eDate   西暦8桁のStringもしくは“－“を削除したい西暦10桁のString
+001985 |      *
+001986 |      * @return 和暦 元号"H"or"S"or"T"+yymmdd"フォーマット
+001987 |      */
+001988 | 	public String getSimpleGengoWareki2(String eDate)throws Exception{
+001989 | 		StringBuffer sbDate;
+001990 | 		if(eDate==null){
+001991 | 			sbDate=new StringBuffer("");
+001992 | 		}else{
+001993 | 			sbDate=new StringBuffer(get49Wareki2(eDate));
+001994 | 			sbDate.delete(10,11);
+001995 | 			sbDate.delete(7,8);
+001996 | 			sbDate.delete(4,5);
+001997 | 			if(sbDate.substring(0,2).equals("令和")){
+001998 | 				sbDate.replace(0,2,"R");
+001999 | 			}else if(sbDate.substring(0,2).equals("平成")){
+002000 | 				sbDate.replace(0,2,"H");
+002001 | 			}else if(sbDate.substring(0,2).equals("昭和")){
+002002 | 				sbDate.replace(0,2,"S");
+002003 | 			}else if(sbDate.substring(0,2).equals("大正")){
+002004 | 				sbDate.replace(0,2,"T");
+002005 | 			}else if(sbDate.substring(0,2).equals("明治")){
+002006 | 				sbDate.replace(0,2,"M");
+002007 | 			}else{
+002008 | 				sbDate.delete(0,2);
+002009 | 			}
+002010 | 		}
+002011 | 		return sbDate.toString();
+002012 | 	}
+002013 | 	
+002014 | 	
+002015 | 	
+002016 | 	/**
+002017 |      * 西暦8桁yyyymmddもしくは西暦10桁yyyy-mm-ddのString引数から
+002018 |      * “－“を削除した形式に編集してから和暦に返還しString型の和暦を返す。
+002019 |      * @param  eDate   西暦8桁のStringもしくは“－“を削除したい西暦10桁のString
+002020 |      *
+002021 |      * @return 和暦 平成yy年mm月dd日フォーマット
+002022 |      */
+002023 | 	public String get49Wareki2(String eDate)throws Exception{
+002024 | 		StringBuffer sbDate;
+002025 | 		
+002026 | 		if(eDate.length()==10){
+002027 | 			if(eDate.substring(4,5).equals("-")&eDate.substring(7,8).equals("-")){
+002028 | 				sbDate=new StringBuffer(getWareki2(edit49Date(eDate)));
+002029 | 			}else{
+002030 | 				sbDate=new StringBuffer("dateError in CifComn");
+002031 | 			}
+002032 | 		}else{
+002033 | 			sbDate=new StringBuffer(getWareki2(eDate));
+002034 | 		}
+002035 | 		return sbDate.toString();
+002036 | 	}
+002037 | 
+002038 | 	//YYYYMMDD->和暦（年号X年XX月XX日）
+002039 | 	public String getWareki2(String seireki)throws Exception
+002040 | 	{
+002041 | 		//８桁ＣＨＥＣＫ	
+002042 | 		if(seireki.length() != 8){
+002043 | 			if(seireki.length() != 10){
+002044 | 				throw new CifApplicationException("1008-02" +"西暦８or10桁を入力して下さい" + seireki);
+002045 | 			}else{
+002046 | 				if(seireki.substring(4,5).equals("-")&&seireki.substring(7,8).equals("-")){
+002047 | 					StringBuffer sbDate=new StringBuffer(seireki);
+002048 | 					sbDate.delete(7,8);
+002049 | 					sbDate.delete(4,5);
+002050 | 					seireki=sbDate.toString();
+002051 | 				}else{
+002052 | 					throw new CifApplicationException("1008-02" +"西暦10桁を入力して下さい" + seireki);
+002053 | 				}
+002054 | 			}
+002055 | 		}
+002056 | 		//ニューメリックＣＨＥＣＫ
+002057 | 		try{
+002058 | 			int wk =  Integer.parseInt(seireki);
+002059 | 		}
+002060 | 		catch(NumberFormatException nfe){
+002061 | 			throw new CifApplicationException("1007-02" + seireki);
+002062 | 		}
+002063 | 		if(!checkDate(seireki)){
+002064 | 			throw new CifApplicationException("1008-02" +"暦上日を入力して下さい" + seireki);
+002065 | 		}
+002066 | 		
+002067 | 		int i = 0;
+002068 | 		for(  ; i < gengoTable2.length;i++){
+002069 | 			if(Integer.parseInt(seireki) >= Integer.parseInt(gengoTable2[i][1]) && Integer.parseInt(seireki) <= Integer.parseInt(gengoTable2[i][2])){
+002070 | 				break;
+002071 | 			}
+002072 | 		}
+002073 | 		if (gengoTable2[i][0].equals("不明")){
+002074 | 			throw new CifApplicationException("1008-02"+":明治元年より過去の日付が入力された"+ seireki);
+002075 | 		}
+002076 | 		
+002077 | 		String wareki = "";
+002078 | 		wareki = gengoTable2[i][0];
+002079 | 		int year =Integer.parseInt(seireki.substring(0,4)) - Integer.parseInt(gengoTable2[i][1].substring(0,4)) + 1 ;
+002080 | 		if(year < 10 ){
+002081 | 			wareki = wareki + "0";
+002082 | 		}
+002083 | 		wareki = wareki + Integer.toString(year) + "年" + seireki.substring(4,6) + "月" + seireki.substring(6,8) + "日"; 
+002084 | 		
+002085 | 		return wareki;
+002086 | 		 
+002087 | 	}
+002088 | 	
+002089 | 	
+002090 | 	/** 
+002091 | 	　* 引数７桁　元号表示"R"or"H"or"S"or"T" + 和暦ＹＹＭＭＤＤとみなし、西暦ＹＹＹＹＭＭＤＤで返す。
+002092 | 	  * 引数６桁　和暦ＹＹＭＭＤＤとみなし、西暦ＹＹＹＹＭＭＤＤで返す。
+002093 | 	　* 　　　　　　ただし、指定の年月日が存在していれば、"PARAMERR"を返す。
+002094 | 	　* 引数４桁　和暦ＹＹＭＭとみなし、西暦ＹＹＹＹＭＭで返す。
+002095 | 	　* 引数２桁　和暦ＹＹとみなし、西暦ＹＹＹＹで返す。
+002096 |     	　* 以外　　、"PARAMERR"を返す。
+002097 | 	  *
+002098 | 	  * @param  wareki  和暦日付（String型）
+002099 | 	  *
+002100 | 	  */
+002101 | 
+002102 | 	public String getSeireki2(String wareki)throws Exception{
+002103 | 
+002104 | 		String seirekiDate = "";
+002105 | 
+002106 | 		String gengo="";
+002107 | 		String warekiYear = "";
+002108 | 		String warekiMonth = "";
+002109 | 		String warekiDay = "";
+002110 | 
+002111 | 		int seirekiYear;
+002112 | 		int seirekiMonth;
+002113 | 		int seirekiDay;
+002114 | 
+002115 | 		
+002116 | 		if(wareki.length() == 7){
+002117 | 			gengo       =wareki.substring(0,1);
+002118 | 			warekiYear  =wareki.substring(1,3);
+002119 | 			warekiMonth =wareki.substring(3,5);
+002120 | 			warekiDay   =wareki.substring(5,7);
+002121 | 			if(gengo.equals("R")){
+002122 | 				seirekiYear = 2018 + Integer.parseInt(warekiYear);
+002123 | 			}else if(gengo.equals("H")){
+002124 | 				seirekiYear = 1988 + Integer.parseInt(warekiYear);
+002125 | 			}else if(gengo.equals("S")){
+002126 | 				seirekiYear = 1925 + Integer.parseInt(warekiYear);
+002127 | 			}else if(gengo.equals("T")){
+002128 | 				seirekiYear = 1911 + Integer.parseInt(warekiYear);
+002129 | 			}else if(gengo.equals("M")){
+002130 | 				seirekiYear = 1867 + Integer.parseInt(warekiYear);
+002131 | 			}else{
+002132 | 				seirekiYear = 2018 + Integer.parseInt(warekiYear);
+002133 | 			}
+002134 | 			
+002135 | 			seirekiDate = Integer.toString(seirekiYear) + warekiMonth + warekiDay;
+002136 | 			seirekiMonth = Integer.parseInt(warekiMonth) ;
+002137 | 			seirekiDay = Integer.parseInt(warekiDay);
+002138 | 		}else{
+002139 | 			//ニューメリックＣＨＥＣＫ
+002140 | 			try{
+002141 | 				int wk =  Integer.parseInt(wareki);
+002142 | 			}
+002143 | 			catch(NumberFormatException nfe){
+002144 | 				throw new CifApplicationException("9000-02"+nfe.toString());
+002145 | 			}
+002146 | 			if(wareki.length() == 6){
+002147 | 				warekiYear = wareki.substring(0,2);
+002148 | 				warekiMonth = wareki.substring(2,4);
+002149 | 				warekiDay = wareki.substring(4,6);
+002150 | 
+002151 | 				seirekiYear = 1988 + Integer.parseInt(warekiYear);
+002152 | 				seirekiDate = Integer.toString(seirekiYear) + warekiMonth + warekiDay;
+002153 | 				seirekiMonth = Integer.parseInt(warekiMonth) ;
+002154 | 				seirekiDay = Integer.parseInt(warekiDay);
+002155 | 			}
+002156 | 			else if(wareki.length() == 4){
+002157 | 				warekiYear = wareki.substring(0,2);
+002158 | 				warekiMonth = wareki.substring(2,4);
+002159 | 
+002160 | 				seirekiYear = 1988 + Integer.parseInt(warekiYear);
+002161 | 				seirekiDate = Integer.toString(seirekiYear) + warekiMonth;
+002162 | 				seirekiMonth = Integer.parseInt(warekiMonth) ;
+002163 | 				seirekiDay = 10;//平成１年１月１日は存在しない為「１０」セット
+002164 | 			}
+002165 | 			else if(wareki.length() == 2){
+002166 | 				warekiYear = wareki.substring(0,2);
+002167 | 
+002168 | 				seirekiYear = 1988 + Integer.parseInt(warekiYear);
+002169 | 				seirekiDate = Integer.toString(seirekiYear);
+002170 | 				seirekiMonth = 1;
+002171 | 				seirekiDay = 10;//平成１年１月１日は存在しない為「１０」セット
+002172 | 			}
+002173 | 			else{
+002174 | 				return "PARAMERR";
+002175 | 			}
+002176 | 			
+002177 | 		}
+002178 | 
+002179 | 		//存在する暦上日なら、trueを返す。存在しない暦上日なら、falseを返す。
+002180 | 		boolean check = checkDate(seirekiYear,seirekiMonth,seirekiDay);
+002181 | 		if(check == false){
+002182 | 			return "PARAMERR";
+002183 | 		}
+002184 | 		return seirekiDate ;
+002185 | 	}
+002186 | 
+002187 | 	
+002188 | 	
+002189 | 	/** 
+002190 | 	　* 指定の和暦年月日が存在するなら、trueを返す。
+002191 | 	　* 指定の和暦年月日が存在しなければ、falseを返す。
+002192 | 	　* 引数が６桁ならyymmdd、７桁なら"H"or"S"or"T" + 和暦yymmdd。
+002193 | 	　* 
+002194 | 	  * @param  wareki  和暦日付（String型）
+002195 | 	  */
+002196 | 	public boolean checkWarekiDate2(String wareki)throws Exception{
+002197 | 
+002198 | 		boolean status=false;
+002199 | 		String date;
+002200 | 		if(wareki.length()==6){
+002201 | 			date=new String(wareki);
+002202 | 		}else if(wareki.length()==7){
+002203 | 			String gengo=new String(wareki.substring(0,1));
+002204 | 			if(gengo.equals("R")|gengo.equals("H")|gengo.equals("S")|gengo.equals("T")|gengo.equals("M")){
+002205 | 				date=new String(wareki.substring(1,7));
+002206 | 			}else{
+002207 | 				return status;
+002208 | 			}
+002209 | 		}else{
+002210 | 			return status;
+002211 | 		}
+002212 | 		try{
+002213 | 			int wk=Integer.parseInt(date);
+002214 | 		}
+002215 | 		catch(NumberFormatException nfe){
+002216 | 			return status;
+002217 | 		}
+002218 | 		if(!getSeireki2(wareki).equals("PARAMERR")){
+002219 | 			status=true;
+002220 | 		}
+002221 | 		return status;
+002222 | 	}
+002223 | 		
+002224 | 	/**
+002225 | 	 * 和暦（GyyMMdd）を、ドット区切り（Gyy.MM.dd）に変換する。
+002226 | 	 * 
+002227 | 	 * @param wareki
+002228 | 	 * @return
+002229 | 	 */
+002230 | 	public static String editSimpleWarekiDot(String wareki){
+002231 | 		if(wareki != null && wareki.length() == 7){
+002232 | 			StringBuffer sb = new StringBuffer();
+002233 | 
+002234 | 			sb.append(wareki.substring(0,3));
+002235 | 			sb.append(".");
+002236 | 			sb.append(wareki.substring(3,5));
+002237 | 			sb.append(".");
+002238 | 			sb.append(wareki.substring(5,7));
+002239 | 
+002240 | 			return sb.toString();
+002241 | 
+002242 | 		} else {
+002243 | 			return "";
+002244 | 		}
+002245 | 	}
+002246 | 	
+002247 | 
+002248 | }

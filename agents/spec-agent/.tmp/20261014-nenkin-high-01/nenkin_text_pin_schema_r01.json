@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema", "documentId", "path", "kind", "canonicalMarkdown", "sha256", "draftResult", "draftResultSha256", "independentReview", "independentReviewSha256", "structureStatus", "structureFindings", "independentReviewApproved", "noFurtherTextRevisionPlanned", "capsule", "basisCounts", "generationRuntime", "reviewRuntime", "structureRuntime", "disposition", "includedInFinalSpecificationBundle"],
+  "properties": {
+    "schema": {"const": "spec-agent-text-reviewed-document-pin/1"},
+    "documentId": {"type": "string", "minLength": 1}, "path": {"type": "string", "minLength": 1},
+    "kind": {"enum": ["basic-design", "detailed-specification", "logical-table-definition", "physical-table-definition", "api", "index", "common", "dependency-design", "database-index", "analysis-report"]},
+    "canonicalMarkdown": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha"},
+    "draftResult": {"type": "string", "minLength": 1}, "draftResultSha256": {"$ref": "#/$defs/sha"},
+    "independentReview": {"type": "string", "minLength": 1}, "independentReviewSha256": {"$ref": "#/$defs/sha"},
+    "structureStatus": {"const": "STRUCTURE_VALID"}, "structureFindings": {"type": "array", "maxItems": 0},
+    "independentReviewApproved": {"const": true}, "noFurtherTextRevisionPlanned": {"const": true},
+    "capsule": {"type": "object", "required": ["manifestSha256", "mode"],
+      "properties": {"manifestSha256": {"const": "92c339cb7040019312d0ec01669d22c44e4cc73fa373d5278c3f6f04c0c09631"}, "mode": {"const": "source-only"}}},
+    "basisCounts": {"type": "object", "additionalProperties": false, "required": ["observed-source", "reference-design"],
+      "properties": {"observed-source": {"type": "integer", "minimum": 0}, "reference-design": {"const": 0}}},
+    "generationRuntime": {"$ref": "#/$defs/runtime"}, "reviewRuntime": {"$ref": "#/$defs/runtime"}, "structureRuntime": {"$ref": "#/$defs/runtime"},
+    "disposition": {"enum": ["specification", "report-only"]}, "includedInFinalSpecificationBundle": {"type": "boolean"},
+    "visualFidelityVerified": {"const": false}, "formalScoringVerified": {"const": false}, "published": {"const": false},
+    "businessProseAssembledByPython": {"const": false}
+  },
+  "allOf": [{"if": {"properties": {"kind": {"const": "analysis-report"}}},
+    "then": {"properties": {"disposition": {"const": "report-only"}, "includedInFinalSpecificationBundle": {"const": false}}},
+    "else": {"properties": {"disposition": {"const": "specification"}, "includedInFinalSpecificationBundle": {"const": true}}}}],
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "runtime": {"type": "object", "required": ["record", "recordSha256", "runtimeId", "directory", "fileCount", "receiptImportCount", "promptModuleSha256"],
+      "properties": {"record": {"type": "string", "minLength": 1}, "recordSha256": {"const": "5c3eeafb764afb64e3ef80fb422e4f68a9c41b98f000d13a8d57a505d947cc79"},
+        "runtimeId": {"const": "source-13"}, "directory": {"type": "string", "minLength": 1}, "fileCount": {"const": 128}, "receiptImportCount": {"const": 13},
+        "promptModuleSha256": {"const": "7bbe016f51fde1d021db443adaee005f419925e27b122982599ce8d7337286fc"}}}
+  }
+}

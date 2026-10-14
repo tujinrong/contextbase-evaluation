@@ -1,0 +1,57 @@
+000001 | package webon.base;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.sql.SQLException;
+000005 | 
+000006 | import common.base.CommonBaseSelect;
+000007 | 
+000008 | /**
+000009 |  * Webon汎用照会ベースクラス　パス管理マスタ Select Baseクラス
+000010 |  * 
+000011 |  * @author Minori 加瀬
+000012 |  * 
+000013 |  * @date	H25.12.30	加瀬		新規作成
+000014 |  * @date	2020.02.06	京極　	webonのFW化対応
+000015 |  */
+000016 | public class SelectPathMngMstBase extends CommonBaseSelect {
+000017 | 
+000018 | 	public SelectPathMngMstBase(Connection connection) {
+000019 | 		super(connection);
+000020 | 		// TODO Auto-generated constructor stub
+000021 | 	}
+000022 | 	//DB名
+000023 | 	public static final String DBNAME = "NAVI.ＵＭパス管理マスタ";
+000024 | 	//DBキー
+000025 | 	public static final String DBKEY_ACCESSPOINT="接続先";
+000026 | 	public static final String DBKEY_PATHMAX="パス最大数";
+000027 | 	public static final String DBKEY_LIMPATHMAX="制限パス最大数";
+000028 | 	/** 
+000029 | 	  * マスタＤＢから値を読込
+000030 | 	  * 
+000031 | 	  * @param String 接続先（IPアドレス）
+000032 | 	  * @return boolean 取得結果
+000033 | 	  * @throws SQLException 
+000034 | 	  */
+000035 | 	public boolean selectPathMax(String ip) throws SQLException {
+000036 | 		//SQL編集
+000037 | 		StringBuilder sb = new StringBuilder();
+000038 | 		sb.append("SELECT *");
+000039 | 		sb.append(" FROM ").append(DBNAME);
+000040 | 		sb.append(" WHERE ").append(DBKEY_ACCESSPOINT).append("='").append(ip).append("'");
+000041 | 
+000042 | 		try {
+000043 | 			execute(sb.toString());
+000044 | 		} catch (SQLException e) {
+000045 | 			throw e;
+000046 | 		}
+000047 | 
+000048 | 		if (getList() != null) {
+000049 | 			return true;
+000050 | 		} else{
+000051 | 			return false;
+000052 | 		}
+000053 | 	}
+000054 | 	
+000055 | 
+000056 | 
+000057 | }

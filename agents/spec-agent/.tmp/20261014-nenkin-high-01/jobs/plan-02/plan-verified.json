@@ -1,0 +1,1187 @@
+{
+  "systemSummary": "年金自動受取予約管理システム（nenkin）の文書計画。ログイン、メニュー、予約の新規・変更・削除、店舗・担当者・顧客参照、登録内容印刷、店舗別Excel出力、日次・月次処理データ出力を、JSP、Action、セッションBean、サービス、SQLへ結び付ける。n2frameworkは年金アプリから到達する受付・認証・利用記録・DB接続・共通PDF経路の依存として扱い、他アプリの業務を独立した対象機能へ展開しない。既存の61文書の安定ID、相対出力path、sourcePaths、責務を引き継ぎ、機能詳細はdetailed-specification、論理表はlogical-table-definition、物理表はphysical-table-definitionへ文書種別を修正する。以下はMarkdown文書の生成計画であり、文書生成、プログラム実行、試験成功、表示確認、顧客承認を表さない。",
+  "documents": [
+    {
+      "id": "IDX-NENKIN",
+      "path": "index.md",
+      "title": "年金自動受取予約管理システム 仕様書索引",
+      "kind": "index",
+      "sourcePaths": [
+        "nenkin/WEB-INF/web.xml",
+        "nenkin/JSP/NENKIN/Menu.jsp"
+      ],
+      "responsibilities": [
+        "計画内の正確な文書ID・相対パス・責務・関連先を対応付け、仕様本文とanalysis-reportを別区分にする。未生成の文書リンクは未生成と表示する。",
+        "basic-designとdetailed-specificationを機能文書として扱う共通記載契約を定める。先頭にはschema=spec-md/1.0、documentId、version、path、sheetsを含む有効なJSONの実HTMLコメントを「<!-- spec-meta: {...} -->」の構文で置き、タイトル直下には文書属性を置く。概要・項目一覧・イベント仕様・補足説明の本文見出しと、同じ順序のsheetsのheading・kind・sheetを一致させる。",
+        "両種別の項目一覧は「No、グループ、項目名、種類、入出力、DB連携項目、候補取得元、必須、形式・桁、説明」の10列をこの表記・順序で使用する矩形LIST表1つとする。入出力はI、O、I／O、‐を使用し、キーを一意にする。型やコードはインラインコード、セル内の縦棒は安全な表現とし、br以外のHTMLをLISTへ入れない。",
+        "各イベントはh3、その配下はh4の「処理概要」「処理手順」「処理フロー」「SQL・テーブル関連（ER図）」「DB操作の詳細」「結果・例外時の扱い」を指定順で置く。DB非使用の場合も六節を保ち、実際の保持領域と非該当理由を説明する。番号付き手順、条件付きフロー、SQL、状態、返却値、例外を相互照合する。",
+        "大きなフローは番号付きサブフローへ分け、入口・出口・続き先・引継値を明示する。拒否経路、再検査、catch順、枝ごとの応答・状態・代入を省略せず、合流点へ不正な固定値を置かない。図の推奨寸法は幅1200・高さ1600px程度とし、英字識別子や数値を途中で折り返さない。重要判断には原文のファイル・開始行・終了行を付ける。",
+        "基本設計の静的HTML/CSS投影は概要内のコードフェンス外へ置き、原本DOM、共有CSS、配置、表示・操作条件を保持する。送信先とmethodは本文または非実行data属性へ残し、formの実接続先、JavaScriptイベント、原本にないDOM改善を追加しない。ボタンはtype=button、ナビゲーションは文書内fragment等とし、boolean属性は真の場合だけ置く。",
+        "生成時には原稿そのものでメタデータのコメント構文とJSON、宣言章と本文、全イベントの六h4、全表行の列数、縦棒の安全性を確認する。図と静的投影の原寸確認は独立工程とし、確認前に表示合格と記録しない。入口の根拠：nenkin/WEB-INF/web.xml:15-28、nenkin/JSP/NENKIN/Menu.jsp:6-13。"
+      ]
+    },
+    {
+      "id": "SCR-013",
+      "path": "basic/login.md",
+      "title": "ログイン 基本設計書",
+      "kind": "basic-design",
+      "sourcePaths": [
+        "nenkin/JSP/MENU/Login.jsp",
+        "nenkin/WEB-INF/src/nenkin/LoginAction.java",
+        "n2framework/WEB-INF/src/common/LoginAction.java",
+        "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "nenkin/assets/css/site.css"
+      ],
+      "responsibilities": [
+        "職員番号と認証情報の入力、認証失敗の表示、職員確認後のメニュー遷移を業務上の意味で説明し、認証情報の実値を含まない静的画面投影を作る。",
+        "共通ログインで認証状態を作った後、年金側で職員名簿を確認する二段階を示す。ローカル表示条件と本番認証を区別する。根拠：nenkin/WEB-INF/src/nenkin/LoginAction.java:7-12、nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java:50-78。",
+        "SCR-013-DETAIL（detail/login.md）とCOM-015（common/authentication.md）を関連付け、IDX-NENKIN（index.md）の機能文書契約を適用する。n2frameworkの認証は選択された年金画面の依存として説明する。"
+      ]
+    },
+    {
+      "id": "SCR-013-DETAIL",
+      "path": "detail/login.md",
+      "title": "ログイン 詳細仕様書",
+      "kind": "detailed-specification",
+      "sourcePaths": [
+        "nenkin/JSP/MENU/Login.jsp",
+        "nenkin/WEB-INF/src/nenkin/LoginAction.java",
+        "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "n2framework/WEB-INF/src/common/LoginAction.java",
+        "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java",
+        "n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java",
+        "n2framework/WEB-INF/src/common/bean/LoginInfoBean.java"
+      ],
+      "responsibilities": [
+        "form0、受信パラメータ、APPL_NAME・UNIFY_FLG、共通側の認証引数、LoginBean、NENKIN_STAFF_CONTEXTへの移送を追跡する。ブラウザー桁制約をサーバーのNULL排除保証にしない。",
+        "認証検索、職員名簿、事業所名、役職名、所属課係の取得順と0件・数値変換失敗・DB例外を説明する。共通検索の文字列連結SQLをPreparedStatementと誤記しない。",
+        "ログイン開始時の年金職員情報・CSRF情報削除、共通処理の戻り値を年金メニューへ置き換える条件、MenuViewActionからの追加失敗を示す。根拠：nenkin/WEB-INF/src/nenkin/LoginAction.java:7-12、n2framework/WEB-INF/src/common/LoginAction.java:175-270,297-441,475-539。",
+        "SCR-013（basic/login.md）と対応させ、IDX-NENKIN（index.md）の四主章、10列項目一覧、全イベントの六h4、手順・フロー・結果照合を適用する。COM-108は年金LoginAction、COM-015・COM-026・COM-030・COM-034は認証依存のsource identityとして対応付ける。"
+      ]
+    },
+    {
+      "id": "SCR-017",
+      "path": "basic/menu.md",
+      "title": "メニュー 基本設計書",
+      "kind": "basic-design",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Menu.jsp",
+        "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+        "nenkin/WEB-INF/src/nenkin/bean/MenuViewBean.java",
+        "nenkin/assets/css/site.css"
+      ],
+      "responsibilities": [
+        "ログイン職員表示と、新規・変更・削除、処理データ、印刷、EXCEL出力への操作を説明する。",
+        "共有ヘッダー、職員情報、ボタン配置、ログアウトを原本に沿って静的投影する。根拠：nenkin/JSP/NENKIN/Menu.jsp:6-13。",
+        "SCR-017-DETAIL（detail/menu.md）と対応させ、IDX-NENKIN（index.md）の機能文書契約を適用する。"
+      ]
+    },
+    {
+      "id": "SCR-017-DETAIL",
+      "path": "detail/menu.md",
+      "title": "メニュー 詳細仕様書",
+      "kind": "detailed-specification",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Menu.jsp",
+        "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+        "nenkin/WEB-INF/src/nenkin/bean/MenuViewBean.java",
+        "nenkin/WEB-INF/src/nenkin/StaffViewAction.java",
+        "nenkin/WEB-INF/src/nenkin/StaffVerifyAction.java",
+        "nenkin/WEB-INF/src/nenkin/StaffClearAction.java",
+        "n2framework/WEB-INF/src/common/LogoutAction.java"
+      ],
+      "responsibilities": [
+        "menuFormのVIEW_ID・COMMAND_ID変更から各Actionへの呼出しを対応付け、職員番号の表示整形とViewBean設定を説明する。",
+        "Staff/View・Verify・Clearは現在MenuViewActionへ移譲する互換入口として記載し、職員手入力による認証機能を創作しない。",
+        "ログアウトの削除対象属性と残る属性を区別し、COM-015（common/authentication.md）、COM-111（common/session-and-mutation.md）へ関連付ける。根拠：nenkin/WEB-INF/src/nenkin/MenuViewAction.java:10-16、各Staff Action:7-8、n2framework/WEB-INF/src/common/LogoutAction.java:26-33。",
+        "SCR-017（basic/menu.md）とIDX-NENKIN（index.md）の機能文書契約へ対応させる。COM-110・COM-125はメニュー、COM-119～121は互換入口、COM-017は年金から使う共通ログアウトとしてsource identityを保持する。"
+      ]
+    },
+    {
+      "id": "SCR-018",
+      "path": "basic/pension.md",
+      "title": "年金予約 新規・変更・削除 基本設計書",
+      "kind": "basic-design",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Pension.jsp",
+        "nenkin/WEB-INF/src/nenkin/PensionViewAction.java",
+        "nenkin/WEB-INF/src/nenkin/PensionLoadAction.java",
+        "nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+        "nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/assets/css/site.css"
+      ],
+      "responsibilities": [
+        "基本情報・予約情報の論理項目、参照候補、日付入力、年金種類、登録・削除・クリア・戻るを説明する。",
+        "初期、新規、既存読込、キーreadonly、入力拒否、権限制限、完了の状態を分け、確認ダイアログと候補領域を静的投影へ反映する。",
+        "既存予約の照会キーはフリガナと電話番号であり、顧客マスター読込の店番・顧客番号と区別する。根拠：nenkin/JSP/NENKIN/Pension.jsp:18-46、nenkin/WEB-INF/src/nenkin/PensionLoadAction.java:13-29。",
+        "SCR-018-DETAIL（detail/pension.md）と対応させ、IDX-NENKIN（index.md）の機能文書契約を適用する。"
+      ]
+    },
+    {
+      "id": "SCR-018-DETAIL",
+      "path": "detail/pension.md",
+      "title": "年金予約 新規・変更・削除 詳細仕様書",
+      "kind": "detailed-specification",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Pension.jsp",
+        "nenkin/WEB-INF/src/nenkin/PensionViewAction.java",
+        "nenkin/WEB-INF/src/nenkin/PensionClearAction.java",
+        "nenkin/WEB-INF/src/nenkin/PensionLoadAction.java",
+        "nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+        "nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java",
+        "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "nenkin/WEB-INF/src/nenkin/bean/PensionViewBean.java",
+        "nenkin/WEB-INF/src/nenkin/model/PensionReservation.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/WEB-INF/src/nenkin/util/AnsiTextUtil.java"
+      ],
+      "responsibilities": [
+        "全コントロールとhidden制御項目を受信名、Java型、正規化、候補取得元、保存列、DDL属性、JDBCバインドへ対応付ける。表示名称、更新者、算出年金種類、画面だけの担当者名を区別する。",
+        "初期表示、クリア、キー変更時読込、候補選択後Load、顧客基本表への代替読込、日付変更時の予定年齢計算、確認・取消、Save、Delete、戻るをイベント別に説明する。",
+        "Saveの職員確認、受信変換、POST・CSRF、入力検査、現キーと元キーの再照会、キー変更拒否、既存更新権限、保存、空入力モデルへの戻りを順序どおり示す。根拠：nenkin/WEB-INF/src/nenkin/PensionSaveAction.java:10-48、nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java:138-188。",
+        "Deleteの対象再照会と権限検査から、削除明細INSERT、本体DELETE、件数検査、commit・rollbackまで追跡する。JVM内synchronizedとDB排他を区別し、比較版のないWHEREを明示する。根拠：nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java:10-34、nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:280-350。",
+        "ActionとRepositoryで異なるキー比較、NULL・空文字・ゼロ、入力拒否後の保持値とJSP再表示、保存前変換例外とトランザクション内例外、commit後の画面生成失敗を分けて記載する。入口の事前照会とRepository内の再照会の間に状態が変わる境界を示し、事前検査から後続成功を保証しない。",
+        "SCR-018（basic/pension.md）、COM-145（common/pension-persistence.md）、COM-146（common/reference-data.md）、DATA-PENSION-RESERVATION（db/logical/pension-reservation.md）へ関連付ける。COM-112・113・115・116・126・134のsource identityを対応させ、IDX-NENKIN（index.md）の機能文書契約を適用する。"
+      ]
+    },
+    {
+      "id": "SCR-016",
+      "path": "basic/lookup.md",
+      "title": "店舗・担当者・顧客参照 基本設計書",
+      "kind": "basic-design",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Lookup.jsp",
+        "nenkin/JSP/NENKIN/Pension.jsp",
+        "nenkin/JSP/NENKIN/Excel.jsp",
+        "nenkin/WEB-INF/src/nenkin/LookupViewAction.java",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/assets/css/site.css"
+      ],
+      "responsibilities": [
+        "共通参照画面の店舗・担当者・顧客モードを分け、検索条件、一覧項目、選択、クリア、ページ移動、閉じるを説明する。",
+        "親画面への選択値移送と、顧客選択後の予約読込を候補表示と区別する。「候補」ボタンが顧客参照を開く現行動作を示す。根拠：nenkin/JSP/NENKIN/Pension.jsp:63-65、nenkin/JSP/NENKIN/Lookup.jsp:10-35。",
+        "モード別の静的投影には親画面のiframe・モーダルと共有CSSとの対応を含める。",
+        "SCR-016-DETAIL（detail/lookup.md）と対応させ、IDX-NENKIN（index.md）の機能文書契約を適用する。"
+      ]
+    },
+    {
+      "id": "SCR-016-DETAIL",
+      "path": "detail/lookup.md",
+      "title": "店舗・担当者・顧客参照 詳細仕様書",
+      "kind": "detailed-specification",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Lookup.jsp",
+        "nenkin/WEB-INF/src/nenkin/LookupViewAction.java",
+        "nenkin/WEB-INF/src/nenkin/LookupSearchAction.java",
+        "nenkin/WEB-INF/src/nenkin/bean/LookupViewBean.java",
+        "nenkin/WEB-INF/src/nenkin/model/BranchLookupItem.java",
+        "nenkin/WEB-INF/src/nenkin/model/CustomerLookupItem.java",
+        "nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/JSP/NENKIN/Pension.jsp",
+        "nenkin/JSP/NENKIN/Excel.jsp"
+      ],
+      "responsibilities": [
+        "TARGETの既定処理、各検索文字列と店番の変換、SubWindowBean、全件取得後の20件切出し、総件数・表示範囲を追跡する。切出し後にページ番号を補正する順序を保持する。根拠：nenkin/WEB-INF/src/nenkin/LookupViewAction.java:15-22、nenkin/WEB-INF/src/nenkin/bean/LookupViewBean.java:12-40。",
+        "SQLの任意述語、氏名OR条件、LIKEエスケープ、電話数値の文字列検索、ORDER BY、各接続先と店舗名Map補完を説明する。SQLページング・件数上限・取消を存在すると推測しない。",
+        "postMessageのsource識別文字列とorigin確認、モード別送信値、親画面の採用値と不採用値、上位店番変更時の既存値保持・解除を原文どおり記載する。識別文字列の確認をevent.sourceによる送信元ウィンドウ確認と混同しない。根拠：nenkin/JSP/NENKIN/Lookup.jsp:31-35、nenkin/JSP/NENKIN/Pension.jsp:63-68、nenkin/JSP/NENKIN/Excel.jsp:10。",
+        "範囲外ページ、整数算術、subList、JSP再表示の例外を固定の0件結果へまとめない。切出し結果と補正後ページ表示の対応を本文・図で照合する。",
+        "SCR-016（basic/lookup.md）、COM-146（common/reference-data.md）へ関連付け、COM-109・124・129・131・136のsource identityを保持する。IDX-NENKIN（index.md）の機能文書契約を適用する。"
+      ]
+    },
+    {
+      "id": "SCR-019",
+      "path": "basic/report.md",
+      "title": "登録内容印刷 基本設計書",
+      "kind": "basic-design",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Report.jsp",
+        "nenkin/WEB-INF/src/nenkin/ReportViewAction.java",
+        "nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/assets/css/site.css"
+      ],
+      "responsibilities": [
+        "店舗指定の有無、単店舗・範囲指定、四つの並び替え、プレビュー、0件表示、印刷操作を説明する。",
+        "初期状態、店舗入力disabled、入力拒否、プレビュー作成後の印刷活性を静的投影に分ける。",
+        "印刷はブラウザーのHTML印刷であり、店舗別の明細とA4横の印刷CSSを説明する。根拠：nenkin/JSP/NENKIN/Report.jsp:35-61,65-100、nenkin/assets/css/site.css:2141-2259。",
+        "SCR-019-DETAIL（detail/report.md）と対応させ、IDX-NENKIN（index.md）の機能文書契約を適用する。"
+      ]
+    },
+    {
+      "id": "SCR-019-DETAIL",
+      "path": "detail/report.md",
+      "title": "登録内容印刷 詳細仕様書",
+      "kind": "detailed-specification",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Report.jsp",
+        "nenkin/WEB-INF/src/nenkin/ReportViewAction.java",
+        "nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java",
+        "nenkin/WEB-INF/src/nenkin/bean/ReportViewBean.java",
+        "nenkin/WEB-INF/src/nenkin/model/PensionReservation.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java",
+        "nenkin/assets/css/site.css"
+      ],
+      "responsibilities": [
+        "USE_BRANCH_RANGE、BRANCH_FROM・TO、SORT_TYPEの受信と変換を、入力表示値・検索引数・SQL述語へ対応付ける。至が変換不能な場合と空欄の場合を受信段階から説明する。",
+        "Preview入口の検査、単店舗・下限上限、四ORDER BY、LEFT JOIN、全件保持、店舗ごとのグループ化を追跡する。根拠：nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java:3、nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:249-272、nenkin/JSP/NENKIN/Report.jsp:65-100。",
+        "画面の「顧客氏名」並び替えがふりがな列を使う対応、出力日時、日付整形、NULL店番グループ、印刷用非表示・改ページ・長文表示を説明する。入力拒否後のモデルとJSP処理の例外範囲も記載する。",
+        "SCR-019（basic/report.md）、COM-145（common/pension-persistence.md）、COM-151（common/browser-and-layout.md）へ関連付け、COM-117・118・127のsource identityを保持する。IDX-NENKIN（index.md）の機能文書契約を適用する。"
+      ]
+    },
+    {
+      "id": "SCR-015",
+      "path": "basic/excel.md",
+      "title": "店舗別Excel出力 基本設計書",
+      "kind": "basic-design",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Excel.jsp",
+        "nenkin/WEB-INF/src/nenkin/ExcelViewAction.java",
+        "nenkin/WEB-INF/src/nenkin/ExcelExportAction.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java",
+        "nenkin/assets/css/site.css"
+      ],
+      "responsibilities": [
+        "店番指定、店舗参照、対象なし、ダウンロード、戻るを説明し、店舗名の表示と抽出条件を区別する。",
+        "XLSXの業務項目とファイル名規則を説明する。根拠：nenkin/WEB-INF/src/nenkin/ExcelExportAction.java:14-21、nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java:36-63。",
+        "店舗参照モーダルを含む静的投影と、印刷画面・日次月次出力との役割の違いを示す。",
+        "SCR-015-DETAIL（detail/excel.md）と対応させ、IDX-NENKIN（index.md）の機能文書契約を適用する。"
+      ]
+    },
+    {
+      "id": "SCR-015-DETAIL",
+      "path": "detail/excel.md",
+      "title": "店舗別Excel出力 詳細仕様書",
+      "kind": "detailed-specification",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Excel.jsp",
+        "nenkin/WEB-INF/src/nenkin/ExcelViewAction.java",
+        "nenkin/WEB-INF/src/nenkin/ExcelExportAction.java",
+        "nenkin/WEB-INF/src/nenkin/bean/ExcelViewBean.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionExcelExportResult.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java"
+      ],
+      "responsibilities": [
+        "店番のraw文字列、正数Integer変換、3桁検査、店舗名照会、店舗別検索、0件再表示、ダウンロードの順を説明する。店舗名が取得できないことを出力拒否と同一視しない。",
+        "請求予定日降順・担当者・顧客番号順、全出力列とモデル・DB列、日付の文字列出力、確認済の「確」、ファイル名・シート名・MIMEを対応付ける。根拠：nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:223-244、nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java:42-63。",
+        "出力ストリーム書込・flushとCSV戻り値によるforward抑止、DB取得・生成・送信の例外、送信途中の応答状態をCOM-012（common/http-dispatch.md）・COM-150（common/workbook-and-download.md）へ関連付ける。",
+        "SCR-015（basic/excel.md）と対応させ、COM-105・106・123・143・144のsource identityを保持する。IDX-NENKIN（index.md）の機能文書契約を適用する。"
+      ]
+    },
+    {
+      "id": "SCR-014",
+      "path": "basic/batch.md",
+      "title": "日次・月次処理データ出力 基本設計書",
+      "kind": "basic-design",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Batch.jsp",
+        "nenkin/WEB-INF/src/nenkin/BatchViewAction.java",
+        "nenkin/WEB-INF/src/nenkin/BatchRunAction.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java",
+        "nenkin/assets/css/site.css"
+      ],
+      "responsibilities": [
+        "職員指定・全職員、新規・変更・削除分の複数選択、日次対象日、月次開始終了日、0件結果、XLSX・ZIPを説明する。",
+        "対象日・当月期間・削除基準日の初期設定と、出力前の削除明細整理を明示する。自動スケジュール実行の存在を推定しない。根拠：nenkin/WEB-INF/src/nenkin/BatchViewAction.java:15-24、nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:58-112。",
+        "共通条件、日次・月次カード、職員表示、日付候補、入力拒否を原本どおり静的投影する。",
+        "SCR-014-DETAIL（detail/batch.md）と対応させ、IDX-NENKIN（index.md）の機能文書契約を適用する。"
+      ]
+    },
+    {
+      "id": "SCR-014-DETAIL",
+      "path": "detail/batch.md",
+      "title": "日次・月次処理データ出力 詳細仕様書",
+      "kind": "detailed-specification",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Batch.jsp",
+        "nenkin/WEB-INF/src/nenkin/BatchViewAction.java",
+        "nenkin/WEB-INF/src/nenkin/BatchRunAction.java",
+        "nenkin/WEB-INF/src/nenkin/BatchDailyAction.java",
+        "nenkin/WEB-INF/src/nenkin/BatchMonthlyAction.java",
+        "nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionBatchRunMode.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionBatchExportResult.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionBatchExportFileResult.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java",
+        "nenkin/WEB-INF/src/nenkin/model/PensionAuditRecord.java",
+        "nenkin/WEB-INF/src/nenkin/model/AuditType.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      ],
+      "responsibilities": [
+        "初期表示、Daily、Monthly、戻るを入口から追跡し、職員確認・受信値移送・POST/CSRF・対象選択・職員番号検査・要求DTO・期間解決の順を示す。画面入口で拒否されるALLとサービス単体で許容されるALLを区別する。",
+        "hiddenのDELETE_CUTOFF_DATEも受信値として扱い、基準日以前の削除明細DELETEとcommit、その後の区分別抽出を別トランザクションとして示す。後続の生成・送信失敗が履歴整理を取り消すとは記載しない。根拠：nenkin/WEB-INF/src/nenkin/BatchRunAction.java:14-21、nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:68-91、nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:457-480。",
+        "新規・変更は本体の変更FLGと更新日・更新者で抽出し、削除は削除明細を使う。SQL順と出力前再ソート、連番、区分別列、和暦整形、Q名称、ファイル名、上部行・結合範囲を対応付ける。根拠：nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:353-404、nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:150-290。",
+        "全区分0件、一区分出力、複数ファイルZIP、一部区分0件のメッセージを分ける。IllegalArgumentExceptionによる画面再表示と一般例外の共通処理、生成済み情報と応答状態を枝ごとに保持する。個別catchへ到達した例外を後段の一般処理へ重複分類しない。",
+        "SCR-014（basic/batch.md）、COM-145（common/pension-persistence.md）、COM-150（common/workbook-and-download.md）、DATA-PENSION-DELETED（db/logical/pension-deleted.md）へ関連付ける。COM-101～104・122・132・139～142のsource identityを対応させ、IDX-NENKIN（index.md）の機能文書契約を適用する。"
+      ]
+    },
+    {
+      "id": "API-NENKIN-PENSION-LOOKUP",
+      "path": "api/pension-lookup.md",
+      "title": "年金照会JSON入口契約",
+      "kind": "api",
+      "sourcePaths": [
+        "nenkin/WEB-INF/web.xml",
+        "n2framework/WEB-INF/src/common/ControlServlet.java",
+        "nenkin/WEB-INF/src/nenkin/PensionLookupAction.java",
+        "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+        "nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java"
+      ],
+      "responsibilities": [
+        "FUNCTION_ID=nenkin、VIEW_ID=Pension、COMMAND_ID=Lookupで反射ディスパッチ可能な入口を記載し、現行JSP・JavaScriptからの呼出しが確認できないことを到達性属性として示す。COM-114をsource identityとして対応付ける。",
+        "フォーム受信値、職員確認、POST以外の405、LOOKUP_MODE=keyと顧客番号照会、found=false、reservationの型・NULL・日付表示値、UTF-8 JSONを説明する。JSON要求DTOを創作しない。",
+        "CSV戻り値は応答済みを示す制御値であり、JSONをCSV出力と分類しない。認証失敗のJSP応答とDB・整形・送信例外を通常JSONへ一般化しない。根拠：nenkin/WEB-INF/src/nenkin/PensionLookupAction.java:12-28、n2framework/WEB-INF/src/common/ControlServlet.java:332-344,375-383。",
+        "COM-012（common/http-dispatch.md）、COM-111（common/session-and-mutation.md）、COM-145（common/pension-persistence.md）へ関連付け、年金の入口契約と到達する共通受付の境界を説明する。"
+      ]
+    },
+    {
+      "id": "COM-012",
+      "path": "common/http-dispatch.md",
+      "title": "HTTP受付・Action実行・共通応答契約",
+      "kind": "common",
+      "sourcePaths": [
+        "nenkin/WEB-INF/web.xml",
+        "n2framework/WEB-INF/src/common/ControlServlet.java",
+        "n2framework/WEB-INF/src/common/CommonAction.java",
+        "n2framework/WEB-INF/src/common/CommonConst.java",
+        "n2framework/WEB-INF/src/common/LoginInterfaceAction.java",
+        "nenkin/JSP/COMMON/Error.jsp",
+        "nenkin/JSP/COMMON/SubMessage.jsp"
+      ],
+      "responsibilities": [
+        "年金の/Action.doへ接続されたGET・POST、Windows-31J受信設定、通常の三識別値、外部連携分岐、反射クラス名生成、認証、運用可否、Action、利用記録、forwardの順を説明する。GETのPDF・連携分岐をPOSTの通常受付と区別する。",
+        "欠落識別値による反射実行catchより前の例外、Action内例外の共通エラー化、利用記録後・forward先JSP・応答送信後の例外境界を分ける。PDF・CSV・null戻り値のforward抑止を示す。根拠：n2framework/WEB-INF/src/common/ControlServlet.java:54-96,107-124,309-383。",
+        "ErrorMsg・MESSAGEの表示、ログインへのリンク、補助メッセージの戻る操作を説明し、SCR-011・SCR-012を年金配下の共通表示source identityとして対応付ける。メッセージが利用記録のJSP名を変えることと、実際の遷移先を区別する。",
+        "COM-016の連携入口、COM-018の運用可否、COM-013（common/access-log.md）、COM-015（common/authentication.md）、COM-045（common/framework-pdf.md）を対応付ける。共通フレームワークの他アプリ条件は受付条件と依存境界まで扱う。"
+      ]
+    },
+    {
+      "id": "COM-015",
+      "path": "common/authentication.md",
+      "title": "共通認証・ログイン情報・ログアウト契約",
+      "kind": "common",
+      "sourcePaths": [
+        "n2framework/WEB-INF/src/common/LoginAction.java",
+        "n2framework/WEB-INF/src/common/LoginInterfaceAction.java",
+        "n2framework/WEB-INF/src/common/LogoutAction.java",
+        "n2framework/WEB-INF/src/common/bean/LoginInfoBean.java",
+        "n2framework/WEB-INF/src/common/bean/OtherUserBean.java",
+        "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java",
+        "n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java",
+        "n2framework/WEB-INF/src/common/util/CommonConverter.java",
+        "nenkin/WEB-INF/src/nenkin/LoginAction.java"
+      ],
+      "responsibilities": [
+        "年金の通常ログインで使用する共通認証、職員属性補完、0件時の設定値、セッションへの登録を定義する。外部連携分岐は条件と依存境界を示し、他アプリの業務仕様へ展開しない。",
+        "LoginBeanとOtherUserBeanの用途、入力欠落・数値変換・DB検索の例外、年金側での戻り値置換を説明する。認証情報の実値は記載しない。",
+        "LogoutActionがViewBeanとLoginBeanを削除する契約と、年金専用属性を削除しない現行実装を区別する。根拠：n2framework/WEB-INF/src/common/LoginAction.java:175-270,297-441,475-539、n2framework/WEB-INF/src/common/LogoutAction.java:26-33。",
+        "COM-016・017・026・030・034・035・042・108のsource identityを契約内の該当節へ対応付け、SCR-013-DETAIL（detail/login.md）とCOM-111（common/session-and-mutation.md）を関連付ける。"
+      ]
+    },
+    {
+      "id": "COM-111",
+      "path": "common/session-and-mutation.md",
+      "title": "年金職員状態・セッション・変更受付契約",
+      "kind": "common",
+      "sourcePaths": [
+        "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "nenkin/WEB-INF/src/nenkin/model/StaffContext.java",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "n2framework/WEB-INF/src/common/CommonConst.java",
+        "nenkin/WEB-INF/src/nenkin/LoginAction.java",
+        "n2framework/WEB-INF/src/common/LogoutAction.java"
+      ],
+      "responsibilities": [
+        "ViewBean、SubWindowBean、LoginBean、年金職員状態、CSRF情報、MESSAGE、ErrorMsgの所有領域・生成・参照・更新・削除を対応付ける。画面間で共有するBeanの型と上書きを説明する。",
+        "既存StaffContextの利用とLoginBeanからの職員再確認、確認失敗時の削除、CSRF生成・比較、POST制約を示す。メッセージの「有効期限」から独立した期限検査の存在を推定しない。",
+        "所属店75かつ役職コード3000未満の更新・削除制限、役職変換失敗時の制限、各呼出し箇所を定義する。根拠：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java:33-106。",
+        "COM-135のStaffContextを対応付け、年金の機能詳細とCOM-015（common/authentication.md）を関連付ける。セッション情報、受信値、表示用モデル、保存対象を別の状態として追跡する。"
+      ]
+    },
+    {
+      "id": "COM-013",
+      "path": "common/access-log.md",
+      "title": "利用記録・ログ出力契約",
+      "kind": "common",
+      "sourcePaths": [
+        "n2framework/WEB-INF/src/common/ControlServlet.java",
+        "n2framework/WEB-INF/src/common/CounterShift.java",
+        "n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java",
+        "n2framework/WEB-INF/src/common/FWLog.java",
+        "n2framework/WEB-INF/src/common/base/CommonBase.java",
+        "n2framework/WEB-INF/src/common/base/CommonBaseSelect.java",
+        "nenkin/WEB-INF/resources/log4j.properties"
+      ],
+      "responsibilities": [
+        "年金Action後の利用記録に設定する機能・画面・コマンド・Action・JSP・職員情報と日時を説明する。業務データのトランザクションとは別の接続・commitであることを示す。",
+        "記録失敗時のrollback、ログ出力、例外を呼出し元へ再送しない処理と、その後の応答継続を区別する。根拠：n2framework/WEB-INF/src/common/ControlServlet.java:349-383、n2framework/WEB-INF/src/common/CounterShift.java:25-53。",
+        "FWLog、共通SQL基底のSQLログ、設定ファイルの責務を説明する。機密値を含むログの実例は掲載しない。",
+        "COM-014・021・022・025のsource identityを該当節へ対応付け、DATA-ACCESS-COUNTER（db/logical/access-counter.md）、DB-ACCESS-COUNTER（db/physical/access-counter.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "COM-138",
+      "path": "common/database-connections.md",
+      "title": "DB接続・SQL実行基盤・ローカル初期化契約",
+      "kind": "common",
+      "sourcePaths": [
+        "nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java",
+        "nenkin/WEB-INF/src/nenkin/service/NenkinDataAccessException.java",
+        "nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java",
+        "nenkin/WEB-INF/web.xml",
+        "n2framework/WEB-INF/src/common/CommonAction.java",
+        "n2framework/WEB-INF/src/common/base/CommonBase.java",
+        "n2framework/WEB-INF/src/common/base/CommonBaseSelect.java",
+        "n2framework/WEB-INF/src/common/util/CommonUtil.java",
+        "n2framework/WEB-INF/src/common/OperatePermission.java",
+        "nenkin/WEB-INF/resources/db/schema.sql"
+      ],
+      "responsibilities": [
+        "RAROA_DB、Oracle_SP2NM、Oracle_DWHの用途、JNDI候補順、DataSourceキャッシュ、型確認・lookup失敗・接続取得失敗を説明する。実際の本番接続設定は別の未確認境界とする。",
+        "共通CommonUtilのautoCommit=falseと、年金Repository側の明示トランザクション開始を区別する。共通検索のList<Map>変換ではDB NULLが空文字となりtrimされる契約を示す。根拠：nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java:12-93、n2framework/WEB-INF/src/common/util/CommonUtil.java:36-43、n2framework/WEB-INF/src/common/base/CommonBaseSelect.java:46-108。",
+        "nenkinは運用可否表の照会対象外だが、その判定前に接続を取得する順を説明する。接続失敗で運用拒否となる経路を省略しない。根拠：n2framework/WEB-INF/src/common/OperatePermission.java:26-84。",
+        "localDb条件、H2ファイル位置の決定、DDL・初期化SQLの読込、JNDI登録、終了処理を宣言された起動動作として記載し、実行済みとは扱わない。",
+        "COM-018・021・022・043・107・137のsource identityを対応付け、IDX-DB-NENKIN（db/index.md）とDEP-NENKIN（architecture/dependencies.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "COM-145",
+      "path": "common/pension-persistence.md",
+      "title": "年金予約データアクセス・更新契約",
+      "kind": "common",
+      "sourcePaths": [
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/src/nenkin/model/PensionReservation.java",
+        "nenkin/WEB-INF/src/nenkin/model/PensionAuditRecord.java",
+        "nenkin/WEB-INF/src/nenkin/model/AuditType.java",
+        "nenkin/WEB-INF/src/nenkin/service/NenkinDataAccessException.java",
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql"
+      ],
+      "responsibilities": [
+        "照会・候補・一覧・店舗別・印刷・更新区分検索を区別し、全SELECT項目、LEFT JOIN、述語、ORDER BY、パラメータ、結果変換を入口文書へ対応付ける。",
+        "登録前コピーと検査、キー正規化、存在再照会、INSERTまたはUPDATE、削除明細保存、本体削除、履歴整理、件数検査、commit・rollback・closeの契約を示す。根拠：nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:280-480,513-738。",
+        "文字列・Integer・Boolean・日付・数値電話のNULL変換、JDBC型、文字列サイズ指定の有無、更新日時と更新者の設定を説明する。根拠：nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:704-869。",
+        "synchronizedの範囲、版比較と予約キーのDB一意制約の不在、commit失敗時の確定状態不明、rollback失敗の扱いを区別する。未接続のsearchCandidates・findLatestAuditTypeを稼働画面機能にしない。",
+        "COM-132・134・137のsource identityを対応付け、SCR-018-DETAIL（detail/pension.md）、SCR-014-DETAIL（detail/batch.md）と本体・削除明細の論理表および物理表文書へ関連付ける。"
+      ]
+    },
+    {
+      "id": "COM-146",
+      "path": "common/reference-data.md",
+      "title": "参照候補・表示名称・保存コード契約",
+      "kind": "common",
+      "sourcePaths": [
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/src/nenkin/model/BranchLookupItem.java",
+        "nenkin/WEB-INF/src/nenkin/model/CodeLookupItem.java",
+        "nenkin/WEB-INF/src/nenkin/model/CustomerLookupItem.java",
+        "nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java",
+        "nenkin/WEB-INF/resources/db/data.sql",
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql"
+      ],
+      "responsibilities": [
+        "候補の取得元、抽出条件、順序、キー・名称、空候補、初期選択、選択値移送を定義し、店舗名Map補完とSQL JOINを区別する。",
+        "性別・裁定請求・受給有無は画面で名称を送信し、保存時に名称からコードを照会する契約を説明する。名称不在のSQLExceptionと未選択のNULLを区別する。",
+        "五つの年金種類チェックから1・2・4・8・16を合算し、種類表の存在確認後に保存する対応を示す。ローカル初期化値は本番候補の保証としない。根拠：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java:237-286、nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:573-620、nenkin/WEB-INF/resources/db/data.sql:55-94。",
+        "表示名称のDB容量と業務上限、JOIN欠落によるNULLと名称列のNOT NULL、保存・更新入口が確認できないマスターを区別する。",
+        "COM-129～131・136のsource identityを保持し、SCR-016-DETAIL（detail/lookup.md）と性別・裁定請求・受給有無・店舗・年金種類・職員・顧客の各論理表および物理表文書へ関連付ける。"
+      ]
+    },
+    {
+      "id": "COM-148",
+      "path": "common/value-normalization.md",
+      "title": "文字・電話・日付・備考の変換契約",
+      "kind": "common",
+      "sourcePaths": [
+        "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+        "nenkin/WEB-INF/src/nenkin/util/AnsiTextUtil.java",
+        "nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java",
+        "nenkin/assets/js/app.js",
+        "nenkin/assets/js/japanese-era-calendar.js"
+      ],
+      "responsibilities": [
+        "ブラウザーの数字補助、Actionの正数Integer変換、NFKC・空白整理・大文字化、数値電話キー、電話表示の先頭0補完を層ごとに示す。rawと正規化後、文字・コード単位・バイト、ゼロ・空・NULLを区別する。",
+        "Java日付受付とブラウザー和暦受付の書式・元号境界・不正値保持の違い、ISO保存、和暦・西暦・帳票表示を説明する。根拠：nenkin/WEB-INF/src/nenkin/util/DateUtil.java:15-71,139-179、nenkin/assets/js/japanese-era-calendar.js:113-170,308-341。",
+        "備考のWindows-31J変換可否と56バイト制約をDB容量から分離し、画面検査のメッセージとRepository検査例外を対応付ける。根拠：nenkin/WEB-INF/src/nenkin/util/AnsiTextUtil.java:13-46、nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java:167-188。",
+        "HTML・JSON・XMLの出力変換と不正日付の再表示を説明し、宣言だけの変換helperを画面へ接続された処理と区別する。",
+        "COM-147・149・151・152のsource identityを該当節へ対応付け、各年金機能の受信・保存・表示契約へ関連付ける。ブラウザー補助や型宣言から未確認の受信値保証を作らない。"
+      ]
+    },
+    {
+      "id": "COM-150",
+      "path": "common/workbook-and-download.md",
+      "title": "Open XMLブック生成・ZIP・ダウンロード契約",
+      "kind": "common",
+      "sourcePaths": [
+        "nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java",
+        "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "n2framework/WEB-INF/src/common/ControlServlet.java"
+      ],
+      "responsibilities": [
+        "単一シートXLSXの構成、文字・数値セル、空値、シート名整理、ヘッダー、列幅、固定行、フィルター、結合、印刷設定を説明する。列幅算定の先頭100行とデータ取得件数を混同しない。",
+        "店舗別と区分別出力の列・日付・上部行・縮尺を個別文書へ対応付け、ZIPへの複数ブックと結果テキストの格納条件を示す。根拠：nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java:26-65,129-267、nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:95-109,250-290,313-347。",
+        "メモリ上のbyte配列、Content-Disposition、MIME、Content-Length、write・flush、応答済み戻り値、生成例外と送信例外を区別する。根拠：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java:204-211。",
+        "SCR-015-DETAIL（detail/excel.md）、SCR-014-DETAIL（detail/batch.md）、COM-012（common/http-dispatch.md）へ関連付ける。既存Excel原本との表示一致や生成物の表示確認はANL-COVERAGE（analysis/coverage-and-limitations.md）で別に管理する。"
+      ]
+    },
+    {
+      "id": "COM-151",
+      "path": "common/browser-and-layout.md",
+      "title": "ブラウザー入力補助・共有表示契約",
+      "kind": "common",
+      "sourcePaths": [
+        "nenkin/assets/js/app.js",
+        "nenkin/assets/js/japanese-era-calendar.js",
+        "nenkin/assets/css/site.css",
+        "nenkin/JSP/NENKIN/Pension.jsp",
+        "nenkin/JSP/NENKIN/Lookup.jsp",
+        "nenkin/JSP/NENKIN/Report.jsp",
+        "nenkin/JSP/NENKIN/Batch.jsp",
+        "nenkin/JSP/NENKIN/Excel.jsp"
+      ],
+      "responsibilities": [
+        "data-digits-onlyと実コントロールへの登録、数字変換、カーソル・フォーカス、change発火、和暦カレンダーの選択・閉じる・表示値更新を説明する。",
+        "共通JSのdata-modal系helperと、JSP内にある固有モーダル・確認処理の接続有無を区別する。根拠：nenkin/assets/js/app.js:36-79,152-224、nenkin/JSP/NENKIN/Pension.jsp:59-68。",
+        "CSSの実際のclass・id・roleとの対応、ヘッダー、幅、二列配置、候補iframe、readonly・disabled・hidden、媒体別表示を整理する。原本にないDOMラッパーやCSS改善を投影へ追加しない。",
+        "静的投影では真のboolean属性だけを出力し、送信先は非実行data属性へ残す。成立しないモードを同じ画面状態へ合成しない。原寸表示確認の記録はANL-COVERAGE（analysis/coverage-and-limitations.md）へ分離する。",
+        "COM-152のカレンダーsource identityを対応付け、各基本設計書の概要内の静的投影と各詳細仕様書のブラウザーイベントを関連付ける。"
+      ]
+    },
+    {
+      "id": "COM-045",
+      "path": "common/framework-pdf.md",
+      "title": "共通GET経路のPDFセッション契約",
+      "kind": "common",
+      "sourcePaths": [
+        "n2framework/WEB-INF/src/common/ControlServlet.java",
+        "n2framework/WEB-INF/src/common/util/PDFUtil.java",
+        "n2framework/WEB-INF/src/common/pdf/FWSessionAgent.java",
+        "n2framework/WEB-INF/src/common/pdf/FWSessionTimer.java",
+        "n2framework/WEB-INF/src/common/pdf/FWTimerHandler.java"
+      ],
+      "responsibilities": [
+        "OPKとcharCommonUIDがともに未設定のGETから呼ばれる共通PDF経路を説明し、年金のHTML印刷画面と区別する。根拠：n2framework/WEB-INF/src/common/ControlServlet.java:54-79。",
+        "セッションAgentの取得・ロック後再確認、コールバック、保持応答、タイマー、型別catchと返却を追跡する。Agent取得時とoverlay時のcatch順、型付き例外のstatusCode引継ぎ、再throw、再試行、セッション無効化の到達範囲を分ける。根拠：n2framework/WEB-INF/src/common/util/PDFUtil.java:98-237。",
+        "Canon FM・iText・フォーム資材の依存境界を示し、外部実装未収録の処理を成功保証や年金固有の帳票機能へ拡張しない。",
+        "COM-038・039のsource identityを対応付け、COM-012（common/http-dispatch.md）、DEP-NENKIN（architecture/dependencies.md）へ関連付ける。各例外枝の理由・状態・応答コードを一つの固定エラー値へまとめない。"
+      ]
+    },
+    {
+      "id": "DEP-NENKIN",
+      "path": "architecture/dependencies.md",
+      "title": "画面・処理・保持領域・外部入出力の依存仕様",
+      "kind": "dependency-design",
+      "sourcePaths": [
+        "nenkin/WEB-INF/web.xml",
+        "nenkin/JSP/NENKIN/Menu.jsp",
+        "n2framework/WEB-INF/src/common/ControlServlet.java",
+        "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java",
+        "nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java",
+        "nenkin/tools/build.ps1",
+        "nenkin/tools/start.ps1",
+        "nenkin/tools/stop.ps1"
+      ],
+      "responsibilities": [
+        "UIイベント、識別値、Action、サービス、接続、SQL、モデル、JSPまたはダウンロードを結ぶ依存図とCRUD索引を作り、計画内の文書ID・パスへ関連付ける。",
+        "HTTP受信、セッション、DataSourceキャッシュ、候補List・Map、出力byte配列、ローカルDBファイル、外部PDF資材を別の保持領域として示す。",
+        "正常経路、拒否、型別例外、一般例外、forward時例外、commit後失敗を分けた番号付きサブフローを計画する。JSP直アクセス、反射可能な入口、未接続helperを通常メニュー経路と区別する。",
+        "ビルド・起動スクリプトは配布物と外部依存の宣言として分析し、実行結果としない。FW.jarが既存framework classesから組み立てられる境界を示す。根拠：nenkin/tools/build.ps1:8-26、nenkin/WEB-INF/web.xml:11-28。",
+        "対象アプリをnenkinとし、n2frameworkの関連は到達する共通依存として図示する。他アプリの操作クラスを、ファイルが収録されている理由だけで年金機能にしない。"
+      ]
+    },
+    {
+      "id": "IDX-DB-NENKIN",
+      "path": "db/index.md",
+      "title": "DB・論理データ仕様索引",
+      "kind": "database-index",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java",
+        "n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java"
+      ],
+      "responsibilities": [
+        "テーブルごとの論理仕様・物理DDL文書と利用機能・CRUDを索引化する。業務表、共通認証表、参照表、宣言のみの表を区別する。論理表と物理表はそれぞれ1表1ファイルとし、対応するDATA IDとDB IDおよび正確な相対パスを示す。",
+        "検索JOIN、別接続取得後のMap補完、削除時移送を関連図へ示す。DDLにないFK、多重度、PKを追加しない。",
+        "logical-table-definitionとphysical-table-definitionはともにTABLE文書契約を適用する。先頭の実HTMLコメントのspec-metaはschema=spec-md/1.1、layout=TABLE、documentId、version、pathを持ち、sheetsは物理テーブル名のsheetだけを持つ1件とする。sectionsは「テーブルヘッダー」kind=HEADER、「項目詳細」kind=LIST・key=[\"No\"]の順で宣言し、sheetsの中へ入れない。",
+        "両種別の本文h2は「テーブルヘッダー」「項目詳細」の二章とする。ヘッダーは一つの二列表へ論理名・物理名、定義、条件、索引、根拠、実装との相違、環境差、未確定事項をまとめる。明細columnsは「No、論理名、物理名、PK、NOT NULL、タイプ、長さ、初期値、説明」の九列をこの表記・順序で使い、一列一項目を記載する。",
+        "PK・NOT NULLは該当するとき〇、非該当は空欄とし、初期値なし・長さ非適用は空欄とする。型、容量と単位、NULL、既定値、制約、根拠を保持し、説明には入力・候補・検索・保存・履歴での業務上の用途、条件付き必須、参照先を記載する。論理表でも物理属性を推測で補わず、対応する物理表文書と収録DDLの範囲を明示する。",
+        "SQL Server用DDLとH2互換DDLの属性を区別し、Oracle本番DDLの代替にしない。業務上限、DB容量、DEFAULT、処理設定値を別に示す。根拠：nenkin/WEB-INF/resources/db/schema.sql:6-177、nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql:10-172。",
+        "表形式の構文と列数の確認、各列の用途と保存入口の根拠確認を別に行う。宣言だけの表へ読書き・暗号化・消費を創作しない。年金から使う共通認証・利用記録表はn2frameworkの到達依存として対応付ける。"
+      ]
+    },
+    {
+      "id": "DATA-PENSION-RESERVATION",
+      "path": "db/logical/pension-reservation.md",
+      "title": "年金予約 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/src/nenkin/model/PensionReservation.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/JSP/NENKIN/Pension.jsp",
+        "nenkin/WEB-INF/resources/db/schema.sql"
+      ],
+      "responsibilities": [
+        "年金1_LKの各列を基本情報・年金種類・請求・配偶者・予約・更新管理の意味と利用イベントへ対応付ける。",
+        "フリガナ・電話の照会キー、顧客番号との違い、更新者と担当者コード、名称参照、表示・保存変換、変更FLGの現在状態を説明する。変更全件を保存する履歴表として説明しない。根拠：nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:34-67,704-778。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の二章・九列契約を適用し、DB-PENSION-RESERVATION（db/physical/pension-reservation.md）とSCR-018-DETAIL（detail/pension.md）への対応を示す。"
+      ]
+    },
+    {
+      "id": "DB-PENSION-RESERVATION",
+      "path": "db/physical/pension-reservation.md",
+      "title": "年金1_LK テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      ],
+      "responsibilities": [
+        "全列のH2・SQL Server型、容量・単位、NULL、既定値、索引を定義する。PK・UNIQUE・FKはDDLに宣言されていないことを明示する。根拠：nenkin/WEB-INF/resources/db/schema.sql:106-135,168-170、nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql:60-93,130-160。",
+        "画面必須とDB NULL許容、INTEGERバインドとBIGINT列、DECIMAL電話、BooleanとBIT、更新日時の処理設定を区別し、DATA-PENSION-RESERVATION（db/logical/pension-reservation.md）へ対応付ける。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用し、条件付きDDLの宣言と配備済み実属性の確認を区別する。"
+      ]
+    },
+    {
+      "id": "DATA-PENSION-DELETED",
+      "path": "db/logical/pension-deleted.md",
+      "title": "年金削除明細 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/src/nenkin/model/PensionAuditRecord.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java",
+        "nenkin/WEB-INF/resources/db/schema.sql"
+      ],
+      "responsibilities": [
+        "年金＿削除明細の各列を削除時点の予約内容、削除実行者、更新日・時刻、削除分出力へ対応付ける。",
+        "本体からの移送、変更FLGへのNULL設定、基準日以前の整理、検索結果用auditIdがDB保存IDではないことを説明する。根拠：nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:315-404,457-480,690-738。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の契約を適用し、DB-PENSION-DELETED（db/physical/pension-deleted.md）とSCR-014-DETAIL（detail/batch.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "DB-PENSION-DELETED",
+      "path": "db/physical/pension-deleted.md",
+      "title": "年金＿削除明細 テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      ],
+      "responsibilities": [
+        "全列の型、容量、NULL、既定値、更新日・更新者索引を定義し、PK・FKを創作しない。根拠：nenkin/WEB-INF/resources/db/schema.sql:137-166,171、nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql:95-127,163-170。",
+        "保存列の意味はDATA-PENSION-DELETED（db/logical/pension-deleted.md）へ対応付け、履歴整理のWHERE・日付型と本体削除とのトランザクション関係を説明する。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用する。"
+      ]
+    },
+    {
+      "id": "DATA-GENDER",
+      "path": "db/logical/gender.md",
+      "title": "性別 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/resources/db/data.sql"
+      ],
+      "responsibilities": [
+        "性別ｺｰﾄﾞと名称を候補、名称送信、コード保存、顧客基本表のコード変換、表示JOINへ対応付ける。根拠：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java:237-238、nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:134-135,712-713,775。",
+        "nenkin/WEB-INF/resources/db/data.sql:55-56のローカル初期化値と本番候補を区別し、年金画面からのマスター更新入口が確認できないことを示す。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の契約を適用し、DB-GENDER（db/physical/gender.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "DB-GENDER",
+      "path": "db/physical/gender.md",
+      "title": "性別テーブル テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      ],
+      "responsibilities": [
+        "性別ｺｰﾄﾞのTINYINT・PK、名称のVARCHAR/NVARCHAR(10)・NOT NULLを定義する。根拠：nenkin/WEB-INF/resources/db/schema.sql:81-84、nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql:10-18。",
+        "名称列のNOT NULLとLEFT JOIN欠落時の表示NULL、DB容量と未確認の業務上限を区別し、DATA-GENDER（db/logical/gender.md）へ対応付ける。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用する。"
+      ]
+    },
+    {
+      "id": "DATA-CLAIM-STATUS",
+      "path": "db/logical/claim-status.md",
+      "title": "裁定請求 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Pension.jsp",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/resources/db/data.sql"
+      ],
+      "responsibilities": [
+        "裁請ｺｰﾄﾞと名称を「裁定請求書徴収」の候補・名称送信・保存コード・帳票表示へ対応付ける。根拠：nenkin/JSP/NENKIN/Pension.jsp:35、nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:723-724,776。",
+        "未選択、名称不在、JOIN欠落とローカル初期化値を区別する。根拠：nenkin/WEB-INF/resources/db/data.sql:57-58。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の契約を適用し、DB-CLAIM-STATUS（db/physical/claim-status.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "DB-CLAIM-STATUS",
+      "path": "db/physical/claim-status.md",
+      "title": "裁定請求テーブル テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      ],
+      "responsibilities": [
+        "裁請ｺｰﾄﾞのTINYINT・PKと裁定請求名称のVARCHAR/NVARCHAR(10)・NOT NULLを定義する。根拠：nenkin/WEB-INF/resources/db/schema.sql:86-89、nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql:20-28。",
+        "名称によるコード逆引きと表示JOINをDATA-CLAIM-STATUS（db/logical/claim-status.md）へ関連付け、業務上限を容量で代用しない。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用する。"
+      ]
+    },
+    {
+      "id": "DATA-BENEFIT-STATUS",
+      "path": "db/logical/benefit-status.md",
+      "title": "受給有無 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Pension.jsp",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/resources/db/data.sql"
+      ],
+      "responsibilities": [
+        "受給ｺｰﾄﾞ・受給有無を画面選択、配偶者関連情報、コード保存、印刷・Excel表示へ対応付ける。根拠：nenkin/JSP/NENKIN/Pension.jsp:40、nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:729-730,777。",
+        "空候補・未選択・逆引き失敗・ローカル初期化値を区別し、追加の受給判定業務を創作しない。根拠：nenkin/WEB-INF/resources/db/data.sql:59-60。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の契約を適用し、DB-BENEFIT-STATUS（db/physical/benefit-status.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "DB-BENEFIT-STATUS",
+      "path": "db/physical/benefit-status.md",
+      "title": "受給有無テーブル テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      ],
+      "responsibilities": [
+        "受給ｺｰﾄﾞのTINYINT・PK、名称のVARCHAR/NVARCHAR(10)・NOT NULLを定義する。根拠：nenkin/WEB-INF/resources/db/schema.sql:91-94、nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql:30-38。",
+        "保存列のコードと表示名称、JOIN結果のNULL、既定値の不在を説明し、DATA-BENEFIT-STATUS（db/logical/benefit-status.md）へ対応付ける。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用する。"
+      ]
+    },
+    {
+      "id": "DATA-BRANCH",
+      "path": "db/logical/branch.md",
+      "title": "店舗名称 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/resources/db/data.sql"
+      ],
+      "responsibilities": [
+        "店舗ｺｰﾄﾞと店名を店舗参照、店番表示、職員・顧客候補のMap補完、予約・帳票JOINへ対応付ける。根拠：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java:41-72,184-203,289-321、nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:774。",
+        "N2_DWHの事業所名称とは用途とキーを区別し、ローカル初期化と本番マスター管理の未確認境界を説明する。根拠：nenkin/WEB-INF/resources/db/data.sql:61-62。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の契約を適用し、DB-BRANCH（db/physical/branch.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "DB-BRANCH",
+      "path": "db/physical/branch.md",
+      "title": "店名テーブル テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java"
+      ],
+      "responsibilities": [
+        "店舗ｺｰﾄﾞのINTEGER/INT・PK、店名のVARCHAR/NVARCHAR(80)・NOT NULLを定義する。根拠：nenkin/WEB-INF/resources/db/schema.sql:96-99、nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql:40-48。",
+        "画面店番の3桁制約とDB型、名称のDB容量と未確認の入力上限、別DB職員所属店番とのアプリケーション照合を区別し、DATA-BRANCH（db/logical/branch.md）へ対応付ける。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用する。"
+      ]
+    },
+    {
+      "id": "DATA-PENSION-TYPE",
+      "path": "db/logical/pension-type.md",
+      "title": "年金種類 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Pension.jsp",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/WEB-INF/resources/db/data.sql"
+      ],
+      "responsibilities": [
+        "五チェックの名称、組合せコード、合算値と年金種類表示名を対応付ける。チェック別保存列と年金種類コード列を同一項目にしない。根拠：nenkin/JSP/NENKIN/Pension.jsp:34、nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:596-616,717-722。",
+        "コード0時のNULL、組合せコード不在時の例外、ローカル初期化の1～31を説明する。根拠：nenkin/WEB-INF/resources/db/data.sql:64-94。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の契約を適用し、DB-PENSION-TYPE（db/physical/pension-type.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "DB-PENSION-TYPE",
+      "path": "db/physical/pension-type.md",
+      "title": "年金種類テーブル テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      ],
+      "responsibilities": [
+        "種類ｺｰﾄﾞのINTEGER/INT・PK、年金種類名称のVARCHAR/NVARCHAR(120)・NOT NULLを定義する。根拠：nenkin/WEB-INF/resources/db/schema.sql:101-104、nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql:50-58。",
+        "名称容量と組合せコードのアプリケーション規則、FK未宣言と存在照会による検査を区別し、DATA-PENSION-TYPE（db/logical/pension-type.md）へ対応付ける。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用する。"
+      ]
+    },
+    {
+      "id": "DATA-WEB-LOGIN",
+      "path": "db/logical/web-login.md",
+      "title": "共通ログイン情報 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java",
+        "n2framework/WEB-INF/src/common/LoginAction.java",
+        "nenkin/WEB-INF/resources/db/schema.sql"
+      ],
+      "responsibilities": [
+        "アプリケーション名、認証検索に使うユーザー識別、認証照合列、共通権限列の用途を説明する。職員番号入力と認証検索ユーザー値を区別する。根拠：n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java:40-63、n2framework/WEB-INF/src/common/LoginAction.java:155-167,214-249。",
+        "年金で利用する列と他アプリ条件でのみ利用する列を分け、保存・管理入口や暗号化処理を創作しない。認証情報の実値は掲載しない。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の契約を適用し、DB-WEB-LOGIN（db/physical/web-login.md）とCOM-015（common/authentication.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "DB-WEB-LOGIN",
+      "path": "db/physical/web-login.md",
+      "title": "DB2.ＵＷＥＢログイン情報表 H2互換テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java"
+      ],
+      "responsibilities": [
+        "全列のVARCHAR容量、NULL、アプリケーション名・ユーザーＩＤの複合PKをH2互換DDLとして定義する。根拠：nenkin/WEB-INF/resources/db/schema.sql:6-18。",
+        "本番Oracle属性は未確認とし、認証SQLが文字列連結でサイズ付きSQLパラメータを使わないことを区別する。各列の年金認証での用途をDATA-WEB-LOGIN（db/logical/web-login.md）へ対応付ける。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用する。"
+      ]
+    },
+    {
+      "id": "DATA-STAFF",
+      "path": "db/logical/staff.md",
+      "title": "職員名簿 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "n2framework/WEB-INF/src/common/LoginAction.java",
+        "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/WEB-INF/src/nenkin/model/StaffContext.java",
+        "nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java",
+        "nenkin/WEB-INF/resources/db/schema.sql"
+      ],
+      "responsibilities": [
+        "職員番号、所属店番、漢字・カナ氏名、役職等を認証属性補完、年金職員確認、担当者候補、更新者へ対応付ける。",
+        "共通ログインの所属コード加工と年金StaffContextの取得値、NULL所属店番のint変換、候補のstaffCodeとstaffNoの別名を説明する。根拠：n2framework/WEB-INF/src/common/LoginAction.java:297-329、nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java:206-234,314-326、nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java:37-50。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の契約を適用し、DB-STAFF（db/physical/staff.md）、COM-111（common/session-and-mutation.md）、SCR-016-DETAIL（detail/lookup.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "DB-STAFF",
+      "path": "db/physical/staff.md",
+      "title": "DB2.Ｕ職員名簿表 H2互換テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java"
+      ],
+      "responsibilities": [
+        "職員番号PK、各DECIMAL(18,0)、氏名VARCHAR(40)、NULLを全列定義する。根拠：nenkin/WEB-INF/resources/db/schema.sql:20-30。",
+        "H2互換容量とJava int・String取得、画面8桁・担当者4桁の制約を区別する。本番Oracle列容量とマスター更新時の業務上限は未確認とする。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用し、DATA-STAFF（db/logical/staff.md）へ各列の用途を対応付ける。"
+      ]
+    },
+    {
+      "id": "DATA-STAFF-SECTION",
+      "path": "db/logical/staff-section.md",
+      "title": "職員所属課係 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java",
+        "n2framework/WEB-INF/src/common/LoginAction.java",
+        "nenkin/WEB-INF/resources/db/schema.sql"
+      ],
+      "responsibilities": [
+        "職員番号と所属課係コードを年金ログインで使用する共通ログイン情報の補完へ対応付け、名称がコード分岐で設定されることを説明する。",
+        "職員番号検索で複数行があり得るDDLと、ORDER BYなしで先頭行を採用する実装を区別する。根拠：n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java:137-158、n2framework/WEB-INF/src/common/LoginAction.java:401-430。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の契約を適用し、DB-STAFF-SECTION（db/physical/staff-section.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "DB-STAFF-SECTION",
+      "path": "db/physical/staff-section.md",
+      "title": "DB2.Ｕ職員所属課係一覧表 H2互換テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java"
+      ],
+      "responsibilities": [
+        "職員番号DECIMAL(8,0)、所属課係コードVARCHAR(20)、両列NOT NULL・複合PKを定義する。根拠：nenkin/WEB-INF/resources/db/schema.sql:32-36。",
+        "職員名簿へのFKは未宣言として扱い、本番属性と保存入口は確認済みとしない。DATA-STAFF-SECTION（db/logical/staff-section.md）へ利用側を対応付ける。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用する。"
+      ]
+    },
+    {
+      "id": "DATA-STAFF-ROLE",
+      "path": "db/logical/staff-role.md",
+      "title": "役職名称 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java",
+        "n2framework/WEB-INF/src/common/LoginAction.java",
+        "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "nenkin/WEB-INF/resources/db/schema.sql"
+      ],
+      "responsibilities": [
+        "役職コードから共通ログインの役職名を取得する対応と、年金更新権限が名称ではなく職員名簿の役職コードを判定する対応を分ける。",
+        "コード未設定・0・名称0件と「該当なし」の設定を説明する。根拠：n2framework/WEB-INF/src/common/LoginAction.java:380-399、nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java:96-99。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の契約を適用し、DB-STAFF-ROLE（db/physical/staff-role.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "DB-STAFF-ROLE",
+      "path": "db/physical/staff-role.md",
+      "title": "DB2.ＵＪＶ役職コード表 H2互換テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java"
+      ],
+      "responsibilities": [
+        "役職コードDECIMAL(4,0)・PKと役職VARCHAR(40)・NULL許容を定義する。根拠：nenkin/WEB-INF/resources/db/schema.sql:38-41。",
+        "名称保存の業務上限・本番Oracle属性を未確認とし、参照先へのFKを補わない。DATA-STAFF-ROLE（db/logical/staff-role.md）へ名称取得と権限判定の違いを対応付ける。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用する。"
+      ]
+    },
+    {
+      "id": "DATA-OFFICE",
+      "path": "db/logical/office.md",
+      "title": "事業所名称 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "n2framework/WEB-INF/src/common/LoginAction.java",
+        "n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java",
+        "nenkin/WEB-INF/resources/db/schema.sql"
+      ],
+      "responsibilities": [
+        "店舗コード・枝番・事業所名を、年金ログインで使用する共通ログインの所属コード分解と所属店名取得へ対応付ける。年金店名テーブルの参照と区別する。",
+        "所属コード未取得・検索0件の「該当なし」、取得前後の接続境界を説明する。根拠：n2framework/WEB-INF/src/common/LoginAction.java:300-310,331-363、n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java:39-61。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の契約を適用し、DB-OFFICE（db/physical/office.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "DB-OFFICE",
+      "path": "db/physical/office.md",
+      "title": "N2_DWH.Ｊ事業所コード表２ H2互換テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java"
+      ],
+      "responsibilities": [
+        "店舗コード・枝番DECIMAL(2,0)、複合PK、事業所名VARCHAR(80)・NULLを定義する。根拠：nenkin/WEB-INF/resources/db/schema.sql:43-48。",
+        "SQLに現れるN2_DWH物理名とコメントの別名称を区別し、本番DDL・更新業務上限は未確認とする。DATA-OFFICE（db/logical/office.md）へ利用側を対応付ける。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用する。"
+      ]
+    },
+    {
+      "id": "DATA-ACCESS-COUNTER",
+      "path": "db/logical/access-counter.md",
+      "title": "利用記録 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "n2framework/WEB-INF/src/common/ControlServlet.java",
+        "n2framework/WEB-INF/src/common/CounterShift.java",
+        "n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java",
+        "nenkin/WEB-INF/resources/db/schema.sql"
+      ],
+      "responsibilities": [
+        "アクセス日時、機能・画面・コマンド・Action、記録用JSP名、利用者を年金Action呼出し後の共通記録へ対応付ける。",
+        "ユーザー値未取得時のSQL組立て、空項目のNULL処理、記録失敗と画面処理継続、業務更新とは独立したcommitを説明する。根拠：n2framework/WEB-INF/src/common/ControlServlet.java:349-373、n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java:34-85、n2framework/WEB-INF/src/common/CounterShift.java:25-53。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の契約を適用し、DB-ACCESS-COUNTER（db/physical/access-counter.md）とCOM-013（common/access-log.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "DB-ACCESS-COUNTER",
+      "path": "db/physical/access-counter.md",
+      "title": "DB2.Ｕカウンターシフト H2互換テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java"
+      ],
+      "responsibilities": [
+        "日時文字列、各識別値・JSP名・ユーザーＩＤのVARCHAR容量とNULLを全列定義する。PK宣言の不在を示す。根拠：nenkin/WEB-INF/resources/db/schema.sql:55-64。",
+        "コメントのPK項目表現をDDLのPK制約と扱わず、生成日時形式と保存列の容量を対応付ける。DATA-ACCESS-COUNTER（db/logical/access-counter.md）へ各列の生成元と用途を関連付ける。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用する。"
+      ]
+    },
+    {
+      "id": "DATA-DB-MANAGEMENT",
+      "path": "db/logical/db-management.md",
+      "title": "DB処理中情報 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "n2framework/WEB-INF/src/common/OperatePermission.java",
+        "n2framework/WEB-INF/src/common/base/SelectDBKanriDBBase.java"
+      ],
+      "responsibilities": [
+        "ＤＢ名・処理中ＦＬＧの宣言と共通運用可否処理との対応を説明する。",
+        "nenkinでは対象分岐に入らず表照会へ進まないため、年金業務の稼働制御表として説明しない。対象外判定前の接続取得は別に説明する。根拠：n2framework/WEB-INF/src/common/OperatePermission.java:26-60。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の契約を適用し、DB-DB-MANAGEMENT（db/physical/db-management.md）へ関連付ける。COM-028のsource identityを参照条件の節へ対応付ける。"
+      ]
+    },
+    {
+      "id": "DB-DB-MANAGEMENT",
+      "path": "db/physical/db-management.md",
+      "title": "DB2.ＵＤＢ管理ＤＢ H2互換テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "n2framework/WEB-INF/src/common/OperatePermission.java"
+      ],
+      "responsibilities": [
+        "ＤＢ名VARCHAR(80)・PK、処理中ＦＬＧVARCHAR(1)・NOT NULLを宣言表として定義する。根拠：nenkin/WEB-INF/resources/db/schema.sql:50-53。",
+        "DDL収録と対象年金アプリからの読書き到達性を区別し、運用更新入口・本番属性を創作しない。DATA-DB-MANAGEMENT（db/logical/db-management.md）へ列の宣言と利用条件を対応付ける。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用する。"
+      ]
+    },
+    {
+      "id": "DATA-CUSTOMER",
+      "path": "db/logical/customer.md",
+      "title": "顧客基本情報 論理データ仕様",
+      "kind": "logical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/src/nenkin/model/CustomerLookupItem.java",
+        "nenkin/WEB-INF/src/nenkin/PensionLoadAction.java",
+        "nenkin/WEB-INF/resources/db/schema.sql"
+      ],
+      "responsibilities": [
+        "店舗コード・顧客番号・氏名・カナ・担当者・電話・住所・性別・生年月日を顧客候補検索と予約への初期移送へ対応付ける。",
+        "電話の数値検索と表示補完、数値日付のISO変換、候補DTOのNULL担当者から0への変換、店名別取得、予約表との照会順を説明する。顧客基本表への年金画面からの保存を創作しない。根拠：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java:75-135,324-346、nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:87-140、nenkin/WEB-INF/src/nenkin/PensionLoadAction.java:19-29。",
+        "本表だけを扱うTABLE文書としてIDX-DB-NENKIN（db/index.md）の契約を適用し、DB-CUSTOMER（db/physical/customer.md）、SCR-016-DETAIL（detail/lookup.md）、SCR-018-DETAIL（detail/pension.md）へ関連付ける。"
+      ]
+    },
+    {
+      "id": "DB-CUSTOMER",
+      "path": "db/physical/customer.md",
+      "title": "N2_SIGHT.Ｂ顧客基本表 H2互換テーブル定義",
+      "kind": "physical-table-definition",
+      "sourcePaths": [
+        "nenkin/WEB-INF/resources/db/schema.sql",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+      ],
+      "responsibilities": [
+        "店舗コード・顧客番号の複合PK、DECIMAL列、氏名・住所・性別文字列の容量とNULLを全列定義する。根拠：nenkin/WEB-INF/resources/db/schema.sql:67-78。",
+        "H2互換DDLとOracle本番属性、Java int取得とDECIMAL容量、移送先年金列との型・容量差を区別する。DATA-CUSTOMER（db/logical/customer.md）へ各列の候補検索と初期移送での用途を対応付ける。",
+        "IDX-DB-NENKIN（db/index.md）のspec-md/1.1・単一sheet・二章・九列TABLE契約を適用する。"
+      ]
+    },
+    {
+      "id": "ANL-COVERAGE",
+      "path": "analysis/coverage-and-limitations.md",
+      "title": "解析範囲・材料・実行制限報告",
+      "kind": "analysis-report",
+      "sourcePaths": [
+        "manifest.json",
+        "nenkin/WEB-INF/web.xml",
+        "nenkin/tools/build.ps1",
+        "nenkin/tools/smoke-test.ps1"
+      ],
+      "responsibilities": [
+        "coverageNotesへ、manifestのsource-only、訓練参照不許可、referenceFiles空、収録175ファイル・omitted170件、sources/indexedの対応を記録する。manifestは材料・権限情報としてのみ使用し、業務・実装factの根拠にしない。",
+        "対象はnenkin、n2frameworkは到達依存範囲であること、原仕様・評価資料・workspace外・秘密情報を成果物根拠にしないことを記録する。",
+        "ソース・SQL・スクリプトの未実行、未コンパイル、未テスト、未接続、文書未生成、図・HTML・Excelの未描画を記録する。smoke-testの存在を試験合格と扱わない。",
+        "本計画の根拠位置、確認済み範囲、資料不足を索引化し、報告制限を納品仕様本文へ混ぜない。必要原文の範囲確認と、未読・出力省略・後続生成時の追加追跡を区別する。",
+        "生成後の原稿構造確認と、図・静的HTML・出力ブックの独立した原寸表示確認を別工程として管理する。このジョブの読取り・最終応答だけで表示合格や数値的品質判定を作らない。"
+      ]
+    },
+    {
+      "id": "ANL-TRACEABILITY",
+      "path": "analysis/identity-reachability-and-differences.md",
+      "title": "安定ID・到達性・実装差分・未解決事項報告",
+      "kind": "analysis-report",
+      "sourcePaths": [
+        "nenkin/JSP/NENKIN/Staff.jsp",
+        "nenkin/WEB-INF/src/nenkin/StaffViewAction.java",
+        "nenkin/WEB-INF/src/nenkin/StaffVerifyAction.java",
+        "nenkin/WEB-INF/src/nenkin/StaffClearAction.java",
+        "nenkin/WEB-INF/src/nenkin/PensionLookupAction.java",
+        "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+        "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+        "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+        "nenkin/assets/js/app.js",
+        "nenkin/assets/js/japanese-era-calendar.js",
+        "n2framework/WEB-INF/src/common/ControlServlet.java",
+        "n2framework/WEB-INF/src/common/LogoutAction.java",
+        "nenkin/tools/build.ps1"
+      ],
+      "responsibilities": [
+        "入力で与えられた安定source identityとaliasを計画文書・節へ対応付ける。hash不一致の過去内容を根拠にせず、現在カプセルの原文を使う。基本文書のSCR IDと既存DETAIL派生ID、全既存文書ID・相対出力path・sourcePathsを保持する。",
+        "detailed-designからdetailed-specification、logical-dataからlogical-table-definition、database-tableからphysical-table-definitionへの文書種別修正を記録する。機能責務とTABLE責務は種別名修正で削除・縮小しない。",
+        "SCR-020のStaff.jspは残存ビュー、COM-119～121はメニュー移譲入口として記録する。未接続候補検索、最終区分helper、JSON入口、共通JS helper、他アプリ処理を通常UI機能から区別する。",
+        "ActionとRepositoryのキー正規化差、ページ切出し後補正、ログアウト後の年金属性残存、ブラウザーとJava日付受付差、履歴整理後の出力失敗を、観測事実・コメント意図・未確定運用・改善案に分ける。",
+        "ソースと配布classesの一致、本番設定、DDL、外部PDF依存、既存Excelレイアウト等の未解決事項を証拠位置付きで管理し、顧客承認や数値的な品質判定を創作しない。",
+        "関連文書はIDX-NENKIN（index.md）とIDX-DB-NENKIN（db/index.md）の正確なID・相対パスへ対応付ける。範囲外または年金からの到達性が確認できないframeworkのsource identityは報告上の分類に残し、対象アプリの納品機能を追加しない。"
+      ]
+    }
+  ],
+  "unresolved": [
+    "本番コンテナのJNDI定義、JDBCドライバー、DataSource実装、接続先スキーマ、分離レベル、タイムアウトは確認できない。NenkinDataSourceのlookup契約から本番接続・SQL実行成功へは拡張できない。関連：nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java:12-93。",
+    "DB2・N2_DWH・N2_SIGHTのOracle本番DDLがない。schema.sqlはローカルH2互換定義として扱い、本番の型・容量単位・NULL・制約・索引は未確定とする。関連：nenkin/WEB-INF/resources/db/schema.sql:6-78。",
+    "SQL Server用DDLの配備状況と既存DBの実属性は不明。条件付きCREATE文の収録だけでは、既存テーブルが同じ定義であることを確認できない。関連：nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql:10-172。",
+    "店舗名・職員名・顧客名・コード名称を管理する本番保存処理と業務上限がない。DDL容量を業務入力上限に置き換えられない。表示JOINや候補取得の根拠と、未確認のマスター管理境界を分ける。関連：nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java:41-286、nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:772-778。",
+    "年金予約キーの業務上の一意性、電話番号の先頭0・数字抽出、フリガナ空白整理の運用契約は不明。Actionの元キー比較とRepositoryの保存照会キーには加工差があり、収録DDLには対応するUNIQUE・PKがない。関連：nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java:102-116、nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:837-860、nenkin/WEB-INF/resources/db/schema.sql:106-135,168-170。",
+    "複数JVM・外部更新を含む競合時の期待動作、更新版比較、DBロック方針、commit応答不明時の再実行運用は定義資料がない。synchronizedと事前照会から競合安全を保証できない。関連：nenkin/WEB-INF/src/nenkin/PensionSaveAction.java:24-46、nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:280-350,672-683。",
+    "削除明細の保持期間と、受信したDELETE_CUTOFF_DATEで整理することの業務上の承認・変更権限は不明。初期値の2か月前は観測した設定処理であり、正式な保存期間規程とは扱えない。関連：nenkin/WEB-INF/src/nenkin/BatchViewAction.java:21-23、nenkin/WEB-INF/src/nenkin/BatchRunAction.java:15-20、nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:457-480。",
+    "PensionLookupActionの実利用者・外部呼出し契約がない。汎用ディスパッチで呼出し可能だが、現行画面からの呼出しは確認できない。関連：nenkin/WEB-INF/src/nenkin/PensionLookupAction.java:11-28、n2framework/WEB-INF/src/common/ControlServlet.java:332-338。",
+    "残存Staff.jspの直接利用、共通外部ログイン分岐、任意のAction識別値を受ける運用範囲は不明。通常メニュー到達性と区別して残す。関連：nenkin/JSP/NENKIN/Staff.jsp:3-14、各Staff Action:7-8、n2framework/WEB-INF/src/common/ControlServlet.java:136-248,309-338。",
+    "build.ps1はframeworkの既存classesをFW.jarへ格納するが、classes・jarはカプセルで省略されている。解析したframeworkソースと実配布バイナリの一致は確認できない。関連：nenkin/tools/build.ps1:8-30。省略材料の説明はANL-COVERAGEのcoverageNotesへ置く。",
+    "共通PDF経路が依存するCanon FM実装・設定・フォーム資材と関連ライブラリーの実体を確認できない。年金のHTML印刷から共通PDF生成を使用する経路も確認できない。関連：n2framework/WEB-INF/src/common/ControlServlet.java:54-79、n2framework/WEB-INF/src/common/util/PDFUtil.java:98-237、nenkin/JSP/NENKIN/Report.jsp:61。",
+    "Servletコンテナでの受信文字コード・重複パラメータ・JSP直アクセス・catch外例外・送信後forward失敗の最終HTTP応答は実環境資料がなく、ソースで確認できる境界までとする。Windows-31J受付設定と各JSPのUTF-8宣言から、実際の往復変換結果を保証しない。関連：n2framework/WEB-INF/src/common/ControlServlet.java:110-124,309-383、nenkin/JSP/NENKIN/Pension.jsp:1,18。",
+    "既存Excelレイアウト原本とcover・normal・listの具体的テンプレートは含まれていない。preserveExistingExcelLayoutの表示一致は判定できず、ソース内の出力列・結合・書式だけを計画根拠とする。図・静的HTML・出力ブックの原寸描画確認もこのジョブでは未実施である。関連：nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java:42-63、nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:222-290、nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java:129-267。"
+  ]
+}

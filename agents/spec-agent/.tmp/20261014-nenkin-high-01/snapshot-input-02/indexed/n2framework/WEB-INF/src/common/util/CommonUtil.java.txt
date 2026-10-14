@@ -1,0 +1,58 @@
+000001 | /*
+000002 |  * 作成日: 2007/05/29
+000003 |  *
+000004 |  */
+000005 | package common.util;
+000006 | 
+000007 | import java.sql.Connection;
+000008 | import java.sql.SQLException;
+000009 | import java.text.SimpleDateFormat;
+000010 | import java.util.TimeZone;
+000011 | 
+000012 | import javax.naming.InitialContext;
+000013 | import javax.naming.NamingException;
+000014 | import javax.sql.DataSource;
+000015 | 
+000016 | /**
+000017 |  * 共通ユーティリティクラス。
+000018 |  * メソッドは必ずstaticメソッドにする。
+000019 |  * 定数以外のメンバ変数は持たせない。
+000020 |  *
+000021 |  * @author JSC kengo murayama
+000022 |  *
+000023 |  * @date	H22.9.3		青木・浅見		センター集約対応なし
+000024 |  */
+000025 | public class CommonUtil {
+000026 | 
+000027 | 	/**
+000028 | 	 * ＤＢコネクションを取得する
+000029 | 	 * 
+000030 | 	 * @param ic		InitialContext
+000031 | 	 * @param strDS	ＪＤＢＣ名
+000032 | 	 * @return
+000033 | 	 * @throws NamingException
+000034 | 	 * @throws SQLException
+000035 | 	 */
+000036 | 	public static Connection getConnection(InitialContext ic, String strDS)
+000037 | 		throws NamingException, SQLException {
+000038 | 
+000039 | 		DataSource ds = (DataSource) ic.lookup(strDS);
+000040 | 		Connection cn = ds.getConnection();
+000041 | 		cn.setAutoCommit(false);
+000042 | 
+000043 | 		return cn;
+000044 | 	}
+000045 | 
+000046 | 	/**
+000047 | 	 * 本日日付・時刻取得
+000048 | 	 * @param format	日付・時刻フォーマット(「yyyyMMdd」、「HHmmss」など)
+000049 | 	 * 
+000050 | 	 * @return 本日日付
+000051 | 	 */
+000052 | 	public static String getCurrentDate(String format)
+000053 | 	{
+000054 | 		SimpleDateFormat gSDFDate = new SimpleDateFormat(format);
+000055 | 		gSDFDate.setTimeZone(TimeZone.getTimeZone("JST"));
+000056 | 		return gSDFDate.format(new java.util.Date());
+000057 | 	}
+000058 | }

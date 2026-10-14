@@ -1,0 +1,447 @@
+000001 | package webon.operation;
+000002 | 
+000003 | import java.sql.Connection;
+000004 | import java.util.ArrayList;
+000005 | import java.util.HashMap;
+000006 | import java.util.Iterator;
+000007 | import java.util.List;
+000008 | import java.util.Map;
+000009 | 
+000010 | import org.w3c.dom.Node;
+000011 | 
+000012 | import webon.WebonBase;
+000013 | import webon.WebonException;
+000014 | import webon.util.ConvertUtil;
+000015 | import webon.util.FixedValue;
+000016 | import webon.util.ValidateUtil;
+000017 | 
+000018 | import common.bean.LoginInfoBean;
+000019 | 
+000020 | /**
+000021 |  * Webon汎用照会クラス　自振契約明細照会汎用管理クラス
+000022 |  * 自振契約明細照会(XML)の取得とデータ管理、アクセスメソッドの提供
+000023 |  * 
+000024 |  * @author 吉津
+000025 |  * 
+000026 |  * @date	2020.04.16	新規作成
+000027 |  */
+000028 | public class JifuriKeiyakuShokai extends CommonOperation{
+000029 | 	
+000030 | 	private static final String syokaiName = "自振契約明細照会";
+000031 | 	
+000032 | 	//オペレーションＩＤ
+000033 | 	private final String operationId="OP-JIFURIKY-0001";
+000034 | 	//ログイン情報
+000035 | 	LoginInfoBean loginInfo;
+000036 | 	//webon引数
+000037 | 	String woCif;
+000038 | 	String woBrno;
+000039 | 	
+000040 | 	//Errorレベル
+000041 | 	private static final int ERRLEVEL_ERROR=0;	//Error
+000042 | 	private static final int ERRLEVEL_WARNING=1;	//Warning
+000043 | 	//Error箇所
+000044 | 	private static final String ERRSPOT_WOGET = "0";		//取得時
+000045 | 	private static final String ERRSPOT_WOANALYZE = "1";	//解析時
+000046 | 	private static final String ERRSPOT_WOMOLD = "2";		//成型時
+000047 | 	//Erro追加情報格納用リスト
+000048 | 	List<Map<String, String>> etc = new ArrayList<Map<String,String>>();
+000049 | 	//Error有無フラグ
+000050 | 	boolean errFlg=false;
+000051 | 	
+000052 | 	//顧客結合照会リスト
+000053 | 	List<JifuriKeiyakuBean> jifuriKeiyakuList = new ArrayList<JifuriKeiyakuBean>();
+000054 | 	
+000055 | 	//自振契約明細照会
+000056 | 	public class JifuriKeiyakuBean{
+000057 | 		//顧客情報
+000058 | 		String 店番="";
+000059 | 		String 顧客番号="";
+000060 | 		String 科目="";
+000061 | 		String 口座番号="";
+000062 | 		String 振替コード="";
+000063 | 		String 振替摘要="";
+000064 | 		String 企業="";
+000065 | 		String 自振契約日="";
+000066 | 		String 最新振替日="";
+000067 | 		
+000068 | 		public String get店番() {
+000069 | 			return 店番;
+000070 | 		}
+000071 | 		public void set店番(String 店番) {
+000072 | 			this.店番 = 店番;
+000073 | 		}
+000074 | 		public String get顧客番号() {
+000075 | 			return 顧客番号;
+000076 | 		}
+000077 | 		public void set顧客番号(String 顧客番号) {
+000078 | 			this.顧客番号 = 顧客番号;
+000079 | 		}
+000080 | 		public String get科目() {
+000081 | 			return 科目;
+000082 | 		}
+000083 | 		public void set科目(String 科目) {
+000084 | 			this.科目 = 科目;
+000085 | 		}
+000086 | 		public String get口座番号() {
+000087 | 			return 口座番号;
+000088 | 		}
+000089 | 		public void set口座番号(String 口座番号) {
+000090 | 			this.口座番号 = 口座番号;
+000091 | 		}
+000092 | 		public String get振替コード() {
+000093 | 			return 振替コード;
+000094 | 		}
+000095 | 		public void set振替コード(String 振替コード) {
+000096 | 			this.振替コード = 振替コード;
+000097 | 		}
+000098 | 		public String get振替摘要() {
+000099 | 			return 振替摘要;
+000100 | 		}
+000101 | 		public void set振替摘要(String 振替摘要) {
+000102 | 			this.振替摘要 = 振替摘要;
+000103 | 		}
+000104 | 		public String get企業() {
+000105 | 			return 企業;
+000106 | 		}
+000107 | 		public void set企業(String 企業) {
+000108 | 			this.企業 = 企業;
+000109 | 		}
+000110 | 		public String get自振契約日() {
+000111 | 			return 自振契約日;
+000112 | 		}
+000113 | 		public void set自振契約日(String 自振契約日) {
+000114 | 			this.自振契約日 = 自振契約日;
+000115 | 		}
+000116 | 		public String get最新振替日() {
+000117 | 			return 最新振替日;
+000118 | 		}
+000119 | 		public void set最新振替日(String 最新振替日) {
+000120 | 			this.最新振替日 = 最新振替日;
+000121 | 		}
+000122 | 	}
+000123 | 	
+000124 | 	//setter,getter
+000125 | 	public List<Map<String, String>> getEtc() {
+000126 | 		return etc;
+000127 | 	}
+000128 | 	public void setEtc(List<Map<String, String>> etc) {
+000129 | 		this.etc = etc;
+000130 | 	}
+000131 | 	public boolean isErrFlg() {
+000132 | 		return errFlg;
+000133 | 	}
+000134 | 	public void setErrFlg(boolean errFlg) {
+000135 | 		this.errFlg = errFlg;
+000136 | 	}
+000137 | 	public String getWoCif() {
+000138 | 		return woCif;
+000139 | 	}
+000140 | 	public void setWoCif(String woCif) {
+000141 | 		this.woCif = woCif;
+000142 | 	}
+000143 | 	public String getWoBrno() {
+000144 | 		return woBrno;
+000145 | 	}
+000146 | 	public void setWoBrno(String woBrno) {
+000147 | 		this.woBrno = woBrno;
+000148 | 	}
+000149 | 	public List<JifuriKeiyakuBean> getJifuriKeiyakuList() {
+000150 | 		return jifuriKeiyakuList;
+000151 | 	}
+000152 | 	public void setJifuriKeiyakuList(List<JifuriKeiyakuBean> jifuriKeiyakuList) {
+000153 | 		this.jifuriKeiyakuList = jifuriKeiyakuList;
+000154 | 	}
+000155 | 
+000156 | 	/**
+000157 | 	 * 店番・顧客番号を元に自振契約明細照会を取得する
+000158 | 	 * 
+000159 | 	 * @param cif 顧客番号
+000160 | 	 * @param br 店番
+000161 | 	 * @param loginInfo ログイン情報
+000162 | 	 * @param con
+000163 | 	 * @throws Exception
+000164 | 	 */
+000165 | 	public void getWebonByCif(String cif,String br, LoginInfoBean loginInfo, Connection con) throws Exception {
+000166 | 		try{
+000167 | 			//引数チェック 引数がセットされているか
+000168 | 			if (cif == null) {throw new Exception("顧客番号が設定されていません");}
+000169 | 			if (br == null) {throw new Exception("原店番号が設定されていません");}
+000170 | 			if (con == null) {throw new Exception("ＤＢコネクションが設定されていません");}
+000171 | 			
+000172 | 			//引数のセット
+000173 | 			this.woBrno=br;
+000174 | 			this.woCif=cif;
+000175 | 			this.loginInfo = loginInfo;
+000176 | 			
+000177 | 			//Webon問合せ実行
+000178 | 			getWebon(con);
+000179 | 			
+000180 | 			//取得結果解析
+000181 | 			analyzeWeon();
+000182 | 			
+000183 | 		}catch(WebonException e){
+000184 | 			throw e;
+000185 | 		}catch(Exception e){
+000186 | 			throw e;
+000187 | 		}
+000188 | 	}
+000189 | 
+000190 | 	/**
+000191 | 	 * Webon取得メソッド
+000192 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000193 | 	 * 
+000194 | 	 * @param req リクエスト
+000195 | 	 * @param res レスポンス
+000196 | 	 * @throws Exception 
+000197 | 	 */
+000198 | 	private void getWebon(Connection con) throws Exception {
+000199 | 		
+000200 | 		//WebonBaseの取得
+000201 | 		webonBase = new WebonBase(operationId, loginInfo, con);
+000202 | 		//設定値
+000203 | 		webonBase.put("顧客番号",woCif);
+000204 | 		webonBase.put("原店番号",woBrno);
+000205 | 		//問い合わせ
+000206 | 		webonBase.doQuery();
+000207 | 		
+000208 | 		//エラー処理
+000209 | 		if (!webonBase.checkResult()) {
+000210 | 			//エラーコード等をセット
+000211 | 			WebonException e = createWoException("Webon取得結果エラー", ERRLEVEL_ERROR, ERRSPOT_WOGET);
+000212 | 			//エラー処理は上位に任せる
+000213 | 			throw e;
+000214 | 		}
+000215 | 	}
+000216 | 
+000217 | 	/**
+000218 | 	 * Webon取得内容解析メソッド
+000219 | 	 * アクション内では、初期設定メソッド(setMember)と、データ保管メソッド(saveSession)を行うこと
+000220 | 	 * 
+000221 | 	 * @param req リクエスト
+000222 | 	 * @param res レスポンス
+000223 | 	 * @throws Exception 
+000224 | 	 * @throws Exception 
+000225 | 	 */
+000226 | 	public void analyzeWeon() throws Exception {
+000227 | 		//WEBON結果走査用固定値
+000228 | 		final String WOKEY_TSUCYO="通帳部宛";		//これがroot
+000229 | 		final String WOKEY_JIFURI="自振契約明細照会";	//これがroot2
+000230 | 		final String WOKEY_ROOP="明細票";
+000231 | 		final String DBKEY_CUSTNO="顧客番号";
+000232 | 		final String DBKEY_BRANCHNO="店番";
+000233 | 		
+000234 | 		//結果取得
+000235 | 		Node editData = webonBase.getEditData();
+000236 | 		//結果解析
+000237 | 		//データの最上位ノードを取得(もうちょっと精査要)
+000238 | 		Node root=editData.getFirstChild();
+000239 | 		Node root2=null;
+000240 | //		while (true) {
+000241 | 		for (int roopCount=0;roopCount<FixedValue.SYS_WBNUMLIMIT;roopCount++){
+000242 |         	//取得できなかったら終わり
+000243 |         	if (root==null){break;}
+000244 | 	    	if (root.getNodeType()==Node.ELEMENT_NODE) {
+000245 | 	    		//要素名の解析
+000246 | 	    		if (root.getNodeName().equals(WOKEY_TSUCYO)) {
+000247 | 	    			root2 = root.getFirstChild();
+000248 | //	    			while (true) {
+000249 | 	    			for (int roopCount2=0;roopCount2<FixedValue.SYS_WBNUMLIMIT;roopCount2++){
+000250 | 	    	        	//取得できなかったら終わり
+000251 | 	    	        	if (root2==null){break;}
+000252 | 	    		    	if (root2.getNodeType()==Node.ELEMENT_NODE) {
+000253 | 	    		    		//要素名の解析
+000254 | 	    		    		if (root2.getNodeName().equals(WOKEY_JIFURI)) {
+000255 | 	    		    			break;
+000256 | 	    		            }
+000257 | 	    		    	}
+000258 | 	    	        	//次の子ノードを取得
+000259 | 	    		    	root2 = root.getNextSibling();
+000260 | 	    			}
+000261 | 	    			break;
+000262 | 	            } 
+000263 | 	    	}
+000264 |         	//次の子ノードを取得
+000265 | 	    	root = root.getNextSibling();
+000266 | 		}
+000267 | 		//全体の走査
+000268 |         Node child = root2.getFirstChild();
+000269 |         List<Node> loopNodes = new ArrayList<Node>();
+000270 |         String wobrno=null;
+000271 |         String wocustno=null;
+000272 | //		while (true) {
+000273 | 		for (int roopCount=0;roopCount<FixedValue.SYS_WBNUMLIMIT;roopCount++){
+000274 |         	//取得できなかったら終わり
+000275 |         	if (child==null){break;}
+000276 | 	    	if (child.getNodeType()==Node.ELEMENT_NODE) {
+000277 | 	    		//要素名の解析
+000278 | 	    		//ループ対象行
+000279 | 	    		if (child.getNodeName().equals(WOKEY_ROOP)) {
+000280 | 	    			loopNodes.add(child);
+000281 | 	            //ループ対象行以外
+000282 | 	            } else if (child.getNodeName().equals(DBKEY_BRANCHNO)){
+000283 | 	    			//必須チェック
+000284 | 	    			if(!getChildText(child).equals("")){
+000285 | 	    				wobrno=getChildText(child);
+000286 | 	    			}else{
+000287 | 	    				WebonException e = createWoException("Webon取得結果解析エラー", ERRLEVEL_ERROR, ERRSPOT_WOANALYZE);
+000288 | 	    				//エラー項目のセット
+000289 | 	    				Map<String, String>map = new HashMap<String, String>();
+000290 | 	    				map.put("店番", null);
+000291 | 	    				etc.add(map);
+000292 | 	    				e.setEtc(etc);
+000293 | 	    				//エラー処理は上位に任せる
+000294 | 	    				throw e;
+000295 | 	    			}
+000296 | 	            } else if (child.getNodeName().equals(DBKEY_CUSTNO)){
+000297 | 	    			//必須チェック
+000298 | 	    			if(!getChildText(child).equals("")){
+000299 | 	    				wocustno=getChildText(child);
+000300 | 	    			}else{
+000301 | 	    				WebonException e = createWoException("Webon取得結果解析エラー", ERRLEVEL_ERROR, ERRSPOT_WOANALYZE);
+000302 | 	    				//エラー項目のセット
+000303 | 	    				Map<String, String>map = new HashMap<String, String>();
+000304 | 	    				map.put("顧客番号", null);
+000305 | 	    				etc.add(map);
+000306 | 	    				e.setEtc(etc);
+000307 | 	    				//エラー処理は上位に任せる
+000308 | 	    				throw e;
+000309 | 	    			}
+000310 | 	            }
+000311 | 	    	}
+000312 |         	//次の子ノードを取得
+000313 |         	child = getNextElement(child);
+000314 | 		}
+000315 | 		//ループ行の走査＆値のセット
+000316 | 		for (int i=0; i<loopNodes.size(); i++ ) {
+000317 | 			//ループの要素を取り出し
+000318 | 			Node elem=loopNodes.get(i).getFirstChild();
+000319 | 			//データ格納用ビーンの生成
+000320 | 			JifuriKeiyakuBean bean = new JifuriKeiyakuBean();
+000321 | 			bean.set店番(wobrno);
+000322 | 			bean.set顧客番号(wocustno);
+000323 | 			//項目の取得
+000324 | //			while (true) {
+000325 | 			for (int roopCount=0;roopCount<FixedValue.SYS_WBNUMLIMIT;roopCount++){
+000326 | 				if (elem==null){break;}
+000327 | 				if (elem.getNodeType()==Node.ELEMENT_NODE ){
+000328 | 					if(elem.getNodeName().equals("科目")) {
+000329 | 						bean.set科目(getChildText(elem));
+000330 | 					}else if(elem.getNodeName().equals("口座番号")){
+000331 | 						bean.set口座番号(getChildText(elem));
+000332 | 					}else if(elem.getNodeName().equals("振替コード")){
+000333 | 						bean.set振替コード(getChildText(elem));
+000334 | 					}else if(elem.getNodeName().equals("振替摘要")){
+000335 | 						bean.set振替摘要(getChildText(elem));
+000336 | 					}else if(elem.getNodeName().equals("企業")){
+000337 | 						bean.set企業(getChildText(elem));
+000338 | 					}else if(elem.getNodeName().equals("自振契約日")){
+000339 | 						bean.set自振契約日(getChildText(elem));
+000340 | 					}else if(elem.getNodeName().equals("最新振替日")){
+000341 | 						bean.set最新振替日(getChildText(elem));
+000342 | 					}
+000343 | 				}
+000344 | 	        	//次の子ノードを取得
+000345 | 		    	elem = getNextElement(elem);
+000346 | 				
+000347 | 			}
+000348 | 
+000349 | 			//1口座分取得したので、リストに格納
+000350 | 	    	jifuriKeiyakuList.add(bean);
+000351 | 		}
+000352 | 		//取得項目のチェック
+000353 | 		checkWebon();
+000354 | 		
+000355 | 		//エラーチェック(Exceptionの有無を判定する)
+000356 | 		if(errFlg){
+000357 | 			WebonException e = createWoException("Webon取得結果解析エラー", ERRLEVEL_WARNING, ERRSPOT_WOMOLD);
+000358 | 			e.setEtc(etc);
+000359 | 			//エラー処理は上位に任せる
+000360 | 			throw e;
+000361 | 		}
+000362 | 	}
+000363 | 	/**
+000364 | 	 * 取得内容チェックメソッド
+000365 | 	 */
+000366 | 	private void checkWebon(){
+000367 | 		//取得した口座情報分チェックする
+000368 | 		Iterator<JifuriKeiyakuBean> it = jifuriKeiyakuList.iterator();
+000369 | 
+000370 | 		//不要レコードの削除
+000371 | 		while (it.hasNext()) {
+000372 | 			JifuriKeiyakuBean jkb = it.next();
+000373 | 			//店顧客のレコードの正規チェックして異常なら取り除く
+000374 | 			if (!autoTransAccCheck(jkb)) {
+000375 | 				it.remove();}
+000376 | 		}
+000377 | 		
+000378 | 		//項目チェック
+000379 | 		it = jifuriKeiyakuList.iterator();
+000380 | 		while(it.hasNext()){
+000381 | 			JifuriKeiyakuBean jkb = it.next();
+000382 | 			
+000383 | 			jkb.set店番(ConvertUtil.chkConvertNumAdd0(jkb.get店番(), 3));
+000384 | 			jkb.set顧客番号(ConvertUtil.chkConvertNumAdd0(jkb.get顧客番号(), 7));
+000385 | 			jkb.set科目(ConvertUtil.chkConvertNumAdd0(jkb.get科目(), 2));
+000386 | 			jkb.set口座番号(ConvertUtil.chkConvertNumAdd0(jkb.get口座番号(), 7));
+000387 | 			jkb.set振替コード(ConvertUtil.chkConvertNumAdd0(jkb.get振替コード(), 3));
+000388 | 			jkb.set振替摘要(ConvertUtil.chkNull(jkb.get振替摘要()));
+000389 | 			jkb.set企業(ConvertUtil.chkConvertNumAdd0(jkb.get企業(),5));
+000390 | 			//【和暦処理】
+000391 | 			jkb.set自振契約日(ConvertUtil.chkConvertDateAdd0(jkb.get自振契約日()));
+000392 | 			jkb.set最新振替日(ConvertUtil.chkConvertDateAdd0(jkb.get最新振替日()));			
+000393 | 		}
+000394 | 	}
+000395 | 	/** 
+000396 | 	 * 自振契約明細照会のループ区間が口座情報かどうかをチェック
+000397 | 	 * @param Connection DB接続
+000398 | 	 * @return boolean 判定結果
+000399 | 	 */
+000400 | 	private boolean autoTransAccCheck(JifuriKeiyakuBean jkb) {
+000401 | 		
+000402 | 		//項目が取得できていなかったらNG
+000403 | 		if (jkb.get科目()==null) {return false;}
+000404 | 		if (jkb.get口座番号()==null) {return false;}
+000405 | 		//ブランクだったらNG
+000406 | 		if (jkb.get科目().isEmpty()) {return false;}
+000407 | 		if (jkb.get口座番号().isEmpty()) {return false;}
+000408 | 		//数値でなかったらNG
+000409 | 		if (!ValidateUtil.numCheck(jkb.get科目())) {return false;}
+000410 | 		if (!ValidateUtil.numCheck(jkb.get口座番号())) {return false;}
+000411 | 		//長さがあっていなかったらNG
+000412 | 		if (jkb.get科目().length()!=2) {return false;}
+000413 | 		//自振契約日のフォーマットチェック
+000414 | 		if (!jkb.get自振契約日().matches("[0-9 ][0-9]-[0-9 ][0-9]-[0-9 ][0-9]")) {return false;}
+000415 | 		return true;
+000416 | 	}
+000417 | 	
+000418 | 	//以下UTILITY
+000419 | 	//以下、ユーティリティ的メソッド
+000420 | 	/**
+000421 | 	 * エラー生成メソッド
+000422 | 	 * @param String	エラーメッセージ
+000423 | 	 * @param int		エラーレベル
+000424 | 	 * @param String	エラー箇所
+000425 | 	 */
+000426 | 	private WebonException createWoException(String msg ,int el, String es){
+000427 | 		//エラーコード等をセット
+000428 | 		WebonException e = new WebonException(msg,webonBase);
+000429 | 		//顧客を特定する情報をセット
+000430 | 		e.setOperationId(operationId);
+000431 | 		e.setBrno(woBrno);
+000432 | 		e.setCif(woCif);
+000433 | 		e.setErrStat(el);
+000434 | 		e.setErrSpot(es);
+000435 | 		//エラー処理は上位に任せる
+000436 | 		return e;
+000437 | 	}
+000438 | 	/**
+000439 | 	 * 照会名取得メソッド(Static)
+000440 | 	 * 照会名を取得する
+000441 | 	 * 
+000442 | 	 * @return String 照会名
+000443 | 	 */
+000444 | 	public static String getSyokaiName() {
+000445 | 		return syokaiName;
+000446 | 	}
+000447 | }

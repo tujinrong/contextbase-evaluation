@@ -1,0 +1,342 @@
+000001 | package jhkcommon;
+000002 | 
+000003 | /**
+000004 |  *
+000005 |  * OjiServlet
+000006 |  *
+000007 |  * @date	H22.8.27	青木・浅見		センター集約対応
+000008 |  * 			H23.12.12	Minori米持		リーディング連携対応
+000009 |  *
+000010 |  */
+000011 |   
+000012 | import java.io.IOException;
+000013 | import java.io.PrintWriter;
+000014 | import java.sql.Connection;
+000015 | import java.sql.ResultSet;
+000016 | import java.sql.SQLException;
+000017 | import java.sql.Statement;
+000018 | 
+000019 | import javax.naming.InitialContext;
+000020 | import javax.servlet.ServletConfig;
+000021 | import javax.servlet.ServletContext;
+000022 | import javax.servlet.ServletException;
+000023 | import javax.servlet.http.HttpServlet;
+000024 | import javax.servlet.http.HttpServletRequest;
+000025 | import javax.servlet.http.HttpServletResponse;
+000026 | import javax.sql.DataSource;
+000027 | 
+000028 | /** CifアプリケーションのテンプレートになるServlet */
+000029 | public abstract class OjiServlet extends HttpServlet{
+000030 | 
+000031 | 	private String servletName="";
+000032 | 	private String databaseType="";
+000033 | 	private String outputType="";
+000034 | 	private String inPutHtmlName="";
+000035 | 	private String outPutHtmlName="";
+000036 | 	private String outPutHtmlName2="";
+000037 | 	private String pdfFileName="";
+000038 | 	private String outPutListName="";
+000039 | 	private String errorReturnClassName="";
+000040 | 	private String errorReturnHtmlName="";
+000041 | 	private String notUsed="";
+000042 | 	//
+000043 | 	private String sDBServer = "";
+000044 | 	private String sClass = "";
+000045 | 	private String s47Status="";
+000046 | 	// HTMLのスケルトン格納ディレクトリを定義
+000047 | 	private String sFilePath = "";
+000048 | 	private String sPath = "";
+000049 | 
+000050 | 	public CifComon cCom;
+000051 | 	public SubroutineCallFactory scf;
+000052 | 	private String htmlSkeleton="";
+000053 | 	public String htmlSkeleton2="";
+000054 | 	private Exception initException;
+000055 | 
+000056 | 	/** イニシャライズ */
+000057 | 	public void init(ServletConfig config) throws ServletException {
+000058 | 		// HttpServletのinitメソッドを起動
+000059 | 		super.init(config);
+000060 | 		setProperties();
+000061 | 		ServletContext scntxt = this.getServletContext();
+000062 | 		sFilePath= scntxt.getInitParameter("SFILEPATH");
+000063 | 		sPath= scntxt.getInitParameter("SSERVLETPATH");
+000064 | 
+000065 | 		// CifComonのインスタンスを作成
+000066 | 		cCom = new CifComon(sFilePath, sDBServer, "", "");
+000067 | 		// SubroutineCallFactoryのインスタンスを作成
+000068 | 		scf = new SubroutineCallFactory();
+000069 | 		// 出力用ＨＴＭＬのスケルトンを読込み
+000070 | 		try{
+000071 | 			//NECIKO if(outPutHtmlName!=""&&outPutHtmlName!=null){
+000072 | 			if(!outPutHtmlName.equals("") && outPutHtmlName!=null){
+000073 | 				htmlSkeleton=cCom.CifComonHTMLRead(outPutHtmlName,"");
+000074 | 			}
+000075 | 			//NECIKO if(outPutHtmlName2!=""&&outPutHtmlName2!=null){
+000076 | 			if(!outPutHtmlName2.equals("") && outPutHtmlName2!=null){
+000077 | 				htmlSkeleton2=cCom.CifComonHTMLRead(outPutHtmlName2,"");
+000078 | 			}
+000079 | 		}
+000080 | 		catch(Exception e){
+000081 | 			initException=e;
+000082 | 		}
+000083 | 	}
+000084 | 
+000085 | 	
+000086 | 	/** Postメソッドリクエスト時の起動スレッド */
+000087 | 	public void doPost(HttpServletRequest req, HttpServletResponse res)
+000088 | 	{
+000089 | 		ojiServletMain(req,res);
+000090 | 	}
+000091 | 
+000092 | 
+000093 | 	/** Getメソッドリクエスト時の起動スレッド */
+000094 | 	public void doGet(HttpServletRequest req, HttpServletResponse res)
+000095 | 	{
+000096 | 		ojiServletMain(req,res);
+000097 | 	}
+000098 | 
+000099 | 	
+000100 | 	/** initから呼ばれるオーバーライド専用メソッド
+000101 | 	    アプリケーションはこのメソッドをオーバーライドする。*/
+000102 | 	abstract public void setProperties();
+000103 | 	
+000104 | 	
+000105 | 	/** CifServletのメインコントロール*/
+000106 | 	private void ojiServletMain(HttpServletRequest req, HttpServletResponse res)
+000107 | 	{
+000108 | 		try{
+000109 | 			startMain();
+000110 | 
+000111 | 			//メニュー画面のみＤＢ管理ＤＢチェックを行わない。
+000112 | 			String inputParams;
+000113 | 			inputParams=req.getParameter("HTML_NAME");
+000114 | 			if (inputParams == null) inputParams = "";
+000115 | 			if(!new String(inputParams.getBytes("iso-8859-1"),"Windows-31J").equals("LoanMain.html")){
+000116 | 				check();
+000117 | 			}
+000118 | 
+000119 | 			mainControl(req,res);
+000120 | 			exitMain();
+000121 | 			
+000122 | 		}
+000123 | 		catch (Exception e){
+000124 | 			errorControl(e,req,res);
+000125 | 			if(e.toString().startsWith("java.sql.SQLException")){
+000126 | 				e.printStackTrace();
+000127 | 				this.getServletContext().log("log",e);
+000128 | 			}
+000129 | 		}
+000130 | 	}
+000131 | 	
+000132 | 	
+000133 | 	
+000134 | 	protected void startMain()
+000135 | 		throws Exception
+000136 | 	{
+000137 | 		if (initException!=null){
+000138 | 			throw initException;
+000139 | 		}
+000140 | 	}
+000141 | 	
+000142 | 	
+000143 | 	/** ojiServletMainから呼ばれるオーバーライド専用メソッド
+000144 | 	    アプリケーションはこのメソッドをオーバーライドする。*/
+000145 | 	abstract public void mainControl(HttpServletRequest req, HttpServletResponse res)
+000146 | 		throws Exception;
+000147 | 
+000148 | 	
+000149 | 	protected void exitMain()
+000150 | 		throws Exception
+000151 | 	{
+000152 | 	}
+000153 | 
+000154 | 
+000155 | 	protected void errorControl(Exception e,HttpServletRequest req, HttpServletResponse res)
+000156 | 	{
+000157 | 		// エラー時のメッセージとSQLを画面に表示するHTMLを作成 
+000158 | 		res.setContentType("text/html; charset=Windows-31J");
+000159 | 		res.setHeader("Expires", "Sat, 01 Jan 2000 00:00:00 GMT");
+000160 | 		res.setHeader("cache-control", "no-store");
+000161 | 		res.setHeader("Pragma", "no-cache");
+000162 | 		String errorHtml="";
+000163 | 		errorHtml ="<FONT SIZE=3 COLOR=#0000A0><B>処理がエラーとなりました。</B></FONT><br><br>\n";
+000164 | 		
+000165 | 		errorHtml+="<table width=630 border=0>\n";
+000166 | 		if(e.toString().startsWith("jhkcommon.CifApplicationException")){
+000167 | 			errorHtml +="<tr><td width=100 valign=top>エラー理由＝</td>";
+000168 | 			errorHtml +="<td>"+CifErrorCode.getErrorMessage(e.getMessage())+"</td></tr></table><br><br>\n";
+000169 | 		}else{
+000170 | 			errorHtml +="システムエラーが発生しています。システム部へ問い合わせてください。<br><br>\n\n";
+000171 | 		}
+000172 | 		
+000173 | 		if(errorReturnClassName.equals("")){
+000174 | 			errorHtml+="<FORM name=eroor method=post action=HtmlHandler>\n";
+000175 | 			errorHtml+="<input type=hidden name=HTML_NAME value="+inPutHtmlName+">\n";
+000176 | 			errorHtml+="<input type=hidden name=SERVLET_LINE value=LineMakeBrno>\n";
+000177 | 			errorHtml+="<input type=submit value=もう一度入力画面に戻る>\n";
+000178 | 			errorHtml+="</FORM>\n";
+000179 | 		}else{
+000180 | 			errorHtml+="<FORM name=eroor method=post action="+errorReturnClassName+">\n";
+000181 | 			errorHtml+="<input type=hidden name=HTML_NAME value="+errorReturnHtmlName+">\n";
+000182 | 			errorHtml+="<input type=hidden name=SERVLET_LINE value=LineMakeBrno>\n";
+000183 | 			errorHtml+="<input type=submit value=もう一度入力画面に戻る>\n";
+000184 | 			errorHtml+="</FORM>\n";
+000185 | 		}
+000186 | 		
+000187 | 		errorHtml+="<table width=630 border=1>\n";
+000188 | 		
+000189 | 		errorHtml+="<tr><td width=110>className</td><td>"+servletName+"</td></tr>\n";
+000190 | 		errorHtml+="<tr><td>e.getMessage</td><td>"+e.getMessage()+"</td></tr>\n";
+000191 | 		errorHtml+="<tr><td>e.toString</td><td>"+e.toString()+"</td></tr>\n";
+000192 | 		errorHtml+="<tr><td>StackTrace</td><td>"+"\n";
+000193 | 		try{
+000194 | 			PrintWriter pw = res.getWriter();
+000195 | 			pw.println(errorHtml);
+000196 | 			e.printStackTrace(pw);
+000197 | 			
+000198 | 			pw.close();
+000199 | 		}
+000200 | 		catch (Exception eio){
+000201 | 		}
+000202 | 	}
+000203 | 	
+000204 | 
+000205 | 
+000206 | 	/** レスポンスヘッダーを定義する共通メソッド。 */
+000207 | 	public void makeResponseHeader(HttpServletRequest req, HttpServletResponse res)
+000208 | //		throws IOException
+000209 | 	{
+000210 | 		// ブラウザに返すデータ形式を指定  
+000211 | 		res.setContentType("text/html; charset=Windows-31J");
+000212 | 		// HttpServletResponseのメソッドを利用してHTTPのヘッダ情報を指定 
+000213 | 		res.setHeader("Expires", "Sat, 01 Jan 2000 00:00:00 GMT");
+000214 | 		res.setHeader("cache-control", "no-store");
+000215 | 		res.setHeader("Pragma", "no-cache");
+000216 |  		// HttpServletRequestのメソッドを利用してセッションをオブジェクトとして取得 
+000217 | //		HttpSession session = req.getSession(true);
+000218 | 	}
+000219 | 
+000220 | 
+000221 | 	/** データベースのコネクションを取得する。 */
+000222 | 	public Connection createConnection()
+000223 | 		
+000224 | 	{
+000225 | 		Connection conn=null;
+000226 | 		try{
+000227 | 			DataSource ds = (DataSource) new InitialContext().lookup(databaseType);
+000228 | 			conn = ds.getConnection();
+000229 | 			conn.setAutoCommit(false);
+000230 | 		}
+000231 | 		catch (Exception e){
+000232 | 		}
+000233 | 		return conn;
+000234 | 	}
+000235 | 
+000236 | 
+000237 | 	public void make()
+000238 | 		throws IOException
+000239 | 	{
+000240 | 
+000241 | 	}
+000242 | 
+000243 | 	/** ＤＢ管理ＤＢのチェックを行う。 */
+000244 | 	protected void check() 
+000245 | 		throws Exception
+000246 | 	{
+000247 | 		//Connectionの取得
+000248 | 		Connection con = null;
+000249 | 		Statement stmt = null;
+000250 | 		boolean flg = false;
+000251 | 
+000252 | 		try {
+000253 | 			DataSource ds = (DataSource) new InitialContext().lookup("jdbc/Oracle_SP2NM");
+000254 | 			con = ds.getConnection();
+000255 | 			con.setAutoCommit(false);
+000256 | 			stmt = con.createStatement();
+000257 | 			ResultSet rs = null;
+000258 | 
+000259 | 			//ＵＤＢ管理ＤＢの検索
+000260 | 			StringBuffer sb = new StringBuffer();
+000261 | 			sb.append("select 処理中ＦＬＧ");
+000262 | 			sb.append(" from DB2.ＵＤＢ管理ＤＢ");
+000263 | 			sb.append(" where ＤＢ名 = 'Ｕ調査カード'");
+000264 | 			rs = stmt.executeQuery(sb.toString());
+000265 | 				
+000266 | 			while(rs.next()){
+000267 | 				if(rs.getLong("処理中ＦＬＧ")==0){
+000268 | 					flg = true;
+000269 | 				}
+000270 | 			}
+000271 | 		} catch (Exception e) {
+000272 | 			e.printStackTrace();
+000273 | 		} finally {
+000274 | 			try {
+000275 | 				if (stmt != null) stmt.close();
+000276 | 				if (con  != null) con.close();
+000277 | 				con = null;
+000278 | 			} catch (SQLException e1) {
+000279 | 				e1.printStackTrace();
+000280 | 			}
+000281 | 		}
+000282 | 		if(!flg){
+000283 | 			throw new CifApplicationException("1056");
+000284 | 		}
+000285 | 	}
+000286 | 
+000287 | 	//アクセサメソッド
+000288 | 	
+000289 | 	public void setServletName(String servletName){
+000290 | 		this.servletName=servletName;
+000291 | 	}
+000292 | 	public void setDatabaseType(String databaseType){
+000293 | 		this.databaseType=databaseType;
+000294 | 	}
+000295 | 	public void setOutputType(String outputType){
+000296 | 		this.outputType=outputType;
+000297 | 	}
+000298 | 	public void setInPutHtmlName(String inPutHtmlName){
+000299 | 		this.inPutHtmlName=inPutHtmlName;
+000300 | 	}
+000301 | 	public void setOutPutHtmlName(String outPutHtmlName){
+000302 | 		this.outPutHtmlName=outPutHtmlName;
+000303 | 	}
+000304 | 	public void setOutPutHtmlName2(String outPutHtmlName2){
+000305 | 		this.outPutHtmlName2=outPutHtmlName2;
+000306 | 	}
+000307 | 	public void setPdfFileName(String pdfFileName){
+000308 | 		this.pdfFileName=pdfFileName;
+000309 | 	}
+000310 | 	public void setOutPutListName(String outPutListName){
+000311 | 		this.outPutListName=outPutListName;
+000312 | 	}
+000313 | 	public void setErrorReturnClassName(String errorReturnClassName){
+000314 | 		this.errorReturnClassName=errorReturnClassName;
+000315 | 	}
+000316 | 	public void setErrorReturnHtmlName(String errorReturnHtmlName){
+000317 | 		this.errorReturnHtmlName=errorReturnHtmlName;
+000318 | 	}
+000319 | 	public void setNotUsed(String notUsed){
+000320 | 		this.notUsed=notUsed;
+000321 | 	}
+000322 | 
+000323 | 	public String getHtmlSkeleton(){
+000324 | 		return this.htmlSkeleton;
+000325 | 	}
+000326 | 	public String getFilePath(){
+000327 | 		return this.sFilePath;
+000328 | 	}
+000329 | 	public String getOutPutHtmlName(){
+000330 | 		return this.outPutHtmlName;
+000331 | 	}
+000332 | 	public String getInPutHtmlName(){
+000333 | 		return this.inPutHtmlName;
+000334 | 	}
+000335 | 	public String getPdfFileName(){
+000336 | 		return this.pdfFileName;
+000337 | 	}
+000338 | 	public String get47Status(){
+000339 | 		return this.s47Status;
+000340 | 	}
+000341 | }
+000342 | 

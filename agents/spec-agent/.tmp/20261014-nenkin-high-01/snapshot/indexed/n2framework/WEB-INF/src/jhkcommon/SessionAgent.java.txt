@@ -1,0 +1,558 @@
+000001 | package jhkcommon;
+000002 | 
+000003 | /*
+000004 |  * SessionAgent.java
+000005 |  * 
+000006 |  * 
+000007 |  * @date	H22.8.19	青木・浅見		センター集約対応
+000008 |  *  
+000009 |  */
+000010 | 
+000011 | import java.io.File;
+000012 | import java.io.IOException;
+000013 | import java.io.InputStream;
+000014 | import java.net.SocketException;
+000015 | import java.util.List;
+000016 | 
+000017 | import javax.servlet.ServletOutputStream;
+000018 | import javax.servlet.http.HttpServletRequest;
+000019 | 
+000020 | import com.canon.iw.fm.common.exception.FMIllegalStatusException;
+000021 | import com.canon.iw.fm.common.exception.FMPrintException;
+000022 | import com.canon.iw.fm.common.exception.FMPropertyException;
+000023 | import com.canon.iw.fm.common.exception.FMSystemException;
+000024 | import com.canon.iw.fm.common.message.FMResponse;
+000025 | import com.canon.iw.fm.server.FMComposerAgent;
+000026 | import com.canon.iw.fm.server.FMJob;
+000027 | 
+000028 | /**
+000029 |  * SessionAgent
+000030 |  *
+000031 |  * セッション単位生成されるエージェント
+000032 |  *
+000033 |  * 修正履歴：2005/10/21 NEC Soft, Ltd.
+000034 |  *   「FormCraft Pro. for Web」から「Form Manager V6.1」へのバージョンアップ
+000035 |  *    にともない大幅変更。(NECIKO)
+000036 |  *     
+000037 |  *     FcwJobControlクラスは廃止。FMComposerAgentクラスへ統合された。
+000038 |  *     FMComposerAgentクラスはfinalクラス（継承不可）のため、本クラスで
+000039 |  *     継承する方式をやめ、本クラス内でFMComposerAgentクラスのインスタンス
+000040 |  *     を作成して使用する方式へ変更。
+000041 |  *     その他、各種クラス名の変更、各種メソッドの仕様変更、Fcp3Dataクラスの
+000042 |  *     廃止など、Form ManagerのJavaAPIの仕様に合わせ、変更点多数。
+000043 |  *     
+000044 |  *
+000045 |  */
+000046 | public class SessionAgent {
+000047 | 	
+000048 | 	private FMComposerAgent	_agent = null;	// エージェント
+000049 | 	private FMJob _job = null;				// ジョブ
+000050 | 	private SessionTimer _timer = null;		// タイムアウト用セッションタイマー
+000051 | 	private ServletOutputStream _outputStream = null;
+000052 | 
+000053 | 	private boolean _callback = false;		// コールバックかどうか
+000054 | 	private String _requestHost = null;		// サーバを呼び出したときのURLホスト名（webap01:8181）
+000055 | 	private String _requestHostIP = null;	// サーバを呼び出したときのURLホスト名（webap01）
+000056 | 	private String _requestUri = null;		// URI （/webap/cif/servlet/xxxxx）
+000057 | 
+000058 | 	private static final int AGENT_ERROR_TIMEOUT = 4001010;
+000059 | 	private static final int AGENT_ERROR = 4999999;
+000060 | 	private static final String RETRIEVE = "fcw-retrieve";
+000061 | 
+000062 | 
+000063 | 	/**
+000064 | 	 * コンストラクタ.
+000065 | 	 */
+000066 | 	public SessionAgent() throws IOException, FMPropertyException, FMSystemException {
+000067 | 		this(null, null, null);
+000068 | 	}
+000069 | 
+000070 | 	/**
+000071 | 	 * コンストラクタ.
+000072 | 	 */
+000073 | 	public SessionAgent(String uniqueId, String managerUrlKey, File logFile)
+000074 | 	       throws IOException, FMPropertyException, FMSystemException {
+000075 | 		// FormManagerインストールディレクトリの指定
+000076 | 		FMComposerAgent.setRootDirectory("C:\\iWFM");	
+000077 | 		// エージェントの作成
+000078 | 	  	_agent = new FMComposerAgent(uniqueId, managerUrlKey, logFile);
+000079 | 		// ジョブの作成
+000080 | 		_job= _agent.newJob();
+000081 | 	}
+000082 | 
+000083 | 
+000084 | 	/**
+000085 | 	 * セッション終了時の処理を行います。
+000086 | 	 */
+000087 | 	public void invalidate() {
+000088 | 		clear();
+000089 | 		try {
+000090 | 			_agent.removeJob(getJob());
+000091 | 		} catch (FMSystemException e) {
+000092 | 		}
+000093 | 	}
+000094 | 
+000095 | 	/**
+000096 | 	 * リクエストオブジェクトに設定されている属性に従ってオーバレイを実行します。
+000097 | 	 */
+000098 | 	public FMResponse overlay() throws FMPropertyException, FMPrintException,
+000099 | 	                                   FMIllegalStatusException {
+000100 | 		FMResponse response = null;
+000101 | 
+000102 | 		try {
+000103 | 			int jobstatus = 0;
+000104 | 			int resstatus = 0;
+000105 | 			FMJob job = getJob();
+000106 | 			job.overlay();					//オーバレイの同期実行
+000107 | 			jobstatus = job.getStatus();	//ジョブステータスの取得(処理が終わっていれば0)
+000108 | 			response = job.getResponse();	//リクエストタイムアウト時はnullが返る
+000109 | 			if (response != null) {
+000110 | 				//レスポンスオブジェクトから結果情報を取得
+000111 | 				resstatus = ((Integer)response.get("fm-status")).intValue();
+000112 | 			}
+000113 | 
+000114 | 			if (jobstatus != 0 || response == null || resstatus != 0) {
+000115 | 				// 何らかの理由で同期オーバレイが失敗した。
+000116 | 				// おそらくタイムアウト。
+000117 | 				if (job.isTimeout() == true) {
+000118 | 					// ジョブを置き換えないと次のリクエストと衝突してしまう。
+000119 | 					// セッションを終了するか、ジョブを切り替える。
+000120 | 					clear();
+000121 | 					_agent.removeJob(job);
+000122 | 					_job = _agent.newJob();
+000123 | 					throw new FMPrintException("synchronous overlay timeout",
+000124 | 				                               AGENT_ERROR_TIMEOUT);
+000125 | 				} else {
+000126 | 					// タイムアウト以外の理由でジョブが異常終了
+000127 | 					String msg = null;
+000128 | 					if (response != null) {
+000129 | 						msg = (String)response.get("fm-message");
+000130 | 					}
+000131 | 					if (msg == null) {
+000132 | 						msg = "エラーコード:" + jobstatus;
+000133 | 					}
+000134 | 					throw new FMPrintException("message: " + msg, AGENT_ERROR);
+000135 | 				}
+000136 | 			} else {
+000137 | 				// オーバレイは成功した
+000138 | 			}
+000139 | 		} catch (FMPropertyException e) {
+000140 | 			throw e;
+000141 | 		} catch (FMPrintException e) {
+000142 | 			throw e;
+000143 | 		} catch (FMIllegalStatusException e) {
+000144 | 			throw e;
+000145 | 		}
+000146 | 
+000147 | 		return response;
+000148 | 	}
+000149 | 
+000150 | 	/**
+000151 | 	 * overlay メソッドで最後に生成された結果オブジェクトを返します。.
+000152 | 	 * なければ null を返します。
+000153 | 	 * 本メソッドは、Internet Explorerのような特異な動作をするクライアントへの対処や、
+000154 | 	 * そもそも切断しやすいHTTPプロトコルで再送リクエストが発行されるようなケースに
+000155 | 	 * 対処するためのものです。
+000156 | 	 */
+000157 | 	public FMResponse getLastResponse() {
+000158 | 		return getJob().getResponse();
+000159 | 	}
+000160 | 
+000161 | 	/**
+000162 | 	 * 読み込まれたパラメータをもとに、オーバレイ実行可能かどうかを返します。.
+000163 | 	 */
+000164 | 	public boolean canOverlay() {
+000165 | 		return getJob().canOverlay();
+000166 | 	}
+000167 | 
+000168 | 	/**
+000169 | 	 * canOverlay() メソッド呼出しで false が返されたときに、エラーメッセージを獲得します。.
+000170 | 	 */
+000171 | 	public String getMessage() {
+000172 | 		return getJob().getMessage();
+000173 | 	}
+000174 | 
+000175 | 	/**
+000176 | 	 * 保持していた全パラメータをクリアするためのメソッドです。.
+000177 | 	 */
+000178 | 	public synchronized void clear() {
+000179 | 		try {
+000180 | 			getJob().clear();
+000181 | 		} catch (FMIllegalStatusException e) {
+000182 | 		}
+000183 | 	}
+000184 | 
+000185 | 
+000186 | 	//--------------------------------------------------------------
+000187 | 	// オーバーレイ属性の設定
+000188 | 	//--------------------------------------------------------------
+000189 | 		
+000190 | 	/**
+000191 | 	 * フォームファイル名(fm-formfilename)の設定
+000192 | 	 *
+000193 | 	 */
+000194 | 	public void setFormFileName(String formFileName) {
+000195 | 		getJob().getRequest().put("fm-formfilename",formFileName);
+000196 | 	}
+000197 | 
+000198 | 	/**
+000199 | 	 * フィールドデータ(fm-fielddata)の設定
+000200 | 	 *
+000201 | 	 */
+000202 | 	public void setFieldData(byte[] fieldData) {
+000203 | 		getJob().getRequest().put("fm-fielddata",fieldData);
+000204 | 		
+000205 | 		//-----------デバック用（フィールドデータをサーバ上へファイル出力）
+000206 | 		/*******
+000207 | 		OutputStream out = null;
+000208 | 		try {
+000209 | 		String fname = new String().valueOf(System.currentTimeMillis());
+000210 | 		out = new BufferedOutputStream(new FileOutputStream("C:\\iWFM\\data\\"
+000211 | 			                                                + fname + ".txt"));
+000212 | 		out.write(fieldData);
+000213 | 		out.close();
+000214 | 		} catch (Exception e) {
+000215 | 			e.printStackTrace();
+000216 | 		} finally {
+000217 | 			try {
+000218 | 				if (out!=null) out.close();
+000219 | 			} catch (Exception e) {}
+000220 | 		}
+000221 | 		*******/
+000222 | 		//-------------デバックＥＮＤ
+000223 | 	}
+000224 | 
+000225 | 	/**
+000226 | 	 * 出力先(fm-target)の設定
+000227 | 	 *   dest={"client","sever","folder"}
+000228 | 	 */
+000229 | 	public void setDestination(String dest) {
+000230 | 		getJob().getRequest().put("fm-target",dest);
+000231 | 	}
+000232 | 
+000233 | 	/**
+000234 | 	 * 出力方式(fm-action)の設定
+000235 | 	 *   act={"view","save","print","printsave"}
+000236 | 	 */
+000237 | 	public void setAction(String act) {
+000238 | 		getJob().getRequest().put("fm-action",act);
+000239 | 	}
+000240 | 
+000241 | 	/**
+000242 | 	 * 出力データ形式(fm-outputtype)の設定
+000243 | 	 *   type={"pdf","csm","fcm"}
+000244 | 	 */
+000245 | 	public void setType(String type) {
+000246 | 		getJob().getRequest().put("fm-outputtype",type);
+000247 | 	}
+000248 | 
+000249 | 	/**
+000250 | 	 * ドライバ(fm-driver)の設定
+000251 | 	 *  ※fm-target="client",fm-action="view"の場合、この指定は無視されます。
+000252 | 	 *  ※fm-outputtype="pdf"の場合、この指定は無視されます。
+000253 | 	 */
+000254 | 	public void setDriver(String driver) {
+000255 | 		getJob().getRequest().put("fm-driver",driver);
+000256 | 	}
+000257 | 
+000258 | 	/**
+000259 | 	 * サーバセーブ用ファイル名(fm-outfile)の設定
+000260 | 	 *  ※fm-target="server",fm-action="save"の場合のみ有効
+000261 | 	 */
+000262 | 	public void setServerSaveFile(File fileName) {
+000263 | 		getJob().getRequest().put("fm-outfile",fileName);
+000264 | 	}
+000265 | 
+000266 | 	//--------------------------------------------------------------
+000267 | 	// パラメータ関連
+000268 | 	//--------------------------------------------------------------
+000269 | 
+000270 | 	/**
+000271 | 	 * HttpServletRequest からパラメータを読み込みこみます。.
+000272 | 	 */
+000273 | 	public void parseParameters(HttpServletRequest request) {
+000274 | 		String key, value;
+000275 | 
+000276 | 		String requestHost = request.getHeader("Host");
+000277 | 		if (requestHost != null) {
+000278 | 			_requestHost = requestHost;
+000279 | 			int pos = requestHost.indexOf(":");
+000280 | 			if (pos >= 0) {
+000281 | 				String requestHostIP = requestHost.substring(0, pos);
+000282 | 				_requestHostIP = requestHostIP;
+000283 | 			}else{
+000284 | 				_requestHostIP = requestHost;
+000285 | 			}
+000286 | 		}
+000287 | 
+000288 | 		_requestUri = request.getRequestURI();
+000289 | 
+000290 | 		// リクエストパラメータ中に"fcw-retrieve"の文字列が含まれる場合は、
+000291 | 		// IE 問題対策としてプログラムが発行したコールバックと判断します。
+000292 | 		value = request.getParameter(RETRIEVE);
+000293 | 		if (value != null) {
+000294 | 			_callback = true;
+000295 | 		}
+000296 | 		else {
+000297 | 			_callback = false;
+000298 | 		}
+000299 | 	}
+000300 | 
+000301 | 	/**
+000302 | 	 * リクエストオブジェクトにオーバレイ属性を設定します。
+000303 | 	 */
+000304 | 	public void setFMParameters(String[][] fixedData, List variableData, int formCount,
+000305 | 	                            String formatFileName) throws IOException {
+000306 | 
+000307 | 		InputStream stream = null;
+000308 | 		ServletOutputStream out = null;
+000309 | 
+000310 | 		// フォームファイル名の設定
+000311 | 		setFormFileName(formatFileName);
+000312 | 	  	// フィールドデータの設定
+000313 | 	  	byte[] fieldData = makeFieldData(fixedData, variableData, formCount);
+000314 | 		setFieldData(fieldData);
+000315 | 		// 出力先の設定
+000316 | 		setDestination("client");
+000317 | 		// 出力方式の設定
+000318 | 		setAction("view");
+000319 | 		// データ形式の設定
+000320 | 		setType("pdf");
+000321 | 
+000322 | 		//ドライバは設定不要
+000323 | 		//setDriver("FCPC");	
+000324 | 
+000325 | 
+000326 | 	  	/**テスト用（c:\\iWFM\\storeへＰＤＦファイルを出力する）
+000327 | 		setDestination("server");
+000328 | 		setAction("view");
+000329 | 		setType("pdf");
+000330 | 		String fname = new String().valueOf(System.currentTimeMillis());
+000331 | 		File testFile = new File("C:\\iWFM\\store", fname + ".pdf");
+000332 | 		setServerSaveFile(testFile);
+000333 | 		************************************************************/
+000334 | 
+000335 | 	}
+000336 | 
+000337 | 
+000338 | 	/**
+000339 | 	 * フィールドデータの作成
+000340 | 	 */
+000341 | 	public byte[] makeFieldData(String[][] fixedData, List variableData, int formCount) {
+000342 | 
+000343 | 		final String SP = ",";		//データ項目区切り子
+000344 | 		final String QT = "\"";		//リテラル記法引用符
+000345 | 		byte[] fielddata = null;
+000346 | 
+000347 | 		/*******************************************
+000348 | 		 * 制御セクション
+000349 | 		 *******************************************/
+000350 | 		StringBuffer sb = new StringBuffer();
+000351 | 		sb.append("[Control Section]\r\n");
+000352 | 		sb.append("VERSION=5.0\r\n");
+000353 | 
+000354 | 		/*******************************************
+000355 | 		 * 固定セクション
+000356 | 		 *******************************************/
+000357 | 		if (fixedData==null || fixedData[0][0].equals("")) {
+000358 | 			//固定フィールド無し
+000359 | 		} else {
+000360 | 			//固定フィールドデータセット
+000361 | 			sb.append("[Fixed Data Section]\r\n");
+000362 | 			for(int i=0 ; i < fixedData.length ; i++){
+000363 | 				sb.append(fixedData[i][0] + "=" + QT + fixedData[i][1] + QT + "\r\n");
+000364 | 			}
+000365 | 		}
+000366 | 
+000367 | 		/*******************************************
+000368 | 		 * 可変セクション
+000369 | 		 *******************************************/
+000370 | 		sb.append("[Body Data Section]\r\n");
+000371 | 		boolean isFirstRow = true;		//可変セクション内の先頭行かどうか
+000372 | 		boolean isFirstCol = true;		//明細行の先頭列かどうか
+000373 | 
+000374 | 		if (formCount > 1 ){
+000375 | 			////////////////////////////////////////////////
+000376 | 			// 複数フォームの場合の処理
+000377 | 			////////////////////////////////////////////////
+000378 | 			int pageCount = 0;		//処理済みページ(フォーム)数
+000379 | 			// ページ(フォーム)の数だけ繰り返す
+000380 | 			for (int page = 0; page < variableData.size(); page++) {
+000381 | 				// １ページ分データ取り出し
+000382 | 				List pagedata = (List)variableData.get(page);
+000383 | 				// 行(明細)の数だけ繰り返す
+000384 | 				for (int row = 0; row < pagedata.size(); row++) {
+000385 | 					isFirstCol = true;
+000386 | 					// 先頭行以外はまず改行出力
+000387 | 					if (!isFirstRow) sb.append("\r\n");
+000388 | 					isFirstRow = false;
+000389 | 					// １明細分データ取り出し
+000390 | 					List rowdata = (List)pagedata.get(row);
+000391 | 					// 要素(列データ)の数だけ繰り返す
+000392 | 					for (int col = 0; col < rowdata.size(); col++) {
+000393 | 						// 列データ取り出し
+000394 | 						//  String dt = (String)rowdata.get(col);
+000395 | 						//  要素がBigDecimalだとClassCastExceptionが発生した為、toString()に変更
+000396 | 						//  かつ、データに￥を含む場合の対処追加
+000397 | 						String dt = rowdata.get(col).toString().replaceAll("\\\\","\\\\\\\\");
+000398 | 						// 先頭データ以外はセパレータ付与
+000399 | 						if (!isFirstCol) sb.append(SP);
+000400 | 						// データ出力
+000401 | 						sb.append(QT + dt + QT);
+000402 | 						isFirstCol = false;
+000403 | 					}
+000404 | 				}
+000405 | 				// １ページ分の処理終わったのでページ数カウントアップ
+000406 | 				pageCount++;
+000407 | 				// まだ未処理ページがあれば、フォーム切替えして処理継続
+000408 | 				if (pageCount < formCount) {
+000409 | 					/*******************************************
+000410 | 					 * フォームセクション
+000411 | 					 *******************************************/
+000412 | 					sb.append("\r\n[Form Section]\r\n");
+000413 | 					// フォームの切り替え指定
+000414 | 					sb.append("NEXTPAGE\r\n");
+000415 | 					/*******************************************
+000416 | 					 * 次の固定セクション
+000417 | 					 *******************************************/
+000418 | 					//固定フィールド有無チェック
+000419 | 					if (fixedData==null || fixedData[0][0].equals("")) {
+000420 | 						//固定フィールド無し
+000421 | 					} else {
+000422 | 						//固定フィールドデータセット
+000423 | 						sb.append("[Fixed Data Section]\r\n");
+000424 | 						for(int i=0; i < fixedData.length; i++) {
+000425 | 							sb.append(fixedData[i][0] + "="
+000426 | 							        + QT + fixedData[i][1] + QT + "\r\n");
+000427 | 						}
+000428 | 					}
+000429 | 					/*******************************************
+000430 | 					 * 次の可変セクション開始
+000431 | 					 *******************************************/
+000432 | 					sb.append("[Body Data Section]\r\n");
+000433 | 					isFirstRow = true;
+000434 | 				}
+000435 | 			}
+000436 | 		} else {
+000437 | 			////////////////////////////////////////////////
+000438 | 			// 単数フォームの場合の処理
+000439 | 			////////////////////////////////////////////////
+000440 | 			// 行(明細)の数だけ繰り返す
+000441 | 			for (int row = 0; row < variableData.size(); row++) {
+000442 | 				isFirstCol = true;
+000443 | 				// 先頭行以外はまず改行出力
+000444 | 				if (!isFirstRow) sb.append("\r\n");
+000445 | 				isFirstRow = false;
+000446 | 				// １明細分データ取り出し
+000447 | 				List rowdata = (List)variableData.get(row);
+000448 | 				// 要素(列データ)の数だけ繰り返す
+000449 | 				for (int col = 0; col < rowdata.size(); col++) {
+000450 | 					// 列データ取り出し
+000451 | 					//  String dt = (String)rowdata.get(col);
+000452 | 					//  要素がBigDecimalだとClassCastExceptionが発生した為、toString()に変更
+000453 | 					//  かつ、データに￥を含む場合の対処追加
+000454 | 					String dt = rowdata.get(col).toString().replaceAll("\\\\","\\\\\\\\");
+000455 | 					// 先頭データ以外はセパレータ付与
+000456 | 					if (!isFirstCol) sb.append(SP);
+000457 | 					// データ出力
+000458 | 					sb.append(QT + dt + QT);
+000459 | 					isFirstCol = false;
+000460 | 				}
+000461 | 			}
+000462 | 		}
+000463 | 
+000464 | 		// デフォルト文字セットにてバイト配列に変換
+000465 | 		fielddata = sb.toString().getBytes();
+000466 | 		return fielddata;
+000467 | 	}
+000468 | 
+000469 | 	//--------------------------------------------------------------
+000470 | 	// レスポンス関連
+000471 | 	//--------------------------------------------------------------
+000472 | 
+000473 | 	/**
+000474 | 	 * ServletOutputStream の遅延クローズ
+000475 | 	 * データデータ送出後、即座に close()メソッドを呼び出すとエラーになることがある。.
+000476 | 	 */
+000477 | 	public void resetOutputStream(ServletOutputStream stream) {
+000478 | 		try {
+000479 | 			// 前回ストリームをクローズしていなかった場合はここでクローズする
+000480 | 			if (_outputStream != null) {
+000481 | 				_outputStream.close();
+000482 | 			}
+000483 | 			// 新しいストリームを後でクローズするために覚えておく
+000484 | 			_outputStream = stream;
+000485 | 		} catch (SocketException e) {
+000486 | 			// IE では、ストリームをクローズすると SocketException が発生することがある。
+000487 | 			// 結果を表示するために処理しない。
+000488 | 		} catch (IOException e) {
+000489 | 		}
+000490 | 	}
+000491 | 
+000492 | 	//--------------------------------------------------------------
+000493 | 	// タイマー関連
+000494 | 	//--------------------------------------------------------------
+000495 | 
+000496 | 	/**
+000497 | 	 * タイマーを始動し、指定時間後にハンドラが呼び出されるようにします。.
+000498 | 	 */
+000499 | 	public void setSessionTimer(long msec, TimerHandler handler, Object userInfo) {
+000500 | 		if (_timer == null) {
+000501 | 			_timer = new SessionTimer(msec, handler);
+000502 | 		} else {
+000503 | 			_timer.cancel();
+000504 | 		}
+000505 | 		_timer.setTime(msec);
+000506 | 		_timer.setHandler(handler);
+000507 | 		_timer.setUserInfo(userInfo);
+000508 | 	}
+000509 | 
+000510 | 	/**
+000511 | 	 * タイマーを始動し、指定時間後にハンドラが呼び出されるようにします。.
+000512 | 	 */
+000513 | 	public void startTimer() throws IllegalThreadStateException, SecurityException {
+000514 | 		if (_timer != null) {
+000515 | 			_timer.restart();
+000516 | 		}
+000517 | 	}
+000518 | 
+000519 | 	/**
+000520 | 	 * タイマーをストップし、これ以降ハンドラが呼び出されないようにします。.
+000521 | 	 */
+000522 | 	public void stopTimer() {
+000523 | 		if (_timer != null) {
+000524 | 			_timer.cancel();
+000525 | 		}
+000526 | 	}
+000527 | 
+000528 | 	//--------------------------------------------------------------
+000529 | 	// getter / setter
+000530 | 	//--------------------------------------------------------------
+000531 | 
+000532 | 	public FMJob getJob() {
+000533 | 		return _job;
+000534 | 	}
+000535 | 
+000536 | 	public boolean isCallback() {
+000537 | 		return _callback;
+000538 | 	}
+000539 | 
+000540 | 	public String getRequestHost() {
+000541 | 		return _requestHost;
+000542 | 	}
+000543 | 
+000544 | 	public String getRequestHostIP() {
+000545 | 		return _requestHostIP;
+000546 | 	}
+000547 | 
+000548 | 	public String getRequestUri() {
+000549 | 		return _requestUri;
+000550 | 	}
+000551 | 
+000552 | 	//--------------------------------------------------------------
+000553 | 	// FMComposerAgentクラスのメソッド実装
+000554 | 	//--------------------------------------------------------------
+000555 | 	public String getUniqueId() throws FMSystemException {
+000556 | 		return _agent.getUniqueId();
+000557 | 	}
+000558 | }

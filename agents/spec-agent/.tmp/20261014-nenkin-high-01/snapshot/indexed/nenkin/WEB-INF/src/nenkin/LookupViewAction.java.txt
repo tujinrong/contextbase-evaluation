@@ -1,0 +1,23 @@
+000001 | package nenkin;
+000002 | 
+000003 | import java.util.ArrayList;
+000004 | import java.util.List;
+000005 | import javax.servlet.http.HttpServletRequest;
+000006 | import javax.servlet.http.HttpServletResponse;
+000007 | import nenkin.bean.LookupViewBean;
+000008 | import nenkin.model.BranchLookupItem;
+000009 | import nenkin.model.CustomerLookupItem;
+000010 | import nenkin.model.StaffLookupItem;
+000011 | import nenkin.service.ReferenceDataService;
+000012 | 
+000013 | public class LookupViewAction extends NenkinBaseAction {
+000014 | 	public String perform(HttpServletRequest request, HttpServletResponse response) {
+000015 | 		if (!requireStaff(request)) return STAFF_JSP;
+000016 | 		LookupViewBean bean=new LookupViewBean();String target=trim(request.getParameter("TARGET"));if(!"branch".equals(target)&&!"staff".equals(target))target="customer";bean.setTarget(target);bean.setKeyword(trim(request.getParameter("KEYWORD")));bean.setBranchNo(trim(request.getParameter("BRANCH_NO")));bean.setNameKeyword(trim(request.getParameter("NAME_KEYWORD")));bean.setPhoneKeyword(trim(request.getParameter("PHONE_KEYWORD")));bean.setPage(integerOrDefault(request.getParameter("PAGE"),1));ReferenceDataService service=ReferenceDataService.getInstance();Integer branch=integerOrNull(bean.getBranchNo());
+000017 | 		if("branch".equals(target)){List<BranchLookupItem> all=service.searchBranches(bean.getKeyword());bean.setTotalCount(all.size());bean.setBranches(page(all,bean.getPage(),bean.getPageSize()));}
+000018 | 		else if("staff".equals(target)){List<StaffLookupItem> all=service.searchStaff(branch,bean.getKeyword());bean.setTotalCount(all.size());bean.setStaff(page(all,bean.getPage(),bean.getPageSize()));}
+000019 | 		else {List<CustomerLookupItem> all=service.searchCustomers(branch,bean.getNameKeyword(),bean.getPhoneKeyword());bean.setTotalCount(all.size());bean.setCustomers(page(all,bean.getPage(),bean.getPageSize()));}
+000020 | 		if(bean.getPage()>bean.getTotalPages())bean.setPage(bean.getTotalPages());setSubWindowBean(request.getSession(),bean);return LOOKUP_JSP;
+000021 | 	}
+000022 | 	private <T> List<T> page(List<T> source,int page,int size){int start=Math.max(0,(page-1)*size);int end=Math.min(source.size(),start+size);return start>=source.size()?new ArrayList<T>():new ArrayList<T>(source.subList(start,end));}
+000023 | }

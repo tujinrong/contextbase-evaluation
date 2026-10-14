@@ -1,0 +1,103 @@
+000001 | package jhkcommon;
+000002 | 
+000003 | /**
+000004 |  *
+000005 |  * 入力データを入力画面に復帰させる為のクラス
+000006 |  * 
+000007 |  * @date	H22.8.26	青木・浅見		センター集約対応
+000008 |  *
+000009 |  */
+000010 | import java.util.Enumeration;
+000011 | import java.util.Iterator;
+000012 | import java.util.Vector;
+000013 | 
+000014 | import javax.servlet.RequestDispatcher;
+000015 | import javax.servlet.http.HttpServlet;
+000016 | import javax.servlet.http.HttpServletRequest;
+000017 | import javax.servlet.http.HttpServletResponse;
+000018 | import javax.servlet.http.HttpSession;
+000019 | 
+000020 | public class InputDataRemaker extends HttpServlet{
+000021 | 
+000022 | 	HttpServletRequest req=null;
+000023 | 	HttpServletResponse res=null;
+000024 | 	Vector inputParams=null;	//{項目名,値,OK}
+000025 | 
+000026 | 	public InputDataRemaker(HttpServletRequest req,HttpServletResponse res)
+000027 | 		throws Exception
+000028 | 	{
+000029 | 		this.req=req;
+000030 | 		this.res=res;
+000031 | 		this.inputParams=new Vector();
+000032 | 		Enumeration enum2=req.getParameterNames();
+000033 | 		String params;
+000034 | 		String paramsUnicode;
+000035 | 		String name;
+000036 | 		while(enum2.hasMoreElements()){
+000037 | 			name=enum2.nextElement().toString();
+000038 | 			params=req.getParameter(name);
+000039 | 			if (params == null) params = "";
+000040 | 			paramsUnicode=new String(params.getBytes("iso-8859-1"),"Windows-31J");
+000041 | 			String[] ss={name,paramsUnicode,"OK",""};
+000042 | //			String[] ss={name,req.getParameter(name),"OK",""};
+000043 | 			inputParams.addElement(ss);
+000044 | 		}
+000045 | 	}
+000046 | 	/**
+000047 | 	 * エラーの項目ごとのメッセージを受取りテーブルにセット。
+000048 | 	 */
+000049 | 	
+000050 | 	public void setErrorLetter(String name,String letter){
+000051 | 		Iterator it=inputParams.iterator();
+000052 | 		String[] s=null;
+000053 | 		while(it.hasNext()){
+000054 | 			s = (String[])it.next();
+000055 | 			if(s[0].equals(name)){
+000056 | 				s[2]=letter;
+000057 | 				it.remove();
+000058 | 				inputParams.addElement(s);
+000059 | 				break;
+000060 | 			}
+000061 | 		}
+000062 | 	}
+000063 | 
+000064 | 
+000065 | 	
+000066 | 	/**
+000067 | 	 * 入力エラー発生時にinputDataError.htmlを表示する為に、HtmlPicUpへforwardする。
+000068 | 	 */
+000069 | 	public boolean reOpenInputHtml(String nextHtmlName){
+000070 | 		String path="/servlet/HtmlPicUp?HTML_NAME=inputDataError.html&SERVLET_LINE=LineMakeInputDataError";
+000071 | 		boolean status=forwardNextHtml(nextHtmlName,path);
+000072 | 		return status;
+000073 | 	}
+000074 | 
+000075 | 
+000076 | 	/**
+000077 | 	 * pathに指定されたservletにforwardする。
+000078 | 	 * REMAKE_VECTORに入力パラメータ
+000079 | 	 * NEXT_HTML_NAMEにnextHtmlNameをsetAttributeする。
+000080 | 	 */
+000081 | 	public boolean forwardNextHtml(String nextHtmlName,String path){
+000082 | 		boolean status=true;
+000083 | 		HttpSession session = req.getSession();
+000084 | 		session.setAttribute("REMAKE_VECTOR",inputParams);
+000085 | 		session.setAttribute("NEXT_HTML_NAME",nextHtmlName);
+000086 | //		ServletContext sc = this.getServletContext();
+000087 | //		RequestDispatcher rd =sc.getRequestDispatcher(path);
+000088 | 		RequestDispatcher rd =req.getRequestDispatcher(path);
+000089 | 		if (rd !=null){
+000090 | 			try{
+000091 | 				rd.forward(req,res);
+000092 | 			}
+000093 | 			catch (Exception e) {
+000094 | 				status=false;
+000095 | 			}
+000096 | 		}
+000097 | 		return status;
+000098 | 	}
+000099 | 	
+000100 | 	
+000101 | 	
+000102 | }
+000103 | 

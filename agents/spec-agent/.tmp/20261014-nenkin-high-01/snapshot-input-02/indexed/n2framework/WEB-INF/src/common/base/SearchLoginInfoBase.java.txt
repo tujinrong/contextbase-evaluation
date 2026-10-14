@@ -1,0 +1,189 @@
+000001 | /*
+000002 |  * 作成日: 2009/02/17
+000003 |  *
+000004 |  */
+000005 | package common.base;
+000006 | 
+000007 | 
+000008 | import java.sql.Connection;
+000009 | import java.sql.SQLException;
+000010 | 
+000011 | import common.base.CommonBaseSelect;
+000012 | 
+000013 | /**
+000014 |  * フレームワーク　ログイン情報検索Baseクラス
+000015 |  * 
+000016 |  * @author JSC kengo murayama
+000017 |  * 
+000018 |  * @date	H22.9.6		青木・浅見		センター集約対応
+000019 |  */
+000020 | public class SearchLoginInfoBase extends CommonBaseSelect {
+000021 | 
+000022 | 	/**
+000023 | 	 * コンストラクタ
+000024 | 	 * 
+000025 | 	 * @param connection
+000026 | 	 */
+000027 | 	public SearchLoginInfoBase(Connection connection) {
+000028 | 		super(connection);
+000029 | 	}
+000030 | 
+000031 | 	/**
+000032 | 	 * ＵＷＥＢログイン情報表のＰＫ検索を実行する
+000033 | 	 * 
+000034 | 	 * @param applName
+000035 | 	 * @param userId
+000036 | 	 * @param password
+000037 | 	 * @return
+000038 | 	 * @throws SQLException
+000039 | 	 */
+000040 | 	public boolean selectＷＥＢログイン情報表(String applName, String userId, String password) throws SQLException {
+000041 | 
+000042 | 		try {
+000043 | 
+000044 | 			StringBuffer sb = new StringBuffer();
+000045 | 
+000046 | 			sb.append("select *");
+000047 | 			sb.append(" from DB2.ＵＷＥＢログイン情報表");
+000048 | 			sb.append(" where アプリケーション名 = '").append(applName).append("'");
+000049 | 			sb.append(" and ユーザーＩＤ = '").append(userId).append("'");
+000050 | 			sb.append(" and パスワード = '").append(password).append("'");
+000051 | 
+000052 | 			execute(sb.toString());
+000053 | 
+000054 | 		} catch (SQLException e) {
+000055 | 			throw e;
+000056 | 		}
+000057 | 
+000058 | 		if (getList() != null) {
+000059 | 			return true;
+000060 | 		} else{
+000061 | 			return false;
+000062 | 		}
+000063 | 	}
+000064 | 
+000065 | 	
+000066 | 	/**
+000067 | 	 * ＵＷＥＢログイン情報表のＰＫ検索を実行する
+000068 | 	 * 
+000069 | 	 * @param applName
+000070 | 	 * @param userId
+000071 | 	 * @param password
+000072 | 	 * @return
+000073 | 	 * @throws SQLException
+000074 | 	 */
+000075 | 	public boolean selectＷＥＢログイン情報表(String applName, String userId) throws SQLException {
+000076 | 
+000077 | 		try {
+000078 | 
+000079 | 			StringBuffer sb = new StringBuffer();
+000080 | 
+000081 | 			sb.append("select *");
+000082 | 			sb.append(" from DB2.ＵＷＥＢログイン情報表");
+000083 | 			sb.append(" where アプリケーション名 = '").append(applName).append("'");
+000084 | 			sb.append(" and ユーザーＩＤ = '").append(userId).append("'");
+000085 | 
+000086 | 			execute(sb.toString());
+000087 | 
+000088 | 		} catch (SQLException e) {
+000089 | 			throw e;
+000090 | 		}
+000091 | 
+000092 | 		if (getList() != null) {
+000093 | 			return true;
+000094 | 		} else{
+000095 | 			return false;
+000096 | 		}
+000097 | 	}	
+000098 | 	
+000099 | 	
+000100 | 	/**
+000101 | 	 * Ｕ職員名簿表のＰＫ検索を実行する
+000102 | 	 * 
+000103 | 	 * @param shokuinNo
+000104 | 	 * @return
+000105 | 	 * @throws SQLException
+000106 | 	 */
+000107 | 	public boolean select職員名簿表(String shokuinNo) throws SQLException {
+000108 | 
+000109 | 		try {
+000110 | 
+000111 | 			StringBuffer sb = new StringBuffer();
+000112 | 
+000113 | 			sb.append("select *");
+000114 | 			sb.append(" from DB2.Ｕ職員名簿表");
+000115 | 			sb.append(" where 職員番号 = ").append(shokuinNo);
+000116 | 
+000117 | 			execute(sb.toString());
+000118 | 
+000119 | 		} catch (SQLException e) {
+000120 | 			throw e;
+000121 | 		}
+000122 | 
+000123 | 		if (getList() != null) {
+000124 | 			return true;
+000125 | 		} else{
+000126 | 			return false;
+000127 | 		}
+000128 | 	}
+000129 | 
+000130 | 	/**
+000131 | 	 * Ｕ職員所属課係一覧表のＰＫ検索を実行する
+000132 | 	 * 
+000133 | 	 * @param shokuinNo
+000134 | 	 * @return
+000135 | 	 * @throws SQLException
+000136 | 	 */
+000137 | 	public boolean select職員所属課係一覧表(String shokuinNo) throws SQLException {
+000138 | 
+000139 | 		try {
+000140 | 
+000141 | 			StringBuffer sb = new StringBuffer();
+000142 | 
+000143 | 			sb.append("select *");
+000144 | 			sb.append(" from DB2.Ｕ職員所属課係一覧表");
+000145 | 			sb.append(" where 職員番号 = ").append(shokuinNo);
+000146 | 
+000147 | 			execute(sb.toString());
+000148 | 
+000149 | 		} catch (SQLException e) {
+000150 | 			throw e;
+000151 | 		}
+000152 | 
+000153 | 		if (getList() != null) {
+000154 | 			return true;
+000155 | 		} else{
+000156 | 			return false;
+000157 | 		}
+000158 | 	}
+000159 | 
+000160 | 	/**
+000161 | 	 * SELECT文を実行する
+000162 | 	 * 
+000163 | 	 * @param yakusyokucode
+000164 | 	 * @return
+000165 | 	 * @throws SQLException
+000166 | 	 */
+000167 | 	public boolean select役職コード表(String yakusyokucode) throws SQLException{
+000168 | 		try{
+000169 | 			//ＵＪＶ役職コード表
+000170 | 			StringBuffer sb = new StringBuffer();
+000171 | 
+000172 | 			sb.append("SELECT");
+000173 | 			sb.append(" 役職");
+000174 | 			sb.append(" FROM DB2.ＵＪＶ役職コード表");
+000175 | 			sb.append(" WHERE 役職コード = ").append(yakusyokucode);
+000176 | 
+000177 | 			execute(sb.toString());
+000178 | 
+000179 | 		}catch (SQLException e){
+000180 | 			throw e;
+000181 | 		}
+000182 | 
+000183 | 		if(getList() != null){
+000184 | 			return true;
+000185 | 		}else{
+000186 | 			return false;
+000187 | 		}
+000188 | 	}
+000189 | }

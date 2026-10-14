@@ -1,0 +1,155 @@
+000001 | /*
+000002 |  * 作成日: 2017/05/15
+000003 |  *
+000004 |  */
+000005 | package common;
+000006 | 
+000007 | import java.sql.Connection;
+000008 | import java.sql.SQLException;
+000009 | import java.util.ArrayList;
+000010 | import java.util.List;
+000011 | import java.util.Map;
+000012 | 
+000013 | import javax.naming.InitialContext;
+000014 | import javax.servlet.http.HttpServletRequest;
+000015 | import javax.servlet.http.HttpServletResponse;
+000016 | import javax.servlet.http.HttpSession;
+000017 | 
+000018 | import common.base.SelectTenpoKanriDaichoBase;
+000019 | import common.bean.DaikoBean;
+000020 | import common.bean.TenpoListBean;
+000021 | import common.util.CommonConverter;
+000022 | 
+000023 | /**
+000024 |  * 代行店舗選択画面　表示共通アクションクラス
+000025 |  *
+000026 |  * @author Minoei 山口
+000027 |  * 
+000028 |  * @date
+000029 |  *   
+000030 |  */
+000031 | public class ViewDaikoAction extends CommonAction {
+000032 | 
+000033 | 	/**
+000034 | 	 * アクション実行メソッド
+000035 | 	 * 
+000036 | 	 * @param req リクエスト
+000037 | 	 * @param res レスポンス
+000038 | 	 * @return ＪＳＰ名
+000039 | 	 */
+000040 | 	public String perform(HttpServletRequest req, HttpServletResponse res) throws Exception {
+000041 | 		HttpSession session = req.getSession();
+000042 | 
+000043 | 
+000044 | 		//ＤＢ検索
+000045 | 		Connection con = null;
+000046 | 
+000047 | 		try {
+000048 | 			//DB接続
+000049 | 			InitialContext ic = new InitialContext();
+000050 | 			con = getConnection(ic, CommonConst.JDBC_ORACLE_SP2NM);
+000051 | 
+000052 | 			//店舗一覧取得
+000053 | 			List lsView1 = new ArrayList();
+000054 | 			List lsView2 = new ArrayList();
+000055 | 			List lsView3 = new ArrayList();
+000056 | 			List lsView4 = new ArrayList();
+000057 | 			List lsView5 = new ArrayList();
+000058 | 
+000059 | 			DaikoBean beanDaiko = new DaikoBean();
+000060 | 
+000061 | 
+000062 | 			//店舗管理台帳の読み込み
+000063 | 			SelectTenpoKanriDaichoBase baseSelectTenpoKanriDaicho = new SelectTenpoKanriDaichoBase(con);
+000064 | 			baseSelectTenpoKanriDaicho.selectTenpoIchiran();
+000065 | 			List lsTenpo = baseSelectTenpoKanriDaicho.getList();
+000066 | 
+000067 | 			int cnt = 0;
+000068 | 			if(lsTenpo != null && !lsTenpo.isEmpty()){
+000069 | 
+000070 | 				for(int i=0; i<lsTenpo.size(); i++){
+000071 | 
+000072 | 					Map map = (Map)lsTenpo.get(i);
+000073 | 					cnt++;
+000074 | 					
+000075 | 					if(cnt <= 17){
+000076 | 						TenpoListBean beanList = new TenpoListBean();
+000077 | 						beanList.set店舗番号(CommonConverter.getAdd0String(((String)map.get("店番")),3));
+000078 | 						beanList.set店舗名((String)map.get("漢字店名"));
+000079 | 						beanList.set店舗((CommonConverter.getAdd0String(((String)map.get("店番")),3)) + "　" + (String)map.get("漢字店名"));
+000080 | 
+000081 | 						lsView1.add(beanList);
+000082 | 					}
+000083 | 
+000084 | 
+000085 | 					if(cnt >= 18  &&  cnt <= 34){
+000086 | 						TenpoListBean beanList = new TenpoListBean();
+000087 | 						beanList.set店舗番号(CommonConverter.getAdd0String(((String)map.get("店番")),3));
+000088 | 						beanList.set店舗名((String)map.get("漢字店名"));
+000089 | 						beanList.set店舗((CommonConverter.getAdd0String(((String)map.get("店番")),3)) + "　" + (String)map.get("漢字店名"));
+000090 | 
+000091 | 						lsView2.add(beanList);
+000092 | 					}
+000093 | 
+000094 | 
+000095 | 					if(cnt >= 35  &&  cnt <= 51){
+000096 | 						TenpoListBean beanList = new TenpoListBean();
+000097 | 						beanList.set店舗番号(CommonConverter.getAdd0String(((String)map.get("店番")),3));
+000098 | 						beanList.set店舗名((String)map.get("漢字店名"));
+000099 | 						beanList.set店舗((CommonConverter.getAdd0String(((String)map.get("店番")),3)) + "　" + (String)map.get("漢字店名"));
+000100 | 
+000101 | 						lsView3.add(beanList);
+000102 | 					}
+000103 | 
+000104 | 
+000105 | 					if(cnt >= 52  &&  cnt <= 68){
+000106 | 						TenpoListBean beanList = new TenpoListBean();
+000107 | 						beanList.set店舗番号(CommonConverter.getAdd0String(((String)map.get("店番")),3));
+000108 | 						beanList.set店舗名((String)map.get("漢字店名"));
+000109 | 						beanList.set店舗((CommonConverter.getAdd0String(((String)map.get("店番")),3)) + "　" + (String)map.get("漢字店名"));
+000110 | 
+000111 | 						lsView4.add(beanList);
+000112 | 					}
+000113 | 					
+000114 | 					
+000115 | 					
+000116 | 					if(cnt >= 69  &&  cnt <= 85){
+000117 | 						TenpoListBean beanList = new TenpoListBean();
+000118 | 						beanList.set店舗番号(CommonConverter.getAdd0String(((String)map.get("店番")),3));
+000119 | 						beanList.set店舗名((String)map.get("漢字店名"));
+000120 | 						beanList.set店舗((CommonConverter.getAdd0String(((String)map.get("店番")),3)) + "　" + (String)map.get("漢字店名"));
+000121 | 
+000122 | 						lsView5.add(beanList);
+000123 | 					}
+000124 | 					
+000125 | 				}
+000126 | 			}
+000127 | 			beanDaiko.set店舗一覧１(lsView1);
+000128 | 			beanDaiko.set店舗一覧２(lsView2);
+000129 | 			beanDaiko.set店舗一覧３(lsView3);
+000130 | 			beanDaiko.set店舗一覧４(lsView4);
+000131 | 			beanDaiko.set店舗一覧５(lsView5);
+000132 | 
+000133 | 
+000134 | 			session.setAttribute(CommonConst.SS_JSP_BEAN, beanDaiko);
+000135 | 
+000136 | 			return "./JSP/MENU/Daiko.jsp";
+000137 | 
+000138 | 		} catch (Exception e) {
+000139 | 			try {
+000140 | 				if (con != null) con.rollback();
+000141 | 			} catch (SQLException e1) {
+000142 | 				FWLog.error(e1);
+000143 | 			}
+000144 | 			throw e;
+000145 | 		} finally {
+000146 | 			try {
+000147 | 				if (con != null) con.close();
+000148 | 				con = null;
+000149 | 			} catch (SQLException e1) {
+000150 | 				FWLog.error(e1);
+000151 | 			}
+000152 | 		}
+000153 | 	}
+000154 | 
+000155 | }

@@ -1,0 +1,189 @@
+{
+  "schema": "spec-agent-output-baseline-independent-metadata-audit/1",
+  "createdUtc": "2026-10-14T02:26:28.277799+00:00",
+  "scope": "BASELINE_JSON_STRUCTURAL_METADATA_ONLY",
+  "status": "STRUCTURAL_METADATA_PASS_PUBLICATION_NOT_QUALIFIED",
+  "baseline": {
+    "path": "D:\\開発\\contextbase-evaluation\\agents\\spec-agent\\report\\20261014-nenkin-high-01\\independent-audit\\output-inventory-publish-baseline-r01.json",
+    "sha256": "b66ea84af2fc79b8980358717a92b01136e28e59adda00f4079fa17eb5235449",
+    "schema": "spec-agent-output-change-baseline/1",
+    "createdUtc": "2026-10-14T01:10:58.864134+00:00",
+    "outputRoot": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\output",
+    "exists": true,
+    "fileCount": 906,
+    "fileMapEntries": 906,
+    "sortedPathHashMapSha256": "de6f98abcdc148bee18e75b6a041e88fab970c3e7d360c086e40c5016972a305",
+    "statedScope": "Current raw-byte SHA inventory for future publish-time drift detection. Not a historical before/after proof of prepare_run execution."
+  },
+  "checks": {
+    "noDuplicateJsonKeys": true,
+    "exactOutputRoot": true,
+    "strictIntegerFileCount906": true,
+    "all906RelativePathsCanonical": true,
+    "all906Sha256Lowercase64": true,
+    "noWindowsCasefoldFileCollisions": true,
+    "baselineBytesUnchanged": true
+  },
+  "metadataOnlyCounts": {
+    "firstPathComponent": {
+      "Excel": 180,
+      "html": 252,
+      "md": 293,
+      "PDF": 181
+    },
+    "extensions": {
+      ".xlsx": 180,
+      ".css": 1,
+      ".html": 194,
+      ".png": 140,
+      ".md": 180,
+      ".dot": 30,
+      ".json": 1,
+      ".pdf": 180
+    },
+    "longestRelativePathCharacters": 128
+  },
+  "protectedGateRequirements": [
+    {
+      "gate": "OLD_OUTPUT_906",
+      "presentInBaseline": true,
+      "additionalAtFutureExecution": "Exact current complete relative-path+SHA set equals this baseline; no link/reparse nodes, source/output race or publisher concurrency assumed away."
+    },
+    {
+      "gate": "OLD_SOURCE_345",
+      "presentInBaseline": false,
+      "additionalAtFutureExecution": "Separate caller-pinned inventory/root/schema/count345 and allbyte before/after hash receipt; do not derive this gate from output906."
+    },
+    {
+      "gate": "SOURCE_INPUT",
+      "presentInBaseline": false,
+      "additionalAtFutureExecution": "Explicit immutable input snapshot/capability closure and root/path/hash schema; raw source read scope stays outside this preparer."
+    },
+    {
+      "gate": "NEW_CAP_179",
+      "presentInBaseline": false,
+      "additionalAtFutureExecution": "Separate pinned capability/schema/item-count179/complete status/selected membership and sourcebinding; final candidate file count is separately specified."
+    },
+    {
+      "gate": "SELECTED_NEW_DELIVERY",
+      "presentInBaseline": false,
+      "additionalAtFutureExecution": "Explicit approved path→sha copy allowlist, nonempty complete deliverable sets/index/manifest/reviews; reject unknown, unfinished, missing, extra, or linked entries."
+    },
+    {
+      "gate": "ROLLBACK_AND_BACKUP",
+      "presentInBaseline": false,
+      "additionalAtFutureExecution": "Explicit fresh backup/quarantine/staging paths plus durable step receipt and checksum906 restoration proof; never discard old or failed new bytes."
+    }
+  ],
+  "minimumReversibleWindowsCandidate": [
+    "Prepare/check a fresh complete candidate from explicit caller-pinned files under the new run; no wildcard copy or recursive traversal follows links.",
+    "Require same volume for final directory renames, exact allowed roots, every path/ancestor os.lstat reparse0x400 or is_symlink rejection, resolve exact, no existing backup/target alias.",
+    "Immediately before switching, require current old output exact906 inventory and protected source/input/cap pins still unchanged; an exclusive operation lock can exclude cooperating publishers only.",
+    "Write and flush an exclusive step journal. Rename old output to explicit fresh backup, verify its906 hashes, then rename the already verified candidate into exact output.",
+    "Verify new explicit membership/checksums and all protected pins. On failure, preserve the new candidate at explicit fresh quarantine if present, restore the backup to exact output, and recheck906.",
+    "Retain backup/journal/failure evidence; do not recursively delete either old output or failed new output during this operation."
+  ],
+  "limits": [
+    "Only baseline JSON was inspected; actual output exists/count/hashes/links were not remeasured.",
+    "Two directory renames are individually atomic on suitable Windows same-volume paths, but their pair is not an atomic transaction; output may be briefly absent.",
+    "Path preflight is a limited filesystem actor gate and does not prove race-free exclusion against arbitrary concurrent processes.",
+    "Baseline hashes cover file payloads only and do not inventory directories, empty directories, ACLs, ADS, file identity, timestamps, or reparse exclusions.",
+    "906 is old-output file count; 345 and179 are separate protected-population claims not verified by this baseline.",
+    "This current baseline cannot prove historical pre-prepare_run output preservation.",
+    "No new candidate completion, semantic/visual qualification, adoption, or publication approval was inferred."
+  ],
+  "tests": [
+    {
+      "name": "positive-canonical-Excel/通常/合成01.xlsx",
+      "pass": true
+    },
+    {
+      "name": "positive-canonical-Markdown/合成/index.md",
+      "pass": true
+    },
+    {
+      "name": "positive-canonical-PDF/合成/file.pdf",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'../escape.md'",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'/absolute.md'",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'C:/drive.md'",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'a\\\\b.md'",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'a//b.md'",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'a/./b.md'",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'a/../b.md'",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'a:stream.md'",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'a\\x00.md'",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'a\\n.md'",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'a/CON.md'",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'a/NUL.txt'",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'a/file.'",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'a/file '",
+      "pass": true
+    },
+    {
+      "name": "reject-canonical-'a/file?.md'",
+      "pass": true
+    }
+  ],
+  "syntheticPathCases": 18,
+  "actualOutputInspected": false,
+  "actualOutputBodyRead": false,
+  "actualOutputHashesRead": false,
+  "actualSourceOrInputRead": false,
+  "actualNewCapabilityRead": false,
+  "actualCopyExecuted": false,
+  "actualRenameExecuted": false,
+  "actualBackupExecuted": false,
+  "actualRollbackExecuted": false,
+  "providerExecuted": false,
+  "authorExecuted": false,
+  "markerExecuted": false,
+  "semanticApproval": false,
+  "formalQualityAssessed": false,
+  "stateApproval": false,
+  "wholeApproval": false,
+  "adoption": false,
+  "published": false,
+  "reviewer": "/root/delivery_tools/registration_pdf_qa"
+}

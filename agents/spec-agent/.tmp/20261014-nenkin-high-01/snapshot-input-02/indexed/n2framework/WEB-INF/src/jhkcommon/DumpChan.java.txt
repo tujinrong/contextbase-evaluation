@@ -1,0 +1,108 @@
+000001 | package jhkcommon;
+000002 | 
+000003 | /**
+000004 |  *
+000005 |  * だんぷちゃん
+000006 |  * 
+000007 |  * @date	H22.8.25	青木・浅見		センター集約対応なし
+000008 |  *
+000009 |  */
+000010 | import java.io.IOException;
+000011 | import java.io.PrintWriter;
+000012 | import java.util.Iterator;
+000013 | import java.util.Vector;
+000014 | 
+000015 | import javax.servlet.RequestDispatcher;
+000016 | import javax.servlet.ServletContext;
+000017 | import javax.servlet.http.HttpServlet;
+000018 | import javax.servlet.http.HttpServletRequest;
+000019 | import javax.servlet.http.HttpServletResponse;
+000020 | 
+000021 | public class DumpChan extends HttpServlet{
+000022 | 
+000023 | 	/**
+000024 | 	 * 表示したいオブジェクトをVectorでわたすと、
+000025 | 	 * Htmlを作成してブラウザにリダイレクトしてくれる。
+000026 | 	 *	
+000027 | 	 *  利用の書式例
+000028 | 	 *	DumpChan dc=new DumpChan(); //インスタンスを作成
+000029 | 	 *	Vector v=new Vector(); //Vectorのインスタンスを作成
+000030 | 	 *	v.addElement(new String(userId));   //String型の変数「userId」の中を見たい場合。
+000031 | 	 *	v.addElement(new Boolean(isLogin)); //boolean型の変数「isLogin」の中を見たい場合。
+000032 | 	 *	v.addElement(new Integer(a));       //Integer型の変数「a」の中を見たい場合。
+000033 | 	 *	dc.makeDump(req,res,v); //このメソッドを起動。
+000034 | 	 */
+000035 | 	public boolean makeDump(HttpServletRequest req, HttpServletResponse res, Vector table)
+000036 | 		throws IOException
+000037 | 	{
+000038 | 		res.setContentType("text/html; charset=Windows-31J");
+000039 | 		res.setHeader("Expires", "Sat, 01 Jan 2000 00:00:00 GMT");
+000040 | 		res.setHeader("cache-control", "no-store");
+000041 | 		res.setHeader("Pragma", "no-cache");
+000042 | 
+000043 | 		String backhtmlFile = "";
+000044 | 		
+000045 | 		backhtmlFile += "<BODY BGCOLOR='#FFC4FE'>ver1.4";
+000046 | 		backhtmlFile += "<H1><center><table><tr><td><FONT size=7 COLOR=#000080>だんぷちゃん</font></td>\n";
+000047 | 		backhtmlFile += "<td><IMG SRC=\"http://10.10.6.252/cif/onpu.gif\"></td>\n";
+000048 | 		backhtmlFile += "<td><FONT size=7 COLOR=#000080>登場ですぅ～</FONT></td></tr></table></center><BR>\n";
+000049 | 		backhtmlFile += "<pre>";
+000050 | 		backhtmlFile += "<table bgcolor=#ffffff border=0 cellpadding=10 cellspacing=1 width=80%>";
+000051 | 
+000052 | 		String[][] decodeTable = {
+000053 | 			{"<",">"},
+000054 | 			{"&lt;","&gt;"}
+000055 | 		};
+000056 | 		
+000057 | 		Iterator it=table.iterator();
+000058 | 		int i=0;
+000059 | 		String s="";
+000060 | 		while(it.hasNext()){
+000061 | 			s = it.next().toString();
+000062 | 			
+000063 | 			
+000064 | 			int count=0;
+000065 | 			for (;count<decodeTable[0].length;count++){
+000066 | 				int index=0;
+000067 | 				while (index!=-1){
+000068 | 					index=s.indexOf(decodeTable[0][count]);
+000069 | 					if (index>-1){
+000070 | 						StringBuffer sb = new StringBuffer(s);
+000071 | 						sb.replace(index,index+1,decodeTable[1][count]);
+000072 | 						s=sb.toString();
+000073 | 					}
+000074 | 				}
+000075 | 			}
+000076 | 			backhtmlFile += "<tr bgcolor=#FFC4FE><td><font SIZE=3><pre>項目" +i+ "=</pre></font></td>\n";
+000077 | 			backhtmlFile += "<td><font SIZE=3><pre>" +s+ "</pre></font></td></tr>\n";
+000078 | 			i++;
+000079 | 		}
+000080 | 		backhtmlFile += "</table><BR>\n </font></pre>";
+000081 | 		PrintWriter pw = res.getWriter();
+000082 | 		pw.println(backhtmlFile);
+000083 | 		pw.close();
+000084 | 
+000085 | 		//HttpSession session = req.getSession();
+000086 | 		/*
+000087 | 		RequestDispatcher rd =req.getRequestDispatcher("/servlet/Bye");
+000088 | 		*/
+000089 | 		
+000090 | 		ServletContext sc = this.getServletContext();
+000091 | 		RequestDispatcher rd =sc.getRequestDispatcher("/servlet/Bye");
+000092 | 		
+000093 | 		if (rd !=null){
+000094 | 			try{
+000095 | 				rd.forward(req,res);
+000096 | 			}
+000097 | 			catch (Exception e) {
+000098 | 				backhtmlFile+="ディスパッチャ・エラー";
+000099 | 			}
+000100 | 		}
+000101 | 
+000102 | 		boolean flg=false;
+000103 | 		return flg;
+000104 | 	}
+000105 | 
+000106 | 	
+000107 | }
+000108 | 
