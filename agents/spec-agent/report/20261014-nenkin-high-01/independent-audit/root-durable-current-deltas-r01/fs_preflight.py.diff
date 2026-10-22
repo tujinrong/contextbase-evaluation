@@ -1,0 +1,99 @@
+--- fs_preflight_v2_62_r02.py
++++ fs_preflight.py
+@@ -13,10 +13,6 @@
+ from datetime import datetime, timezone
+ 
+ SCHEMA="fs-preflight-v2-62/1"
+-WORKSPACE=Path(r"D:\開発\contextbase-evaluation")
+-OWN_TMP=WORKSPACE/"agents/spec-agent/.tmp/20261014-nenkin-high-01"
+-OWN_REPORT=WORKSPACE/"agents/spec-agent/report/20261014-nenkin-high-01"
+-OWN_ROOTS=(OWN_TMP,OWN_REPORT)
+ FORBIDDEN={"input","rawinput","raw-input","raw","source","src","spec","spec-eval","evaluator-only","source-pilot"}
+ MAX_FILE=256_000_000
+ 
+@@ -83,9 +79,9 @@
+     if st is not None and kind=="directory":require(stat.S_ISDIR(st.st_mode),"not an ordinary directory")
+     return st
+ 
+-def owned_path(value, *, expectation="existing", kind="file"):
++def owned_path(value, *, expectation="existing", kind="file", contract=None):
+     p=absolute_path(value)
+-    require(is_within(p,OWN_ROOTS),"not below this run owned tmp/report roots")
++    require(is_within(p,contract.roots),"not below this run owned tmp/report roots")
+     reject_protected(p);metadata(p,expectation=expectation,kind=kind)
+     return p
+ 
+@@ -98,39 +94,41 @@
+     metadata(path,expectation="existing",kind="file")
+     return raw
+ 
+-def input_roots(binding_descriptor):
++def input_roots(binding_descriptor, contract):
+     require(isinstance(binding_descriptor,dict),"pinned binding descriptor required")
+-    file=owned_path(binding_descriptor.get("path"),expectation="existing",kind="file")
++    file=owned_path(binding_descriptor.get("path"),expectation="existing",kind="file", contract=contract)
+     require(file.suffix.casefold()==".json","binding JSON extension required")
+     raw=read_pinned(file,binding_descriptor.get("sha256"))
+-    binding=json_unique(raw.decode("utf-8"))
++    binding=json_unique(raw.decode("utf-8"));contract.check_binding(file, sha(raw))
+     require(binding.get("schema")=="reverse-agent-delivery-binding/1","binding schema mismatch")
+     roots=[]
+     for field in ("permittedMarkdownRoot","permittedRenderRoot"):
+         require(field in binding,"missing bound permitted root")
+         root=absolute_path(binding[field])
+-        require(is_within(root,OWN_ROOTS),"bound permitted root outside this owned new run")
++        require(is_within(root,contract.roots),"bound permitted root outside this owned new run")
+         reject_protected(root);metadata(root,expectation="existing",kind="directory")
+         roots.append(root)
+     return binding,roots,sha(raw)
+ 
+-def check(request):
++def check(request, contract):
+     require(isinstance(request,dict) and request.get("schema")==SCHEMA,"explicit FS preflight schema required")
++    require(set(request).issubset({'schema','role','operation','path','expectedSha256','outputRoot','ownedOutput','binding','fresh'}),'unknown filesystem request keys')
+     role=request.get("role");operation=request.get("operation")
+     require(role in {"model","binding","markdown","image","render-pins","render-manifest","output"},"unknown filesystem role")
+     require(operation in {"read","mkdir","write-fresh","write-owned","save-fresh","post-write"},"unknown filesystem operation")
+     path=absolute_path(request.get("path"));reject_protected(path)
+     binding_sha=None
+     if role in {"model","binding"}:
+-        require(operation=="read" and is_within(path,OWN_ROOTS),"model/binding read limited to owned new run")
++        require(operation=="read" and is_within(path,contract.roots),"model/binding read limited to owned new run")
+         require(path.suffix.casefold()==".json","model/binding JSON required")
+     elif role=="output":
+-        root=owned_path(request.get("outputRoot"),expectation="any",kind="directory")
++        root=owned_path(request.get("outputRoot"),expectation="any",kind="directory", contract=contract)
++        contract.allowed_output_root(root)
+         require(path.is_relative_to(root),"output escapes declared fresh output root")
+         require(operation!="read" or request.get("ownedOutput") is True,"output reads require caller ownership")
+     else:
+         require(operation=="read","bound inputs are read-only")
+-        _,roots,binding_sha=input_roots(request.get("binding"))
++        _,roots,binding_sha=input_roots(request.get("binding"), contract=contract)
+         root=roots[0] if role=="markdown" else roots[1]
+         require(path.is_relative_to(root),"input outside exact bound permitted root")
+         if role=="markdown":require(path.suffix.casefold()==".md","Markdown extension required")
+@@ -163,14 +161,15 @@
+             "scope":"CALLER_FS_ACTOR_METADATA_AND_BYTE_BINDINGS_ONLY"}
+ 
+ def main():
++    import argparse
++    from run_contract import add_contract_arguments, load_args
++    parser=argparse.ArgumentParser();add_contract_arguments(parser)
++    args=parser.parse_args();contract=load_args(args)
+     raw=sys.stdin.buffer.read(1_048_577)
+-    require(len(raw)<=1_048_576,"FS request exceeds bound")
+-    result=check(json_unique(raw.decode("utf-8")))
+-    print(json.dumps(result,ensure_ascii=False,separators=(",",":")))
++    require(len(raw)<=1_048_576,'FS request exceeds bound')
++    result=check(json_unique(raw.decode('utf-8')),contract=contract)
++    contract.recheck();print(json.dumps(result,ensure_ascii=False,separators=(',',':')))
+     return 0
+ 
+-if __name__=="__main__":
+-    try:raise SystemExit(main())
+-    except (ValueError,OSError,KeyError,TypeError) as error:
+-        print(str(error),file=sys.stderr);raise SystemExit(2)
+-
++if __name__=='__main__':
++    raise SystemExit(main())

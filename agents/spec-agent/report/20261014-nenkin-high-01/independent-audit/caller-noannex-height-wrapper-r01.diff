@@ -1,0 +1,156 @@
+--- D:\開発\contextbase-evaluation\agents\spec-agent\.tmp\20261014-nenkin-high-01\durable-candidate\conversion-scope-r04\verify_actual_case.py
++++ D:\開発\contextbase-evaluation\agents\spec-agent\.tmp\20261014-nenkin-high-01\delivery\verify_actual_noannex_height_r01.py
+@@ -1,76 +1,81 @@
+-"""Read-only actual Artifact/model comparison, then mechanical print-plan metadata.
+-No business text is created. Input selection is an explicitly pinned case JSON.
+-"""
+-import argparse,datetime,hashlib,json,sys,types
++"""Caller-side read-only measured-height case; no annex or source-body authoring."""
++import argparse, datetime, hashlib, importlib.util, json, sys
+ from pathlib import Path
+-from run_contract import add_contract_arguments, load_args
+-def digest(raw):return hashlib.sha256(raw).hexdigest()
++sys.dont_write_bytecode = True
++PKG = Path(r'D:\開発\contextbase-evaluation\agents\spec-agent\.tmp\20261014-nenkin-high-01\durable-candidate\conversion-scope-r04')
++CODE_SHA = 'b72d0f9e86b47fb1ccac99101dceed56840a9e615b35b071006d8773b72af7c0'
++def digest(raw): return hashlib.sha256(raw).hexdigest()
+ def main():
+-    parser=argparse.ArgumentParser();add_contract_arguments(parser);parser.add_argument('--case',required=True);parser.add_argument('--case-sha256',required=True);args=parser.parse_args()
+-    contract=load_args(args);contract.begin('verify',contract.data['outputRoots']['verify'])
+-    g=contract.module('native_annex')
+-    v=contract.module('verify_xlsx')
+-    c=contract.module('verify_original_sheets')
+-    raw_case=g.read(args.case,args.case_sha256, contract=contract);case=g.unique(raw_case.decode('utf8'))
+-    assert case['schema']=='actual-annex-verification-case/1'
+-    expected_keys={'schema','sourceModel','model','annexReceipt','originalAuthorManifest','authorManifest','documentId','verificationOutput','printPlanOutput'}
+-    if contract.data['inputStage'] is not None:expected_keys.update({'originalSourceModel','measuredRowHeightReceipt'})
+-    assert set(case)==expected_keys
+-    def bound(key):
+-        pin=case[key];return g.read(pin['path'],pin['sha256'], contract=contract)
+-    source=g.unique(bound('sourceModel').decode('utf8'));model=g.unique(bound('model').decode('utf8'))
+-    proof=g.verify(case['annexReceipt']['path'],case['annexReceipt']['sha256'],case['model']['path'],case['model']['sha256'], contract=contract)
+-    assert proof['sourceModel']==case['sourceModel']
+-    row_proof=None;original_source=source
+-    if contract.data['inputStage'] is not None:
+-        receipt=contract.data['inputStage']['requiredMeasuredReceipt']
+-        assert receipt is not None and case['measuredRowHeightReceipt']==receipt
+-        row_proof=contract.module('measured_height').verify(contract,receipt,case['sourceModel'])
+-        assert case['originalSourceModel']==row_proof['sourceModel']
+-        original_source=g.unique(bound('originalSourceModel').decode('utf8'))
+-        contract.model_input_proof(case['model'],annex_receipt=case['annexReceipt'])
+-    else:
+-        assert 'measuredRowHeightReceipt' not in case and 'originalSourceModel' not in case
+-        contract.model_input_proof(case['model'],annex_receipt=case['annexReceipt'])
+-    old_manifest=g.unique(bound('originalAuthorManifest').decode('utf8'));manifest=g.unique(bound('authorManifest').decode('utf8'))
+-    assert len(source['documents'])==len(model['documents'])==len(old_manifest['documents'])==len(manifest['documents'])==1
+-    doc=model['documents'][0];original=source['documents'][0];actual=manifest['documents'][0];old=old_manifest['documents'][0]
+-    assert manifest['status']==old_manifest['status']=='EXPORTED_VERIFICATION_PENDING'
+-    assert manifest['conversionExecutionContract']==contract.provenance()
+-    assert manifest['modelSha256']==case['model']['sha256'] and old_manifest['modelSha256']==(case['originalSourceModel'] if row_proof else case['sourceModel'])['sha256']
+-    assert doc['documentId']==original['documentId']==actual['documentId']==old['documentId']==case['documentId']
+-    data=g.read(actual['xlsx'],actual['xlsxSha256'], contract=contract);old_data=g.read(old['xlsx'],old['xlsxSha256'], contract=contract)
+-    original_check=v.verify(old_data,original_source['documents'][0],require_print=False);check=v.verify(data,doc,require_print=False)
+-    equality=c.compare(old_data,data,len(original['sheets']),row_height_overrides=row_proof['rowHeightOverrides'] if row_proof else None)
+-    original_count=len(old['writtenCells']);assert actual['writtenCells'][:original_count]==old['writtenCells']
+-    report={'schema':'actual-annex-readonly-verification/1','scope':'READ_ONLY_MODEL_SOURCE_AND_ORIGINAL_SHEETS_EQUALITY',
++    parser = argparse.ArgumentParser()
++    parser.add_argument('--contract', type=Path, required=True)
++    parser.add_argument('--contract-sha256', required=True)
++    parser.add_argument('--original-author', required=True)
++    parser.add_argument('--original-author-sha256', required=True)
++    parser.add_argument('--author-sha256', required=True)
++    args = parser.parse_args()
++    path = PKG/'run_contract.py'
++    assert digest(path.read_bytes()) == CODE_SHA
++    spec = importlib.util.spec_from_file_location('run_contract', path)
++    boundary = importlib.util.module_from_spec(spec); sys.modules['run_contract'] = boundary; spec.loader.exec_module(boundary)
++    contract = boundary.RunContract(args.contract, args.contract_sha256, execution=True)
++    contract.enable_dependencies(); contract.begin('verify', contract.data['outputRoots']['verify'])
++    assert set(contract.grant['allowedOperations']) == {'xlsx','verify','print'}
++    stage = contract.data['inputStage']; assert stage and stage['requiredMeasuredReceipt']
++    model_pin = stage['acceptedInputModel']
++    input_proof = contract.model_input_proof(model_pin)
++    row_proof = input_proof['measuredProof']
++    prior = contract.stage_contract(stage['antecedentContract'])
++    model_path = Path(model_pin['path'])
++    author_path = Path(contract.data['outputRoots']['xlsx'])/'delivery-manifest.json'
++    old_author_pin = {'path':args.original_author,'sha256':args.original_author_sha256}
++    assert Path(args.original_author) == Path(prior.data['outputRoots']['xlsx'])/'delivery-manifest.json'
++    pins = [model_pin, row_proof['sourceModel'], old_author_pin,
++            {'path':str(author_path),'sha256':args.author_sha256}]
++    def bound(pin): return boundary.read_pinned(contract.owned(pin['path']), pin['sha256'])
++    def obj(pin): return boundary.unique_json(bound(pin).decode('utf8'))
++    model = obj(model_pin); original = obj(row_proof['sourceModel'])
++    old_manifest = obj(old_author_pin); manifest = obj(pins[-1])
++    assert len(model['documents']) == len(original['documents']) == len(old_manifest['documents']) == len(manifest['documents']) == 1
++    doc=model['documents'][0]; old_doc=original['documents'][0]; current=manifest['documents'][0]; old=old_manifest['documents'][0]
++    assert len(doc['sheets']) == len(old_doc['sheets']) == 2 and all(not s.get('images',[]) for s in doc['sheets'])
++    assert manifest['status'] == old_manifest['status'] == 'EXPORTED_VERIFICATION_PENDING'
++    assert manifest['conversionExecutionContract'] == contract.provenance()
++    assert old_manifest['conversionExecutionContract'] == prior.provenance()
++    assert manifest['modelSha256'] == model_pin['sha256'] and old_manifest['modelSha256'] == row_proof['sourceModel']['sha256']
++    assert model['conversionContract'] == original['conversionContract'] == prior.provenance()
++    assert doc['documentId'] == old_doc['documentId'] == current['documentId'] == old['documentId']
++    assert current['writtenCells'] == old['writtenCells'] and len(current['writtenCells']) == 331
++    workbook_pin={'path':current['xlsx'],'sha256':current['xlsxSha256']}
++    old_workbook_pin={'path':old['xlsx'],'sha256':old['xlsxSha256']}; pins.extend([workbook_pin,old_workbook_pin])
++    raw=bound(workbook_pin); old_raw=bound(old_workbook_pin)
++    literal=contract.module('verify_xlsx'); comparer=contract.module('verify_original_sheets')
++    old_check=literal.verify(old_raw,old_doc,require_print=False); check=literal.verify(raw,doc,require_print=False)
++    equality=comparer.compare(old_raw,raw,2,row_height_overrides=row_proof['rowHeightOverrides'])
++    assert len(row_proof['rowHeightOverrides']) == 1
++    root=Path(contract.data['outputRoots']['verify'])
++    report_path=contract.output('verify',root/'readonly-noannex-verification-r01.json',fresh=True)
++    plan_path=contract.output('verify',root/'print-plan-r01.json',fresh=True)
++    report={'schema':'actual-noannex-measured-readonly-verification/1','scope':'READ_ONLY_NOANNEX_ORIGINAL_SHEETS_EXCEPT_EXACT_MEASURED_HEIGHT',
+             'createdUtc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'status':'PASS_MECHANICAL_NATIVE_PENDING',
+-            'case':args.case,'caseSha256':args.case_sha256,'sourceModel':case['sourceModel'],'model':case['model'],
+-            'xlsx':actual['xlsx'],'xlsxSha256':actual['xlsxSha256'],'originalBaselineXlsx':old['xlsx'],'originalBaselineXlsxSha256':old['xlsxSha256'],
+-            'conversionExecutionContract':contract.provenance(),'measuredRowHeightProof':row_proof,
+-            'originalBaselineVerification':original_check,'verification':check,'originalSheetComparison':equality,
+-            'originalWrittenCells':original_count,'allOriginalWrittenCellsExactAndOrdered':True,'actualNativeOrPrintQualified':False}
+-    contract.output('verify',case['verificationOutput'],fresh=True)
+-    contract.output('verify',case['printPlanOutput'],fresh=True)
+-    output=g.safe(case['verificationOutput'],fresh=True, contract=contract);output.parent.mkdir(parents=True,exist_ok=True);g.safe(output.parent, contract=contract)
+-    output.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
+-    items=[];old_sheets=len(original['sheets'])
+-    for ordinal,spec in enumerate(doc['sheets']):
+-        item={'ordinal':ordinal,'name':spec['name'],'kind':spec['role'],'columns':spec['columns'],'lastRow':spec['lastRow']}
+-        if spec['role']=='normal':item['printRanges']=proof['originalSheetPrintProjection'][0][ordinal]['printRanges'] if ordinal<old_sheets else [spec['printArea']]
+-        elif spec['role']=='list':item.update(headerRow=spec['tables'][0]['headerRow'],itemList=spec.get('itemList',False))
+-        elif spec['role']=='table':item['headerRow']=spec['tables'][0]['headerRow']
+-        items.append(item)
++            'model':model_pin,'originalModel':row_proof['sourceModel'],'authorManifest':pins[3],'originalAuthorManifest':old_author_pin,
++            'xlsx':workbook_pin,'originalXlsx':old_workbook_pin,'conversionExecutionContract':contract.provenance(),
++            'inputStageProof':input_proof,'measuredRowHeightProof':row_proof,'originalBaselineVerification':old_check,
++            'verification':check,'originalSheetComparison':equality,'originalWrittenCells':331,'allWrittenCellsExactAndOrdered':True,
++            'annexAdded':False,'actualNativeOrPrintQualified':False}
++    sheets=[]
++    for ordinal,s in enumerate(doc['sheets']):
++        item={'ordinal':ordinal,'name':s['name'],'kind':s['role'],'columns':s['columns'],'lastRow':s['lastRow']}
++        if s['role']=='table': item['headerRow']=s['tables'][0]['headerRow']
++        elif s['role']=='list': item.update(headerRow=s['tables'][0]['headerRow'],itemList=s.get('itemList',False))
++        sheets.append(item)
+     plan={'schema':'print-metadata-v2-62/1','scope':'PRINT_METADATA_ONLY','ownedFreshArtifact':True,'documentId':doc['documentId'],
+-          'source':{'path':actual['xlsx'],'sha256':actual['xlsxSha256']},'sourceAuthorReceipt':case['authorManifest'],
+-          'sourceModel':case['model'],'nativePrintAnnexReceipt':case['annexReceipt'],'sheets':items}
+-    plan_path=g.safe(case['printPlanOutput'],fresh=True, contract=contract);plan_path.write_text(json.dumps(plan,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
+-    if row_proof:
+-        bound('originalSourceModel');contract.module('measured_height').verify(contract,contract.data['inputStage']['requiredMeasuredReceipt'],case['sourceModel'])
+-    bound('sourceModel');bound('model');bound('originalAuthorManifest');bound('authorManifest');g.read(args.case,args.case_sha256, contract=contract)
+-    contract.recheck()
+-    print(json.dumps({'verification':str(output),'verificationSha256':digest(output.read_bytes()),'printPlan':str(plan_path),
+-                      'printPlanSha256':digest(plan_path.read_bytes()),'xlsxSha256':actual['xlsxSha256'],
+-                      'originalWrittenCells':original_count,'totalWrittenCells':len(actual['writtenCells']),
+-                      'cells':check['cellsChecked'],'sheets':check['sheetCount'],'images':check['embeddedImagesChecked']},ensure_ascii=False))
+-if __name__=='__main__':main()
++          'source':workbook_pin,'sourceAuthorReceipt':pins[3],'sourceModel':model_pin,'sheets':sheets}
++    root.mkdir(); contract.owned(root)
++    for output,value in [(report_path,report),(plan_path,plan)]:
++        with output.open('x',encoding='utf8',newline='\n') as f: json.dump(value,f,ensure_ascii=False,indent=2,allow_nan=False); f.write('\n')
++    for pin in pins: bound(pin)
++    contract.model_input_proof(model_pin); contract.recheck()
++    print(json.dumps({'verification':str(report_path),'verificationSha256':digest(report_path.read_bytes()),
++                      'printPlan':str(plan_path),'printPlanSha256':digest(plan_path.read_bytes()),'cells':check['cellsChecked'],
++                      'sheets':check['sheetCount'],'images':check['embeddedImagesChecked'],'nativeQualified':False},ensure_ascii=False))
++if __name__=='__main__': main()

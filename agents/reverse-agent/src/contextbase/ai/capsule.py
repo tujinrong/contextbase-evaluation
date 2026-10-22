@@ -19,7 +19,7 @@ TEXT_SUFFIXES = frozenset({
     '.csproj', '.vbproj', '.sln', '.props', '.targets', '.bas', '.cls', '.frm',
     '.c', '.h', '.cpp', '.hpp', '.cob', '.cbl', '.cpy', '.rpg', '.rpgle',
     '.sqlrpgle', '.dds', '.cl', '.clle', '.bnd', '.py', '.rb', '.go', '.rs',
-    '.php', '.sh', '.ps1', '.bat', '.cmd', '.resx', '.txt',
+    '.php', '.sh', '.ps1', '.bat', '.cmd', '.resx', '.txt', '.md',
 })
 
 

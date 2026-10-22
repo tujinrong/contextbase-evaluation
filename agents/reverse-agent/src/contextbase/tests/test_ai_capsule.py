@@ -54,6 +54,17 @@ class CapsuleTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             capsule.verify(target)
 
+    def test_source_readme_included_without_agent_or_evaluator_instructions(self):
+        data = '# Configuration notes\n\nA source-owned runtime contract.\n'.encode('utf-8')
+        self.material('app/README.md', data)
+        for name in ('AGENTS.md', 'app/agent.md', 'spec/requirements.md', 'spec-eval/rubric.md'):
+            self.material(name, b'# Excluded instruction or reference\n')
+        target = self.root / 'snapshot'
+        value = capsule.create(self.source, target, project_id='synthetic')
+        self.assertEqual(['app/README.md'], [item['path'] for item in value['files']])
+        self.assertEqual(data, (target / 'sources/app/README.md').read_bytes())
+        capsule.verify(target)
+
     def test_mutated_indexed_evidence_rejected(self):
         self.material('logic.cs')
         target = self.root / 'snapshot'

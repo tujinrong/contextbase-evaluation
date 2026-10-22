@@ -86,6 +86,34 @@ class ProviderTests(unittest.TestCase):
         self.assertEqual(self.workspace, options["cwd"])
         self.assertTrue(Path(command[command.index("--output-last-message") + 1]).is_absolute())
 
+    def image(self, path):
+        from PIL import Image
+        Image.new('RGB', (80, 60), '#abcdef').save(path)
+        return path
+
+    def test_image_is_explicit_bounded_and_pinned(self):
+        image = self.image(self.workspace/'derived-preview.png')
+        result = self.run_fake(images=(image,))
+        self.assertEqual('passed', result['metadata']['status'])
+        command = self.seen[0][0]
+        self.assertEqual(str(image.resolve()), command[command.index('--image')+1])
+        self.assertEqual(hashlib.sha256(image.read_bytes()).hexdigest(), result['metadata']['image_inputs'][0]['sha256'])
+
+    def test_image_outside_workspace_rejected_before_job_creation(self):
+        image = self.image(self.root/'not-authorized.png')
+        with self.assertRaises(ValueError):
+            provider.run_job(self.workspace,self.job,'Inspect only supplied images',images=(image,))
+        self.assertFalse(self.job.exists())
+
+    def test_image_changed_during_inference_is_not_approved(self):
+        image = self.image(self.workspace/'derived-preview.png');fake = self.fake()
+        def mutate(command,**kwargs):
+            result = fake(command,**kwargs)
+            image.write_bytes(b'changed')
+            return result
+        result=self.run_fake(fake=mutate,images=(image,))
+        self.assertEqual('image_input_changed',result['metadata']['status'])
+
     def test_utf8_input_preserves_prompt_and_includes_common_boundary(self):
         self.run_fake()
         payload = self.stdin_payloads[0]

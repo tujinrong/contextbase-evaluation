@@ -1,0 +1,681 @@
+{
+  "documentId": "DET-SCR-011",
+  "sourcePathsRead": [
+    "manifest.json",
+    "indexed/nenkin/JSP/COMMON/Error.jsp.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/CounterShift.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/OperatePermission.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/CommonAction.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/FWLog.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/base/CommonBase.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/util/CommonUtil.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/bean/LoginInfoBean.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/LogoutAction.java.txt",
+    "indexed/nenkin/WEB-INF/web.xml.txt",
+    "indexed/nenkin/index.jsp.txt",
+    "indexed/nenkin/assets/css/site.css.txt",
+    "indexed/nenkin/JSP/COMMON/SubMessage.jsp.txt",
+    "indexed/nenkin/JSP/MENU/Login.jsp.txt",
+    "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/LoginAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt"
+  ],
+  "facts": [
+    {
+      "id": "DET-SCR-011-F001",
+      "topic": "画面・要求入口",
+      "statement": "年金Webアプリケーションは/Action.doをcommon.ControlServletへ対応付ける。共通制御が選ぶCommonConst.ERROR_JSPの値は./JSP/COMMON/Error.jspであり、このアプリケーション内のnenkin/JSP/COMMON/Error.jspをforward先とする。エラー表示はAction実行結果等から選択されるJSP表示であり、エラー画面自身にはフォーム送信入口がない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/web.xml.txt",
+          "startLine": 15,
+          "endLine": 24
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+          "startLine": 39,
+          "endLine": 46
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 313,
+          "endLine": 344
+        },
+        {
+          "path": "indexed/nenkin/JSP/COMMON/Error.jsp.txt",
+          "startLine": 1,
+          "endLine": 8
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F002",
+      "topic": "項目一覧・実コントロール対応",
+      "statement": "画面の項目は、固定見出しを表示するh1の「処理エラー」、セッション値を表示するdiv.message.error、a.access-buttonの「ログイン画面へ」である。各要素にid、name、roleは付いていない。メッセージは出力項目、復帰リンクは遷移操作であり、入力DTO、検索条件、保存列、候補一覧には対応しない。入力欄、hidden項目、送信ボタン、JavaScriptイベントはこのJSPに存在しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/COMMON/Error.jsp.txt",
+          "startLine": 1,
+          "endLine": 8
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F003",
+      "topic": "表示値・未設定と空文字の区別",
+      "statement": "表示元はrequestパラメータではなく、HttpSessionの属性ErrorMsgである。CommonConst.ERROR_MSGも同じキー文字列を持つ。JSPはsession.getAttribute(\"ErrorMsg\")がnullなら「処理を完了できませんでした。」を選び、null以外なら属性を再取得してHtmlUtil.escapeへ渡す。空文字はnullではないため既定文言へ置き換わらず、空の表示になる。属性の取得型はObjectであり、この画面専用Beanへのバインドはない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+          "startLine": 39,
+          "endLine": 40
+        },
+        {
+          "path": "indexed/nenkin/JSP/COMMON/Error.jsp.txt",
+          "startLine": 6,
+          "endLine": 6
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+          "startLine": 11,
+          "endLine": 15
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F004",
+      "topic": "共通変換・HTMLエスケープ",
+      "statement": "HtmlUtil.escape(Object)はnullを空文字、それ以外をString.valueOf(value)で文字列化し、&、<、>、二重引用符、単一引用符の順にHTML文字参照へ置換する。trim、改行タグへの変換、文字数制限はこの処理にない。Action例外用の固定文言に含まれる<BR>も&lt;BR&gt;へ変換されるため、画面ではタグ文字列として表示され、HTMLの改行としては機能しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+          "startLine": 11,
+          "endLine": 15
+        },
+        {
+          "path": "indexed/nenkin/JSP/COMMON/Error.jsp.txt",
+          "startLine": 6,
+          "endLine": 6
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 339,
+          "endLine": 344
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F005",
+      "topic": "保持領域・属性の保持",
+      "statement": "Error.jspはErrorMsgを読むだけで、表示後のremoveAttribute、セッションinvalidate、ViewBeanの作り直しを行わない。共通制御の三つのエラー選択枝はErrorMsgを上書きするが、正常にActionが終了する枝でErrorMsgを消去する処理はない。したがって、この属性は表示ごとに消費される一回限りのメッセージではなく、別の上書きやセッション終了等が起きるまで残り得る。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/COMMON/Error.jsp.txt",
+          "startLine": 1,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 313,
+          "endLine": 385
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F006",
+      "topic": "イベント・ログイン画面への復帰",
+      "statement": "「ログイン画面へ」はrequest.getContextPath()に/を付けたアプリケーションルートへの通常のリンクであり、直前画面へのhistory.backやLogoutのAction送信ではない。web.xmlのwelcome-fileはJSP/MENU/Login.jspで、index.jspも同じログインJSPへforwardする。リンク自体には属性削除処理がなく、ログイン画面へ移動したことからログアウトやErrorMsgの消去を推定できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/COMMON/Error.jsp.txt",
+          "startLine": 7,
+          "endLine": 7
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/web.xml.txt",
+          "startLine": 26,
+          "endLine": 28
+        },
+        {
+          "path": "indexed/nenkin/index.jsp.txt",
+          "startLine": 1,
+          "endLine": 2
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F007",
+      "topic": "共通属性・入力確認画面との相違",
+      "statement": "ErrorMsgとMESSAGEは別のセッション属性であり、CommonConst.ERROR_MSG_LISTはMESSAGEを指す。Error.jspはMESSAGEを参照しない。SubMessage.jspはMESSAGEをListとして反復表示し、戻るボタンでhistory.backを呼ぶ。一方、ログインJSPは非空のMESSAGEを表示した後にその属性を削除する。このMESSAGEの消費規則をErrorMsgへ適用してはならない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+          "startLine": 39,
+          "endLine": 43
+        },
+        {
+          "path": "indexed/nenkin/JSP/COMMON/Error.jsp.txt",
+          "startLine": 6,
+          "endLine": 7
+        },
+        {
+          "path": "indexed/nenkin/JSP/COMMON/SubMessage.jsp.txt",
+          "startLine": 5,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/nenkin/JSP/MENU/Login.jsp.txt",
+          "startLine": 17,
+          "endLine": 19
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F008",
+      "topic": "画面配置・共有CSS",
+      "statement": "画面DOMはbodyの直下にmain.app-shell、その中にsection.screen.surface.compact-screenを置き、見出し、メッセージ、復帰リンクの順に並べる。共有ナビゲーションヘッダーや職員情報はこのJSPには出力されない。共有CSSは背景色#edf1f4、日本語フォント、白いsurfaceと枠、screenの18px余白を定義し、エラーメッセージには文字色#6f1f1f、背景#fff0f0、枠色#ca8f8fを適用する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/COMMON/Error.jsp.txt",
+          "startLine": 3,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 174,
+          "endLine": 190
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 261,
+          "endLine": 285
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 298,
+          "endLine": 310
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F009",
+      "topic": "画面配置・CSSの適用優先順位",
+      "statement": "compact-screenにはmax-width:640pxとmargin-top:28pxがあるが、後方の.screen:not(.lookup-screen-popup)もエラー画面に一致し、より高い詳細度でmax-widthを--work-screen-widthの1180pxへ上書きする。同規則は左右marginをautoにする。復帰リンクのaccess-buttonはinline-flex、最小高さ42px、余白8px 18pxであり、hover・focus時の背景色と、a:focus-visibleの輪郭も共有CSSで定義される。静的投影ではcompact-screenの宣言だけから幅640pxに固定しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 13,
+          "endLine": 16
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 117,
+          "endLine": 123
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 282,
+          "endLine": 285
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 387,
+          "endLine": 407
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1996,
+          "endLine": 2000
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F010",
+      "topic": "要求値・Action呼出し前の変換",
+      "statement": "ControlServlet.processは要求文字コードをWindows-31Jに設定する。特殊連携分岐を通らない要求では、FUNCTION_ID、VIEW_ID、COMMAND_IDをgetParameterでString変数functionID、viewID、commandIDへ直接受け取る。その後、functionID.toLowerCase()をactionPackageとし、Action実行時にactionPackage + \".\" + viewID + commandID + \"Action\"をクラス名にする。ErrorMsgをHTTP入力やフォームDTOから受け取る処理ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 107,
+          "endLine": 111
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 243,
+          "endLine": 248
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 300,
+          "endLine": 338
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F011",
+      "topic": "例外境界・識別値の欠落",
+      "statement": "FUNCTION_ID欠落によるfunctionID.toLowerCase()のNullPointerExceptionと、VIEW_ID欠落によるviewID.equals(\"Login\")のNullPointerExceptionは、Action用tryの前で起こり得る。これらは339行のcatchによる共通エラー化の対象ではない。COMMAND_IDのnullは同じ場所で参照解除されず、Action実行へ到達した場合はクラス名の文字列連結へ入るため、三つの識別値の欠落を同じ検証結果として説明できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 243,
+          "endLine": 246
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 309,
+          "endLine": 339
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F012",
+      "topic": "イベント・ログイン状態によるエラー選択",
+      "statement": "VIEW_IDがLogin以外の場合、checkLoginはセッションのLoginBeanをLoginInfoBeanへキャストし、非nullかつisログイン可否()がtrueの場合だけ通過させる。不成立ならActionと運用可否判定を実行せず、ErrorMsgへ「ログイン時間切れです。再度ログインしてください。」を設定し、strUrlをERROR_JSPにする。この文言はログイン情報未設定やログイン可否falseでも選ばれるため、実際の時間経過だけを判定した結果ではない。VIEW_IDがLoginならこのログイン検査を省くが、後続の運用可否判定は残る。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+          "startLine": 33,
+          "endLine": 34
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 311,
+          "endLine": 329
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 396,
+          "endLine": 404
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/bean/LoginInfoBean.java.txt",
+          "startLine": 116,
+          "endLine": 122
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F013",
+      "topic": "イベント・運用可否によるエラー選択",
+      "statement": "OperatePermission.check(actionPackage)がfalseを返すと、共通制御はActionを実行せず、ErrorMsgへ「現在メンテナンス中のため画面を表示できません。」を設定する。OperatePermissionは業務種別を判定する前にjdbc/Oracle_SP2NMの接続を取得する。nenkinは運用状態表を照会する分岐に含まれず、接続取得後は対象外としてtrueを返すが、取得中等のExceptionを内部catchで処理して末尾へ進む経路はfalseになる。したがって、年金でこの文言が出たことだけから運用状態表が保守中だったとは断定できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 325,
+          "endLine": 329
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/OperatePermission.java.txt",
+          "startLine": 26,
+          "endLine": 84
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+          "startLine": 18,
+          "endLine": 19
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F014",
+      "topic": "例外境界・Action用catchの対象",
+      "statement": "Action用tryの範囲はClass.forNameによるクラス取得、newInstanceによる生成、CommonActionへのキャスト、action.perform(req,res)の呼出しである。この範囲から外へ出るExceptionは一つのcatchで共通エラーへ変換される。CommonAction.performの宣言もthrows Exceptionである。Action自身が捕捉して戻り値へ変換した拒否や失敗はこのcatchへ来ず、Exceptionに含まれないErrorもこのcatchの捕捉対象ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 330,
+          "endLine": 345
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonAction.java.txt",
+          "startLine": 27,
+          "endLine": 36
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F015",
+      "topic": "例外処理・固定文言と処理順序",
+      "statement": "Action用catchは、e.printStackTrace()、FWLog.error(e)、ErrorMsgの設定、strUrlの設定の順で処理する。設定文言は「アプリケーションエラーが発生しました。<BR>システム管理者に連絡してください。」であり、例外の本文を画面へ移送しない。FWLog.error(Throwable)はerrorLoggerとloggerへ順に記録する。これらのログ処理を保護する内側のcatchはないため、catchへ入っただけでErrorMsg設定まで必ず完了するとは保証できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 339,
+          "endLine": 345
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/FWLog.java.txt",
+          "startLine": 109,
+          "endLine": 112
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F016",
+      "topic": "後処理・利用者識別とcatch外の処理",
+      "statement": "アクセス記録用のuserIdはStringでnullに初期化される。VIEW_IDがLogoutならAction前にLoginBeanから職員番号を取得し、Logout以外ならエラー画面選択後も含めてAction処理後のLoginBeanから取得する。後者はBeanがnullなら代入しない。これらのキャストと取得はAction用tryの外にあるため、属性の型不整合等が起きた場合に同じcatchで再度共通エラーへ変換される構造ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 300,
+          "endLine": 323
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 349,
+          "endLine": 355
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/bean/LoginInfoBean.java.txt",
+          "startLine": 228,
+          "endLine": 234
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F017",
+      "topic": "共通アクセス記録・記録名と実遷移先",
+      "statement": "共通制御は要求内のfunctionID、viewID、commandID、viewID + commandID、userIdからMapを作り、CounterShift.countUpへ渡す。MESSAGEが非nullなら、空のListであっても記録するＪＳＰ名を./JSP/COMMON/SubMessage.jspにする。それ以外はstrUrlを記録する。この条件はstrUrlを変更しないため、残っているMESSAGEにより記録名がSubMessage.jspでも、実際にはError.jspへforwardする組合せが成立する。ErrorMsg本文はこのMapに含まれない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+          "startLine": 42,
+          "endLine": 43
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 357,
+          "endLine": 383
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F018",
+      "topic": "共通アクセス記録・データ操作の実体",
+      "statement": "InsertCounterShiftBaseはDB2.Ｕカウンターシフトへ、アクセス日付、アクセス時刻、機能ＩＤ、画面ＩＤ、コマンドＩＤ、アクションＩＤ、ＪＳＰ名、ユーザーＩＤをINSERTする。日付と時刻は同じDateからyyyyMMddとHHmmssSSSで生成する。SQLは文字列連結によるStatement実行で、JDBCパラメータの型・サイズ指定はない。setColumunを通る項目のnullと空文字はSQLのnullになる一方、ユーザーＩＤは常に単一引用符で囲むため、Javaのnullは文字列'null'としてSQLへ組み込まれる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java.txt",
+          "startLine": 34,
+          "endLine": 88
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/CommonBase.java.txt",
+          "startLine": 44,
+          "endLine": 63
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F019",
+      "topic": "共通アクセス記録・独立トランザクションと失敗",
+      "statement": "CounterShift.countUpは専用に接続を取得してINSERT後にcommitする。接続取得helperはDataSourceから得た接続へsetAutoCommit(false)を設定する。countUp内のExceptionではconが非nullの場合にrollbackを試み、元例外をログへ出し、finallyでcloseする。rollbackとcloseのSQLExceptionもそれぞれログへ出す。戻り値はvoidであり、これらのcatchとログ処理が完了する限り、記録失敗を呼出元へ再throwしたりErrorMsgを別文言へ変更したりせず、後続の画面遷移へ進む。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CounterShift.java.txt",
+          "startLine": 25,
+          "endLine": 54
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/util/CommonUtil.java.txt",
+          "startLine": 36,
+          "endLine": 44
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F020",
+      "topic": "表示イベント・業務DB非使用と保持領域",
+      "statement": "エラー表示そのものはセッションのErrorMsg、表示処理内のObject・String、HTML応答を使用し、予約等の業務テーブルを検索・更新しない。サーブレット経由の場合は表示前の運用可否処理による共通接続と、アクセス記録のINSERTを別の共通処理として区別する。CounterShiftはforwardより前に呼ばれるため、そのcommit後にJSP描画が失敗してもアクセス記録を描画失敗に連動して取り消す処理はない。Error.jsp自身を表示するだけの経路にはcountUp呼出しがない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/COMMON/Error.jsp.txt",
+          "startLine": 1,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/OperatePermission.java.txt",
+          "startLine": 30,
+          "endLine": 55
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 373,
+          "endLine": 383
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CounterShift.java.txt",
+          "startLine": 31,
+          "endLine": 37
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F021",
+      "topic": "応答・forward条件と文字コード宣言",
+      "statement": "共通制御はstrUrlが非nullでPDFでもCSVでもない場合に、Content-Typeをtext/html; charset=Windows-31J、ExpiresをSat, 01 Jan 2000 00:00:00 GMT、cache-controlをno-store、Pragmaをno-cacheに設定してforwardする。ERROR_JSPはこの条件を満たす。一方、Error.jsp自身のpage directive、pageEncoding、meta charsetはUTF-8である。共通制御の設定とJSPの宣言は別々に保持すべき実装情報であり、要求のWindows-31J設定とも区別する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 375,
+          "endLine": 383
+        },
+        {
+          "path": "indexed/nenkin/JSP/COMMON/Error.jsp.txt",
+          "startLine": 1,
+          "endLine": 4
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F022",
+      "topic": "応答・HTTP状態の確定範囲",
+      "statement": "共通エラー選択とそのforward処理には、エラー理由に応じたsetStatusやsendErrorがなく、Error.jspにもHTTP状態を変更するコードはない。提供web.xmlにもerror-page、filter、security-constraintの宣言はない。したがって、Error.jspという名前やAction例外の発生からHTTP 500を設定する仕様とは説明できない。Actionによる先行応答設定、応答コミット、forward失敗、コンテナー側処理を含めた最終HTTP状態を、すべての失敗で一つの値へ固定する根拠はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 313,
+          "endLine": 383
+        },
+        {
+          "path": "indexed/nenkin/JSP/COMMON/Error.jsp.txt",
+          "startLine": 1,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/web.xml.txt",
+          "startLine": 1,
+          "endLine": 30
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F023",
+      "topic": "例外境界・POSTとGETの相違",
+      "statement": "doPostはprocessを外側のcatchで囲まずに呼ぶため、Action用catchより前や後から外へ出る例外について、ここでErrorMsgを設定し直す処理はない。doGetはOPKとcharCommonUIDがともにない場合に旧PDF処理を呼び、それ以外はprocessを呼ぶ。GETの両枝にはException用catchがあるが、行うのはFWLog.errorだけであり、共通エラーJSPへの追加forwardやHTTP状態設定はしない。GET側のログ捕捉をPOSTや通常エラー画面の応答保証へ拡張しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 54,
+          "endLine": 80
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 91,
+          "endLine": 108
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F024",
+      "topic": "例外境界・JSP描画と属性の再取得",
+      "statement": "Error.jspの評価と出力は、Action用tryを抜けた後のRequestDispatcher.forwardで行われる。JSPにはerrorPage指定や独自catchがなく、HtmlUtil.escapeにもこの変換を囲むcatchはないため、描画・変換・出力で生じる失敗をAction用catchで同じ画面へ変換する構造ではない。また、ErrorMsgのnull判定と表示値取得は二度のgetAttributeであり、ローカル変数への一回取得ではない。両取得の間に別要求等が属性を変更する場合、判定時と表示時に同じ値を読む保証はこのコードにはない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 332,
+          "endLine": 345
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 375,
+          "endLine": 383
+        },
+        {
+          "path": "indexed/nenkin/JSP/COMMON/Error.jsp.txt",
+          "startLine": 1,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+          "startLine": 11,
+          "endLine": 15
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F025",
+      "topic": "到達例・業務画面内の入力拒否",
+      "statement": "接続された通常画面の例として、Excel.jspはPOSTでFUNCTION_ID=nenkin、VIEW_ID=Excel、COMMAND_ID=Exportを送る。ExcelExportActionは店番の空欄・変換不成立・形式不正や対象0件をExcelViewBeanのmessageへ設定し、ViewBeanを保持してEXCEL_JSPを返す。これらは例外を共通側へ投げる経路ではなく、Error.jsp表示ではない。requireStaffがfalseの場合もSTAFF_JSP、すなわちログインJSPを返し、共通エラー画面とは別の拒否経路になる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 8,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 13,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 24,
+          "endLine": 31
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 50,
+          "endLine": 79
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F026",
+      "topic": "到達例・ダウンロード開始後の失敗",
+      "statement": "ExcelExportActionは出力対象がある場合にwriteDownloadを呼び、その完了後にCSVを返して共通側のforwardを抑止する。writeDownloadはresponse.reset、Content-TypeとContent-Dispositionと長さの設定、出力ストリームへのwrite、flushの順で処理し、Exceptionを外へ返し得る。途中のExceptionが共通catchへ届いても、共通エラー側には応答コミット確認、ダウンロード用ヘッダーを除去するreset、既送信データの回収処理がない。したがって、出力開始後の失敗でエラーHTMLへの切替や利用者の受領結果を保証できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 19,
+          "endLine": 22
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 204,
+          "endLine": 212
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 338,
+          "endLine": 344
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 375,
+          "endLine": 383
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F027",
+      "topic": "失敗時状態・業務処理の確定と画面表示",
+      "statement": "Action用catchが行うのはログ出力、ErrorMsg設定、遷移先選択であり、Actionが変更した業務DBやセッション属性を共通的に復元する処理ではない。共通制御はActionへ業務接続やトランザクションを渡しておらず、後段のCounterShiftは別途取得した接続を使う。エラー画面が選ばれたことだけから、先行する業務更新が未実施だった、rollback済みだった、または画面状態が初期化されたと記載できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 332,
+          "endLine": 373
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CounterShift.java.txt",
+          "startLine": 27,
+          "endLine": 40
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-011-F028",
+      "topic": "処理フロー・合流点と引継値",
+      "statement": "共通エラーへ進むフローは、識別値処理、Login以外のログイン検査、運用可否判定、Action生成・実行の順を持つ。ログイン拒否、運用可否false、Action用catch完了の三枝は、それぞれ選んだErrorMsgとERROR_JSPを保持して後処理へ合流する。合流後は利用者識別、記録Map生成、CounterShift、forward、JSP表示へ進むため、共通エラー選択をフローの終端にしてはならない。図ではAction前の例外出口、catch内部の失敗、後処理・forwardの失敗を、この三枝の文言へ合流させず別の出口として扱う。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 309,
+          "endLine": 383
+        },
+        {
+          "path": "indexed/nenkin/JSP/COMMON/Error.jsp.txt",
+          "startLine": 6,
+          "endLine": 7
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "ログイン時間切れの具体的な分数は、提供web.xmlと確認した共通制御に設定がなく確定できない。表示文言をセッションタイムアウト時間の定義として扱わない。",
+    "共通制御のWindows-31J指定とError.jspのUTF-8宣言が実配備環境で最終的にどの応答文字コードになるかは、コンテナーと応答状態を実行確認していないため未確定である。",
+    "Action用catchの外へ出たPOST例外、forward・JSP描画例外、応答開始後の失敗について、実配備コンテナーが返す最終ステータス・本文・接続状態は未確定である。提供web.xmlにないサーバー共通設定や外部処理は確認していない。",
+    "Class.forNameで実際にロードされる配備クラス、JSP変換結果、Servlet API・ログライブラリの実装は照合していない。ソースで確認した呼出しと捕捉範囲を、稼働確認済みの結果として扱わない。",
+    "ErrorMsg選択後の業務更新の確定状態は、失敗した個別Action・サービス・DB操作の境界に依存する。本画面と共通catchだけから一律のcommit・rollback結果は確定できない。",
+    "ErrorMsgの二回取得間の属性変更や、セッション終了と並行する要求の実際の発生・応答は未検証である。確認できたのは属性を一回取得して固定する実装ではないことまでである。"
+  ],
+  "coverageNotes": [
+    "manifest.jsonのmodeはsource-only、trainingReferenceAuthorizedByUserとreferenceSpecificationIncludedはfalse、referenceFilesは空配列である。参照設計は読んでいない。manifestは材料・権限の確認だけに使い、業務・実装factの根拠には使用していない。",
+    "読取りはworkspace内のmanifest.jsonとindexed/に限定した。sources/とindexed/はrg --filesで位置を確認した。workspace外、親・兄弟ディレクトリ、記憶・ユーザー設定、評価期待値、他ジョブ、資格情報ファイルは読んでいない。ネットワーク、プラグイン、外部サービス、委任エージェントは使用していない。",
+    "manifestのindexed項目は176件である。本ジョブはその全件解析ではなく、DET-SCR-011の責務に必要な画面、共通制御、表示変換、アクセス記録、復帰先と例外境界を対象とした。manifestに省略記載されたclassやjar等は読んでおらず、配備バイナリとの一致も確認していない。",
+    "根拠には行番号付きindexedテキストを使用した。referencesの行番号は各ファイルの原ソース行番号に対応する。Error.jspは1～8行を全読し、HtmlUtilは主に11～15行、CommonConstは属性キー・JSP定数、ControlServletはGET/POST入口、通常識別値受信、285～405行の制御・後処理を確認した。特殊連携の他業務分岐は識別値の位置確認に留め、その業務仕様を本書へ取り込んでいない。",
+    "OperatePermission、CounterShift、InsertCounterShiftBase、CommonBase、CommonUtilの必要範囲を追い、接続取得、INSERT、commit・rollback・close、呼出元復帰まで確認した。FWLogはcatch内から呼ばれるerror処理を確認した。共通記録表の物理定義の再作成は本書の責務に含めない。",
+    "共有CSSはエラー画面の実DOMに一致する規則、後方の上書き、関連するメディア規則を確認した。compact-screenのmax-widthだけで表示幅を確定していない。原寸の画面描画・静的HTML投影の生成は行っていない。",
+    "Login.jsp、index.jsp、web.xmlは復帰先と属性消費規則を確認した。SubMessage.jspはErrorMsgとの相違を確認した。LoginAction、LogoutAction、LoginInfoBeanは関連する属性操作・取得契約のみを対象とし、認証値は取得・掲載していない。",
+    "Excel.jspとExcelExportAction、NenkinBaseActionは、通常画面から到達する入力拒否と直接出力の例外境界を確認するために読んだ。buildByBranch等の出力サービス内部、帳票明細、検索SQLはこの文書では展開せず、個別機能の解析範囲とする。",
+    "途中の大量出力には省略があったため、その出力を全範囲の読了とは扱っていない。本文根拠として必要な制御、表示変換、SQL、ログ処理、CSSの行範囲は分けて再確認した。",
+    "関連文書は入力計画上の対応であり、生成済みとは判定していない。基本設計との対応はSCR-011（../基本設計書/基本設計書_SCR-011_エラー.md）、共通制御・アクセス記録はCOM-012（../共通/共通仕様書_COM-012_共通コントロールサーブレット.md）、ログイン属性はCOM-015（../共通/共通仕様書_COM-015_ログイン処理.md）、表示変換はCOM-111（../共通/共通仕様書_COM-111_年金業務共通処理.md）、共有CSSはCOM-151（../共通/共通仕様書_COM-151_画面共通入力・通信制御.md）へ接続する。",
+    "本応答はDET-SCR-011の執筆材料となるfactsであり、Markdown仕様書、図、HTML、PDF、Excel、解析報告ファイルは生成していない。原プログラム、SQL、スクリプト、ビルド、テストは実行していない。表示合格・顧客承認・実行成功は認定しておらず、正式率はnullとする。"
+  ]
+}

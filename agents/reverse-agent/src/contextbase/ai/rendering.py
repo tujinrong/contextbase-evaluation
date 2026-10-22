@@ -465,7 +465,13 @@ def render_document(source: Path, destination: Path, *, mermaid_package: Path | 
     parser.renderer.rules["fence"] = fence
     tokens = parser.parse(content)
     for token in tokens:
-        if token.type == "html_block" and BeautifulSoup(token.content, "html.parser").find(["form", "input", "select", "textarea", "table"]):
+        if token.type != "html_block":
+            continue
+        fragment = BeautifulSoup(token.content, "html.parser")
+        # A menu or error screen can consist solely of text and links.
+        # Semantic screen containers are still visual layouts without forms.
+        if (fragment.find(["form", "input", "select", "textarea", "button", "table", "main"])
+                or fragment.select_one('[role="main"], [data-screen], .app-shell, .screen')):
             layout_blocks.append({"html": token.content, "lines": [token.map[0] + 1, token.map[1]]})
     body, removed = _sanitize(parser.renderer.render(tokens, parser.options, {}), source.parent, asset_root)
     result["safety"]["removed"].extend(removed)

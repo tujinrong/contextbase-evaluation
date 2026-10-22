@@ -1,0 +1,408 @@
+{
+  "groups": {
+    "schema": "scr014-ai-authored-format-groups/1",
+    "groups": [
+      {
+        "section": "共通受付 C",
+        "groups": [
+          {
+            "title": "要求の受付とログイン確認",
+            "steps": [
+              1,
+              2
+            ]
+          },
+          {
+            "title": "運用可否とAction実行",
+            "steps": [
+              3,
+              4
+            ]
+          },
+          {
+            "title": "応答の後処理",
+            "steps": [
+              5
+            ]
+          }
+        ]
+      },
+      {
+        "section": "1. メニューからの初期表示",
+        "groups": [
+          {
+            "title": "要求の受付と職員確認",
+            "steps": [
+              1,
+              2
+            ]
+          },
+          {
+            "title": "初期条件の設定",
+            "steps": [
+              3,
+              4
+            ]
+          },
+          {
+            "title": "状態の保持と画面表示",
+            "steps": [
+              5
+            ]
+          }
+        ]
+      },
+      {
+        "section": "3. 日付入力・カレンダー操作",
+        "groups": [
+          {
+            "title": "日付の入力とカレンダー表示",
+            "steps": [
+              1,
+              2
+            ]
+          },
+          {
+            "title": "表示月・選択日の変更と終了",
+            "steps": [
+              3,
+              4,
+              5
+            ]
+          },
+          {
+            "title": "出力要求への引渡し",
+            "steps": [
+              6
+            ]
+          }
+        ]
+      },
+      {
+        "section": "4. 日次データの出力",
+        "groups": [
+          {
+            "title": "要求の受付と事前検査",
+            "steps": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          {
+            "title": "出力条件の確定",
+            "steps": [
+              5,
+              6,
+              7
+            ]
+          },
+          {
+            "title": "削除明細の整理とファイル生成",
+            "steps": [
+              8,
+              9
+            ]
+          },
+          {
+            "title": "結果の返却",
+            "steps": [
+              10
+            ]
+          }
+        ]
+      },
+      {
+        "section": "5. 月次データの出力",
+        "groups": [
+          {
+            "title": "要求の受付と事前検査",
+            "steps": [
+              1,
+              2
+            ]
+          },
+          {
+            "title": "出力期間の確定",
+            "steps": [
+              3,
+              4,
+              5
+            ]
+          },
+          {
+            "title": "削除明細の整理・ファイル生成と返却",
+            "steps": [
+              6,
+              7
+            ]
+          }
+        ]
+      },
+      {
+        "section": "6. メニューへ戻る",
+        "groups": [
+          {
+            "title": "戻る要求の受付と職員確認",
+            "steps": [
+              1,
+              2
+            ]
+          },
+          {
+            "title": "メニュー状態の設定",
+            "steps": [
+              3,
+              4
+            ]
+          },
+          {
+            "title": "応答と再入場",
+            "steps": [
+              5
+            ]
+          }
+        ]
+      }
+    ],
+    "referenceCorrections": [
+      {
+        "from": "日次の手順2～4と同じ順序で",
+        "to": "日次の手順1.2～1.4と同じ順序で"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "section": "共通受付 C",
+      "oldNumber": 1,
+      "newNumber": "1.1",
+      "text": "Servletが受信文字コードをWindows-31Jに設定し、識別パラメータを読む。出力フォームもaccept-charsetにWindows-31Jを指定する。"
+    },
+    {
+      "section": "共通受付 C",
+      "oldNumber": 2,
+      "newNumber": "1.2",
+      "text": "識別値を参照した後、セッションのLoginBeanが存在し、ログイン可否が真であることを確認する。不成立なら「ログイン時間切れです。再度ログインしてください。」をErrorMsgへ設定し、共通エラーJSPを選ぶ。"
+    },
+    {
+      "section": "共通受付 C",
+      "oldNumber": 3,
+      "newNumber": "2.1",
+      "text": "運用可否を確認する。nenkinは業務別管理表による処理中フラグ検査の対象分岐に入らず、共通接続を取得できれば許可される。接続取得等の例外は内部でログへ記録され、運用不可となる。この場合は「現在メンテナンス中のため画面を表示できません。」を設定する。"
+    },
+    {
+      "section": "共通受付 C",
+      "oldNumber": 4,
+      "newNumber": "2.2",
+      "text": "動的にActionを生成して実行する。この生成・実行から伝播したExceptionは共通catchで記録し、一般エラーを設定して共通エラーJSPを選ぶ。Action内部で捕捉して正常に返した結果は、その返却値を引き継ぐ。"
+    },
+    {
+      "section": "共通受付 C",
+      "oldNumber": 5,
+      "newNumber": "3.1",
+      "text": "選択された遷移先またはダウンロード制御値を使い、共通のアクセス記録と応答後処理 Z を行う。Zの契約は補足説明に示す。"
+    },
+    {
+      "section": "1. メニューからの初期表示",
+      "oldNumber": 1,
+      "newNumber": "1.1",
+      "text": "menuFormのVIEW_IDをBatch、COMMAND_IDをViewへ変更して送信し、共通受付 C を通る。"
+    },
+    {
+      "section": "1. メニューからの初期表示",
+      "oldNumber": 2,
+      "newNumber": "1.2",
+      "text": "BatchViewActionがrequireStaffを呼ぶ。職員確認不成立なら、実体がログインJSPであるSTAFF_JSPを返す。職員確認中のDB例外等が伝播すれば、CのAction実行catchへ進む。"
+    },
+    {
+      "section": "1. メニューからの初期表示",
+      "oldNumber": 3,
+      "newNumber": "2.1",
+      "text": "職員確認に成功すると新しいBatchViewBeanを作る。職員番号・通知は空文字、3区分はすべてfalseとする。"
+    },
+    {
+      "section": "1. メニューからの初期表示",
+      "oldNumber": 4,
+      "newNumber": "2.2",
+      "text": "サーバー当日を対象日、当月の月初・月末を開始日・終了日へ設定する。別にCalendarの表示時点を2か月戻し、履歴整理基準日へ設定する。日付計算に明示的なタイムゾーン指定はない。"
+    },
+    {
+      "section": "1. メニューからの初期表示",
+      "oldNumber": 5,
+      "newNumber": "3.1",
+      "text": "セッションの共通属性ViewBeanを新しいBeanへ置き換え、Batch.jspを返す。応答後処理 Z を経て画面を表示する。"
+    },
+    {
+      "section": "3. 日付入力・カレンダー操作",
+      "oldNumber": 1,
+      "newNumber": "1.1",
+      "text": "各入力をwesternモードでバインドする。初期バインド、blur、change時に解析できる値はyyyy/MM/ddへ変換する。解析できない値はそのまま残す。"
+    },
+    {
+      "section": "3. 日付入力・カレンダー操作",
+      "oldNumber": 2,
+      "newNumber": "1.2",
+      "text": "隣接ボタン、Alt＋下矢印、F4で対象入力のカレンダーを開く。入力日が有効ならその月、無効または空欄ならクライアント当日の月を表示する。サーバー初期日の計算とは別である。"
+    },
+    {
+      "section": "3. 日付入力・カレンダー操作",
+      "oldNumber": 3,
+      "newNumber": "2.1",
+      "text": "前月・翌月を選ぶと表示月だけを変更する。月見出しには西暦と和暦の表示を使い、日ボタンには日曜、選択日、当日を示すclassを付ける。"
+    },
+    {
+      "section": "3. 日付入力・カレンダー操作",
+      "oldNumber": 4,
+      "newNumber": "2.2",
+      "text": "日を選ぶと対象入力だけを書き換え、inputとchangeを発火する。カレンダーを閉じ、入力へフォーカスを戻す。"
+    },
+    {
+      "section": "3. 日付入力・カレンダー操作",
+      "oldNumber": 5,
+      "newNumber": "2.3",
+      "text": "外側クリックまたはEscapeでも閉じる。これらの操作は選択済み入力値を一括クリアしない。"
+    },
+    {
+      "section": "3. 日付入力・カレンダー操作",
+      "oldNumber": 6,
+      "newNumber": "3.1",
+      "text": "出力時は名前付きの可視入力から文字列を送る。本画面にはdata-era-hidden-inputがなく、共通helperが持つ別hidden日付への同期は適用されない。runBatchはform.submitを直接呼び、全日付一括検査を呼ばない。"
+    },
+    {
+      "section": "4. 日次データの出力",
+      "oldNumber": 1,
+      "newNumber": "1.1",
+      "text": "COMMAND_IDをDailyへ変更してフォームを送信し、共通受付 C を通る。BatchDailyActionはDAILYを返し、BatchRunActionの処理を実行する。"
+    },
+    {
+      "section": "4. 日次データの出力",
+      "oldNumber": 2,
+      "newNumber": "1.2",
+      "text": "tryに入る前にrequireStaffを実行する。不成立ならログインJSPを返す。成立後、受信した条件から新しいBatchViewBeanを作る。文字列の未送信・NULLは空文字へ変え、Javaのtrimで前後空白を除く。チェックは値1、大小文字を問わないtrue・onをtrue、それ以外と未送信をfalseとする。"
+    },
+    {
+      "section": "4. 日次データの出力",
+      "oldNumber": 3,
+      "newNumber": "1.3",
+      "text": "POSTかを先に確認し、その後、セッション側と送信側の照合値を比較する。不正なら有効期限通知を設定し、今回条件をViewBeanへ保存してBatch.jspを返す。"
+    },
+    {
+      "section": "4. 日次データの出力",
+      "oldNumber": 4,
+      "newNumber": "1.4",
+      "text": "3区分がすべてfalseなら区分選択通知で再表示する。続いて、職員番号が非空で半角数字以外を含む場合、またはtrim後8桁を超える場合は、職員番号通知で再表示する。いずれもサービスを呼ばない。"
+    },
+    {
+      "section": "4. 日次データの出力",
+      "oldNumber": 5,
+      "newNumber": "2.1",
+      "text": "Beanの条件をPensionBatchExportRequestへ移し、runMode=DAILYを設定する。サービス呼出しから送信までを囲むtryへ入る。"
+    },
+    {
+      "section": "4. 日次データの出力",
+      "oldNumber": 6,
+      "newNumber": "2.2",
+      "text": "サービスは要求の存在と区分選択を再検査する。runModeを確認し、対象日の正規化前trim値が非空かを確認してDateUtilへ渡す。変換結果を検索開始・終了へ設定する。月次の2項目は日次期間の決定に使わない。"
+    },
+    {
+      "section": "4. 日次データの出力",
+      "oldNumber": 7,
+      "newNumber": "2.3",
+      "text": "職員番号をIntegerへ変換する。空欄はNULLとなる。通常画面を通過した数字の先頭ゼロは失われ、0は整数0となる。サービス単体ではALLもNULLにするが、画面Actionは英字を拒否する。"
+    },
+    {
+      "section": "4. 日次データの出力",
+      "oldNumber": 8,
+      "newNumber": "3.1",
+      "text": "共通整理フロー P を実行する。基準日がtrim後非空なら、出力検索より先に削除明細整理を呼ぶ。呼出省略、正規化後空欄によるDB未実行、commit正常復帰を区別して後段へ引き継ぐ。"
+    },
+    {
+      "section": "4. 日次データの出力",
+      "oldNumber": 9,
+      "newNumber": "3.2",
+      "text": "共通生成フロー G を実行する。選択区分ごとに全件検索し、0件なら通知を追加する。1件以上なら店番・顧客番号・取得時採番IDで再整列し、出力行、帳票上部、単一シートxlsxを生成する。"
+    },
+    {
+      "section": "4. 日次データの出力",
+      "oldNumber": 10,
+      "newNumber": "4.1",
+      "text": "生成数が0なら通知を半角空白で連結し、今回条件をViewBeanへ保存して再表示する。生成数1なら単一xlsx、2以上ならZIPを送信する。ダウンロード経路は今回Beanを保存し直さず、戻り値CSVを返す。"
+    },
+    {
+      "section": "5. 月次データの出力",
+      "oldNumber": 1,
+      "newNumber": "1.1",
+      "text": "COMMAND_IDをMonthlyへ変更してフォームを送信し、共通受付 C を通る。BatchMonthlyActionがMONTHLYを設定してBatchRunActionへ接続する。"
+    },
+    {
+      "section": "5. 月次データの出力",
+      "oldNumber": 2,
+      "newNumber": "1.2",
+      "text": "日次の手順2～4と同じ順序で、職員確認、今回Beanの作成、POST・照合値、区分選択、職員番号形式を検査する。拒否時は対応する通知と今回条件を保持する。職員確認不成立はログインJSPであり、条件エラーの再表示とは分ける。"
+    },
+    {
+      "section": "5. 月次データの出力",
+      "oldNumber": 3,
+      "newNumber": "2.1",
+      "text": "runMode=MONTHLYの要求DTOを作り、サービスへ渡す。対象日のDAILY_DATEもBean・DTOへ移されるが、月次の出力期間には使わない。"
+    },
+    {
+      "section": "5. 月次データの出力",
+      "oldNumber": 4,
+      "newNumber": "2.2",
+      "text": "サービスは要求と区分、runModeを確認した後、開始日、終了日の順に正規化前の必須検査と日付変換を行う。開始日空欄は「月初日を入力してください。」、終了日空欄は「月末日を入力してください。」となる。"
+    },
+    {
+      "section": "5. 月次データの出力",
+      "oldNumber": 5,
+      "newNumber": "2.3",
+      "text": "ISO文字列の開始日が終了日より後なら、「月初日は月末日以前で指定してください。」で拒否する。等しい場合は通過する。同一月、月初・月末、期間長の追加検査はない。"
+    },
+    {
+      "section": "5. 月次データの出力",
+      "oldNumber": 6,
+      "newNumber": "3.1",
+      "text": "職員番号を変換した後、共通整理 Pへ進む。続いて共通生成 Gを実行し、新規、変更、削除の選択区分を順に処理する。Pから引き継ぐ整理状態Sは各枝の値を維持する。"
+    },
+    {
+      "section": "5. 月次データの出力",
+      "oldNumber": 7,
+      "newNumber": "3.2",
+      "text": "生成数0は通知再表示、1は単一xlsx、2以上は月次ZIPとする。try内のIllegalArgumentExceptionはE1、それ以外の伝播ExceptionはCの一般catchへ進む。最終処理はZを使う。"
+    },
+    {
+      "section": "6. メニューへ戻る",
+      "oldNumber": 1,
+      "newNumber": "1.1",
+      "text": "戻るボタンがbatchFormのVIEW_IDをMenu、COMMAND_IDをViewへ変更して送信する。"
+    },
+    {
+      "section": "6. メニューへ戻る",
+      "oldNumber": 2,
+      "newNumber": "1.2",
+      "text": "共通受付 C を通り、MenuViewActionが職員確認を行う。不成立ならログインJSPを返す。"
+    },
+    {
+      "section": "6. メニューへ戻る",
+      "oldNumber": 3,
+      "newNumber": "2.1",
+      "text": "成立時は新しいMenuViewBeanを作り、ログイン職員番号を最小8桁ゼロ埋めし、氏名とともに設定する。"
+    },
+    {
+      "section": "6. メニューへ戻る",
+      "oldNumber": 4,
+      "newNumber": "2.2",
+      "text": "共通セッション属性ViewBeanをMenuViewBeanへ置き換え、Menu.jspを返す。送信されたバッチ条件は保存しない。"
+    },
+    {
+      "section": "6. メニューへ戻る",
+      "oldNumber": 5,
+      "newNumber": "3.1",
+      "text": "応答後処理 Z を行う。次に「処理データ」から入り直すと、初期表示イベントによって条件が再初期化される。"
+    }
+  ],
+  "originalStepTextPreserved": true,
+  "version": "1.3"
+}

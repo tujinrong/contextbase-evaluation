@@ -1,0 +1,1278 @@
+{
+  "documentId": "SYS-ARCHITECTURE",
+  "sourcePathsRead": [
+    "manifest.json",
+    "indexed/nenkin/README.md.txt",
+    "indexed/nenkin/WEB-INF/web.xml.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/LoginAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/MenuViewAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/PensionViewAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/PensionLoadAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/PensionClearAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/PensionLookupAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/LookupViewAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/LookupSearchAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/ReportViewAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/ExcelViewAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/BatchViewAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/StaffViewAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/StaffVerifyAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/StaffClearAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/bean/PensionViewBean.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/bean/LookupViewBean.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/bean/ReportViewBean.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/bean/StaffViewBean.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/model/StaffContext.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataAccessException.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportResult.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportResult.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+    "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+    "indexed/nenkin/JSP/MENU/Login.jsp.txt",
+    "indexed/nenkin/JSP/NENKIN/Menu.jsp.txt",
+    "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+    "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+    "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+    "indexed/nenkin/tools/build.ps1.txt",
+    "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/CommonAction.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/LogoutAction.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/OperatePermission.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/CounterShift.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/base/CommonBase.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/base/CommonBaseSelect.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/util/CommonUtil.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/util/CommonConverter.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/util/PDFUtil.java.txt",
+    "sources/nenkin/WEB-INF/src/nenkin/PensionLookupAction.java",
+    "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java"
+  ],
+  "facts": [
+    {
+      "id": "ARCH-001",
+      "topic": "配置・要求入口",
+      "statement": "年金Webアプリケーションはcommon.ControlServletを起動時ロード対象として登録し、/Action.doへ割り当てる。welcome-fileはJSP/MENU/Login.jspである。同じweb.xmlにローカルDB初期化用のnenkin.H2JndiSetupListenerとLOGGER_NAME=n2nenkinを設定している。これは配置宣言であり、配備成功を示すものではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/web.xml.txt",
+          "startLine": 4,
+          "endLine": 28
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 40,
+          "endLine": 44
+        }
+      ]
+    },
+    {
+      "id": "ARCH-002",
+      "topic": "ブラウザー・JSP・Actionの接続",
+      "statement": "メニューはFUNCTION_ID=nenkinを保持し、ボタン操作でVIEW_IDとCOMMAND_IDを設定して/Action.doへPOSTする。通常の四入口はPension/View、Batch/View、Report/View、Excel/Viewである。ログアウトだけはFUNCTION_ID=common、VIEW_ID=Logout、空のCOMMAND_IDを送る。画面遷移はブラウザーがJavaクラスを直接指定する構造ではなく、Servletが識別値からAction名を組み立てる構造である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Menu.jsp.txt",
+          "startLine": 6,
+          "endLine": 13
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 243,
+          "endLine": 248
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 334,
+          "endLine": 338
+        }
+      ]
+    },
+    {
+      "id": "ARCH-003",
+      "topic": "要求単位のAction",
+      "statement": "通常POSTはprocessへ入り、要求文字コードをWindows-31Jに設定する。ServletはFUNCTION_IDを小文字化したpackageと、VIEW_ID・COMMAND_ID・Actionを連結したクラス名をClass.forNameで解決し、newInstanceで要求ごとのActionを生成してperformへrequestとresponseを渡す。Action自体をセッションや共有キャッシュへ保存する処理はこの経路にない。NenkinBaseActionの正規化日付作業変数も、このActionインスタンス内の一時値である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 91,
+          "endLine": 111
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 309,
+          "endLine": 338
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 184,
+          "endLine": 189
+        }
+      ]
+    },
+    {
+      "id": "ARCH-004",
+      "topic": "共通要求処理の順序",
+      "statement": "通常識別値の取得後は、共通ログイン確認、ログアウト時の利用者番号退避、運用可否確認、Action生成・実行、利用者番号取得、アクセス記録、必要なJSPへのforwardの順で進む。VIEW_IDがLoginなら共通ログイン確認を省略する。共通認証がない要求はErrorMsgを設定して共通エラーJSPへ進み、Actionを生成しない。Actionの戻り先がnull・PDF・CSVの場合はアクセス記録後のforwardを行わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 309,
+          "endLine": 384
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 396,
+          "endLine": 404
+        }
+      ]
+    },
+    {
+      "id": "ARCH-005",
+      "topic": "例外捕捉範囲",
+      "statement": "共通エラー化するtryはActionの反射生成とperform呼出しを囲む。FUNCTION_ID欠落時のtoLowerCase、VIEW_ID欠落時のequalsなどはそのtryより前にあり、JSPへのforwardはtryより後にある。したがって、Action内のExceptionを共通エラーへ変換する契約を、識別値処理やJSP描画の例外まで拡張できない。共通catchはエラーJSPを選ぶが、HTTP状態コードを明示設定していない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 243,
+          "endLine": 246
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 309,
+          "endLine": 345
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 375,
+          "endLine": 383
+        }
+      ]
+    },
+    {
+      "id": "ARCH-006",
+      "topic": "JSPからサービスへの依存",
+      "statement": "JSPはセッションの画面Beanを表示するだけではない。Pension.jspは描画開始時にReferenceDataServiceを取得し、性別・裁定請求・受給有無・年金種類の候補をDBから取得する。このため入力拒否による再表示や保存完了後の再表示にもDB読取りが発生し得る。候補取得やその後のJSP描画で発生する例外は、ServletのAction実行用catchの外側で起こる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 1,
+          "endLine": 4
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 237,
+          "endLine": 285
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 332,
+          "endLine": 383
+        }
+      ]
+    },
+    {
+      "id": "ARCH-007",
+      "topic": "画面Beanの保持領域と寿命",
+      "statement": "主画面のBeanはHTTP要求属性ではなく、共通キーViewBeanでセッションへ保存する。メニュー、予約、印刷、Excel、日次・月次の各Actionは同じキーへ異なる画面Beanを設定するため、前画面のBeanは次の設定で置き換わる。PensionViewBeanは予約モデル・メッセージ・職員表示・既存区分を保持し、ReportViewBeanは検索条件・preview状態・取得済み予約一覧を保持する。これらの保持をDB保存済み状態と同一視しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+          "startLine": 30,
+          "endLine": 37
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 37,
+          "endLine": 43
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/PensionViewBean.java.txt",
+          "startLine": 6,
+          "endLine": 22
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/ReportViewBean.java.txt",
+          "startLine": 8,
+          "endLine": 30
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/MenuViewAction.java.txt",
+          "startLine": 12,
+          "endLine": 16
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelViewAction.java.txt",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchViewAction.java.txt",
+          "startLine": 16,
+          "endLine": 25
+        }
+      ]
+    },
+    {
+      "id": "ARCH-008",
+      "topic": "参照画面の保持領域とメモリページング",
+      "statement": "参照画面は主画面とは別のセッションキーSubWindowBeanにLookupViewBeanを保存し、JSPも同じキーを使用する。各検索はサービスから全件のListを受け取り、Action内で20件単位の部分Listを新規作成してBeanへ保存する。全件Listは要求内の作業用であり、セッションには条件・総件数・ページ番号・そのページの候補を保持する。ページ上限の補正は切出し後なので、範囲外ページの要求では表示ページ番号が補正されても候補が空のままになる経路がある。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/LookupViewAction.java.txt",
+          "startLine": 14,
+          "endLine": 22
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/LookupViewBean.java.txt",
+          "startLine": 12,
+          "endLine": 46
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 1,
+          "endLine": 4
+        }
+      ]
+    },
+    {
+      "id": "ARCH-009",
+      "topic": "共通ログイン情報と業務職員情報",
+      "statement": "共通認証結果はLoginBeanキーのLoginInfoBean、年金で利用する職員情報はNENKIN_STAFF_CONTEXTキーのStaffContextとして別々に保持する。StaffContextは職員番号int、氏名String、所属店番int、役職コードStringを持つ。職員表示用の番号文字列と、保存処理へ渡す更新者の数値はこの情報から作るため、フォームの担当者コードとは別の値である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+          "startLine": 33,
+          "endLine": 34
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 33,
+          "endLine": 47
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/StaffContext.java.txt",
+          "startLine": 5,
+          "endLine": 25
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 191,
+          "endLine": 201
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+          "startLine": 39,
+          "endLine": 46
+        }
+      ]
+    },
+    {
+      "id": "ARCH-010",
+      "topic": "二段階認証の入口",
+      "statement": "通常ログインフォームはAPPL_NAME=unify、FUNCTION_ID=nenkin、VIEW_ID=Login、空のCOMMAND_ID、UNIFY_FLG=0を送る。nenkin.LoginActionは年金職員情報とCSRF情報を先に除去し、common.LoginActionへ認証を委譲する。共通処理がログインJSPを返した場合はそのまま終了し、それ以外はMenuViewActionを実行する。メニュー表示前のrequireStaffが追加職員確認を行うので、共通認証成功だけでは年金業務セッション成立にならない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/MENU/Login.jsp.txt",
+          "startLine": 21,
+          "endLine": 25
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/LoginAction.java.txt",
+          "startLine": 6,
+          "endLine": 12
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/MenuViewAction.java.txt",
+          "startLine": 10,
+          "endLine": 16
+        }
+      ]
+    },
+    {
+      "id": "ARCH-011",
+      "topic": "共通認証のデータ依存",
+      "statement": "通常unifyログインでは、受信した職員番号を名簿確認用に保持し、認証照会のユーザーにはアプリケーション名を使用する。共通処理はOracle_SP2NMでＵＷＥＢログイン情報表と職員名簿を読み、所属情報があればOracle_DWHのＪ事業所コード表２を読む。その後Oracle_SP2NMで役職名と職員所属課係を取得し、最終的にLoginInfoBeanをセッションへ設定する。各DB読取りや変換の途中に例外が起きれば、この設定まで到達するとは限らない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt",
+          "startLine": 122,
+          "endLine": 188
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt",
+          "startLine": 214,
+          "endLine": 269
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt",
+          "startLine": 297,
+          "endLine": 441
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt",
+          "startLine": 475,
+          "endLine": 539
+        }
+      ]
+    },
+    {
+      "id": "ARCH-012",
+      "topic": "共通認証結果と追加確認の相違",
+      "statement": "共通側は認証表が一致すると、職員番号の数値変換失敗や名簿不在でもloginStatusをtrueにし、名簿不在用の所属・氏名等を設定する経路を持つ。職員番号の8桁ゼロ埋めは、8桁以上を切り詰める処理ではない。年金側は共通Beanの番号をtrimした後、ASCII数字1～8桁であることを検査し、数値化した同じ番号をReferenceDataService.verifyStaffへ渡す。この二段階の検査条件を一つの認証条件へまとめない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt",
+          "startLine": 245,
+          "endLine": 277
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt",
+          "startLine": 320,
+          "endLine": 329
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/util/CommonConverter.java.txt",
+          "startLine": 290,
+          "endLine": 310
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 57,
+          "endLine": 71
+        }
+      ]
+    },
+    {
+      "id": "ARCH-013",
+      "topic": "年金職員確認の再利用・拒否",
+      "statement": "requireStaffはセッションにStaffContextがあれば再照会せず、CSRF情報を確保して成功を返す。職員情報がなければ共通ログイン可否を確認し、職員名簿に存在する番号からStaffContextを作る。番号不正または名簿不在ではLoginBeanを除去し、拒否メッセージをMESSAGEへ設定する。共通認証がない場合はログイン要求メッセージを設定する。失敗経路では職員情報とCSRF情報を除去してfalseを返すが、verifyStaff中のDB例外はこの拒否処理へ置き換えず上位へ伝わる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 45,
+          "endLine": 79
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 206,
+          "endLine": 234
+        }
+      ]
+    },
+    {
+      "id": "ARCH-014",
+      "topic": "CSRFと操作権限の適用位置",
+      "statement": "CSRF情報はセッションに既存の非空Stringがあれば再利用し、なければ生成する。更新要求の確認はHTTP methodがPOSTであることと、要求CSRF_TOKENがセッション値に一致することで行う。予約Save・DeleteとBatchRunは職員確認、要求値の取込み、POST・CSRF確認の順で処理する。店番75かつ役職コードが3000未満、または役職コードが数値化できない職員は変更・削除を拒否する。新規登録や全メニューに同じ制限を適用する実装ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 81,
+          "endLine": 100
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+          "startLine": 11,
+          "endLine": 46
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java.txt",
+          "startLine": 11,
+          "endLine": 31
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 14,
+          "endLine": 19
+        }
+      ]
+    },
+    {
+      "id": "ARCH-015",
+      "topic": "ログアウトと残存属性",
+      "statement": "common.LogoutActionが除去するのはViewBeanとLoginBeanの二属性であり、セッション全体のinvalidateは行わない。SubWindowBean、NENKIN_STAFF_CONTEXT、NENKIN_CSRF_TOKENをこの処理では除去しない。Servletはログアウト前のLoginInfoBeanからアクセス記録用の職員番号を退避する。通常の後続Action要求は共通ログイン確認で止まり、通常の再ログイン開始時には年金側LoginActionが職員情報とCSRF情報を除去する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/LogoutAction.java.txt",
+          "startLine": 26,
+          "endLine": 34
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 313,
+          "endLine": 323
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/LoginAction.java.txt",
+          "startLine": 7,
+          "endLine": 12
+        }
+      ]
+    },
+    {
+      "id": "ARCH-016",
+      "topic": "フォーム・業務モデル・永続値の分離",
+      "statement": "予約入力はrequest.getParameterの文字列からActionが明示的にPensionReservationへ移す。数値項目はtrim後の正数だけをIntegerとし、欠落・空文字・非数値・ゼロ以下はnullになる。文字列は欠落を空文字へ変換し、チェック項目は1・true・onをbooleanのtrueへ変換する。PensionReservationの表示名称や電話番号文字列は、そのままDB物理型を表すものではなく、保存時にコード逆引き・電話番号の数値化・JDBC DATEへの変換を行う。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 119,
+          "endLine": 164
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 13,
+          "endLine": 38
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 704,
+          "endLine": 738
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 798,
+          "endLine": 824
+        }
+      ]
+    },
+    {
+      "id": "ARCH-017",
+      "topic": "共有サービスと共有Repository",
+      "statement": "PensionRepositoryとReferenceDataServiceはprivateコンストラクタとstatic final INSTANCEを持つ共有インスタンスである。Excel出力・日次月次出力のサービスも共有インスタンスを持ち、PensionRepositoryをfinalフィールドで参照する。一方、検索結果のList、店舗名Map、Connection、Statement、ResultSet、出力用配列は各呼出し内に作成する。共有Repositoryを予約データの常駐メモリストアと説明しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 69,
+          "endLine": 83
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 483,
+          "endLine": 509
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 32,
+          "endLine": 39
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 289,
+          "endLine": 311
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 16,
+          "endLine": 33
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 38,
+          "endLine": 55
+        }
+      ]
+    },
+    {
+      "id": "ARCH-018",
+      "topic": "三系統のJNDI接続先",
+      "statement": "年金側の接続取得は業務用jdbc/RAROA_DB、職員用jdbc/Oracle_SP2NM、顧客用jdbc/Oracle_DWHの三系統に分かれる。各系統は短いJNDI名を先に探索し、次にjava:comp/env/付きの同名を探索する。各候補がDataSourceなら採用し、NamingExceptionなら次候補へ進む。最後まで取得できなければSQLExceptionを投げ、最後のNamingExceptionがあればcauseへ設定する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 12,
+          "endLine": 23
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 77,
+          "endLine": 94
+        }
+      ]
+    },
+    {
+      "id": "ARCH-019",
+      "topic": "DataSourceキャッシュの寿命",
+      "statement": "NenkinDataSourceは三系統それぞれのDataSourceをstatic volatileフィールドへキャッシュし、初回取得時にクラス単位の同期内で再確認する。キャッシュするのはDataSourceであり、Connectionではない。各open呼出しは採用済みDataSourceのgetConnectionを呼ぶ。明示的なキャッシュ解除・再探索入口はこのクラスにないため、JNDI再登録だけで既存キャッシュが更新されるとは扱えない。staticフィールドの共有範囲は当該クラスをロードしたクラスローダーの範囲である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 25,
+          "endLine": 75
+        }
+      ]
+    },
+    {
+      "id": "ARCH-020",
+      "topic": "共通接続と年金接続の違い",
+      "statement": "共通処理のCommonUtil.getConnectionは指定された一つのJNDI名をlookupし、取得したConnectionへsetAutoCommit(false)を設定する。CommonActionの接続取得もこの処理へ委譲する。対してNenkinDataSourceはConnection取得時にautoCommitを変更せず、予約保存・削除・削除明細整理が個別にfalseを設定する。年金の参照接続のautoCommitや分離レベルは、この取得コードから固定値を確定できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/util/CommonUtil.java.txt",
+          "startLine": 36,
+          "endLine": 43
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonAction.java.txt",
+          "startLine": 46,
+          "endLine": 49
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 32,
+          "endLine": 75
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 280,
+          "endLine": 287
+        }
+      ]
+    },
+    {
+      "id": "ARCH-021",
+      "topic": "業務DBと外部参照DBの分離",
+      "statement": "業務接続は予約本表の年金1_LK、年金＿削除明細、店名テーブル、および性別・裁定請求・受給有無・年金種類の四コード表を扱う。職員接続はDB2.Ｕ職員名簿表、顧客接続はN2_SIGHT.Ｂ顧客基本表の参照に使用する。収録SQL Server DDLも年金業務7表を定義し、職員・顧客表を既存Oracle表として作成対象から外している。DDLの配置方針と、実配備先で表・権限が成立していることは別である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 24,
+          "endLine": 31
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 23,
+          "endLine": 29
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 103,
+          "endLine": 104
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 206,
+          "endLine": 218
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 1,
+          "endLine": 5
+        },
+        {
+          "path": "indexed/nenkin/README.md.txt",
+          "startLine": 16,
+          "endLine": 20
+        }
+      ]
+    },
+    {
+      "id": "ARCH-022",
+      "topic": "接続をまたぐ表示情報の組立て",
+      "statement": "職員・顧客候補の店舗名はDB間JOINで取得しない。ReferenceDataServiceは業務接続で店名テーブル全件をMapへ読み込み、その接続を閉じてから職員または顧客接続の行へ店舗番号で突き合わせる。追加職員確認もこの店舗名取得を経由する。顧客基本情報から予約モデルを作る処理は顧客接続を閉じた後、別の業務接続で店舗名・性別名称を補う。複数DBの読取りを一つの整合したスナップショットとして保証する処理ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 97,
+          "endLine": 125
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 206,
+          "endLine": 234
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 289,
+          "endLine": 321
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 119,
+          "endLine": 140
+        }
+      ]
+    },
+    {
+      "id": "ARCH-023",
+      "topic": "データアクセス方式の相違",
+      "statement": "年金Repositoryと参照サービスはPreparedStatementを使い、検索値や保存値をJDBCのsetString・setInt・setBigDecimal等で渡す。一方、共通認証・共通職員検索・事業所名検索はSQL文字列へ値を連結し、CommonBaseSelectがStatementで実行する。共通側の結果は全列をStringとして読み、SQL NULLを空文字へ、非NULLをtrim済み文字列へ変換したList<Map>である。この変換を、年金側のnullable Integerやモデル変換と同じ契約として扱わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java.txt",
+          "startLine": 40,
+          "endLine": 52
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java.txt",
+          "startLine": 107,
+          "endLine": 117
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java.txt",
+          "startLine": 39,
+          "endLine": 51
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/CommonBaseSelect.java.txt",
+          "startLine": 46,
+          "endLine": 108
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 144,
+          "endLine": 167
+        }
+      ]
+    },
+    {
+      "id": "ARCH-024",
+      "topic": "予約保存の処理境界",
+      "statement": "予約Saveは職員確認、入力取込み、POST・CSRF確認、入力検査を行い、現在キーとORIGINALキーで既存予約を別々に照会する。重複読込み、キー変更、既存変更の権限を判定してからRepositoryへ進む。Repositoryは受領モデルのコピーを正規化・検証した後に接続を開き、autoCommitをfalseにして同じ接続で存在を再確認し、INSERTまたはUPDATEを選択してcommitする。Actionの事前照会とRepositoryの存在再確認は別時点であり、その間の状態変更を同一検査としてまとめない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+          "startLine": 11,
+          "endLine": 48
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 280,
+          "endLine": 308
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 513,
+          "endLine": 532
+        }
+      ]
+    },
+    {
+      "id": "ARCH-025",
+      "topic": "保存時の正規化と例外到達",
+      "statement": "Actionのキー比較はNFKC・trim・英字大文字化とASCII数字抽出を使うが、Repositoryのふりがな正規化には空白集約があり、電話番号はUnicode数字を抽出してBigDecimalにするため先頭ゼロの表現も失われる。Actionの非空検査後でもRepositoryで空キーや数字のない電話番号として拒否される経路がある。prepareForSaveはRepositoryのtryより前なので、そこでのIllegalArgumentExceptionはDB例外ラップやrollback処理を経由しない。SaveActionには個別catchがなく、Action実行中ならServletの共通catchへ伝わる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 102,
+          "endLine": 117
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 167,
+          "endLine": 181
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 280,
+          "endLine": 285
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 513,
+          "endLine": 526
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 837,
+          "endLine": 865
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+          "startLine": 46,
+          "endLine": 50
+        }
+      ]
+    },
+    {
+      "id": "ARCH-026",
+      "topic": "予約削除のトランザクション",
+      "statement": "DeleteActionは職員・要求・対象キー・元キー・権限を確認してからRepository.deleteへ進む。Repositoryは同じ業務接続内で対象を再取得し、不在ならrollbackしてfalseを返す。対象があれば削除時の更新日・時刻・更新者を付けた削除明細を追加し、ふりがなと電話番号を条件に本表を削除する。削除明細追加と本表削除は各1件を要求し、成功時に一緒にcommitする。対象消失のfalseとDB例外による失敗は異なる結果である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java.txt",
+          "startLine": 11,
+          "endLine": 34
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 315,
+          "endLine": 349
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 690,
+          "endLine": 700
+        }
+      ]
+    },
+    {
+      "id": "ARCH-027",
+      "topic": "同期・排他と失敗処理",
+      "statement": "Repositoryの保存・削除・削除明細整理はインスタンスのsynchronizedメソッドであり、通常経路の共有INSTANCEに対する同一JVM内の呼出しを直列化する。Actionの事前照会や他JVM・他接続の更新まで囲むロックではない。UPDATEとDELETEのWHEREはふりがな・電話番号で、比較版を含まない。提供DDLにも予約本表・削除明細のPKや一意制約はなく、検索キー索引は非一意である。例外時のrollback失敗とclose失敗は元の結果を優先して抑制するため、commit例外後の永続状態を例外名だけから断定できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 66,
+          "endLine": 75
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 280,
+          "endLine": 346
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 458,
+          "endLine": 479
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 920,
+          "endLine": 940
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 60,
+          "endLine": 137
+        }
+      ]
+    },
+    {
+      "id": "ARCH-028",
+      "topic": "日次・月次の独立した更新境界",
+      "statement": "日次・月次の出力サービスは要求・選択区分・対象期間・職員番号を検査した後、削除基準日が非空なら削除明細整理を先に呼ぶ。整理処理は業務接続を独自に開き、データ更新日が基準日以下の削除明細を削除してcommitする。その後の区分別検索、Workbook生成、ZIP生成、HTTP送信とはトランザクションを共有しない。後段の失敗で既に確定した整理が巻き戻るという説明は成立しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 58,
+          "endLine": 92
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 458,
+          "endLine": 479
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 19,
+          "endLine": 21
+        }
+      ]
+    },
+    {
+      "id": "ARCH-029",
+      "topic": "変更区分・削除明細と監査情報",
+      "statement": "新規・変更出力は予約本表の変更FLGを0または1で絞り、削除出力は削除明細を読む。保存は本表をINSERTまたはUPDATEし、各変更前後の行を独立履歴として追加する処理ではない。PensionAuditRecordへ渡すauditIdは検索結果を読みながら1から付けるメモリ上の連番である。アクセス記録表、予約の現在行、削除明細、出力用監査モデルを一つの完全な監査履歴として扱わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 290,
+          "endLine": 299
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 353,
+          "endLine": 406
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 657,
+          "endLine": 698
+        }
+      ]
+    },
+    {
+      "id": "ARCH-030",
+      "topic": "アクセス記録の内容と順序",
+      "statement": "ServletはAction結果が決まった後、forwardより前にカウンターシフトを記録する。記録対象は機能ID・画面ID・コマンドID・連結したAction ID・JSP名・利用者IDで、登録側がアクセス日付と時刻を付ける。MESSAGE属性が存在すると記録JSP名をSubMessage.jspに置き換えるが、実際のforward先strUrlは変更しない。したがって記録JSP名だけから実表示画面や描画成功を確定できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 349,
+          "endLine": 383
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java.txt",
+          "startLine": 34,
+          "endLine": 65
+        }
+      ]
+    },
+    {
+      "id": "ARCH-031",
+      "topic": "アクセス記録と業務更新の独立性",
+      "statement": "CounterShift.countUpはOracle_SP2NMへの新しい共通接続でDB2.ＵカウンターシフトへINSERTし、独自にcommitする。捕捉した記録例外ではrollbackを試み、記録例外・rollback例外・close例外をログへ出して戻る。業務用RAROA_DBの更新接続を受け取らないため、業務更新とアクセス記録は原子的に確定しない。通常は記録失敗で選択済みの業務応答を差し替えず、業務失敗や認証拒否の経路にもServlet末尾へ到達すれば記録を試みる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CounterShift.java.txt",
+          "startLine": 25,
+          "endLine": 53
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 313,
+          "endLine": 373
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 286,
+          "endLine": 307
+        }
+      ]
+    },
+    {
+      "id": "ARCH-032",
+      "topic": "年金と運用状態確認の関係",
+      "statement": "OperatePermissionは業務種別を判定する前にOracle_SP2NMへの接続を取得する。運用状態表を照会するのはing・credit・crd・rate・saikenの分岐であり、nenkinは対象外としてtrueを返す。ただし接続取得で例外になった場合はcatch後にfalseを返すので、年金もこの共通接続への依存を持つ。年金用の運用状態レコードを照会するという説明は成立しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/OperatePermission.java.txt",
+          "startLine": 26,
+          "endLine": 84
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 325,
+          "endLine": 329
+        }
+      ]
+    },
+    {
+      "id": "ARCH-033",
+      "topic": "Excel・ZIP生成用メモリ",
+      "statement": "店舗別Excelは取得した予約ListをObject配列の明細Listへ移し、OpenXmlWorkbookWriterで単一シートのOpen XMLを作る。WriterはByteArrayOutputStream上のZipOutputStreamへ構成XMLを書き、完成したbyte配列を返す。日次・月次も区分別Workbookをbyte配列として保持し、複数ファイルなら別のメモリZIPへまとめる。これらの生成経路にサーバーファイルへの保存や出力ジョブの永続化はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 36,
+          "endLine": 63
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 26,
+          "endLine": 65
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 74,
+          "endLine": 109
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 313,
+          "endLine": 347
+        }
+      ]
+    },
+    {
+      "id": "ARCH-034",
+      "topic": "出力結果の保持とコピー",
+      "statement": "Excel出力結果と日次・月次出力結果は、受け取ったbyte配列をコンストラクタでcloneし、getContentでもcloneを返す。日次・月次のファイル情報ListとメッセージListはコピー後に変更不可のListとして保持する。通常Actionは結果をローカル変数で受け取り送信するため、Serializableの宣言だけを理由に出力バイナリがセッションへ保存されるとは扱わない。予約モデルのcopyも別モデルを作り、Repositoryはそのコピーを正規化する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportResult.java.txt",
+          "startLine": 12,
+          "endLine": 31
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportResult.java.txt",
+          "startLine": 17,
+          "endLine": 32
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 19,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 20,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 43,
+          "endLine": 76
+        }
+      ]
+    },
+    {
+      "id": "ARCH-035",
+      "topic": "日次・月次の応答合流",
+      "statement": "日次・月次サービスは生成ファイル0件なら空byte配列とメッセージ、1件ならそのWorkbookのファイル名・内容、複数件なら日次または月次のZIP名とZIP内容を返す。ファイル情報とメッセージは各枝で引き継ぐ。複数件ZIPでは未出力区分のメッセージがあれば出力結果.txtを追加する。Actionは内容なしならBeanへメッセージを設定して再表示し、内容ありなら直接ダウンロードする。IllegalArgumentExceptionは画面内再表示にするが、他のExceptionを同じcatchで処理しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 95,
+          "endLine": 112
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 313,
+          "endLine": 338
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 20,
+          "endLine": 21
+        }
+      ]
+    },
+    {
+      "id": "ARCH-036",
+      "topic": "ダウンロードと応答確定境界",
+      "statement": "writeDownloadはファイル名をUTF-8でエンコードし、response.reset、Content-Type、Content-Disposition、Content-Lengthの設定後、完成済みbyte配列をwriteしてflushする。Excel・日次月次Actionは送信後にCSVを返すが、これはServletのforwardを抑止する制御値であり、CSVファイルを生成したという意味ではない。途中送信の失敗がAction用catchへ届いても、既に応答が開始・確定していれば共通エラーJSPへの切替え成功を保証できず、利用者のファイル受領も戻り値から確定できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 204,
+          "endLine": 211
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 19,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 20,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 338,
+          "endLine": 345
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 375,
+          "endLine": 383
+        }
+      ]
+    },
+    {
+      "id": "ARCH-037",
+      "topic": "登録内容印刷と旧PDF経路",
+      "statement": "登録内容印刷はReportPreviewActionがRepository検索結果をReportViewBeanへ保持し、Report.jspが明細を表示してwindow.printを呼ぶブラウザー印刷である。別にControlServletのGETは、OPKとcharCommonUIDがともに未設定なら旧PDFUtil.pdfControlへ進む。旧PDF補助にはセッション内FWSessionAgent、コールバック結果の再利用、タイマー再開・解除があるが、この経路を年金の登録内容印刷へ結ぶ呼出しは確認できない。GET側の外側catchはログ出力のみで、POST側と同じ共通エラー遷移を設定しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java.txt",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 3,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 61,
+          "endLine": 61
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 54,
+          "endLine": 79
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/util/PDFUtil.java.txt",
+          "startLine": 118,
+          "endLine": 141
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/util/PDFUtil.java.txt",
+          "startLine": 183,
+          "endLine": 234
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/util/PDFUtil.java.txt",
+          "startLine": 400,
+          "endLine": 415
+        }
+      ]
+    },
+    {
+      "id": "ARCH-038",
+      "topic": "通常参照通信とJSON入口",
+      "statement": "予約画面の参照はiframeを対象にしたフォームPOSTでLookup/Viewを開き、参照画面からのpostMessageを同一originとsource識別で確認して入力へ移す。顧客選択後はLOOKUP_KANA・LOOKUP_PHONE等を保持してPension/Loadを送信する。候補ボタンもTARGET=customerへ置き換える。別途PensionLookupActionは職員確認後にPOST以外を405とし、JSONを直接返してCSVを戻す実装だが、付属JSP・assetsからの呼出しは検索で確認できない。通常UIの非同期JSON照会として図示しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 62,
+          "endLine": 68
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionLoadAction.java.txt",
+          "startLine": 12,
+          "endLine": 31
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionLookupAction.java.txt",
+          "startLine": 11,
+          "endLine": 23
+        }
+      ]
+    },
+    {
+      "id": "ARCH-039",
+      "topic": "互換資源と未接続helper",
+      "statement": "StaffViewAction・StaffVerifyAction・StaffClearActionはすべてMenuViewActionへ委譲する。StaffViewBeanのコメントは旧セッションのデシリアライズ互換用と説明しており、通常ログイン後に職員番号を再入力する機能として採用しない。PensionRepositoryのsearchCandidatesとfindLatestAuditTypeには実装があるが、年金ソース内の呼出し検索では宣言以外を確認できない。反射規則でActionに到達し得ることと、helperが通常画面に接続されていることを分ける。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/StaffViewAction.java.txt",
+          "startLine": 6,
+          "endLine": 9
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/StaffVerifyAction.java.txt",
+          "startLine": 6,
+          "endLine": 9
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/StaffClearAction.java.txt",
+          "startLine": 6,
+          "endLine": 9
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/StaffViewBean.java.txt",
+          "startLine": 5,
+          "endLine": 13
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 171,
+          "endLine": 215
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 416,
+          "endLine": 453
+        }
+      ]
+    },
+    {
+      "id": "ARCH-040",
+      "topic": "他業務向け共通分岐",
+      "statement": "ControlServletはOPK、Otheflg、charCommonUID等の特殊連携値によって通常のFUNCTION_ID・VIEW_ID・COMMAND_IDとは別の識別値設定を行う。共通LoginActionにはcredit、bat、unify、cif、ringi等の分岐や代行画面への委譲がある。一方、年金の通常ログインフォームは固定のunify条件を送る。これらの共通分岐や基盤資源の存在を理由に、別業務の画面・オンライン操作・代行店舗選択を年金の通常機能へ追加しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 115,
+          "endLine": 246
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt",
+          "startLine": 143,
+          "endLine": 173
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt",
+          "startLine": 226,
+          "endLine": 242
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt",
+          "startLine": 475,
+          "endLine": 533
+        },
+        {
+          "path": "indexed/nenkin/JSP/MENU/Login.jsp.txt",
+          "startLine": 21,
+          "endLine": 25
+        }
+      ]
+    },
+    {
+      "id": "ARCH-041",
+      "topic": "ローカルDB構成と寿命",
+      "statement": "H2JndiSetupListenerはn2nenkin.localDbの既定値falseなら初期化せず終了する。有効時はローカルDBを初期化してschema.sql、data.sqlの順に読み込み、同じDataSourceをOracle_SP2NM・Oracle_DWH・RAROA_DB・RAROA_SHAREのJNDI名へ再登録する。通常構成の三系統分離に対し、ローカル互換構成は同じDataSourceへ集約する構成である。終了時は登録解除とSHUTDOWNを試みる。既定保存先はWEB-INF/local-db/nenkinで、n2nenkin.db.pathによる変更がある。これらはListener内の処理定義であり、本解析で実行した手順ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 22,
+          "endLine": 35
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 48,
+          "endLine": 85
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 101,
+          "endLine": 128
+        }
+      ]
+    },
+    {
+      "id": "ARCH-042",
+      "topic": "ビルドと配備実装の境界",
+      "statement": "収録build.ps1は既存n2frameworkのWEB-INF/classesをjar.exeでFW.jarへまとめ、年金ソースをjavacでコンパイルする構成である。したがって共通Javaソースを読んだ結果だけでは、ビルドが使用する既存classや配備済みFW.jarとの一致を保証できない。スクリプト中のコマンドは読取り材料として確認したもので、実行結果ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/build.ps1.txt",
+          "startLine": 16,
+          "endLine": 29
+        },
+        {
+          "path": "indexed/nenkin/tools/build.ps1.txt",
+          "startLine": 49,
+          "endLine": 49
+        }
+      ]
+    },
+    {
+      "id": "ARCH-043",
+      "topic": "依存図材料・通常構成",
+      "statement": "通常構成の図は次の接続を持つ。ブラウザー→JSPフォーム→ControlServlet→要求ごとのAction、Action→セッションのViewBean／SubWindowBean、Action→PensionReservation・StaffContext等のモデル、Action→共有PensionRepository／ReferenceDataService／出力サービス、各サービス・Repository→NenkinDataSource→三系統JNDIである。JSP→ReferenceDataServiceの描画時依存も必要である。Mermaid材料:\nflowchart LR\n B[ブラウザー] -->|フォーム送信| C[ControlServlet]\n C -->|反射生成| A[要求ごとのAction]\n A --> M[業務モデル]\n A --> V[セッション内画面Bean]\n C -->|forward| J[JSP]\n V --> J\n J --> B\n A --> R[PensionRepository]\n A --> S[ReferenceDataService]\n J -->|候補取得| S\n A --> E[Excel・日次月次サービス]\n E --> R\n E --> W[OpenXmlWorkbookWriter]\n W --> O[要求内の出力byte配列]\n O -->|直接送信| B\n R --> D[NenkinDataSource]\n S --> D\n D --> DB1[jdbc/RAROA_DB]\n D --> DB2[jdbc/Oracle_SP2NM]\n D --> DB3[jdbc/Oracle_DWH]\n C --> L[共通認証・運用確認・アクセス記録]\n L --> U[CommonUtil]\n U --> DB2\n U --> DB3\nDB間の矢印は設けず、別接続から得た店舗名の突合せはサービス内のメモリ処理として示す。共通処理からDWHへ向かう辺は共通ログインの事業所名取得であり、アクセス記録の接続先ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 325,
+          "endLine": 383
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 37,
+          "endLine": 43
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 3,
+          "endLine": 4
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 12,
+          "endLine": 75
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 74,
+          "endLine": 109
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt",
+          "startLine": 331,
+          "endLine": 375
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CounterShift.java.txt",
+          "startLine": 29,
+          "endLine": 37
+        }
+      ]
+    },
+    {
+      "id": "ARCH-044",
+      "topic": "処理フロー図材料・分岐と合流",
+      "statement": "通常POSTのフローは二つに分ける。第1図の入口は文字コード設定・識別値取得であり、識別値処理の例外はAction用catchへ入らない。共通ログイン拒否はErrorMsgとエラーJSPを設定し、運用可否拒否は別のErrorMsgと同じエラーJSPを設定する。Actionが呼ばれた場合だけ反射生成・performのExceptionを共通アプリケーションエラーへ変換する。第1図の出口は各枝で決まったstrUrlとセッション状態である。第2図はそのstrUrlを保持してアクセス記録へ進み、MESSAGE有無で記録JSP名だけを選び分ける。最後にstrUrlがnull・PDF・CSVならforwardせず終了し、それ以外はヘッダー設定後にforwardする。合流点で全枝を成功や固定HTTP状態へ変更せず、forward時例外と既送信応答の限界を別出口として残す。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 107,
+          "endLine": 111
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 243,
+          "endLine": 246
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 309,
+          "endLine": 384
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "実配備先のJNDIリソース定義、DBホスト、接続プール、読取り接続のautoCommit・分離レベル、実ユーザーの権限は確認できない。三つの論理接続先から物理サーバー数を推定しない。",
+    "共通ソースと既存n2framework class、FW.jar、配備済みバイナリの一致は未照合である。ソース上の動作を配備済み環境の実証結果として扱えない。",
+    "セッション有効時間、コンテナーのセッション永続化・複製、同一セッションの並行要求制御は未確認である。同じViewBean／SubWindowBeanキーを複数タブが共有する構造は確認できるが、実際の競合順序や再現結果は確定していない。",
+    "提供web.xmlには認証filterやsecurity-constraintの宣言がない。確認した認証はAction.do経路の実装であり、直接JSPアクセスやコンテナー共通設定による保護の実効範囲は未確認である。",
+    "Servletは要求・通常forward応答にWindows-31Jを設定する一方、確認した年金JSPはUTF-8を宣言する。実コンテナーでの最終応答文字コード、要求デコード結果、表示の成否は未実行のため確定していない。",
+    "commitで例外が起きた場合や、その後のrollbackが失敗した場合のDB確定状態はソースだけでは判定できない。HTTP送信途中の失敗でも、業務更新・削除明細整理・アクセス記録・利用者の受領状態を一括した成否へまとめられない。",
+    "旧PDF経路は共通ServletからPDFUtilへの接続とセッションagent・タイマー利用まで確認した。FWSessionAgent以下の全処理、外部FM実装、帳票資源、実コールバックの成立は本書責務の調査では確定していない。",
+    "反射で指定されるクラスの実ロード結果、特殊連携要求の外部送信元、付属UI以外からのPensionLookupAction利用は未確認である。通常画面内の呼出し不在を、外部利用が絶対にないことへ拡張しない。"
+  ],
+  "coverageNotes": [
+    "manifestは材料管理と読取り権限の確認にだけ使用した。mode=source-only、trainingReferenceAuthorizedByUser=false、referenceSpecificationIncluded=false、referenceFiles空、収録176ファイルを確認した。参照設計は使用していない。",
+    "読取り対象は指定workspace内のmanifest.json、sources/、indexed/に限定した。workspace外、親・兄弟ディレクトリ、期待値、spec-eval、過去成果物、ユーザー設定、外部サービスは使用していない。",
+    "本文確認には行番号付きindexedを使用し、開始点の9ファイルから年金Action、画面Bean、業務モデル、出力サービス、JSP、共通接続・認証・アクセス記録・配置宣言へ追跡した。大きなRepositoryと共通LoginActionは必要範囲を分割して確認した。ファイル一覧や検索一致だけを全文読了とは扱っていない。",
+    "通常UI接続確認としてsources/nenkin/JSP、sources/nenkin/assets、sources/nenkin/WEB-INF/src/nenkin内でPensionLookup、fetch、XMLHttpRequest、searchCandidates、findLatestAuditTypeを検索した。PensionLookupActionと二つのhelperは宣言を確認したが、通常UIからの呼出しは確認できなかった。検索だけの走査範囲と、本文範囲を確認したsourcePathsReadは区別する。",
+    "READMEは構成・DB方針・ローカル配置の関連範囲を参照した。READMEに記載された未提供の解析資料・旧資源へのパスは追跡していない。認証値はfactsへ転載していない。",
+    "SYS-ARCHITECTUREの計画上の正本位置は共通/システム分析.md。以下の関連リンクはこの位置からの相対パスで照合したものであり、対象文書の生成済み状態を示さない。",
+    "COM-012 → 共通仕様書_COM-012_共通コントロールサーブレット.md。共通要求分岐、反射Action生成、アクセス記録、forward、旧GET/PDF境界を接続する。",
+    "COM-015 → 共通仕様書_COM-015_ログイン処理.md。共通認証、職員番号の組替え、共通表の読取り、LoginInfoBean、ログアウトの属性除去を接続する。",
+    "COM-111 → 共通仕様書_COM-111_年金業務共通処理.md。年金職員確認、CSRF、変更・削除権限、入力変換、キー比較、ダウンロード応答を接続する。",
+    "API-NENKIN → 要求処理一覧.md。FUNCTION_ID・VIEW_ID・COMMAND_ID、Action選択、JSP・JSON・ダウンロードの応答分岐、例外捕捉境界を接続する。",
+    "DB-OPS → DB仕様書/DB操作仕様書.md。三系統接続、PreparedStatementと共通Statementの相違、予約保存・削除、削除明細整理、アクセス記録の独立した確定境界を接続する。",
+    "ENV-NENKIN → 設定・配置・依存仕様書.md。Servlet・Listener登録、JNDI探索とキャッシュ、ローカルH2集約構成、既存classを使うFW.jar構築を接続する。",
+    "原プログラム、SQL、スクリプト、ビルド、テストは実行していない。ファイル編集・生成、ネットワーク、プラグイン、外部サービス、委譲エージェントは使用していない。図は未描画の材料であり、表示合格や配備成功を記録していない。",
+    "本応答はSYS-ARCHITECTURE用の解析factsである。Markdown・HTML・PDF・Excelの生成、後工程の構造検査・独立レビュー・表示確認・出版状態は判定していない。正式率はnullとして扱い、正式採点を実施したとは記録しない。"
+  ]
+}

@@ -184,6 +184,7 @@ def run_job(
     prompt: str,
     schema: dict | None = None,
     timeout_seconds: int | float = 1800,
+    *, images: tuple[Path, ...] = (),
 ) -> dict:
     """Return answer/exit_code/usage/metadata and preserve every new job artifact.
 
@@ -204,6 +205,21 @@ def run_job(
     job_dir = _plain_path(Path(job_dir))
     if not workspace.is_dir():
         raise ValueError("The source-only workspace must exist")
+    if not isinstance(images, (tuple, list)) or len(images) > 8:
+        raise ValueError("At most eight explicit workspace image inputs are supported")
+    image_inputs = []
+    for candidate in images:
+        image = _plain_path(Path(candidate))
+        if workspace not in image.parents or not image.is_file() or image.suffix.lower() not in {'.png', '.jpg', '.jpeg', '.webp'}:
+            raise ValueError("Image input must be a supported raster inside the explicit workspace")
+        if image.stat().st_size > 20_000_000:
+            raise ValueError("Image input exceeds the bounded size")
+        from PIL import Image
+        with Image.open(image) as raster:
+            if raster.width * raster.height > 40_000_000:
+                raise ValueError("Image input exceeds the bounded dimensions")
+            raster.verify()
+        image_inputs.append({'path': str(image), 'sha256': hashlib.sha256(image.read_bytes()).hexdigest()})
     job_dir.mkdir(parents=True, exist_ok=False)
     start = time.perf_counter()
     metadata: dict[str, Any] = {
@@ -223,6 +239,8 @@ def run_job(
         "stderr_path": str(job_dir / "stderr.log"),
         "answer_path": str(job_dir / "answer.txt"),
     }
+    if image_inputs:
+        metadata['image_inputs'] = image_inputs
     result: dict[str, Any] = {"answer": None, "exit_code": None, "usage": None, "metadata": metadata}
     # Each artifact is first created exclusively within this exclusive job.
     for filename in ("events.jsonl", "stderr.log"):
@@ -279,8 +297,10 @@ def run_job(
     command = [
         str(cli), "exec", "--ephemeral", "--sandbox", "read-only", "--color", "never", "--json",
         "-c", 'approval_policy="never"', "-c", "project_doc_max_bytes=0",
-        "--output-last-message", str(job_dir / "answer.txt"),
     ]
+    for image in image_inputs:
+        command += ['--image', image['path']]
+    command += ["--output-last-message", str(job_dir / "answer.txt")]
     if schema is not None:
         command += ["--output-schema", str(schema_path)]
     command.append("-")
@@ -325,6 +345,14 @@ def run_job(
         status = "provider_unavailable"
     result["usage"], event_metadata = _events(job_dir / "events.jsonl")
     metadata.update(event_metadata)
+    for image in image_inputs:
+        try:
+            unchanged = hashlib.sha256(Path(image['path']).read_bytes()).hexdigest() == image['sha256']
+        except OSError:
+            unchanged = False
+        if not unchanged:
+            metadata['error_code'] = 'image_input_changed'
+            return finish('image_input_changed')
     if status is None and metadata["error_events"]:
         status = "failed_events"
     if status is None and metadata["invalid_event_lines"]:

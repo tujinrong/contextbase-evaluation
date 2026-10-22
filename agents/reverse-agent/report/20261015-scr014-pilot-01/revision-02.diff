@@ -1,0 +1,34 @@
+--- revision-1.0
++++ revision-1.1
+@@ -1,7 +1,7 @@
+-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SCR-014","version":"1.0","path":"基本設計書/基本設計書_SCR-014_日次 _ 月次処理.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"概要"},{"heading":"項目一覧","kind":"LIST","sheet":"項目一覧","key":["No"]},{"heading":"イベント仕様","kind":"GRID","sheet":"イベント仕様"},{"heading":"補足説明","kind":"GRID","sheet":"補足説明"}]} -->
++<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SCR-014","version":"1.1","path":"基本設計書/基本設計書_SCR-014_日次 _ 月次処理.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"概要"},{"heading":"項目一覧","kind":"LIST","sheet":"項目一覧","key":["No"]},{"heading":"イベント仕様","kind":"GRID","sheet":"イベント仕様"},{"heading":"補足説明","kind":"GRID","sheet":"補足説明"}]} -->
+ # 日次 / 月次処理 基本設計書
+ 
+-文書ID：SCR-014　文書種別：基本設計書　文書版：1.0  
++文書ID：SCR-014　文書種別：基本設計書　文書版：1.1  
+ 対象画面：日次 / 月次処理　対象機能：年金予約明細の条件指定出力、出力前の削除明細整理
+ 
+ ## 概要
+@@ -153,8 +153,8 @@
+ 
+ | No | グループ | 項目名 | 種類 | 入出力 | DB連携項目 | 候補取得元 | 必須 | 形式・桁 | 説明 |
+ | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+-| 1 | ヘッダー | ログイン職員番号 | 表示 | O | DB2.Ｕ職員名簿表.職員番号をStaffContext経由で表示 | 候補なし | 入力対象外 | `int`を最小8桁ゼロ埋め | セッションのログイン職員。抽出条件や明細の担当者コードとは別の値。 |
+-| 2 | ヘッダー | ログイン職員氏名 | 表示 | O | DB2.Ｕ職員名簿表.漢字氏名をStaffContext経由で表示 | 候補なし | 入力対象外 | `String`、HTMLエスケープ | セッションに保持した氏名を表示する。画面から更新しない。 |
++| 1 | ヘッダー | ログイン職員番号 | 表示 | O | DB2.Ｕ職員名簿表.職員番号。提供H2 DDLはDECIMAL(18,0)、PK、NOT NULL | 候補なし | 入力対象外 | Java `int`を最小8桁ゼロ埋め | StaffContext経由のログイン職員。抽出条件や明細の担当者コードとは別の値。DB型の容量と最小表示幅を区別する。 |
++| 2 | ヘッダー | ログイン職員氏名 | 表示 | O | DB2.Ｕ職員名簿表.漢字氏名。提供H2 DDLはVARCHAR(40)、NULL可 | 候補なし | 入力対象外 | Java `String`、HTMLエスケープ | StaffLookupItemが取得値のNULLを空文字にし、StaffContext経由で表示する。画面から更新しない。DB容量40を保守業務の入力上限と扱わない。 |
+ | 3 | 共通条件 | 抽出対象の職員番号 | 文字入力 `batchStaff`／STAFF_NO | I／O | 本体・削除明細の更新者を検索。保存なし | 候補取得・名簿存在検査なし | 任意。空欄は更新者条件なし | ブラウザーmaxlength=8。サーバーtrim後に半角数字1～8桁。内部`Integer` | 初期空欄。先頭ゼロは検索時の数値化で失われる。数値0は全職員ではなく更新者=0。 |
+ | 4 | 共通条件 | 新規分 | チェック INCLUDE_NEW | I／O | 年金1_LK.変更FLG=0の抽出制御。保存なし | 固定選択肢、選択時の値1 | 新規・変更・削除のうち1個以上 | 受信`String`を`boolean`へ変換 | 初期未選択。ほかの区分と同時選択できる。 |
+ | 5 | 共通条件 | 変更分 | チェック INCLUDE_CHANGED | I／O | 年金1_LK.変更FLG=1の抽出制御。保存なし | 固定選択肢、選択時の値1 | 新規・変更・削除のうち1個以上 | 受信`String`を`boolean`へ変換 | 初期未選択。現在の本体行が対象となる。 |
+@@ -729,6 +729,10 @@
+ 根拠：`nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:23-36,95-112,165-184,250-347`、`nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java:104-218`、`nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java:204-211`、`n2framework/WEB-INF/src/common/ControlServlet.java:375-383`。
+ 
+ ### DB属性と出力元の保存契約
++
++ヘッダーの職員情報は、提供H2用DDLではDB2.Ｕ職員名簿表の職員番号がDECIMAL(18,0)・PK・NOT NULL、漢字氏名がVARCHAR(40)・NULL可である。名簿検索の職員番号はsetIntで指定し、取得した氏名のNULLはStaffLookupItemで空文字へ変換する。その後StaffContextへ保持し、画面では職員番号を最小8桁でゼロ埋めし、氏名をHTMLエスケープして表示する。これらのDDL属性はローカル用の提示定義であり、本番DBの適用属性や名称保守の業務上限を確認した結果ではない。
++
++根拠：`nenkin/WEB-INF/resources/db/schema.sql:20-29`、`nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java:206-234`、`nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java:27-34`、`nenkin/JSP/NENKIN/Batch.jsp:5-7,29`。
+ 
+ 次表は本体・削除明細に共通する関連属性である。両表の掲載列はすべてNULL可で、DEFAULTは宣言されていない。型・容量は提供DDLの宣言であり、画面の業務入力上限とは分ける。
+ 

@@ -1,0 +1,1808 @@
+{
+  "documentId": "OUTPUT-NENKIN",
+  "sourcePathsRead": [
+    "manifest.json",
+    "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+    "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+    "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+    "indexed/nenkin/JSP/NENKIN/Menu.jsp.txt",
+    "indexed/nenkin/assets/css/site.css.txt",
+    "indexed/nenkin/assets/js/app.js.txt",
+    "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+    "indexed/nenkin/WEB-INF/web.xml.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/ReportViewAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/ExcelViewAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/BatchViewAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/BatchDailyAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/BatchMonthlyAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/bean/ReportViewBean.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/bean/ExcelViewBean.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/model/PensionAuditRecord.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/model/AuditType.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataAccessException.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportResult.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchRunMode.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportResult.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportFileResult.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/util/DateUtil.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/util/AnsiTextUtil.java.txt",
+    "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+    "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+    "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/OperatePermission.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/CounterShift.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/util/CommonUtil.java.txt"
+  ],
+  "facts": [
+    {
+      "id": "OUT-001",
+      "topic": "出力機能の入口と到達性",
+      "statement": "メニューの「印刷」はReport/View、「EXCEL出力」はExcel/View、「処理データ」はBatch/ViewをPOSTで要求する。/Action.doはcommon.ControlServletへ登録され、通常要求のFUNCTION_ID・VIEW_ID・COMMAND_IDからActionクラスを組み立てる。登録内容印刷のプレビューはReportPreviewAction、店舗別ExcelはExcelExportAction、日次・月次はBatchDailyAction・BatchMonthlyActionから共通のBatchRunActionへ接続される。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Menu.jsp.txt",
+          "startLine": 9,
+          "endLine": 13
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/web.xml.txt",
+          "startLine": 15,
+          "endLine": 24
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 332,
+          "endLine": 338
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchDailyAction.java.txt",
+          "startLine": 1,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchMonthlyAction.java.txt",
+          "startLine": 1,
+          "endLine": 3
+        }
+      ]
+    },
+    {
+      "id": "OUT-002",
+      "topic": "出力前の共通認証",
+      "statement": "通常のAction呼出し前に共通ログインを確認し、各出力ActionでもrequireStaffを呼ぶ。年金職員セッションが存在すれば再利用し、存在しない場合はログイン情報の職員番号が1～8桁の数字であることを確認して名簿を照会する。職員確認が成立しない場合は職員情報とCSRF情報を除去し、ログイン画面へ戻す。ここで生成・維持するCSRF情報を日次・月次の実行検査に使用する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 309,
+          "endLine": 338
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 24,
+          "endLine": 35
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 45,
+          "endLine": 94
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 206,
+          "endLine": 234
+        }
+      ]
+    },
+    {
+      "id": "OUT-003",
+      "topic": "要求値・変換値・検索引数の区別",
+      "statement": "各画面フォームは文字列の要求値を送る。共通Servletは要求文字コードをWindows-31Jに設定し、ActionはgetParameterで得たStringを明示的に変換する。trimはNULLを空文字へ変え、integerOrNullは空文字・数値変換失敗・0以下をNULLへ変える。チェック項目は値が1、大小文字を問わないtrue、onのいずれかの場合だけtrueになる。ブラウザーの入力補助やmaxlengthと、これらのサーバー側変換は別の契約である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 107,
+          "endLine": 111
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 119,
+          "endLine": 135
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 30,
+          "endLine": 53
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 35,
+          "endLine": 58
+        }
+      ]
+    },
+    {
+      "id": "OUT-004",
+      "topic": "登録内容印刷の初期状態と保持領域",
+      "statement": "Report/Viewは新しいReportViewBeanをセッションのViewBeanへ設定する。初期値は店舗範囲指定なし、店番自・至は空文字、並び順は1、preview=false、明細は空リストである。初期表示ではプレビュー領域を出さず、印刷ボタンをdisabledにする。印刷条件と取得明細はこのセッションBeanに保持され、ブラウザー印刷操作自体はDBへ保存しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ReportViewAction.java.txt",
+          "startLine": 1,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/ReportViewBean.java.txt",
+          "startLine": 8,
+          "endLine": 30
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 37,
+          "endLine": 39
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+          "startLine": 31,
+          "endLine": 31
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 59,
+          "endLine": 68
+        }
+      ]
+    },
+    {
+      "id": "OUT-005",
+      "topic": "登録内容印刷の店舗条件",
+      "statement": "実コントロールuseBranchのUSE_BRANCH_RANGEをbooleanへ、branchFrom・branchToのBRANCH_FROM・BRANCH_TOをtrim後のStringへ保持し、検索用には正数IntegerまたはNULLへ変換する。範囲指定ありで店番自がNULLなら入力拒否し、両端が有効で自が至を超える場合も拒否する。至が空欄または変換後NULLなら自の単一店舗を検索する。範囲指定なしでは入力欄の保持値にかかわらず検索引数を両方NULLにする。maxlength=3はブラウザー属性であり、このActionには3桁上限の明示検査がない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 47,
+          "endLine": 55
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java.txt",
+          "startLine": 1,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 119,
+          "endLine": 135
+        }
+      ]
+    },
+    {
+      "id": "OUT-006",
+      "topic": "登録内容印刷の検索SQLと並び順",
+      "statement": "印刷検索は年金1_LKを対象とし、店舗条件なしならWHERE 1=1だけ、自だけならR.店番=?、両端ありならR.店番>=? AND R.店番<=?を加える。引数は存在する順にsetIntでバインドする。ORDER BYは、1および未定義の並び順では店番・担当者コード・顧客番号、2では店番・ふりがな・顧客番号、3では店番・生年月日・顧客番号、4では店番・請求予定日・顧客番号で、方向指定がないため昇順である。SQLページングや取得上限は設定せず、結果全件をリストへ取り込む。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 248,
+          "endLine": 272
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 483,
+          "endLine": 510
+        }
+      ]
+    },
+    {
+      "id": "OUT-007",
+      "topic": "登録内容印刷の並び順受信と再表示",
+      "statement": "SORT_TYPEはintegerOrDefaultで処理し、欠落・変換失敗・0以下なら1になる。有効な正数で1～4以外の値はBeanにそのまま残るが、SQLと表示ラベルは担当者コード順へ分岐する。この場合、1～4のラジオボタンはいずれもcheckedにならない。入力拒否時は新しく作ったBeanのpreview=falseと空明細が保持され、以前のプレビューを引き継がない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java.txt",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 128,
+          "endLine": 130
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 9,
+          "endLine": 9
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 40,
+          "endLine": 43
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/ReportViewBean.java.txt",
+          "startLine": 10,
+          "endLine": 16
+        }
+      ]
+    },
+    {
+      "id": "OUT-008",
+      "topic": "登録内容印刷の0件と印刷操作",
+      "statement": "検索を実施した場合は0件でもpreview=trueになる。画面には件数0と「対象データがありません」「印刷条件を変更してプレビューを作成してください。」を表示し、preview成立を条件とする印刷ボタンは活性になる。印刷ボタンはwindow.print()を呼ぶだけで、サーバーへPDF生成や印刷完了の通知を送らない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java.txt",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 59,
+          "endLine": 68
+        }
+      ]
+    },
+    {
+      "id": "OUT-009",
+      "topic": "登録内容印刷の店舗単位構成",
+      "statement": "JSPは取得順の連続した同一店番を一つのreport-pageへまとめる。NULL店番同士も同一グループとして扱う。各店舗の表ヘッダーには「年金自動受取予約明細表」、出力日時、店番、先頭明細の店舗名、並び順、当該店舗の件数を置く。全体件数と並び順は画面専用ツールバーにも表示する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 65,
+          "endLine": 89
+        }
+      ]
+    },
+    {
+      "id": "OUT-010",
+      "topic": "登録内容印刷の明細項目と配置",
+      "statement": "印刷明細は二段構成である。上段は顧客番号、担当、顧客氏名、カナ氏名、性別、電話番号、生年月日、裁請、請求予定日、予齢、予約徴求日を表示し、下段は住所、配偶者氏名、受給、配偶者生年月日、年金種類、備考を表示する。担当はstaffCodeの数値表示であり、担当者氏名や2桁ゼロ埋めを行わない。6ヶ月先確認はこの印刷明細に出力しない。氏名・住所・配偶者・年金種類・備考には全文をtitle属性にも設定する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 85,
+          "endLine": 95
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1935,
+          "endLine": 1994
+        }
+      ]
+    },
+    {
+      "id": "OUT-011",
+      "topic": "登録内容印刷の日付表現",
+      "statement": "登録内容印刷の生年月日・請求予定日・予約徴求日・配偶者生年月日はHtmlUtil.formatReportDateを通す。ISO日付として解析できた明治以降の日付は、元号英字、空白、2桁以上の元号年、ピリオドと空白で区切る月日となり、例はR 08. 10. 15である。ISO解析に失敗した値は元の文字列を返し、明治開始前は西暦表示からスラッシュを置換する。出力日時はJSP描画時のDateUtil.todayIsoと現在時刻HH:mmを組み合わせ、検索実行時刻をBeanへ保存した値ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 8,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 93,
+          "endLine": 94
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+          "startLine": 22,
+          "endLine": 48
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+          "startLine": 74,
+          "endLine": 81
+        }
+      ]
+    },
+    {
+      "id": "OUT-012",
+      "topic": "ブラウザー印刷の用紙・改ページ・省略表示",
+      "statement": "印刷CSSはA4横、余白8mmを指定し、共有ヘッダー、条件フォーム、メッセージ、操作部などのno-print領域を非表示にする。店舗のreport-pageごとに改ページし、最終店舗の末尾改ページは解除する。theadをtable-header-groupとして繰返し対象にし、明細行内での改ページを避ける。印刷時の明細は二段各5.2mm・6.6ptで、report-cellのoverflow:hidden、white-space:nowrap等は残るため、画面のtitle属性にある全文が紙へ自動展開される仕様ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1965,
+          "endLine": 1975
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 2141,
+          "endLine": 2260
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 20,
+          "endLine": 30
+        }
+      ]
+    },
+    {
+      "id": "OUT-013",
+      "topic": "印刷画面の店舗入力制御",
+      "statement": "toggleBranchはuseBranchのcheckedに合わせて店番自・至のdisabledを切り替え、選択を有効にした操作では店番自へフォーカスする。初期描画時にもこの切替えを行う。値をクリアする処理はない。戻る操作は同じフォームのVIEW_IDをMenu、COMMAND_IDをViewへ変更して送信する。CSSのreport-filter-gridは並び順と店舗条件を二領域に配置し、印刷用本文のreport-pageとは別の画面領域にする。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 35,
+          "endLine": 56
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 105,
+          "endLine": 108
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1633,
+          "endLine": 1637
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1763,
+          "endLine": 1766
+        }
+      ]
+    },
+    {
+      "id": "OUT-014",
+      "topic": "店舗別Excelの入力条件",
+      "statement": "店舗別Excelの実入力はexcelBranch、要求名BRANCH_NOで、ブラウザーmaxlengthは3である。ExcelExportActionは職員確認後、要求値をtrimしてExcelViewBean.branchNoへ保持し、正数Integerへ変換する。空欄または変換後NULLなら「店番を入力してください。」、正数へ変換できてもtrim後が4文字以上またはASCII数字以外を含むなら「店番は3桁以内の数字で入力してください。」として再表示する。このActionはisAuthorizedMutationを呼ばず、CSRF照合を追加していない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 8,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 13,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 119,
+          "endLine": 125
+        }
+      ]
+    },
+    {
+      "id": "OUT-015",
+      "topic": "店舗別Excelの店舗名照会と参照選択",
+      "statement": "Excel画面の参照選択は同一originのnenkin.lookupメッセージからbranchNoを入力欄、branchNameを表示領域へ移す。サーバーは出力時に店名テーブルを店舗ｺｰﾄﾞ=?、setInt(1,店番)で別途照会し、取得できた場合だけBeanへ名称を設定する。名称不在でも予約検索へ進むため、店名マスターの存在をExcel出力可否の必須条件にしていない。表示店舗名は店舗別Excelの列には含まれない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 8,
+          "endLine": 10
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 18,
+          "endLine": 20
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 184,
+          "endLine": 203
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 42,
+          "endLine": 57
+        }
+      ]
+    },
+    {
+      "id": "OUT-016",
+      "topic": "店舗別Excelの取得対象と順序",
+      "statement": "店舗別ExcelはPensionRepository.listByBranchで年金1_LKを検索する。WHEREはR.店番=?のみで、店番をsetInt(1,branchNo)へ渡す。ORDER BYは請求予定日降順、担当者コード昇順、顧客番号昇順である。更新区分、データ更新日、ログイン職員による抽出条件は付加しない。結果全件をPensionReservationのリストへ取り込み、DB更新を行わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 223,
+          "endLine": 245
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 36,
+          "endLine": 63
+        }
+      ]
+    },
+    {
+      "id": "OUT-017",
+      "topic": "店舗別Excelの0件時",
+      "statement": "予約検索が0件ならサービスはファイル名空文字、空byte配列、rowCount=0を返し、Workbookを生成しない。Actionは「入力された店番には対象データがありません。」を設定し、入力した店番と取得できた店舗名をセッションBeanに残してExcel.jspへ戻す。0件のExcelファイルをダウンロードさせる処理ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 36,
+          "endLine": 40
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 15,
+          "endLine": 21
+        }
+      ]
+    },
+    {
+      "id": "OUT-018",
+      "topic": "店舗別Excelのファイル名・シート・配置",
+      "statement": "店舗別Excelのファイル名は年金データ_店番_yyyyMMdd.xlsxで、日付は生成時のDateUtil.todayIsoからハイフンを除いた値である。店番は先頭0で最低3文字にするが、threeDigits自体は長い値を切り捨てない。シート名は「年金ﾃﾞｰﾀ」で、タイトル先行行や結合範囲を渡さず、1行目をヘッダー、2行目以降を明細とする。共通Writerの既定印刷倍率100を使用する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 60,
+          "endLine": 72
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 26,
+          "endLine": 28
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 129,
+          "endLine": 141
+        }
+      ]
+    },
+    {
+      "id": "OUT-019",
+      "topic": "店舗別Excelの18列とセル型",
+      "statement": "店舗別Excelの列順は、A顧客番号←customerNo、B担\\n当←staffCode、C顧客氏名←customerName、Dふりがな←kanaName、E性\\n別←gender、F住所←address、G電話番号←phoneNumber、H生年月日←birthDate、I年金種類←pensionType、J裁定\\n請求←claimStatus、K受給\\n有無←hasBenefit、L請求予定日←claimScheduledDate、M予定\\n年齢←plannedAge、N配偶者名←spouseName、O配偶者\\n生年月日←spouseBirthDate、P予約徴求日←reservationRequestDate、Q備考←notes、R６ヶ月先\\n確認←sixMonthCheckである。ヘッダー中の\\nは実際の改行を示す。customerNo・staffCode・plannedAgeが非NULLなら数値セル、それ以外は文字列セルで、確認済は「確」、未確認は空文字を出力する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 42,
+          "endLine": 57
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 13,
+          "endLine": 38
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 172,
+          "endLine": 183
+        }
+      ]
+    },
+    {
+      "id": "OUT-020",
+      "topic": "店舗別Excelの日付と電話番号",
+      "statement": "店舗別Excelは明細の日付Stringを和暦へ変換せず、そのままWriterへ渡す。元の値はJDBC ResultSet.getStringによるDATE列の読取値であり、サービスで独自の西暦表示書式やExcel日付シリアル値を設定していない。電話番号はRepository読取時にdisplayPhoneで加工したStringを文字列セルへ渡すため、出力時に復元した先頭0を数値セルへ変換しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 741,
+          "endLine": 762
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 50,
+          "endLine": 56
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 179,
+          "endLine": 183
+        }
+      ]
+    },
+    {
+      "id": "OUT-021",
+      "topic": "日次・月次画面の初期条件",
+      "statement": "Batch/Viewは新しいBatchViewBeanを作り、日次対象日を当日、月次開始日・終了日を当月の月初・月末へ設定する。職員番号は空文字で全職員、出力区分の新規・変更・削除はすべてfalseが初期状態である。削除基準日は画面表示時点のCalendarから2か月を減じた日をyyyy-MM-ddにしてhiddenのDELETE_CUTOFF_DATEへ出す。月末日へ固定した基準日ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchViewAction.java.txt",
+          "startLine": 14,
+          "endLine": 25
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java.txt",
+          "startLine": 7,
+          "endLine": 15
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 35,
+          "endLine": 40
+        }
+      ]
+    },
+    {
+      "id": "OUT-022",
+      "topic": "日次・月次の入力項目と要求DTO",
+      "statement": "batchStaffのSTAFF_NOはStringでmaxlength=8、dailyDateのDAILY_DATE、monthStartのMONTH_START、monthEndのMONTH_ENDはStringでmaxlength=14である。INCLUDE_NEW・INCLUDE_CHANGED・INCLUDE_DELETEDは各booleanへ変換する。Actionは全日付、職員番号、削除基準日をtrimしてBeanに保持し、同じ値をPensionBatchExportRequestへ移す。要求DTOのString初期値は空文字で、setterはNULLを空文字へ変換し、runModeの既定値はDAILYである。これらの条件は抽出・処理制御用であり、そのまま予約列へ保存しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 49,
+          "endLine": 58
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 68,
+          "endLine": 85
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 15,
+          "endLine": 19
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java.txt",
+          "startLine": 9,
+          "endLine": 43
+        }
+      ]
+    },
+    {
+      "id": "OUT-023",
+      "topic": "日次・月次実行入口の検査順序",
+      "statement": "日次・月次の実行順は、1.職員確認、2.要求値を新しいBeanへ保持、3.POSTとCSRF一致の検査、4.三つの出力区分のいずれか一つ以上の選択検査、5.空欄以外の職員番号についてASCII数字かつ8文字以内の検査、6.要求DTO生成、7.サービス呼出しである。3～5の拒否では保持済みBeanへメッセージを設定してBatch.jspへ戻す。区分は各項目を必須とする契約ではなく、三項目のいずれか必須である。職員番号の全桁0はこの検査で拒否しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 13,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 89,
+          "endLine": 94
+        }
+      ]
+    },
+    {
+      "id": "OUT-024",
+      "topic": "日次・月次サービスの期間検査",
+      "statement": "サービスは要求NULLと区分全未選択を拒否した後、期間、職員番号、削除明細整理の順に処理する。runMode=NULLは拒否し、DAILYではdailyDateを必須日付として同じ開始日・終了日にする。MONTHLYではmonthStart・monthEndを必須日付としてISO化し、開始日が終了日を超える場合に拒否する。同一月であること、実際の月初・月末であること、期間日数の上限は検査しない。日次では月次用の日付、月次では日次用の日付を抽出条件に使わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 58,
+          "endLine": 71
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 115,
+          "endLine": 146
+        }
+      ]
+    },
+    {
+      "id": "OUT-025",
+      "topic": "サーバーの日付正規化",
+      "statement": "DateUtil.toIsoDateはNFKC正規化とtrim後に、4桁西暦の区切り付き日付、yyyyMMdd、明治・大正・昭和・平成・令和またはM/T/S/H/Rによる和暦を受け付ける。和暦年は元または1～3桁で、0以下と元号の開始・終了期間外を拒否する。存在しない月日も非寛容の日付解析で拒否する。正常結果はyyyy-MM-dd、正規化後空文字なら空文字であり、不正時はIllegalArgumentExceptionを投げる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/DateUtil.java.txt",
+          "startLine": 15,
+          "endLine": 71
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/DateUtil.java.txt",
+          "startLine": 139,
+          "endLine": 179
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/DateUtil.java.txt",
+          "startLine": 199,
+          "endLine": 200
+        }
+      ]
+    },
+    {
+      "id": "OUT-026",
+      "topic": "日付の必須検査後に空値が生じる経路",
+      "statement": "requiredDateの空欄検査はNFKC前のString.trimで行い、DateUtil.toIsoDateの返却値が空文字でないことを再検査しない。そのため、サービスへ全角空白だけの対象日が渡ると、最初の空欄検査を通った後に空文字へ変わり、日次の開始・終了がともに空文字になる。Repositoryは空の日付のWHEREを省くため、この経路では日付条件なしの抽出となり得る。月次でも両端が同様に空文字なら両端条件を省き、開始だけ空文字なら下限条件を省く。これはコードから追跡した分岐であり、実行確認結果ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 119,
+          "endLine": 135
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/DateUtil.java.txt",
+          "startLine": 35,
+          "endLine": 39
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/DateUtil.java.txt",
+          "startLine": 139,
+          "endLine": 145
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 358,
+          "endLine": 372
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 868,
+          "endLine": 869
+        }
+      ]
+    },
+    {
+      "id": "OUT-027",
+      "topic": "ブラウザー日付補助とサーバー検査の差",
+      "statement": "Batch画面の日付はwesternモードのカレンダーへ接続し、解析できた値をyyyy/MM/ddへ表示する。blur・change時の補助は解析に成功した場合だけ表示値を書き換え、解析できない値をサーバー送信前に必ず排除する処理ではない。クライアントにはISO形式の先頭部分を解析する経路や、区切りなし和暦を解析する経路があり、Javaの完全一致パターンと同一ではない。したがって補助後の表示値、HTTPで受けるString、サーバーのISO化結果を区別する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 69,
+          "endLine": 81
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 31,
+          "endLine": 58
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 128,
+          "endLine": 170
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 335,
+          "endLine": 389
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/DateUtil.java.txt",
+          "startLine": 15,
+          "endLine": 21
+        }
+      ]
+    },
+    {
+      "id": "OUT-028",
+      "topic": "職員指定の検索上の意味",
+      "statement": "サービスのparseStaffNoはNULL・trim後空文字・大小文字を問わないALLを指定なしのNULLへ変え、それ以外をIntegerへ変換する。サービス単体では8桁上限や正数検査を行わないが、通常ActionはALLと負号を含む値を先に拒否する。変換した職員番号は担当者コードではなく、R.更新者の抽出引数updatedByにする。空欄時は更新者条件を付けず、名簿に存在する職員かを出力条件として照会しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 18,
+          "endLine": 19
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 138,
+          "endLine": 146
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 374,
+          "endLine": 397
+        }
+      ]
+    },
+    {
+      "id": "OUT-029",
+      "topic": "削除明細整理の対象と独立commit",
+      "statement": "DELETE_CUTOFF_DATEがtrim後非空なら、選択した出力区分にかかわらず抽出前にpurgeDeletedAuditsThroughを呼ぶ。Repositoryは日付正規化後に空なら0を返し、それ以外は年金＿削除明細のデータ更新日<=?をJDBC DATEで指定してDELETEする。更新者や出力期間による限定はない。接続をautoCommit=falseにして削除件数を得た後に独立commitし、その件数は出力結果へ採用しない。SQLExceptionではrollbackを試みるが、rollback自体の失敗は元例外を優先して保持しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 68,
+          "endLine": 80
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 457,
+          "endLine": 480
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 817,
+          "endLine": 824
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 920,
+          "endLine": 927
+        }
+      ]
+    },
+    {
+      "id": "OUT-030",
+      "topic": "削除基準日の受信境界",
+      "statement": "削除基準日はhiddenで送信した値をActionがtrimしてDTOへ移し、実行時に当日から再計算した値との一致やセッション保持値との一致を確認しない。空欄なら整理を省略し、不正な日付ならサービス呼出し中のIllegalArgumentExceptionとして画面再表示になる。有効な日付の場合は、その日以前の削除明細が出力対象期間内でも先に除去される。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 39,
+          "endLine": 40
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 15,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 68,
+          "endLine": 80
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 458,
+          "endLine": 473
+        }
+      ]
+    },
+    {
+      "id": "OUT-031",
+      "topic": "日次・月次の区分別抽出SQL",
+      "statement": "新規・変更は年金1_LK、削除は年金＿削除明細をRとして取得する。新規はR.変更FLG=?に0、変更は同じ条件に1をsetIntし、削除には変更FLG条件を付けない。開始日が非空ならR.データ更新日>=?、終了日が非空ならR.データ更新日<=?、職員指定ありならR.更新者=?を加える。バインド順は存在する変更FLG、開始DATE、終了DATE、更新者INTEGERである。正常な日次では同日を上下限にするため対象日一致と同じ範囲になり、正常な月次では両端を含む。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 353,
+          "endLine": 399
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 817,
+          "endLine": 824
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 115,
+          "endLine": 128
+        }
+      ]
+    },
+    {
+      "id": "OUT-032",
+      "topic": "新規・変更・削除の取得元の意味",
+      "statement": "新規・変更の出力元は保存のたびに更新される予約本表の現在値であり、全変更履歴を蓄積した表ではない。新規insertは変更FLG=0、既存updateは変更FLG=1で、保存時にデータ更新日・更新時間・更新者を設定する。通常保存Actionが渡す更新者はログイン職員番号で、明細の担当者コードとは別値である。削除時は読取った既存予約を削除日のデータ更新日・削除実行者とともに削除明細へ追加し、その後に本表を削除して同じトランザクションでcommitする。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+          "startLine": 39,
+          "endLine": 47
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java.txt",
+          "startLine": 24,
+          "endLine": 33
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 280,
+          "endLine": 298
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 324,
+          "endLine": 342
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 657,
+          "endLine": 695
+        }
+      ]
+    },
+    {
+      "id": "OUT-033",
+      "topic": "日次・月次の取得順・再ソート・連番",
+      "statement": "RepositoryのSQL順はデータ更新日・更新時間・店番・顧客番号で、取得した行へ1からlongのauditIdを付ける。これは検索結果内の連番で、永続監査IDを取得した値ではない。サービスはさらに店番、顧客番号、auditIdの順へ並べ替え、店番・顧客番号のNULLを非NULLより前にする。ExcelのNo列は再ソート後に各ファイルで1から振り直す。全件を取得し、SQLのページング、件数上限、明示的な取消・タイムアウトは設定していない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 377,
+          "endLine": 413
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 199,
+          "endLine": 243
+        }
+      ]
+    },
+    {
+      "id": "OUT-034",
+      "topic": "Q番号と出力識別情報",
+      "statement": "サービスが生成するqueryNameはQ番号_Excel出力_年金予約_区分_データ明細リストである。番号は日次の職員指定ありで新規010・変更020・削除030、日次の全職員で040・050・060、月次の職員指定ありで070・080・090、月次の全職員で100・110・120となる。queryNameは生成済みファイルのメタデータPensionBatchExportFileResultへ格納する識別文字列であり、この文字列でDBの保存クエリーやオブジェクトを実行していない。実際の検索はfindAuditRecordsのPreparedStatementである。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 165,
+          "endLine": 184
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 301,
+          "endLine": 308
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportFileResult.java.txt",
+          "startLine": 8,
+          "endLine": 24
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 383,
+          "endLine": 399
+        }
+      ]
+    },
+    {
+      "id": "OUT-035",
+      "topic": "日次・月次Excelの名称規則",
+      "statement": "区分表示名は新規・変更・削除である。各Excelのファイル名は「年金予約【区分】データ明細リスト（範囲期間）.xlsx」とし、範囲は職員指定ありで担当者別、指定なしで全担当者、期間は日次または月次とする。シート名は「新規分データ」「変更分データ」「削除分データ」、帳票タイトルは「年金予約【区分】データ明細リスト」である。ファイル名には対象日、職員番号そのもの、Q番号を含めない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/AuditType.java.txt",
+          "startLine": 4,
+          "endLine": 7
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 173,
+          "endLine": 184
+        }
+      ]
+    },
+    {
+      "id": "OUT-036",
+      "topic": "新規分Excelの17列",
+      "statement": "新規分Excelの列順は、A No←再採番、B予約徴求日←reservationRequestDate、Cカナ氏名←kanaName、D漢字氏名←customerName、E性\\n別←gender、F住所←address、G生年月日←birthDate、H電話番号←phoneNumber、I年金\\n種類←pensionType、J予定\\n年齢←plannedAge、K請求予定日←claimScheduledDate、L備考←notes、M配偶者名←spouseName、N配偶者\\n生年月日←spouseBirthDate、O店番←branchNo、P顧客番号←customerNo、Q担\\n当←staffCodeである。No・予定年齢・店番・顧客番号は非NULLなら数値セルで、担当と日付を含む残りは文字列セルになる。裁定請求、受給有無、6ヶ月先確認は新規分の出力列に含めない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 28,
+          "endLine": 31
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 222,
+          "endLine": 234
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 172,
+          "endLine": 183
+        }
+      ]
+    },
+    {
+      "id": "OUT-037",
+      "topic": "変更分・削除分Excelの20列",
+      "statement": "変更分と削除分は同じ20列で、A No←再採番、B店番←branchNo、C顧客番号←customerNo、D漢字氏名←customerName、Eカナ氏名←kanaName、F性\\n別←gender、G住所←address、H電話番号←phoneNumber、I生年月日←birthDate、J年金\\n種類←pensionType、K裁定\\n請求←claimStatus、L請求予定日←claimScheduledDate、M予定\\n年齢←plannedAge、N配偶者名←spouseName、O配偶者\\n生年月日←spouseBirthDate、P受給\\n有無←hasBenefit、Q予約徴求日←reservationRequestDate、R担\\n当←staffCode、S備考←notes、T６ヶ月\\n先確認←sixMonthCheckとなる。No・店番・顧客番号・予定年齢は非NULLなら数値セル、残りは文字列セルで、確認済は「確」、それ以外は空文字である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 32,
+          "endLine": 36
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 235,
+          "endLine": 243
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 172,
+          "endLine": 183
+        }
+      ]
+    },
+    {
+      "id": "OUT-038",
+      "topic": "日次・月次の日付・担当表示",
+      "statement": "日次・月次Excelの4つの明細日付はNULL・trim後空文字なら空表示、それ以外はDateUtil.toAccessWarekiでR8.10.15のように元号年の先頭0と元号後の空白を除いた文字列にする。担当者コードはNULLなら空文字、値ありならLocale.ROOTの%02dで最低2桁の文字列にし、3桁以上を切り捨てない。明治開始前の西暦日付はISO化できても和暦出力時にIllegalArgumentExceptionとなり得るため、期間入力検査の通過だけでWorkbook生成成功を保証しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 222,
+          "endLine": 243
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 293,
+          "endLine": 298
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/DateUtil.java.txt",
+          "startLine": 79,
+          "endLine": 103
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/DateUtil.java.txt",
+          "startLine": 158,
+          "endLine": 164
+        }
+      ]
+    },
+    {
+      "id": "OUT-039",
+      "topic": "新規分Excelのタイトル・結合範囲・倍率",
+      "statement": "新規分は17列幅の先行行を7行用意し、D1にタイトル、D5に処理日、F5に対象期間、J5に職員番号、L5に職員指定表示を置く。結合範囲はD1:M3、D5:E6、日次F5:H6または月次F5:I6、J5:K6、L5:M6である。8行目が列ヘッダー、9行目以降が明細となり、印刷倍率は70である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 250,
+          "endLine": 275
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 289,
+          "endLine": 290
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 132,
+          "endLine": 140
+        }
+      ]
+    },
+    {
+      "id": "OUT-040",
+      "topic": "変更分・削除分Excelのタイトル・結合範囲・倍率",
+      "statement": "変更分と削除分は20列幅の先行行を7行用意し、E1にタイトル、E5に処理日、G5に対象期間、L5に職員番号、N5に職員指定表示を置く。結合範囲はE1:P3、E5:F6、日次G5:H6または月次G5:I6、L5:M6、N5:P6である。8行目が列ヘッダー、9行目以降が明細となり、印刷倍率は60である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 250,
+          "endLine": 290
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 132,
+          "endLine": 140
+        }
+      ]
+    },
+    {
+      "id": "OUT-041",
+      "topic": "Excel上部の処理日・職員番号の意味",
+      "statement": "日次・月次Excelの「処理日」欄はファイル生成日ではなく抽出対象期間で、日次は対象日の短い和暦、月次は開始日～終了日の短い和暦を置く。「職員番号」欄は要求職員番号のtrim後文字列を保持し、NULLまたは空欄ならALLにする。検索でInteger化して失われた先頭0も、この表示には要求文字列から残る。上部行はWriterが常に文字列セルとして出力する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 257,
+          "endLine": 281
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 144,
+          "endLine": 159
+        }
+      ]
+    },
+    {
+      "id": "OUT-042",
+      "topic": "未出力区分のメッセージ",
+      "statement": "選択した区分が0件なら、その区分のWorkbookとファイル結果を作らず、メッセージだけを蓄積する。職員指定ありでは「入力した担当者の【区分分（日次または月次）】の該当明細はありませんでした」、全職員の日次では「入力年月日の【区分分（日次）】の該当明細はありませんでした」、全職員の月次では「入力年月の【区分分（月次）】の該当明細はありませんでした」とする。選択していない区分のメッセージは作らない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 74,
+          "endLine": 92
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 150,
+          "endLine": 160
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 187,
+          "endLine": 196
+        }
+      ]
+    },
+    {
+      "id": "OUT-043",
+      "topic": "日次・月次の生成ファイル0件",
+      "statement": "選択区分すべてが0件なら、結果はファイル名空文字、ExcelのContent-Type、空byte配列、空のfiles、区分別messagesとなる。ActionはhasContent=falseを判定してmessagesを半角空白で連結し、要求値を保持したBeanのmessageへ設定してBatch.jspへ戻す。ダウンロードや出力結果.txt単体の送信は行わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 95,
+          "endLine": 103
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 20,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 33,
+          "endLine": 33
+        }
+      ]
+    },
+    {
+      "id": "OUT-044",
+      "topic": "日次・月次の生成ファイル1件",
+      "statement": "生成できたExcelが1件なら、その区分のファイル名・ExcelのContent-Type・Workbook内容を直接返す。他の選択区分が0件であってもmessagesは結果オブジェクト内に保持されるだけで、単独Excelへ書き込まれず、出力結果.txtも付けず、Actionは画面メッセージの再設定をせずにダウンロードする。分岐基準は選択区分数ではなく生成済みファイル数である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 81,
+          "endLine": 109
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 20,
+          "endLine": 20
+        }
+      ]
+    },
+    {
+      "id": "OUT-045",
+      "topic": "日次・月次の複数ファイルZIP",
+      "statement": "生成済みExcelが2件以上なら、日次は「年金予約データ明細リスト（日次）.zip」、月次は「年金予約データ明細リスト（月次）.zip」、Content-Typeはapplication/zipとなる。ZIPへ各Excelを区分順に格納し、messagesが存在する場合だけ「出力結果.txt」を追加する。テキスト内容は各メッセージの末尾にCRLFを付け、UTF-8のbyte列にする。全選択区分に明細があれば出力結果.txtを入れない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 100,
+          "endLine": 109
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 150,
+          "endLine": 160
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 313,
+          "endLine": 347
+        }
+      ]
+    },
+    {
+      "id": "OUT-046",
+      "topic": "出力結果DTOとメモリ保持",
+      "statement": "PensionBatchExportFileResultはqueryName・fileName・categoryName・rowCountを保持し、文字列NULLを空文字へ変える。PensionBatchExportResultはファイル名、Content-Type、全内容byte配列、生成済みファイル一覧、メッセージ一覧を保持する。byte配列は構築時と取得時にcloneし、二つのリストはコピーして変更不可にする。hasContentは内容byte数が正であるかだけを判定し、利用者の保存・受領を表す状態ではない。店舗別結果もbyte配列をcloneする。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportFileResult.java.txt",
+          "startLine": 8,
+          "endLine": 24
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportResult.java.txt",
+          "startLine": 11,
+          "endLine": 32
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportResult.java.txt",
+          "startLine": 8,
+          "endLine": 31
+        }
+      ]
+    },
+    {
+      "id": "OUT-047",
+      "topic": "共通取得列と表示元",
+      "statement": "印刷、店舗別Excel、日次・月次の明細は共通のSELECT_COLUMNSを使う。予約側の店番・顧客番号・担当者コード・顧客氏名・ふりがな・住所・電話番号・各日付・予定年齢・備考・配偶者名・6ヶ月先確認等を取得し、店舗名は店名テーブル、性別名称は性別テーブル、裁定請求名称は裁定請求テーブル、受給有無名称は受給有無テーブル、年金種類名称は年金種類テーブルから取得する。各出力サービスがこの共通モデルから必要な列だけを選ぶため、取得列すべてが各帳票へ表示されるわけではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 43,
+          "endLine": 58
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 741,
+          "endLine": 778
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 50,
+          "endLine": 56
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 222,
+          "endLine": 243
+        }
+      ]
+    },
+    {
+      "id": "OUT-048",
+      "topic": "出力SQLのJOIN・ER図材料",
+      "statement": "検索上の関連は、R.店番=B.店舗ｺｰﾄﾞ、R.性別=G.性別ｺｰﾄﾞ、R.裁定請求=C.裁請ｺｰﾄﾞ、R.受給有無=H.受給ｺｰﾄﾞ、R.年金種類=P.種類ｺｰﾄﾞの5本で、すべてLEFT JOINである。Rは通常出力では年金1_LK、削除分では年金＿削除明細に切り替わる。関連図はこの検索上の参照として表し、FK制約として表さない。参照先名称列がDDLでNOT NULLでも、対応マスターがないLEFT JOIN結果はNULLになり、モデルsetterで空文字へ変換される。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 360,
+          "endLine": 364
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 772,
+          "endLine": 778
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 87,
+          "endLine": 140
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 215,
+          "endLine": 236
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 10,
+          "endLine": 55
+        }
+      ]
+    },
+    {
+      "id": "OUT-049",
+      "topic": "数値・NULL・モデル型",
+      "statement": "branchNo・customerNo・staffCode・plannedAgeはJavaのIntegerで、JDBC getIntとwasNullからNULLを保持する。文字列プロパティはNULLを空文字へ変える。6ヶ月先確認はgetInt!=0でboolean化するため、DBのNULLも出力上は未確認の空表示になる。顧客番号のDDLはBIGINTだが読取型はIntegerであるため、DB容量全域を出力できる保証へ拡張できない。モデルのNULL許容とDB列のNULL許容は別々の根拠で確認する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 13,
+          "endLine": 38
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 287,
+          "endLine": 288
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 741,
+          "endLine": 783
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 63,
+          "endLine": 65
+        }
+      ]
+    },
+    {
+      "id": "OUT-050",
+      "topic": "電話番号の保存値と出力値",
+      "statement": "予約の電話番号列はDECIMAL(15,0)で、保存処理は数字を抽出してBigDecimalとしてバインドする。出力読取では数字以外を除いた値から余分な先頭0を取り除き、9桁または10桁で先頭が0でない場合に限り0を一つ補う。元のハイフン配置や任意個数の先頭0を保存・復元する処理ではない。NULLは空文字、数値0は「0」となり、両者を同一表示へ扱わない。帳票・Excelではこの加工後文字列を使用する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 807,
+          "endLine": 814
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 843,
+          "endLine": 860
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 329,
+          "endLine": 334
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 349,
+          "endLine": 355
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 70,
+          "endLine": 70
+        }
+      ]
+    },
+    {
+      "id": "OUT-051",
+      "topic": "出力元のDB属性",
+      "statement": "SQL Server用DDLでは、予約本表と削除明細の出力元列はすべてNULL可で、店番・担当者コード・予定年齢・更新者はINT、顧客番号はBIGINT、電話番号はDECIMAL(15,0)、生年月日・請求予定日・配偶者生年月日・予約徴求日・データ更新日はDATE、更新時間はTIME(0)、性別・裁定請求・受給有無・変更FLGはTINYINT、年金種類はINT、年金種別フラグと6ヶ月先確認はBITである。顧客氏名・ふりがな・配偶者名はNVARCHAR(100)、住所はNVARCHAR(300)、備考はNVARCHAR(400)である。これは提供DDLの宣言で、配備済みDBの確認結果ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 60,
+          "endLine": 126
+        }
+      ]
+    },
+    {
+      "id": "OUT-052",
+      "topic": "ローカルDDLとの差",
+      "statement": "ローカルH2用DDLは同じ業務列構成を持つが、SQL ServerのNVARCHARをVARCHAR、BITをBOOLEAN、INTをINTEGER、TIME(0)をTIMEとして宣言している。文字列長の数値が同じでも、これをブラウザーmaxlengthやWindows-31Jのバイト上限へ置き換えない。予約本表・削除明細にはPKや一意制約を宣言せず、検索キー・顧客・更新区分・削除更新日の索引は通常の非一意索引である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 106,
+          "endLine": 171
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 60,
+          "endLine": 126
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 130,
+          "endLine": 170
+        }
+      ]
+    },
+    {
+      "id": "OUT-053",
+      "topic": "表示名称のDB容量と業務上限の区別",
+      "statement": "出力名称の参照先は、店名NVARCHAR(80)、性別・裁定請求・受給有無の各名称NVARCHAR(10)、年金種類名称NVARCHAR(120)をSQL Server用DDLで宣言し、いずれもNOT NULLである。各コード列はPKとなる。ローカルDDLは対応名称を同じ長さ指定のVARCHARで宣言する。これらはマスター保存容量であり、名称を維持管理する業務上の入力上限や承認済み名称規約を確定する根拠にはしない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 10,
+          "endLine": 55
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 81,
+          "endLine": 104
+        }
+      ]
+    },
+    {
+      "id": "OUT-054",
+      "topic": "備考の保存検査と出力制約",
+      "statement": "通常保存では備考についてWindows-31Jへ変換できることと56バイト以内であることをAction側およびRepositoryの保存準備で確認する。これはDBのNVARCHAR(400)またはVARCHAR(400)という容量と別制約である。出力サービスとWriterは読取った備考を56バイトで再検査・切捨てせず、文字列セルへ渡す。DBに別経路で入った長い備考まで通常保存と同じ制約を満たすとは保証しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 167,
+          "endLine": 180
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 513,
+          "endLine": 531
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/AnsiTextUtil.java.txt",
+          "startLine": 13,
+          "endLine": 46
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 55,
+          "endLine": 56
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 231,
+          "endLine": 243
+        }
+      ]
+    },
+    {
+      "id": "OUT-055",
+      "topic": "共通Workbook生成の入力契約と構成",
+      "statement": "OpenXmlWorkbookWriterは単一シートのxlsxをメモリ上で生成する。headersがNULLまたは空、rowsがNULLならIllegalArgumentExceptionを投げる。生成するZIP部品は[Content_Types].xml、_rels/.rels、xl/workbook.xml、xl/_rels/workbook.xml.rels、xl/styles.xml、xl/worksheets/sheet1.xmlの6個で、XML本文はUTF-8で格納し、各ZIPエントリーにsetTime(0L)を指定する。入力明細を実行する処理、外部テンプレート読込、ファイル保存先への書込みはない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 26,
+          "endLine": 65
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 292,
+          "endLine": 297
+        }
+      ]
+    },
+    {
+      "id": "OUT-056",
+      "topic": "共通Workbookのセル型と欠落値",
+      "statement": "明細はヘッダー列数まで出力し、ObjectがNumberなら数値セル、それ以外はinlineStrの文字列セルとする。NULL行、配列に存在しない列、NULL要素は空文字セルになる。ヘッダーより多い配列要素は出力しない。数値はスタイル2、文字列明細はスタイル0を使い、日付専用書式や日付シリアル値、数式セルを生成しない。先行行は非NULL要素だけをString.valueOfで文字列セルとして置く。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 144,
+          "endLine": 185
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 223,
+          "endLine": 237
+        }
+      ]
+    },
+    {
+      "id": "OUT-057",
+      "topic": "共通Workbookのスタイル・固定行・フィルター",
+      "statement": "標準フォントはメイリオ10ptで、ヘッダーは太字・黄色塗り・罫線・中央揃え・折返し、行高45を指定する。数値明細は右揃え・上揃え、文字列明細は通常の罫線スタイルを使う。タイトルの先頭行は22pt太字で行高28、その他の先行行文字は16ptを使う。ヘッダー行までを固定し、その翌行をスクロール開始位置とするため、店舗別は1行、日次・月次は8行を固定する。オートフィルターはヘッダーから最終明細行までである。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 104,
+          "endLine": 125
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 132,
+          "endLine": 168
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 188,
+          "endLine": 195
+        }
+      ]
+    },
+    {
+      "id": "OUT-058",
+      "topic": "共通Workbookの列幅",
+      "statement": "列幅はヘッダーと先頭最大100明細を調べ、表示長+2の最大値を5～40へ補正する。表示長はUnicodeコードポイントごとにASCIIを1、その他を2として数え、実フォントの描画幅を測定しない。先行タイトル・条件行は列幅算定に含めず、101件目以降の長文も算定に含めない。したがってコード上の幅設定から全文表示や印刷時の収まりを確認済みとはできない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 205,
+          "endLine": 218
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 240,
+          "endLine": 247
+        }
+      ]
+    },
+    {
+      "id": "OUT-059",
+      "topic": "共通Workbookの文字処理とシート名",
+      "statement": "文字列セルはXMLで許容されないコードポイントを除去し、アンパサンド、大小記号、二重引用符、一重引用符をエスケープする。先頭または末尾が空白文字ならxml:space=preserveを付ける。シート名はNULL・trim後空欄ならSheet1、バックスラッシュ・スラッシュ・疑問符・アスタリスク・角括弧・コロンを下線へ置換し、Java String.lengthで31を超える場合はsubstring(0,31)とする。31の単位はUTF-16コード単位で、31文字や31バイトの業務制約ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 223,
+          "endLine": 232
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 261,
+          "endLine": 289
+        }
+      ]
+    },
+    {
+      "id": "OUT-060",
+      "topic": "Excelの印刷設定",
+      "statement": "共通WriterはExcelの用紙サイズ9、portrait、水平中央配置を指定する。左右余白0、上下余白0.3937、ヘッダー・フッター余白0.1181を設定し、倍率を10～400へ補正する。呼出値は店舗別100、新規分70、変更・削除分60である。Excel側に印刷タイトル行や店舗別改ページを追加する定義はなく、ブラウザー印刷のA4横・店舗別改ページ・thead繰返しとは別の設定である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 197,
+          "endLine": 201
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 26,
+          "endLine": 28
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 289,
+          "endLine": 290
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 2141,
+          "endLine": 2145
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 2190,
+          "endLine": 2217
+        }
+      ]
+    },
+    {
+      "id": "OUT-061",
+      "topic": "ダウンロード応答とCSV戻り値",
+      "statement": "ダウンロードは完成済みbyte配列を受け、ファイル名をUTF-8でURLエンコードしてからresponse.reset、Content-Type設定、Content-Disposition設定、Content-Length設定、OutputStream.write、flushの順に行う。Content-Dispositionはattachment; filename=download; filename*=UTF-8''にエンコード名を続ける。店舗別と日次・月次Actionの成功戻り値CSVは共通Servletのforward抑止用であり、CSVファイルを生成した意味ではない。実データ形式はxlsxまたはZIPである。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 204,
+          "endLine": 211
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 19,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 20,
+          "endLine": 20
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 375,
+          "endLine": 383
+        }
+      ]
+    },
+    {
+      "id": "OUT-062",
+      "topic": "出力失敗時のcatchと応答境界",
+      "statement": "BatchRunActionのサービス呼出しから送信までのtryはIllegalArgumentExceptionを先に画面内メッセージへ変換する。この対象には期間・職員番号・削除基準日の不正だけでなく、明細や上部条件の和暦変換で後から生じる同型例外も含まれる。DBのNenkinDataAccessException、WriterやZIP生成のIllegalStateException、通常の送信例外はこのcatchで処理せず、共通ServletのAction実行catchへ伝播する。ExcelExportActionとReportPreviewActionには個別catchがない。共通catchはエラー画面への戻り先を設定するが、出力が既に開始・確定していれば、画面への切替えや最終HTTP状態を保証できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 20,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 13,
+          "endLine": 22
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java.txt",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 57,
+          "endLine": 64
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 330,
+          "endLine": 336
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 332,
+          "endLine": 383
+        }
+      ]
+    },
+    {
+      "id": "OUT-063",
+      "topic": "Action前後の例外とJSP再表示",
+      "statement": "FUNCTION_IDのtoLowerCaseやVIEW_IDのequalsはAction実行catchより前にあるため、識別値欠落による例外を各帳票Actionの入力拒否と同一視しない。JSPへのforwardもAction実行catchの後にあるため、セッションBeanや職員情報の型、日付表示処理などによるJSP描画例外はこのcatchの対象外である。Batchの入力拒否では要求値を残し、日付欄はHtmlUtil.formatWesternDateが解析できれば西暦表示、できなければ元文字列をHTMLエスケープして表示する。再表示の正常完了までをActionのreturnだけで確定しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 309,
+          "endLine": 339
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 375,
+          "endLine": 383
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 3,
+          "endLine": 7
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 69,
+          "endLine": 81
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+          "startLine": 11,
+          "endLine": 24
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+          "startLine": 74,
+          "endLine": 78
+        }
+      ]
+    },
+    {
+      "id": "OUT-064",
+      "topic": "DB確定・生成完了・利用者受領の区別",
+      "statement": "削除明細整理のcommit、Excel・ZIPのメモリ生成、HTTPへのwrite・flush、利用者の受領は異なる段階である。整理成功後は0件再表示、後続区分の検索失敗、和暦変換失敗、Workbook生成失敗、ZIP生成失敗、送信失敗のいずれでも、整理済み明細を戻す処理がない。write・flush後も利用者がファイルを保存・開封できたことを確認する通知や受領記録は実装していない。整理のcommit呼出し自体が例外になった場合のDB確定状態も、後続照会で再確認しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 68,
+          "endLine": 112
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 458,
+          "endLine": 480
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 204,
+          "endLine": 211
+        }
+      ]
+    },
+    {
+      "id": "OUT-065",
+      "topic": "出力時の同時更新と再実行",
+      "statement": "日次・月次は選択区分を新規、変更、削除の順に別々のfindAuditRecordsで検索し、それぞれ接続を取得・終了する。整理から全区分の読取を通す共通トランザクションや同一時点のスナップショット、出力全体の同期はない。整理メソッドのsynchronizedはRepositoryインスタンスの当該呼出しを同期する範囲にとどまり、後続読取を保護しない。出力済みフラグ更新や消費処理も行わないため、再実行はその時点のDB値から再抽出し、同じ内容になることも、前回と変わることもあり得る。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 68,
+          "endLine": 112
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 150,
+          "endLine": 160
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 353,
+          "endLine": 413
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 458,
+          "endLine": 480
+        }
+      ]
+    },
+    {
+      "id": "OUT-066",
+      "topic": "接続先と動的依存",
+      "statement": "帳票検索、店舗名・コード名称参照、削除明細整理は年金業務用DataSourceを使い、探索順はjdbc/RAROA_DB、java:comp/env/jdbc/RAROA_DBである。職員セッションの補完確認は職員用jdbc/Oracle_SP2NM系統を使う。DataSourceは系統ごとにキャッシュし、各操作でgetConnectionする。年金側の接続取得そのものではautoCommitや分離レベルを設定せず、整理等の更新側がautoCommit=falseを設定する。実際にJNDIへ登録されたDB製品・接続設定はこのコードだけでは確定しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 12,
+          "endLine": 59
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 77,
+          "endLine": 93
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 465,
+          "endLine": 472
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 206,
+          "endLine": 234
+        }
+      ]
+    },
+    {
+      "id": "OUT-067",
+      "topic": "出力と共通アクセス記録",
+      "statement": "共通ServletはAction処理後にアクセス記録を呼び、ダウンロード成功戻り値CSVでも記録処理を通る。記録項目は機能ID・画面ID・コマンドID・Action ID・JSP名・利用者ID等で、業務帳票の受領確認ではない。CounterShiftは共通接続で独立commitし、失敗時はrollbackを試してログ出力し、通常は例外を業務応答へ再送出しない。したがって店舗別Excelや印刷の業務表更新なしと、共通アクセス記録なしを同一視しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 349,
+          "endLine": 383
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CounterShift.java.txt",
+          "startLine": 25,
+          "endLine": 52
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java.txt",
+          "startLine": 34,
+          "endLine": 65
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/util/CommonUtil.java.txt",
+          "startLine": 36,
+          "endLine": 43
+        }
+      ]
+    },
+    {
+      "id": "OUT-068",
+      "topic": "日次・月次フロー図の分割材料",
+      "statement": "処理フローは三つに分割できる。サブフロー1は職員確認から要求保持、POST・CSRF、区分、職員番号、サービス期間検査までで、拒否時は対応するBeanとメッセージを保って再表示へ進む。サブフロー2は基準日整理のcommit後、区分ごとに抽出し、0件ならmessages追加、明細ありなら再ソート・行変換・レイアウト・Workbook生成を行い、generatedとmessagesを引き継ぐ。サブフロー3はgenerated.sizeを判定し、0件は空内容と全messages、1件はそのファイル情報と全messages、2件以上はZIP情報と全messagesを結果へ設定する。合流後に一律のファイル名や空messagesを代入して枝ごとの値を失わせない。IllegalArgumentExceptionの画面再表示と、それ以外の共通例外経路を別出口にする。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 13,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 58,
+          "endLine": 128
+        }
+      ]
+    },
+    {
+      "id": "OUT-069",
+      "topic": "印刷・店舗別Excelフロー図の分岐材料",
+      "statement": "印刷フローは職員確認、要求値保持・変換、範囲指定ありか、店番自が有効か、両端逆転か、検索、preview=true、セッション設定、JSP表示の順で表す。0件もpreview成立側に置き、ブラウザー印刷を別イベントにする。店舗別Excelフローは職員確認、店番変換、空欄または変換失敗、3桁・ASCII数字検査、店舗名照会、予約検索、0件再表示またはWorkbook生成・送信に分ける。店舗名不在を拒否条件として追加せず、DB・生成・送信の例外を成功節点へ合流させない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java.txt",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 60,
+          "endLine": 68
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 13,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 36,
+          "endLine": 63
+        }
+      ]
+    },
+    {
+      "id": "OUT-070",
+      "topic": "生成処理の寿命と完了の意味",
+      "statement": "サービスとRepositoryは共有インスタンスを持つ一方、抽出リスト、行配列、Workbook XML、Excel byte配列、ZIP byte配列、生成済みファイル一覧は出力呼出し中のメモリで組み立てる。サービス結果からActionが直接送信し、サーバー上の出力ファイルパスや保存済みファイルIDは作らない。PensionAuditRecordは予約をコピーして保持し、取得時にもコピーを返すが、これはメモリオブジェクトの分離であり、DB上の全区分を同一時点へ固定する保証ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 16,
+          "endLine": 19
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 38,
+          "endLine": 41
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 74,
+          "endLine": 109
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionAuditRecord.java.txt",
+          "startLine": 19,
+          "endLine": 41
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 45,
+          "endLine": 56
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "実配備のJNDI登録内容、DB製品・ドライバー・分離レベル・接続既定値、および提供DDLと実DBの一致は未確認である。ソース上の接続探索とSQLを、稼働環境での実行保証へ拡張しない。",
+    "日付とファイル名生成に使うDateUtilやJSPの日時処理は明示的なタイムゾーンを設定していない。実行JVMの既定タイムゾーンは未提供であり、ジョブのAsia/Tokyoをアプリの設定値として採用しない。",
+    "店舗名・性別名称・裁定請求名称・受給有無名称・年金種類名称の維持管理入口、保存更新側の業務上限、名称規約は確認できない。DDL容量を業務上限として代用しない。",
+    "顧客番号BIGINTをgetIntで読む場合の範囲外データに対する具体的なドライバー応答、およびDATE列getStringの実環境での文字列表現は実行確認していない。",
+    "HTTP受信前のコンテナー処理、配備時に追加されるfilter、要求の重複パラメータや文字変換失敗の扱いは収録設定だけでは確定しない。ActionへStringが到達した後の分岐と区別する。",
+    "日付のNFKC後空文字による抽出条件脱落はソース上で追跡できるが、ブラウザー・コンテナーを通した再現確認は未実施である。修正済みや承認済みの挙動とは扱わない。",
+    "Excel・ZIP送信中の失敗後に利用者が受け取る最終HTTP状態、部分ファイル、エラー画面への切替え可否は応答確定時点とコンテナーに依存する。利用者の受領完了を確認する契約は見つからない。",
+    "削除明細整理のcommit呼出しが例外となる場合のDB確定状態、およびrollback失敗後の状態は再照会していないため確定できない。",
+    "Excelの原寸表示、結合セル内の収まり、印刷ページ数、ブラウザーの繰返しヘッダー・省略表示・空プレビュー印刷の実際は未確認である。コードの設定値を表示合格や印刷完了としない。",
+    "配備バイナリと提供ソースの一致、原プログラム・DB・ビルド・テストの実行結果、顧客承認は確認していない。新たな採用設計案は設定していない。"
+  ],
+  "coverageNotes": [
+    "manifestは読取り権限と材料一覧の確認にのみ使用した。mode=source-only、trainingReferenceAuthorizedByUser=false、referenceSpecificationIncluded=false、referenceFiles=[]であり、参考設計は読んでいない。業務factのreferencesにmanifestを使用していない。",
+    "manifestにindexedの対応が176件あることを確認した。176件すべての本文を読了した意味ではない。sources/・indexed/の一覧で位置を確認し、本書の出力責務に必要な閉包をindexedの行番号付き原文で読んだ。",
+    "指定された開始点のReport.jsp、ReportPreviewAction、PensionExcelExportService、PensionBatchExportService、PensionBatchExportFileResult、PensionBatchExportResult、OpenXmlWorkbookWriter、DateUtil、NenkinBaseActionは宣言から末尾まで確認した。大量出力で省略されたPensionBatchExportServiceは範囲を分けて再取得し、1～401行を補完した。",
+    "site.cssは共有領域の関連定義、Report用1577～1999行、レスポンシブ関連2002～2139行、印刷用2141～2260行を中心に確認した。無関係な全画面CSSを読了したとは扱っていない。",
+    "開始点から追加追跡した範囲は、メニュー・Servlet登録、Report/Excel/BatchのViewと実行Action、対応Bean、出力要求・結果DTO、共通予約モデル、監査モデル、Repositoryの対象検索・保存区分設定・削除明細作成・整理・読取変換、表示補助、DataSource、関連DDL、共通例外・アクセス記録である。別機能の全登録仕様や参照画面全仕様は再収録していない。",
+    "ReferenceDataServiceは店舗名照会、職員確認依存、店舗名突合せ、電話番号表示等の関連範囲を確認した。nenkin/service内の更新SQL位置も検索したが、名称マスターの維持管理処理は確認できなかった。ローカル初期データの実値を出力規約や本番値として採用していない。",
+    "referencesのpathはmanifestにあるindexedのPOSIX相対パスを使用し、startLine/endLineは各行の原ソース番号に対応する。本文抽出を確認していないファイルを根拠として列挙していない。",
+    "文書計画上の関連先は、SCR-014=基本設計書/基本設計書_SCR-014_日次 _ 月次処理.md、DET-SCR-014=詳細仕様書/詳細仕様書_SCR-014_日次 _ 月次処理.md、SCR-015=基本設計書/基本設計書_SCR-015_EXCEL出力.md、DET-SCR-015=詳細仕様書/詳細仕様書_SCR-015_EXCEL出力.md、SCR-019=基本設計書/基本設計書_SCR-019_登録内容印刷.md、DET-SCR-019=詳細仕様書/詳細仕様書_SCR-019_登録内容印刷.mdである。これらは入力計画との対応であり、生成済みを確認したリンクではない。",
+    "共通契約の計画上の対応先は、COM-150=共通/共通仕様書_COM-150_外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成する.md、COM-111=共通/共通仕様書_COM-111_年金業務共通処理.md、COM-012=共通/共通仕様書_COM-012_共通コントロールサーブレット.md、COM-151=共通/共通仕様書_COM-151_画面共通入力・通信制御.md、API-NENKIN=共通/要求処理一覧.md、DATA-CONTRACTS=共通/データオブジェクト定義書.md、DB-OPS=共通/DB仕様書/DB操作仕様書.md、DB-PHYSICAL=共通/DB仕様書/テーブル定義書.mdである。生成状態は未確認である。",
+    "報告へ分離する解釈訂正は、Q番号をDB保存クエリーとしないこと、新規・変更を完全監査履歴としないこと、出力前整理を生成・送信と一体rollbackとしないこと、選択区分数と生成ファイル数を区別すること、単独Excelでは他区分の0件メッセージを利用者へ送らないこと、担当者コードと更新者による抽出を区別することである。",
+    "今回返す成果物はOUTPUT-NENKINの解析facts JSONである。Markdown本文、spec-meta、表・図・静的HTMLの原稿、派生HTML・PDF・Excelを生成していないため、それらの構造検査や描画確認を実施済みとは記録しない。文書版2.0および関連文書所在地は入力計画の指定として後工程へ引き継ぐ。",
+    "workspace外、親・兄弟ディレクトリ、記憶ファイル、外部skill、原仕様、評価期待値、他ジョブの答案は読んでいない。ネットワーク、プラグイン、外部サービス、委譲エージェントは使用していない。ファイル編集・生成、原プログラム・SQL・スクリプト・マクロ・ビルド・テストの実行、import、コンパイル、インストールは行っていない。",
+    "正式率はnullである。ソース推論、根拠行の確認、文書生成、独立レビュー、表示確認、原仕様による正式採点は別の状態として扱う。後工程の出版・表示検査の成否は予断しない。"
+  ]
+}

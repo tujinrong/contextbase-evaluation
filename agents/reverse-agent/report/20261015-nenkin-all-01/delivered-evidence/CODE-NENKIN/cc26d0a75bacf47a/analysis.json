@@ -1,0 +1,1113 @@
+{
+  "documentId": "CODE-NENKIN",
+  "sourcePathsRead": [
+    "manifest.json",
+    "indexed/nenkin/WEB-INF/resources/db/data.sql.txt",
+    "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+    "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/model/AuditType.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchRunMode.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/model/CodeLookupItem.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/model/PensionAuditRecord.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/PensionViewAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/PensionClearAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/PensionLoadAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java.txt",
+    "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/BatchViewAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/BatchDailyAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/BatchMonthlyAction.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+    "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataAccessException.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+    "indexed/nenkin/WEB-INF/web.xml.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt"
+  ],
+  "facts": [
+    {
+      "id": "CODE-NENKIN-001",
+      "topic": "コード値の適用範囲",
+      "statement": "data.sqlはローカルH2互換DBの初期化材料である。登録されたH2JndiSetupListenerはn2nenkin.localDbの既定値falseでは初期化せず、有効時の初期化処理でschema.sql、data.sqlの順に処理する。したがって、以下のdata.sql由来のコード・名称はローカル初期データとして掲載する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/web.xml.txt",
+          "startLine": 11,
+          "endLine": 13
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 21,
+          "endLine": 35
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 82,
+          "endLine": 83
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-002",
+      "topic": "性別の項目対応",
+      "statement": "性別はselect#genderのGENDERからPensionReservation.gender（String）へ受け取る表示名称である。候補のキーは性別テーブル.性別ｺｰﾄﾞ、名称は同表.性別で、ローカル初期値は1=男、2=女。保存時は名称からIntegerのコードへ逆引きし、年金1_LK.性別へRECORD_COLUMNSの第6パラメータとして設定する。取得時はコード表との結合で名称へ戻す。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/data.sql.txt",
+          "startLine": 55,
+          "endLine": 56
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 27,
+          "endLine": 27
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 138,
+          "endLine": 145
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 237,
+          "endLine": 239
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 707,
+          "endLine": 713
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 772,
+          "endLine": 778
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-003",
+      "topic": "裁定請求の項目対応",
+      "statement": "画面の論理名は「裁定請求書徴収」で、実コントロールはselect#claimStatus、要求名はCLAIM_STATUS、モデルはPensionReservation.claimStatus（String）である。裁定請求テーブルの裁請ｺｰﾄﾞと裁定請求を候補に使用し、ローカル初期値は1=未、2=済。保存時は名称を逆引きし、年金1_LK.裁定請求へ第16パラメータとしてコードを設定する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/data.sql.txt",
+          "startLine": 57,
+          "endLine": 58
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 35,
+          "endLine": 35
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 149,
+          "endLine": 149
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 241,
+          "endLine": 243
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 717,
+          "endLine": 724
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-004",
+      "topic": "受給有無の項目対応",
+      "statement": "受給有無はselect#hasBenefitのHAS_BENEFITからPensionReservation.hasBenefit（String）へ受け取る。候補は受給有無テーブル.受給ｺｰﾄﾞと受給有無で、ローカル初期値は1=未、2=既である。「有」「無」へ名称を置き換えない。保存時は名称を逆引きし、年金1_LK.受給有無へ第21パラメータとしてコードを設定する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/data.sql.txt",
+          "startLine": 59,
+          "endLine": 60
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 40,
+          "endLine": 40
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 156,
+          "endLine": 156
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 245,
+          "endLine": 247
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 725,
+          "endLine": 730
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-005",
+      "topic": "候補取得のSQL・順序・接続",
+      "statement": "各候補取得は共通のlistCodesを使い、指定されたコード列をCODE_VALUE、名称列をLABEL_VALUEとして全行SELECTし、コード列の昇順で返す。WHERE、停止値除外、ページング、検索パラメータはない。毎回業務用接続を取得するため、JSPで順に取得する性別・裁定請求・受給有無・年金種類の4一覧は、一つのトランザクションによる同時点取得ではない。業務用接続の探索先はjdbc/RAROA_DB、java:comp/env/jdbc/RAROA_DBの順である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 237,
+          "endLine": 287
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 4,
+          "endLine": 4
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 12,
+          "endLine": 15
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 32,
+          "endLine": 44
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-006",
+      "topic": "候補DTOと空選択",
+      "statement": "CodeLookupItemはintのcodeとStringのlabelを持ち、labelのNULLを空文字へ変換する。候補サービスは空選択用レコードを追加せず、性別・裁定請求書徴収・受給有無のJSPが各selectの先頭へvalue=\"\"の空optionを追加する。候補optionは数値コードではなく名称をvalueと表示文字に使い、モデル名称と候補名称のJava文字列一致でselectedを出力する。表示・属性値はHTMLエスケープする。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/CodeLookupItem.java.txt",
+          "startLine": 9,
+          "endLine": 33
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 263,
+          "endLine": 279
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 27,
+          "endLine": 40
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+          "startLine": 11,
+          "endLine": 20
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-007",
+      "topic": "初期表示・クリア時の選択状態",
+      "statement": "新しいPensionReservationはgender、claimStatus、hasBenefit、pensionTypeを空文字、5種類の年金チェックとsixMonthCheckをfalseで保持する。PensionViewActionはこの空モデルを画面Beanに設定し、PensionClearActionも同処理を継承する。登録成功後と削除成功後にも空モデルを再設定するため、以前のコード選択を初期値として引き継ぐ処理ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 13,
+          "endLine": 40
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionViewAction.java.txt",
+          "startLine": 7,
+          "endLine": 12
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionClearAction.java.txt",
+          "startLine": 6,
+          "endLine": 7
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+          "startLine": 46,
+          "endLine": 48
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java.txt",
+          "startLine": 31,
+          "endLine": 34
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-008",
+      "topic": "受信名称の変換と操作別必須",
+      "statement": "Actionはrequest.getParameterで得たJava Stringを読み、GENDER、CLAIM_STATUS、HAS_BENEFITについてNULLを空文字に変換してtrimする。これらをIntegerへバインドする処理はない。登録前検査は店番、フリガナ、電話番号、日付、備考を確認し、3名称と年金チェックの選択を必須にしていない。ほかの検査を通過すれば3名称の空欄は保存時NULLとなり、年金チェック全未選択も許容される。削除では入力された名称を保存対象とせず、検索し直した既存モデルを削除明細に使用する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 119,
+          "endLine": 125
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 138,
+          "endLine": 181
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 573,
+          "endLine": 604
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 315,
+          "endLine": 332
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-009",
+      "topic": "名称から保存コードへの逆引き",
+      "statement": "resolveCodeは名称を空文字化・trimし、空なら照会せずnullを返す。非空ならSELECT コード列 FROM 対象表 WHERE 名称列 = ?を実行し、第1パラメータをsetStringで設定する。該当行がなければSQLExceptionを送出し、数値に見える要求値を保存コードとして直接採用しない。逆引きにはNFKC変換や空白集約はない。ORDER BYと複数件検査もなく、名称の一意制約がないDDLでは同名複数コードから一意に選ぶ契約は確認できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 573,
+          "endLine": 594
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 81,
+          "endLine": 104
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 10,
+          "endLine": 57
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-010",
+      "topic": "コード列・名称列のDDLとJDBC",
+      "statement": "収録DDLでは、性別・裁定請求・受給有無の各コード表キーはTINYINTのNOT NULLかつPK、名称はH2でVARCHAR(10)、SQL Server用DDLでNVARCHAR(10)のNOT NULLである。予約本表と削除明細の対応コード列はTINYINTでNULLを許容する。保存用setIntegerは非NULLをsetInt、NULLをsetNull(Types.INTEGER)で渡し、DB列がTINYINTでもJDBCのNULL型指定はINTEGERである。名称の照会用setStringにはサイズ指定がない。これらのDB宣言容量は名称の業務上限とは別である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 81,
+          "endLine": 94
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 106,
+          "endLine": 165
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 10,
+          "endLine": 37
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 62,
+          "endLine": 125
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 582,
+          "endLine": 589
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 798,
+          "endLine": 804
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-011",
+      "topic": "年金種類の候補名称取得と表示順",
+      "statement": "年金種類のキーは年金種類テーブル.種類ｺｰﾄﾞ、名称は年金種類である。getPensionTypeLabelsはコード昇順で取得した全行をHashMap<Integer,String>へ格納する。画面はMapの列挙順を使わず、HTMLに記述した1、8、2、16、4の順に各チェックの名称を参照する。したがって候補SQLの取得順、Mapの列挙順、画面の配置順は区別する。指定キーがMapにない場合、画面のHtmlUtil.escapeは名称を空表示にする。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 254,
+          "endLine": 277
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 34,
+          "endLine": 34
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+          "startLine": 11,
+          "endLine": 14
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-012",
+      "topic": "年金種類のチェック・モデル・保存列対応",
+      "statement": "5チェックの対応は、NATIONAL_PENSION→boolean nationalPension→「種類：国民年金」→重み1、EMPLOYEE_PENSION→boolean employeePension→「種類：厚生年金」→重み2、MUTUAL_AID_PENSION→boolean mutualAidPension→「種類：共済年金」→重み4、EMPLOYEE_PENSION_FUND→boolean employeePensionFund→「種類：厚生年金基金」→重み8、NATIONAL_PENSION_FUND→boolean nationalPensionFund→「種類：国民年金基金」→重み16である。各ブラウザーcheckboxの送信valueはすべて1であり、重み8や16を直接送信する構造ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 34,
+          "endLine": 34
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 158,
+          "endLine": 162
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 33,
+          "endLine": 37
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 596,
+          "endLine": 602
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 717,
+          "endLine": 722
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-013",
+      "topic": "チェック受信値のboolean変換",
+      "statement": "isCheckedは要求値が厳密に1、または大文字小文字を区別しないtrue・onならtrueにする。要求値NULLとそれ以外の文字列はfalseで、判定前のtrimは行わない。この変換を年金5チェック、６ヶ月先確認、日次・月次の3出力区分に共用する。画面のvalue=1と、Actionが追加で受け入れるtrue・onを分けて記載する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 133,
+          "endLine": 135
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 158,
+          "endLine": 163
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 15,
+          "endLine": 15
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-014",
+      "topic": "年金種類の合成・コード表照合",
+      "statement": "保存時はtrueになった5種類の重みを加算する。合計0なら年金種類コードはnullとなり、コード表照会は行わない。合計が1～31ならSELECT 年金種類 FROM 年金種類テーブル WHERE 種類ｺｰﾄﾞ = ?をsetIntで照会し、行が存在する場合だけ合成コードを採用する。該当行がなければSQLExceptionとなる。存在確認では名称内容をモデルへ代入せず、PensionReservation.pensionTypeの文字列も合成の入力に使わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 596,
+          "endLine": 620
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 717,
+          "endLine": 724
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 138,
+          "endLine": 164
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-015",
+      "topic": "年金種類・確認済の物理保持",
+      "statement": "年金5種類は合成コードだけでなく個別列にも保存する。個別列はH2のBOOLEAN、SQL Server用DDLのBITでNULLを許容し、保存処理では第10～14パラメータへsetIntの1または0を設定する。合成先の年金種類はNULL許容のINTEGER／INTで、第15パラメータをsetIntegerで設定する。コード表の種類ｺｰﾄﾞはINTEGER／INTのNOT NULLかつPK、名称はVARCHAR(120)／NVARCHAR(120)のNOT NULLである。６ヶ月先確認は別のbooleanで、第27パラメータに1／0を設定し、合成コードには加算しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 101,
+          "endLine": 134
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 50,
+          "endLine": 90
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 717,
+          "endLine": 737
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-016",
+      "topic": "ローカル年金種類コード1～8",
+      "statement": "ローカル初期データの名称は、1=国民年金、2=厚生年金、3=国民年金+厚生年金、4=共済年金、5=国民年金+共済年金、6=厚生年金+共済年金、7=国民年金+厚生年金+共済年金、8=厚生年金基金である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/data.sql.txt",
+          "startLine": 64,
+          "endLine": 71
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-017",
+      "topic": "ローカル年金種類コード9～16",
+      "statement": "ローカル初期データの名称は、9=国民年金+厚生年金基金、10=厚生年金+厚生年金基金、11=国民年金+厚生年金+厚生年金基金、12=共済年金+厚生年金基金、13=国民年金+共済年金+厚生年金基金、14=厚生年金+共済年金+厚生年金基金、15=国民年金+厚生年金+共済年金+厚生年金基金、16=国民年金基金である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/data.sql.txt",
+          "startLine": 72,
+          "endLine": 79
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-018",
+      "topic": "ローカル年金種類コード17～24",
+      "statement": "ローカル初期データの名称は、17=国民年金+国民年金基金、18=厚生年金+国民年金基金、19=国民年金+厚生年金+国民年金基金、20=共済年金+国民年金基金、21=国民年金+共済年金+国民年金基金、22=厚生年金+共済年金+国民年金基金、23=国民年金+厚生年金+共済年金+国民年金基金、24=厚生年金基金+国民年金基金である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/data.sql.txt",
+          "startLine": 80,
+          "endLine": 87
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-019",
+      "topic": "ローカル年金種類コード25～31",
+      "statement": "ローカル初期データの名称は、25=国民年金+厚生年金基金+国民年金基金、26=厚生年金+厚生年金基金+国民年金基金、27=国民年金+厚生年金+厚生年金基金+国民年金基金、28=共済年金+厚生年金基金+国民年金基金、29=国民年金+共済年金+厚生年金基金+国民年金基金、30=厚生年金+共済年金+厚生年金基金+国民年金基金、31=国民年金+厚生年金+共済年金+厚生年金基金+国民年金基金である。初期データの年金種類定義範囲は1～31であり、全未選択を示すコード0の登録はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/data.sql.txt",
+          "startLine": 64,
+          "endLine": 94
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-020",
+      "topic": "既存データの名称復元・参照欠落",
+      "statement": "予約取得では、性別、裁定請求、受給有無、年金種類をそれぞれコード表へLEFT JOINし、名称をモデルへ移送する。参照先がない場合の名称NULLはモデルのsetterで空文字になるため、コード表名称のNOT NULL宣言は結合結果の非NULL保証にはならない。年金5チェックは個別保存列をgetIntして0以外をtrueとし、wasNullによるNULL判別は行わない。合成年金種類の名称と5チェックは別々の保存値から取得し、読込み時に整合検査や再合成はしていない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 43,
+          "endLine": 58
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 741,
+          "endLine": 778
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 131,
+          "endLine": 132
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 163,
+          "endLine": 164
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 219,
+          "endLine": 236
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 287,
+          "endLine": 288
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-021",
+      "topic": "顧客基本表からの性別変換",
+      "statement": "予約読込みで予約が見つからず、店番と顧客番号が得られる場合は顧客基本表へフォールバックする。その性別コードは顧客接続のResultSetからStringとして取得してtrimし、Integerに変換できなければnullにする。その後、別の業務接続で性別テーブルをコード照会し、コードNULLまたは該当行なしでは名称を空文字にする。外部顧客表の文字列コードと、予約画面が送信する性別名称は別の入力境界である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionLoadAction.java.txt",
+          "startLine": 18,
+          "endLine": 29
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 87,
+          "endLine": 140
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 554,
+          "endLine": 570
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 786,
+          "endLine": 795
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-022",
+      "topic": "変更FLGの設定契機",
+      "statement": "Repository.saveは保存用モデルと検索キーを準備してから業務接続を開き、トランザクション内でふりがな・電話番号による存在確認を行う。既存行があればUPDATEと変更FLG=1、なければINSERTと変更FLG=0を選び、commit後にそれぞれAuditType.CHANGEDまたはNEWを返す。UPDATEは全RECORD_COLUMNSを設定し、WHEREはふりがなと電話番号である。変更前後の差分比較で変更FLGを決める処理はない。画面Actionは返されたAuditTypeを表示判定に使用せず、正常復帰後に「登録終了！」を設定する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 60,
+          "endLine": 67
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 280,
+          "endLine": 308
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 623,
+          "endLine": 637
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 657,
+          "endLine": 687
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+          "startLine": 46,
+          "endLine": 48
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-023",
+      "topic": "変更FLGの物理属性と履歴の意味",
+      "statement": "収録DDLの変更FLGは本表・削除明細ともNULL許容のTINYINTで、DEFAULTや0・1限定のCHECKはない。通常の本表保存は0／1を設定するが、DDLの許容値全体を0／1だけと断定しない。新規・変更抽出は年金1_LKの現在行を対象にするため、更新により変更FLGと更新日時が上書きされる。過去の新規・変更をすべて保持する監査履歴表としては扱わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 130,
+          "endLine": 165
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 86,
+          "endLine": 125
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 353,
+          "endLine": 377
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 672,
+          "endLine": 680
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-024",
+      "topic": "削除区分の成立・保存値",
+      "statement": "削除ではトランザクション内で既存予約を再取得し、不在ならrollbackしてfalseを返す。存在する場合はデータ更新日を当日にし、年金＿削除明細へ追加してから本表をふりがな・電話番号で削除する。明細追加と本表削除は各1件を要求し、commit後にtrueを返す。削除明細の第28パラメータである変更FLGにはnullを設定する。削除区分は専用表に記録されたことによって扱い、変更FLGへDや2を設定する実装ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 315,
+          "endLine": 350
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 690,
+          "endLine": 701
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 733,
+          "endLine": 737
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-025",
+      "topic": "削除明細へ移すコードの再変換",
+      "statement": "削除明細の作成は本表物理行をそのまま複写するSQLではない。コード表と結合して読み取ったPensionReservationを共通bindRecordへ渡し、性別・裁定請求・受給有無は名称から再逆引きし、年金種類は個別チェックから再合成する。参照欠落で空文字になった名称はNULLとして設定され得る。非空名称や合成コードの照会失敗は削除明細追加を失敗させるため、コード表の状態も削除処理の成否に関係する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 326,
+          "endLine": 346
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 640,
+          "endLine": 650
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 690,
+          "endLine": 737
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 741,
+          "endLine": 778
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-026",
+      "topic": "AuditTypeのコード・名称と変換helper",
+      "statement": "AuditTypeはNEWのコードN・表示名新規、CHANGEDのコードC・表示名変更、DELETEDのコードD・表示名削除を定義する。fromCodeはNULLを空文字として扱い、trim後に大文字小文字を区別せず照合し、不一致ならIllegalArgumentExceptionを送出する。通常の保存・バッチ処理はenum定数を直接使用しており、この文字列変換を画面入力の検証や公開APIとして接続する呼出しは確認できない。N・C・Dは変更FLGの数値やcheckboxの送信値とは別の区分表現である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/AuditType.java.txt",
+          "startLine": 3,
+          "endLine": 32
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 290,
+          "endLine": 299
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 150,
+          "endLine": 161
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-027",
+      "topic": "区分別抽出のSQL・JDBC・結果",
+      "statement": "findAuditRecordsはtypeがNULLなら接続前にIllegalArgumentExceptionとする。NEWは年金1_LKの変更FLG=0、CHANGEDは同表の変更FLG=1、DELETEDは年金＿削除明細を検索し、削除分に変更FLG条件は付けない。任意の開始日・終了日はデータ更新日>=・<=、任意のupdatedByは更新者=の条件にする。バインド順は新規・変更だけ先頭にsetIntの変更FLG、続いて存在する日付条件をsetDate、最後に存在する更新者条件をsetIntである。ORDER BYはデータ更新日、更新時間、店番、顧客番号の昇順で、明示的な取得件数上限や取消処理はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 353,
+          "endLine": 413
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 817,
+          "endLine": 824
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-028",
+      "topic": "抽出結果の監査区分と連番",
+      "statement": "区分別抽出のPensionAuditRecord.auditTypeは呼出し時のenumを各結果へ設定する。auditDate・auditTime・updatedByは対象行のデータ更新日・更新時間・更新者から取得する。auditIdは検索ごとに1から付けるメモリ上の連番であり、DBに保存された監査IDではない。本表の変更FLGがNULLまたは0・1以外の場合、新規・変更の等価条件には該当せず、それを自動的に削除分へ振り分ける条件もない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 360,
+          "endLine": 404
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionAuditRecord.java.txt",
+          "startLine": 9,
+          "endLine": 26
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-029",
+      "topic": "最終区分取得helperの到達性と判定差",
+      "statement": "findLatestAuditTypeは宣言されているが、確認した年金Java・JSPの通常経路に呼出しはない。このhelper単体では、正規化キーが不成立ならnull、本表に行があれば変更FLGをgetIntして0ならNEW、それ以外ならCHANGEDを返す。本表取得は最大1行でORDER BYがなく、wasNull判定もない。本表不在の場合だけ削除明細を更新日・時刻降順の最大1行で調べ、存在すればDELETED、なければnullとする。新規・変更抽出の0／1等価条件とは判定が異なり、両表の日時を比較した最新判定でもない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 416,
+          "endLine": 454
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 74,
+          "endLine": 80
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-030",
+      "topic": "日次・月次の入口と実行区分",
+      "statement": "PensionBatchRunModeはDAILYとMONTHLYの2定数で、数値コードや日本語名称の属性を持たない。画面はFUNCTION_ID=nenkin、VIEW_ID=Batchのまま、日次ボタンでCOMMAND_ID=Daily、月次ボタンでMonthlyを送信する。共通Servletの反射規則によりBatchDailyAction／BatchMonthlyActionへ接続し、それぞれDAILY／MONTHLYを要求DTOへ設定する。利用者がrunModeというフォーム項目を送ってenumへ直接変換する構造ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchRunMode.java.txt",
+          "startLine": 1,
+          "endLine": 6
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 35,
+          "endLine": 38
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 72,
+          "endLine": 92
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchDailyAction.java.txt",
+          "startLine": 1,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchMonthlyAction.java.txt",
+          "startLine": 1,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 19,
+          "endLine": 19
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 332,
+          "endLine": 338
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-031",
+      "topic": "出力区分の選択・初期値・処理順",
+      "statement": "新規分・変更分・削除分は、それぞれINCLUDE_NEW、INCLUDE_CHANGED、INCLUDE_DELETEDというvalue=1のcheckboxからbooleanへ変換する複数選択条件である。BatchViewBeanと要求DTOでは3値とも初期falseで、各項目単独の必須ではなく、いずれか一つ以上が必要となる。Actionとサービスの両方で全未選択を拒否する。複数選択時の処理順は、画面操作順によらずNEW、CHANGED、DELETEDである。これらは検索・出力制御値であり、DBへ直接保存しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 53,
+          "endLine": 58
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java.txt",
+          "startLine": 7,
+          "endLine": 14
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java.txt",
+          "startLine": 9,
+          "endLine": 17
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 15,
+          "endLine": 19
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 58,
+          "endLine": 65
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 150,
+          "endLine": 162
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-032",
+      "topic": "実行区分ごとの期間条件",
+      "statement": "日次ではDAILY_DATEが必要で、正規化した同じ日を開始・終了の両方へ渡す。月次ではMONTH_STARTとMONTH_ENDが必要で、正規化後に開始日が終了日を超える場合は拒否する。月次という名称でも、サービスには同じ暦月や月初・月末への一致を要求する条件はない。初期画面では対象日を当日、開始日・終了日を当月初日・末日に設定する。要求DTOのrunMode初期値はDAILYだが、通常Actionは選択された入口のenumで上書きし、サービス単体へのNULL指定は拒否される。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchViewAction.java.txt",
+          "startLine": 16,
+          "endLine": 20
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java.txt",
+          "startLine": 9,
+          "endLine": 23
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 19,
+          "endLine": 19
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 115,
+          "endLine": 135
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-033",
+      "topic": "職員指定・全職員区分の境界",
+      "statement": "STAFF_NOは空欄で全職員となり、指定時はActionで8桁以内のASCII数字を要求する。サービスはこれをInteger updatedByへ変換し、検索では予約の担当者コードではなく更新者列に条件を付ける。サービス単体のparseStaffNoは空文字または大文字小文字を区別しないALLをnullへ変換するが、通常ActionはALLを数値検査で拒否する。したがってALLを画面の有効入力として掲載しない。全職員／職員指定はDAILY／MONTHLYやNEW／CHANGED／DELETEDとは独立した条件である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 49,
+          "endLine": 51
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 15,
+          "endLine": 19
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 68,
+          "endLine": 80
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 138,
+          "endLine": 147
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 374,
+          "endLine": 397
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-034",
+      "topic": "実行・出力区分から作る出力識別情報",
+      "statement": "出力名称にはAuditTypeの新規・変更・削除、職員指定の担当者別／全担当者、実行区分の日次／月次を組み合わせる。サービスが作るQ番号は、日次職員指定で新規Q010・変更Q020・削除Q030、日次全職員でQ040・Q050・Q060、月次職員指定でQ070・Q080・Q090、月次全職員でQ100・Q110・Q120となる。この番号はbuildSpecの文字列生成結果であり、DBの保存クエリーを実行する識別子ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 165,
+          "endLine": 184
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 77,
+          "endLine": 80
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-035",
+      "topic": "削除明細整理と区分別抽出の順序",
+      "statement": "サービスは出力区分選択、期間、職員番号の検査後、DELETE_CUTOFF_DATEが非空なら削除明細整理を行い、その後に選択区分を検索する。整理SQLは年金＿削除明細のデータ更新日<=基準日で、職員指定条件や出力区分条件は付けない。整理は独立した接続・トランザクションでcommitするため、新規分だけを選択した場合にも実行され、後続の抽出・生成失敗で同時に巻き戻す処理ではない。初期基準日は画面初期化時点からCalendarで2か月戻した日で、hiddenへ保持する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchViewAction.java.txt",
+          "startLine": 21,
+          "endLine": 23
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 40,
+          "endLine": 40
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 58,
+          "endLine": 80
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 457,
+          "endLine": 480
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-036",
+      "topic": "コード変換失敗と保存・削除の例外境界",
+      "statement": "名称逆引き不成立と合成年金種類コード不在はSQLExceptionであり、保存ではRepositoryのcatch(Exception)がrollbackを試みてNenkinDataAccessExceptionへ変換する。削除でも同様にrollbackを試みて業務DB例外へ変換する。保存用モデルの事前準備は保存メソッドのtryより前にあるため、その検証例外とは捕捉位置が異なる。rollback失敗は元の例外を優先して抑制されるので、例外が返ったことだけでrollback成功を保証しない。画面Action内にこれらのDB例外を入力エラーへ変換するcatchはなく、接続された共通ServletのAction実行catchへ伝播する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 280,
+          "endLine": 307
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 344,
+          "endLine": 349
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 513,
+          "endLine": 532
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 916,
+          "endLine": 927
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataAccessException.java.txt",
+          "startLine": 3,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 332,
+          "endLine": 345
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-037",
+      "topic": "候補取得失敗・再表示と最終応答境界",
+      "statement": "コード候補のSQL失敗はReferenceDataServiceでNenkinDataAccessExceptionに変換し、空一覧やローカル初期値への代替は行わない。Pension.jspは描画のたびに候補4一覧を直接取得するため、入力拒否後の再表示でも候補取得に失敗し得る。共通ServletのAction実行catchはforwardより前で終了しており、JSP内の候補取得例外をそのcatchで同じ共通画面へ変換できるとはいえない。保存commit後のJSP失敗と保存処理自体の失敗も区別する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 271,
+          "endLine": 285
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 375,
+          "endLine": 376
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 3,
+          "endLine": 4
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+          "startLine": 13,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+          "startLine": 46,
+          "endLine": 48
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 332,
+          "endLine": 345
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 375,
+          "endLine": 383
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-038",
+      "topic": "バッチ区分不正・該当なしの結果",
+      "statement": "BatchRunActionは職員確認、要求値保持、POST・CSRF確認、出力区分選択確認、職員番号確認の順に進み、その後にサービスを呼ぶ。サービスからのIllegalArgumentExceptionは入力Beanへメッセージを設定してBatch.jspへ戻すが、DB例外はこのcatchの対象ではない。区分別検索が0件の場合は当該区分・日次月次・職員指定有無に応じたメッセージを追加し、その区分のファイルを生成しない。生成結果は0ファイルで空byte配列、1ファイルで当該Excel、複数ファイルで日次または月次のZIPとなり、選択数そのものではなく生成できたファイル数で決まる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 13,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 74,
+          "endLine": 112
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 187,
+          "endLine": 196
+        }
+      ]
+    },
+    {
+      "id": "CODE-NENKIN-039",
+      "topic": "関連図に保持する結合と制約の区別",
+      "statement": "コード関連図の実装上の接続は、年金1_LKまたは年金＿削除明細の性別→性別テーブル.性別ｺｰﾄﾞ、裁定請求→裁定請求テーブル.裁請ｺｰﾄﾞ、受給有無→受給有無テーブル.受給ｺｰﾄﾞ、年金種類→年金種類テーブル.種類ｺｰﾄﾞというLEFT JOINである。収録DDLはコード表PKを宣言する一方、これらのFKは宣言していない。図ではSQL参照関係として示し、参照整合性をDBが強制する関係や、根拠のない業務上の多重度を追加しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 772,
+          "endLine": 778
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 81,
+          "endLine": 171
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 10,
+          "endLine": 170
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "本番DBのコード実値・表示名称・追加値・廃止値・変更運用は提供されていない。data.sqlの1／2や年金種類1～31を本番の確定値または承認済み業務規則へ一般化できない。",
+    "コード表名称の登録・更新を担当する通常画面やサービスは確認できない。性別・裁定請求・受給有無・年金種類の名称について、業務上限や改名・削除・同名登録の運用規則は未確認であり、DDL容量で補わない。",
+    "本番JNDIの実登録先、配置済みDBのDDL、照合順序、JDBCドライバーは未確認である。名称逆引きの文字比較や同名複数行の取得順、既存DBが収録DDLと一致することは保証できない。",
+    "コード表の描画時取得から保存時再照会までの変更を固定する版情報や共通トランザクションはない。途中での改名・削除時にどの運用対応を採るかは未定義である。",
+    "参照コード欠落時は名称が空文字になり、再保存や削除明細作成でNULLへ変換され得る。欠落コードを保持・警告・拒否する追加業務規則は確認できない。",
+    "AuditType.fromCode、getPensionTypeLabel、findLatestAuditTypeについて通常UIからの呼出しは確認できない。未収録の外部呼出しや配備バイナリ上の利用は確認していない。",
+    "commitで例外が発生した場合のDB確定状態、rollback失敗後の状態、JSP描画失敗時のコンテナー応答、ダウンロード受領完了はソース読取りだけでは確定できない。"
+  ],
+  "coverageNotes": [
+    "対象は入力計画のCODE-NENKIN、共通/コード一覧.md、年金コード・区分一覧である。今回は材料となるfactsを返し、Markdown本文や派生ファイルは生成していない。",
+    "manifestはmode=source-only、trainingReferenceAuthorizedByUser=false、referenceSpecificationIncluded=false、referenceFiles=[]であった。参考設計は使用せず、全factをobserved-sourceとした。manifestは権限・材料の確認だけに使用し、業務factの根拠にはしていない。",
+    "manifestには176材料、169省略項目が記録されている。この件数を対象全機能の読了や解析完了の証明として扱っていない。",
+    "rg --filesとrg -nで所在・呼出しを確認し、本文はmanifest記載のindexedパスを範囲指定で読んだ。referencesの行番号はindexedに付された原ソース行番号である。sources/nenkin/WEB-INF/src、sources/nenkin/JSP、コード表DDLでも名称・enum・helperの横断検索を行った。",
+    "開始点8材料のうち、schema.sqlは1～177行、schema-raroa-sqlserver.sqlは1～172行、AuditTypeは1～34行、PensionBatchRunModeは1～6行、NenkinBaseActionは1～213行を確認した。data.sqlではコード一覧に該当する55～94行を確認し、認証用初期値を分析対象へ含めていない。",
+    "ReferenceDataServiceは主に1～45行、225～310行、365～389行を確認した。PensionRepositoryは1～178行と270～941行を確認し、候補検索・帳票並び順など本コード文書の責務外の部分を全文採録していない。",
+    "閉包として予約JSP、モデル、候補DTO、表示・クリア・読込み・保存・削除Action、バッチJSP・Bean・要求DTO・日次月次Action・出力サービス、接続取得、例外型、HTML変換、ServletのAction実行catchとforwardを追跡した。PensionBatchExportServiceの詳細確認範囲は1～205行で、Workbook生成内部や全出力列の仕様は今回の中心責務に含めていない。",
+    "H2JndiSetupListenerはローカル有効条件とschema.sql／data.sqlの初期化順を確認する範囲、ControlServletは入口生成・例外・forward境界を確認する範囲に限定した。認証用初期値や接続認証値はfactsへ掲載していない。",
+    "関連文書の計画上の対応は、COM-111=共通/共通仕様書_COM-111_年金業務共通処理.md、DATA-CONTRACTS=共通/データオブジェクト定義書.md、DB-OPS=共通/DB仕様書/DB操作仕様書.md、DB-LOGICAL=共通/DB仕様書/論理データ仕様書.md、DB-PHYSICAL=共通/DB仕様書/テーブル定義書.mdである。候補操作はDET-SCR-018=詳細仕様書/詳細仕様書_SCR-018_新規・変更・削除.md、抽出操作はDET-SCR-014=詳細仕様書/詳細仕様書_SCR-014_日次 _ 月次処理.md、出力識別情報はOUTPUT-NENKIN=共通/帳票一覧.mdへ対応する。いずれも計画上の案内であり、生成済みとは判断していない。",
+    "図の材料として、候補取得→空option追加→名称選択、受信名称空／非空→NULL／逆引き成功／逆引き不成立、年金合計0／非0→NULL／コード存在確認、保存存在有無→変更FLG1／0、削除対象有無→false／削除明細追加・本表削除、実行区分→期間、出力区分→検索元、0件→メッセージ、生成数0／1／複数→結果の各分岐をfactsに保持した。図の描画・原寸確認は行っていない。",
+    "原プログラム、SQL、スクリプト、ビルド、テストは実行していない。ファイル変更、ネットワーク、プラグイン、外部サービス、委譲エージェント、モデル学習は使用していない。配備バイナリ照合・実DB照会・表示検証・正式採点は未実施で、正式率はnullとして扱う。"
+  ]
+}

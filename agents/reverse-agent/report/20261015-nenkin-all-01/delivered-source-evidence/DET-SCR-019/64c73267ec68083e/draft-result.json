@@ -1,0 +1,37 @@
+{
+  "documentId": "DET-SCR-019",
+  "path": "詳細仕様書/詳細仕様書_SCR-019_登録内容印刷.md",
+  "contentSha256": "64c73267ec68083e7e1fa80a1272fb65c9711b72a7b2c7dc1341d0dd35ded63a",
+  "aiAuthored": true,
+  "semanticProseAssembledByPython": false,
+  "analysisFacts": 53,
+  "unresolved": [
+    "実行時JNDI登録、実DB定義、JDBCドライバー、照合順序、接続既定のautoCommit・分離レベル・タイムアウトは未確認。収録DDLは条件付き作成宣言であり、既存本番表の実測結果ではない。",
+    "店名・コード名称表を維持管理する画面や更新サービスと、名称の業務上限は特定できない。DDLのNVARCHAR容量を業務上限へ置き換えていない。",
+    "顧客番号のDB宣言はBIGINT、取得はgetInt、モデルはIntegerである。int範囲外の既存値の有無と、実ドライバーでの変換結果・例外は未確認。",
+    "同じ全ソートキーを持つ行同士の順序、および実接続先の照合順序によるカナ文字列の具体的な順番は確定できない。",
+    "A4横、繰返しヘッダー、行分割抑制、店舗別改ページ、省略表示、mainの残存paddingはソース宣言から説明した。静的HTML・Mermaid・印刷紙面の描画確認は未実施であり、表示合格とは判定していない。",
+    "ブラウザー印刷の取消・完了・失敗・受領をサーバーへ返す契約はない。preview=trueやJSP返却から印刷完了を確定できない。",
+    "JSP描画例外や応答送信途中の失敗に対するコンテナー側の最終HTTP状態、エラーページ、送信済み部分の扱いは確定できない。",
+    "共有セッション属性ViewBeanが別画面のBean型へ置換された場合の、複数タブ・キャッシュ・再要求を含む実際の描画挙動は未確認。画面別Beanの分離や同時操作保証は確認できない。",
+    "Report.jspへの直接要求が配備設定で制限されるかは未確認。JSP自身の職員情報なし空表示と、Action入口の認証・職員確認を区別している。",
+    "検索コードに明示的な件数上限・取消連携はない。外部DataSourceやサーバーが設定する制限、大量件数時の所要時間・メモリ量・セッション運用上限は未確認。",
+    "原アプリ、SQL、スクリプト、ビルド、テストは実行していない。ファイル生成・編集、派生形式の表示確認、配備バイナリ照合、独立レビュー、正式採点は未実施。正式率はnullとする。"
+  ],
+  "factCorrections": [
+    "概要／静的画面投影のform#reportFormからaction=\"#report-preview-projection\"を削除した。元の送信先/Action.doとHTTP method POSTはdata-source-action・data-source-methodおよび要求入口表へ保持した。投影の全ボタンはtype=\"button\"とし、DOM階層・表示状態・CSSを維持した。これは納品HTMLの構造修正であり、実装のフォーム送信契約の変更ではない。対応根拠：R019-006、sources/nenkin/JSP/NENKIN/Report.jsp:30-33、同:59-63。",
+    "プレビューのサブフローP-2に付す説明を、SQLExceptionはRepositoryでNenkinDataAccessExceptionへ包まれて共通Action用catchへ到達する表現へ合わせた。SQL例外を元の型のまま共通catchへ渡す解釈を除いた。対応根拠：R019-045・R019-046、sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:483-510、sources/n2framework/WEB-INF/src/common/ControlServlet.java:332-345。"
+  ],
+  "analysisExecutedInThisJob": false,
+  "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261015-nenkin-all-01\\jobs\\documents-03\\a6f95fb78971f8ad\\content-01",
+  "snapshot": {
+    "manifestSha256": "a28612d98f58abbddbdae4a16cf7a4d162b525642186b2ec5b1b13e151d85957",
+    "capsuleSchema": "reverse-ai-source-capsule/2",
+    "mode": "source-only",
+    "modeDerivation": "explicit-manifest-mode",
+    "scope": "sealed-manifest-and-raw-material"
+  },
+  "referenceMode": "source-only",
+  "structureFindings": [],
+  "status": "AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED"
+}

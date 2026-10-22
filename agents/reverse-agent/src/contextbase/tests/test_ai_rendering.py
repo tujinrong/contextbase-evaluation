@@ -253,6 +253,18 @@ erDiagram
         self.assertEqual(self.before, self.source.read_bytes())
         self.assertFalse(self.result["originalModified"])
 
+    def test_text_and_link_only_main_is_a_visual_screen(self):
+        source = self.run_root/'control-free-screen.md'
+        source.write_text(fixture('<style>body{background:#edf1f4}.screen{background:white;padding:20px}</style>\n\n<main><section class="screen"><h1>人工の状態表示</h1><p>CONTROL-FREE-SCREEN</p><a href="#return">戻る</a></section></main>\n',path='control-free-screen.md'),encoding='utf8')
+        before=source.read_bytes()
+        result=render_document(source,self.run_root/'control-free-screen',chromium_executable=self.chromium)
+        self.assertEqual('PASS',result['display']['status'],result['display'])
+        self.assertEqual(1,len(result['layouts']))
+        self.assertEqual('PASS',result['layouts'][0]['status'])
+        self.assertTrue((self.run_root/'control-free-screen/layout-001.png').is_file())
+        self.assertIn('background:#edf1f4',(self.run_root/'control-free-screen/layout-001.html').read_text('utf8'))
+        self.assertEqual(before,source.read_bytes())
+
     def test_relative_document_citation_is_inert_in_real_browser(self):
         detail = self.run_root/'detail'; detail.mkdir()
         source = detail/'citation.md'

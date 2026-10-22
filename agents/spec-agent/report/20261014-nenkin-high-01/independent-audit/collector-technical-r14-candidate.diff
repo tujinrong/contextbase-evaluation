@@ -1,0 +1,141 @@
+--- D:\開発\contextbase-evaluation\agents\spec-agent\.tmp\20261014-nenkin-high-01\collect_reviewed_r13_table_candidate.py
++++ D:\開発\contextbase-evaluation\agents\spec-agent\.tmp\20261014-nenkin-high-01\collect_reviewed_r14_technical_candidate.py
+@@ -184,6 +184,82 @@
+             prompt_metadata_object(review_prefix, TABLE_METADATA_REVIEW_MARKER) ==
+                 {'tableFormatPolicy': optional['policy'], 'tableFormatMetadata': optional['context']},
+             'Table independent review original context/policy/supplement differs')
++
++TECHNICAL_METADATA_WRITER = RUN / 'nenkin_writer_driver_r13_technical_candidate.py'
++TECHNICAL_METADATA_WRITER_SHA = '560d95bb9d26f2ccccbd30969eba805a8b7b3caaf2e2d86c55b77ee819e24018'
++TECHNICAL_METADATA_REVIEW_MARKER = '\nSame-run technical revision review metadata (mechanical display scope only, no source authority):\n'
++
++def bind_optional_technical_metadata(wave_input, definition, plan_value, prepared, grant_value, remember, writer=None):
++    if 'technicalRevisionMetadata' not in wave_input:
++        return None
++    require('executionMetadata' not in wave_input and 'tableFormatMetadata' not in wave_input and
++        definition['kind'] in {'basic-design','detailed-specification'} and
++        prepared['helper'] == str(safe(TECHNICAL_METADATA_WRITER)) and prepared['helperSha256'] == TECHNICAL_METADATA_WRITER_SHA and
++        grant_value['driverSha256'] == TECHNICAL_METADATA_WRITER_SHA,
++        'Technical supplement requires exact approved feature revision writer')
++    path = remember(inside(TECHNICAL_METADATA_WRITER, RUN), TECHNICAL_METADATA_WRITER_SHA)
++    if writer is None:
++        spec = importlib.util.spec_from_file_location('fixed_technical_metadata_writer_r13', path)
++        writer = importlib.util.module_from_spec(spec)
++        spec.loader.exec_module(writer)
++    require(safe(writer.__file__) == path and sha(path) == TECHNICAL_METADATA_WRITER_SHA,
++        'Loaded technical writer file/bytes differ')
++    base, exact_plan, context = writer.binding(wave_input['grant'], wave_input['grantSha256'], check_deadline=False)
++    require(exact_plan == plan_value and context == load(guard.CONTEXT), 'Technical base plan/full context differs')
++    metadata = wave_input['technicalRevisionMetadata']
++    bound = writer.with_technical_revision_metadata(base, exact_plan, metadata['metadata']['path'], metadata['metadata']['sha256'])
++    previous, reused = prepared['revisions'], prepared['completedAnalyses']
++    require(isinstance(previous,dict) and isinstance(reused,dict) and set(reused)<=set(prepared['documents']),
++        'Technical prepared revision/reuse map differs')
++    writer.technical_revision_selection(bound, exact_plan, prepared['documents'], previous)
++    require(bound == wave_input and [definition['id']] == bound['technicalRevisionMetadata']['documentIds'],
++        'Full reconstructed technical input differs')
++    for filename, expected in bound['technicalRevisionMetadata']['pinnedFiles'].items():
++        remember(filename, expected)
++    from contextbase.ai import workflow
++    bound_definition = workflow.select_document(Path(bound['plan']), definition['id'])
++    revision_context = writer.recheck_previous(previous[definition['id']], bound_definition, bound, context)
++    for filename, expected in previous[definition['id']]['pinnedFiles'].items():
++        remember(filename, expected)
++    if definition['id'] in reused:
++        writer.recheck_analysis(reused[definition['id']], bound_definition, bound, context)
++        require(previous[definition['id']]['analysisWillBeReused'] is True and
++            previous[definition['id']]['analysisJob'] == reused[definition['id']]['analysisJob'] and
++            previous[definition['id']]['analysisHandoffSha256'] == reused[definition['id']]['analysisHandoffSha256'],
++            'Technical revision own completed checkpoint binding differs')
++        for filename, expected in reused[definition['id']]['pinnedFiles'].items():
++            remember(filename, expected)
++        revision_context['completedAnalysisReuse'] = reused[definition['id']]
++    else:
++        require(previous[definition['id']]['analysisWillBeReused'] is False, 'Technical fresh/reuse truth differs')
++    revision_context = writer.technical_revision_context(revision_context,context,bound,bound_definition)
++    require(sha(path) == TECHNICAL_METADATA_WRITER_SHA, 'Technical writer changed while binding')
++    return {'context':bound['technicalRevisionMetadata']['context'],'policy':writer.TECHNICAL_REVISION_POLICY,
++        'provenance':{key:value for key,value in bound['technicalRevisionMetadata'].items() if key!='context'},
++        'draftScope':revision_context,'staticPreviewPolicy':writer.STATIC_PREVIEW_POLICY,
++        'staticPreviewReviewScope':writer.STATIC_PREVIEW_REVIEW_SCOPE}
++
++def technical_metadata_prompt_binding(optional, definition, original, author_result, handoff, draft_prompt, review_prompt, context):
++    prefix = review_prompt.split('\n原稿本文:\n',1)[0]
++    carriers = (original,author_result,handoff)
++    scope = prompt_metadata_object(draft_prompt,DRAFT_SCOPE_MARKER) if DRAFT_SCOPE_MARKER in draft_prompt else None
++    if optional is None:
++        require(all('technicalRevisionMetadata' not in value for value in carriers) and TECHNICAL_METADATA_REVIEW_MARKER not in prefix and
++            not(isinstance(scope,dict) and ('technicalRevisionMetadata' in scope or 'technicalRevisionPolicy' in scope)),
++            'Unbound technical carrier or prompt refused')
++        return
++    require(definition['kind'] in {'basic-design','detailed-specification'} and
++        all(value.get('technicalRevisionMetadata')==optional['provenance'] for value in carriers),
++        'Technical text-pin/result/review-handoff provenance differs')
++    require(scope==optional['draftScope'] and scope.get('executionContext')==context and
++        scope.get('technicalRevisionMetadata')==optional['context'] and scope.get('technicalRevisionPolicy')==optional['policy'],
++        'Technical draft complete previous text/review/context/reuse differs')
++    require(prompt_metadata_object(prefix,REVIEW_SCOPE_MARKER)==context and
++        prompt_metadata_object(prefix,TECHNICAL_METADATA_REVIEW_MARKER)==
++            {'technicalRevisionPolicy':optional['policy'],'technicalRevisionMetadata':optional['context']},
++        'Technical review original context/full metadata differs')
++
++
+ 
+ def main():
+     parser = argparse.ArgumentParser()
+@@ -357,6 +433,7 @@
+             pin(metadata_file, digest)
+         execution_metadata = bind_optional_metadata(after_value['input'], definition, value, prepared, grant_value, pin)
+         table_metadata = bind_optional_table_metadata(after_value['input'], definition, value, prepared, grant_value, pin)
++        technical_metadata = bind_optional_technical_metadata(after_value['input'], definition, value, prepared, grant_value, pin)
+         review_handoff = pin(review_file.parent / 'review-handoff.json')
+         draft, review, handoff = load(draft_file), load(review_file), load(review_handoff)
+         require(draft['aiAuthored'] is True and draft['semanticProseAssembledByPython'] is False and
+@@ -389,6 +466,24 @@
+                                 original_prompt, review_prompt, context)
+         raw_draft_prompt = safe(draft_file.parent / 'draft/prompt.txt').read_bytes().decode('utf-8')
+         table_metadata_prompt_binding(table_metadata, definition, original, result, handoff, raw_draft_prompt, review_prompt, context)
++        technical_metadata_prompt_binding(technical_metadata, definition, original, result, handoff, raw_draft_prompt, review_prompt, context)
++        if technical_metadata is not None:
++            from contextbase.ai import prompts
++            technical_structure = validate_document(document.read_bytes().decode('utf-8'), definition['path'],
++                expected_document_id=definition['id'], expected_kind=definition['kind'])
++            technical_definition = workflow.select_document(plan, definition['id'])
++            expected_technical_review = (provider.COMMON_POLICY + '\nUser task (within that boundary):\n' +
++                prompts.REVIEW + workflow._document_context(guard.SNAPSHOT, technical_definition) +
++                REVIEW_SCOPE_MARKER + json.dumps(context, ensure_ascii=False, indent=2) +
++                '\nInert static projection review metadata (format scope only, no new source facts or read permissions):\n' +
++                json.dumps({'staticPreviewPolicy':technical_metadata['staticPreviewPolicy'],
++                    'staticPreviewReviewScope':technical_metadata['staticPreviewReviewScope']},ensure_ascii=False,indent=2) +
++                TECHNICAL_METADATA_REVIEW_MARKER + json.dumps({'technicalRevisionPolicy':technical_metadata['policy'],
++                    'technicalRevisionMetadata':technical_metadata['context']},ensure_ascii=False,indent=2) +
++                '\n原稿本文:\n' + document.read_bytes().decode('utf-8') +
++                '\n構造検査の指摘（意味の正確さを採点した結果ではありません）:\n' + json.dumps(technical_structure,ensure_ascii=False))
++            require(review_prompt==expected_technical_review,
++                'Complete raw technical review prompt source/context/static policy/metadata/MD/structure differs')
+         if table_metadata is not None:
+             from contextbase.ai import prompts
+             table_structure = validate_document(document.read_bytes().decode('utf-8'), definition['path'],
+@@ -436,6 +531,13 @@
+                 DRAFT_SCOPE_MARKER + json.dumps(table_metadata['draftScope'], ensure_ascii=False, indent=2) +
+                 analysis_marker + json.dumps(analysis, ensure_ascii=False, indent=2))
+             require(raw_draft_prompt == expected_table_draft, 'Complete raw table draft prompt boundary/context/previous evidence/policy/facts differs')
++        if technical_metadata is not None:
++            expected_technical_draft = (provider.COMMON_POLICY + '\nUser task (within that boundary):\n' +
++                prompts.WRITE + workflow._document_context(guard.SNAPSHOT,bound_definition) +
++                DRAFT_SCOPE_MARKER + json.dumps(technical_metadata['draftScope'],ensure_ascii=False,indent=2) +
++                analysis_marker + json.dumps(analysis,ensure_ascii=False,indent=2))
++            require(raw_draft_prompt==expected_technical_draft,
++                'Complete raw technical draft prompt boundary/source/context/previous/reuse/metadata/facts differs')
+         require(analysis['documentId'] == definition['id'] and checkpoint['referenceMode'] == 'source-only',
+                 'Fresh source analysis identity/mode mismatch')
+         pin(analysis_job / 'analysis-verified.json', checkpoint['analysisSha256'])
+@@ -466,6 +568,8 @@
+             records[-1]['executionMetadata'] = execution_metadata['provenance']
+         if table_metadata is not None:
+             records[-1]['tableFormatMetadata'] = table_metadata['provenance']
++        if technical_metadata is not None:
++            records[-1]['technicalRevisionMetadata'] = technical_metadata['provenance']
+ 
+     def recheck():
+         guard.recheck(fixed, runtime)

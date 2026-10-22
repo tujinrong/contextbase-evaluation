@@ -1,0 +1,38 @@
+{
+  "documentId": "SCR-013",
+  "path": "基本設計書/基本設計書_SCR-013_年金自動受取予約管理システム - ログイン.md",
+  "contentSha256": "6f26fd94e8d5014f70bc4ce7e542f690b58386a5c8f55cbe1bdd56397ca9c180",
+  "aiAuthored": true,
+  "semanticProseAssembledByPython": false,
+  "analysisFacts": 40,
+  "unresolved": [
+    "本番の認証表・職員名簿・所属課係・役職・事業所表の列型、容量、NULL、制約と、氏名等の登録・更新側の業務上限は未確定。確認できた外部表DDLはローカル互換定義であり、本番物理保証へ転用していない。",
+    "配備環境のDataSource、JDBCドライバー、接続先、既存テーブルとローカル初期化の成功状態は未確認。n2nenkin.localDbによる表示切替を認証成功や接続成功の証拠としていない。",
+    "実HTTP要求、外部filter、直接JSPアクセス制約、コンテナの最終応答状態・文字コード、セッション有効時間は未確定。原プログラム、SQL、スクリプト、ビルド、テストは実行していない。",
+    "共通認証から年金職員確認までの読取は同一トランザクションではなく、読取間のマスター変更に対する一貫したスナップショットは保証されていない。既存StaffContextの名簿再確認周期も未定義。",
+    "coverageNotes引継ぎ：manifestのmode=source-only、trainingReferenceAuthorizedByUser=false、referenceSpecificationIncluded=false、referenceFiles=[]を限定検索で確認した。manifestは権限・材料管理にだけ使用した。読取りは指定workspaceのmanifest.json、sources/、indexed/と提示データに限定し、参考設計、workspace外、ネットワーク、プラグイン、委譲エージェントは使用していない。ファイルは編集していない。",
+    "実行境界上の問題：ローカル画面の構造確認で使用した検索条件が広く、認証用初期値を含む案内行がツール出力へ混入した。当該値は本応答へ転載せず、当該行の再読取りを中止した。ホストの実行イベントにはこの問題を記録する必要がある。",
+    "解析報告用の追跡対応：SCR-013・版2.0の「概要」「項目一覧」はSCR013-F001～F008・F025・F026、「イベント仕様／初期表示」はF002・F006～F008・F025、「イベント仕様／ログイン送信・職員確認・メニュー表示」はF009～F024・F029～F039、「イベント仕様／ログアウト後の復帰・再ログイン」はF027・F030・F033～F036、「補足説明」はF014・F021・F024・F028・F029・F038～F040に対応する。原文位置は提示factsのreferencesとfactCorrectionsの追加位置を保持し、ホスト側で最終contentの本文ハッシュへ対応付ける。",
+    "Markdown本文と静的HTML・Mermaidの記述を返した。spec-metaのコメント・JSON、四主章との対応、項目一覧10列、各イベントの六h4、表の列数と縦棒表記を原稿で確認した。ファイル出力、HTML・PDF・Excel変換、Mermaid描画、原寸の表示確認は未実施であり、表示合格・出版完了・顧客承認は判定していない。関連文書は計画上の対応のみで生成状態は未確認。正式率はnull。"
+  ],
+  "factCorrections": [
+    "SCR013-F017の所属課係名称を明確化した。コード100の名称は一つの文字列「融資Ｍ・リレーションＧ」であり、コード10＝店長席、100＝融資Ｍ・リレーションＧ、600＝事務グループである。根拠：indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt、419～430行。本文「イベント仕様／ログイン送信・職員確認・メニュー表示／処理手順」3.4へ反映。",
+    "SCR013-F034・F035を補足した。LoginBean削除後にアクセス記録用Mapへ入るJava nullと、DBへ渡すSQL NULLは異なる。InsertCounterShiftBaseはユーザーIDを引用符で囲んでappendするため、Java nullはSQL文字列リテラル'null'として組み立てられる。根拠：indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt、349～371行、indexed/n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java.txt、60～65行。本文の手順5.1～5.3、結果説明へ反映。",
+    "SCR013-F032を補足した。共通名簿の所属店番がDB NULLなら共通結果変換で空文字となり、ゼロ埋めでも空文字のままなので、Integer.parseIntより先にsubstring(0,2)等で例外になり得る。名簿0件による代替情報設定とは別経路である。根拠：indexed/n2framework/WEB-INF/src/common/base/CommonBaseSelect.java.txt、94～102行、indexed/n2framework/WEB-INF/src/common/util/CommonConverter.java.txt、275～310行、indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt、298～304行。本文の共通情報組立てと例外説明へ反映。",
+    "SCR013-F022・F036を補足した。requireStaffはLoginBean型不適合の場合もログインJSPを返すが、その分岐ではLoginBeanを削除しない。ControlServletはAction実行catchの後でLoginBeanをLoginInfoBeanへ直接castするため、型不適合属性が残るとforward前に別の例外が起こり得る。ログインJSPを返したことと再表示完了を分離した。根拠：indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt、57～78行、indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt、339～355行。本文の手順4.2、5.1、結果表、サブフロー2-5へ反映。",
+    "SCR013-F023を条件付きで記述した。MenuViewActionはrequireStaff成功後にStaffContextを再取得し、非nullの場合だけ職員番号と氏名を設定する。再取得がnullならMenuViewBeanの既定値「-」「未確認」のままViewBeanへ保存してメニューJSPを返す。取得済み職員情報がある枝にはこの既定値を適用しない。根拠：indexed/nenkin/WEB-INF/src/nenkin/MenuViewAction.java.txt、10～16行、indexed/nenkin/WEB-INF/src/nenkin/bean/MenuViewBean.java.txt、5～12行。本文の項目一覧、手順4.8、サブフロー2-4へ反映。",
+    "SCR013-F021・F038を補足した。年金側の職員番号・所属店番取得はgetIntで、wasNullの確認がない。この取得結果ではDB NULLと0を区別する情報を保持しない。ローカルDDLで所属店番がNULL可であることと、StaffContextがintを保持することを分けた。根拠：indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt、314～321行、indexed/nenkin/WEB-INF/resources/db/schema.sql.txt、20～29行。本文のDB操作説明へ反映。"
+  ],
+  "analysisExecutedInThisJob": true,
+  "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261015-nenkin-all-01\\jobs\\documents-03\\f34c471f197e53bf\\content-01",
+  "snapshot": {
+    "manifestSha256": "a28612d98f58abbddbdae4a16cf7a4d162b525642186b2ec5b1b13e151d85957",
+    "capsuleSchema": "reverse-ai-source-capsule/2",
+    "mode": "source-only",
+    "modeDerivation": "explicit-manifest-mode",
+    "scope": "sealed-manifest-and-raw-material"
+  },
+  "referenceMode": "source-only",
+  "structureFindings": [],
+  "status": "AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED"
+}

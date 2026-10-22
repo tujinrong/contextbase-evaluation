@@ -1,0 +1,36 @@
+{
+  "documentId": "DET-SCR-016",
+  "path": "詳細仕様書/詳細仕様書_SCR-016_店番参照／担当者参照／顧客参照.md",
+  "contentSha256": "ea8c879c49b7c890d53e6348a4cddb867566ed70a7ac9adab67baab6ff1b4ea1",
+  "aiAuthored": true,
+  "semanticProseAssembledByPython": false,
+  "analysisFacts": 52,
+  "unresolved": [
+    "本番のDB2.Ｕ職員名簿表とN2_SIGHT.Ｂ顧客基本表の物理DDLは未収録であり、型・容量・NULL・PK・制約を確定できない。本文のDB属性はローカル互換DDLと明記した。店舗名・職員名・顧客名の保守入口、業務上限、登録時正規化、停止・廃止値の運用も未確定である。",
+    "JNDI実登録、配備ドライバー、既存表属性、TO_CHAR・LIKE ESCAPEの実行互換性、DECIMALのgetString表現、getInt範囲外値の実行時挙動は未照合である。ローカル互換DDLを本番保証へ転用していない。",
+    "同一フリガナ・数値化電話番号に複数予約がある場合の採用行はORDER BY・件数検査がなく確定しない。顧客選択時の店番・顧客番号との一致も予約優先検索では検証しない。本文E04に記載し、承認済みの選択規則は追加していない。",
+    "不正店番・数字なし電話による検索範囲拡大、切出し後のページ補正、空の候補キーの現在入力による代用について、業務上の許容判断は確認できない。未実装の改善案や推定設計は採用していない。",
+    "通常導線の候補ボタンはsearchCustomersへ接続する。PensionRepository.searchCandidatesの宣言から通常UIでの利用を推定していない。他の全機能を含めた呼出元不在の網羅判定は本書の検証範囲外である。",
+    "ブラウザーの実送信バイト列、ServletとJSPの文字コード設定の最終応答への反映、iframe内Escape・focus・表示は未実行である。識別値処理の例外、forward・JSP描画例外のコンテナ側最終HTTP状態も未確認である。",
+    "報告用追跡情報：文書DET-SCR-016、版2.0。概要・項目一覧はF016-001～008・014～021・027～028・035・049～050、E01はF016-001～024・026～027・045・047～048・051、E02はF016-025、E03はF016-030～035・051、E04はF016-037～046・052、E05はF016-036、補足説明はF016-016～020・029・047～050に対応する。各factの複数原文位置は提示入力のreferencesを引き継ぐ。追記訂正の位置はfactCorrectionsに記録した。本文ハッシュと最終節対応はホスト側のreportへ登録する必要がある。",
+    "報告用coverageNotes：manifestのmode=source-only、trainingReferenceAuthorizedByUser=false、referenceSpecificationIncluded=false、referenceFiles=[]を確認した。manifestは材料管理と読取り権限の確認だけに使用し、業務factの根拠にしていない。読取りは指定workspaceのmanifest・indexed・sourcesの位置確認と提示入力に限定し、外部メモリ、親・兄弟ディレクトリ、参考仕様、ネットワーク、外部サービス、委任エージェントを使用していない。",
+    "報告用実施境界：原プログラム・SQL・スクリプト・ビルド・テストを実行せず、ファイルを変更していない。返却したMarkdownのメタデータJSON、四主章、項目一覧10列、5イベント各六h4、表の列構成を原稿上で照合した。静的投影とMermaidの描画、HTML・PDF・Excel変換、表示確認、独立レビュー、配備バイナリ照合は実施していない。正式率はnullであり、後工程の表示・出版の成否を確定していない。"
+  ],
+  "factCorrections": [
+    "F016-034・F016-042を補足した。『現在入力を保持』は選択後DOMの全情報を保持する意味ではない。readReservationはbranchNameを読まず、顧客通知は編集用CUSTOMER_NAMEを変更しないため、Load未取得時の店名は空、顧客氏名は従前の編集input由来となる。本文E03の結果説明、E04手順4.3と結果表へ反映。根拠：indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt:138-164、indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt:13-21、indexed/nenkin/JSP/NENKIN/Pension.jsp.txt:22-26、65-65、indexed/nenkin/WEB-INF/src/nenkin/PensionLoadAction.java.txt:20-29。",
+    "F016-005・F016-008の整数変換を、ASCII数字だけの形式検査として記述しないよう具体化した。原文はtrim後のInteger.parseIntと正数判定であり、ブラウザーのASCII数字除去とは別契約である。3桁上限はActionに存在しない。本文E01手順3.2～3.3、項目一覧4・7へ反映。根拠：indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt:119-130、indexed/nenkin/WEB-INF/src/nenkin/LookupViewAction.java.txt:16-20。",
+    "F016-023・F016-029・F016-033～F016-043の主要な結果分岐は原文と整合しており、現行動作を改善案へ置き換えていない。切出し後補正、候補ボタンの顧客基本表検索、担当者選択時の店番非移送、予約優先Loadと結果別モデルを本文と図へ保持した。根拠：indexed/nenkin/WEB-INF/src/nenkin/LookupViewAction.java.txt:17-22、indexed/nenkin/JSP/NENKIN/Pension.jsp.txt:63-68、indexed/nenkin/WEB-INF/src/nenkin/PensionLoadAction.java.txt:12-31。"
+  ],
+  "analysisExecutedInThisJob": true,
+  "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261015-nenkin-all-01\\jobs\\documents-03\\cbcc50dde489b94d\\content-01",
+  "snapshot": {
+    "manifestSha256": "a28612d98f58abbddbdae4a16cf7a4d162b525642186b2ec5b1b13e151d85957",
+    "capsuleSchema": "reverse-ai-source-capsule/2",
+    "mode": "source-only",
+    "modeDerivation": "explicit-manifest-mode",
+    "scope": "sealed-manifest-and-raw-material"
+  },
+  "referenceMode": "source-only",
+  "structureFindings": [],
+  "status": "AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED"
+}

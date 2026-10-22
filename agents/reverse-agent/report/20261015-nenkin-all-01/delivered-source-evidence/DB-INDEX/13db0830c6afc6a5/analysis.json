@@ -1,0 +1,1125 @@
+{
+  "documentId": "DB-INDEX",
+  "sourcePathsRead": [
+    "nenkin/WEB-INF/resources/db/schema.sql",
+    "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+    "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+    "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+    "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java",
+    "n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java",
+    "n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java",
+    "n2framework/WEB-INF/src/common/OperatePermission.java",
+    "n2framework/WEB-INF/src/common/base/SelectDBKanriDBBase.java",
+    "nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java",
+    "nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java",
+    "nenkin/WEB-INF/web.xml",
+    "n2framework/WEB-INF/src/common/CommonConst.java",
+    "n2framework/WEB-INF/src/common/util/CommonUtil.java",
+    "n2framework/WEB-INF/src/common/CounterShift.java",
+    "n2framework/WEB-INF/src/common/ControlServlet.java",
+    "n2framework/WEB-INF/src/common/LoginAction.java",
+    "n2framework/WEB-INF/src/common/base/CommonBase.java",
+    "n2framework/WEB-INF/src/common/base/CommonBaseSelect.java",
+    "nenkin/WEB-INF/src/nenkin/LoginAction.java",
+    "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+    "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/LookupViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/PensionLoadAction.java",
+    "nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+    "nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java",
+    "nenkin/WEB-INF/src/nenkin/PensionLookupAction.java",
+    "nenkin/WEB-INF/src/nenkin/PensionViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java",
+    "nenkin/WEB-INF/src/nenkin/ExcelExportAction.java",
+    "nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java",
+    "nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java",
+    "nenkin/WEB-INF/src/nenkin/BatchRunAction.java",
+    "nenkin/WEB-INF/src/nenkin/BatchDailyAction.java",
+    "nenkin/WEB-INF/src/nenkin/BatchMonthlyAction.java",
+    "nenkin/JSP/NENKIN/Pension.jsp",
+    "nenkin/JSP/NENKIN/Menu.jsp",
+    "nenkin/JSP/NENKIN/Excel.jsp",
+    "nenkin/JSP/NENKIN/Batch.jsp",
+    "nenkin/JSP/MENU/Login.jsp",
+    "n2framework/WEB-INF/src/common/base/SelectCodeGyosyuBase.java",
+    "n2framework/WEB-INF/src/common/base/SelectDaikoSyokuinBase.java",
+    "n2framework/WEB-INF/src/common/base/SelectTenpoKanriDaichoBase.java",
+    "n2framework/WEB-INF/src/common/base/SelectSaijitsuBase.java"
+  ],
+  "facts": [
+    {
+      "id": "DB-INDEX-F001",
+      "topic": "TBL-NEN-001：年金1_LK",
+      "statement": "年金1_LKは予約の現行内容を保持する業務表である。予約の読込み、登録・変更・削除、印刷用検索、店舗別Excel、新規・変更区分の抽出に使用する。店舗・顧客・担当者、氏名・住所・電話、生年月日、年金種類、請求・受給・配偶者情報、備考、更新情報、確認・変更フラグを持つ。SQL Server DDLでの物理名はdbo.[年金1_LK]であり、RepositoryがSQLへ埋め込む表名はスキーマ未修飾の年金1_LKである。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 60,
+          "endLine": 93
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 24,
+          "endLine": 67
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 144,
+          "endLine": 169
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 223,
+          "endLine": 272
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 353,
+          "endLine": 388
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F002",
+      "topic": "TBL-NEN-002：年金＿削除明細",
+      "statement": "年金＿削除明細は予約削除時の明細を保持する業務表であり、予約本表と同じ28列を定義する。削除処理は対象予約を取得し、削除時の更新日・時刻・更新者を設定してこの表へ再バインドし、変更FLGにはNULLを設定する。日次・月次の削除区分はこの表から抽出し、基準日以前の明細を整理するDELETEも実装されている。SQL Server DDLでの物理名はdbo.[年金＿削除明細]である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 95,
+          "endLine": 128
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 315,
+          "endLine": 343
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 353,
+          "endLine": 375
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 458,
+          "endLine": 480
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 690,
+          "endLine": 737
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F003",
+      "topic": "TBL-NEN-003：店名テーブル",
+      "statement": "店名テーブルは業務DB内の店舗コードと店舗表示名の対応表である。店舗候補の検索、店番指定時の名称取得、予約・削除明細への名称JOIN、職員・顧客候補に付ける店舗名の取得に使用する。キーは店舗ｺｰﾄﾞで、H2ではINTEGER、SQL ServerではINTの主キーである。店名はNOT NULLで、DB宣言容量はH2がVARCHAR(80)、SQL ServerがNVARCHAR(80)である。この容量を名称の業務上限とは確定しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 96,
+          "endLine": 99
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 40,
+          "endLine": 48
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 41,
+          "endLine": 71
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 184,
+          "endLine": 202
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 289,
+          "endLine": 321
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 772,
+          "endLine": 778
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F004",
+      "topic": "TBL-NEN-004：性別テーブル",
+      "statement": "性別テーブルは性別ｺｰﾄﾞと性別の表示名称を対応付ける。画面候補はコード順に取得し、予約表示では保存コードから名称をJOINする。保存では画面・モデルの名称からコードを逆引きし、予約本表または削除明細の性別列へ設定する。性別ｺｰﾄﾞは両DDLでTINYINTの主キー、名称はNOT NULLでH2がVARCHAR(10)、SQL ServerがNVARCHAR(10)である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 81,
+          "endLine": 84
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 10,
+          "endLine": 18
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 237,
+          "endLine": 238
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 263,
+          "endLine": 277
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 573,
+          "endLine": 593
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 712,
+          "endLine": 713
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 775,
+          "endLine": 775
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F005",
+      "topic": "TBL-NEN-005：裁定請求テーブル",
+      "statement": "裁定請求テーブルは裁請ｺｰﾄﾞと裁定請求の表示名称を対応付ける。予約画面の裁定請求書徴収の候補としてコード順に取得され、画面の選択値は名称である。Repositoryは名称からコードを逆引きして予約の裁定請求列へ保存し、取得時は同列から名称をJOINする。裁請ｺｰﾄﾞはTINYINTの主キー、名称はNOT NULLでH2がVARCHAR(10)、SQL ServerがNVARCHAR(10)である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 86,
+          "endLine": 89
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 20,
+          "endLine": 28
+        },
+        {
+          "path": "nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 35,
+          "endLine": 35
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 241,
+          "endLine": 242
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 263,
+          "endLine": 277
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 723,
+          "endLine": 724
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 776,
+          "endLine": 776
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F006",
+      "topic": "TBL-NEN-006：受給有無テーブル",
+      "statement": "受給有無テーブルは受給ｺｰﾄﾞと受給有無の表示名称を対応付ける。候補はコード順に取得し、保存では名称から逆引きしたコードを予約の受給有無列へ設定する。予約・削除明細の取得時は同列から名称をJOINする。受給ｺｰﾄﾞはTINYINTの主キー、名称はNOT NULLでH2がVARCHAR(10)、SQL ServerがNVARCHAR(10)である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 91,
+          "endLine": 94
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 30,
+          "endLine": 38
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 245,
+          "endLine": 246
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 263,
+          "endLine": 277
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 729,
+          "endLine": 730
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 777,
+          "endLine": 777
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F007",
+      "topic": "TBL-NEN-007：年金種類テーブル",
+      "statement": "年金種類テーブルは種類ｺｰﾄﾞと年金種類の表示名称を対応付ける。画面の各チェック項目の名称と、予約表示・出力の合成年金種類名に使用する。保存コードは国民年金1、厚生年金2、共済年金4、厚生年金基金8、国民年金基金16の合計で、0ならNULL、0以外ならこの表の存在確認後に予約の年金種類列へ設定する。種類ｺｰﾄﾞはH2がINTEGER、SQL ServerがINTの主キーで、名称はNOT NULL、DB宣言容量はそれぞれVARCHAR(120)、NVARCHAR(120)である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 101,
+          "endLine": 104
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 50,
+          "endLine": 58
+        },
+        {
+          "path": "nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 34,
+          "endLine": 34
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 249,
+          "endLine": 260
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 596,
+          "endLine": 620
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 778,
+          "endLine": 778
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F008",
+      "topic": "TBL-N2-001：DB2.ＵＷＥＢログイン情報表",
+      "statement": "DB2.ＵＷＥＢログイン情報表は共通ログインの認証照会先である。通常の認証照会はアプリケーション名、ユーザーＩＤ、認証列の一致条件でSELECT *を行い、呼出側は検索結果が0件なら認証を拒否する。接続先はjdbc/Oracle_SP2NMである。ローカル互換DDLではアプリケーション名とユーザーＩＤの複合主キーを定義するが、本番表の物理制約を確認した証拠ではない。認証値は仕様材料へ転載しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java",
+          "startLine": 40,
+          "endLine": 62
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/LoginAction.java",
+          "startLine": 183,
+          "endLine": 222
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 6,
+          "endLine": 18
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/CommonConst.java",
+          "startLine": 18,
+          "endLine": 19
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F009",
+      "topic": "TBL-N2-002：DB2.Ｕ職員名簿表",
+      "statement": "DB2.Ｕ職員名簿表は共通ログインの職員属性取得、年金側の追加職員確認、担当者参照に使用する外部参照表である。年金側は職員番号、漢字氏名、カナ氏名、所属店番、役職コードを取得し、職員が存在すればStaffContextを作成する。既存StaffContextを再利用できる要求では追加照会を省く。ローカル互換DDLは職員番号をDECIMAL(18,0)の主キーとして定義するが、本番列属性へ転用しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java",
+          "startLine": 107,
+          "endLine": 127
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 137,
+          "endLine": 174
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 206,
+          "endLine": 234
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 50,
+          "endLine": 78
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 20,
+          "endLine": 30
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F010",
+      "topic": "TBL-N2-003：DB2.Ｕ職員所属課係一覧表",
+      "statement": "DB2.Ｕ職員所属課係一覧表は共通ログイン時の所属課係コード取得先である。職員番号を条件にSELECT *を行い、呼出側は結果があれば先頭行の所属課係コードをLoginInfoBeanへ設定する。SQLにORDER BYはないため、複数行時の選択順はこの実装から確定しない。ローカル互換DDLの主キーは職員番号と所属課係コードの組合せであり、職員番号単独の一意性を定義していない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java",
+          "startLine": 137,
+          "endLine": 157
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/LoginAction.java",
+          "startLine": 375,
+          "endLine": 430
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 32,
+          "endLine": 36
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F011",
+      "topic": "TBL-N2-004：DB2.ＵＪＶ役職コード表",
+      "statement": "DB2.ＵＪＶ役職コード表は共通ログインで役職コードから役職名を取得する外部参照表である。名簿から取得した役職コードがNULL・空文字・0でない場合に照会し、結果があれば先頭行の役職をLoginInfoBeanへ設定する。対象コードがない場合や照会条件を満たさない場合は役職名を該当なしとする。ローカル互換DDLでは役職コードがDECIMAL(4,0)の主キー、役職がNULL可能なVARCHAR(40)である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java",
+          "startLine": 167,
+          "endLine": 187
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/LoginAction.java",
+          "startLine": 375,
+          "endLine": 399
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 38,
+          "endLine": 41
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F012",
+      "topic": "TBL-N2-005：N2_DWH.Ｊ事業所コード表２",
+      "statement": "N2_DWH.Ｊ事業所コード表２は共通ログインで所属先の事業所名を取得する外部参照表であり、年金業務DBの店名テーブルとは別のオブジェクトである。共通ログインは名簿の所属店番を4桁へゼロ埋めし、前2桁と後2桁を店舗コード・枝番としてjdbc/Oracle_DWHから照会する。結果の事業所名を所属店名へ設定し、0件なら該当なしとする。ローカル互換DDLの主キーは店舗コードと枝番である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/LoginAction.java",
+          "startLine": 300,
+          "endLine": 363
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java",
+          "startLine": 39,
+          "endLine": 61
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 43,
+          "endLine": 48
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F013",
+      "topic": "TBL-N2-006：DB2.Ｕカウンターシフト",
+      "statement": "DB2.Ｕカウンターシフトは共通要求のアクセス記録先である。記録項目はアクセス日付、アクセス時刻、機能ＩＤ、画面ＩＤ、コマンドＩＤ、アクションＩＤ、ＪＳＰ名、ユーザーＩＤで、日時は記録処理時に生成する。ControlServletはActionの戻り先決定後、forward前に記録を呼び出す。ローカル互換DDLには主キーを定義しておらず、登録コード内のPKに関するコメントだけから主キーを追加してはならない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java",
+          "startLine": 34,
+          "endLine": 65
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 349,
+          "endLine": 383
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 55,
+          "endLine": 64
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F014",
+      "topic": "TBL-N2-007：N2_SIGHT.Ｂ顧客基本表",
+      "statement": "N2_SIGHT.Ｂ顧客基本表は顧客参照と予約入力への顧客基本情報取込みに使用する外部参照表である。顧客参照は店舗・顧客番号・氏名・電話・生年月日・担当者を取得し、予約読込みは予約が見つからず店舗番号と顧客番号を数値化できた場合に顧客基本表へフォールバックする。Repositoryの個別取得は店舗コードと顧客番号の一致条件を使用し、住所・性別も取り込む。この経路に顧客基本表を更新する処理はない。ローカル互換DDLの複合主キーや列容量は本番物理属性の保証ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 75,
+          "endLine": 134
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/PensionLoadAction.java",
+          "startLine": 13,
+          "endLine": 31
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 87,
+          "endLine": 141
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 66,
+          "endLine": 78
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F015",
+      "topic": "TBL-N2-008：DB2.ＵＤＢ管理ＤＢ",
+      "statement": "DB2.ＵＤＢ管理ＤＢはDB名ごとの処理中ＦＬＧを照会する共通運用状態表である。照会SQLはＤＢ名の一致条件で処理中ＦＬＧを取得する。OperatePermissionは対象業務の結果先頭行が存在し、処理中ＦＬＧが文字列0なら運用可能とする。年金のactionPackageであるnenkinは照会対象分岐に含まれない。ローカル互換DDLではＤＢ名をVARCHAR(80)の主キー、処理中ＦＬＧをNOT NULLのVARCHAR(1)として定義する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/base/SelectDBKanriDBBase.java",
+          "startLine": 39,
+          "endLine": 60
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/OperatePermission.java",
+          "startLine": 38,
+          "endLine": 70
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 50,
+          "endLine": 53
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F016",
+      "topic": "接続先とオブジェクト群",
+      "statement": "年金Repositoryと参照サービスは接続を三系統に分ける。業務7表はjdbc/RAROA_DB、職員名簿はjdbc/Oracle_SP2NM、顧客基本表はjdbc/Oracle_DWHを使用する。各系統は通常名、java:comp/env付きの順でDataSourceを探索し、取得したDataSourceを系統別にキャッシュする。共通認証・課係・役職・アクセス記録・運用判定もOracle_SP2NM系、事業所名はOracle_DWH系である。JNDI識別子は確認できるが、実際に配備された接続先DBや権限を確認した結果ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java",
+          "startLine": 12,
+          "endLine": 93
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 52,
+          "endLine": 54
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 103,
+          "endLine": 104
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 159,
+          "endLine": 160
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/LoginAction.java",
+          "startLine": 338,
+          "endLine": 384
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/CounterShift.java",
+          "startLine": 29,
+          "endLine": 35
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/OperatePermission.java",
+          "startLine": 30,
+          "endLine": 32
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F017",
+      "topic": "本番向けDDLとローカル互換DDLの境界",
+      "statement": "schema-raroa-sqlserver.sqlがCREATE TABLEを宣言する対象はdbo配下の業務7表である。冒頭コメントは職員名簿と顧客基本表を既存N2 Oracle表として作成対象外と説明している。schema.sqlは業務7表に加えて共通・外部8表のローカル互換定義を持つ。したがって索引では業務7表、外部参照・記録先、年金では状態照会しない運用表を区別し、外部8表のH2型・長さ・NULL・主キーを本番表の物理定義として扱わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 1,
+          "endLine": 128
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 6,
+          "endLine": 166
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/OperatePermission.java",
+          "startLine": 38,
+          "endLine": 60
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F018",
+      "topic": "索引の一覧と非一意性",
+      "statement": "両DDLは同じ列構成の非一意索引を4本宣言する。年金1_LKのふりがな・電話番号にはH2のIX_NENKIN1_KEY／SQL ServerのIX_年金1_LK_検索キー、店番・顧客番号にはIX_NENKIN1_CUSTOMER／IX_年金1_LK_顧客、変更FLG・データ更新日・更新者にはIX_NENKIN1_UPDATE／IX_年金1_LK_更新区分を対応付ける。年金＿削除明細のデータ更新日・更新者にはIX_NENKIN_DELETE_UPDATE／IX_年金削除明細_更新日を対応付ける。いずれもCREATE UNIQUE INDEXではなく、検索キーや顧客組合せの一意性を保証しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 168,
+          "endLine": 171
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 130,
+          "endLine": 172
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F019",
+      "topic": "主キー・NULL・FKの宣言範囲",
+      "statement": "年金1_LKと年金＿削除明細は両DDLとも28列すべてNULL可能で、主キー、一意制約、列のDEFAULTを宣言していない。業務の5つの名称・コード表はコード列を主キーとし、名称列をNOT NULLとするが、名称の一意制約は宣言していない。対象15表を定義するH2 DDLと業務7表のSQL Server DDLにはFOREIGN KEY／REFERENCESの宣言がない。アプリケーションの必須検査、SQL JOIN、コード存在確認をDDLのNOT NULLやFK制約へ読み替えない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 6,
+          "endLine": 171
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 10,
+          "endLine": 172
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F020",
+      "topic": "名称取得のSQL JOINと関連図",
+      "statement": "予約本表または削除明細を別名Rとして取得するとき、Repositoryは店番＝店名テーブル.店舗ｺｰﾄﾞ、性別＝性別テーブル.性別ｺｰﾄﾞ、裁定請求＝裁定請求テーブル.裁請ｺｰﾄﾞ、受給有無＝受給有無テーブル.受給ｺｰﾄﾞ、年金種類＝年金種類テーブル.種類ｺｰﾄﾞの5条件でLEFT JOINする。関連図の辺はこれらの照会上の関連として表現する。名称表側の列がNOT NULLでも、不一致を許すLEFT JOINの結果名称はNULLになり得る。DDLにないFKや本番の多重度を図へ追加しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 43,
+          "endLine": 58
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 360,
+          "endLine": 364
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 772,
+          "endLine": 779
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 10,
+          "endLine": 128
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F021",
+      "topic": "別接続データのメモリ突合せ",
+      "statement": "職員・顧客候補の店舗名は外部表とのSQL JOINで取得しない。参照サービスは先に業務DBの店名テーブルを全件読み、店舗コードをキーとするMapを作成してから、別接続で職員または顧客を取得して店舗名を付加する。Mapに名称がなければ空文字を設定する。顧客基本情報の個別取込みも顧客接続を閉じた後に業務接続を開き、店名と性別表示名を取得する。この関連はDB間のFKや単一SELECTのJOINとして記載しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 97,
+          "endLine": 125
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 153,
+          "endLine": 172
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 289,
+          "endLine": 321
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 119,
+          "endLine": 140
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F022",
+      "topic": "通常操作からのDB到達経路",
+      "statement": "予約画面の登録・削除はPensionSaveAction／PensionDeleteActionからRepositoryの保存・削除へ到達し、読込みは予約キー検索を優先して顧客基本表取得へ分岐する。参照画面はTARGETによって店舗・職員・顧客の検索を選ぶ。印刷プレビューは予約検索、店舗別Excelは店舗条件付き予約検索、日次・月次は更新区分別抽出と任意の削除明細整理へ到達する。これらはDB一覧の用途欄に対応付けられる実装上の入口であり、単なる表名宣言とは区別する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+          "startLine": 23,
+          "endLine": 48
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java",
+          "startLine": 16,
+          "endLine": 34
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/PensionLoadAction.java",
+          "startLine": 18,
+          "endLine": 31
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/LookupViewAction.java",
+          "startLine": 14,
+          "endLine": 20
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java",
+          "startLine": 36,
+          "endLine": 39
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/BatchRunAction.java",
+          "startLine": 13,
+          "endLine": 21
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java",
+          "startLine": 68,
+          "endLine": 80
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F023",
+      "topic": "予約保存の更新対象と確定境界",
+      "statement": "保存は業務接続のautoCommitをfalseにし、同じ接続で正規化したふりがな・数値電話番号の存在を再確認してINSERTまたはUPDATEを選ぶ。INSERTは変更FLGを0、UPDATEは1として28列を設定し、UPDATEのWHEREはふりがなと電話番号である。各更新件数が1件であることを検査してからcommitし、NEWまたはCHANGEDを返す。接続内の処理で例外が発生した場合はrollbackを試みるが、rollback失敗は元の例外を優先して抑止する。ここでのcommitと、その後の画面応答の成立は別の境界である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 60,
+          "endLine": 67
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 280,
+          "endLine": 308
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 623,
+          "endLine": 637
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 657,
+          "endLine": 687
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 704,
+          "endLine": 737
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 920,
+          "endLine": 928
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+          "startLine": 46,
+          "endLine": 48
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F024",
+      "topic": "削除明細追加と本表削除の一体性",
+      "statement": "削除は業務接続内で対象予約を再取得し、不在ならrollbackしてfalseを返す。存在すれば削除明細を1件追加した後、年金1_LKをふりがな・電話番号の一致条件で削除する。本表削除件数が1件でなければ例外とし、両操作が成立してからcommitしてtrueを返す。例外時は同じ接続のrollbackを試みる。このため、接続された処理は削除明細への単独追記でも、本表だけの削除でもない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 315,
+          "endLine": 350
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 640,
+          "endLine": 654
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 690,
+          "endLine": 701
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F025",
+      "topic": "更新区分抽出と完全履歴の区別",
+      "statement": "新規・変更の抽出元は年金1_LKであり、変更FLGの0／1と任意のデータ更新日範囲・更新者で絞る。削除の抽出元は年金＿削除明細で、変更FLG条件は付けない。変更は本表の現在行を更新するため、抽出結果を過去の変更前後をすべて保存した完全な監査履歴と説明できない。PensionAuditRecordへ渡すauditIdは検索ごとに1から採番するメモリ上の連番で、DDLにある永続監査IDではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 66,
+          "endLine": 67
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 353,
+          "endLine": 413
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 106,
+          "endLine": 166
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F026",
+      "topic": "削除明細整理の独立トランザクション",
+      "statement": "日次・月次の出力サービスは期間と職員条件を処理した後、削除基準日が空でなければ区分別抽出前に削除明細整理を呼ぶ。整理は年金＿削除明細のデータ更新日が基準日以下の行を削除し、専用接続でcommitして件数を返す。その後に抽出・Workbook生成・応答送信が失敗しても、既にcommitされた整理を出力処理と一体でrollbackする実装はない。基準日が空ならRepository単体は0を返してDELETEを行わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 458,
+          "endLine": 480
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java",
+          "startLine": 68,
+          "endLine": 92
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/BatchRunAction.java",
+          "startLine": 19,
+          "endLine": 21
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F027",
+      "topic": "アクセス記録の独立性と記録JSP名",
+      "statement": "アクセス記録はCounterShiftがjdbc/Oracle_SP2NMの別接続を取得してINSERT・commitするため、年金業務更新のトランザクションとは独立する。失敗時はrollbackを試みてログを出力し、呼出元へ例外を再送出しない。ControlServletはMESSAGE属性がある場合に記録ＪＳＰ名を./JSP/COMMON/SubMessage.jspとするが、実forward先はAction等で決定したstrUrlのままである。アクセス表のＪＳＰ名を実際に表示された画面の確定記録へ一般化しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/CounterShift.java",
+          "startLine": 25,
+          "endLine": 53
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/util/CommonUtil.java",
+          "startLine": 36,
+          "endLine": 43
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 357,
+          "endLine": 383
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F028",
+      "topic": "運用状態表の非照会と接続依存",
+      "statement": "OperatePermissionは業務種別を判定する前にjdbc/Oracle_SP2NM接続を取得する。照会対象はing、credit、crd、rate、saikenで、それ以外は運用可能として戻るため、nenkinではDB2.ＵＤＢ管理ＤＢへのSELECTに到達しない。ただし接続取得が例外になればcatch後にfalseを返し、ControlServletは運用不可の共通エラーへ進む。したがって、年金で状態表を照会しないことは、運用判定が共通DB接続に依存しないことを意味しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/OperatePermission.java",
+          "startLine": 26,
+          "endLine": 84
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/ControlServlet.java",
+          "startLine": 309,
+          "endLine": 338
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F029",
+      "topic": "検索キーとDB一意性・排他の区別",
+      "statement": "Repositoryの予約キー検索は、ふりがなをNFKC・trim・空白集約・大文字化した文字列と、電話番号から数字を抽出してBigDecimalにした値を使用し、setStringとsetBigDecimalでバインドする。これは店番・顧客番号の組合せとは別の検索キーである。保存・削除のsynchronizedは同じRepositoryインスタンスの呼出しを同期するが、SQLに比較版条件や明示的な行ロック取得はなく、非一意索引をDB全体の重複防止・楽観ロック保証として扱えない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 144,
+          "endLine": 161
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 280,
+          "endLine": 298
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 315,
+          "endLine": 342
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 672,
+          "endLine": 683
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 837,
+          "endLine": 865
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 168,
+          "endLine": 170
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F030",
+      "topic": "名称表の参照と保存コードへの変換",
+      "statement": "性別・裁定請求・受給有無の保存値は表示名称そのものではなく、名称一致で逆引きしたコードである。空名称はNULLコードとなり、非空名称が表に見つからなければSQLExceptionになる。候補名称列に一意制約は宣言されておらず、逆引きは最初の結果を使用する。確認した通常経路には5つの名称・コード表を保守する登録・更新・削除入口がなく、これらのDDL定義からマスター保守画面や業務上の名称上限を創作しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 573,
+          "endLine": 593
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 704,
+          "endLine": 737
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 237,
+          "endLine": 310
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 10,
+          "endLine": 58
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F031",
+      "topic": "未接続helperと画面候補の取得元",
+      "statement": "Repositoryには年金1_LKの部分一致候補検索searchCandidatesと、本表・削除明細を調べるfindLatestAuditTypeが宣言されているが、収録された年金Java・JSPの呼出し検索では両者の呼出元を確認できない。予約画面の候補ボタンはcandidateをcustomerへ変換して参照画面を開き、参照画面はReferenceDataService.searchCustomersを呼ぶ。通常の候補操作の取得元は顧客基本表であり、未接続helperを別の稼働機能や追加DBオブジェクトとして掲載しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 171,
+          "endLine": 215
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 416,
+          "endLine": 454
+        },
+        {
+          "path": "nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 29,
+          "endLine": 29
+        },
+        {
+          "path": "nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 63,
+          "endLine": 65
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/LookupViewAction.java",
+          "startLine": 16,
+          "endLine": 20
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F032",
+      "topic": "DDLの条件付き作成と旧代替表",
+      "statement": "H2 DDLはCREATE TABLE IF NOT EXISTS、SQL Server DDLはOBJECT_IDによる存在検査で表の新規作成を条件付ける。SQL Serverの各索引も対象オブジェクトと索引名の存在検査後に作成するため、これらのファイルは既存表の全属性を宣言どおりに修正する移行処理ではない。H2 DDL末尾のNENKIN_AUDIT、NENKIN_RESERVATION、NENKIN_BRANCH、NENKIN_STAFFは旧代替表のDROP対象であり、現行15表へ追加しない。NAVIはスキーマ作成のみで、このDDLに同スキーマの対象表定義はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 1,
+          "endLine": 6
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 173,
+          "endLine": 177
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 10,
+          "endLine": 17
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 60,
+          "endLine": 128
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 130,
+          "endLine": 172
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F033",
+      "topic": "ローカル互換DBの有効条件とJNDI対応",
+      "statement": "ローカルH2はシステムプロパティn2nenkin.localDbの既定値falseでは初期化を行わない。初期化用メソッドはschema.sql、data.sqlの順に読む実装であり、JNDI登録用メソッドはOracle_SP2NM、Oracle_DWH、RAROA_DB、RAROA_SHAREの4名を同じDataSourceへ再登録する。この互換構成と、本番で三系統に分かれる年金の接続契約を分けて説明する。ここで確認したのはコード上の構成であり、DDL・初期データの実行結果ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java",
+          "startLine": 22,
+          "endLine": 36
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java",
+          "startLine": 78,
+          "endLine": 105
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java",
+          "startLine": 12,
+          "endLine": 23
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F034",
+      "topic": "業務表のDB方言差",
+      "statement": "業務7表は同じ日本語表名・列名でH2とSQL Serverに定義されるが、物理型は同一ではない。文字列はH2のVARCHARに対してSQL ServerはNVARCHAR、予約・削除明細の各真偽列はBOOLEANに対してBIT、更新時間はTIMEに対してTIME(0)である。表の同一安定IDを維持しながら物理定義の環境差を示し、一方の型名・容量表現を他方へ上書きしない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema.sql",
+          "startLine": 81,
+          "endLine": 166
+        },
+        {
+          "path": "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 10,
+          "endLine": 128
+        }
+      ]
+    },
+    {
+      "id": "DB-INDEX-F035",
+      "topic": "共通SQL実行と年金SQL実行の区別",
+      "statement": "共通ログイン、事業所名、運用状態の検索は引数をSQL文字列へ連結し、CommonBaseSelectがStatement.executeQueryで実行する。共通アクセス記録もSQL文字列を組み立て、CommonBaseのStatement.executeUpdateを使用する。一方、年金Repositoryと参照サービスの検索条件・更新値はPreparedStatementへバインドする。DB一覧の利用処理を説明するとき、全オブジェクトのアクセスが同じパラメータ化契約であるとは記載しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java",
+          "startLine": 40,
+          "endLine": 52
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java",
+          "startLine": 44,
+          "endLine": 51
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/base/SelectDBKanriDBBase.java",
+          "startLine": 44,
+          "endLine": 50
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/base/CommonBaseSelect.java",
+          "startLine": 46,
+          "endLine": 60
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java",
+          "startLine": 37,
+          "endLine": 65
+        },
+        {
+          "path": "n2framework/WEB-INF/src/common/base/CommonBase.java",
+          "startLine": 44,
+          "endLine": 49
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 150,
+          "endLine": 160
+        },
+        {
+          "path": "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 103,
+          "endLine": 117
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "本番の外部8表について、完全なDDL、全列、実際の型・容量・NULL・DEFAULT・主キー・索引・FKは確認できない。共通処理のSELECT *も列構造の完全な証拠にはならない。H2互換定義は本番属性の代用にしない。",
+    "コンテナーに登録された実DataSource、接続先DB、既定スキーマ、DBユーザー権限、分離レベルは未確認である。Repositoryの未修飾表名が実環境でSQL Server DDLのdbo配下を解決することも確定していない。",
+    "実DBの既存表に追加の制約・索引・トリガー等があるか、条件付きCREATEの定義と一致しているかは未確認である。DDLが存在することを配備済み・実行済みの証拠にしない。",
+    "5つの名称・コード表と外部マスターの本番保守入口、更新担当、名称の業務上限は今回確認した通常経路から確定できない。DB宣言容量を業務上限へ置き換えない。",
+    "職員所属課係が複数行の場合の先頭行選択と、名称重複時の保存コード逆引きについて、明示的なORDER BYによる選択規則はない。本番データの重複有無も未確認である。",
+    "DB-LOGICAL／DB-PHYSICALは提示計画上の関連文書であり、このジョブでは生成済み本文や実在アンカーを確認していない。同一安定IDの見出しへの接続は後工程で実体と照合する必要がある。",
+    "反射によるAction生成は確認できるが、配備バイナリ、追加Action、コンテナー側設定など収録ソース外の動的境界は未照合である。未接続helperの判断は収録された年金Java・JSP内の検索範囲に限る。"
+  ],
+  "coverageNotes": [
+    "manifest.jsonは材料一覧と読取り権限の確認にだけ使用した。mode=source-only、trainingReferenceAuthorizedByUser=false、referenceSpecificationIncluded=false、referenceFilesは空である。参照設計は読んでおらず、すべてのfactをobserved-sourceとした。",
+    "manifestの収録ファイル数は176である。これは材料件数であり、176ファイルすべての本文を読了したという意味ではない。sourcePathsReadには本文の範囲読取りまたは内容検索を行った原ソースのpathを記録した。ファイル名の列挙だけで確認したものは含めていない。",
+    "sourcePathsReadとreferences.pathはmanifest.files.pathに一致するPOSIX相対pathを使用する。実際の読取りはworkspace内のsources/<path>またはmanifest対応のindexedファイルから行った。indexedの行頭番号を原ソースの開始行・終了行へ対応付けた。",
+    "主要な全体照合範囲はschema.sqlの1～177行、schema-raroa-sqlserver.sqlの1～172行、PensionRepository.javaの1～941行、ReferenceDataService.javaの1～389行、SearchLoginInfoBase.javaの1～189行である。出力が切れた主要範囲は分割して再取得した。",
+    "共通側は認証検索、事業所検索、運用状態検索、アクセス記録、接続取得、共通Servletの呼出し・記録・forward範囲を追跡した。LoginAction、ControlServlet、NenkinBaseAction、H2JndiSetupListener、画面JSP等はDB一覧の責務に必要な範囲を読み、全ファイル読了とは扱っていない。",
+    "SelectCodeGyosyuBase、SelectDaikoSyokuinBase、SelectTenpoKanriDaichoBase、SelectSaijitsuBaseは共通SQL探索で一致箇所を確認した範囲である。これら別責務の表を今回の15表へ追加していない。",
+    "安定IDの割当ては提示された文書計画に従う。TBL-NEN-001～007およびTBL-N2-001～008の各topicはその計画IDであり、ID自体がソース内に定義されていると主張するものではない。表の存在・用途・関連は各factの原ソース根拠で示した。",
+    "関連先はDB-LOGICAL＝共通/DB仕様書/論理データ仕様書.md、DB-PHYSICAL＝共通/DB仕様書/テーブル定義書.mdである。DB-INDEXの共通/DBオブジェクト一覧.mdからの相対pathは、それぞれDB仕様書/論理データ仕様書.md、DB仕様書/テーブル定義書.mdとなる。15表すべてを両文書の同一安定IDの見出しへ接続する計画とし、生成済みリンクや存在確認済みアンカーとは扱わない。",
+    "処理詳細の関連計画はDB-OPS＝共通/DB仕様書/DB操作仕様書.md、接続・配置はENV-NENKIN＝共通/設定・配置・依存仕様書.md、認証はCOM-015＝共通/共通仕様書_COM-015_ログイン処理.md、共通入口・アクセス記録はCOM-012＝共通/共通仕様書_COM-012_共通コントロールサーブレット.mdである。いずれも提示計画上の対応先である。",
+    "関連図の材料は、予約本表・削除明細から5名称表へのSQL LEFT JOIN、外部顧客・職員から店名Mapへのアプリケーション内突合せ、認証・名簿・課係・役職・事業所の逐次照会、独立したアクセス記録、年金では状態表SELECTに進まない運用判定として整理した。FK、SQL JOIN、メモリ関連、制御依存を同じ辺の意味に統合しない。",
+    "修正すべき解釈は、検索キー索引を一意キーとする説明、現行行抽出を完全履歴とする説明、出力前整理を出力失敗時に一体rollbackできるとする説明、候補ボタンを予約候補helperへ接続する説明、外部表のH2属性を本番保証へ転用する説明である。対応根拠はF018～F021、F025～F026、F029、F031に保持した。新しい採用設計案は作成していない。",
+    "workspace内の指定材料のみを読取り、入力プログラム・SQL・スクリプト・ビルド・テストは実行していない。ファイル編集・生成、ネットワーク、外部サービス、委譲エージェントは使用していない。認証の実値や初期認証データは取得・転載していない。",
+    "本応答はDB-INDEX用の解析factsであり、Markdown・HTML・PDF・Excelの生成や図の描画確認は行っていない。構造検査、表示確認、実DB動作確認、顧客承認を成功済みとは記録しない。原仕様による正式率はnullである。"
+  ]
+}

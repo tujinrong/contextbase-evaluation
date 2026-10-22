@@ -1,0 +1,38 @@
+{
+  "documentId": "COM-111",
+  "path": "共通/共通仕様書_COM-111_年金業務共通処理.md",
+  "contentSha256": "56f6d9a81d06106095c372d8b5082c3b13b0681b8b40623511ab05a8050e0271",
+  "aiAuthored": true,
+  "semanticProseAssembledByPython": false,
+  "analysisFacts": 56,
+  "unresolved": [
+    "coverageNotes：manifestのmode=source-only、trainingReferenceAuthorizedByUser=false、referenceSpecificationIncluded=false、referenceFiles=[]を確認した。読取りは指定snapshotのmanifest.json・sources/・indexed/に限定し、参考設計、workspace外、期待値、他ジョブ、ユーザー設定は参照していない。",
+    "coverageNotes：原プログラム・SQL・スクリプト・ビルド・テスト・入力モジュールは実行していない。ファイル編集、ネットワーク、プラグイン、外部サービス、委譲エージェント、学習処理は使用していない。Markdown本文を返却し、HTML・PDF・Excelの生成、Mermaid原寸描画、表示合格は記録していない。正式採点はnull。",
+    "Servlet受信の不正バイト、Windows-31J変換不能文字、同名複数パラメータなどのコンテナー動作は未確認。送信前に変化した文字を備考検査が元のUnicode入力として評価できる保証はない。",
+    "JNDI登録、DataSource・JDBCドライバー、実DB製品・版、配備バイナリ、稼働表の属性は未照合。DDLの型・容量・NULL・索引は収録宣言として記載し、適用済みの実DB保証とはしていない。",
+    "所属店番75の制限はセッション保持情報とActionの存在判定に依存する。職員役職の変更や、Actionの新規判定後にRepositoryがUPDATEへ切り替わる競合について、承認済み運用規則は未確認。比較版・DB全体排他・権限再確認を補う採用設計案は追加していない。",
+    "バッチ必須日付は正規化後の非空再検査がなく、全角空白だけの入力から期間WHERE省略へ進む経路がソース上導かれる。この経路の実行結果と、業務としての拒否・許容規則は未確認。本文では現行経路を記載し、改善済みとはしていない。",
+    "店舗名・区分名称・年金種類名称の候補取得、逆引き、DDL属性は確認できるが、接続されたマスター保守の保存時業務上限は確認できない。DDL宣言長を業務上限で代用していない。",
+    "commit例外時のDB確定状態、およびreset・write・flush失敗後の最終HTTP応答は失敗段階と外部実装に依存する。rollback試行を未更新保証、共通エラーJSP選択を表示完了保証、flush成功を利用者受領保証としていない。",
+    "関連文書は提示計画のID・pathへ対応させたが、生成状態は未確認。節本文ハッシュとのreport対応付け、派生形式の表示確認と出版結果はホスト側の記録対象であり、本応答では完了を主張しない。"
+  ],
+  "factCorrections": [
+    "COM111-F004補足：職員セッション自動生成の番号検査はASCII数字1～8桁で、正数検査ではない。0だけの番号もInteger.parseInt後にverifyStaffへ渡り得る。本文E1・項目1へ反映。根拠：sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java:57-65。",
+    "COM111-F024補足：Repositoryの保存前日付再検査順は、生年月日→請求予定日→予約徴求日→配偶者生年月日である。Actionの生年月日→配偶者生年月日→請求予定日→予約徴求日とは区別して本文E2・E3へ反映。根拠：sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java:172-179、sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:513-531。",
+    "COM111-F017補足：Repository.saveはNEWまたはCHANGEDを返すが、SaveActionは戻り値を受けず、どちらの成功でも空予約・existing=false・「登録終了！」へ置換する。本文E3へ反映。根拠：sources/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java:39-48、sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:290-299。",
+    "COM111-F053補足：共通ログイン確認もAction用tryの前にあり、checkLoginはLoginBeanをLoginInfoBeanへ直接キャストする。年金requireStaffのinstanceofによる扱いを、共通Servlet前段の型保証へ拡張しない。本文の共通Servlet境界へ反映。根拠：indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt:309-339、396-403。",
+    "追跡対応：COM-111版2.0のE1はCOM111-F002～F008、E2はF008～F019・F025～F027、E3はF010・F017～F024・F034～F040、E4はF041～F049、E5はF022・F027～F034、E6はF049～F054に対応する。補足説明はF014～F015・F023～F029・F035～F036・F053～F056を統合した。既存factsのreferencesをreport用根拠位置として保持し、manifestを実装factの根拠へ追加しない。"
+  ],
+  "analysisExecutedInThisJob": true,
+  "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261015-nenkin-all-01\\jobs\\documents-01\\061d9faa0c2db01e\\round-01",
+  "snapshot": {
+    "manifestSha256": "a28612d98f58abbddbdae4a16cf7a4d162b525642186b2ec5b1b13e151d85957",
+    "capsuleSchema": "reverse-ai-source-capsule/2",
+    "mode": "source-only",
+    "modeDerivation": "explicit-manifest-mode",
+    "scope": "sealed-manifest-and-raw-material"
+  },
+  "referenceMode": "source-only",
+  "structureFindings": [],
+  "status": "AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED"
+}

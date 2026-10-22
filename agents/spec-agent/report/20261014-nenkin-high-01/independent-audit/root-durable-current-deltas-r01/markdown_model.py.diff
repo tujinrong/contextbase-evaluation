@@ -1,0 +1,83 @@
+--- delivery_model_v2_62_r07.py
++++ markdown_model.py
+@@ -7,11 +7,11 @@
+ import os
+ import re
+ from pathlib import Path
++from run_contract import add_contract_arguments, load_args
+ from bs4 import BeautifulSoup
+ from markdown_it import MarkdownIt
+ 
+ SCHEMA = 'reverse-agent-delivery-model/1'
+-OWN_RUN_ROOTS = (Path(r'D:\開発\contextbase-evaluation\agents\spec-agent\.tmp\20261014-nenkin-high-01'),Path(r'D:\開発\contextbase-evaluation\agents\spec-agent\report\20261014-nenkin-high-01'))
+ # V2 preservation interpretation: 62 is inherited from the reference format, not a literal human numeric selection.
+ GRID_COLUMNS = 62
+ GRID_COLUMN_WIDTH = 3
+@@ -59,10 +59,11 @@
+     if not child.is_relative_to(render):raise ValueError('Render child escapes pinned directory')
+     return child
+ 
+-def load_bound(binding_path, expected_sha256):
++def load_bound(binding_path, expected_sha256, contract):
+     if not isinstance(expected_sha256,str) or not re.fullmatch('[0-9a-f]{64}',expected_sha256):raise ValueError('Explicit binding SHA256 required')
++    contract.check_binding(binding_path, expected_sha256)
+     binding_path = safe_path(binding_path)
+-    if not any(binding_path.is_relative_to(root) for root in OWN_RUN_ROOTS):raise ValueError('Binding outside this owned run')
++    if not any(binding_path.is_relative_to(root) for root in contract.roots):raise ValueError('Binding outside this owned run')
+     binding_bytes = safe_path(binding_path).read_bytes()
+     if sha(binding_bytes)!=expected_sha256:raise ValueError('Changed delivery binding')
+     bound = json.loads(binding_bytes.decode('utf-8-sig'))
+@@ -70,7 +71,7 @@
+         raise ValueError('Unsupported binding schema')
+     mdroot = safe_path(bound['permittedMarkdownRoot'])
+     renderroot = safe_path(bound['permittedRenderRoot'])
+-    if any(not any(root.is_relative_to(own) for own in OWN_RUN_ROOTS) for root in (mdroot,renderroot)):raise ValueError('Delivery inputs outside this owned run')
++    if any(not any(root.is_relative_to(own) for own in contract.roots) for root in (mdroot,renderroot)):raise ValueError('Delivery inputs outside this owned run')
+     rows, ids, paths = [], set(), set()
+     for entry in bound['documents']:
+         cp = canonical(entry['canonicalDocumentPath'])
+@@ -139,7 +140,7 @@
+                      'rawMarkdown':raw.decode('utf-8-sig'), 'images':images})
+     if not rows:
+         raise ValueError('Empty delivery selection')
+-    return bound, rows, {'binding':str(binding_path), 'bindingSha256':sha(binding_bytes)}
++    return bound, rows, {'binding':str(binding_path), 'bindingSha256':sha(binding_bytes), 'conversionContract':contract.provenance()}
+ 
+ def inline_text(token):
+     pieces = []
+@@ -495,27 +496,29 @@
+                 [cell for b in all_blocks if b['kind']=='table' for row in b['matrix'] for cell in row if cell]+html_cells}
+ 
+ def main():
+-    parser=argparse.ArgumentParser()
++    parser=argparse.ArgumentParser(); add_contract_arguments(parser)
+     parser.add_argument('--binding',type=Path,required=True); parser.add_argument('--binding-sha256',required=True); parser.add_argument('--model',type=Path,required=True)
+     parser.add_argument('--image-max-width',type=int,default=1100)
+     parser.add_argument('--preview-max-height',type=int,default=None)
+-    args=parser.parse_args()
+-    bound, entries, provenance=load_bound(args.binding,args.binding_sha256)
++    args=parser.parse_args(); contract=load_args(args)
++    contract.begin('model', contract.data['outputRoots']['model'])
++    bound, entries, provenance=load_bound(args.binding,args.binding_sha256, contract=contract)
+     model={'schema':SCHEMA, **provenance,'sourceSnapshotManifestSha256':bound['sourceSnapshotManifestSha256'],
+            'referenceMode':bound.get('referenceMode'),
+            'formatProfile':FORMAT_PROFILE,
+            'projection':{'imageMaxWidth':args.image_max_width,'previewMaxHeight':args.preview_max_height},
+            'documents':[document_model(entry,args.image_max_width,args.preview_max_height) for entry in entries], 'businessContentAuthored':False,
+            'visualReview':'PENDING','applicationExecuted':False}
+-    output=safe_path(args.model)
+-    if not any(output.is_relative_to(root) for root in OWN_RUN_ROOTS):raise ValueError('Model output outside this owned run')
++    output=contract.output('model', args.model, fresh=True)
++    if not any(output.is_relative_to(root) for root in contract.roots):raise ValueError('Model output outside this owned run')
+     roots=[safe_path(bound['permittedMarkdownRoot']),safe_path(bound['permittedRenderRoot']),safe_path(args.binding)]
+     if any(output==p or output.is_relative_to(p) or p.is_relative_to(output) for p in roots):
+         raise ValueError('Model output must be disjoint from pinned inputs')
+     if output.exists(): raise ValueError('Fresh model output required')
+     safe_path(output.parent).mkdir(parents=True,exist_ok=True)
+     with safe_path(output).open('x',encoding='utf-8') as handle:handle.write(json.dumps(model,ensure_ascii=False,indent=2)+'\n')
+-    load_bound(args.binding,args.binding_sha256)
++    load_bound(args.binding,args.binding_sha256, contract=contract)
++    contract.recheck()
+     print(json.dumps({'documents':len(entries),'modelSha256':sha(output.read_bytes()),'visualReview':'PENDING'}))
+ 
+ if __name__=='__main__': main()

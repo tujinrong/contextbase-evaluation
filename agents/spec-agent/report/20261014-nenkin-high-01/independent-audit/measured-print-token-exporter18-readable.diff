@@ -1,0 +1,51 @@
+--- D:\開発\contextbase-evaluation\agents\spec-agent\.tmp\20261014-nenkin-high-01\delivery\export_pdf_bound_r17.py
++++ D:\開発\contextbase-evaluation\agents\spec-agent\.tmp\20261014-nenkin-high-01\delivery\export_pdf_bound_r18.py
+@@ -13,6 +13,7 @@
+ from delivery_model_v2_62_r08 import load_bound,document_model,safe_path,canonical,OWN_RUN_ROOTS
+ from pdf_projection_r14 import project_html,text_coverage,canonical_text_order,GEOMETRY_JS,CONTENT_WIDTH_PX
+ import print_original_text_groups_r02 as original_groups
++import measured_print_token_policy_r01 as measured_token_policy
+ 
+ def sha(raw):return hashlib.sha256(raw).hexdigest()
+ def require(ok,message):
+@@ -109,6 +110,13 @@
+     expected=Path(__file__).resolve().with_name('print_original_text_groups_r02.py')
+     require(Path(original_groups.__file__).resolve()==expected,'original group helper import origin mismatch')
+     require(sha(safe_path(expected).read_bytes())==ORIGINAL_GROUP_HELPER_SHA256,'original group helper bytes changed')
++
++MEASURED_TOKEN_POLICY_HELPER_SHA256='e784377c8e782e7547c5bb67556f4e979152830d5538177c1b701a915be67cc5'
++
++def measured_token_policy_helper_guard():
++    expected=Path(__file__).resolve().with_name('measured_print_token_policy_r01.py')
++    require(Path(measured_token_policy.__file__).resolve()==expected,'measured token policy helper import origin mismatch')
++    require(sha(safe_path(expected).read_bytes())==MEASURED_TOKEN_POLICY_HELPER_SHA256,'measured token policy helper bytes changed')
+ 
+ CANONICAL_PRINT_VISIBILITY_JS=r"""() => {
+  const rows=[];const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
+@@ -241,7 +249,14 @@
+                         raw=safe_path(image['path']).read_bytes();require(sha(raw)==image['sha256'],'native source PNG drift')
+                         fresh_write(destination/'native-assets'/relative.with_suffix('')/(image['id']+'.png'),raw);pictures.append({**image,'bytes':raw})
+                     original_group_helper_guard()
+-                    print_html,projection,tiles=original_groups.project_original_text_groups(html,pictures,project_html)
++                    token_policy_metadata=None;nowrap_tokens=('WEB-INF',)
++                    if args.nowrap_policy is not None:
++                        measured_token_policy_helper_guard()
++                        nowrap_tokens,token_policy_metadata=measured_token_policy.load_measured_token_policy(args.nowrap_policy,args.nowrap_policy_sha256,entry,args.binding,args.binding_sha256)
++                    print_html,projection,tiles=original_groups.project_original_text_groups(html,pictures,project_html,nowrap_tokens)
++                    if token_policy_metadata is not None:
++                        require(sha(print_html.encode('utf-8'))==token_policy_metadata['acceptedPrintProjectionSha256'],'current print projection differs from exact geometry-zero diagnostic')
++                        projection['measuredTokenPolicy']=token_policy_metadata
+                     source_md=safe_path(entry['markdown']).read_bytes();require(sha(source_md)==entry['markdownSha256'],'source Markdown changed before exact copy')
+                     fresh_write(destination/'HTML'/relative.with_suffix('.html'),html);fresh_write(destination/'Markdown'/relative,source_md)
+                     fresh_write(qa/'print-projection.html',print_html.encode('utf-8'))
+@@ -293,8 +308,9 @@
+ def main():
+     p=argparse.ArgumentParser();p.add_argument('--binding',type=Path,required=True);p.add_argument('--binding-sha256',required=True);p.add_argument('--output-root',type=Path,required=True)
+     p.add_argument('--chromium',type=Path,required=True);p.add_argument('--chromium-sha256',required=True);p.add_argument('--poppler',type=Path,required=True);p.add_argument('--poppler-sha256',required=True)
++    p.add_argument('--nowrap-policy',type=Path);p.add_argument('--nowrap-policy-sha256')
+     p.add_argument('--stage-timeout',type=int,default=90);p.add_argument('--total-timeout',type=int,default=900);p.add_argument('--pdf-marker-completed',action='store_true');p.add_argument('--worker',action='store_true',help=argparse.SUPPRESS)
+-    args=p.parse_args();require(args.pdf_marker_completed,'one-time root PDF marker must already have completed');require(30<=args.stage_timeout<=300 and args.stage_timeout<=args.total_timeout<=3600,'bounded timeout required')
++    args=p.parse_args();require((args.nowrap_policy is None)==(args.nowrap_policy_sha256 is None),'optional measured token policy requires both exact path and SHA');require(args.pdf_marker_completed,'one-time root PDF marker must already have completed');require(30<=args.stage_timeout<=300 and args.stage_timeout<=args.total_timeout<=3600,'bounded timeout required')
+     if args.worker:worker(args)
+     else:supervise(args)
+ if __name__=='__main__':main()

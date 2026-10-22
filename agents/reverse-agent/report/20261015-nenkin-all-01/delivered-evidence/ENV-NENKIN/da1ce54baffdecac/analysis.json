@@ -1,0 +1,997 @@
+{
+  "documentId": "ENV-NENKIN",
+  "sourcePathsRead": [
+    "manifest.json",
+    "indexed/nenkin/README.md.txt",
+    "indexed/nenkin/WEB-INF/web.xml.txt",
+    "indexed/nenkin/WEB-INF/resources/log4j.properties.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/util/CommonUtil.java.txt",
+    "indexed/nenkin/tools/build.ps1.txt",
+    "indexed/nenkin/tools/start.ps1.txt",
+    "indexed/nenkin/tools/stop.ps1.txt",
+    "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+    "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+    "indexed/nenkin/WEB-INF/resources/db/data.sql.txt",
+    "indexed/nenkin/index.jsp.txt",
+    "indexed/nenkin/JSP/MENU/Login.jsp.txt",
+    "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/CommonAction.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/FWLog.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/CounterShift.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/OperatePermission.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/LoginInterfaceAction.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/util/PDFUtil.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/pdf/FWSessionAgent.java.txt",
+    "indexed/n2framework/WEB-INF/src/jhkcommon/PdfFactory3.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java.txt",
+    "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt"
+  ],
+  "facts": [
+    {
+      "id": "ENV-NENKIN-001",
+      "topic": "deployment.webDescriptor",
+      "statement": "web.xmlはWeb Application 2.3のDTDを宣言し、表示名を「年金自動受取予約管理システム」とする。Servlet実装はjavax.servlet系を使用するため、配備構成にはこのAPI体系との対応が必要である。DTDの宣言だけでは実際のコンテナー製品・版を確定できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/web.xml.txt",
+          "startLine": 1,
+          "endLine": 4
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 12,
+          "endLine": 17
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-002",
+      "topic": "deployment.entryPoints",
+      "statement": "コンテキストのwelcome-fileはJSP/MENU/Login.jspである。index.jspを直接要求した場合も同じJSPへforwardする。common.ControlServletはControlServletという名前でload-on-startup=1として登録され、/Action.doへ対応付けられる。nenkin.H2JndiSetupListenerはコンテキストListenerとして登録される。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/web.xml.txt",
+          "startLine": 11,
+          "endLine": 28
+        },
+        {
+          "path": "indexed/nenkin/index.jsp.txt",
+          "startLine": 1,
+          "endLine": 2
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-003",
+      "topic": "logging.initialization",
+      "statement": "web.xmlのコンテキストパラメーターLOGGER_NAMEはn2nenkinである。ControlServlet.initはその値を取得してFWLog.initLoggerへ渡す。FWLogはCommons LoggingのLogFactoryからアプリケーション用の指定名Loggerと、errorという名前のエラー用Loggerを取得し、staticフィールドへ保持する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/web.xml.txt",
+          "startLine": 6,
+          "endLine": 9
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 40,
+          "endLine": 44
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/FWLog.java.txt",
+          "startLine": 3,
+          "endLine": 4
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/FWLog.java.txt",
+          "startLine": 15,
+          "endLine": 32
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-004",
+      "topic": "logging.configuration",
+      "statement": "付属log4j.propertiesはrootLoggerをINFO、出力先をstdoutというConsoleAppenderに設定する。PatternLayoutの形式は%d{yyyy-MM-dd HH:mm:ss} %-5p %c - %m%nであり、日時、レベル、Logger名、メッセージを出力する。このファイルにはファイルAppender、ローテーション、保存期間の設定はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/log4j.properties.txt",
+          "startLine": 1,
+          "endLine": 5
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-005",
+      "topic": "logging.errorDispatch",
+      "statement": "FWLogのdebugとinfoはアプリケーション用Loggerへ渡す。errorの各オーバーロードはエラー用Loggerとアプリケーション用Loggerの双方へ渡し、Throwableの場合は例外オブジェクトも渡す。二つのLoggerへの呼出しが存在することと、実環境で同じログが何回記録されるかは区別する必要がある。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/FWLog.java.txt",
+          "startLine": 49,
+          "endLine": 70
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/FWLog.java.txt",
+          "startLine": 88,
+          "endLine": 111
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-006",
+      "topic": "connections.jndiNames",
+      "statement": "年金側の接続取得は三用途に分かれる。業務用openConnectionはjdbc/RAROA_DB、職員用openStaffConnectionはjdbc/Oracle_SP2NM、顧客用openCustomerConnectionはjdbc/Oracle_DWHを優先する。各用途では優先名に続き、同じ名前の先頭へjava:comp/env/を付けた名前を探索する。共通定数にはこれら三名に加えてjdbc/RAROA_SHAREも宣言される。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 12,
+          "endLine": 23
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 32,
+          "endLine": 74
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+          "startLine": 18,
+          "endLine": 28
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-007",
+      "topic": "connections.lookupFlow",
+      "statement": "年金側のJNDI探索では、候補名ごとにInitialContextを作りlookupする。結果がDataSourceならその場で採用し、別型なら次候補へ進む。NamingExceptionも保持して次候補へ進み、全候補から取得できなければ用途別メッセージのSQLExceptionを投げる。捕捉したNamingExceptionがあれば最後のものを原因に設定する。DataSource採用後のgetConnection失敗は、この探索ループへ戻して別名を再試行する処理には接続されていない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 32,
+          "endLine": 44
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 47,
+          "endLine": 74
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 77,
+          "endLine": 94
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-008",
+      "topic": "connections.dataSourceCache",
+      "statement": "NenkinDataSourceは業務・職員・顧客ごとにvolatile staticのDataSourceを保持する。未取得時だけクラス単位のsynchronized内で再確認して探索し、取得できたDataSourceをキャッシュする。キャッシュするのは接続ではなくDataSourceであり、各呼出しでgetConnectionを行う。このクラスにはキャッシュの消去、期限、JNDI再登録に伴う更新処理がないため、取得済みDataSourceが同じクラスの存続中に自動で再探索される保証はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 25,
+          "endLine": 74
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-009",
+      "topic": "connections.commonAutoCommit",
+      "statement": "共通側のCommonUtil.getConnectionは、呼出元から渡されたInitialContextとJNDI名で直接lookupし、DataSourceへキャストして接続を取得した後、必ずsetAutoCommit(false)を呼んで返す。このメソッド自身には別名探索やDataSourceキャッシュがない。CommonActionの接続取得メソッドもこの処理へ委譲する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/util/CommonUtil.java.txt",
+          "startLine": 36,
+          "endLine": 44
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonAction.java.txt",
+          "startLine": 46,
+          "endLine": 50
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-010",
+      "topic": "connections.pensionAutoCommit",
+      "statement": "年金側のNenkinDataSourceは取得した接続のautoCommitを変更しない。Repositoryの登録・更新、削除、削除明細整理では、それぞれ取得後にsetAutoCommit(false)を設定し、処理内でcommitまたはrollbackする。参照サービスや一覧取得では同じ設定を行っていないため、年金の全接続が取得時から手動commitになるとは説明できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 32,
+          "endLine": 74
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 280,
+          "endLine": 308
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 315,
+          "endLine": 350
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 458,
+          "endLine": 480
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 49,
+          "endLine": 72
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-011",
+      "topic": "connections.masterDependencies",
+      "statement": "ReferenceDataServiceは、店名とコード候補を業務接続から、職員名簿を職員接続から、顧客基本表を顧客接続から取得する。職員・顧客検索は先に業務接続で店名を取得し、結果へメモリ上で対応付けるため、外部名簿または顧客接続だけが利用可能でも検索全体の成立は保証されない。これらの検索は三つのDBを一つのSQL JOINで結合する構成ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 23,
+          "endLine": 29
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 97,
+          "endLine": 133
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 137,
+          "endLine": 180
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 263,
+          "endLine": 311
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-012",
+      "topic": "connections.customerReadSequence",
+      "statement": "Repositoryの顧客基本情報読込みは、顧客接続でN2_SIGHT.Ｂ顧客基本表を店番・顧客番号で検索し、その接続を閉じる。対象があれば続いて業務接続を取得し、店名と性別の表示名称を補う。後段の業務接続や表示値変換で失敗した場合も例外になるため、顧客主表の取得成功だけを画面への読込み成功とは扱わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 87,
+          "endLine": 142
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-013",
+      "topic": "localDatabase.enableCondition",
+      "statement": "H2JndiSetupListenerはSystemプロパティn2nenkin.localDbをBoolean.parseBooleanで判定し、未設定時の値はfalseである。無効ならコンテナーログへ環境側JNDIを使用する旨を出し、DB作成・SQL実行・JNDI再登録を行わず戻る。付属start.ps1が新たに起動するJVMには-Dn2nenkin.localDb=trueを付ける。ログインJSPも同じプロパティを参照しており、これは別の画面入力値ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 23,
+          "endLine": 36
+        },
+        {
+          "path": "indexed/nenkin/tools/start.ps1.txt",
+          "startLine": 44,
+          "endLine": 54
+        },
+        {
+          "path": "indexed/nenkin/JSP/MENU/Login.jsp.txt",
+          "startLine": 11,
+          "endLine": 11
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-014",
+      "topic": "localDatabase.fileLocation",
+      "statement": "ローカルDBのファイル基準パスは、n2nenkin.db.pathが非NULLかつtrim後に空でなければ、そのtrim後文字列を絶対パス化して決める。指定がなければServletContext.getRealPathで得た/WEB-INF/local-db配下のnenkinを用いる。getRealPathがNULLなら展開配備が必要というIllegalStateExceptionになる。親ディレクトリーが存在せずmkdirsも失敗した場合も初期化を拒否する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 38,
+          "endLine": 42
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 63,
+          "endLine": 71
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-015",
+      "topic": "localDatabase.jdbcUrl",
+      "statement": "ローカルDBはorg.h2.jdbcx.JdbcDataSourceを使用するファイルDBである。JDBC URLはjdbc:h2:file:に絶対パスの区切りをスラッシュへ置換した値を連結し、MODE=Oracle、DATABASE_TO_UPPER=TRUE、CASE_INSENSITIVE_IDENTIFIERS=FALSEを付ける。この互換モード設定は、本番OracleまたはSQL Serverとの動作一致を検証した結果を表すものではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 18,
+          "endLine": 19
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 44,
+          "endLine": 45
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 73,
+          "endLine": 76
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-016",
+      "topic": "localDatabase.initializationFlow",
+      "statement": "ローカル初期化のフローは、有効判定、配置先決定、親ディレクトリー準備、DataSource準備、DB初期化、JNDI再登録、完了ログの順である。DB初期化では同じ接続へ/WEB-INF/resources/db/schema.sql、/WEB-INF/resources/db/data.sqlの順に適用し、finallyで接続を閉じる。既存DBかどうかでdata.sqlを省略する分岐はなく、Listenerが有効に初期化されるたびに両ファイルを処理する。ここにはautoCommit変更、明示commit、明示rollbackがなく、全工程の一括rollbackは契約化されていない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 31,
+          "endLine": 55
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 78,
+          "endLine": 87
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-017",
+      "topic": "localDatabase.scriptResources",
+      "statement": "ListenerはSQLをServletContext.getResourceAsStreamで読み、リソースがなければ対象パスを含むIllegalStateExceptionを投げる。存在するSQLはUTF-8のInputStreamReaderを通してH2のRunScript.executeへ渡す。終了時はReader、Reader未生成時は元のStreamを閉じる。SQLファイルの欠落や読込み・実行・closeの失敗を無視して次工程へ進める実装ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 89,
+          "endLine": 99
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-018",
+      "topic": "localDatabase.jndiRebind",
+      "statement": "ローカル初期化完了後、ListenerはInitialContextにjdbcサブコンテキストを作成する。NameAlreadyBoundExceptionの場合だけ作成済みとして継続し、jdbc/Oracle_SP2NM、jdbc/Oracle_DWH、jdbc/RAROA_DB、jdbc/RAROA_SHAREの順で同じH2 DataSourceをrebindする。java:comp/env付き名へ登録するコードはない。既存登録を退避・復元する処理や、途中のrebind失敗時に登録済みの名前を補償解除する処理もない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 25,
+          "endLine": 29
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 101,
+          "endLine": 105
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-019",
+      "topic": "localDatabase.initializationFailure",
+      "statement": "ローカル初期化のtry内でExceptionが発生すると、ListenerはServletContext.logへ初期化失敗と例外を記録し、原因を保持したIllegalStateExceptionへ包んで投げ直す。成功ログはSQL適用と全JNDI再登録の後にだけ出る。失敗時にコンテナーが最終的にどのHTTP応答を返すかは、このListenerの戻り値やログだけでは確定しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 48,
+          "endLine": 55
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-020",
+      "topic": "localDatabase.shutdownFlow",
+      "statement": "コンテキスト終了時、ListenerのDataSourceがNULLなら何もせず戻る。非NULLなら四つのJNDI名の解除を試み、その後にH2終了処理へ進む。解除時のInitialContext生成失敗と各unbindのNamingExceptionは無視するため、解除に失敗しても次の解除やDB終了の試行を続ける。既存JNDI登録を復元する処理ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 57,
+          "endLine": 61
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 107,
+          "endLine": 114
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-021",
+      "topic": "localDatabase.shutdownFailure",
+      "statement": "H2終了処理は保持中のDataSourceから接続を取り、StatementでSHUTDOWNを実行する。取得・作成・実行中のExceptionはコンテナーログへH2 shutdown failedとして記録し、呼出元へ再送出しない。finallyではStatementとConnectionのcloseを個別に試み、その例外も無視する。終了処理を呼んだことだけではDB終了成功を保証しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 116,
+          "endLine": 130
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-022",
+      "topic": "database.productionScope",
+      "statement": "SQL Server用schema-raroa-sqlserver.sqlが作成対象とする業務表は、dbo.性別テーブル、dbo.裁定請求テーブル、dbo.受給有無テーブル、dbo.店名テーブル、dbo.年金種類テーブル、dbo.年金1_LK、dbo.年金＿削除明細の7表である。外部のDB2.Ｕ職員名簿表とN2_SIGHT.Ｂ顧客基本表は既存N2 Oracle表として作成対象外とコメントされ、DDLにもそのCREATEはない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 1,
+          "endLine": 127
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-023",
+      "topic": "database.productionCreationConditions",
+      "statement": "SQL Server用DDLはANSI_NULLSとQUOTED_IDENTIFIERをONにし、各表についてOBJECT_IDで同名のユーザーテーブルが存在しない場合だけCREATE TABLEする。既存表をDROPして作り直す処理や、既存列の型・NULL・制約をALTERして定義へ一致させる処理はない。したがって既存表がある環境では、このDDLを適用しても収録定義と同じ構造へ補正されるとは限らない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 6,
+          "endLine": 127
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-024",
+      "topic": "database.indexCreation",
+      "statement": "SQL Server用DDLはsys.indexesの対象表と索引名で未存在を確認し、予約本表へ検索キー（ふりがな・電話番号）、顧客（店番・顧客番号）、更新区分（変更FLG・データ更新日・更新者）、削除明細へ更新日（データ更新日・更新者）の4索引を作成する。いずれもCREATE INDEXでありUNIQUEは付かない。H2用DDLにも同じ列構成の4索引がCREATE INDEX IF NOT EXISTSで宣言されるが、索引名は異なる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 130,
+          "endLine": 172
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 168,
+          "endLine": 171
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-025",
+      "topic": "database.physicalDifferences",
+      "statement": "業務7表の文字列列は、SQL Server用DDLではNVARCHAR、H2用DDLではVARCHARで宣言される。年金種別の個別フラグと６ヶ月先確認はSQL ServerではBIT、H2ではBOOLEAN、更新時間はSQL ServerではTIME(0)、H2ではTIMEである。氏名・ふりがな・配偶者名の宣言長100、住所300、備考400、店名80、年金種類名120などのDB容量を、画面やサービスの業務上限へ置き換えてはならない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 10,
+          "endLine": 126
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 81,
+          "endLine": 166
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-026",
+      "topic": "database.constraints",
+      "statement": "両DDLでは性別・裁定請求・受給有無・店舗・年金種類の5表にコード列のPRIMARY KEYを宣言し、名称列をNOT NULLとする。一方、予約本表と削除明細の列にはNOT NULL、PRIMARY KEY、一意制約を宣言せず、業務表間のFOREIGN KEYも宣言していない。検索用のふりがな・電話番号索引を、DBが重複を拒否する一意キーとして扱うことはできない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 10,
+          "endLine": 137
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 81,
+          "endLine": 171
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-027",
+      "topic": "database.localCompatibilityScope",
+      "statement": "H2用schema.sqlはDB2、N2_DWH、N2_SIGHT、NAVIのスキーマを未作成時に作る。業務7表に加え、ログイン情報、職員名簿、職員所属課係、役職、事業所、運用状態、アクセス記録、顧客基本情報の8互換表を作る。NAVIの表定義はこのSQLにはない。これらはローカル互換定義であり、本番外部表の型・容量・NULL・制約を実測または確認した定義としては扱えない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 1,
+          "endLine": 104
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 106,
+          "endLine": 177
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-028",
+      "topic": "database.localObsoleteTableRemoval",
+      "statement": "H2用DDLは表・索引の作成宣言の後、旧Java専用代替表を除くというコメントに続いて、NENKIN_AUDIT、NENKIN_RESERVATION、NENKIN_BRANCH、NENKIN_STAFFをDROP TABLE IF EXISTSする。現行表のCREATE IF NOT EXISTSとは別の削除操作であり、このローカル初期化を既存DBへの非破壊操作と説明してはならない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 173,
+          "endLine": 177
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 78,
+          "endLine": 85
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-029",
+      "topic": "database.localSeedContract",
+      "statement": "data.sqlはローカルの名簿・役職・事業所・運用状態・顧客基本情報と、業務コード・店舗・予約・削除明細へKEY付きMERGEを記述する。予約本表の投入キーはふりがな・電話番号、削除明細はこれらにデータ更新日を加える。このMERGEのKEY指定は表のPRIMARY KEY宣言ではない。起動時の適用が初回に限定されていないため、投入キーに該当する既存ローカルデータの保持を保証する初期化ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/data.sql.txt",
+          "startLine": 6,
+          "endLine": 94
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/data.sql.txt",
+          "startLine": 96,
+          "endLine": 135
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 78,
+          "endLine": 85
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-030",
+      "topic": "database.seedAndProductionSeparation",
+      "statement": "ローカル初期データには性別・裁定請求・受給有無の各2コード、2店舗、年金種類コード1から31、予約本表2件、削除明細1件を投入する記述がある。これらはサンプル投入の定義であり、本番の現在件数や承認済みコード値ではない。SQL Server用DDLには初期データ投入がなく、READMEは本番コード表・店舗表のデータをAccessリンク元から移行する方針を記す。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/data.sql.txt",
+          "startLine": 55,
+          "endLine": 135
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 1,
+          "endLine": 172
+        },
+        {
+          "path": "indexed/nenkin/README.md.txt",
+          "startLine": 20,
+          "endLine": 20
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-031",
+      "topic": "deployment.productionPrerequisites",
+      "statement": "READMEの正式配備方針は、ローカルDB有効化オプションを設定せず環境側JNDIを使い、配備前にSQL Server用DDLをjdbc/RAROA_DBの接続先へ適用するというものである。実行ユーザーには業務7表への必要なDML権限、職員接続のDB2.Ｕ職員名簿表と顧客接続のN2_SIGHT.Ｂ顧客基本表へのSELECT権限を求める。SQL Server実機での適用確認は配備先環境で行う旨が記されており、確認済みの結果ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/README.md.txt",
+          "startLine": 18,
+          "endLine": 20
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-032",
+      "topic": "deployment.commonDatabaseDependencies",
+      "statement": "共通認証のSQLには、DB2.ＵＷＥＢログイン情報表、DB2.Ｕ職員名簿表、DB2.Ｕ職員所属課係一覧表、DB2.ＵＪＶ役職コード表と、N2_DWH.Ｊ事業所コード表２の参照がある。アクセス記録はDB2.ＵカウンターシフトへのINSERTである。業務7表と年金側の職員・顧客参照権限だけを記載して、これら共通処理の接続・権限依存を省略してはならない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java.txt",
+          "startLine": 47,
+          "endLine": 47
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java.txt",
+          "startLine": 114,
+          "endLine": 114
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java.txt",
+          "startLine": 144,
+          "endLine": 144
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/SearchLoginInfoBase.java.txt",
+          "startLine": 172,
+          "endLine": 174
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java.txt",
+          "startLine": 47,
+          "endLine": 47
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java.txt",
+          "startLine": 37,
+          "endLine": 37
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-033",
+      "topic": "connections.operationCheckDependency",
+      "statement": "ControlServletはAction実行前にOperatePermission.checkを呼ぶ。OperatePermissionは業務種別の判定より先にjdbc/Oracle_SP2NMの共通接続を取得する。nenkinは運用状態表を検索する対象分岐に含まれず、接続取得後はチェック対象外としてtrueを返すが、接続取得で例外になればログを出してfalseとなる。運用状態表を検索しないことを、この接続先への非依存と説明してはならない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 325,
+          "endLine": 338
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/OperatePermission.java.txt",
+          "startLine": 26,
+          "endLine": 85
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-034",
+      "topic": "connections.accessLogTransaction",
+      "statement": "共通アクセス記録はControlServletからCounterShift.countUpへ渡され、jdbc/Oracle_SP2NMの別接続でINSERTした後にcommitする。失敗時はその接続のrollbackを試み、元の例外とrollback失敗をログへ出して、接続を閉じる。年金業務更新の接続とは別に取得するため、業務更新とアクセス記録を一体のトランザクションとして説明できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 357,
+          "endLine": 383
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CounterShift.java.txt",
+          "startLine": 25,
+          "endLine": 53
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-035",
+      "topic": "build.directoryContract",
+      "statement": "build.ps1はtoolsの親をAppRoot、その親をOutputRootとし、OutputRoot配下のn2frameworkをFrameworkRootにする。RuntimeRootが空ならOutputRoot/runtimeを解決し、そのjdk配下・tomcat配下で列挙された最初のディレクトリーをそれぞれ使用する。年金の出力先はAppRoot/WEB-INF/libとAppRoot/WEB-INF/classesであり、JDK・Tomcatの具体的な版番号を選択条件にしていない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/build.ps1.txt",
+          "startLine": 1,
+          "endLine": 19
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-036",
+      "topic": "build.outputPreparation",
+      "statement": "ビルドは既存の年金WEB-INF/classesを再帰削除してからlibとclassesを準備する。lib全体を削除する処理はない。PowerShellエラーはStop、StrictModeはLatestであり、後続でjar作成・依存取得・コンパイルに失敗した場合に、削除前のclassesや上書き前のjarを復元する処理は記述されていない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/build.ps1.txt",
+          "startLine": 5,
+          "endLine": 55
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-037",
+      "topic": "build.frameworkPackaging",
+      "statement": "build.ps1はJDKのjar.exeで、n2framework/WEB-INF/classes配下の既存内容をそのまま年金WEB-INF/lib/FW.jarへまとめる。n2frameworkのJavaソースをコンパイルし直す工程はない。jar.exeの終了コードが非ゼロならFW.jar build failedとして中断する。この構成では、解析した共通ソースと包装される既存classの一致は別途確認を要する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/build.ps1.txt",
+          "startLine": 26,
+          "endLine": 27
+        },
+        {
+          "path": "indexed/nenkin/tools/build.ps1.txt",
+          "startLine": 47,
+          "endLine": 50
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-038",
+      "topic": "build.loggingAndPdfLibraries",
+      "statement": "ビルドはn2framework/WEB-INF/libからcommons-logging.jar、log4j.jar、itextpdf-5.3.4.jarを年金WEB-INF/libへ上書きコピーする。明示された版番号はiTextのファイル名に含まれる5.3.4であり、Commons LoggingとLog4jの版番号はスクリプトからは分からない。これら三つについてH2と同じハッシュ照合を行う処理はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/build.ps1.txt",
+          "startLine": 29,
+          "endLine": 45
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-039",
+      "topic": "build.h2Dependency",
+      "statement": "ビルドが選ぶH2は2.1.214である。RuntimeRoot/downloads/h2-2.1.214.jarがなければMaven Centralのrepo1.maven.orgから取得する記述があり、既存・新規のどちらもSHA-256をd623cdc0f61d218cf549a8d09f1c391ff91096116b22e2475475fce4fbe72bd0と照合する。不一致なら中断し、一致した場合だけ年金WEB-INF/libへコピーする。これはスクリプトの取得・照合契約であり、本解析でのダウンロードや照合成功を示さない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/build.ps1.txt",
+          "startLine": 33,
+          "endLine": 45
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-040",
+      "topic": "build.javaCompilation",
+      "statement": "コンパイル対象は年金WEB-INF/src以下の全.javaである。classpathは選択したTomcatのlib/servlet-api.jarと年金WEB-INF/libのワイルドカードで構成し、javacへ-encoding UTF-8、-source 1.7、-target 1.7、-Xlint:-optionsを渡してWEB-INF/classesへ出力する。終了コードが非ゼロならApplication compilation failedで中断する。source/target指定は、実際に選択されたJDKの版や全依存jarの実行互換性を保証するものではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/build.ps1.txt",
+          "startLine": 47,
+          "endLine": 50
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-041",
+      "topic": "build.resourcePlacement",
+      "statement": "コンパイル後、build.ps1はWEB-INF/resources/log4j.propertiesをWEB-INF/classes/log4j.propertiesへコピーし、生成class数を表示する。SQLはclassesへコピーするのではなく、ListenerがWebアプリ内の/WEB-INF/resources/dbから読む。したがって配備物にはclassとlibだけでなく、元のWebリソース配置も必要である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/build.ps1.txt",
+          "startLine": 52,
+          "endLine": 54
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 82,
+          "endLine": 95
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-042",
+      "topic": "start.preparationOrder",
+      "statement": "start.ps1の引数はPort既定8089とRuntimeRoot既定空文字である。RuntimeRootを解決してbuild.ps1を呼び、JDK・Tomcatを選択した後、AppRoot/.runtimeをCatalinaBaseとする。指定ポートが既に待受中かどうかを調べる前に、ビルド、実行ディレクトリー準備、server.xml変更、配備先準備を行う。既起動判定がビルドを省略する構成ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/start.ps1.txt",
+          "startLine": 1,
+          "endLine": 40
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-043",
+      "topic": "start.catalinaBase",
+      "statement": "起動準備では.runtime本体とlogs・temp・work・webappsを不足時に作る。.runtime/confが存在しない場合だけTomcatのconfを再帰コピーし、既存confがあればそのまま使う。これはTomcat本体の配置先とアプリ固有の実行データ置場を分ける構成である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/start.ps1.txt",
+          "startLine": 17,
+          "endLine": 26
+        },
+        {
+          "path": "indexed/nenkin/README.md.txt",
+          "startLine": 49,
+          "endLine": 49
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-044",
+      "topic": "start.serverXmlChanges",
+      "statement": "start.ps1は.runtime/conf/server.xmlを読み、portが数字でshutdown=\"SHUTDOWN\"に続く形へ一致する箇所をshutdownポート8019へ置換する。HTTP Connectorはportが8080・8088・8089のいずれかでprotocol=\"HTTP/1.1\"と続く形だけを引数Portへ置換する。結果はBOMなしUTF-8で保存する。任意の既存Connector表記や、以前に別のカスタムポートへ変更済みの設定まで追従する汎用処理ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/start.ps1.txt",
+          "startLine": 28,
+          "endLine": 33
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-045",
+      "topic": "start.contextDeployment",
+      "statement": "配備先は.runtime/webapps/n2nenkinであり、存在しない場合だけAppRootを参照するWindows Junctionを作る。既存パスが別の場所を指すかどうかの検査・修正はない。付属スクリプトの確認URLはhttp://127.0.0.1:{Port}/n2nenkin/であり、既定Portでは8089となる。このコンテキスト名はweb.xmlのdisplay-nameとは別に、配備先パスで決まる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/start.ps1.txt",
+          "startLine": 35,
+          "endLine": 38
+        },
+        {
+          "path": "indexed/nenkin/tools/start.ps1.txt",
+          "startLine": 60,
+          "endLine": 60
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/web.xml.txt",
+          "startLine": 4,
+          "endLine": 4
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-046",
+      "topic": "start.processAndReadinessFlow",
+      "statement": "起動フローの待受判定では指定PortにListenがなければJavaのTomcat Bootstrap startを非表示で起動し、標準出力・標準エラーを.runtime/logsのconsole.out.log・console.err.logへ分け、返されたプロセスIDを.runtime/tomcat.pidへ書く。Listenがあれば新規起動を省略する。どちらの枝も同じ確認URLへ進み、TimeoutSec=2のHTTP要求を最大80回試し、HTTP 200で準備完了とする。失敗した試行の例外は無視し、各未完了試行後に500ミリ秒待つ。最後まで200が得られなければ標準エラーログ末尾100行の表示を試みて例外にする。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/start.ps1.txt",
+          "startLine": 40,
+          "endLine": 74
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-047",
+      "topic": "start.jvmOptionsAndHealthBoundary",
+      "statement": "新規Tomcat起動のJVMにはJUL設定ファイルとClassLoaderLogManager、TLSのephemeralDHKeySize=2048、java.protocol.handler.pkgs、ローカルDB有効化、catalina.base・catalina.home・java.io.tmpdirを渡し、bootstrap.jarとtomcat-juli.jarからBootstrapを起動する。準備完了の判定はURLのHTTP 200であり、認証、職員確認、業務DB更新、出力処理を検査しない。待受プロセスの同一性や保存PIDとの一致も判定していない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/start.ps1.txt",
+          "startLine": 40,
+          "endLine": 74
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-048",
+      "topic": "stop.controlFlow",
+      "statement": "stop.ps1はPort既定8089とRuntimeRootを受け、起動側と同様にJDK・Tomcat・AppRoot/.runtimeを決める。指定PortにListenがなければalready stoppedとして終了コード0で終わる。Listenがあれば同じCatalinaBaseを指定してBootstrap stopを実行し、最大40回、待受消失を確認する。消失なら終了コード0、残っていれば250ミリ秒待って再確認し、上限後はApplication could not be stoppedを投げる。Portは待受確認に使われ、Bootstrap停止先はCatalinaBaseの構成に依存する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/stop.ps1.txt",
+          "startLine": 1,
+          "endLine": 33
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-049",
+      "topic": "stop.completionBoundary",
+      "statement": "停止スクリプトは起動時に保存したtomcat.pidを読まず、PIDによる強制終了もしない。Javaの終了コードを明示検査せず、指定Portの待受消失で停止成功を判定する。Junction、実行ディレクトリー、ログ、DBファイル、PIDファイルを削除する処理もない。コンテキスト終了時のH2 SHUTDOWNはListener側の処理であり、停止スクリプトの成功表示だけでその成功まで確定することはできない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/tools/stop.ps1.txt",
+          "startLine": 9,
+          "endLine": 34
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 57,
+          "endLine": 60
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt",
+          "startLine": 116,
+          "endLine": 129
+        }
+      ]
+    },
+    {
+      "id": "ENV-NENKIN-050",
+      "topic": "dependencies.pdfAndExcelBoundaries",
+      "statement": "共通ControlServletのGETにはPDFUtilを呼ぶ既存経路があり、PDFUtilはiTextとcom.canon.iw.fmの型、FWSessionAgentは同Canon系の型を参照する。一方、年金の登録内容印刷はReportPreviewActionが検索結果をJSPへ渡し、Report.jspのボタンがwindow.print()を呼ぶ構成である。共通PDF依存を、年金登録内容印刷のサーバーPDF生成と説明してはならない。店舗別・日次月次ExcelはOpenXmlWorkbookWriterを使用し、その生成部はJava標準のメモリ出力とZIP/XMLを使うため、これらの実装からApache POI等の追加依存は導かれない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 54,
+          "endLine": 79
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/util/PDFUtil.java.txt",
+          "startLine": 26,
+          "endLine": 37
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/pdf/FWSessionAgent.java.txt",
+          "startLine": 20,
+          "endLine": 26
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java.txt",
+          "startLine": 2,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 60,
+          "endLine": 61
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 62,
+          "endLine": 62
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 90,
+          "endLine": 90
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 3,
+          "endLine": 65
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "本番コンテナーのJNDI登録内容、実DB接続先、JDBCドライバー、接続プール、接続時autoCommit、分離レベル、タイムアウトは収録範囲から確定できない。認証値を取得・転載して補完する対象とはしない。",
+    "ローカル起動時にInitialContextを提供する環境設定と、jdbcサブコンテキスト作成・rebindの許可は確認できない。起動引数やListenerだけからJNDI登録成功を保証できない。",
+    "ローカルSQL適用とJNDI再登録には全体を戻す明示処理がない。失敗前に確定したDDL・データ・登録の実状態、および初期化失敗後のコンテナー動作は実行していないため不明である。",
+    "JDK・Tomcatの実際の版と選択されるディレクトリー、H2および既存FW.jarとの実行互換性は未確認である。source/target=1.7をJDK・H2の対応版保証へ拡張できない。",
+    "既存n2framework classと解析ソースの一致、各jarの内容・版、Commons Loggingが選択する実装は未照合である。Canon系PDFライブラリの供給元・版・利用可能性も、三つのjarをコピーするbuild.ps1からは確定しない。",
+    "本番SQL Serverの既存表・索引が収録DDLと一致するかは不明である。存在判定は構造比較ではなく、既存列・索引定義の補正を行わない。Java側の業務表名はスキーマ未修飾、DDLはdbo指定であり、実行ユーザーによる名前解決も配備先での確認が必要である。",
+    "本番外部マスター・共通表の物理DDLと権限付与結果は未収録である。H2互換表の型・長さ・NULL・PKを本番属性へ転用できない。READMEにある移行・権限・適用確認方針を、実施済み結果として扱えない。",
+    "実際のserver.xml、Junction参照先、待受プロセス、HTTP 200の応答元は未確認である。Connector置換条件に一致しない構成、shutdownポート8019の使用状況、別プロセスの待受を含む運用時の成立条件は確定していない。",
+    "DataSourceキャッシュの動的更新機構は確認できない。JNDI再登録後に既取得キャッシュを更新する運用手順や、クラスの再ロード境界はこのソースだけでは定まらない。"
+  ],
+  "coverageNotes": [
+    "manifest.jsonは材料・権限の確認にのみ使用した。modeはsource-only、trainingReferenceAuthorizedByUserとreferenceSpecificationIncludedはfalse、referenceFilesは空である。参考設計は使用せず、manifestを業務・実装factの根拠にしていない。",
+    "manifestのindexed一覧は176件である。全件の仕様解析を主張するものではなく、ENV-NENKINの開始点12ファイルと、接続・ログ・共通DB・出力依存を説明するために必要な範囲を追跡した。sourcePathsReadには内容読取りまたは位置検索を行ったファイルを含み、依存先の部分読取りを全ファイル読了とは扱っていない。",
+    "web.xml、log4j.properties、build.ps1、start.ps1、stop.ps1、NenkinDataSource、CommonUtil、両DDLは末尾まで範囲を分けて確認した。Listenerは設定値を除く制御・配置・初期化・再登録・終了部分を確認し、認証値はfactsへ採録していない。",
+    "READMEは構成、DB方針、正式配備条件、起動停止、ローカル検証案内、末尾の資料案内を確認した。認証実値を仕様材料にしていない。末尾で挙げられるContext、analysis、convert、WEB、sampleapp等の参照先へは移動していない。",
+    "data.sqlは投入先・キー・非認証データの定義を確認し、認証実値をfactsへ転載していない。初期データの件数はSQL中の投入記述数であり、稼働DBの実件数ではない。",
+    "文字コードが異なる共通ソースはmanifestに列挙されたindexedの原文行番号付きテキストを使用した。referencesのstartLine/endLineはその原ソース対応行を示し、検索出力の切れた範囲は追加の範囲読取りで補った。",
+    "manifestには既存class、Commons Logging・Log4j・iTextのjar等が非テキスト材料として省略されている。実バイナリ、runtime配置、コンテナー設定、DB実体へアクセスしていない。",
+    "図の材料として、ローカル有効／無効、初期化順序と失敗、DataSource探索と取得失敗、JNDI解除とH2終了、起動の既待受／新規起動、HTTP準備判定、停止の待受消失／上限到達をfactsに保持した。図生成・描画確認は行っていない。",
+    "関連文書は提示計画上、SYS-ARCHITECTURE=共通/システム分析.md、COM-012=共通/共通仕様書_COM-012_共通コントロールサーブレット.md、COM-015=共通/共通仕様書_COM-015_ログイン処理.md、COM-111=共通/共通仕様書_COM-111_年金業務共通処理.md、DB-INDEX=共通/DBオブジェクト一覧.md、DB-PHYSICAL=共通/DB仕様書/テーブル定義書.md、DB-OPS=共通/DB仕様書/DB操作仕様書.md、COM-150=共通/共通仕様書_COM-150_外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成する.mdである。計画との対応であり、生成済み成果物の存在確認ではない。",
+    "コード、SQL、スクリプト、マクロ、ビルド、テストを実行していない。ダウンロード、ネットワーク、外部サービス、プラグイン、委任エージェント、ファイル編集・生成を使用していない。workspace外の資料やメモリーは読んでいない。",
+    "本応答はENV-NENKINの根拠付き解析JSONである。文書変換、HTML・PDF・Excelの表示、配備、顧客承認の成否は判定していない。原仕様による正式評価率はnullとして扱う。"
+  ]
+}

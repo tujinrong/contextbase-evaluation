@@ -1,0 +1,41 @@
+{
+  "documentId": "ENV-NENKIN",
+  "path": "共通/設定・配置・依存仕様書.md",
+  "contentSha256": "5f7e7fe55540084c50a9d0ba27874adaa4472a3974114c43f83e0c76204a189a",
+  "aiAuthored": true,
+  "semanticProseAssembledByPython": false,
+  "analysisFacts": 50,
+  "unresolved": [
+    "本番のコンテナー製品・版、JNDI登録、実DB接続先、JDBCドライバー、接続プール、接続時autoCommit、分離レベル、タイムアウトは未確定である。共通側が要求する直接名と年金側の候補名の両方について、配備設定との対応が必要となる。",
+    "ローカル環境でInitialContextを提供する設定、およびjdbcサブコンテキスト作成・rebindの許可は未確認である。Listener登録とJVMオプションだけではJNDI登録成功を保証できない。",
+    "ローカル初期化の途中失敗時に残るDDL・MERGE結果・JNDI登録状態、および初期化失敗後のコンテナー動作は不明である。全工程の明示rollback・補償処理はない。",
+    "実際に選択されるJDK・Tomcatの版と依存jarの実行互換性は未確認である。source/target=1.7を、実JDK版やH2を含む全依存の互換性保証とは扱えない。",
+    "包装対象となる既存n2framework classと解析ソースの一致、jarの実内容・版、Commons Loggingの実装選択、Canon系PDFライブラリの供給元・利用可能性は未照合である。",
+    "本番SQL Serverの既存表・索引が収録DDLと一致するか、Java側の未修飾表名がdboの対象表へ解決されるかは未確認である。存在判定は構造比較・修正を行わない。",
+    "本番共通表・外部マスターの物理DDL、必要権限の付与結果、コード表・店舗表の移行結果は未収録である。ローカル互換DDLやREADMEの方針を実施済み結果へ転用できない。",
+    "実際のserver.xml、Junction参照先、shutdownポート8019の使用状況、指定Portの待受プロセス、HTTP 200の応答元は未確認である。起動・停止の表示だけでは業務機能やH2終了の成立を確定しない。",
+    "取得済みDataSourceキャッシュをJNDI再登録後に更新する運用方法と、クラス再ロードの境界は定まらない。ソースにはキャッシュ消去・更新機構がない。",
+    "coverageNotes（解析報告転記用）：manifestは読取り範囲・権限確認にのみ使用した。source-onlyで、trainingReferenceAuthorizedByUserとreferenceSpecificationIncludedはfalse、referenceFilesは空である。読取りは指定workspaceのmanifestとindexed、および提示された入力に限定し、参考設計、workspace外、メモリー、資格情報ファイルは使用していない。提供factsにあるindexed176件は材料件数であり、本書で全件を読了したという意味ではない。",
+    "coverageNotes（解析報告転記用）：原プログラム、SQL、スクリプト、ビルド、テストは非実行である。ネットワーク、プラグイン、外部サービス、委任エージェント、ファイル編集・生成は使用していない。認証実値は本文・訂正事項へ転載していない。",
+    "coverageNotes（解析報告転記用）：作成原稿のspec-metaコメントとJSON、宣言章と本文見出し、5イベントの六h4、11表の列数、LISTキー一意性を確認した。Mermaidの描画、HTML・PDF・Excelへの変換と表示確認、配備バイナリ照合は本応答では行っていない。これらの後工程の成否や顧客承認を予断せず、原仕様による正式評価率はnullとする。"
+  ],
+  "factCorrections": [
+    "ENV-NENKIN-013・019を補足：n2nenkin.localDbはtrimせずBoolean.parseBooleanで判定する。また、プロパティ読取りと有効判定は初期化tryの外にあるため、この段階の例外を初期化失敗ログと原因付きIllegalStateExceptionへ一律変換しない。本文の「設定・配置一覧」「ローカルDB初期化・JNDI再登録」へ反映。根拠：indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt、開始行31、終了行37、および開始行51、終了行54。",
+    "ENV-NENKIN-009を補足：CommonUtilはlookup結果を直接キャストするため、別型ではClassCastException、NULLでは後続参照時のNullPointerExceptionが生じ得る。getConnection成功後のsetAutoCommit(false)失敗と取得失敗も区別し、このメソッド自身に取得済み接続のclose処理がないことを追記した。本文の「autoCommitと確定範囲」「DB接続取得」へ反映。根拠：indexed/n2framework/WEB-INF/src/common/util/CommonUtil.java.txt、開始行36、終了行44。",
+    "ENV-NENKIN-020を細分化：各unbindのNamingExceptionでは次の解除へ進むが、InitialContext生成のNamingExceptionでは四名の解除自体を行わずDB終了へ進む。NamingException以外の実行時例外はこの解除処理で捕捉せず、後続SHUTDOWNに到達しない場合がある。解除対象と保持DataSourceの一致確認もない。本文の停止手順・図・例外説明を対応させた。根拠：indexed/nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java.txt、開始行57、終了行60、および開始行107、終了行114。",
+    "ENV-NENKIN-032の接続先と条件を補完：共通ログインのN2_DWH.Ｊ事業所コード表２照会は、所属店番が取得できた場合にjdbc/Oracle_DWHの共通接続で行う。顧客参照だけを同JNDIの利用目的とせず、正式配備の接続・権限表へ追加した。根拠：indexed/n2framework/WEB-INF/src/common/LoginAction.java.txt、開始行331、終了行342、およびindexed/n2framework/WEB-INF/src/common/base/SelectJigyosyoCodeHyo2Base.java.txt、開始行46、終了行49。",
+    "ENV-NENKIN-031の情報区分を明確化：WebOTXへの正式配備、DDL事前適用、Accessリンク元からの移行はREADMEに記された方針として記載し、実配備・移行・権限付与の完了事実とは区別した。根拠：indexed/nenkin/README.md.txt、開始行18、終了行20。"
+  ],
+  "analysisExecutedInThisJob": true,
+  "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261015-nenkin-all-01\\jobs\\documents-01\\be8eb3cf9e5259e8\\round-01",
+  "snapshot": {
+    "manifestSha256": "a28612d98f58abbddbdae4a16cf7a4d162b525642186b2ec5b1b13e151d85957",
+    "capsuleSchema": "reverse-ai-source-capsule/2",
+    "mode": "source-only",
+    "modeDerivation": "explicit-manifest-mode",
+    "scope": "sealed-manifest-and-raw-material"
+  },
+  "referenceMode": "source-only",
+  "structureFindings": [],
+  "status": "AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED"
+}

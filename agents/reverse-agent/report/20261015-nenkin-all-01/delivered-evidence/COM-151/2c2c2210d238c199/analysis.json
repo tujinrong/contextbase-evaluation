@@ -1,0 +1,1552 @@
+{
+  "documentId": "COM-151",
+  "sourcePathsRead": [
+    "manifest.json",
+    "nenkin/assets/js/app.js",
+    "nenkin/assets/js/japanese-era-calendar.js",
+    "nenkin/assets/css/site.css",
+    "nenkin/JSP/NENKIN/Pension.jsp",
+    "nenkin/JSP/NENKIN/Lookup.jsp",
+    "nenkin/JSP/NENKIN/Excel.jsp",
+    "nenkin/JSP/NENKIN/Batch.jsp",
+    "nenkin/JSP/NENKIN/Report.jsp",
+    "nenkin/JSP/NENKIN/Staff.jsp",
+    "nenkin/JSP/NENKIN/Menu.jsp",
+    "nenkin/JSP/MENU/Login.jsp",
+    "nenkin/WEB-INF/web.xml",
+    "nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+    "nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java",
+    "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+    "nenkin/WEB-INF/src/nenkin/PensionViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/PensionClearAction.java",
+    "nenkin/WEB-INF/src/nenkin/PensionLoadAction.java",
+    "nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+    "nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java",
+    "nenkin/WEB-INF/src/nenkin/PensionLookupAction.java",
+    "nenkin/WEB-INF/src/nenkin/LookupViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/LookupSearchAction.java",
+    "nenkin/WEB-INF/src/nenkin/ExcelExportAction.java",
+    "nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java",
+    "nenkin/WEB-INF/src/nenkin/BatchViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/BatchRunAction.java",
+    "nenkin/WEB-INF/src/nenkin/BatchDailyAction.java",
+    "nenkin/WEB-INF/src/nenkin/BatchMonthlyAction.java",
+    "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/StaffViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/StaffVerifyAction.java",
+    "nenkin/WEB-INF/src/nenkin/StaffClearAction.java",
+    "nenkin/WEB-INF/src/nenkin/bean/PensionViewBean.java",
+    "nenkin/WEB-INF/src/nenkin/bean/LookupViewBean.java",
+    "nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java",
+    "nenkin/WEB-INF/src/nenkin/model/PensionReservation.java",
+    "nenkin/WEB-INF/src/nenkin/model/BranchLookupItem.java",
+    "nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java",
+    "nenkin/WEB-INF/src/nenkin/model/CustomerLookupItem.java",
+    "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+    "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+    "nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java",
+    "nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java",
+    "nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java",
+    "nenkin/WEB-INF/resources/db/schema.sql",
+    "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+    "n2framework/WEB-INF/src/common/ControlServlet.java",
+    "n2framework/WEB-INF/src/common/CommonConst.java"
+  ],
+  "facts": [
+    {
+      "id": "COM-151-F001",
+      "topic": "共通JSの初期化と公開範囲",
+      "statement": "app.jsは即時関数内で処理を定義し、DOM読込み中ならDOMContentLoadedで、それ以外は直ちにbind(document)を行う。bindの順序は数字入力、文字列正規化、汎用モーダル、印刷ボタンである。window.nenkinAppにはbind、bindDigitsOnly、closeModal、normalizeDigits、openModal、toHalfWidthDigitsを公開し、互換名jsbrmsBindDigitsOnlyも残す。動的DOMを自動監視する処理はなく、追加要素への適用には公開bind等の呼出しが必要となる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/app.js.txt",
+          "startLine": 188,
+          "endLine": 224
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F002",
+      "topic": "数字入力の加工とイベント順",
+      "statement": "data-digits-onlyへの自動接続はHTMLInputElementだけを対象とし、接続済み印を付け、inputmodeが未設定ならnumericを補う。初期接続時、input時、blur時に全角０～９を半角化し、その後にASCII数字以外を除去する。値が変わらなければ終了し、変われば値を置換し、操作中の入力ではカーソル前に残った数字数へ選択位置を戻してから、bubbles=trueのchangeを同期的に発火する。input・blur・changeを必ず一組で発火する実装ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/app.js.txt",
+          "startLine": 6,
+          "endLine": 53
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F003",
+      "topic": "数字補助の実接続項目",
+      "statement": "対象画面で数字補助が接続する項目は、予約のbranchNo／BRANCH_NO（maxlength=3）、customerNo／CUSTOMER_NO（7）、staffCode／STAFF_CODE（4）、plannedAge／PLANNED_AGE（3）、顧客・担当者参照のlookupBranch／BRANCH_NO（3）、ExcelのexcelBranch／BRANCH_NO（3）、日次月次のbatchStaff／STAFF_NO（8）、印刷のbranchFrom／BRANCH_FROMとbranchTo／BRANCH_TO（各3）である。予約の電話番号、参照条件の電話番号、フリガナにはdata-digits-onlyがない。maxlengthの宣言と、JSによる数字除去・サーバー検査・DB容量は別の制約である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 22,
+          "endLine": 42
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 10,
+          "endLine": 15
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 8,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 48,
+          "endLine": 51
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 49,
+          "endLine": 53
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F004",
+      "topic": "数字入力のフォーカスと画面イベントへの波及",
+      "statement": "数字入力はfocus時に、readonlyでもdisabledでもなく値が存在するときだけ、requestAnimationFrameで全選択する。一方、初期・input・blur時の正規化自体にはreadonly／disabledを除外する条件がない。予約JSPの末尾スクリプトはdeferの共通JSより先に固有リスナーを登録する配置であり、数字補助が顧客番号の値を変更して発火したchangeも顧客参照の起動判定へ届く。値のプログラム代入だけではchangeを発火しない箇所もあるため、すべての値変更が同じ後続処理を伴うとは扱えない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/app.js.txt",
+          "startLine": 15,
+          "endLine": 52
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 9,
+          "endLine": 11
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 65,
+          "endLine": 68
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F005",
+      "topic": "宣言のみの文字列正規化helper",
+      "statement": "data-trim／data-uppercase用helperはinputとtextareaのblurで、trim、次に大文字化を行い、値が変わった場合だけchangeを発火する。対象の予約・参照・Excel・日次月次・印刷JSPにはこれらの属性がないため、このhelperを根拠に画面入力全体がblurでtrim・大文字化されるとは記載できない。予約キーのサーバー側正規化は別処理である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/app.js.txt",
+          "startLine": 55,
+          "endLine": 79
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 18,
+          "endLine": 47
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 102,
+          "endLine": 125
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 837,
+          "endLine": 855
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F006",
+      "topic": "汎用モーダルhelperと実画面の分離",
+      "statement": "app.jsの汎用モーダルはdata-modal-open／close／backdropを入口とし、hidden、aria-hidden、bodyのmodal-openと任意のdata-modal-body-classを変更する。開いた要素と起動元をWeakMapで対応付け、指定された初期フォーカスまたは最初の操作要素へ移し、閉じると接続中の起動元へ戻す。EscapeはDOM順で最後の表示中data-modalを閉じる。実際の予約・ExcelのlookupModalと予約のmessageBoxにはこのdata属性接続がなく、JSP固有関数が制御している。汎用helperのフォーカス復帰やEscape対応をExcel参照へ転用して説明してはならない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/app.js.txt",
+          "startLine": 81,
+          "endLine": 205
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 50,
+          "endLine": 68
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 9,
+          "endLine": 10
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F007",
+      "topic": "カレンダーの実接続項目と表示モード",
+      "statement": "予約画面ではbirthDate／BIRTH_DATEとspouseBirthDate／SPOUSE_BIRTH_DATEがjapanese、claimDate／CLAIM_SCHEDULED_DATEとrequestDate／RESERVATION_REQUEST_DATEがwesternであり、各入力にmaxlength=14とdata-era-calendar、対応ボタンにdata-era-calendar-toggleがある。日次月次のdailyDate／DAILY_DATE、monthStart／MONTH_START、monthEnd／MONTH_ENDもmaxlength=14のwesternである。dataUpdateDate／DATA_UPDATE_DATEはreadonlyの西暦表示で、カレンダー接続はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 30,
+          "endLine": 41
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 65,
+          "endLine": 85
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F008",
+      "topic": "ブラウザーの日付解析形式",
+      "statement": "ブラウザーの主解析は全角数字を半角化し、全角空白を半角空白にしてtrimする。西暦8桁、区切り付き西暦4桁年・1～2桁月日、元号付きの区切りなし年月日、元号付きの区切り形式を順に解析する。元号は明治・大正・昭和・平成・令和、各一文字略称、M／T／S／H／Rを大小文字を区別せず受け付け、元年または1～2桁の元号年を使う。区切りなし形式の判定では空白を除去するが、入力全体へNFKCを適用する処理ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 2,
+          "endLine": 34
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 113,
+          "endLine": 161
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F009",
+      "topic": "元号境界と日付実在性",
+      "statement": "元号範囲は明治1868-09-08～1912-07-29、大正1912-07-30～1926-12-24、昭和1926-12-25～1989-01-07、平成1989-01-08～2019-04-30、令和2019-05-01以降である。ブラウザーはUTC日付を生成した後に年月日が要求値と一致するかを調べ、元号指定時には開始日・終了日も検査して、不一致をnullにする。JavaのDateUtilにも同じ元号開始日・終了日が定義され、元号年0以下および元号範囲外をIllegalArgumentExceptionにする。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 2,
+          "endLine": 28
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 113,
+          "endLine": 125
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+          "startLine": 23,
+          "endLine": 56
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F010",
+      "topic": "ISO補助解析の後続文字",
+      "statement": "ブラウザーのparseIsoDateは先頭のyyyy-MM-ddを正規表現で抽出し、文字列末尾までは検査しない。表示整形・選択日の決定・blur正規化等は主解析が失敗した後にもこの補助解析を試す。そのため、先頭に実在するISO日付を持つ後続文字付き入力がブラウザー側で日付へ置換され得る。一方、JavaのDateUtil.toIsoDateは入力全体に一致する正規表現で形式を判定するため、両者を同一の受理契約として扱えない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 31,
+          "endLine": 34
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 163,
+          "endLine": 178
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+          "startLine": 15,
+          "endLine": 71
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F011",
+      "topic": "日付と月見出しの表示形式",
+      "statement": "表示モードはwesternまたはgregorianの場合だけ西暦とし、それ以外は和暦とする。西暦の日付表示はyyyy/MM/dd、和暦はR 08/06/11のような英字元号・空白・最低2桁年・2桁月日であり、明治開始日前は西暦に戻す。月見出しは表示月の1日を基準に主見出しを決定し、別暦の月表示が異なるときだけ副見出しを出す。改元を含む月も、見出し自体を日ごとに切り替える実装ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 44,
+          "endLine": 110
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 225,
+          "endLine": 275
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F012",
+      "topic": "カレンダー初期接続",
+      "statement": "カレンダーJSはbody直下に一つのdiv.era-calendarを作り、初期状態をhidden、role=dialog、aria-modal=falseとする。各入力とボタンには接続済み印を付ける。入力の初期接続では、参照先入力が存在して表示入力が空なら参照先値から表示を作り、それ以外は表示値を整形して参照先へ同期する。その後にblur・change・キーボード、参照先changeのリスナーを登録する。初期接続だけでは日付ポップアップを開かない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 181,
+          "endLine": 203
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 374,
+          "endLine": 419
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 469,
+          "endLine": 474
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F013",
+      "topic": "開く操作と初期表示月の決定",
+      "statement": "入力上のAlt+ArrowDownまたはF4、対応するカレンダーボタンのclickで開く。開くたびにactiveInputを設定し、解析できる表示入力、解析できる参照先入力、ブラウザーのローカル年月日から作った当日の順で基準日を決め、その年月をvisibleYear／visibleMonthへ代入して描画する。当日へのフォールバックは表示月と選択強調の基準を決める処理であり、空欄や不正な入力へ当日値を保存する処理ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 173,
+          "endLine": 178
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 279,
+          "endLine": 287
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 388,
+          "endLine": 412
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F014",
+      "topic": "月移動と再描画",
+      "statement": "カレンダーは日曜始まりの7列で、月初前の空セルと対象月の日付ボタンを生成する。日曜、基準日と一致する日、当日に別クラスを付ける。前月・翌月ボタンは0始まりの月番号をdata-era-monthに持ち、clickではvisibleYear／visibleMonthだけを変更して再描画する。月移動時には入力値を変更せず、開く操作の初期年月決定にも戻らない。選択済み表示は現在の入力等から再計算し、移動先の月にその日がなければ該当ボタンの強調はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 225,
+          "endLine": 277
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 344,
+          "endLine": 357
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F015",
+      "topic": "日付選択時の値と通知順",
+      "statement": "日付ボタン選択では、activeInputを退避し、ボタンのISO日付を表示モードの文字列へ変換して表示入力に設定する。次に任意の参照先へ同期し、表示入力のinput、changeをこの順で発火し、カレンダーを閉じて表示入力へfocusを戻す。表示入力のchangeには正規化リスナーもあるため、参照先を接続した場合はそのchange処理から再度同期通知が発生する。日付設定、通知、閉じる、フォーカス復帰を一つの無通知代入として図示してはならない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 308,
+          "endLine": 342
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 359,
+          "endLine": 397
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F016",
+      "topic": "blur・changeと任意の参照先同期",
+      "statement": "blurまたはchangeでは、解析成功時だけ表示入力を暦別表示へ置換し、失敗時は表示値を残して同期処理へ進む。data-era-hidden-inputはIDでHTMLInputElementを探す契約であり、type=hiddenそのものは検査しない。同期先には、空欄なら空文字、解析成功ならISO日付、失敗ならtrimした原文字列を入れ、そのinput、changeを発火する。同期先のchangeから表示を作り直す処理は表示入力のイベントを発火しない。対象JSPにはこの属性がなく、現行の日付フォームは表示入力自身のnameで送信する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 289,
+          "endLine": 342
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 374,
+          "endLine": 397
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 30,
+          "endLine": 41
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 69,
+          "endLine": 81
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F017",
+      "topic": "カレンダーの閉じる条件と配置",
+      "statement": "カレンダー外のmousedownで閉じるが、カレンダー内、activeInput内、カレンダー起動ボタン上は除外する。Escapeでも閉じ、closeCalendarはhidden=trueとactiveInput=nullを設定する。日付選択以外の閉じ方にフォーカス復帰は定義されていない。配置は入力の矩形とスクロール量から計算し、横余白8px、基本幅286px、最低利用幅240pxを使い、下に収まらず上に収まる場合だけ上へ出す。表示中はresizeと捕捉段階のscrollで再配置する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 196,
+          "endLine": 223
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 421,
+          "endLine": 453
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F018",
+      "topic": "カレンダーAPIの公開と画面内利用",
+      "statement": "カレンダーAPIはwindow.nenkinEraDateと互換名window.jsbrmsEraDateに同じオブジェクトを公開する。公開parseは主解析parseAccessEraDateであり、ISO接頭辞を解析する補助関数そのものではない。予約画面の予定年齢計算はこのparseを呼ぶため、表示整形で用いる主解析＋ISO補助解析と完全に同じ入口ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 455,
+          "endLine": 467
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 67,
+          "endLine": 68
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F019",
+      "topic": "Javaの日付受理契約",
+      "statement": "DateUtil.toIsoDateはnullを空文字へ変え、NFKC、trim、全角空白置換後に解析する。空文字は空文字で返し、西暦は4桁年の区切り付き年月日または8桁、和暦は正式名称かM／T／S／H／Rと元年または1～3桁年を受け付ける。一文字の漢字元号略称や区切りなし和暦は定義されていない。日付生成にはLocale.ROOTのSimpleDateFormatでsetLenient(false)を使い、形式不一致・実在性不正・元号範囲外はIllegalArgumentExceptionとする。ブラウザー側の補助をこのサーバー契約の保証へ拡張できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+          "startLine": 15,
+          "endLine": 71
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+          "startLine": 139,
+          "endLine": 180
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+          "startLine": 199,
+          "endLine": 215
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F020",
+      "topic": "Javaの日付表示helperの用途差",
+      "statement": "DateUtilの西暦表示は正規化済みISOのハイフンをスラッシュへ変え、和暦表示は最低2桁年のR 08/06/11形式、Access向けはR8.06.11形式にする。DateUtilの和暦変換は明治開始日前に例外を投げる。一方、JSPが使うHtmlUtilはISO用SimpleDateFormatで解析できなければ元文字列を返し、和暦対象以前は西暦表示へ戻す。帳票表示はHtmlUtilの和暦表示のスラッシュを『. 』へ置換する。表示用helperと入力検証用DateUtilを混同しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+          "startLine": 74,
+          "endLine": 110
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+          "startLine": 158,
+          "endLine": 164
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+          "startLine": 22,
+          "endLine": 48
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+          "startLine": 74,
+          "endLine": 81
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F021",
+      "topic": "予約の日付受信から保存まで",
+      "statement": "予約の四つの入力日付はgetParameterの文字列をtrimしてPensionReservationのStringへ入れる。Saveは職員確認、要求値取込み、POST・CSRF照合後に、店番・フリガナ・電話番号を検査し、生年月日、配偶者生年月日、請求予定日、予約徴求日の順で空欄許容のISO正規化を行う。途中で不正ならそこで戻り、後続日付は未正規化のまま残り得る。Repositoryも保存用コピーの四日付を再正規化し、画面から受け取ったデータ更新日はサーバー当日へ上書きする。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 138,
+          "endLine": 188
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+          "startLine": 10,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 513,
+          "endLine": 532
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F022",
+      "topic": "日付項目のDB・JDBC対応",
+      "statement": "予約のbirthDate、claimScheduledDate、spouseBirthDate、reservationRequestDate、dataUpdateDateは、それぞれ年金1_LKの生年月日、請求予定日、配偶者生年月日、予約徴求日、データ更新日に対応する。共通バインドではレコード内の9、17、20、22、24番目の値であり、空文字はsetNull(Types.DATE)、値ありはjava.sql.Date.valueOfを経てsetDateする。収録H2・SQL Server DDLはいずれもこれらをNULL可能なDATEとしている。入力のmaxlength=14は表示文字列の制約であり、DBのDATE型や必須条件を示さない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 34,
+          "endLine": 40
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 704,
+          "endLine": 737
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 817,
+          "endLine": 824
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 106,
+          "endLine": 135
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 62,
+          "endLine": 91
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F023",
+      "topic": "数字入力のサーバー変換と保存列",
+      "statement": "予約のBRANCH_NO、CUSTOMER_NO、STAFF_CODE、PLANNED_AGEはJavaのIntegerへ変換する。共通変換はnull・trim後空欄・Integer.parseInt失敗・0以下をnullとし、ブラウザーと同じ文字除去はしない。保存先は店番、顧客番号、担当者コード、予定年齢で、JDBCはsetIntまたはsetNull(Types.INTEGER)を使う。DDLの顧客番号はBIGINTであるが、入力モデルとJDBC引数はIntegerである。他の三列はINTEGER／INT、四列ともDDLではNULL可能であり、店番の操作上の必須検査とは別である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 119,
+          "endLine": 151
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 13,
+          "endLine": 31
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 704,
+          "endLine": 726
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 798,
+          "endLine": 804
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 63,
+          "endLine": 80
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F024",
+      "topic": "予定年齢のクライアント算出",
+      "statement": "予約画面は生年月日と請求予定日のinput・changeで両値を解析し、両方が有効なら請求年から出生年を引いた値をplannedAgeへ文字列代入する。誕生日の到来は比較せず、片方が空欄・不正の場合に既存年齢を消す処理もない。代入時にplannedAgeのinput・changeは発火しない。サーバーの要求取込みは送信されたPLANNED_AGEをIntegerへ変換し、確認した保存前処理には日付からの再算出がない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 67,
+          "endLine": 68
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 148,
+          "endLine": 157
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 513,
+          "endLine": 532
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F025",
+      "topic": "日次月次の日付初期値と要求値",
+      "statement": "BatchViewActionはサーバー当日を日次対象日、当月初日と末日を月次期間へ設定し、2か月前の日付をDELETE_CUTOFF_DATEへ設定する。画面は三日付を西暦表示し、日次・月次ボタンはCOMMAND_IDだけをDaily／Monthlyへ変更してform.submitする。BatchRunActionは日付と職員番号をtrimしたStringとして新しいBeanへ保持し、POST・CSRF、出力区分、職員番号の順で検査して要求DTOへ渡す。これらの期間値は予約日付列へ直接保存する入力ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchViewAction.java.txt",
+          "startLine": 14,
+          "endLine": 25
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 35,
+          "endLine": 40
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 65,
+          "endLine": 93
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 13,
+          "endLine": 21
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F026",
+      "topic": "日次月次の日付再検査と検索用途",
+      "statement": "出力サービスは日次なら対象日一つ、月次なら開始日・終了日を必須としてDateUtilで正規化し、月次の開始日が終了日より後なら拒否する。職員番号空欄は更新者条件なしになる。抽出は新規・変更では年金1_LKの変更FLG=0／1、削除では年金＿削除明細を使い、データ更新日>=開始日、<=終了日、指定時だけ更新者一致を追加する。JDBCは区分setInt、日付setDate、更新者setIntの順である。DELETE_CUTOFF_DATEは別のDELETE条件に使い、その整理のcommit後に抽出・生成を行うため、後続失敗で整理まで一体に戻る契約ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 58,
+          "endLine": 91
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 115,
+          "endLine": 146
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 353,
+          "endLine": 405
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 457,
+          "endLine": 479
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F027",
+      "topic": "予約の登録・削除確認",
+      "statement": "登録ボタンは店番のvalueが空か、次にフリガナまたは電話番号のvalueが空かを調べ、該当時は入力案内だけを表示して送信しない。通過時に登録確認を表示し、OKの場合だけSaveへ送信する。削除も店番、次に二つのキーの空値を調べ、対象案内または削除確認を出し、OKの場合だけDeleteへ送信する。これらのクライアント検査はtrim・日付解析・権限照合・既存予約確認ではなく、確認取消では送信しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 46,
+          "endLine": 61
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F028",
+      "topic": "予約の確認ダイアログ状態",
+      "statement": "showBoxはPromiseを返し、タイトルと本文をtextContentで設定し、確認時は『?』とキャンセル、案内時は『!』と非表示のキャンセルを設定してOKへfocusする。OKはtrue、キャンセルはfalseで解決し、hidden化と両onclick解除を行う。予約画面のEscapeはmessageBox表示中ならmessageCancel.clickを呼び、表示していなければlookupModalを閉じる。案内時もキャンセルのハンドラー自体は設定されている。messageBoxの背景には閉じる処理がなく、閉じた際の元フォーカス復帰やbodyクラス変更もこの関数にはない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 51,
+          "endLine": 59
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 68,
+          "endLine": 68
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F029",
+      "topic": "予約の完了表示とクリア",
+      "statement": "予約画面のメッセージは『終了』を含むとsuccessクラス、それ以外はerrorクラスになり、role=statusとaria-live=politeで表示する。表示中の本文に『終了』があればsetTimeoutで案内用showBoxも開く。登録・削除の成功Actionは空の予約モデルと『登録終了！』『削除終了！』を設定して戻る。クリアは確認ダイアログを通らずClearを送信し、PensionClearActionがPensionViewActionを継承して新しい空モデル・existing=falseを作る。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 17,
+          "endLine": 19
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 46,
+          "endLine": 68
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+          "startLine": 46,
+          "endLine": 48
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java.txt",
+          "startLine": 31,
+          "endLine": 34
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionViewAction.java.txt",
+          "startLine": 7,
+          "endLine": 11
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionClearAction.java.txt",
+          "startLine": 6,
+          "endLine": 7
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F030",
+      "topic": "予約の参照モーダル起動",
+      "statement": "予約のopenLookupは起動元のactiveElementを保持し、candidateをcustomerへ読み替える。すべてのモードで現在の店番を渡し、候補ボタンの場合だけ現在のフリガナ・電話番号を検索条件へ渡す。見出しを店番参照・担当者参照・顧客参照に切り替え、モーダルを表示し、bodyへlookup-modal-openを付け、閉じるボタンへfocusした後にiframeへPOSTする。一時フォームの送信項目はFUNCTION_ID=nenkin、VIEW_ID=Lookup、COMMAND_ID=View、TARGET、POPUP=1、BRANCH_NO、NAME_KEYWORD、PHONE_KEYWORDである。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 50,
+          "endLine": 64
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F031",
+      "topic": "キー変更と顧客番号変更の自動起動",
+      "statement": "フリガナ・電話番号のchangeは、ORIGINAL_KANAがある、どちらかがreadonly、どちらかのtrim後が空、のいずれかなら何もしない。それ以外では現在値をLOOKUP_KANA／LOOKUP_PHONEへ入れてLoadへ送信する。顧客番号のchangeは店番と顧客番号が非空でORIGINAL_KANAが空の場合に顧客参照を開くが、そのopenLookupはCUSTOMER_NOを送信しない。したがって、この操作を顧客番号による即時一意照会として説明できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 19,
+          "endLine": 19
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 63,
+          "endLine": 68
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F032",
+      "topic": "iframeへの送信方式とExcelとの差",
+      "statement": "予約とExcelは、method=post、action=contextPath+'/Action.do'、target=lookupFrame、acceptCharset=Windows-31Jの一時フォームにhidden入力を組み立て、bodyへ追加してsubmit後に削除する。Excelの参照要求はbranchモードの固定識別値だけを送り、現在の店番を初期検索条件として渡さない。ExcelはlookupModalのhidden切替を行うが、予約のような起動元保存、閉じるボタンへのfocus、bodyのlookup-modal-open設定、固有Escape処理はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 56,
+          "endLine": 64
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 9,
+          "endLine": 10
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F033",
+      "topic": "参照画面の返却プロトコル",
+      "statement": "Lookup.jspは選択ボタンのdata属性をdatasetから読み、window.parent.postMessage(data, location.origin)で返す。共通識別はsource='nenkin.lookup'である。branchはtarget・branchNo・branchName、staffはtarget・staffCode・staffName・branchNo、customerはtarget・branchNo・customerNo・branchName・customerName・staffCode・kanaName・phoneNumberを返す。datasetから読む値は文字列であり、表示される生年月日は返却項目に含まれない。閉じるボタンはtarget='close'だけを追加したメッセージを送る。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 24,
+          "endLine": 35
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F034",
+      "topic": "親画面の受信検査と項目移送",
+      "statement": "予約・Excelの受信処理はoriginがlocation.originと一致し、dataが存在し、data.sourceがnenkin.lookupの場合だけ進む。event.sourceがlookupFrame.contentWindowであることや、各項目の型・形式の検査は書かれていない。予約のbranch選択は店番と表示用店名だけ、staff選択は担当者コードと表示用担当者名だけを変更する。staffの返却店番は移送せず、branch選択で顧客番号・担当者・元キーを解除する処理もない。これらの代入でinput／changeを発火する処理はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 65,
+          "endLine": 65
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 10,
+          "endLine": 10
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F035",
+      "topic": "顧客選択後のLoadとモーダル終了",
+      "statement": "予約のcustomer受信は店番・顧客番号・二つの表示名称・LOOKUP_KANA・LOOKUP_PHONEを設定し、モーダルを閉じてからLoadへ送信する。返却staffCodeをその場で担当者欄へ入れる処理はない。予約のcloseLookupはhidden化、iframeのabout:blank化、bodyクラス除去、起動元へのfocusを行う。Excelはbranch受信時に店番と表示用店名を設定し、認識したsourceのメッセージならtargetがbranch以外でも閉じる。両画面とも参照を閉じるだけで親の選択済み値をクリアしない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 64,
+          "endLine": 65
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 10,
+          "endLine": 10
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F036",
+      "topic": "Loadのサーバー側到達先と結果",
+      "statement": "PensionLoadActionは職員確認後に画面要求値を取り込み、LOOKUP_KANA／LOOKUP_PHONEがそれぞれ空なら通常キーへ戻す。正規化フリガナと数値化電話番号で予約本表を先に検索し、見つかれば取得モデル・existing=trueで再表示する。見つからない場合は正のIntegerへ変換できた店番・顧客番号の組で顧客基本表を検索し、取得できればそのモデル、取得できなければ要求モデルをexisting=falseで返す。参照通信の選択値だけで予約取得や顧客取得の成功を保証しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionLoadAction.java.txt",
+          "startLine": 11,
+          "endLine": 31
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 87,
+          "endLine": 140
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 144,
+          "endLine": 167
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F037",
+      "topic": "参照検索・クリア・ページ操作",
+      "statement": "Lookupの検索はフォームPOST、ページ操作はPAGEを設定したform.submit、クリアはフォーム内のtype未指定またはtype=textの入力を空にしてPAGE=1を送信する。hidden識別値とTARGETはクリアしない。LookupViewActionはTARGETがbranch／staff以外ならcustomerにし、要求文字列をtrimしてBeanへ保持する。店番は共通Integer変換でnullとなった場合に検索条件から外れる。全件取得後に20件ずつメモリ切出しを行い、その後にページ上限を補正するため、範囲外ページの補正後に再切出しはしない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 8,
+          "endLine": 18
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 28,
+          "endLine": 35
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/LookupViewAction.java.txt",
+          "startLine": 14,
+          "endLine": 22
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/LookupViewBean.java.txt",
+          "startLine": 12,
+          "endLine": 40
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F038",
+      "topic": "店番・担当者候補の取得契約",
+      "statement": "店番参照は業務接続の店名テーブルから店舗ｺｰﾄﾞ・店名を取得し、正規化キーワードが非空なら店舗コードの文字列化LIKEまたは店名の大小文字を無視したLIKE、店舗コード順とする。担当者参照は職員接続のDB2.Ｕ職員名簿表を使い、指定時だけ所属店番一致、キーワード非空時だけカナ氏名または漢字氏名のLIKEを追加して職員番号順にする。バインドは任意の店番setInt、その後に同じ部分一致文字列を二つのsetStringへ渡す。表示用店舗名は別途業務接続で取得した対応表から補う。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 41,
+          "endLine": 73
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 137,
+          "endLine": 181
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 289,
+          "endLine": 321
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 358,
+          "endLine": 372
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F039",
+      "topic": "顧客候補の検索値と表示値",
+      "statement": "顧客参照は顧客接続のN2_SIGHT.Ｂ顧客基本表を使い、指定時だけ店舗コード一致、正規化氏名が非空なら漢字氏名またはカナ氏名のLIKE、数字抽出・先頭ゼロ集約後の電話条件が非空ならTO_CHAR(電話番号)のLIKEをANDで追加する。順序は店舗コード・顧客番号・カナ氏名で、バインド順は店番setInt、氏名setString二つ、電話setStringである。LIKE用のバックスラッシュ、%、_、角括弧をエスケープする。電話条件が数字を含まなければ電話述語は付かず、空欄の条件は対象を限定しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 75,
+          "endLine": 134
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 349,
+          "endLine": 372
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 843,
+          "endLine": 855
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F040",
+      "topic": "参照結果の数値・日付・名称変換",
+      "statement": "顧客候補の店番・顧客番号はint、担当者コードもintで、担当者列のSQL NULLは0へ変換する。候補の文字列はモデルでnullを空文字にする。電話番号は数字列の先頭ゼロを集約した後、長さ9または10で先頭0でない場合だけ0を一つ補って表示する。生年月日は空欄または文字列0なら空文字、ピリオドがあればその前までをDateUtilへ渡す。店名は別接続のメモリ対応表に見つからなければ空文字とする。これらは候補表示・返却用の加工であり、親画面への全項目保存を意味しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 118,
+          "endLine": 125
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 324,
+          "endLine": 355
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/CustomerLookupItem.java.txt",
+          "startLine": 8,
+          "endLine": 50
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 26,
+          "endLine": 32
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F041",
+      "topic": "表示名称と保存コードの分離",
+      "statement": "予約画面の性別・裁定請求・受給有無は、JSP描画時に各コード表をコード順で取得し、空選択を先頭に置き、optionの表示とvalueに名称を使う。保存時はその名称からコードをsetStringで逆引きし、空名称ならNULL、非空で該当なしならSQLExceptionとなる。予約取得の名称はLEFT JOIN由来であり、参照先の名称列がNOT NULLでも結合不成立の結果はNULLになり得る。店名の収録容量80、区分名10、年金種類名120はDDLの宣言であり、名称更新側の業務上限を代用しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 4,
+          "endLine": 4
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 27,
+          "endLine": 40
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 237,
+          "endLine": 285
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 573,
+          "endLine": 593
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 772,
+          "endLine": 778
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 10,
+          "endLine": 55
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F042",
+      "topic": "保持領域と入力ロック",
+      "statement": "予約・Excel・日次月次・印刷の表示BeanはセッションのViewBean、参照結果は別のSubWindowBeanに保持する。予約のexisting=trueではフリガナと電話番号だけにreadonlyとaccess-key-lockedを付け、ORIGINAL_KANA／ORIGINAL_PHONEへ元値を入れる。画面内の店名・担当者名表示spanや参照起動元、確認Promise、カレンダーのactiveInput・表示年月はブラウザー側の保持情報である。readonlyやhiddenはサーバー側の本人性・キー不変性の保証ではなく、Actionは送信値を別途取り込む。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+          "startLine": 31,
+          "endLine": 37
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 37,
+          "endLine": 43
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 3,
+          "endLine": 4
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 19,
+          "endLine": 31
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 10,
+          "endLine": 14
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F043",
+      "topic": "確認画面とサーバー更新判定の境界",
+      "statement": "Save／Deleteはブラウザー確認済みを示す値を検証する方式ではなく、職員確認後、要求取込み、POST・CSRF照合、操作別入力検査、現在キー・元キーのDB照会へ進む。Saveは既存値との食違いで既存予約を読み直し、元キーだけ残る場合はキー変更を拒否する。既存更新と削除には店番75・役職条件による制限もある。Repositoryのsaveは同一インスタンス内で同期し、存在を再照会してinsert／updateを選びcommitするため、ダイアログOKから更新成功へ直結するフローにはできない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+          "startLine": 10,
+          "endLine": 48
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java.txt",
+          "startLine": 10,
+          "endLine": 34
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 89,
+          "endLine": 106
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 280,
+          "endLine": 308
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 623,
+          "endLine": 637
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F044",
+      "topic": "共通要求入口と文字コード",
+      "statement": "web.xmlは/Action.doをcommon.ControlServletへ接続する。対象JSPのフォームはPOSTとaccept-charset=Windows-31Jを使い、Servletも要求パラメータを読む前にWindows-31Jを設定する。通常識別値からpackageを小文字化し、VIEW_IDとCOMMAND_IDを連結したActionを反射生成する。戻る操作は同じフォームのVIEW_IDをMenu、COMMAND_IDをViewへ変えてsubmitする。JSP自体のcontentType／pageEncodingはUTF-8であり、要求文字コードと表示ソースの文字コードは別に宣言されている。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/web.xml",
+          "startLine": 15,
+          "endLine": 24
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 107,
+          "endLine": 120
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 243,
+          "endLine": 246
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 309,
+          "endLine": 344
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 1,
+          "endLine": 18
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 57,
+          "endLine": 58
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F045",
+      "topic": "サーバー例外と再表示の到達範囲",
+      "statement": "ControlServletの共通catchは反射生成とAction.performを囲み、Exceptionを共通エラー先へ変換する。識別値の小文字化やログイン・運用判定はその外にあり、アクセス記録後のforwardもcatch外である。したがって、Actionから返った入力拒否モデルのJSP描画失敗まで同じcatchで処理されるとは言えない。予約JSPは再表示時にも候補表を取得し、Batch／ReportのJSPは職員番号のInteger変換を行うため、Actionの画面戻りだけでHTML応答完了を確定できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 309,
+          "endLine": 345
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 349,
+          "endLine": 383
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 3,
+          "endLine": 4
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Batch.jsp.txt",
+          "startLine": 3,
+          "endLine": 7
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 3,
+          "endLine": 9
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F046",
+      "topic": "入力エラーの後続例外と出力応答",
+      "statement": "予約Saveの検証エラー経路も、existing判定のRepository照会が成功してからBeanを設定する。Repositoryの保存前正規化はDB処理tryの前にあり、そこでのIllegalArgumentExceptionはDB処理catchを通らずAction外へ出る。BatchRunActionはサービス呼出しとダウンロードを囲むIllegalArgumentExceptionだけを画面再表示へ変換し、その他の例外は共通側へ出る。ダウンロードはreset、ヘッダー・長さ設定、write、flushの順で、送信後にCSVを返す。出力開始後の失敗を常に完全なエラー画面へ置換できるとは保証できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java.txt",
+          "startLine": 17,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 280,
+          "endLine": 305
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt",
+          "startLine": 20,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 204,
+          "endLine": 211
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 376,
+          "endLine": 383
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F047",
+      "topic": "未接続JSON入口と候補helper",
+      "statement": "通常の参照UIはLookupのJSPとpostMessageを使う。PensionLookupActionには別途、POST限定、キーまたは店番・顧客番号による取得、foundとreservationのJSON直接出力があり、DateUtilの表示変換とHtmlUtil.jsonを使うが、対象JSP・共通JSからの呼出しは確認できない。予約の候補ボタンはcustomerモードへ接続しているため、Repositoryに宣言されたsearchCandidatesをこのボタンの取得元や稼働中の非同期照会として扱わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 62,
+          "endLine": 68
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 30,
+          "endLine": 35
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionLookupAction.java.txt",
+          "startLine": 11,
+          "endLine": 28
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 171,
+          "endLine": 198
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F048",
+      "topic": "HTMLとJSONの表示変換",
+      "statement": "HtmlUtil.escapeはnullを空文字へ変え、&、<、>、二重引用符、単一引用符をHTMLエスケープする。valueはnullを空文字へ変えるだけでエスケープしない。checkedは真のときだけchecked属性文字列、selectedは一致時だけselected属性文字列を返す。jsonはJSON文字列内容用のバックスラッシュ・引用符・改行等と制御文字、<、>、U+2028／U+2029を処理する。これらは入力の業務検証ではなく、HtmlUtil.json単体がJSONオブジェクトを生成するわけでもない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+          "startLine": 11,
+          "endLine": 20
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+          "startLine": 51,
+          "endLine": 71
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/PensionLookupAction.java.txt",
+          "startLine": 25,
+          "endLine": 28
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F049",
+      "topic": "共有ヘッダーと通常画面の幅",
+      "statement": "対象通常画面はheader.app-nav、main.app-shell、section.screen.surfaceを共用し、参照iframe内は共有ヘッダーを置かない。app-navは最小高さ48pxの横並びで、濃色背景・タイトル・任意のmetaを表示する。app-shellは幅100%・最大1440px、通常mainは上20px・左右18px・下52pxの余白を持つ。末尾の.screen:not(.lookup-screen-popup)は最大幅1180pxと左右中央配置を指定し、Excelのcompact-screenにある最大640pxより詳細度が高いため、最終的な最大幅を640pxと断定できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 178,
+          "endLine": 217
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 261,
+          "endLine": 285
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1996,
+          "endLine": 2000
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 5,
+          "endLine": 5
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 5,
+          "endLine": 7
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F050",
+      "topic": "予約配置とレスポンシブ条件",
+      "statement": "予約はaccess-layoutの二列で基本情報と予約情報を並べ、pension-entry-form内の列間隔は36px、項目行はラベル128pxと残り幅の入力で構成する。幅960px以下では全体を一列・間隔24pxにし、640px以下ではラベルと入力も一列、年金種類checkbox-gridも一列にする。参照付き入力はinput-referenceの入力・ボタン・名称の三列で、名称は最小7em・改行なし、640px以下では最小6emの名称列を持つ。単に画面全体が縮小する仕様ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 20,
+          "endLine": 45
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 772,
+          "endLine": 899
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1466,
+          "endLine": 1471
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 2002,
+          "endLine": 2138
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F051",
+      "topic": "固定幅と実DOMに適用されないCSS",
+      "statement": "日次月次は.screen.batch-export-screenに幅1120px・最小1040px、印刷は.screen.report-screenに幅1180px・最小1080pxがあり、通常の狭幅メディア条件ではこれらの最小幅を解除しない。Lookupのlookup-filter-rowは後の宣言でflex・折返しになっており、640px以下のgrid-template-columns指定だけではgridへ変わらない。Lookupのbodyはpopup-pageであり、lookup-popup-body／lookup-popup-main向け背景・余白規則はそのDOMに適用されない。Excelの実クラスexcel-screenもexcel-export-screenとは別名である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 454,
+          "endLine": 482
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 948,
+          "endLine": 970
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1237,
+          "endLine": 1249
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1577,
+          "endLine": 1580
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 2042,
+          "endLine": 2138
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 6,
+          "endLine": 6
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 5,
+          "endLine": 5
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F052",
+      "topic": "モーダル・確認・カレンダーの重なり",
+      "statement": "lookup-modalは画面固定・z-index=1000で、パネル幅min(1120px,96vw)、高さmin(720px,90vh)、ヘッダーと残り領域のiframeを持つ。message-boxは固定・z-index=1100、パネル幅min(440px,画面幅-32px)、カレンダーは絶対配置・z-index=1200である。[hidden]は全体共通でdisplay:none !importantとなる。スクロール抑止用のmodal-open、lookup-modal-open、message-box-openは別クラスであり、予約の参照ではlookup-modal-openを操作するが、確認ダイアログはmessage-box-openを付けない。role=dialogからこれらのCSS動作を推定しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 25,
+          "endLine": 27
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 170,
+          "endLine": 172
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1076,
+          "endLine": 1244
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1343,
+          "endLine": 1352
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 59,
+          "endLine": 64
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F053",
+      "topic": "入力ロック・フォーカスのCSS",
+      "statement": "form-control／form-selectと操作ボタン等にはフォーカス枠を定義し、disabledとreadonlyの入力背景を変える。予約のキーはaccess-key-lockedで赤文字となるが、その背景指定より.form-control[readonly]の方が詳細度が高い。dataUpdateDateはaccess-readonly-display[readonly]の後続規則で通常文字色と灰色背景を持つ。削除・登録・クリアはsticky-actionsで画面下端へ追従する領域に置かれる。ロック対象は実際にreadonlyを付けるキー二項目と更新日であり、予約情報全体を編集不可にする実装ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 117,
+          "endLine": 129
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1259,
+          "endLine": 1277
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1507,
+          "endLine": 1513
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 4,
+          "endLine": 4
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 25,
+          "endLine": 46
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F054",
+      "topic": "印刷画面の入力活性と印刷操作",
+      "statement": "Report.jspは初期表示でtoggleBranch(false)を呼び、店舗指定チェックに応じてbranchFrom／branchToのdisabledを変更する。チェック変更で有効化したときだけ店番自へfocusし、無効化時に保持値は消さない。サーバーは店舗指定なしなら両値を検索へ渡さず、指定ありなら店番自の正数変換を要求し、有効な店番至がある場合だけ大小を比較する。印刷ボタンはpreview成立時だけ活性で、onclickからwindow.printを直接呼ぶ。app.jsのdata-print helperはこのボタンの接続元ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 49,
+          "endLine": 61
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 105,
+          "endLine": 108
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java.txt",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/assets/js/app.js.txt",
+          "startLine": 178,
+          "endLine": 185
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F055",
+      "topic": "印刷検索とExcel店番検査の違い",
+      "statement": "印刷のBRANCH_FROM／BRANCH_TOは共通Integer変換を使うため、不正な店番至はnullとなり、店番自だけの単店条件へ進む経路がある。Repositoryは至なしなら店番等価、至ありなら上下限を使い、setIntで結ぶ。Excelは別途、trim後の店番を正数Integerへ変換した後、長さ3以内かつASCII数字のみを検査する。店名照会は表示補助であり、店名未取得を出力拒否条件にしていない。同じmaxlength=3の入力でも、各操作のサーバー契約は同一ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java.txt",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 249,
+          "endLine": 272
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 483,
+          "endLine": 503
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 14,
+          "endLine": 21
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F056",
+      "topic": "印刷CSSと画面表示との差",
+      "statement": "印刷CSSはA4横・余白8mm、白背景・黒文字を指定し、app-nav、app-footer、print-filter-screen、no-printを非表示にする。Reportの固定幅・最小幅・枠・影を解除し、店舗別article.report-pageの後で改ページし、最後だけ解除する。report-ledgerのtheadを繰返しヘッダー、明細行を分割回避にし、見出し・明細をmm単位とpt単位へ変更する。画面と印刷でreport-cellのoverflow:hiddenとnowrapは残る。mainの通常余白は高い詳細度のmain.app-shell:not(.login-shell)で指定されており、印刷側の.app-shell { padding:0 }だけではその指定を打ち消さない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 261,
+          "endLine": 263
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1935,
+          "endLine": 1975
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 2141,
+          "endLine": 2260
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Report.jsp.txt",
+          "startLine": 65,
+          "endLine": 100
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F057",
+      "topic": "フロー作成用の状態と合流条件",
+      "statement": "共通制御の図は、数字補助、日付初期接続、カレンダーを開く際の基準日決定、月再描画、日選択、確認ダイアログ、参照起動・受信を分ける必要がある。日付の初期決定は表示値→参照先値→当日の優先分岐、月移動は表示年月だけの更新、日選択は値更新→通知→閉じる→focusという別経路になる。参照受信の合流では、branch・staffの画面内更新と、customerのclose後Load送信と、closeのみを区別し、取得済み名称やキーを共通の空値で上書きする節点を置かない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/assets/js/app.js.txt",
+          "startLine": 15,
+          "endLine": 51
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 173,
+          "endLine": 178
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 279,
+          "endLine": 287
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 344,
+          "endLine": 397
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Pension.jsp.txt",
+          "startLine": 59,
+          "endLine": 68
+        }
+      ]
+    },
+    {
+      "id": "COM-151-F058",
+      "topic": "旧職員画面の数字補助と到達性",
+      "statement": "Staff.jspにもmaxlength=8、data-digits-only、autofocusの職員番号入力が残る。ただしStaffViewAction、StaffVerifyAction、StaffClearActionはすべてMenuViewActionへ委譲し、そのActionは職員確認後にMenu.jspを返す。したがって、旧JSPにある数字補助や職員番号再入力を、通常の年金ログイン後に必要な共通手順として追加しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Staff.jsp.txt",
+          "startLine": 11,
+          "endLine": 14
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/StaffViewAction.java.txt",
+          "startLine": 6,
+          "endLine": 9
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/StaffVerifyAction.java.txt",
+          "startLine": 6,
+          "endLine": 9
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/StaffClearAction.java.txt",
+          "startLine": 6,
+          "endLine": 9
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/MenuViewAction.java.txt",
+          "startLine": 9,
+          "endLine": 16
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "実際のブラウザー・版・配備時ヘッダー・CSP等は未確認であり、共通JSの読込み、IME操作中のイベント、フォーカス移動、iframe送信、postMessage到達の実行結果は確定していない。ソース上の処理順と実操作試験の結果を分ける必要がある。",
+    "JNDI探索実装では業務・職員・顧客の接続系統を確認したが、配備先DataSource、実DBの定義・データ・権限は未照合である。収録DDLを配備済みDBの属性保証として扱えない。",
+    "店舗名・担当者名・顧客名称等の更新側の業務上限と運用責務は確定していない。収録された名称列のDB容量や表示DTOの型から業務上限を補わない。外部マスターの本番型・NULL属性もローカル互換DDLから確定できない。",
+    "ブラウザーの当日はローカル年月日、Javaの当日・時刻は明示タイムゾーンを設定しない日時APIから得ている。配備環境のタイムゾーンと日付切替時の一致は未確認である。",
+    "カレンダー月移動には業務上の最小・最大年月を指定する検査がない。Date.UTC、Javaの日付解析、JDBC DATE、実DBが受理する歴史日付・極端な年月の共通範囲は未検証であり、全期間で同一動作とは保証しない。",
+    "親画面の受信処理にはoriginとsource文字列の検査があるが、送信window・フィールド型・選択要求との対応を検証する契約は確認できない。これを補う実装案や承認済み通信規則は今回採用していない。",
+    "印刷・狭幅レイアウト・CSS詳細度による適用結果はソースから整理した。ブラウザー描画、原寸表示、改ページ、繰返しヘッダー、文字の省略状態、印刷完了は確認していない。",
+    "クライアント確認、DB commit、ダウンロードwrite／flush、ブラウザーでの受領・印刷完了は異なる境界である。後二者の完了をサーバー戻り値や確認ダイアログから確定できない。"
+  ],
+  "coverageNotes": [
+    "manifestのmodeはsource-only、trainingReferenceAuthorizedByUserとreferenceSpecificationIncludedはfalse、referenceFilesは空配列であった。参考設計・原仕様・期待値・workspace外・ユーザー設定・メモリは読んでいない。manifestは材料と権限の確認だけに使い、業務factの根拠にしていない。",
+    "sourcePathsReadはmanifest.pathのPOSIX相対パスで重複をまとめた一覧である。本文はsources/配下または対応するindexed/<path>.txtから読み、referencesのindexed行番号は各行に付された原ソース行番号と対応する。",
+    "開始点10ファイルは、app.js全224行、japanese-era-calendar.js全474行、site.css全2260行、Pension.jsp全70行、Lookup.jsp全36行、Excel.jsp全10行、Batch.jsp全96行、Report.jsp全111行、DateUtil.java全218行、HtmlUtil.java全82行を照合した。大きなファイルは行範囲を分け、切れた出力の対象部分を再取得した。",
+    "閉包として、数字・日付の要求取込み、予約Load／Save／Delete／Clear、参照View／Search、Excel店番検査、印刷条件、日次月次の初期値・入力検査・日付範囲、関連Beanとモデル、接続取得、対象SQL・JDBCバインド・DDL、共通ServletのAction実行とforward境界を追跡した。PensionRepositoryと出力サービスはCOM-151の責務に必要な範囲を読み、他機能全体の仕様再収録はしていない。",
+    "Menu.jsp・Login.jspは共有ヘッダー等の横断検索で該当箇所を確認した。PensionExcelExportServiceはDateUtil呼出箇所の確認に限る。ControlServletはPOST入口、文字コード、通常識別値処理、Action実行catch、forward境界を中心に読み、他業務の特殊連携仕様を本書へ取り込んでいない。",
+    "対象JSPとassets、および関連Javaの横断検索で、data-trim／data-uppercase、汎用data-modal、data-print、data-era-hidden-inputの宣言と実使用を照合した。予約候補とJSON入口についても、宣言の存在と通常UIの接続を分けた。",
+    "関連計画はCOM-111=共通/共通仕様書_COM-111_年金業務共通処理.md、COM-012=共通/共通仕様書_COM-012_共通コントロールサーブレット.md、API-NENKIN=共通/要求処理一覧.md、DB-OPS=共通/DB仕様書/DB操作仕様書.md、DET-SCR-016=詳細仕様書/詳細仕様書_SCR-016_店番参照／担当者参照／顧客参照.md、DET-SCR-018=詳細仕様書/詳細仕様書_SCR-018_新規・変更・削除.md、DET-SCR-019=詳細仕様書/詳細仕様書_SCR-019_登録内容印刷.mdと照合した。これは提示された計画上の対応であり、成果物の生成済み確認ではない。",
+    "この応答はCOM-151の解析factsである。原プログラム、SQL、スクリプト、マクロ、ビルド、テストを実行せず、ファイル編集・生成、ネットワーク、プラグイン、外部サービス、委譲エージェントも使用していない。",
+    "Markdown本文、HTML静的投影、Mermaid、PDF、Excelは本ジョブで生成・描画していない。表示合格・通信成功・DB更新成功・顧客承認・配備バイナリ一致を記録しない。正式率はnullであり、今回のソース解析を正式採点へ置き換えない。"
+  ]
+}

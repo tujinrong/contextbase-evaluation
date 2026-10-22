@@ -1,0 +1,40 @@
+{
+  "documentId": "DET-SCR-014",
+  "path": "詳細仕様書/詳細仕様書_SCR-014_日次 _ 月次処理.md",
+  "contentSha256": "3c27bc39d7ddb6ba9ef24570fcfdd7fea36f2c34e0bc689380ab7303fefae69e",
+  "aiAuthored": true,
+  "semanticProseAssembledByPython": false,
+  "analysisFacts": 54,
+  "unresolved": [
+    "実配備のJNDI登録先、DataSource・JDBCドライバー、接続の既定autoCommit・分離レベル、既存DBの実DDL・データは未確認である。接続探索コードとDDL宣言を稼働環境の保証にはできない。",
+    "DELETE_CUTOFF_DATEの保持期間を業務規則として固定する根拠、要求値変更を許可する運用条件、整理件数の利用者通知方針は未提供である。現行のhidden要求値利用を記載し、サーバー再計算・上限検査を実装済みまたは承認済みの規則として追加していない。",
+    "必須検査後に日付がNFKC正規化で空となる経路はソースから導いたものである。ブラウザー・コンテナを通した再現結果ではなく、正規化後の再必須検査を追加する採用判断も行っていない。",
+    "SQL Serverの顧客番号BIGINTをJava getIntで読むため、Integer範囲外の既存値に対する実際のJDBC例外・変換結果は未確認である。顧客番号の業務上限も未提供である。",
+    "コード表名称の保存・変更を担当する運用または別システム、名称の業務上限は確認できない。ログイン職員氏名等の本番外部表属性をローカル互換DDLから確定していない。",
+    "有効な西暦入力と和暦出力可能範囲には差があるが、対象日・帳票明細日に許容する業務上の下限は未提供である。明治開始日前の変換拒否を入力受付時から一律に行う実装とは扱っていない。",
+    "commit例外時のDB最終状態、rollback失敗後の状態、応答送信開始後のエラー画面到達、ブラウザーの完全受領・保存は静的解析では確定できない。",
+    "セッションViewBeanは他画面も共用する。並行タブ・並行要求でのBean型や保持条件の競合は実行確認しておらず、画面状態の独立性は保証しない。",
+    "実送信バイト、重複HTTPパラメータの選択、コンテナ固有のデコード・forward動作、配備classとの一致は未確認である。本文の受信値追跡はgetParameterが返したString以降の契約として記載した。",
+    "本ジョブでは提供facts・前稿を利用し、manifestおよび指摘箇所のカレンダー・CSS・Batch.jspと出力入口・サービスの必要範囲を再読した。提供factsの全参照箇所を今回すべて再読したことや、収録全ファイルを読了したことは意味しない。source-onlyであり、参考設計・原仕様・workspace外資料は使用していない。",
+    "原プログラム、SQL、スクリプト、ビルド、テストは非実行である。ファイル編集・保存、ネットワーク、プラグイン、外部サービス、委任エージェントは使用していない。静的HTML・Mermaidの描画、原寸表示、PDF・Excel等の派生形式の生成・表示確認も未実施であり、表示合格・出版完了とは判定していない。",
+    "関連文書は入力計画のID・相対パスに照合した対応先であり、生成済みとの確認はしていない。本文ハッシュと節別根拠のreportへの記録、後工程の変換・表示結果の記録はホスト側の成果物管理で必要となる。原仕様による正式採点は未実施でnullである。"
+  ],
+  "factCorrections": [
+    "DET-SCR-014／版2.0／イベント仕様・職員番号入力補助・日付カレンダー：前稿の月移動枝は入力日または当日から初期月を決める節点へ戻っていた。openCalendarでactiveInputとvisibleYear・visibleMonthを初期設定する処理と、data-era-monthを分割・数値化して表示年月を更新しrenderCalendar(activeInput)へ進む処理を分離した。手順2.2～3.4とフロー3を対応させ、月移動後の年月と入力値を保持する経路へ訂正した。参照：sources/nenkin/assets/js/japanese-era-calendar.js 開始行173・終了行178、開始行225・終了行234、開始行255・終了行286、開始行350・終了行371。提供fact F050の概要をこの状態遷移で具体化した。",
+    "DET-SCR-014／版2.0／概要・静的画面HTML：前稿で欠落していた--work-screen-width:1180px、main.app-shell:not(.login-shell)のpadding:20px 18px 52px、.screen:not(.lookup-screen-popup)のmax-widthと左右autoマージンを追加した。既存のmain・sectionを維持し、原文での適用順に合わせた。幅1120px・min-width1040px、後続カレンダー規則との詳細度関係は保持した。参照：sources/nenkin/JSP/NENKIN/Batch.jsp 開始行19・終了行21、sources/nenkin/assets/css/site.css 開始行1・終了行17、開始行261・終了行263、開始行1996・終了行2000。提供fact F052の共通CSS適用範囲を補完した。",
+    "DET-SCR-014／版2.0／日次・月次出力・結果・例外時の扱い：writeDownloadまでを含むIllegalArgumentExceptionの個別catchはBatch.jsp名を返す処理であり、送信開始後の画面再表示成功まで保証しないことを結果表にも明記した。個別catchと共通catchの順序、先行整理の正常commit状態は変更していない。参照：sources/nenkin/WEB-INF/src/nenkin/BatchRunAction.java 開始行20・終了行21。提供facts F044～F047と本文の境界説明を整合させた。",
+    "解析素材のcoverageNotesにある『仕様本文・図・静的HTMLの生成未実施』は素材作成時点の状態として扱う。本応答ではMarkdown本文、Mermaid記述、非実行の静的HTML記述を作成した。ファイル保存、派生形式の生成、描画確認、原プログラムの実行を行ったことには置き換えない。manifestは読取り権限・材料の確認にのみ使用し、業務factの根拠には使用していない。"
+  ],
+  "analysisExecutedInThisJob": false,
+  "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261015-nenkin-all-01\\jobs\\documents-03\\51fd67b19f7b772a\\content-01",
+  "snapshot": {
+    "manifestSha256": "a28612d98f58abbddbdae4a16cf7a4d162b525642186b2ec5b1b13e151d85957",
+    "capsuleSchema": "reverse-ai-source-capsule/2",
+    "mode": "source-only",
+    "modeDerivation": "explicit-manifest-mode",
+    "scope": "sealed-manifest-and-raw-material"
+  },
+  "referenceMode": "source-only",
+  "structureFindings": [],
+  "status": "AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED"
+}

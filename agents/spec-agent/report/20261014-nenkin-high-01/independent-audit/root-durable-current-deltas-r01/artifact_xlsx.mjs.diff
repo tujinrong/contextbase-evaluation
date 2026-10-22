@@ -1,0 +1,132 @@
+--- build_xlsx_v2_62_r10.mjs
++++ artifact_xlsx.mjs
+@@ -3,44 +3,43 @@
+ import path from 'node:path';
+ import crypto from 'node:crypto';
+ import { execFileSync } from 'node:child_process';
+-import { pathToFileURL } from 'node:url';
++import { pathToFileURL, fileURLToPath } from 'node:url';
++import os from 'node:os';
+ 
+ const hash = data => crypto.createHash('sha256').update(data).digest('hex');
+ const argv=process.argv.slice(2);
+ const option=name => {const index=argv.indexOf(name);return index<0?null:argv[index+1];};
+-// Guards cover this actor's explicit FS calls; package/runtime FS boundaries are unchanged.
+-const BUNDLED_NODE=String.raw`C:\Users\tujin\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe`;
+-const BUNDLED_PYTHON=String.raw`C:\Users\tujin\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe`;
+-const OWN_TMP=String.raw`D:\開発\contextbase-evaluation\agents\spec-agent\.tmp\20261014-nenkin-high-01`;
+-const HELPER=path.join(OWN_TMP,'delivery','fs_preflight_v2_62_r02.py');
+-const HELPER_SHA='4c03b060269ee36dbbb1b8368fbb6cde9a95a6f7e91849e376c40919b61c567c';
++// Runtime/helper selection is fixed metadata, never generated executable source.
++const packageRoot=path.dirname(fileURLToPath(import.meta.url));
++const manifestSha=option('--package-manifest-sha256');
++const contractPath=option('--contract');const contractSha=option('--contract-sha256');
++if(!manifestSha||!contractPath||!contractSha)throw new Error('Pinned package manifest and current-run contract required');
++const metadataFile=async(file,expected)=>{
++  file=path.resolve(file);let at=file;
++  for(;;){try{const s=await fs.lstat(at);if(s.isSymbolicLink())throw new Error('Linked bootstrap path');}catch(e){if(e.code!=='ENOENT')throw e;}const parent=path.dirname(at);if(parent===at)break;at=parent;}
++  if(await fs.realpath(file)!==file)throw new Error('Bootstrap resolution changed');
++  const st=await fs.lstat(file);if(!st.isFile()||st.size>8000000)throw new Error('Bounded bootstrap ordinary file required');
++  const raw=await fs.readFile(file);if(hash(raw)!==expected)throw new Error('Bootstrap SHA drift');return raw;
++};
++const manifestRaw=await metadataFile(path.join(packageRoot,'package-manifest.json'),manifestSha);
++const packageManifest=JSON.parse(manifestRaw.toString('utf8'));
++const HELPER=path.join(packageRoot,'run_contract.py');const HELPER_SHA=packageManifest.files['run_contract.py'];
++await metadataFile(HELPER,HELPER_SHA);
++const BUNDLED_NODE=path.join(os.homedir(),'.cache','codex-runtimes','codex-primary-runtime','dependencies','node','bin','node.exe');
++const BUNDLED_PYTHON=path.join(os.homedir(),'.cache','codex-runtimes','codex-primary-runtime','dependencies','python','python.exe');
+ if(path.resolve(process.execPath)!==path.resolve(BUNDLED_NODE))throw new Error('Bundled Node executable required');
+-const BOOTSTRAP_PY=String.raw`import os,sys,stat,hashlib
+-from pathlib import Path
+-expected=Path(r"D:\開発\contextbase-evaluation\agents\spec-agent\.tmp\20261014-nenkin-high-01\delivery\fs_preflight_v2_62_r02.py")
+-p=Path(os.path.abspath(sys.argv[1]))
+-if p!=expected or p.resolve(strict=False)!=p:raise ValueError("HOLD: bootstrap helper path")
+-for node in (p,*p.parents):
+- try:st=node.lstat()
+- except FileNotFoundError:continue
+- if stat.S_ISLNK(st.st_mode) or getattr(st,"st_file_attributes",0)&0x400:raise ValueError("HOLD: linked bootstrap helper")
+-st=p.lstat()
+-if not stat.S_ISREG(st.st_mode) or st.st_size>262144:raise ValueError("HOLD: bootstrap helper metadata")
+-raw=p.read_bytes()
+-if hashlib.sha256(raw).hexdigest()!=sys.argv[2]:raise ValueError("HOLD: bootstrap helper SHA")
+-for node in (p,*p.parents):
+- st=node.lstat()
+- if stat.S_ISLNK(st.st_mode) or getattr(st,"st_file_attributes",0)&0x400:raise ValueError("HOLD: bootstrap helper changed path")
+-if p.resolve(strict=False)!=p:raise ValueError("HOLD: bootstrap helper changed resolution")
+-sys.argv=[str(p)]
+-exec(compile(raw,str(p),"exec"),{"__name__":"__main__","__file__":str(p),"__package__":None})
+-`;
++const runtimeRaw=await metadataFile(path.join(packageRoot,'profiles','runtime.json'),packageManifest.files['profiles/runtime.json']);
++const runtimeBootstrap=JSON.parse(runtimeRaw.toString('utf8'));
++if(runtimeBootstrap.tools.python.path!==BUNDLED_PYTHON)throw new Error('Bundled Python origin');
++await metadataFile(BUNDLED_PYTHON,runtimeBootstrap.tools.python.sha256);
+ const guardEnv={...process.env,PYTHONDONTWRITEBYTECODE:'1'};delete guardEnv.PYTHONPATH;delete guardEnv.PYTHONHOME;
++const boundary=(mode,extra=[],input=undefined)=>execFileSync(BUNDLED_PYTHON,['-I','-B','-X','utf8',HELPER,'--contract',contractPath,'--contract-sha256',contractSha,'--mode',mode,...extra],{input,encoding:'utf8',env:guardEnv,cwd:packageRoot,timeout:90000,maxBuffer:4194304,windowsHide:true});
++const checkedContract=JSON.parse(boundary('validate',['--operation','xlsx','--fresh']));
++if(checkedContract.codePins['artifact_xlsx.mjs']!==hash(await metadataFile(fileURLToPath(import.meta.url),checkedContract.codePins['artifact_xlsx.mjs'])))throw new Error('XLSX helper pin');
++const OWN_TMP=checkedContract.work;
+ const fsChecks=[];const ownedOutputHashes=new Map();let bindingDescriptor=null;
+ const preflight=request=>{
+-  const raw=execFileSync(BUNDLED_PYTHON,['-I','-B','-X','utf8','-c',BOOTSTRAP_PY,HELPER,HELPER_SHA],
+-    {input:JSON.stringify({schema:'fs-preflight-v2-62/1',...request}),encoding:'utf8',env:guardEnv,cwd:OWN_TMP,timeout:30000,maxBuffer:1048576,windowsHide:true});
+-  const result=JSON.parse(raw);
++  const result=JSON.parse(boundary('fs',[],JSON.stringify({schema:'fs-preflight-v2-62/1',...request})));
+   if(result.status!=='METADATA_AND_PINS_CHECKED'||result.raceFreeGuarantee!==false)throw new Error('Invalid FS preflight response');
+   fsChecks.push(result);return result;
+ };
+@@ -50,9 +49,8 @@
+ };
+ const rawModelPath=option('--model');const outputRoot=option('--output-root');const modelSha=option('--model-sha256');
+ if(!rawModelPath||!outputRoot||!modelSha||!argv.includes('--authoring-marker-completed'))throw new Error('Supply pinned --model/--model-sha256, fresh --output-root and acknowledged completed author marker.');
+-const ARTIFACT_ENTRY="C:\\Users\\tujin\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\node_modules\\@oai\\artifact-tool\\dist\\artifact_tool.mjs";
+-const PACKAGE_BOOTSTRAP_PY="import os,sys,stat,hashlib,json\nfrom pathlib import Path\nexpected=[(Path(r\"C:\\Users\\tujin\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\node_modules\\@oai\\artifact-tool\\dist\\artifact_tool.mjs\"),\"0900e6e29e518a03fa1a49008257ddf525b0557ad3c4a38be60bfa9085bb85d7\"),(Path(r\"C:\\Users\\tujin\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\node_modules\\@oai\\artifact-tool\\package.json\"),\"4c6ba2c3f71d8d8b8b24c3aca3627b860de5a3d95da3824191d93fed7f447a86\")]\nchecked=[]\nfor p,sha in expected:\n if p.resolve(strict=False)!=p:raise ValueError(\"HOLD: bundled package entry resolution\")\n for node in (p,*p.parents):\n  st=node.lstat()\n  if stat.S_ISLNK(st.st_mode) or getattr(st,\"st_file_attributes\",0)&0x400:raise ValueError(\"HOLD: linked bundled package entry\")\n st=p.lstat()\n if not stat.S_ISREG(st.st_mode) or st.st_size>32000000:raise ValueError(\"HOLD: bundled package metadata\")\n if hashlib.sha256(p.read_bytes()).hexdigest()!=sha:raise ValueError(\"HOLD: bundled public package SHA\")\n checked.append({\"path\":str(p),\"sha256\":sha})\nprint(json.dumps({\"checked\":checked,\"importExecuted\":False,\"raceFreeGuarantee\":False}))\n";
+-const packageEntryPin=JSON.parse(execFileSync(BUNDLED_PYTHON,['-I','-B','-X','utf8','-c',PACKAGE_BOOTSTRAP_PY],{encoding:'utf8',env:guardEnv,cwd:OWN_TMP,timeout:30000,maxBuffer:1048576,windowsHide:true}));
++const ARTIFACT_ENTRY=checkedContract.tools.artifactEntry.path;
++const packageEntryPin={checked:[checkedContract.tools.artifactEntry,checkedContract.tools.artifactPackage],importExecuted:false,raceFreeGuarantee:false};
+ const { Workbook, SpreadsheetFile }=await import(pathToFileURL(ARTIFACT_ENTRY).href);
+ 
+ const modelPath=path.resolve(rawModelPath);const destination=path.resolve(outputRoot);
+@@ -85,20 +83,17 @@
+   const bytes=await fs.readFile(file);if(hash(bytes)!==sha)throw new Error('Owned output changed during read');preflight(request);return bytes;
+ };
+ const modelRaw=await readPinned(modelPath,modelSha,'model');const model=JSON.parse(modelRaw.toString('utf8'));
+-const ANNEX_HELPER=path.join(OWN_TMP,'delivery','prepare_native_print_annex_r05.py');
+-const ANNEX_HELPER_SHA='6893c891ce4bd930160e88e24d21a4b23bd731f4d03fb5ca0959549a4aa4c4da';
++if(JSON.stringify(model.conversionContract)!==JSON.stringify(checkedContract.provenance))throw new Error('Exact package/run model provenance required');
++const ANNEX_HELPER=path.join(packageRoot,'native_annex.py');
++const ANNEX_HELPER_SHA=checkedContract.codePins['native_annex.py'];
+ const annexReceiptPath=option('--print-annex-receipt');const annexReceiptSha=option('--print-annex-receipt-sha256');
+ let annexVerified=null;
+ const verifyPrintAnnex=async()=>{
+   if(!model.nativePrintAnnex){if(annexReceiptPath||annexReceiptSha)throw new Error('Annex arguments without projected model');return;}
+   if(!annexReceiptPath||!annexReceiptSha)throw new Error('Pinned print-annex receipt required');
+   await readPinned(annexReceiptPath,annexReceiptSha,'model');
+-  // This code is caller-owned technical machinery, not specification input.
+-  const req={path:ANNEX_HELPER,operation:'read',role:'output',outputRoot:path.dirname(ANNEX_HELPER),ownedOutput:true,expectedSha256:ANNEX_HELPER_SHA};
+-  preflight(req);
+-  const answer=execFileSync(BUNDLED_PYTHON,['-I','-B','-X','utf8',ANNEX_HELPER,'--verify-only','--model',modelPath,'--model-sha256',modelSha,'--receipt',annexReceiptPath,'--receipt-sha256',annexReceiptSha],
+-    {encoding:'utf8',env:guardEnv,cwd:OWN_TMP,timeout:90000,maxBuffer:4194304,windowsHide:true});
+-  preflight(req);const verified=JSON.parse(answer);
++  const answer=boundary('annex-verify',['--model',modelPath,'--model-sha256',modelSha,'--receipt',annexReceiptPath,'--receipt-sha256',annexReceiptSha]);
++  const verified=JSON.parse(answer);
+   if(verified.schema!=='native-print-annex-verified/1'||verified.modelSha256!==modelSha||verified.receiptSha256!==annexReceiptSha||verified.originalSheetsDeepIdentical!==true||verified.rgbaAndFullPixelCoverage!==true||verified.originalPrimaryPrintHoldRetained!==true)throw new Error('Invalid native print annex verification');
+   if(annexVerified&&JSON.stringify(annexVerified)!==JSON.stringify(verified))throw new Error('Print annex drift');annexVerified=verified;
+ };
+@@ -119,9 +114,10 @@
+   if(!a||(!a.startsWith('..')&&!path.isAbsolute(a))||(!b.startsWith('..')&&!path.isAbsolute(b)))throw new Error('Output must be disjoint from pinned inputs/model');
+ }
+ const provenance={schema:'reverse-agent-xlsx-delivery/1',modelSha256:hash(modelRaw),bindingSha256:model.bindingSha256,
++  conversionContract:model.conversionContract,
+   sourceSnapshotManifestSha256:model.sourceSnapshotManifestSha256,referenceMode:model.referenceMode,businessContentAuthored:false,applicationExecuted:false,
+   formatInterpretation:'existing V2 reference preservation interpreted as V2-62',
+-  filesystemPreflight:{helperSha256:HELPER_SHA,bootstrap:'bundledPython-static-code-lstat-SHA-same-bytes-compile-exec',scope:'CALLER_FS_ACTOR_ONLY',raceFreeGuarantee:false,packageRuntimeFilesystemBoundaryChanged:false,publicBundledPackageEntry:packageEntryPin,checks:fsChecks},
++  filesystemPreflight:{helperSha256:HELPER_SHA,bootstrap:'pinned-fixed-contract-module-cli-no-source-string-execution',scope:'CALLER_FS_ACTOR_ONLY',raceFreeGuarantee:false,packageRuntimeFilesystemBoundaryChanged:false,publicBundledPackageEntry:packageEntryPin,checks:fsChecks},
+   documents:[],status:'RUNNING',visualReview:'PENDING',authoringMarkerAcknowledged:true,nativePrintAnnex:annexVerified};
+ await mkdirOutput(destination,true);
+ 
+@@ -221,4 +217,5 @@
+   await readPinned(model.binding,model.bindingSha256,'binding');await readPinned(modelPath,hash(modelRaw),'model');
+ }catch(error){provenance.status='FAILED';provenance.error=String(error);provenance.published=false;throw error;}
+ finally{await writeOutput(path.join(destination,'delivery-manifest.json'),JSON.stringify(provenance,null,2)+'\n');}
++boundary('validate',['--operation','xlsx']);
+ console.log(JSON.stringify({documents:provenance.documents.length,status:provenance.status,visualReview:'PENDING'}));

@@ -1,0 +1,39 @@
+{
+  "documentId": "SYS-FUNCTIONS",
+  "path": "機能一覧.md",
+  "contentSha256": "7e72d028a14ba8e931a728ce30f7bab819bddddf7ef795e75c0796bf14258bb2",
+  "aiAuthored": true,
+  "semanticProseAssembledByPython": false,
+  "analysisFacts": 37,
+  "unresolved": [
+    "実環境のJNDI登録、接続先DBの現行状態、配備クラスと収録ソースの一致は未確認である。反射による到達可能性はソース上の判断であり、稼働・接続成功の確認結果ではない。",
+    "PensionLookupAction、searchCandidates、findLatestAuditType等のカプセル外クライアント・設定・動的呼出しによる使用状況は確定できない。通常UI未使用・呼出元未確認の判断は提供材料内に限定する。",
+    "旧SCR-008・009・010・012・020と個々の資源の正確な旧ID・旧ファイル名対応は未確定である。未提供の識別メタデータを補って対応を創作していない。Staff系、SubMessage、JSON入口、helper、他業務資源の採否は本文に個別記載した。",
+    "write・flushやwindow.printから、利用者のファイル受領・保存・印刷完了は確定できない。出力開始後の例外、JSP描画例外、commit例外時の最終状態・HTTP応答は、確認できる処理段階を超えて保証していない。",
+    "関連文書の生成済み状態は確認していない。本文には入力計画と照合した文書ID・相対パスを通常文字列で記載し、未生成成果物への生成済みリンクは作成していない。REPORT-ANALYSISの別冊保存先も文字列で案内した。",
+    "REPORT-ANALYSISのcoverageNotes転記用：manifestはsource-only、trainingReferenceAuthorizedByUser=false、referenceSpecificationIncluded=false、referenceFiles空であり、参照設計は使用していない。manifestは材料・権限確認にのみ使用し、業務factの根拠にはしていない。入力factsの176件という収録範囲を全件精読の主張には置き換えていない。",
+    "REPORT-ANALYSISの実行制限転記用：指定workspaceのmanifest・indexedと提示データのみを用い、読取りと推論を行った。原プログラム・SQL・スクリプト・ビルド・テストの実行、ファイル編集、ネットワーク、外部サービス、委譲エージェントは使用していない。描画確認・派生成果物生成・配備バイナリ照合は未実施であり、表示合格や出版結果は判定していない。原仕様による正式率はnullである。"
+  ],
+  "factCorrections": [
+    "SYS-FUNCTIONS-F009のUI接続条件を補完した。キーchangeによるLoadは常時送信ではなく、ORIGINAL_KANA未設定、両キーがreadonlyでない、両入力がtrim後非空という条件を持つ。本文「予約の入力・読込み・登録・変更・削除・クリア」手順2.3へ反映。根拠：indexed/nenkin/JSP/NENKIN/Pension.jsp.txt、開始行66・終了行68。",
+    "SYS-FUNCTIONS-F013の削除拒否条件を具体化した。Actionは現在予約不在、または現在予約と元予約のsameReservationKey不一致で読込みを要求し、Repositoryへ進まない。Repository再取得後の不在によるfalseとは別経路として本文と図へ反映。根拠：indexed/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java.txt、開始行17・終了行33；indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt、開始行315・終了行343。",
+    "SYS-FUNCTIONS-F030の個別catch範囲を補完した。BatchRunActionのIllegalArgumentException捕捉対象はサービスbuildだけでなくwriteDownloadを含むtry内であり、職員確認・要求値保持・入口検査はその前にある。『入力例外すべてを同catchが扱う』とはせず、catchへ到達する範囲を本文へ反映。根拠：indexed/nenkin/WEB-INF/src/nenkin/BatchRunAction.java.txt、開始行14・終了行21。",
+    "REPORT-ANALYSIS向けの解釈修正として、予約画面の候補を顧客参照へ対応付け、searchCandidatesを通常機能へ追加しなかった。SYS-FUNCTIONS-F015・F035を維持。根拠：indexed/nenkin/JSP/NENKIN/Pension.jsp.txt、開始行63・終了行65；indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt、開始行171・終了行215。",
+    "REPORT-ANALYSIS向けに、日次・月次の削除明細整理を独立commitとして記述し、出力失敗と一体rollbackとする解釈を除いた。SYS-FUNCTIONS-F022を維持。根拠：indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt、開始行68・終了行80；indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt、開始行458・終了行480。",
+    "REPORT-ANALYSIS向けに、新規・変更分を現在行の区分別出力とし、完全な変更履歴とは記述しなかった。auditIdは取得連番、queryNameはサービス生成情報として区別した。SYS-FUNCTIONS-F023・F024を維持。根拠：indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt、開始行353・終了行413；indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt、開始行165・終了行219。",
+    "REPORT-ANALYSIS向けに、登録内容印刷をwindow.printによるブラウザー印刷へ対応付け、旧GET PDF経路と分離した。またMESSAGEによるSubMessage.jspは記録名の変更であり、実forward先の変更ではないとした。SYS-FUNCTIONS-F028・F031・F032を維持。根拠：indexed/nenkin/JSP/NENKIN/Report.jsp.txt、開始行59・終了行61；indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt、開始行54・終了行79、開始行364・終了行383。",
+    "REPORT-ANALYSIS向けに、synchronizedを同一JVM内の同一Repositoryインスタンスの同期として扱い、比較版による楽観ロックや検索キーのDB一意性を付加しなかった。SYS-FUNCTIONS-F036を維持。根拠：indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt、開始行280・終了行298、開始行315・終了行342；indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt、開始行60・終了行138。"
+  ],
+  "analysisExecutedInThisJob": true,
+  "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261015-nenkin-all-01\\jobs\\documents-01\\f37edd263c15a987\\round-01",
+  "snapshot": {
+    "manifestSha256": "a28612d98f58abbddbdae4a16cf7a4d162b525642186b2ec5b1b13e151d85957",
+    "capsuleSchema": "reverse-ai-source-capsule/2",
+    "mode": "source-only",
+    "modeDerivation": "explicit-manifest-mode",
+    "scope": "sealed-manifest-and-raw-material"
+  },
+  "referenceMode": "source-only",
+  "structureFindings": [],
+  "status": "AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED"
+}

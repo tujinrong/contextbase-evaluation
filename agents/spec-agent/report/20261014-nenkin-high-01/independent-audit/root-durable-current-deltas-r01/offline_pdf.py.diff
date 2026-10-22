@@ -1,0 +1,180 @@
+--- export_pdf_bound_r12.py
++++ offline_pdf.py
+@@ -10,22 +10,23 @@
+ from bs4 import BeautifulSoup
+ from markdown_it import MarkdownIt
+ from playwright.sync_api import sync_playwright
+-from delivery_model_v2_62_r07 import load_bound,document_model,safe_path,canonical,OWN_RUN_ROOTS
+-from pdf_projection_r12 import project_html,text_coverage,canonical_text_order,GEOMETRY_JS,CONTENT_WIDTH_PX
++from markdown_model import load_bound,document_model,safe_path,canonical
++from run_contract import add_contract_arguments, load_args
++from pdf_projection import project_html,text_coverage,canonical_text_order,GEOMETRY_JS,CONTENT_WIDTH_PX
+ 
+ def sha(raw):return hashlib.sha256(raw).hexdigest()
+ def require(ok,message):
+     if not ok:raise ValueError('HOLD: '+message)
+-def owned(path):
+-    p=safe_path(path);require(any(p.is_relative_to(r) for r in OWN_RUN_ROOTS),'output outside this run');return p
+-def fresh_write(path,data):
+-    p=owned(path);safe_path(p.parent).mkdir(parents=True,exist_ok=True)
++def owned(path, contract):
++    p=contract.output('pdf', path);require(any(p.is_relative_to(r) for r in contract.roots),'output outside this run');return p
++def fresh_write(path,data, contract):
++    p=owned(path, contract=contract);safe_path(p.parent).mkdir(parents=True,exist_ok=True)
+     with safe_path(p).open('xb') as h:h.write(data)
+     require(safe_path(p).read_bytes()==data,'fresh output changed');return p
+-def json_write(path,value):return fresh_write(path,(json.dumps(value,ensure_ascii=False,indent=2)+'\n').encode())
+-def stage(destination,name,**details):
++def json_write(path,value, contract):return fresh_write(path,(json.dumps(value,ensure_ascii=False,indent=2)+'\n').encode(), contract=contract)
++def stage(destination,name,contract, **details):
+     event={'utc':datetime.now(timezone.utc).isoformat(),'pid':os.getpid(),'stage':name,**details}
+-    with owned(destination/'stages.jsonl').open('a',encoding='utf-8') as h:h.write(json.dumps(event,ensure_ascii=False)+'\n');h.flush()
++    with owned(destination/'stages.jsonl', contract=contract).open('a',encoding='utf-8') as h:h.write(json.dumps(event,ensure_ascii=False)+'\n');h.flush()
+     print(json.dumps(event,ensure_ascii=False),flush=True)
+ 
+ def creation_time(kernel,handle):
+@@ -67,11 +68,15 @@
+     def close(self):
+         if getattr(self,'handle',None):self.k.CloseHandle(self.handle);self.handle=None
+ 
+-def supervise(args):
+-    destination=owned(args.output_root);require(not destination.exists(),'fresh PDF root required')
++def supervise(args, contract):
++    contract.begin('pdf', args.output_root);contract.marker('pdf')
++    destination=owned(args.output_root, contract=contract);require(not destination.exists(),'fresh PDF root required')
+     destination.mkdir(parents=True);job=None;process=None
+     env={**os.environ,'PYTHONDONTWRITEBYTECODE':'1'}
+-    process=subprocess.Popen([sys.executable,'-B','-X','utf8','-u',str(Path(__file__)),*sys.argv[1:],'--worker'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,env=env,creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
++    forwarded=[value for value in sys.argv[1:]]
++    for option in ('--contract','--contract-sha256'):
++        at=forwarded.index(option);del forwarded[at:at+2]
++    process=subprocess.Popen([sys.executable,'-I','-B','-X','utf8','-u',str(contract.code('run_contract.py')),'--contract',str(contract.path),'--contract-sha256',contract.sha256,'--mode','execute','--operation','pdf','--',*forwarded,'--worker'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,env=env,creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
+     start=time.monotonic();progress=start;last=-1
+     try:
+         lines=queue.Queue()
+@@ -85,12 +90,12 @@
+         require(process.poll() is None,'worker exited before ownership handshake')
+         job=OwnedWindowsJob(process.pid,ready['creationTime']);require(process.poll() is None,'worker exited after job assignment')
+         process.stdin.write(b'GO\n');process.stdin.flush();process.stdin.close()
+-        json_write(destination/'owned-worker.json',{'pid':process.pid,'processCreationTime':ready['creationTime'],'windowsJobKillOnClose':True,'goAfterJobAssignment':True,'onlyOwnedTreeStopped':True,'stageTimeoutSeconds':args.stage_timeout,'totalTimeoutSeconds':args.total_timeout})
++        json_write(destination/'owned-worker.json',{'pid':process.pid,'processCreationTime':ready['creationTime'],'windowsJobKillOnClose':True,'goAfterJobAssignment':True,'onlyOwnedTreeStopped':True,'stageTimeoutSeconds':args.stage_timeout,'totalTimeoutSeconds':args.total_timeout}, contract=contract)
+         while process.poll() is None:
+-            log=owned(destination/'stages.jsonl');size=log.stat().st_size if log.exists() else 0
++            log=owned(destination/'stages.jsonl', contract=contract);size=log.stat().st_size if log.exists() else 0
+             if size!=last:last=size;progress=time.monotonic()
+             if time.monotonic()-progress>args.stage_timeout or time.monotonic()-start>args.total_timeout:
+-                json_write(destination/'timeout.json',{'status':'FAILED_TIMEOUT','elapsedSeconds':time.monotonic()-start,'ownedJobOnly':True,'visualQualified':False});raise TimeoutError('Owned PDF worker exceeded bounded timeout')
++                json_write(destination/'timeout.json',{'status':'FAILED_TIMEOUT','elapsedSeconds':time.monotonic()-start,'ownedJobOnly':True,'visualQualified':False}, contract=contract);raise TimeoutError('Owned PDF worker exceeded bounded timeout')
+             time.sleep(0.2)
+         require(process.returncode==0,'PDF worker failed: '+str(process.returncode))
+     finally:
+@@ -203,47 +208,49 @@
+             'inputJavaScriptEnabled':False,'sourceHtmlTextNodeDataNotModified':True,
+             'modelStringsNotDroppedOrNormalized':True,'formalOrNativeApproval':False}
+ 
+-def worker(args):
++def worker(args, contract):
++    contract.code('offline_pdf.py');contract.marker('pdf')
+     worker_ready()
+     require(sys.stdin.buffer.readline(4)==b'GO\n','owned supervisor handshake required')
+-    bound,entries,provenance=load_bound(args.binding,args.binding_sha256)
++    bound,entries,provenance=load_bound(args.binding,args.binding_sha256, contract=contract)
+     require(bound.get('referenceMode')=='source-only','AG-SPEC PDF requires this source-only binding')
+-    destination=owned(args.output_root)
++    destination=owned(args.output_root, contract=contract)
+     for root in (Path(bound['permittedMarkdownRoot']),Path(bound['permittedRenderRoot']),args.binding):
+         root=safe_path(root);require(not(destination==root or destination.is_relative_to(root) or root.is_relative_to(destination)),'PDF output overlaps input roots')
++    require({'path':str(args.chromium),'sha256':args.chromium_sha256}==contract.runtime['tools']['chromium'] and {'path':str(args.poppler),'sha256':args.poppler_sha256}==contract.runtime['tools']['poppler'],'exact trusted PDF tool identities')
+     chromium=tool(args.chromium,args.chromium_sha256);poppler=tool(args.poppler,args.poppler_sha256)
+-    runtime=owned(destination/'.runtime');runtime.mkdir();oldenv={k:os.environ.get(k) for k in ('TEMP','TMP','TMPDIR')};os.environ.update({k:str(runtime) for k in oldenv})
++    runtime=owned(destination/'.runtime', contract=contract);runtime.mkdir();oldenv={k:os.environ.get(k) for k in ('TEMP','TMP','TMPDIR')};os.environ.update({k:str(runtime) for k in oldenv})
+     record={'schema':'spec-agent-offline-pdf-delivery/1',**provenance,'sourceSnapshotManifestSha256':bound['sourceSnapshotManifestSha256'],'referenceMode':bound['referenceMode'],'documents':[],'status':'RUNNING','inputJavaScriptEnabled':False,'businessProseReauthored':False,'originalApplicationExecuted':False,'formalQualityAssessed':False,'sourceUnknownsResolved':False,'visualReview':'PENDING','adoption':False,'published':False,'pdfMarkerAcknowledged':True}
+-    fault=owned(destination/'faulthandler.log').open('x',encoding='utf-8');faulthandler.enable(file=fault,all_threads=True);faulthandler.dump_traceback_later(max(15,args.stage_timeout-15),repeat=True,file=fault)
++    fault=owned(destination/'faulthandler.log', contract=contract).open('x',encoding='utf-8');faulthandler.enable(file=fault,all_threads=True);faulthandler.dump_traceback_later(max(15,args.stage_timeout-15),repeat=True,file=fault)
+     try:
+-        stage(destination,'pinned-inputs',documents=len(entries))
++        stage(destination,'pinned-inputs',documents=len(entries), contract=contract)
+         with sync_playwright() as pw:
+-            stage(destination,'trusted-chromium-launch');browser=pw.chromium.launch(executable_path=str(chromium),headless=True,timeout=45000)
++            stage(destination,'trusted-chromium-launch', contract=contract);browser=pw.chromium.launch(executable_path=str(chromium),headless=True,timeout=45000)
+             context=browser.new_context(java_script_enabled=False,service_workers='block',locale='ja-JP',accept_downloads=False);context.set_default_timeout(45000)
+             blocked=[];context.route('**/*',lambda route:(blocked.append(route.request.url),route.abort()))
+             try:
+                 for entry in entries:
+-                    relative=canonical(entry['canonicalDocumentPath']);qa=owned(destination/'qa'/relative.with_suffix(''));qa.mkdir(parents=True)
++                    relative=canonical(entry['canonicalDocumentPath']);qa=owned(destination/'qa'/relative.with_suffix(''), contract=contract);qa.mkdir(parents=True)
+                     html=safe_path(entry['canonicalHtml']).read_bytes();pictures=[]
+                     for image in entry['images']:
+                         raw=safe_path(image['path']).read_bytes();require(sha(raw)==image['sha256'],'native source PNG drift')
+-                        fresh_write(destination/'native-assets'/relative.with_suffix('')/(image['id']+'.png'),raw);pictures.append({**image,'bytes':raw})
++                        fresh_write(destination/'native-assets'/relative.with_suffix('')/(image['id']+'.png'),raw, contract=contract);pictures.append({**image,'bytes':raw})
+                     print_html,projection,tiles=project_html(html,pictures)
+                     source_md=safe_path(entry['markdown']).read_bytes();require(sha(source_md)==entry['markdownSha256'],'source Markdown changed before exact copy')
+-                    fresh_write(destination/'HTML'/relative.with_suffix('.html'),html);fresh_write(destination/'Markdown'/relative,source_md)
+-                    fresh_write(qa/'print-projection.html',print_html.encode('utf-8'))
+-                    for tile in tiles:fresh_write(qa/'native-tiles'/(tile['sourceId']+'-'+str(tile['tileOrdinal']).zfill(3)+'.png'),tile['bytes'])
+-                    stage(destination,'set-content',documentId=entry['documentId']);page=context.new_page()
++                    fresh_write(destination/'HTML'/relative.with_suffix('.html'),html, contract=contract);fresh_write(destination/'Markdown'/relative,source_md, contract=contract)
++                    fresh_write(qa/'print-projection.html',print_html.encode('utf-8'), contract=contract)
++                    for tile in tiles:fresh_write(qa/'native-tiles'/(tile['sourceId']+'-'+str(tile['tileOrdinal']).zfill(3)+'.png'),tile['bytes'], contract=contract)
++                    stage(destination,'set-content',documentId=entry['documentId'], contract=contract);page=context.new_page()
+                     try:
+                         page.set_viewport_size({'width':CONTENT_WIDTH_PX,'height':1000});page.set_content(print_html,wait_until='domcontentloaded',timeout=45000);page.emulate_media(media='print')
+-                        stage(destination,'trusted-geometry-measure');geometry=page.evaluate(GEOMETRY_JS);json_write(qa/'print-geometry.json',geometry)
++                        stage(destination,'trusted-geometry-measure', contract=contract);geometry=page.evaluate(GEOMETRY_JS);json_write(qa/'print-geometry.json',geometry, contract=contract)
+                         require(not geometry['issues'],'print geometry clips or splits a whole token')
+-                        visibility=canonical_print_visibility(html,entry,projection,page);json_write(qa/'canonical-print-visibility.json',visibility)
+-                        stage(destination,'print-pdf');data=page.pdf(format='A3',landscape=True,scale=1,print_background=True,prefer_css_page_size=True,margin={'top':'12mm','bottom':'12mm','left':'12mm','right':'12mm'})
++                        visibility=canonical_print_visibility(html,entry,projection,page);json_write(qa/'canonical-print-visibility.json',visibility, contract=contract)
++                        stage(destination,'print-pdf', contract=contract);data=page.pdf(format='A3',landscape=True,scale=1,print_background=True,prefer_css_page_size=True,margin={'top':'12mm','bottom':'12mm','left':'12mm','right':'12mm'})
+                     finally:page.close()
+                     require(not blocked,'unexpected external resource request')
+-                    pdf=fresh_write(destination/'PDF'/relative.with_suffix('.pdf'),data)
+-                    stage(destination,'complete-text-coverage');reader=PdfReader(io.BytesIO(data),strict=True);require(bool(reader.pages),'PDF has no pages')
++                    pdf=fresh_write(destination/'PDF'/relative.with_suffix('.pdf'),data, contract=contract)
++                    stage(destination,'complete-text-coverage', contract=contract);reader=PdfReader(io.BytesIO(data),strict=True);require(bool(reader.pages),'PDF has no pages')
+                     extracted='\n'.join(p.extract_text() or '' for p in reader.pages);model=document_model(entry);coverage=text_coverage(extracted,model)
+                     soup=BeautifulSoup(html.decode('utf-8'),'html.parser')
+                     for element in soup.select('style,script'):element.decompose()
+@@ -257,16 +264,16 @@
+                             'fullCanonicalNodes':len(canonical_strings),'visibleOrderedNodes':len(visibility['visibleCanonicalOrderedStrings']),
+                             'measuredExcludedOrdinals':[row['sourceCanonicalOrdinal'] for row in visibility['measuredExclusions']],
+                             'allOriginalModelCoverageAndMultiplicityStillRequired':True})
+-                    fresh_write(qa/'pypdf-extracted.txt',extracted.encode('utf-8'));json_write(qa/'text-coverage.json',coverage)
++                    fresh_write(qa/'pypdf-extracted.txt',extracted.encode('utf-8'), contract=contract);json_write(qa/'text-coverage.json',coverage, contract=contract)
+                     require(not coverage['missing'] and not coverage['multiplicityFailures'] and not missing and not coverage['canonicalTextOrder']['orderFailures'],'PDF incomplete or reordered literal text')
+                     root=reader.trailer['/Root'];require(not any(k in root for k in ('/OpenAction','/AA','/AcroForm')),'active PDF catalog unsupported')
+-                    stage(destination,'poppler-all-pages',pages=len(reader.pages))
++                    stage(destination,'poppler-all-pages',pages=len(reader.pages), contract=contract)
+                     proc=subprocess.run([str(poppler),'-png','-r','110','-f','1','-l',str(len(reader.pages)),str(pdf),str(qa/'page')],capture_output=True,text=True,timeout=args.stage_timeout-5)
+                     require(proc.returncode==0,'Poppler capture failed: '+proc.stderr[:1000])
+                     images=sorted(qa.glob('page-*.png'));require(len(images)==len(reader.pages),'native PDF page count mismatch')
+-                    load_bound(args.binding,args.binding_sha256);tool(args.chromium,args.chromium_sha256);tool(args.poppler,args.poppler_sha256)
++                    load_bound(args.binding,args.binding_sha256, contract=contract);tool(args.chromium,args.chromium_sha256);tool(args.poppler,args.poppler_sha256)
+                     record['documents'].append({'documentId':entry['documentId'],'canonicalDocumentPath':entry['canonicalDocumentPath'],'markdownSha256':entry['markdownSha256'],'canonicalHtmlSha256':sha(html),'renderPinsSha256':entry['renderPinsSha256'],'renderManifestSha256':entry['renderManifestSha256'],'pdfPath':str(pdf),'pdfSha256':sha(data),'pages':len(reader.pages),'projection':projection,'geometry':geometry,'textCoverage':coverage,'pageImages':[{'path':str(p),'sha256':sha(safe_path(p).read_bytes())} for p in images],'allActualPagesViewed':False,'visualReview':'PENDING','formalQualityAssessed':False,'adoption':False})
+-                    stage(destination,'document-written',pages=len(reader.pages))
++                    stage(destination,'document-written',pages=len(reader.pages), contract=contract)
+             finally:context.close();browser.close()
+         record['status']='TEXT_CHECKED_ALL_NATIVE_PAGES_REVIEW_REQUIRED'
+     except BaseException as exc:record.update(status='FAILED',error=str(exc));raise
+@@ -275,13 +282,15 @@
+         for k,v in oldenv.items():
+             if v is None:os.environ.pop(k,None)
+             else:os.environ[k]=v
+-        json_write(destination/'delivery-manifest.json',record)
++        json_write(destination/'delivery-manifest.json',record, contract=contract)
+ 
+ def main():
+     p=argparse.ArgumentParser();p.add_argument('--binding',type=Path,required=True);p.add_argument('--binding-sha256',required=True);p.add_argument('--output-root',type=Path,required=True)
+     p.add_argument('--chromium',type=Path,required=True);p.add_argument('--chromium-sha256',required=True);p.add_argument('--poppler',type=Path,required=True);p.add_argument('--poppler-sha256',required=True)
+     p.add_argument('--stage-timeout',type=int,default=90);p.add_argument('--total-timeout',type=int,default=900);p.add_argument('--pdf-marker-completed',action='store_true');p.add_argument('--worker',action='store_true',help=argparse.SUPPRESS)
+-    args=p.parse_args();require(args.pdf_marker_completed,'one-time root PDF marker must already have completed');require(30<=args.stage_timeout<=300 and args.stage_timeout<=args.total_timeout<=3600,'bounded timeout required')
+-    if args.worker:worker(args)
+-    else:supervise(args)
+-if __name__=='__main__':main()
++    add_contract_arguments(p)
++    args=p.parse_args();contract=load_args(args);require(args.pdf_marker_completed,'one-time root PDF marker must already have completed');require(30<=args.stage_timeout<=300 and args.stage_timeout<=args.total_timeout<=3600,'bounded timeout required')
++    if args.worker:worker(args, contract=contract)
++    else:supervise(args, contract=contract)
++    contract.recheck()
++if __name__=='__main__':raise ValueError('HOLD: use pinned run_contract execute entry')

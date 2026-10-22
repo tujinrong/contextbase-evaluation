@@ -1,0 +1,338 @@
+--- r02/run_contract.py
++++ r03/run_contract.py
+@@ -17,9 +17,9 @@
+ import sys
+ 
+ FILES = {'run_contract.py', 'markdown_model.py', 'artifact_xlsx.mjs', 'fs_preflight.py',
+-         'native_annex.py', 'print_metadata.py', 'verify_xlsx.py', 'verify_original_sheets.py', 'verify_actual_case.py',
++         'native_annex.py', 'measured_height.py', 'print_metadata.py', 'verify_xlsx.py', 'verify_original_sheets.py', 'verify_actual_case.py',
+          'pdf_projection.py', 'offline_pdf.py', 'profiles/v2-preserved.json', 'profiles/runtime.json'}
+-OPERATIONS = {'model', 'annex', 'xlsx', 'verify', 'print', 'pdf'}
++OPERATIONS = {'model', 'height', 'annex', 'xlsx', 'verify', 'print', 'pdf'}
+ FORBIDDEN = {'input', 'rawinput', 'raw-input', 'raw', 'source', 'src', 'spec', 'spec-eval', 'evaluator-only', 'source-pilot'}
+ MAX_READ = 256_000_000
+ 
+@@ -95,7 +95,7 @@
+         raw = read_pinned(self.path, self.sha256, limit=2_000_000)
+         data = unique_json(raw.decode('utf-8'))
+         keys(data, {'schema', 'workspace', 'runId', 'projectId', 'packageManifest', 'sourceIdentity', 'binding',
+-                    'outputRoots', 'markerReceipts', 'executionGrant'})
++                    'outputRoots', 'markerReceipts', 'executionGrant', 'measuredPlan', 'inputStage'})
+         require(data['schema'] == 'spec-agent-conversion-run-contract/1', 'contract schema')
+         run = data['runId']
+         require(isinstance(run, str) and re.fullmatch('[A-Za-z0-9][A-Za-z0-9_-]{0,79}', run), 'canonical bounded run ID')
+@@ -193,6 +193,17 @@
+             self.owned(descriptor(pin)['path'])
+         if data['executionGrant'] is not None:
+             self.owned(descriptor(data['executionGrant'])['path'])
++        if data['measuredPlan'] is not None:
++            self.owned(descriptor(data['measuredPlan'])['path'])
++        if data['inputStage'] is not None:
++            stage = keys(data['inputStage'], {'acceptedInputModel', 'antecedentContract', 'requiredMeasuredReceipt'})
++            for name in ('acceptedInputModel', 'antecedentContract'):
++                self.owned(descriptor(stage[name])['path'])
++            require(data['measuredPlan'] is not None, 'staged input requires exact measured plan')
++            if stage['requiredMeasuredReceipt'] is not None:
++                self.owned(descriptor(stage['requiredMeasuredReceipt'])['path'])
++        else:
++            require(data['measuredPlan'] is None, 'measured plan requires immutable antecedent stage')
+         self.data = data
+         self.execution = execution
+         if check_files:
+@@ -200,12 +211,20 @@
+         if execution:
+             require(data['executionGrant'] is not None, 'candidate has no root execution adoption grant')
+             grant = unique_json(read_pinned(**{'path': data['executionGrant']['path'], 'expected': data['executionGrant']['sha256']}).decode('utf-8'))
+-            keys(grant, {'schema', 'actor', 'workspace', 'runId', 'projectId', 'packageManifestSha256', 'contractIdentity', 'binding', 'outputRoots', 'markerReceipts', 'allowedOperations', 'allowExecution', 'qualification'})
++            keys(grant, {'schema', 'actor', 'workspace', 'runId', 'projectId', 'packageManifestSha256', 'contractIdentity', 'binding', 'outputRoots', 'markerReceipts', 'allowedOperations', 'allowExecution', 'qualification', 'measuredPlan', 'inputStage'})
+             require(grant['schema'] == 'spec-agent-conversion-root-execution-grant/1' and grant['actor'] == '/root'
+                     and grant['runId'] == run and grant['projectId'] == data['projectId']
+                     and grant['workspace'] == data['workspace'] and grant['packageManifestSha256'] == package_pin['sha256'] and grant['contractIdentity'] == identity
+                     and grant['binding'] == data['binding'] and grant['outputRoots'] == data['outputRoots'] and grant['markerReceipts'] == data['markerReceipts']
+                     and grant['allowExecution'] is True and set(grant['allowedOperations']).issubset(OPERATIONS), 'exact root execution grant')
++            require(grant['measuredPlan'] == data['measuredPlan'] and grant['inputStage'] == data['inputStage'], 'exact root-granted measured plan/input stage')
++            require(isinstance(grant['allowedOperations'], list) and len(grant['allowedOperations']) == len(set(grant['allowedOperations'])), 'distinct granted operations')
++            if data['inputStage'] is None:
++                require('height' not in grant['allowedOperations'], 'height needs measured input stage')
++            elif data['inputStage']['requiredMeasuredReceipt'] is None:
++                require(set(grant['allowedOperations']) == {'height'}, 'unmeasured antecedent allowed only for height projection')
++            else:
++                require(set(grant['allowedOperations']).issubset({'annex', 'xlsx', 'verify', 'print'}), 'measured receipt stage only downstream XLSX formatting')
+             self.grant = grant
+ 
+     def owned(self, value, *, fresh=False):
+@@ -280,6 +299,68 @@
+                 require(collection['pinnedInputs'].get(pin['path']) == pin['sha256'], 'collection plan/context provenance mismatch')
+         return bound
+ 
++    def stage_contract(self, pin, *, height=False):
++        descriptor(pin); self.owned(pin['path'])
++        require(absolute(pin['path']) != self.path, 'immutable prior contract, no self-stage')
++        prior = RunContract(pin['path'], pin['sha256'], execution=True)
++        require(prior.package == self.package and prior.data['packageManifest'] == self.data['packageManifest']
++                and prior.data['workspace'] == self.data['workspace'] and prior.data['runId'] == self.data['runId']
++                and prior.data['projectId'] == self.data['projectId'] and prior.data['sourceIdentity'] == self.data['sourceIdentity']
++                and prior.binding == self.binding and prior.data['markerReceipts'] == self.data['markerReceipts'], 'same package/run/binding/source/context across immutable stages')
++        require(all(disjoint(absolute(current), absolute(previous))
++                    for current in self.data['outputRoots'].values() for previous in prior.data['outputRoots'].values()),
++                'fresh operation roots disjoint from all antecedent stage outputs')
++        require(all(disjoint(absolute(current), prior.path) for current in self.data['outputRoots'].values()), 'outputs cannot alias antecedent contract')
++        if height:
++            require(prior.data['inputStage'] is not None and prior.data['inputStage']['requiredMeasuredReceipt'] is None
++                    and prior.data['inputStage']['antecedentContract'] == self.data['inputStage']['antecedentContract']
++                    and set(prior.grant['allowedOperations']) == {'height'}, 'exact prior height-only root grant')
++        else:
++            require(prior.data['inputStage'] is None and prior.data['measuredPlan'] is None, 'single original stage; no arbitrary stage chain')
++            require('model' in prior.grant['allowedOperations'], 'original model stage was root-granted')
++        return prior
++
++    def original_stage_model(self, pin):
++        descriptor(pin)
++        require(self.data['inputStage'] is not None, 'antecedent contract required')
++        prior = self.stage_contract(self.data['inputStage']['antecedentContract'])
++        model = unique_json(read_pinned(self.owned(pin['path']), pin['sha256']).decode('utf8'))
++        require(absolute(pin['path']).is_relative_to(absolute(prior.data['outputRoots']['model']))
++                and model.get('conversionContract') == prior.provenance() and model.get('binding') == self.binding['path']
++                and model.get('bindingSha256') == self.binding['sha256']
++                and model.get('sourceSnapshotManifestSha256') == self.data['sourceIdentity']['sourceSnapshotManifestSha256']
++                and model.get('referenceMode') == 'source-only', 'exact original model origin, binding and source identity')
++        bound = self.check_binding(self.binding['path'], self.binding['sha256'])
++        fields = ('documentId', 'canonicalDocumentPath', 'markdown', 'markdownSha256', 'renderDirectory', 'renderPinsSha256', 'renderManifestSha256')
++        require(len(model['documents']) == len(bound['documents']) and
++                [[d[k] for k in fields] for d in model['documents']] == [[d[k] for k in fields] for d in bound['documents']],
++                'complete ordered bound document/source/render identity across stages')
++        return model
++
++    def model_input_proof(self, pin, *, annex_receipt=None):
++        descriptor(pin)
++        model = unique_json(read_pinned(self.owned(pin['path']), pin['sha256']).decode('utf8'))
++        stage = self.data['inputStage']
++        if stage is None:
++            require(model.get('conversionContract') == self.provenance(), 'exact current package/run model provenance')
++            return {'scope':'CURRENT_CONTRACT_MODEL', 'model':pin, 'originContract':model['conversionContract'], 'actualNativeQualified':False}
++        require(stage['requiredMeasuredReceipt'] is not None, 'unmeasured stage cannot author XLSX')
++        base_pin = stage['acceptedInputModel']
++        proof = self.module('measured_height').verify(self, stage['requiredMeasuredReceipt'], base_pin)
++        require(proof['plan'] == self.data['measuredPlan'], 'root plan and required measured receipt agree')
++        if pin != base_pin:
++            require(annex_receipt is not None, 'exact accepted model or verified append-only annex required')
++            descriptor(annex_receipt)
++            require(absolute(pin['path']).is_relative_to(absolute(self.data['outputRoots']['annex']))
++                    and absolute(annex_receipt['path']).is_relative_to(absolute(self.data['outputRoots']['annex'])), 'annex belongs to current stage output')
++            annex = self.module('native_annex').verify(annex_receipt['path'], annex_receipt['sha256'], pin['path'], pin['sha256'], contract=self)
++            require(annex['sourceModel'] == base_pin, 'annex extends exact root-accepted measured model')
++        prior = self.stage_contract(stage['antecedentContract'])
++        require(model['conversionContract'] == prior.provenance(), 'immutable antecedent model provenance retained')
++        self.recheck()
++        return {'scope':'EXACT_MEASURED_ANTECEDENT_MODEL', 'model':pin, 'originContract':model['conversionContract'],
++                'currentExecutionContract':self.provenance(), 'measuredProof':proof, 'actualNativeQualified':False}
++
+     def marker(self, format_name):
+         pin = self.data['markerReceipts'][format_name]
+         record = unique_json(read_pinned(self.owned(pin['path']), pin['sha256'], limit=200_000).decode('utf-8'))
+@@ -312,6 +393,11 @@
+             read_pinned(self.owned(pin['path']), pin['sha256'])
+         for pin in self.data['markerReceipts'].values():
+             read_pinned(self.owned(pin['path']), pin['sha256'], limit=200_000)
++        if self.data['measuredPlan'] is not None:
++            pin = self.data['measuredPlan']; read_pinned(self.owned(pin['path']), pin['sha256'])
++        if self.data['inputStage'] is not None:
++            for pin in self.data['inputStage'].values():
++                if pin is not None: read_pinned(self.owned(pin['path']), pin['sha256'])
+         if self.data['executionGrant'] is not None:
+             pin = self.data['executionGrant']
+             read_pinned(self.owned(pin['path']), pin['sha256'], limit=200_000)
+@@ -339,7 +425,7 @@
+ def main():
+     parser = argparse.ArgumentParser(description='Candidate metadata boundary, not publication')
+     add_contract_arguments(parser)
+-    parser.add_argument('--mode', choices=['validate', 'fs', 'annex-verify', 'execute'], required=True)
++    parser.add_argument('--mode', choices=['validate', 'fs', 'annex-verify', 'model-verify', 'execute'], required=True)
+     parser.add_argument('--operation', choices=sorted(OPERATIONS))
+     parser.add_argument('--fresh', action='store_true')
+     parser.add_argument('--model'); parser.add_argument('--model-sha256')
+@@ -363,18 +449,24 @@
+         require(len(request_raw) <= 1_048_576, 'bounded FS request')
+         request = unique_json(request_raw.decode('utf-8'))
+         print(json.dumps(contract.module('fs_preflight').check(request, contract=contract), ensure_ascii=False))
++    elif args.mode == 'model-verify':
++        contract.enable_dependencies()
++        require(args.model and args.model_sha256, 'exact model input descriptor')
++        require(bool(args.receipt) == bool(args.receipt_sha256), 'paired annex receipt descriptor')
++        annex = {'path':args.receipt, 'sha256':args.receipt_sha256} if args.receipt else None
++        print(json.dumps(contract.model_input_proof({'path':args.model, 'sha256':args.model_sha256}, annex_receipt=annex), ensure_ascii=False))
+     elif args.mode == 'annex-verify':
+         contract.enable_dependencies()
+         result = contract.module('native_annex').verify(args.receipt, args.receipt_sha256, args.model, args.model_sha256, contract=contract)
+         contract.recheck()
+         print(json.dumps(result, ensure_ascii=False))
+     else:
+-        require(args.operation in {'model', 'annex', 'verify', 'print', 'pdf'}, 'fixed Python converter operation')
++        require(args.operation in {'model', 'height', 'annex', 'verify', 'print', 'pdf'}, 'fixed Python converter operation')
+         require(extra[:1] == ['--'], 'explicit component argument delimiter required')
+         contract.enable_dependencies()
+         contract.module('markdown_model')
+         contract.module('pdf_projection')
+-        target = {'model':'markdown_model', 'annex':'native_annex', 'verify':'verify_actual_case', 'print':'print_metadata', 'pdf':'offline_pdf'}[args.operation]
++        target = {'model':'markdown_model', 'height':'measured_height', 'annex':'native_annex', 'verify':'verify_actual_case', 'print':'print_metadata', 'pdf':'offline_pdf'}[args.operation]
+         module = contract.module(target)
+         forwarded = extra[1:] if extra[:1] == ['--'] else extra
+         # Fixed component code parses all forwarded values; no module/function selection from config.
+--- r02/native_annex.py
++++ r03/native_annex.py
+@@ -254,6 +254,7 @@
+     else:
+         require(args.output_root and not args.receipt and not args.receipt_sha256, 'prepare arguments')
+         contract.begin('annex', args.output_root)
++        contract.model_input_proof({'path':args.model, 'sha256':args.model_sha256})
+         result = prepare(args.model, args.model_sha256, args.output_root, contract=contract)
+     contract.recheck(); print(json.dumps(result, ensure_ascii=False))
+ 
+--- r02/verify_original_sheets.py
++++ r03/verify_original_sheets.py
+@@ -2,7 +2,7 @@
+ 
+ This supplies equality evidence, never actual visual/print approval.
+ """
+-import hashlib, io, json, posixpath, zipfile, re
++import hashlib, io, json, posixpath, zipfile, re, copy, math
+ from xml.etree import ElementTree as ET
+ 
+ S='http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+@@ -104,14 +104,34 @@
+                        'generatedDrawingUuidNames':generated_names})
+     return result,members
+ 
+-def compare(old_raw,new_raw,original_count):
++def normalize_measured_row_heights(old,new,overrides):
++    require(isinstance(overrides,list) and 0<len(overrides)<=64,'bounded explicit measured overrides')
++    normalized=copy.deepcopy(new);seen=set()
++    for item in overrides:
++        require(set(item)=={'sheetOrdinal','sheet','row','beforePt','afterPt'},'typed height override')
++        index=item['sheetOrdinal'];row=item['row']
++        require(type(index) is int and 0<=index<len(old) and type(row) is int and row>0 and (index,row) not in seen,'distinct original XML row')
++        seen.add((index,row));require(old[index]['name']==normalized[index]['name']==item['sheet'],'measured sheet name')
++        before=item['beforePt'];after=item['afterPt']
++        require(type(before) in {int,float} and type(after) in {int,float} and math.isfinite(before) and math.isfinite(after) and 0<before<after<=409,'explicit measured height increase')
++        a=[r for r in old[index]['sheetData'] if r[0].get('r')==str(row)]
++        b=[r for r in normalized[index]['sheetData'] if r[0].get('r')==str(row)]
++        require(len(a)==len(b)==1 and float(a[0][0].get('ht','nan'))==before and float(b[0][0].get('ht','nan'))==after,'observed XML heights exactly match declaration')
++        b[0][0]['ht']=a[0][0]['ht']
++    return normalized
++
++
++def compare(old_raw,new_raw,original_count,row_height_overrides=None):
+     old,old_members=signatures(old_raw);new,new_members=signatures(new_raw)
+     require(type(original_count) is int and original_count==len(old) and len(new)>=original_count,'original/annex sheet counts')
+-    require(old==new[:original_count],'original cells/types/styles/row-heights/columns/merges/drawing extents changed')
++    original_new=new[:original_count]
++    if row_height_overrides is not None:original_new=normalize_measured_row_heights(old,original_new,row_height_overrides)
++    require(old==original_new and json.dumps(old,ensure_ascii=False,sort_keys=True)==json.dumps(original_new,ensure_ascii=False,sort_keys=True),'original cells/types/styles/columns/merges/drawings changed outside declared measured heights')
+     source_images=[sha(v) for k,v in old_members.items() if k.startswith('xl/media/')]
+     new_images=[sha(v) for k,v in new_members.items() if k.startswith('xl/media/')]
+     require(all(new_images.count(h)>=source_images.count(h) for h in set(source_images)),'original PNG payload missing/changed')
+-    return {'scope':'READ_ONLY_ORIGINAL_SHEETS_EQUALITY','originalSheets':original_count,'originalSheetSignaturesExact':True,
++    return {'scope':'READ_ONLY_ORIGINAL_SHEETS_EQUALITY_EXCEPT_DECLARED_ROW_HEIGHTS' if row_height_overrides else 'READ_ONLY_ORIGINAL_SHEETS_EQUALITY','originalSheets':original_count,'originalSheetSignaturesExact':row_height_overrides is None,
++            'originalSheetSignaturesExactExceptDeclaredRowHeights':True,'rowHeightExceptions':row_height_overrides or [],
+             'originalPngPayloadsRetained':len(source_images),'originalCellsIncludingBlankAndMergedContinuationXml':sum(x['cellsIncludingBlanks'] for x in old),
+             'metadataOnlyPrintingExcludedFromComparison':True,'actualNativeOrPrintApproval':False,
+             'observedGeneratedDrawingUuidNamesNormalized':sum(x['generatedDrawingUuidNames'] for x in old),
+--- r02/pdf_projection.py
++++ r03/pdf_projection.py
+@@ -16,6 +16,7 @@
+ table[data-renderer-markdown]:not([data-renderer-columns="1"]):not([data-renderer-columns="2"]) th:first-child,
+ table[data-renderer-markdown]:not([data-renderer-columns="1"]):not([data-renderer-columns="2"]) td:first-child{white-space:nowrap;min-width:6em}
+ table[data-renderer-markdown] code{white-space:nowrap}
++table[data-renderer-markdown][data-renderer-columns="2"] a{white-space:nowrap}
+ table[data-renderer-markdown][data-renderer-columns="10"]{font-size:9pt}
+ table[data-renderer-markdown][data-renderer-columns="10"] code{font-size:inherit}
+ table[data-renderer-markdown][data-renderer-columns="10"] th,table[data-renderer-markdown][data-renderer-columns="10"] td{padding-left:3px;padding-right:3px}
+--- r02/verify_actual_case.py
++++ r03/verify_actual_case.py
+@@ -13,25 +13,41 @@
+     c=contract.module('verify_original_sheets')
+     raw_case=g.read(args.case,args.case_sha256, contract=contract);case=g.unique(raw_case.decode('utf8'))
+     assert case['schema']=='actual-annex-verification-case/1'
++    expected_keys={'schema','sourceModel','model','annexReceipt','originalAuthorManifest','authorManifest','documentId','verificationOutput','printPlanOutput'}
++    if contract.data['inputStage'] is not None:expected_keys.update({'originalSourceModel','measuredRowHeightReceipt'})
++    assert set(case)==expected_keys
+     def bound(key):
+         pin=case[key];return g.read(pin['path'],pin['sha256'], contract=contract)
+     source=g.unique(bound('sourceModel').decode('utf8'));model=g.unique(bound('model').decode('utf8'))
+     proof=g.verify(case['annexReceipt']['path'],case['annexReceipt']['sha256'],case['model']['path'],case['model']['sha256'], contract=contract)
+     assert proof['sourceModel']==case['sourceModel']
++    row_proof=None;original_source=source
++    if contract.data['inputStage'] is not None:
++        receipt=contract.data['inputStage']['requiredMeasuredReceipt']
++        assert receipt is not None and case['measuredRowHeightReceipt']==receipt
++        row_proof=contract.module('measured_height').verify(contract,receipt,case['sourceModel'])
++        assert case['originalSourceModel']==row_proof['sourceModel']
++        original_source=g.unique(bound('originalSourceModel').decode('utf8'))
++        contract.model_input_proof(case['model'],annex_receipt=case['annexReceipt'])
++    else:
++        assert 'measuredRowHeightReceipt' not in case and 'originalSourceModel' not in case
++        contract.model_input_proof(case['model'],annex_receipt=case['annexReceipt'])
+     old_manifest=g.unique(bound('originalAuthorManifest').decode('utf8'));manifest=g.unique(bound('authorManifest').decode('utf8'))
+     assert len(source['documents'])==len(model['documents'])==len(old_manifest['documents'])==len(manifest['documents'])==1
+     doc=model['documents'][0];original=source['documents'][0];actual=manifest['documents'][0];old=old_manifest['documents'][0]
+     assert manifest['status']==old_manifest['status']=='EXPORTED_VERIFICATION_PENDING'
+-    assert manifest['modelSha256']==case['model']['sha256'] and old_manifest['modelSha256']==case['sourceModel']['sha256']
++    assert manifest['conversionExecutionContract']==contract.provenance()
++    assert manifest['modelSha256']==case['model']['sha256'] and old_manifest['modelSha256']==(case['originalSourceModel'] if row_proof else case['sourceModel'])['sha256']
+     assert doc['documentId']==original['documentId']==actual['documentId']==old['documentId']==case['documentId']
+     data=g.read(actual['xlsx'],actual['xlsxSha256'], contract=contract);old_data=g.read(old['xlsx'],old['xlsxSha256'], contract=contract)
+-    original_check=v.verify(old_data,original,require_print=False);check=v.verify(data,doc,require_print=False)
+-    equality=c.compare(old_data,data,len(original['sheets']))
++    original_check=v.verify(old_data,original_source['documents'][0],require_print=False);check=v.verify(data,doc,require_print=False)
++    equality=c.compare(old_data,data,len(original['sheets']),row_height_overrides=row_proof['rowHeightOverrides'] if row_proof else None)
+     original_count=len(old['writtenCells']);assert actual['writtenCells'][:original_count]==old['writtenCells']
+     report={'schema':'actual-annex-readonly-verification/1','scope':'READ_ONLY_MODEL_SOURCE_AND_ORIGINAL_SHEETS_EQUALITY',
+             'createdUtc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'status':'PASS_MECHANICAL_NATIVE_PENDING',
+             'case':args.case,'caseSha256':args.case_sha256,'sourceModel':case['sourceModel'],'model':case['model'],
+             'xlsx':actual['xlsx'],'xlsxSha256':actual['xlsxSha256'],'originalBaselineXlsx':old['xlsx'],'originalBaselineXlsxSha256':old['xlsxSha256'],
++            'conversionExecutionContract':contract.provenance(),'measuredRowHeightProof':row_proof,
+             'originalBaselineVerification':original_check,'verification':check,'originalSheetComparison':equality,
+             'originalWrittenCells':original_count,'allOriginalWrittenCellsExactAndOrdered':True,'actualNativeOrPrintQualified':False}
+     contract.output('verify',case['verificationOutput'],fresh=True)
+@@ -49,6 +65,8 @@
+           'source':{'path':actual['xlsx'],'sha256':actual['xlsxSha256']},'sourceAuthorReceipt':case['authorManifest'],
+           'sourceModel':case['model'],'nativePrintAnnexReceipt':case['annexReceipt'],'sheets':items}
+     plan_path=g.safe(case['printPlanOutput'],fresh=True, contract=contract);plan_path.write_text(json.dumps(plan,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
++    if row_proof:
++        bound('originalSourceModel');contract.module('measured_height').verify(contract,contract.data['inputStage']['requiredMeasuredReceipt'],case['sourceModel'])
+     bound('sourceModel');bound('model');bound('originalAuthorManifest');bound('authorManifest');g.read(args.case,args.case_sha256, contract=contract)
+     contract.recheck()
+     print(json.dumps({'verification':str(output),'verificationSha256':digest(output.read_bytes()),'printPlan':str(plan_path),
+--- r02/artifact_xlsx.mjs
++++ r03/artifact_xlsx.mjs
+@@ -51,7 +51,7 @@
+ if(!rawModelPath||!outputRoot||!modelSha||!argv.includes('--authoring-marker-completed'))throw new Error('Supply pinned --model/--model-sha256, fresh --output-root and acknowledged completed author marker.');
+ const ARTIFACT_ENTRY=checkedContract.tools.artifactEntry.path;
+ const packageEntryPin={checked:[checkedContract.tools.artifactEntry,checkedContract.tools.artifactPackage],importExecuted:false,raceFreeGuarantee:false};
+-const { Workbook, SpreadsheetFile }=await import(pathToFileURL(ARTIFACT_ENTRY).href);
++// Public Artifact import occurs after the exact model/stage proof below.
+ 
+ const modelPath=path.resolve(rawModelPath);const destination=path.resolve(outputRoot);
+ const readPinned=async(file,expectedSha,role)=>{
+@@ -83,7 +83,11 @@
+   const bytes=await fs.readFile(file);if(hash(bytes)!==sha)throw new Error('Owned output changed during read');preflight(request);return bytes;
+ };
+ const modelRaw=await readPinned(modelPath,modelSha,'model');const model=JSON.parse(modelRaw.toString('utf8'));
+-if(JSON.stringify(model.conversionContract)!==JSON.stringify(checkedContract.provenance))throw new Error('Exact package/run model provenance required');
++const inputStageArgs=['--model',modelPath,'--model-sha256',modelSha];
++if(option('--print-annex-receipt'))inputStageArgs.push('--receipt',option('--print-annex-receipt'),'--receipt-sha256',option('--print-annex-receipt-sha256'));
++const modelInputProof=JSON.parse(boundary('model-verify',inputStageArgs));
++if(JSON.stringify(model.conversionContract)!==JSON.stringify(modelInputProof.originContract)||modelInputProof.model.path!==modelPath||modelInputProof.model.sha256!==modelSha)throw new Error('Exact verified model origin/stage required');
++const { Workbook, SpreadsheetFile }=await import(pathToFileURL(ARTIFACT_ENTRY).href);
+ const ANNEX_HELPER=path.join(packageRoot,'native_annex.py');
+ const ANNEX_HELPER_SHA=checkedContract.codePins['native_annex.py'];
+ const annexReceiptPath=option('--print-annex-receipt');const annexReceiptSha=option('--print-annex-receipt-sha256');
+@@ -114,7 +118,7 @@
+   if(!a||(!a.startsWith('..')&&!path.isAbsolute(a))||(!b.startsWith('..')&&!path.isAbsolute(b)))throw new Error('Output must be disjoint from pinned inputs/model');
+ }
+ const provenance={schema:'reverse-agent-xlsx-delivery/1',modelSha256:hash(modelRaw),bindingSha256:model.bindingSha256,
+-  conversionContract:model.conversionContract,
++  conversionContract:model.conversionContract,conversionExecutionContract:checkedContract.provenance,modelInputProof,
+   sourceSnapshotManifestSha256:model.sourceSnapshotManifestSha256,referenceMode:model.referenceMode,businessContentAuthored:false,applicationExecuted:false,
+   formatInterpretation:'existing V2 reference preservation interpreted as V2-62',
+   filesystemPreflight:{helperSha256:HELPER_SHA,bootstrap:'pinned-fixed-contract-module-cli-no-source-string-execution',scope:'CALLER_FS_ACTOR_ONLY',raceFreeGuarantee:false,packageRuntimeFilesystemBoundaryChanged:false,publicBundledPackageEntry:packageEntryPin,checks:fsChecks},

@@ -1,0 +1,33 @@
+{
+  "documentId": "DATA-CONTRACTS",
+  "path": "共通/データオブジェクト定義書.md",
+  "contentSha256": "69cc709fbb0d55982f40633cb83a9005c299d87be463bb49f18ff9cc395da79d",
+  "aiAuthored": true,
+  "semanticProseAssembledByPython": false,
+  "analysisFacts": 58,
+  "unresolved": [
+    "本番の職員名簿・顧客基本表の実DB型、容量、NULL、制約を定義する本番DDLは提供されていない。検索列と移送用途は確認できるが、ローカル互換DDLの属性を本番へ転用しない。外部数値列やBIGINTの顧客番号をgetInt・Integerで扱える実データ範囲も未確認である。",
+    "店名、区分名称、年金種類名称、外部職員氏名等の保存・更新側の業務入口と業務上限は確定できない。提供DDLの容量を名称入力の業務上限として代用していない。",
+    "ServletコンテナーによるWindows-31Jの要求復号、JNDIの実登録内容、JDBCドライバーの数値・日付変換、既存配備表との一致は未確認である。ソース上の変換契約を実環境の動作保証へ拡張していない。",
+    "正規化後に空となる必須日付、およびActionとRepositoryの予約キー比較規則の差は現行経路として記載した。これらを許容する業務意図と修正方針は確定できず、改善案を現行仕様へ採用していない。",
+    "予約キー・コード名称の実データ重複、既存DBの制約、同時要求時の競合結果は未確認である。同一Repositoryインスタンスの同期、件数検査、commit・rollbackから、DB全体の一意性や比較版による排他を保証しない。",
+    "searchCandidates、findLatestAuditType、AuditType.fromCodeの通常画面からの呼出し、およびPensionLookupActionの付属UIからの呼出しは確認されていない。宣言された補助処理・JSON入口として区別した。",
+    "本稿はsource-onlyの提供factsと許可された原文再読に基づく。参考設計、workspace外、評価資料は参照せず、入力プログラム・DB・ビルド・テストは実行していない。ファイル生成、図の描画、HTML・PDF・Excelの表示確認、配備バイナリ照合は未実施であり、正式率はnullとする。"
+  ],
+  "factCorrections": [
+    "DATA-CONTRACTS 2.0「画面状態／登録内容印刷画面」：前稿の「両方が正数なら自以下の至を要求」を「店番自≦店番至」に訂正した。同値を受け付け、自＞至は検索前に拒否する。至が変換後nullなら自の一店舗、範囲不使用なら両引数nullという既存説明およびSQL対応表も整合させた。再読根拠：sources/nenkin/WEB-INF/src/nenkin/ReportPreviewAction.java、開始行3・終了行3。sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java、開始行249・終了行272。",
+    "DC-049の0件結果を明確化した。生成Excelが0の場合、filesは空だがmessagesには選択区分ごとの0件理由を保持する。messagesも空になるという解釈は採用しない。本文「出力要求・結果／日次・月次の集約結果」に反映した。再読根拠：sources/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java、開始行74・終了行112。"
+  ],
+  "analysisExecutedInThisJob": false,
+  "analysisJob": "D:\\開発\\contextbase-evaluation\\agents\\reverse-agent\\.tmp\\20261015-nenkin-all-01\\jobs\\documents-01\\bbd8e20e1834a399\\round-01",
+  "snapshot": {
+    "manifestSha256": "a28612d98f58abbddbdae4a16cf7a4d162b525642186b2ec5b1b13e151d85957",
+    "capsuleSchema": "reverse-ai-source-capsule/2",
+    "mode": "source-only",
+    "modeDerivation": "explicit-manifest-mode",
+    "scope": "sealed-manifest-and-raw-material"
+  },
+  "referenceMode": "source-only",
+  "structureFindings": [],
+  "status": "AI_DRAFT_NOT_YET_INDEPENDENTLY_REVIEWED"
+}

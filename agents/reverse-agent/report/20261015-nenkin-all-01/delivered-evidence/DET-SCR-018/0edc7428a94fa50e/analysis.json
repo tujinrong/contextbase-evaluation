@@ -1,0 +1,1747 @@
+{
+  "documentId": "DET-SCR-018",
+  "sourcePathsRead": [
+    "manifest.json",
+    "sources/nenkin/JSP/NENKIN/Pension.jsp",
+    "sources/nenkin/JSP/NENKIN/Menu.jsp",
+    "sources/nenkin/JSP/NENKIN/Lookup.jsp",
+    "sources/nenkin/JSP/COMMON/Error.jsp",
+    "sources/nenkin/WEB-INF/web.xml",
+    "sources/nenkin/WEB-INF/src/nenkin/PensionViewAction.java",
+    "sources/nenkin/WEB-INF/src/nenkin/PensionLoadAction.java",
+    "sources/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+    "sources/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java",
+    "sources/nenkin/WEB-INF/src/nenkin/PensionClearAction.java",
+    "sources/nenkin/WEB-INF/src/nenkin/PensionLookupAction.java",
+    "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+    "sources/nenkin/WEB-INF/src/nenkin/LookupViewAction.java",
+    "sources/nenkin/WEB-INF/src/nenkin/LookupSearchAction.java",
+    "sources/nenkin/WEB-INF/src/nenkin/bean/PensionViewBean.java",
+    "sources/nenkin/WEB-INF/src/nenkin/bean/LookupViewBean.java",
+    "sources/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java",
+    "sources/nenkin/WEB-INF/src/nenkin/model/StaffContext.java",
+    "sources/nenkin/WEB-INF/src/nenkin/model/CodeLookupItem.java",
+    "sources/nenkin/WEB-INF/src/nenkin/model/BranchLookupItem.java",
+    "sources/nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java",
+    "sources/nenkin/WEB-INF/src/nenkin/model/CustomerLookupItem.java",
+    "sources/nenkin/WEB-INF/src/nenkin/model/AuditType.java",
+    "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+    "sources/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+    "sources/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java",
+    "sources/nenkin/WEB-INF/src/nenkin/service/NenkinDataAccessException.java",
+    "sources/nenkin/WEB-INF/src/nenkin/util/AnsiTextUtil.java",
+    "sources/nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+    "sources/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java",
+    "sources/nenkin/WEB-INF/resources/db/schema.sql",
+    "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+    "sources/nenkin/WEB-INF/resources/db/data.sql",
+    "sources/nenkin/assets/js/app.js",
+    "sources/nenkin/assets/js/japanese-era-calendar.js",
+    "sources/nenkin/assets/css/site.css",
+    "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+    "indexed/nenkin/WEB-INF/src/nenkin/util/DateUtil.java.txt",
+    "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+    "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+    "indexed/nenkin/assets/css/site.css.txt",
+    "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/CommonAction.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/OperatePermission.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/CounterShift.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/base/CommonBase.java.txt",
+    "indexed/n2framework/WEB-INF/src/common/util/CommonUtil.java.txt"
+  ],
+  "facts": [
+    {
+      "id": "DET-SCR-018-F001",
+      "topic": "画面責務と通常入口",
+      "statement": "予約画面は、空の予約入力、既存予約の読込み、顧客基本情報の取込み、登録・変更、削除、クリアを扱う。メニューの「新規・変更・削除」はFUNCTION_ID=nenkin、VIEW_ID=Pension、COMMAND_ID=Viewを送る。画面自身は/Action.doへPOSTし、登録・削除・クリア・読込みではCOMMAND_IDをSave・Delete・Clear・Loadに切り替える。「戻る」はMenu/Viewへ送る。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Menu.jsp",
+          "startLine": 9,
+          "endLine": 13
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 18,
+          "endLine": 19
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 46,
+          "endLine": 68
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F002",
+      "topic": "Servlet接続と要求識別値",
+      "statement": "/Action.doはcommon.ControlServletへ登録されている。通常POST処理はパラメータ読取り前にWindows-31Jを指定し、FUNCTION_IDを小文字化したパッケージとVIEW_ID・COMMAND_IDからActionクラス名を組み立て、要求ごとに生成してperformを呼ぶ。Pensionの各要求はnenkin.PensionViewAction等へ接続する。FUNCTION_ID欠落時のtoLowerCase、VIEW_ID欠落時のequalsはAction実行用tryより前で失敗し得る。COMMAND_ID欠落はクラス名の連結結果へ影響し、クラス生成側のcatch対象となる。フォームの固定hiddenだけを直接要求の完全性保証とは扱えない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/web.xml",
+          "startLine": 15,
+          "endLine": 24
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 107,
+          "endLine": 116
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 243,
+          "endLine": 248
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 309,
+          "endLine": 345
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F003",
+      "topic": "共通認証と運用判定",
+      "statement": "通常要求では共通LoginBeanのログイン可否を確認し、未ログインならErrorMsgに時間切れを設定して共通エラーへ進む。ログイン済みの場合はAction生成前にOperatePermission.checkを行う。nenkinは運用状態表を検索する業務分岐に含まれず、接続取得後に対象外としてtrueを返すため、運用状態表を検索しないことと、職員系DB接続に依存しないことは同義ではない。接続等の例外は運用判定内で記録され、falseとなり得る。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 311,
+          "endLine": 339
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 396,
+          "endLine": 403
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/OperatePermission.java.txt",
+          "startLine": 26,
+          "endLine": 84
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F004",
+      "topic": "年金職員セッション",
+      "statement": "View・Load・Save・Deleteは最初にrequireStaffを呼ぶ。NENKIN_STAFF_CONTEXTがStaffContextなら再利用し、CSRFトークンを用意する。職員情報がなければ、ログイン可のLoginInfoBeanにある職員番号をtrimし、1～8桁の数字列の場合に名簿照会してStaffContextを作る。名簿不在等ではLoginBean、年金職員情報、CSRFを所定の分岐で除去し、MESSAGEに理由を設定してログインJSPへ戻る。名簿照会中の例外をrequireStaff自身で画面入力エラーへ変換するcatchはない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 45,
+          "endLine": 86
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 206,
+          "endLine": 235
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionViewAction.java",
+          "startLine": 8,
+          "endLine": 11
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionLoadAction.java",
+          "startLine": 11,
+          "endLine": 13
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+          "startLine": 10,
+          "endLine": 17
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java",
+          "startLine": 10,
+          "endLine": 15
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F005",
+      "topic": "POST・CSRF検査と順序",
+      "statement": "Save・Deleteは職員確認、フォーム値のモデル化、POST・CSRF照合の順で処理する。CSRF_TOKENは要求Stringであり、セッションNENKIN_CSRF_TOKENのStringと完全一致することを確認する。欠落・不一致・POST以外は「画面の有効期限が切れました。メニューから操作しなおしてください。」を設定し、入力モデルをexisting=falseで再表示する。ここではHTTP拒否コードを設定していない。View・Load・Clearには同じ変更認可検査を呼ぶ記述がない。トークンは既存の非空Stringを再利用し、なければUUID文字列を生成する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 33,
+          "endLine": 35
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 81,
+          "endLine": 94
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+          "startLine": 10,
+          "endLine": 17
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java",
+          "startLine": 10,
+          "endLine": 15
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionLoadAction.java",
+          "startLine": 11,
+          "endLine": 31
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F006",
+      "topic": "変更・削除権限",
+      "statement": "制限判定の対象は入力した店番ではなくログイン職員の所属店番である。所属店番75かつ役職コードをtrim後に整数化した値が3000未満の場合に制限し、役職コードの数値変換失敗も制限する。Saveでは現在キーの既存予約がある場合だけこの制限を適用し、新規扱いには適用しない。Deleteでは対象同一性確認後に適用する。拒否時はDBから取得した既存予約をexisting=trueで表示し、「推進役以上」の変更・削除を求める。画面ボタン自体の権限別非表示・disabledは実装されていない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 96,
+          "endLine": 100
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+          "startLine": 39,
+          "endLine": 47
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java",
+          "startLine": 24,
+          "endLine": 33
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 46,
+          "endLine": 46
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F007",
+      "topic": "初期表示・クリア",
+      "statement": "Viewは職員確認後、createEmpty(staff)で新しいPensionReservationを作り、メッセージ空、existing=falseのPensionViewBeanをセッションへ設定してPension.jspを返す。createEmpty(staff)はstaff引数から店番・担当者・日付を補充せず、単に空モデルを返す。数値項目はnull、文字列は空、六つのbooleanはfalseとなる。ClearはPensionViewActionを継承するだけなので、同じ初期状態を作り直す処理であり、予約本表の削除やセッション全体の破棄ではない。JSP描画時には別途候補取得が発生する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionViewAction.java",
+          "startLine": 7,
+          "endLine": 12
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionClearAction.java",
+          "startLine": 6,
+          "endLine": 7
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 78,
+          "endLine": 84
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java",
+          "startLine": 13,
+          "endLine": 41
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 3,
+          "endLine": 4
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F008",
+      "topic": "保持領域・モデル・表示職員",
+      "statement": "フォーム値は要求からPensionReservationへ手動移送され、PensionViewBeanのreservation・message・existingとともにセッション属性ViewBeanへ保持される。PensionViewBeanのreservation設定はnullを空モデルへ置き換えるが、非nullモデルはコピーせず保持する。ヘッダーの職員番号はStaffContext.staffNoを8桁ゼロ埋めしたString、氏名はStaffContext.staffNameから作り、予約の担当者コードとは区別する。参照結果のSubWindowBean、職員情報、CSRFはそれぞれ別のセッション属性である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/bean/PensionViewBean.java",
+          "startLine": 6,
+          "endLine": 22
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 33,
+          "endLine": 47
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 191,
+          "endLine": 201
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+          "startLine": 31,
+          "endLine": 43
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 14,
+          "endLine": 14
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F009",
+      "topic": "画面構成と表示状態",
+      "statement": "実DOMは共有ヘッダー、戻るボタン付き画面見出し、状態メッセージ、基本情報と予約情報の二領域、登録・削除・クリア、iframe参照モーダル、確認メッセージボックスから成る。通常幅ではaccess-layoutが二列で予約フォームの間隔は36px、項目ラベル列は128pxである。960px以下で一列、640px以下で項目ラベルと入力も一列となる。参照モーダルは最大1120px・720px相当、確認ボックスは最大440px相当のCSSを使う。role=statusは属性であり、見た目はclass=message等のセレクターで決まる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 14,
+          "endLine": 51
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 772,
+          "endLine": 829
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1076,
+          "endLine": 1175
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 2002,
+          "endLine": 2105
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F010",
+      "topic": "hidden制御項目とキーのロック",
+      "statement": "FUNCTION_ID・VIEW_ID・COMMAND_IDは要求振分け用Stringであり予約列へ保存しない。CSRF_TOKENはセッション照合用Stringである。ORIGINAL_KANA・ORIGINAL_PHONEはexisting=trueの再表示モデルから生成するStringで、Save・Delete時に元対象をDB照会するために使う。existing=falseでは両方空になる。LOOKUP_KANA・LOOKUP_PHONEは毎描画空で、顧客選択またはキー入力変更時にブラウザーが設定し、Loadの検索キーとして使う。existing=trueではkanaNameとphoneNumberをreadonlyにするが、ORIGINAL値は比較版や署名ではなく、サーバーに選択済みキーを別保存して照合する処理もない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 4,
+          "endLine": 4
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 19,
+          "endLine": 29
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 65,
+          "endLine": 66
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+          "startLine": 24,
+          "endLine": 36
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java",
+          "startLine": 17,
+          "endLine": 21
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F011",
+      "topic": "HTTP文字列からJava値への変換",
+      "statement": "readReservationはrequest.getParameterの文字列を直接読むため、この経路に別のフォームDTO自動バインドはない。文字列はnullを空文字へ変換してString.trimを行う。BRANCH_NO・CUSTOMER_NO・STAFF_CODE・PLANNED_AGEはtrim後のInteger.parseInt結果が正数の場合だけIntegerとして保持し、欠落、空、ゼロ、負数、変換失敗はnullになる。チェック項目は受信値が1、true、onの場合にtrueとし、trueとonの大文字小文字を区別しない。それ以外と欠落はfalseである。モデル文字列のsetterもnullを空へ変換する。これらはDB列のNULL制約とは別の契約である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 119,
+          "endLine": 164
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java",
+          "startLine": 13,
+          "endLine": 38
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java",
+          "startLine": 287,
+          "endLine": 289
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F012",
+      "topic": "項目対応・店番・顧客番号・担当者コード",
+      "statement": "branchNo/BRANCH_NO→branchNo:Integer→店番、customerNo/CUSTOMER_NO→customerNo:Integer→顧客番号、staffCode/STAFF_CODE→staffCode:Integer→担当者コードの対応で保存する。HTMLにはそれぞれmaxlength=3・7・4、data-digits-onlyがあるが、サーバーに同じ桁数検査はない。保存時は三項目ともsetInt、null時Types.INTEGERであり、DBの顧客番号がBIGINTでもJavaとJDBCはInteger範囲で扱う。SQL Serverの店番・担当者コードはINT NULL、顧客番号はBIGINT NULLで、H2も対応するINTEGER・BIGINTのnullable列である。Save・Deleteは店番の非nullを要求する。顧客番号・担当者コードの空欄等はnullとして保存し、候補の存在確認や所属整合性検査はこの保存経路にない。Loadの顧客基本照会には店番と顧客番号の両方が必要である。予約キー検索・削除WHEREには店番も顧客番号も含まれない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 22,
+          "endLine": 24
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 121,
+          "endLine": 151
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 704,
+          "endLine": 709
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 63,
+          "endLine": 65
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 107,
+          "endLine": 109
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionLoadAction.java",
+          "startLine": 21,
+          "endLine": 24
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F013",
+      "topic": "項目対応・フリガナと正規化キー",
+      "statement": "kanaName/KANA_NAMEはPensionReservation.kanaName:Stringへtrimして受信する。登録と削除で空文字を拒否し、保存時・予約検索時にはNFKC、trim、全角空白の置換、連続半角空白の一個化、Locale.JAPANでの大文字化を行う。正規化結果をふりがな列へsetStringし、同列の等価検索にも使う。SQL ServerはNVARCHAR(100) NULL、H2はVARCHAR(100)であり、画面・Action・Repositoryに同じ100の業務長検査はない。ActionのsameReservationKeyはNFKCとtrim、大文字化を行うが空白の集約はしないため、Repositoryの正規化と同一の処理ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 25,
+          "endLine": 25
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 102,
+          "endLine": 106
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 138,
+          "endLine": 170
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 513,
+          "endLine": 524
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 837,
+          "endLine": 840
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 67,
+          "endLine": 67
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 111,
+          "endLine": 111
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F014",
+      "topic": "項目対応・電話番号の表示値と保存値",
+      "statement": "phoneNumber/PHONE_NUMBERはモデルではStringで、受信時はtrimする。RepositoryはCharacter.isDigitで拾った文字をCharacter.digitでASCII数字へ移し、数字がなければnull、あればBigDecimalにする。検索はsetBigDecimal、保存はsetBigDecimalまたはTypes.DECIMALで、列は両DDLともDECIMAL(15,0)のnullableである。ハイフン等を含む表示文字列をそのまま保存せず、先頭ゼロも数値としては保持しない。再読取りでは先頭ゼロを整理した数字列の長さが9または10で、0始まりでなければ0を一つ補う。電話番号0は数字なしとは異なり数値ゼロとして扱う。画面にmaxlengthはなく、15桁のDB容量検査もActionにはない。Actionのキー比較はNFKC後のASCII数字だけを抽出する別実装である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 29,
+          "endLine": 29
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 102,
+          "endLine": 116
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 807,
+          "endLine": 815
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 843,
+          "endLine": 865
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 329,
+          "endLine": 355
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 70,
+          "endLine": 70
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 114,
+          "endLine": 114
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F015",
+      "topic": "項目対応・顧客氏名・住所・配偶者名",
+      "statement": "customerName/CUSTOMER_NAME→customerName:String→顧客氏名、address/ADDRESSのtextarea→address:String→住所、spouseName/SPOUSE_NAME→spouseName:String→配偶者名は、いずれも受信時にtrimし、setStringで保存する。Saveの必須検査対象には含まれず、空欄は空文字をバインドする。SQL Server列は順にNVARCHAR(100)・NVARCHAR(300)・NVARCHAR(100)で全てNULL可、H2は同じ容量のVARCHARである。これらの画面にmaxlengthはなく、保存処理にもこのDB容量に対応する長さ検査はない。customerNameDisplayはcustomerNameを表示する別spanであり、独立した保存項目ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 23,
+          "endLine": 28
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 38,
+          "endLine": 38
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 138,
+          "endLine": 181
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 707,
+          "endLine": 728
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 63,
+          "endLine": 85
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 107,
+          "endLine": 129
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F016",
+      "topic": "項目対応・四つの日付入力",
+      "statement": "birthDate/BIRTH_DATE→birthDate:String→生年月日、spouseBirthDate/SPOUSE_BIRTH_DATE→spouseBirthDate:String→配偶者生年月日、claimDate/CLAIM_SCHEDULED_DATE→claimScheduledDate:String→請求予定日、requestDate/RESERVATION_REQUEST_DATE→reservationRequestDate:String→予約徴求日の対応である。画面maxlengthはいずれも14で、前二項目は和暦、後二項目は西暦表示モードを指定する。Saveでは空欄を許容して空文字とし、非空値をDateUtilでISO日付へ変換する。Repositoryも日付を再正規化し、非空はjava.sql.DateによるsetDate、空はTypes.DATEで保存する。両DDLとも対応列はDATEでNULL可である。Load・DeleteはSave用の日付検査を呼ばないため、画面入力日付が常にISOであるとは扱えない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 30,
+          "endLine": 41
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 148,
+          "endLine": 188
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 526,
+          "endLine": 531
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 715,
+          "endLine": 733
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 817,
+          "endLine": 825
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 71,
+          "endLine": 84
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 115,
+          "endLine": 128
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F017",
+      "topic": "項目対応・予定年齢",
+      "statement": "plannedAge/PLANNED_AGEはmaxlength=3、data-digits-onlyの入力で、plannedAge:Integerへ正数変換し、予定年齢列へsetIntまたはTypes.INTEGERで保存する。両DDLの列はINT/INTEGERでNULL可である。生年月日または請求予定日のinput・changeでは、両方をブラウザーの日付parserで解釈できた場合に請求年から出生年を引いた値で上書きする。誕生日の到来や月日は差引きに使わず、片方が不正・空なら既存の予定年齢を消さない。サーバーは年齢を再計算せず、送信された値を変換するので、0・負数・不正値はnullとなり、日付との一致検査もない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 37,
+          "endLine": 37
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 67,
+          "endLine": 68
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 121,
+          "endLine": 125
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 151,
+          "endLine": 151
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 725,
+          "endLine": 726
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 80,
+          "endLine": 80
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 124,
+          "endLine": 124
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F018",
+      "topic": "項目対応・性別・裁定請求書徴収・受給有無",
+      "statement": "gender/GENDER→gender:String、claimStatus/CLAIM_STATUS→claimStatus:String、hasBenefit/HAS_BENEFIT→hasBenefit:Stringは、selectの表示名称そのものをoption値として受信する。保存先は順に年金1_LK.性別・裁定請求・受給有無であり、名称を対応コード表から逆引きしてsetInt、空選択はTypes.INTEGERでNULLを設定する。両DDLの保存列はTINYINTでNULL可である。読込み表示元は性別テーブル.性別、裁定請求テーブル.裁定請求、受給有無テーブル.受給有無へのLEFT JOIN結果で、予約表のコードを名称としてそのまま表示しない。名称が空でないのに逆引き先がなければDB処理例外となる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 27,
+          "endLine": 40
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 145,
+          "endLine": 156
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 573,
+          "endLine": 593
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 712,
+          "endLine": 730
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 772,
+          "endLine": 778
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 68,
+          "endLine": 83
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F019",
+      "topic": "項目対応・年金種類の五選択と合成値",
+      "statement": "NATIONAL_PENSION、EMPLOYEE_PENSION、MUTUAL_AID_PENSION、EMPLOYEE_PENSION_FUND、NATIONAL_PENSION_FUNDはbooleanへ変換し、対応する「種類：国民年金」「種類：厚生年金」「種類：共済年金」「種類：厚生年金基金」「種類：国民年金基金」列へsetIntの1/0で保存する。SQL Server列はBIT NULL、H2列はBOOLEANでNULL可である。さらに同順の重み1・2・4・8・16を加算して年金種類コードを作り、合計0なら年金種類列をNULL、非0なら年金種類テーブルにそのコードが存在することを確認して保存する。年金種類列自体はINT/INTEGER NULLである。画面の表示順は国民年金、厚生年金基金、厚生年金、国民年金基金、共済年金で、各文言はコード1・8・2・16・4の名称から取得する。pensionType:Stringは合成コードのJOIN名称を保持する表示用モデル値で、フォームから直接受信しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 34,
+          "endLine": 34
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 158,
+          "endLine": 163
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 596,
+          "endLine": 620
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 717,
+          "endLine": 722
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 72,
+          "endLine": 77
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 116,
+          "endLine": 121
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F020",
+      "topic": "項目対応・備考の56バイト検査",
+      "statement": "notes/NOTESのtextareaはnotes:Stringへtrimして受信し、備考列へsetStringする。空欄は許容される。ActionはWindows-31Jへ変換でき、変換後56バイト以内であることを検査し、不適合時はExcel出力時の文字切れを示す文言で再表示する。Repositoryも保存前に同じ条件を検査するが、変換不可と超過で異なるIllegalArgumentExceptionを送出する。56は文字数やJavaコード単位数ではなく、Windows-31Jのバイト長である。画面にmaxlengthや自動切捨ての接続はない。DB容量はSQL ServerがNVARCHAR(400) NULL、H2がVARCHAR(400)で、業務上限56バイトとは別である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 42,
+          "endLine": 42
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 154,
+          "endLine": 180
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/AnsiTextUtil.java",
+          "startLine": 13,
+          "endLine": 47
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/AnsiTextUtil.java",
+          "startLine": 69,
+          "endLine": 79
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 526,
+          "endLine": 526
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 85,
+          "endLine": 85
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 129,
+          "endLine": 129
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F021",
+      "topic": "項目対応・６ヶ月先確認",
+      "statement": "SIX_MONTH_CHECKはvalue=1のcheckboxからsixMonthCheck:booleanへ変換する。未送信等はfalseとなり、「６ヶ月先確認」列へsetIntの1/0で保存する。SQL Server列はBIT NULL、H2列はBOOLEANでNULL可である。既存のDB NULLはgetInt結果を0と比較するためモデル上falseとなり、次の保存では明示的な0に置き換わる。この項目を将来日付の自動判定や処理済み日時として扱う実装はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 43,
+          "endLine": 43
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 133,
+          "endLine": 135
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 163,
+          "endLine": 163
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 736,
+          "endLine": 737
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 763,
+          "endLine": 768
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 89,
+          "endLine": 89
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 133,
+          "endLine": 133
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F022",
+      "topic": "更新管理項目",
+      "statement": "dataUpdateDate/DATA_UPDATE_DATEはreadonlyの表示入力だが、要求値はdataUpdateDate:Stringへ受信される。保存時にはコピーしたモデルの値をサーバー当日へ上書きし、データ更新日へDATEとして設定するため、送信値を更新日や比較版として採用しない。更新時間はDateUtil.currentTimeのHH:mm:ss.SSSから先頭8文字をjava.sql.Timeへ変換し、更新者はログインStaffContext.staffNoをsetIntする。入力の担当者コードと更新者は別である。変更FLGは新規0・変更1・削除明細NULLを設定する。SQL Serverの列型はDATE、TIME(0)、INT、TINYINTで全てNULL可、H2はDATE、TIME、INTEGER、TINYINTである。日時生成はJavaの既定タイムゾーンに依存する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 31,
+          "endLine": 31
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 153,
+          "endLine": 153
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+          "startLine": 39,
+          "endLine": 47
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 527,
+          "endLine": 531
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 657,
+          "endLine": 737
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 827,
+          "endLine": 834
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/DateUtil.java.txt",
+          "startLine": 114,
+          "endLine": 119
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 86,
+          "endLine": 90
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F023",
+      "topic": "表示専用名称と保存対象",
+      "statement": "branchNameは要求項目ではなく、予約取得時の店名テーブルLEFT JOIN、顧客基本取込み後の店舗コード照会、またはブラウザーの店舗選択で表示する名称である。保存前にも店番で再照会するが、名称は28保存列に含まれず、未登録店番を名称不在だけで拒否しない。customerNameDisplayは顧客氏名入力と同じモデル値の表示である。staffNameDisplayはJSP初期値が空で、担当者参照の選択メッセージでのみ設定し、予約モデル・要求・予約表へは保存しない。そのため再描画で担当者コードが残っていても担当者名spanは空になる。店舗・担当者を手入力した際に名称を自動再照会する接続はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 22,
+          "endLine": 24
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 65,
+          "endLine": 68
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 34,
+          "endLine": 58
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 288,
+          "endLine": 290
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 535,
+          "endLine": 550
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F024",
+      "topic": "コード候補の取得・順序・選択保持",
+      "statement": "Pension.jspは毎描画、性別・裁定請求・受給有無の候補と年金種類名称をReferenceDataServiceから取り直す。各コード表をコード・名称の二列で全件取得し、コード昇順に並べ、抽出パラメータはない。selectの先頭は空選択で、モデル名称と候補名称の完全一致でselectedを付ける。モデル値が候補に存在しない場合に旧値用optionを補う処理はない。年金種類は取得一覧をコードキーのMapにし、画面で必要な五つの単独コードを引く。候補0件やMapの該当コード不在では空選択・空名称が生じ、取得例外はJSP自身で捕捉しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 4,
+          "endLine": 4
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 27,
+          "endLine": 40
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 237,
+          "endLine": 286
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java",
+          "startLine": 11,
+          "endLine": 20
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F025",
+      "topic": "候補名称のDB属性と更新側の範囲",
+      "statement": "コード表の名称列はSQL Serverで性別・裁定請求・受給有無がNVARCHAR(10) NOT NULL、店名がNVARCHAR(80) NOT NULL、年金種類がNVARCHAR(120) NOT NULLで、各コード列にPKがある。H2では対応するVARCHAR容量とNOT NULLを宣言する。一方、予約からのLEFT JOIN結果は参照不成立時にNULLとなり、モデルでは空文字へ変換される。ローカル初期データにはこれら五表のMERGEがあり、性別・裁定請求・受給有無の各二名称、店舗二件、年金種類1～31を設定する。接続された年金Java処理にこれら名称を保守する保存入口は確認できず、名称の業務上限をDDL容量だけから確定できない。外部職員・顧客表の名称は別参照先である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 10,
+          "endLine": 56
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 81,
+          "endLine": 104
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/data.sql",
+          "startLine": 55,
+          "endLine": 62
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/data.sql",
+          "startLine": 64,
+          "endLine": 94
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 741,
+          "endLine": 778
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F026",
+      "topic": "登録・削除のブラウザー確認",
+      "statement": "登録ボタンは店番の非空、フリガナと電話番号の非空を順に確認し、欠ければ案内ボックスを表示して送信しない。通過後に登録確認を表示し、OKだけがSave送信へ進む。削除も店番、キー二項目、削除確認の順で、キャンセル時は送信しない。ブラウザー検査はvalueの非空確認であり、trim後やRepository正規化後の値を保証しない。確認ボックスは通常確認ではOK・キャンセル、案内ではキャンセルをhiddenにし、Escape時にはキャンセル側のclick処理を呼ぶ。クリア・戻るは同じ確認を経由せずフォームを送る。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 46,
+          "endLine": 68
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F027",
+      "topic": "共通数字入力補助の接続",
+      "statement": "店番・顧客番号・担当者コード・予定年齢のdata-digits-onlyにapp.jsの補助が接続する。全角0～9を半角化し、数字以外を除き、値が変わればchangeを発火する。input・blur時と初回bind時に実施し、編集可能な非空入力のfocus時には全選択を予約する。顧客番号のchangeは予約画面の参照開始条件にもつながる。電話番号とフリガナにはこの属性がなく、共通data-trim・data-uppercase補助も当該項目へ指定されていない。クライアント補助をサーバーへ届く要求値の保証へ拡張できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/assets/js/app.js",
+          "startLine": 6,
+          "endLine": 78
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 22,
+          "endLine": 29
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 37,
+          "endLine": 37
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 68,
+          "endLine": 68
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F028",
+      "topic": "日付補助とサーバー日付検査の差",
+      "statement": "四つの日付入力はdata-era-calendarと対応toggleボタンに接続する。カレンダー初期月は解釈できる入力日を優先し、なければ当日を使う。月移動、日選択、外側クリック・Escapeによる終了があり、日選択は表示モードの文字列を入力へ設定してinput・changeを発火する。この画面にはdata-era-hidden-inputがなく、ISO専用hiddenへ送信値を分離していない。ブラウザーparserは元号略字一文字や区切りなし元号日付等も扱い、blur・changeで解釈可能な日付を表示形式へ直す。サーバーDateUtilはNFKC後に西暦区切り形式・8桁西暦・正式元号名またはM/T/S/H/Rの区切り形式を検査し、実在日と元号期間を確認する。両parserの受理形式は同一ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 30,
+          "endLine": 41
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 113,
+          "endLine": 178
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 279,
+          "endLine": 418
+        },
+        {
+          "path": "indexed/nenkin/assets/js/japanese-era-calendar.js.txt",
+          "startLine": 421,
+          "endLine": 440
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+          "startLine": 15,
+          "endLine": 71
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+          "startLine": 139,
+          "endLine": 180
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F029",
+      "topic": "参照・候補を開くイベント",
+      "statement": "店番・担当者・顧客の参照は、対象targetと現在店番をLookup/ViewへPOSTし、lookupFrameに表示する。電話番号横の「候補」もtargetをcustomerへ置き換え、現在フリガナをNAME_KEYWORD、現在電話番号をPHONE_KEYWORDとして顧客参照を開く。予約候補テーブルの検索ではない。モーダル開始時は呼出元を記憶して閉じるボタンへフォーカスし、終了時はiframeをabout:blankにして呼出元へ戻す。顧客番号changeでも、店番・顧客番号が非空かつORIGINAL_KANAが空なら顧客参照を開くが、顧客番号をその参照の検索条件としては送っていない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 22,
+          "endLine": 29
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 62,
+          "endLine": 68
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/LookupViewAction.java",
+          "startLine": 14,
+          "endLine": 20
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F030",
+      "topic": "参照選択値の移送と保持",
+      "statement": "参照子画面はsource=nenkin.lookupを付けて同一origin宛てにpostMessageする。予約画面はevent.originとdata.sourceを確認するが、event.sourceをlookupFrameと比較する処理はない。店舗選択は店番・店名だけ、担当者選択は担当者コード・担当者名だけを更新し、他項目や元キーを消さない。顧客選択は店番・顧客番号・店名・顧客氏名の表示span・LOOKUP二項目を設定してLoadを送る。送信データに含まれる担当者コードを親画面で直接移送する処理はなく、後続の予約または顧客基本照会結果でモデルを作る。参照の閉じるは選択を変更せず、参照側のクリアは検索条件を空にして再検索する操作であり、親予約の選択解除ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Lookup.jsp",
+          "startLine": 24,
+          "endLine": 35
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 64,
+          "endLine": 65
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F031",
+      "topic": "参照候補の取得元・条件・順序",
+      "statement": "店舗候補は業務DBの店名テーブルから取得し、キーワード空なら全件、非空なら店舗コード文字列または店名の部分一致、店舗コード順である。担当者候補は職員DBのDB2.Ｕ職員名簿表で、正数化できた店番があれば所属店番一致、名称があればカナ氏名または漢字氏名の部分一致、職員番号順である。顧客候補は顧客DBのN2_SIGHT.Ｂ顧客基本表で、店番、漢字氏名またはカナ氏名、数字化して先頭ゼロを整理した電話番号の部分一致を条件にし、店舗コード・顧客番号・カナ氏名順である。LIKE値は特殊文字をエスケープしてsetStringし、店番はsetIntする。職員・顧客の店名は別接続で取得した店名Mapから突き合わせる。いずれも全件取得後に20件単位で切り出し、ページ上限補正は切出し後に行う。店番が空・不正でnullになれば、その店番条件を付けない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 41,
+          "endLine": 182
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 289,
+          "endLine": 372
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/LookupViewAction.java",
+          "startLine": 16,
+          "endLine": 22
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/bean/LookupViewBean.java",
+          "startLine": 17,
+          "endLine": 40
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F032",
+      "topic": "Loadの処理順と状態分岐",
+      "statement": "Loadは職員確認後に現在フォームをinputへ保持する。LOOKUP_KANA・LOOKUP_PHONEをそれぞれtrimし、空の項目だけ現在フォームのフリガナ・電話番号で補う。最初にこの二項目で予約を照会し、あれば店番・顧客番号の入力にかかわらず予約全体を表示してexisting=true、「既存データを読み込みました。」とする。予約がなければBRANCH_NO・CUSTOMER_NOを正数Integerへ変換し、両方ある場合だけ顧客基本表へ進む。顧客があればその新しいモデルをexisting=false、「顧客基本表から読み込みました。」で表示し、なければinputをメッセージ空・existing=falseで保持する。既存予約と顧客基本の二分岐を同じ成功状態へ固定せず、モデルの取得元とキーのロック状態を引き継ぐ必要がある。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionLoadAction.java",
+          "startLine": 11,
+          "endLine": 31
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 4,
+          "endLine": 19
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F033",
+      "topic": "予約キー照会SQL・JOIN・結果形",
+      "statement": "findByKanaAndPhoneはフリガナ正規化と電話BigDecimal化を先に行い、フリガナ空または電話nullならDBへ接続せずnullを返す。照会SQLは年金1_LKをRとし、店名B、性別G、裁定請求C、受給有無H、年金種類Pを各コードでLEFT JOINし、WHEREはR.ふりがな=? AND R.電話番号=?だけである。バインドは1がsetStringの正規化フリガナ、2がsetBigDecimalの電話番号である。取得する26表示項目は予約の基本・予約入力値、店舗名、三コード名称、合成年金種類名称、五種類フラグ、確認フラグで、更新時間・更新者・変更FLGはこのモデルへ取得しない。ORDER BY、ページング、複数件検査はなく、results.nextの最初の一件だけを返す。ER材料はR.店番=B.店舗ｺｰﾄﾞ、R.性別=G.性別ｺｰﾄﾞ、R.裁定請求=C.裁請ｺｰﾄﾞ、R.受給有無=H.受給ｺｰﾄﾞ、R.年金種類=P.種類ｺｰﾄﾞという検索関連であり、FK宣言ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 43,
+          "endLine": 58
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 144,
+          "endLine": 168
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 741,
+          "endLine": 778
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F034",
+      "topic": "顧客基本フォールバックのSQLと移送",
+      "statement": "findByCustomerは顧客接続でN2_SIGHT.Ｂ顧客基本表を読み、WHERE C.店舗コード=? AND C.顧客番号=?へ順にsetIntする。SELECTは店舗コード、顧客番号、担当者コード、漢字氏名、カナ氏名、性別コード、漢字住所、電話番号、生年月日の九項目で、最初の一件を新しいPensionReservationへ移す。電話は表示変換し、生年月日は空または0を空、少数点以下を除いた値をISO日付へ変換する。顧客接続を閉じた後、業務接続で店舗名をsetIntの店舗コード照会、性別名称を変換した性別コードのsetInt照会で補う。予約情報・配偶者情報等は現在フォームから合成せず新モデルの初期値になる。顧客表SQL例外、日付変換のIllegalArgumentException、後段の表示値照会例外はLoad内で捕捉されない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 87,
+          "endLine": 141
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 535,
+          "endLine": 570
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 329,
+          "endLine": 346
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionLoadAction.java",
+          "startLine": 19,
+          "endLine": 31
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F035",
+      "topic": "Save入力検査の順序と部分的な正規化",
+      "statement": "SaveのvalidateAndNormalizeは、店番非null、フリガナ非空、電話番号非空、生年月日、配偶者生年月日、請求予定日、予約徴求日、備考の順に検査し、最初の不備を返す。日付は一項目ずつ成功直後にモデルを書き換えるため、後続項目で失敗した場合も先行日付のISO化は残る。DATA_UPDATE_DATEはこの検査に含まれない。フリガナと電話番号の必須検査はreadReservationのtrim後に行うが、RepositoryのNFKCや数字抽出より前である。このため全角空白だけのフリガナ、数字を含まない非空電話文字列はここを通過し得る。これは保存可能と確認した結果ではなく、後段に拒否検査がある経路である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 138,
+          "endLine": 188
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 513,
+          "endLine": 531
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 837,
+          "endLine": 860
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F036",
+      "topic": "Save入力拒否後のDB照会と再表示",
+      "statement": "validateAndNormalizeがエラーを返しても、Saveは直ちに描画へ進まず、入力モデルのフリガナ・電話番号で既存予約を照会する。その存在だけをexistingへ設定し、表示するreservationはDB取得モデルに置き換えず、部分正規化や不正値を含む入力valueのまま保持する。照会で例外が起きれば入力エラー再表示まで到達しない。再表示がexisting=trueならその入力valueからORIGINAL二項目を再作成し、キー入力をreadonlyにする。入力エラー時の既存判定と、正常検査後の重複時にDBモデルへ置き換える処理は異なる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+          "startLine": 17,
+          "endLine": 21
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 4,
+          "endLine": 19
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 167,
+          "endLine": 201
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F037",
+      "topic": "Saveの現在キー・元キー照会と拒否分岐",
+      "statement": "入力検査成功後は現在フリガナ・電話番号によるexisting照会、ORIGINAL_KANA・ORIGINAL_PHONEによるoriginal照会の順に実行する。existingがあり、sameReservationKey(existing, original)がfalseなら、既存DBモデルをexisting=trueで表示し、同じキーのデータを読んだので内容確認後に登録するよう求める。この分岐を先に評価する。existingがなくoriginalがある場合は、元DBモデルをexisting=trueで表示し、キー変更不可・クリア後の新規入力を求める。original欠落や不正キーはRepositoryがnullへ扱うので、現在対象があれば重複確認に進み、両方なければ保存処理へ進む。ORIGINALの非空だけを「既存更新」と判定していない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+          "startLine": 23,
+          "endLine": 38
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+          "startLine": 102,
+          "endLine": 116
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 144,
+          "endLine": 161
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F038",
+      "topic": "Saveの権限判定から戻り値まで",
+      "statement": "現在キー・元キーによる二つの拒否分岐を通過した後、現在existingがある場合だけ職員権限制限を確認する。通過後は入力valueとログイン職員番号をrepository.saveへ渡す。Repositoryが返すAuditType.NEW/CHANGEDはActionで表示分岐に使わず、正常復帰後はいずれも新しい空モデル、existing=false、「登録終了！」をViewBeanへ設定してPension.jspを返す。Saveには入力検査以降の処理を囲む個別catchがなく、Repository等の例外を同じ画面内の保存失敗メッセージへ変換していない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+          "startLine": 39,
+          "endLine": 49
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 290,
+          "endLine": 305
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F039",
+      "topic": "Repositoryのtry前検査",
+      "statement": "synchronized saveの冒頭ではDB用tryへ入る前にprepareForSaveを呼ぶ。対象nullを拒否し、入力モデルをcopyしてフリガナを正規化、電話文字列をtrimし、正規化後フリガナ空、数字のない電話、備考の変換不可・56バイト超過をIllegalArgumentExceptionで拒否する。四日付を再正規化して更新日を当日にし、その後で検索キーを作る。この範囲の例外はsaveのcatch(Exception)によるNenkinDataAccessException変換やrollback対象には入らず、Actionから共通Servletのcatchへ伝播する。コピー元の入力モデルへ保存用正規化を反映する処理ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 280,
+          "endLine": 285
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 513,
+          "endLine": 532
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java",
+          "startLine": 43,
+          "endLine": 76
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/AnsiTextUtil.java",
+          "startLine": 39,
+          "endLine": 47
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F040",
+      "topic": "Repository保存トランザクション",
+      "statement": "保存用モデル作成後、業務接続取得、autoCommit=false、店舗名の再照会、同一接続での存在再確認、現在時刻生成、UPDATEまたはINSERT、commit、AuditType返却の順に進む。存在再確認はSELECT 1 FROM 年金1_LK WHERE ふりがな=? AND 電話番号=?で、setString・setBigDecimalを使い、最初の行の有無だけを返す。この時点で存在すればCHANGEDとして更新、なければNEWとして挿入する。Actionで決めたexistingをRepositoryへ渡して処理種別を固定する方式ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 280,
+          "endLine": 308
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 623,
+          "endLine": 637
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F041",
+      "topic": "保存28列とJDBCパラメータ順",
+      "statement": "INSERTとUPDATEの設定順は共通で、1店番、2顧客番号、3担当者コード、4顧客氏名、5ふりがな、6性別コード、7住所、8電話番号、9生年月日、10国民年金、11厚生年金、12共済年金、13厚生年金基金、14国民年金基金、15合成年金種類、16裁定請求コード、17請求予定日、18予定年齢、19配偶者名、20配偶者生年月日、21受給有無コード、22予約徴求日、23備考、24データ更新日、25更新時間、26更新者、27６ヶ月先確認、28変更FLGである。文字列4・5・7・19・23はsetString、電話8はDECIMAL、日付9・17・20・22・24はDATE、時刻25はTIME、五種類フラグと確認フラグはsetIntの1/0、その他はsetIntまたはTypes.INTEGERのNULLである。JDBC文字列サイズ指定やsetNStringは使っていない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 34,
+          "endLine": 67
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 704,
+          "endLine": 738
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 798,
+          "endLine": 834
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F042",
+      "topic": "INSERT・UPDATEの対象と件数検査",
+      "statement": "INSERTは28列全てを年金1_LKへ設定し、変更FLGを0として実行件数が1でなければSQLExceptionを送出する。UPDATEは28列全てを再設定し、変更FLGを1とする。WHEREはふりがな=? AND 電話番号=?で、29番に保存用キーのsetString、30番にsetBigDecimalをバインドし、更新件数が1でなければSQLExceptionとなる。WHEREに店番、顧客番号、元更新日、更新者、比較版は含まれない。新規・変更時に別の履歴表へ追加するSQLはなく、変更前の予約全体を履歴として残す構成ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 60,
+          "endLine": 67
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 657,
+          "endLine": 687
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 290,
+          "endLine": 299
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F043",
+      "topic": "名称逆引き・年金種類照会の例外",
+      "statement": "性別・裁定請求・受給有無の逆引きは、表示名称をtrimし、空なら照会せずnull、非空ならコード表の名称列=?へsetStringして最初のコードを取得する。名称が見つからなければSQLExceptionを送出し、名称の重複件数検査やORDER BYはない。年金種類は非0の合計コードをsetIntして名称の行が存在するか確認し、不在ならSQLExceptionとする。いずれも保存・削除明細作成のトランザクション内で行われ、Actionの入力選択だけでは後段成功を保証しない。コード表DDLはコードのPKを宣言するが、名称の一意制約は宣言していない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 573,
+          "endLine": 620
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 690,
+          "endLine": 737
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 10,
+          "endLine": 56
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F044",
+      "topic": "Deleteの入口・照会・権限順序",
+      "statement": "Deleteは職員確認、フォーム読取り、POST・CSRF、店番非null、フリガナ・電話番号非空の順に確認する。店番不備は入力valueをexisting=true、キー不備はexisting=falseで再表示する。その後、現在キー、ORIGINAL二項目の順にDB照会し、現在対象なしまたは元対象と同一キーでない場合は「削除対象を参照画面またはキー入力から読み込んでください。」とする。現在対象があればそのDBモデルをexisting=true、なければ入力valueをexisting=falseで表示する。同一性確認後に職員権限を判定し、通過すれば入力キーとログイン職員番号をRepositoryへ渡す。削除にはSave用の日付・備考検査を適用しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java",
+          "startLine": 10,
+          "endLine": 33
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F045",
+      "topic": "削除明細追加・本表削除・戻り値",
+      "statement": "Repository.deleteは同期メソッド内でキーを正規化し、フリガナ空または数字のない電話なら接続前にfalseを返す。接続後はautoCommit=falseとし、同一接続でJOIN付き予約を再取得する。対象なしならrollbackしてfalse、対象ありなら再取得モデルのデータ更新日を当日へ変更し、削除明細へ28列を追加する。続いて年金1_LKをふりがな=? AND 電話番号=?で削除し、setString・setBigDecimalを使用する。明細INSERT、本表DELETEとも1件であることを要求し、通過後commitしてtrueを返す。Actionはtrueなら空モデル・existing=false・「削除終了！」、falseなら入力value・existing=true・「削除対象が見つかりません。」を設定する。このfalseの再表示状態は、入口の対象不成立分岐のexisting=falseとは異なる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 315,
+          "endLine": 350
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 640,
+          "endLine": 654
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 690,
+          "endLine": 701
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java",
+          "startLine": 31,
+          "endLine": 34
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F046",
+      "topic": "削除明細は再構成した予約情報",
+      "statement": "削除明細へ入れる値は画面の変更途中の非キー項目ではなく、Repositoryが削除直前に再取得した予約モデルである。ただしINSERT SELECTによる本表の物理行コピーではない。取得時にコードがJOIN名称へ、DB NULLのフラグがfalseへ、電話が表示文字列へ変換され、そのモデルをbindRecordで再びコード・数値へ変換する。年金種類は五フラグから再合成する。データ更新日・更新時間・更新者は削除時の値、変更FLGはNULLとなる。参照コードの欠落や名称変更がある場合、元のコード値を必ずそのまま保存できるとはいえず、逆引き失敗なら削除全体の例外となる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 326,
+          "endLine": 342
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 690,
+          "endLine": 778
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F047",
+      "topic": "トランザクション内例外と確定境界",
+      "statement": "saveのDB用try内ではExceptionを捕捉してrollbackを試み、既存NenkinDataAccessExceptionなら同じ例外を再送出し、それ以外は「年金予約の登録・更新に失敗しました。」のNenkinDataAccessExceptionへ包む。deleteのtry内例外はrollback後、削除失敗のNenkinDataAccessExceptionへ包む。rollbackで発生したSQLExceptionは元例外を優先して抑止し、closeのExceptionも業務結果を上書きしない。commit自体の例外もこのcatchへ入るが、例外発生だけでDBの確定状態やrollback成功を断定できない。commit後にActionのBean設定やJSP描画が失敗しても、このRepositoryのrollback範囲には戻らない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 298,
+          "endLine": 308
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 342,
+          "endLine": 350
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 916,
+          "endLine": 940
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/NenkinDataAccessException.java",
+          "startLine": 3,
+          "endLine": 9
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+          "startLine": 46,
+          "endLine": 48
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F048",
+      "topic": "同期・非一意索引・比較版の不在",
+      "statement": "Repositoryは単一INSTANCEを公開し、save・deleteをインスタンスsynchronizedとしているため、同じJVM・同じクラスロード下のそのインスタンスを介した変更処理を直列化する。Actionの事前照会、一般検索、別JVM、外部更新まで同じロックで保護する構成ではない。両DDLの予約本表・削除明細にはPK・一意制約・FKの宣言がなく、フリガナ＋電話番号は非一意の検索索引である。SQLに比較版、FOR UPDATE等の明示ロック、分離レベル設定はない。重複行があれば照会は最初の一件を返す一方、UPDATE・DELETEは該当全行に作用して件数不一致を検出する。これを楽観ロックやDB全体の重複防止保証として説明できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 66,
+          "endLine": 75
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 280,
+          "endLine": 350
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 60,
+          "endLine": 170
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 106,
+          "endLine": 171
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F049",
+      "topic": "再照会間の競合・対象消失",
+      "statement": "SaveはActionでの存在・元キー・権限確認と、Repositoryでの存在再確認を別接続・別時点で行う。Repositoryは再確認結果でINSERT/UPDATEを選び直し、権限を再判定しないため、Actionで新規と判定した後に同じキーが作られる等の競合を、事前の新規許可だけで防げない。既存対象が消えた場合も、Actionの両照会がnullとなる経路やRepositoryで不存在となる経路では新規保存へ進み得る。DeleteはRepositoryでも対象を再取得するので、その時点で消失していればfalseを返すが、同じキーで内容が変更された場合の比較版検査はなく、再取得した内容を削除対象とする。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+          "startLine": 24,
+          "endLine": 46
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 286,
+          "endLine": 299
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 324,
+          "endLine": 343
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F050",
+      "topic": "再表示値・HTML変換・完了表示",
+      "statement": "Pension.jspは文字列とメッセージをHtmlUtil.escapeで表示し、nullの数値は空文字にする。日付表示はHtmlUtilのISO解析が成功すれば和暦または西暦へ整形し、解析できなければ元の文字列を返すため、入力拒否後の不正日付も表示モデルに残り得る。checked・selectedはtrue時だけ属性名を出す。状態メッセージは「終了」を含めばsuccess、それ以外はerrorクラスを付け、終了メッセージがあるとブラウザーで完了ボックスを表示する。これはDB正常復帰後の表示動作であり、ブラウザーでの閲覧完了をサーバーが確認する仕組みではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 17,
+          "endLine": 43
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 68,
+          "endLine": 68
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java",
+          "startLine": 11,
+          "endLine": 43
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java",
+          "startLine": 74,
+          "endLine": 81
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F051",
+      "topic": "Action例外・JSP例外・最終応答の範囲",
+      "statement": "Pension各Actionから伝播したExceptionはControlServletの反射生成・perform用catchで記録され、ErrorMsgに共通アプリケーションエラーを設定し、共通エラーJSPを戻り先とする。Repositoryのtry前IllegalArgumentExceptionも、try内で包まれたDB例外も、このcatchへ届けば同じ共通画面へ変換される。これに対してPension.jspの候補再取得や描画は、アクセス記録後のforwardで行われ、Action用catchの外側である。入力エラー再表示や登録完了のBean設定を行えたことだけでは描画成功を保証しない。ActionとServletの当該分岐には一律のHTTPエラー状態設定がなく、JSP例外や応答送信失敗まで同じ画面・状態コードで完了すると断定できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 332,
+          "endLine": 345
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 357,
+          "endLine": 383
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 1,
+          "endLine": 4
+        },
+        {
+          "path": "sources/nenkin/JSP/COMMON/Error.jsp",
+          "startLine": 1,
+          "endLine": 8
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F052",
+      "topic": "共通アクセス記録との分離",
+      "statement": "ServletはAction処理後、forward前に機能ID、画面ID、コマンドID、Action ID、JSP名、利用者識別をカウンターシフトへ渡す。MESSAGE属性がある場合は記録JSP名をSubMessage.jspにするが、実際のforward先を同時にSubMessageへ変える処理ではない。記録は職員系接続を別取得し、アクセス日時と識別情報をDB2.ＵカウンターシフトへStatementで追加して独立commitする。失敗は独立rollbackとログ記録で扱い、予約本表・削除明細のトランザクションとは一体化していない。クリア等で予約表を更新しなくても、この共通記録の副作用はあり得る。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 349,
+          "endLine": 383
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CounterShift.java.txt",
+          "startLine": 25,
+          "endLine": 53
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java.txt",
+          "startLine": 34,
+          "endLine": 68
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/CommonBase.java.txt",
+          "startLine": 44,
+          "endLine": 63
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/util/CommonUtil.java.txt",
+          "startLine": 36,
+          "endLine": 43
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F053",
+      "topic": "接続先・JDBC設定の確認範囲",
+      "statement": "予約・削除明細・コード・店名はjdbc/RAROA_DB、職員はjdbc/Oracle_SP2NM、顧客はjdbc/Oracle_DWHをそれぞれ先に探索し、次にjava:comp/env/付き名称を探索する。各DataSourceをvolatileキャッシュへ保持し、接続は呼出しごとに取得する。全候補でDataSourceを得られなければSQLExceptionとなる。NenkinDataSourceの通常読取接続取得はautoCommit等を変更せず、変更処理が明示的にautoCommit=falseを設定する。対象SQLにパラメータサイズ、query timeout、fetch size、ページ上限、取消処理の設定はなく、DBドライバーやJNDI実体による動作は別の実行境界である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java",
+          "startLine": 12,
+          "endLine": 93
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 144,
+          "endLine": 168
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 280,
+          "endLine": 350
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F054",
+      "topic": "DB定義と取得時のNULL変換",
+      "statement": "予約本表と削除明細は同じ28列を宣言し、どちらのDDLでも全列がNULL可で、DEFAULT値を宣言していない。画面必須の店番・フリガナ・電話番号もDBのNOT NULLではない。Integerモデル値はResultSet.getInt後にwasNullを確認してnullを保持する一方、五種類と確認フラグはgetInt()!=0でNULLとゼロをfalseへまとめる。文字列とJOIN名称はモデルsetterでNULLを空へ変換する。したがって表示空欄から元のDB NULLと空文字を判別できず、booleanの元NULLも再保存時には1/0へなる。SQL ServerとH2の文字型・boolean型の差を、同一物理型として扱わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 60,
+          "endLine": 127
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 106,
+          "endLine": 166
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 741,
+          "endLine": 783
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java",
+          "startLine": 287,
+          "endLine": 289
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F055",
+      "topic": "顧客・職員参照列の物理属性の境界",
+      "statement": "SQL Server用DDLはDB2.Ｕ職員名簿表とN2_SIGHT.Ｂ顧客基本表を既存N2 Oracle表として作成対象外にしている。収録H2互換DDLには職員漢字・カナ氏名VARCHAR(40)、顧客カナ氏名VARCHAR(48)、漢字氏名VARCHAR(96)、漢字住所VARCHAR(160)等があるが、これは本番外部表の容量保証ではない。予約画面への取込み元列は具体的に追跡できる一方、本番側のNULL・容量・入力業務上限をH2互換定義や予約保存列の容量から補完できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+          "startLine": 1,
+          "endLine": 4
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 20,
+          "endLine": 29
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 66,
+          "endLine": 78
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 87,
+          "endLine": 117
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+          "startLine": 206,
+          "endLine": 234
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F056",
+      "topic": "通常画面と未接続helper・JSON入口",
+      "statement": "Repository.searchCandidatesは予約本表から候補を検索する宣言を持つが、今回確認した年金Java・JSPの呼出箇所には接続が見つからず、Pension.jspの「候補」は顧客参照へ接続する。PensionLookupActionにはPOSTでキーまたは店番・顧客番号を照会しJSONを直接返す処理があるが、予約画面のJavaScriptはこのJSON入口を呼ばず、通常の読込みはPensionLoadActionへのフォーム送信である。宣言されたJSON入口の存在を通常UIの非同期照会として説明せず、予約候補helperを稼働中の候補ボタンへ結び付けない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 171,
+          "endLine": 215
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionLookupAction.java",
+          "startLine": 11,
+          "endLine": 28
+        },
+        {
+          "path": "sources/nenkin/JSP/NENKIN/Pension.jsp",
+          "startLine": 57,
+          "endLine": 68
+        }
+      ]
+    },
+    {
+      "id": "DET-SCR-018-F057",
+      "topic": "処理フローの分割と合流時の引継値",
+      "statement": "詳細仕様のフロー材料は、共通入口、初期・クリア、Load、Saveの入力検査、Saveの対象確認・権限、Repository保存、Deleteの対象確認・権限、Repository削除、JSP再表示に分割できる。Load出口は既存予約/顧客基本/入力保持でreservation・message・existingが異なる。Save拒否出口も認可不成立、入力不正、重複、キー変更、権限不足でモデル取得元とexistingが異なる。Deleteは入口対象不成立とRepository再確認後のfalseを同じ状態に固定できない。DB処理例外は共通エラーへ、JSP候補再取得例外はforward境界の外へ分け、保存・削除成功出口にはcommit後という状態を引き継ぐ。これらの分岐条件と値は各Actionの戻り値を維持して図示する必要がある。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionLoadAction.java",
+          "startLine": 11,
+          "endLine": 31
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionSaveAction.java",
+          "startLine": 10,
+          "endLine": 48
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java",
+          "startLine": 10,
+          "endLine": 34
+        },
+        {
+          "path": "sources/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+          "startLine": 280,
+          "endLine": 350
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 332,
+          "endLine": 383
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "実配備のJNDI登録先、JDBCドライバー、DB分離レベル、照合順序、接続既定値、トリガー、追加制約は未確認である。収録DDLを実DBの現在定義や実行結果として扱えない。",
+    "本番外部表DB2.Ｕ職員名簿表・N2_SIGHT.Ｂ顧客基本表の完全なDDLと保存・更新処理は提供範囲から確認できず、表示専用氏名等の本番容量・NULL属性・業務上限・保守責任者は確定できない。",
+    "五つの業務候補表についてローカル初期設定と参照処理は確認できるが、本番候補の内容、名称重複の有無、保守入口、名称の業務上限は未確認である。DB容量を業務上限として代用しない。",
+    "フリガナ・電話番号の既存データがRepositoryの正規化規則へ統一済みか、同一検索キーの重複行が存在するかは未確認である。検索の最初の一件と更新・削除件数不一致の実際の発生状況は確認していない。",
+    "同時更新、対象消失、別JVMや外部更新、commit応答喪失の実際の結果は未検証である。現行には比較版・DB一意制約による保証がなく、楽観ロックや重複防止を実装済みとして追加記載できない。",
+    "ブラウザーによるWindows-31Jフォーム符号化、HTTP要求解析、文字変換不能文字の扱い、maxlengthやJavaScript補助の実際の動作は実行確認していない。Javaで受信した後の検査と、受信前の文字保持保証を区別する必要がある。",
+    "入力拒否後・登録完了後のJSP候補再取得失敗、ServletのAction用catch外の失敗、応答送信失敗に対するコンテナーの最終HTTP状態と表示内容は未確認である。",
+    "予約JSON入口や未接続helperの外部利用者は収録通常画面から確認できない。通常導線がないことを、反射入口や外部呼出しから到達不能であることへ一般化しない。",
+    "採用設計案や改修は本解析で追加していない。正規化後検査、権限再確認、比較版、DB一意性等の不足を、現行実装の保証や承認済み改善へ置き換えていない。"
+  ],
+  "coverageNotes": [
+    "manifestのmode=source-only、trainingReferenceAuthorizedByUser=false、referenceSpecificationIncluded=false、referenceFiles=[]を確認した。参考設計は使用していない。manifestは読取り権限と材料の確認にだけ使用し、業務factsの根拠には使用していない。",
+    "指定workspace内のmanifest.json、sources/、indexed/だけを読んだ。親・兄弟ディレクトリ、原仕様、評価期待値、他ジョブの成果物、ユーザー設定、メモリ、外部サービス、ネットワーク、プラグイン、委任エージェントは使用していない。",
+    "rg --filesで配置、rg -nで位置を確認した。PowerShellはlogin=falseで使用した。初回の相対Get-Contentとパイプ付き読取りは失敗したため読了扱いにせず、rgとindexedの行範囲指定で必要箇所を読み直した。",
+    "大きな出力の切れた部分は読了扱いにしていない。予約画面と五つの主要Action、BaseAction、ViewBean、モデルを照合し、Repositoryは予約・顧客照会、保存・削除、prepareForSave、コード逆引き、全28列バインド、結果変換、JOIN、正規化、rollback・closeを必要範囲ごとに追跡した。帳票・バッチ専用処理の全仕様は当該文書へ再収録していない。",
+    "ReferenceDataServiceは全389行、カレンダーはindexedの1～474行を範囲に分けて確認した。CSSは実画面のヘッダー、フォーム、入力ロック、参照・確認領域、レスポンシブ条件に関係する範囲を確認した。data.sqlは候補五表の55～62行・64～94行だけを抽出し、認証初期値は読取り・転載対象にしていない。",
+    "n2frameworkは通常要求の認証・運用判定・反射呼出し・Action用catch・アクセス記録・forwardと、その到達依存だけを確認した。indexedの行番号は各行先頭の原ソース番号と一致する範囲を引用している。他業務用連携処理の全仕様を読了したとはしていない。",
+    "文書計画上の対応先は、基本側SCR-018=基本設計書/基本設計書_SCR-018_新規・変更・削除.md、詳細側DET-SCR-018=詳細仕様書/詳細仕様書_SCR-018_新規・変更・削除.mdである。参照操作はDET-SCR-016=詳細仕様書/詳細仕様書_SCR-016_店番参照／担当者参照／顧客参照.md、共通入口はCOM-012=共通/共通仕様書_COM-012_共通コントロールサーブレット.md、年金共通検査はCOM-111=共通/共通仕様書_COM-111_年金業務共通処理.md、ブラウザー補助はCOM-151=共通/共通仕様書_COM-151_画面共通入力・通信制御.mdへ対応する。これらは提供計画との照合であり、生成済み確認ではない。",
+    "DB関連の計画対応はDB-OPS=共通/DB仕様書/DB操作仕様書.md、DB-PHYSICAL=共通/DB仕様書/テーブル定義書.md、DB-LOGICAL=共通/DB仕様書/論理データ仕様書.md、データモデルはDATA-CONTRACTS=共通/データオブジェクト定義書.md、JSON入口はAPI-NENKIN=共通/要求処理一覧.mdである。予約本表TBL-NEN-001、削除明細TBL-NEN-002、店名から年金種類までTBL-NEN-003～007、職員TBL-N2-002、顧客TBL-N2-007という提供計画の安定IDへ対応する。",
+    "原プログラム、SQL、マクロ、スクリプト、ビルド、テストは実行していない。ファイルの編集・生成、Markdown本文の出版、HTML・PDF・Excel変換、図の描画・原寸確認、配備バイナリ照合は実施していない。形式変換や表示の合否を予断していない。正式率はnull（未実施）である。"
+  ]
+}

@@ -1,0 +1,1124 @@
+{
+  "documentId": "SCR-015",
+  "sourcePathsRead": [
+    "manifest.json",
+    "nenkin/JSP/NENKIN/Excel.jsp",
+    "nenkin/JSP/NENKIN/Menu.jsp",
+    "nenkin/JSP/NENKIN/Lookup.jsp",
+    "nenkin/WEB-INF/web.xml",
+    "nenkin/WEB-INF/src/nenkin/ExcelViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/ExcelExportAction.java",
+    "nenkin/WEB-INF/src/nenkin/MenuViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java",
+    "nenkin/WEB-INF/src/nenkin/LookupViewAction.java",
+    "nenkin/WEB-INF/src/nenkin/LookupSearchAction.java",
+    "nenkin/WEB-INF/src/nenkin/bean/ExcelViewBean.java",
+    "nenkin/WEB-INF/src/nenkin/bean/LookupViewBean.java",
+    "nenkin/WEB-INF/src/nenkin/model/BranchLookupItem.java",
+    "nenkin/WEB-INF/src/nenkin/model/PensionReservation.java",
+    "nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java",
+    "nenkin/WEB-INF/src/nenkin/service/PensionExcelExportResult.java",
+    "nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java",
+    "nenkin/WEB-INF/src/nenkin/service/PensionRepository.java",
+    "nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java",
+    "nenkin/WEB-INF/src/nenkin/service/NenkinDataAccessException.java",
+    "nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java",
+    "nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java",
+    "nenkin/WEB-INF/src/nenkin/util/DateUtil.java",
+    "nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java",
+    "nenkin/WEB-INF/resources/db/schema.sql",
+    "nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql",
+    "nenkin/assets/css/site.css",
+    "nenkin/assets/js/app.js",
+    "n2framework/WEB-INF/src/common/ControlServlet.java",
+    "n2framework/WEB-INF/src/common/CommonConst.java",
+    "n2framework/WEB-INF/src/common/OperatePermission.java",
+    "n2framework/WEB-INF/src/common/CounterShift.java",
+    "n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java",
+    "n2framework/WEB-INF/src/common/base/CommonBase.java",
+    "n2framework/WEB-INF/src/common/util/CommonUtil.java"
+  ],
+  "facts": [
+    {
+      "id": "SCR-015-F001",
+      "topic": "概要・通常導線",
+      "statement": "EXCEL出力は、店番を直接入力するか店舗参照から選択し、その店番に属する現在の年金予約を単独の.xlsxファイルとして取得する画面である。メニューの「EXCEL出力」はFUNCTION_ID=nenkin、VIEW_ID=Excel、COMMAND_ID=ViewをPOSTする。/Action.doに登録されたControlServletがnenkin.ExcelViewActionを生成するため、画面への通常導線が接続されている。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Menu.jsp.txt",
+          "startLine": 9,
+          "endLine": 13
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/web.xml.txt",
+          "startLine": 15,
+          "endLine": 24
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 332,
+          "endLine": 338
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 36,
+          "endLine": 63
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F002",
+      "topic": "イベント・初期表示",
+      "statement": "ExcelViewActionは職員確認に成功すると新しいExcelViewBeanをセッションのViewBeanへ設定し、./JSP/NENKIN/Excel.jspを返す。branchNo、branchName、messageの初期値はいずれも空文字であり、前回の店番やエラーを再利用しない。初期画面は店番・店舗名が空欄、メッセージ領域は非表示、参照モーダルはhiddenの状態になる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelViewAction.java.txt",
+          "startLine": 1,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/ExcelViewBean.java.txt",
+          "startLine": 5,
+          "endLine": 15
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 31,
+          "endLine": 42
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 3,
+          "endLine": 9
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F003",
+      "topic": "共通入口・認証前処理",
+      "statement": "通常フォームはPOSTで/Action.doへ送信し、ControlServletはパラメータ取得前に受信文字コードをWindows-31Jへ設定する。共通ログインが成立しなければExcelのActionを実行せず、「ログイン時間切れです。再度ログインしてください。」を共通エラーへ設定する。共通運用判定はnenkinを状態表照会対象に含めず、接続取得後にtrueを返す分岐へ進む。ただし、その前の共通接続取得に失敗すればfalseとなり、メンテナンス中の共通エラーへ進む。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 8,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 91,
+          "endLine": 116
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 309,
+          "endLine": 345
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 396,
+          "endLine": 403
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/OperatePermission.java.txt",
+          "startLine": 26,
+          "endLine": 84
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F004",
+      "topic": "年金職員確認・権限境界",
+      "statement": "Excelの表示・出力と店舗参照は、各Actionの先頭でrequireStaffを呼ぶ。既存のStaffContextがあれば再利用し、なければ共通ログインの職員番号が半角数字1～8桁であることを確認して職員名簿を照会する。職員が見つかればStaffContextをセッションへ設定し、見つからなければMESSAGEを設定して年金職員情報とCSRF情報を除去し、ログインJSPを返す。ExcelExportActionには店番75・役職による制限やisAuthorizedMutationの呼出しがなく、CSRFトークンの生成を出力要求の照合済みと解釈しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelViewAction.java.txt",
+          "startLine": 3,
+          "endLine": 3
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 13,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/LookupViewAction.java.txt",
+          "startLine": 14,
+          "endLine": 16
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 24,
+          "endLine": 99
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 206,
+          "endLine": 234
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F005",
+      "topic": "項目・店番の受信から検索まで",
+      "statement": "店番の実コントロールはinput#excelBranch、要求名はBRANCH_NOである。type属性はなく、maxlength=3、inputmode=numeric、data-digits-onlyを持つ。受信値はHttpServletRequest.getParameterでStringとして取得し、NULLを空文字へ置換してtrimしたtextをExcelViewBean.branchNoへ保持する。その後、正数Integerへ変換したbranchを店舗名照会と予約検索の双方へ渡す。店番は検索専用入力であり、この操作で保存列へ書き込まれない。照会先は店名テーブル.店舗ｺｰﾄﾞ、出力条件の列は年金1_LK.店番で、いずれもJDBCのsetInt(1, 値)を使い、文字列サイズ指定はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 8,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 15,
+          "endLine": 19
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 119,
+          "endLine": 125
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 184,
+          "endLine": 196
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 223,
+          "endLine": 234
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F006",
+      "topic": "項目・表示と制御値",
+      "statement": "店舗名はspan#excelBranchNameへ表示する文字列であり、名前付きの送信コントロールではない。ExcelViewBean.branchNameとmessageはStringで、setterはNULLを空文字へ変換する。messageが非空の場合だけフォームの上にmessage errorの領域を表示する。店番、店舗名、メッセージはHtmlUtil.escapeを通す。FUNCTION_ID、VIEW_ID、COMMAND_IDはActionを選択するhidden項目で、DB検索値や保存値ではない。画面には出力ボタン、店番の参照ボタン、見出し右側とフォーム下部の二つの戻るボタンがある。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 5,
+          "endLine": 10
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/ExcelViewBean.java.txt",
+          "startLine": 7,
+          "endLine": 15
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java.txt",
+          "startLine": 11,
+          "endLine": 15
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F007",
+      "topic": "クライアント入力補助",
+      "statement": "app.jsはdata-digits-onlyを持つ店番欄に、初期バインド時・input時・blur時の数字正規化を接続する。全角数字を半角へ変換してから非数字を除き、値が変わった場合にchangeイベントを発火する。編集可能な非空欄へのfocusでは入力内容を選択する。これはブラウザー上の補助であり、HTTP受信値の半角数字化や3桁以内をサーバーへ保証する処理ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 4,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/nenkin/assets/js/app.js.txt",
+          "startLine": 6,
+          "endLine": 53
+        },
+        {
+          "path": "indexed/nenkin/assets/js/app.js.txt",
+          "startLine": 188,
+          "endLine": 193
+        },
+        {
+          "path": "indexed/nenkin/assets/js/app.js.txt",
+          "startLine": 219,
+          "endLine": 223
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F008",
+      "topic": "イベント・出力時の入力検査",
+      "statement": "EXCEL出力の検査順序は、職員確認、BRANCH_NOのtrimとBeanへの保持、正数Integerへの変換、空欄または変換結果NULLの拒否、trim後の長さと半角数字の検査である。欠落・空欄・0・負数・数値変換失敗・Integer範囲超過は先行検査で「店番を入力してください。」となる。正数へ変換できてもtrim後のString.lengthが3を超える、または[0-9]+に一致しない場合は「店番は3桁以内の数字で入力してください。」となる。例えば000は先行拒否、0001と+1は後段拒否である。受信文字列そのものの長さ検査はなく、前後のtrim対象空白を除去した後に検査する。通常入口で通過する値は半角数字1～3桁かつ数値1～999であり、空欄を全店舗の指定として扱わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 13,
+          "endLine": 19
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 119,
+          "endLine": 125
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F009",
+      "topic": "状態・入力拒否と再表示",
+      "statement": "二つの入力拒否経路は、その要求で新しく作ったExcelViewBeanにtrim後の店番と該当メッセージを保持してセッションへ設定し、Excel.jspへ戻る。店舗名照会の前に戻るため、店舗名は空文字になる。JSPは保持値をエスケープして再表示するが、その後にapp.jsの初期正規化が動くため、非数字や全角数字を含む拒否値はブラウザー上で再び加工され得る。サーバーが保持した文字列とJavaScript適用後の表示値を同一としない。JSPには拒否状態に応じて出力・参照・戻るをdisabledにする条件はない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 15,
+          "endLine": 18
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/ExcelViewBean.java.txt",
+          "startLine": 7,
+          "endLine": 15
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 6,
+          "endLine": 8
+        },
+        {
+          "path": "indexed/nenkin/assets/js/app.js.txt",
+          "startLine": 15,
+          "endLine": 53
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F010",
+      "topic": "状態・店番編集と店舗名表示",
+      "statement": "店番の直接編集に店舗名照会や店舗名クリアを接続する処理は、Excel.jspとapp.jsの接続部分にない。店舗名は参照画面からの選択メッセージで更新され、サーバーの出力処理では検査通過後に再照会する。参照選択後に店番だけを手入力で変更すると、表示中の店舗名が以前の選択名のまま残り得る。実際の出力条件は送信されたBRANCH_NOから決まり、画面の店舗名文字列からは決まらない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 8,
+          "endLine": 10
+        },
+        {
+          "path": "indexed/nenkin/assets/js/app.js.txt",
+          "startLine": 15,
+          "endLine": 53
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 15,
+          "endLine": 19
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F011",
+      "topic": "データ操作・店舗名の表示用照会",
+      "statement": "形式検査を通過すると、ReferenceDataService.getBranchは業務接続で「SELECT 店舗ｺｰﾄﾞ AS BRANCH_NO, 店名 AS BRANCH_NAME FROM 店名テーブル WHERE 店舗ｺｰﾄﾞ = ?」を実行し、店番をsetIntで結び付ける。先頭結果をBranchLookupItemへ格納し、0件ならNULLを返す。Actionは結果がある場合だけBeanへ店舗名を設定し、結果がNULLでも予約出力サービスを呼ぶ。店舗名が見つかることは出力可否の必須条件ではない。ただし照会自体のSQLExceptionは例外として伝播し、名称不在のNULLとは異なる失敗経路になる。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 18,
+          "endLine": 20
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 184,
+          "endLine": 203
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/BranchLookupItem.java.txt",
+          "startLine": 8,
+          "endLine": 16
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F012",
+      "topic": "データ操作・店舗別予約の抽出",
+      "statement": "PensionExcelExportService.buildByBranchはPensionRepository.listByBranchを呼ぶ。検索元は年金1_LKの別名Rで、WHEREの条件はR.店番 = ?だけである。店番はsetInt(1, branchNo)で設定し、ORDER BY R.請求予定日 DESC, R.担当者コード, R.顧客番号の順で全結果を取得する。期間、更新者、新規・変更区分、確認済、ログイン職員の所属店による追加条件はない。SQLページング、取得件数上限、setQueryTimeout、取消処理はこの検索に記載されていない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 36,
+          "endLine": 40
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 24,
+          "endLine": 30
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 223,
+          "endLine": 246
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F013",
+      "topic": "SQL・テーブル関連図の材料",
+      "statement": "店舗別予約検索は五つのLEFT JOINを使う。関連はR.店番=B.店舗ｺｰﾄﾞ、R.性別=G.性別ｺｰﾄﾞ、R.裁定請求=C.裁請ｺｰﾄﾞ、R.受給有無=H.受給ｺｰﾄﾞ、R.年金種類=P.種類ｺｰﾄﾞである。Bは店名テーブル、Gは性別テーブル、Cは裁定請求テーブル、Hは受給有無テーブル、Pは年金種類テーブルを示す。名称はこれらの結合結果から取得し、コード値そのものを出力名に置き換えるフォールバックはない。結合先が見つからない予約もLEFT JOINの取得対象に残る。関連図にはこれらの検索関係を示し、FK制約として表現しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 24,
+          "endLine": 30
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 43,
+          "endLine": 58
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 741,
+          "endLine": 778
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 60,
+          "endLine": 91
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F014",
+      "topic": "項目・検索列とDB宣言の制約",
+      "statement": "収録DDLでは、検索対象の年金1_LK.店番はSQL ServerでINT NULL、H2でNULLを許すINTEGERである。候補・表示用の店名テーブル.店舗ｺｰﾄﾞはSQL ServerでINT NOT NULLの主キー、H2でINTEGER NOT NULLの主キーであり、店名はSQL ServerでNVARCHAR(80) NOT NULL、H2でVARCHAR(80) NOT NULLである。画面の3桁制約はDBの整数型容量とは別であり、検索専用店番が必須でも予約表の列をNOT NULLとはしない。店舗名の結合結果がNULLになり得ることも、マスター保存列のNOT NULLとは別の性質である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema.sql.txt",
+          "startLine": 96,
+          "endLine": 109
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 40,
+          "endLine": 45
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 60,
+          "endLine": 65
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 15,
+          "endLine": 17
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F015",
+      "topic": "取得結果・型とNULL変換",
+      "statement": "検索結果はPensionReservationへ移す。店番・顧客番号・担当者コード・予定年齢はgetIntとwasNullでIntegerまたはNULLへ変換し、名称・住所・日付・備考などはgetStringからStringへ移してNULLを空文字へ変換する。６ヶ月先確認はgetIntの結果が0以外ならtrueであり、SQL NULLもこの読取りではfalseになる。顧客番号のDDLはBIGINTだがJava側はIntegerとgetIntを使っており、DB型の全範囲をそのまま表現する構造ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 741,
+          "endLine": 783
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 13,
+          "endLine": 38
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/PensionReservation.java.txt",
+          "startLine": 287,
+          "endLine": 289
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql.txt",
+          "startLine": 63,
+          "endLine": 65
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F016",
+      "topic": "出力項目・18列の移送",
+      "statement": "出力列はAからRまでの18列で、順番と取得元は、顧客番号=R.顧客番号、担当=R.担当者コード、顧客氏名=R.顧客氏名、ふりがな=R.ふりがな、性別=G.性別、住所=R.住所、電話番号=R.電話番号の表示用変換値、生年月日=R.生年月日、年金種類=P.年金種類、裁定請求=C.裁定請求、受給有無=H.受給有無、請求予定日=R.請求予定日、予定年齢=R.予定年齢、配偶者名=R.配偶者名、配偶者生年月日=R.配偶者生年月日、予約徴求日=R.予約徴求日、備考=R.備考、６ヶ月先確認=R.６ヶ月先確認から作る表示文字である。担当・性別・裁定請求・受給有無・予定年齢・配偶者生年月日・６ヶ月先確認のヘッダーにはソースで改行が設定されている。店番と店舗名は検索・表示用に取得されるが、この18列には含まれない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 42,
+          "endLine": 57
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 43,
+          "endLine": 58
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 741,
+          "endLine": 768
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F017",
+      "topic": "出力値・電話番号・日付・セル型",
+      "statement": "電話番号はDBから文字列で読み、数字以外を除いて先頭の連続する0を整理した後、残った値が9桁または10桁で先頭が0でなければ0を一つ補って出力する。ハイフン付きの番号整形ではない。生年月日・請求予定日・配偶者生年月日・予約徴求日はgetStringで取得した値をそのまま渡し、この店舗別出力では和暦変換を行わない。顧客番号・担当者コード・予定年齢の非NULL値は数値セル、電話番号・日付・名称は文字列セルになる。数値のNULLは空の文字列セルとなり、６ヶ月先確認はtrueなら「確」、それ以外は空文字である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 329,
+          "endLine": 355
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 743,
+          "endLine": 768
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 843,
+          "endLine": 855
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 50,
+          "endLine": 57
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 172,
+          "endLine": 183
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F018",
+      "topic": "出力形式・ファイル名と単一シート",
+      "statement": "1件以上ある場合のファイル名は「年金データ_店番3桁_yyyyMMdd.xlsx」で、数値化した店番を左側0埋めし、DateUtil.todayIsoからハイフンを除去した生成時の日付を付ける。日付生成はJVM既定タイムゾーンを使うSimpleDateFormatであり、このメソッドにはJSTの明示指定がない。シート名は「年金ﾃﾞｰﾀ」である。先行タイトル行・結合範囲を渡さない3引数版のWorkbook生成を使うため、1行目がヘッダー、2行目以降が明細、固定位置はA2、フィルター範囲はA1からRの最終行になる。印刷設定はA4縦・倍率100である。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 60,
+          "endLine": 71
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/DateUtil.java.txt",
+          "startLine": 114,
+          "endLine": 116
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 26,
+          "endLine": 28
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 129,
+          "endLine": 200
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F019",
+      "topic": "出力生成・メモリと文字列処理",
+      "statement": "Workbookは検索結果リストから明細配列を作り、XMLとZIPをメモリ上で構築してbyte[]として返す。列幅はヘッダーと先頭100件までの明細を調べ、ASCIIを1、それ以外のコードポイントを2として数えた長さに2を加え、5～40へ補正する。この幅は入力やDBの業務上限ではない。文字列セルはinlineStrとして生成し、XMLに許されない文字を除去してXML特殊文字をエスケープする。生成中のIOExceptionはIllegalStateExceptionへ変換する。PensionExcelExportResultは内容配列を構築時と取得時にcloneする。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 47,
+          "endLine": 63
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 38,
+          "endLine": 65
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 205,
+          "endLine": 247
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java.txt",
+          "startLine": 270,
+          "endLine": 297
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportResult.java.txt",
+          "startLine": 12,
+          "endLine": 23
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F020",
+      "topic": "状態・対象0件",
+      "statement": "予約検索結果が空ならサービスはファイル名空文字・空byte配列・rowCount=0を返し、Workbookを生成しない。Actionは「入力された店番には対象データがありません。」を設定し、入力したtrim後の店番と、事前照会で取得できた店舗名をViewBeanへ保持してExcel.jspを返す。店舗名照会が0件だった場合は店舗名空欄のままである。0件ではファイルを送信せず、ダウンロード成功として扱わない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 36,
+          "endLine": 40
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 15,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/ExcelViewBean.java.txt",
+          "startLine": 7,
+          "endLine": 15
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F021",
+      "topic": "状態・出力送信と成功経路",
+      "statement": "rowCountが0以外ならwriteDownloadを呼ぶ。ファイル名をUTF-8でURLエンコードした後、応答をresetし、Content-Typeをapplication/vnd.openxmlformats-officedocument.spreadsheetml.sheet、Content-Dispositionをattachment形式、Content-Lengthを内容配列の長さに設定して、出力ストリームへwrite・flushする。その後の戻り値「CSV」はControlServletのJSP forward抑止値であり、生成ファイルの形式は.xlsxである。成功経路では今回のExcelViewBeanをセッションへ設定せず、完了メッセージやExcel画面の再表示を返さない。write・flushの正常復帰から利用者側の保存完了までは確定できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 12,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 204,
+          "endLine": 211
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 373,
+          "endLine": 383
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F022",
+      "topic": "例外・DB照会から応答まで",
+      "statement": "店舗名照会と予約検索のSQLExceptionはNenkinDataAccessExceptionへ変換し、ResultSet・PreparedStatement・Connectionをfinallyで閉じる。closeのExceptionは元の検索結果や例外を上書きしない。ExcelExportActionとPensionExcelExportServiceには、これらの例外やWorkbook生成例外、ダウンロード送信例外を画面内メッセージへ変えるcatchがない。Action呼出し中のExceptionはControlServletの共通catchへ届き、共通ErrorMsgとエラーJSPの戻り先が設定される。DB障害や生成障害を対象0件へ合流させない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 184,
+          "endLine": 203
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 375,
+          "endLine": 387
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 223,
+          "endLine": 246
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 916,
+          "endLine": 938
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 13,
+          "endLine": 23
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 332,
+          "endLine": 345
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F023",
+      "topic": "例外・共通catchの外側と送信後の境界",
+      "statement": "共通catchの対象はAction生成とperformの呼出しである。FUNCTION_IDからのtoLowerCase、VIEW_IDを使うログイン判定などはその前にあり、要求識別値欠落をすべて同じcatchが処理する構造ではない。また、Action終了後のJSP forwardはcatchの外にあるため、入力拒否や0件で戻り先を決めても、JSP描画の成功までは保証しない。送信途中の例外が共通catchへ届いた場合も、既に応答が確定していれば後続のエラーJSPへのforward成功を保証できない。これらの失敗に対する統一HTTP状態コードの設定は確認できない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 243,
+          "endLine": 246
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 309,
+          "endLine": 345
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 349,
+          "endLine": 383
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 204,
+          "endLine": 211
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 3,
+          "endLine": 8
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F024",
+      "topic": "保持領域・DB更新とアクセス記録",
+      "statement": "店舗別出力の業務経路は店舗名と予約のSELECT、要求内のBean・リスト・byte配列の生成、HTTP送信で構成され、予約本表や削除明細を更新する呼出しはない。店舗名照会と予約検索はそれぞれ接続を取得して閉じ、両照会を一つのトランザクションで固定する処理はない。一方、ControlServletはAction後にCounterShiftを呼び、別接続のDB2.Ｕカウンターシフトへアクセス記録を追加してcommitする。記録失敗時はrollbackを試みてログへ出し、業務結果を返す契約とは分かれているため、「業務データ更新なし」と「DB書込みが一切ない」を同じ意味にしない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 18,
+          "endLine": 21
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 191,
+          "endLine": 202
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionRepository.java.txt",
+          "startLine": 230,
+          "endLine": 244
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/ControlServlet.java.txt",
+          "startLine": 357,
+          "endLine": 383
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CounterShift.java.txt",
+          "startLine": 25,
+          "endLine": 53
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java.txt",
+          "startLine": 34,
+          "endLine": 68
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/util/CommonUtil.java.txt",
+          "startLine": 36,
+          "endLine": 43
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F025",
+      "topic": "接続・依存実装",
+      "statement": "店舗名照会と店舗別予約検索はNenkinDataSource.openConnectionを使い、jdbc/RAROA_DB、java:comp/env/jdbc/RAROA_DBの順でDataSourceを探索する。DataSourceは共有キャッシュへ保持するが、検索ごとにgetConnectionを呼ぶ。職員情報を自動生成する場合の名簿照会はjdbc/Oracle_SP2NM系の別DataSourceを使い、その前に業務接続から店舗名一覧を取得する。接続先が見つからなければSQLExceptionとなる。これらのソースは接続名と取得順を示すものであり、実環境の接続成功や配置済みDBとの一致を示す結果ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 12,
+          "endLine": 59
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java.txt",
+          "startLine": 77,
+          "endLine": 93
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 206,
+          "endLine": 234
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 290,
+          "endLine": 310
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F026",
+      "topic": "イベント・店舗参照を開く",
+      "statement": "参照ボタンはブラウザー上で一時formを作り、target=lookupFrame、method=post、acceptCharset=Windows-31Jとして/Action.doへ送る。固定値はFUNCTION_ID=nenkin、VIEW_ID=Lookup、COMMAND_ID=View、TARGET=branch、POPUP=1である。現在の店番と検索語は引き継がない。モーダルのhiddenを解除して送信し、一時formを削除する。LookupViewActionはbranchモードで検索し、結果をセッションのSubWindowBeanへ保持するため、Excel側のViewBeanとは別の保持領域を使う。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 9,
+          "endLine": 10
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/LookupViewAction.java.txt",
+          "startLine": 14,
+          "endLine": 22
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java.txt",
+          "startLine": 37,
+          "endLine": 42
+        },
+        {
+          "path": "indexed/n2framework/WEB-INF/src/common/CommonConst.java.txt",
+          "startLine": 31,
+          "endLine": 37
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F027",
+      "topic": "候補取得・店舗検索条件",
+      "statement": "店舗参照の検索語KEYWORDはActionでtrimした後、ReferenceDataServiceでNFKC正規化、trim、空白の集約、大文字化を行う。正規化後が空なら店名テーブルの全店舗を取得する。非空なら、店舗ｺｰﾄﾞをVARCHAR(20)へ変換した値の部分一致、または店名の大文字化した部分一致で抽出し、店舗ｺｰﾄﾞの昇順に並べる。二つのLIKEには同じパターンをsetString(1)とsetString(2)で渡し、バックスラッシュ、%、_、角括弧をエスケープする。VARCHAR(20)は検索時のCAST指定であり、店番入力や保存列の業務上限ではない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/LookupViewAction.java.txt",
+          "startLine": 16,
+          "endLine": 17
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 23,
+          "endLine": 30
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 41,
+          "endLine": 73
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 358,
+          "endLine": 372
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F028",
+      "topic": "候補表示・ページングと0件",
+      "statement": "店舗候補はSQLで全件取得してから、メモリ上で1ページ20件へ切り出す。初期ページは1、総ページ数は最小1である。0件では件数表示が0件中0～0件となり、明細行は作られず、選択済みのExcel店番を自動解除する通知もない。ページ上限の補正は切出し後に行うため、上限超過ページを直接要求した場合、ページ番号だけ最終ページへ補正されても候補リストは空のままになり得る。前へ・ページ番号・次へはPAGEを書き換えて再検索する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/LookupViewAction.java.txt",
+          "startLine": 16,
+          "endLine": 22
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/LookupViewBean.java.txt",
+          "startLine": 17,
+          "endLine": 20
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/bean/LookupViewBean.java.txt",
+          "startLine": 33,
+          "endLine": 42
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 18,
+          "endLine": 28
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 34,
+          "endLine": 35
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F029",
+      "topic": "イベント・候補検索・クリア・選択",
+      "statement": "店舗参照には検索語欄、検索ボタン、クリアボタン、店番・店名・選択ボタンの一覧がある。検索はLookup/SearchをPOSTし、LookupSearchActionはLookupViewActionを継承する。クリアは参照フォームのテキスト入力を空にしてPAGE=1で再送する操作であり、Excel側の選択値を消す操作ではない。選択ボタンは行のdata属性からbranchNoとbranchNameを取り、target=branch、source=nenkin.lookupとして親へpostMessageする。候補表示の店番はintの文字列表現であり、ここでは3桁0埋めしない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 8,
+          "endLine": 24
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 31,
+          "endLine": 35
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/LookupSearchAction.java.txt",
+          "startLine": 1,
+          "endLine": 2
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/BranchLookupItem.java.txt",
+          "startLine": 8,
+          "endLine": 16
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F030",
+      "topic": "イベント・選択値の受渡しと閉じる",
+      "statement": "Excel側は受信メッセージのoriginが現在のoriginと等しいこと、dataが存在すること、data.sourceがnenkin.lookupであることを確認する。target=branchならexcelBranch.valueとexcelBranchName.textContentを更新し、その後モーダルを閉じてiframe.srcをabout:blankへ戻す。条件を通過したbranch以外のメッセージでもモーダルは閉じる。参照画面の閉じるはtarget=closeを送るため、店番と店舗名を変更しない。親モーダルの閉じるボタンと背景クリックも同じcloseLookupを使う。選択だけではExcel出力要求を送らない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 9,
+          "endLine": 10
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 31,
+          "endLine": 33
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F031",
+      "topic": "候補と出力入力の制約差",
+      "statement": "店舗候補のSQLには店番1～999への限定がなく、BranchLookupItemのキーもintである。選択値はJavaScriptで店番欄へ代入するため、候補取得時点でExcel出力の3桁・正数条件を満たす保証はない。仮に0・負数・4桁以上の店舗コードが候補に含まれて選択された場合も、出力時にはExcelExportActionの検査を通る必要がある。ブラウザーのmaxlengthを候補選択値やHTTP要求に対するサーバー検査の代わりにしない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java.txt",
+          "startLine": 41,
+          "endLine": 63
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/model/BranchLookupItem.java.txt",
+          "startLine": 8,
+          "endLine": 16
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 8,
+          "endLine": 10
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelExportAction.java.txt",
+          "startLine": 15,
+          "endLine": 17
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F032",
+      "topic": "モーダル共通helperの到達性",
+      "statement": "app.jsの汎用モーダル処理はdata-modal、data-modal-openなどを対象にし、Escape時の閉鎖もdata-modalを持つ表示中要素だけを探す。Excel.jspの参照モーダルにはこれらのdata属性がなく、独自のopenLookup・closeLookupを呼ぶ。したがって、汎用helperにあるEscape閉鎖、初期フォーカス移動、起動ボタンへのフォーカス復帰、bodyのmodal-open設定を、この画面で接続済みの動作として説明しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 8,
+          "endLine": 10
+        },
+        {
+          "path": "indexed/nenkin/assets/js/app.js.txt",
+          "startLine": 89,
+          "endLine": 175
+        },
+        {
+          "path": "indexed/nenkin/assets/js/app.js.txt",
+          "startLine": 195,
+          "endLine": 204
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F033",
+      "topic": "イベント・戻る",
+      "statement": "二つの戻るボタンは同じbackMenuを呼び、excelViewをMenu、excelCommandをViewへ変えてexcelFormをPOSTする。BRANCH_NOもフォーム内に残って送信されるが、MenuViewActionは店番の出力検査を呼ばず、職員確認後に新しいMenuViewBeanへ職員番号8桁表示と職員名を設定してメニューJSPを返す。店番が空欄や不正でも、戻る操作をExcelExportActionの必須検査へ接続しない。メニューから再びExcel/Viewへ入れば、Excel画面は新しい空Beanで初期化される。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 6,
+          "endLine": 10
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/MenuViewAction.java.txt",
+          "startLine": 10,
+          "endLine": 16
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/ExcelViewAction.java.txt",
+          "startLine": 3,
+          "endLine": 3
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F034",
+      "topic": "静的画面投影・共有ヘッダーと実際の幅",
+      "statement": "Excel.jspのDOMは、システム名だけを持つheader.app-nav、main.app-shell、section.screen.surface.compact-screen.excel-screen、画面見出しと戻るボタン、メッセージ、フォーム、参照モーダルの順である。この画面にはメニュー画面のログアウトフォームや職員バッジを追加しない。共有CSSは紺色ヘッダー、灰色背景、白い枠付き画面を設定する。compact-screenにはmax-width:640pxがあるが、後方のより詳細度が高い.screen:not(.lookup-screen-popup)がmax-widthを--work-screen-width=1180pxへ上書きし、左右をauto marginにする。静的投影を640px固定の画面として確定しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 5,
+          "endLine": 10
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1,
+          "endLine": 16
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 178,
+          "endLine": 212
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 261,
+          "endLine": 285
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1996,
+          "endLine": 1999
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F035",
+      "topic": "静的画面投影・入力行と状態差",
+      "statement": "店番のfield-rowは汎用の縦方向グリッドであり、入力・参照ボタン・店舗名を入れるinput-referenceは3列のinline-gridである。通常幅では店番欄のshort-inputは最大110px、店舗名は最小7emかつ折返しなしとなる。640px以下では見出しをグリッドへ変え、short-inputの最大幅を100%にし、参照行の列構成も変える。CSSに宣言されたexcel-export-screen、excel-export-branch-row、excel-export-actions等の専用classはExcel.jspに付いていないため、その配置を投影へ転用しない。入力拒否と0件の投影では同じDOM上にエラーメッセージを追加し、店番・店舗名の保持差を反映する。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 5,
+          "endLine": 9
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 298,
+          "endLine": 309
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 454,
+          "endLine": 476
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 813,
+          "endLine": 818
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 880,
+          "endLine": 914
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1452,
+          "endLine": 1471
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 2042,
+          "endLine": 2100
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F036",
+      "topic": "静的画面投影・参照モーダル",
+      "statement": "参照モーダルはid=lookupModal、class=lookup-modal、role=dialog、aria-modal=trueを持ち、初期状態ではhiddenである。表示時は画面全体を覆う背景と中央パネルを使い、パネルは幅min(1120px,96vw)、高さmin(720px,90vh)で、上部に「店番参照」と閉じるボタン、その下にiframeを配置する。iframe内のLookup.jspにも店番参照の見出しと閉じるボタンがある。子画面のbodyの実classはpopup-pageであり、CSSのlookup-popup-bodyやlookup-popup-mainとは一致しない。静的投影では親と子の構造を保ち、存在しないラッパーclassを補って整形しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Excel.jsp.txt",
+          "startLine": 9,
+          "endLine": 10
+        },
+        {
+          "path": "indexed/nenkin/JSP/NENKIN/Lookup.jsp.txt",
+          "startLine": 4,
+          "endLine": 9
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1076,
+          "endLine": 1141
+        },
+        {
+          "path": "indexed/nenkin/assets/css/site.css.txt",
+          "startLine": 1237,
+          "endLine": 1249
+        }
+      ]
+    },
+    {
+      "id": "SCR-015-F037",
+      "topic": "補足・日次月次出力との責務差",
+      "statement": "店舗別Excelは指定店番の予約本表を対象とする18列の単一ファイルで、日次・月次の新規・変更・削除別抽出とは異なる。日次・月次サービスは期間と更新者を使って区分別に抽出し、新規17列、変更・削除20列の明細を作り、和暦日付・担当者2桁表示を使う。さらにヘッダー前の7行、タイトル等の結合範囲、70または60の印刷倍率を設定し、複数ファイル時はZIPにまとめる。これらの区分選択、削除明細整理、帳票タイトル、日付形式、ZIP返却を店舗別Excelへ追加しない。",
+      "basis": "observed-source",
+      "references": [
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionExcelExportService.java.txt",
+          "startLine": 36,
+          "endLine": 63
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 28,
+          "endLine": 36
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 58,
+          "endLine": 112
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 227,
+          "endLine": 243
+        },
+        {
+          "path": "indexed/nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java.txt",
+          "startLine": 250,
+          "endLine": 298
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "実環境のJNDI登録、DataSource実装、接続先DB、SQL方言設定、配備済みクラスとの一致は未確認である。ソースの接続名・SQL・DDL宣言から接続成功や実行成功を保証しない。",
+    "店名テーブルを保守する接続済みの登録・更新画面やサービスは今回の関連経路では確認できない。店名の業務上限と保守時検査は未確定であり、NVARCHAR(80)またはVARCHAR(80)の容量を業務上限として代用しない。",
+    "性別・裁定請求・受給有無・年金種類の表示名称はコード表JOIN由来である。名称マスターの業務上限・運用上の更新責務は、DDLの型容量だけでは確定できない。",
+    "年金1_LK.顧客番号はDDL上BIGINTだが、取得先はgetIntとIntegerである。実データの範囲と、範囲外の値に対する使用JDBCドライバーの応答は未確認であり、全BIGINT値を出力可能とは保証できない。",
+    "店舗名照会と予約検索は別の接続・時点で行われる。並行更新時の整合性や隔離レベルは確認できず、店舗名と予約が同一時点のスナップショットであるとは保証できない。",
+    "Workbookの名前に使う日付はJVM既定タイムゾーンに依存する。実環境のタイムゾーン設定は未確認である。",
+    "HTTP受信値はServlet APIのgetParameterから追跡した。コンテナーによる重複パラメータ選択、外部フィルター、プロキシ、実際の文字コード変換結果は未確認である。",
+    "送信途中で失敗した場合の応答コミット状態、共通エラーへのforward可否、最終HTTP状態、利用者が受け取るファイルの完全性は静的解析だけでは確定できない。",
+    "WorkbookのExcel上の表示、画面・モーダルの原寸表示、ブラウザー補助処理の実動作は未確認である。ソースに生成・表示処理があることを表示合格や受入完了とはしない。"
+  ],
+  "coverageNotes": [
+    "manifestのmodeはsource-only、trainingReferenceAuthorizedByUserとreferenceSpecificationIncludedはいずれもfalse、referenceFilesは空配列である。参考設計は読んでおらず、factsはすべてobserved-sourceとした。manifestは読取り範囲と材料の確認にのみ使用した。",
+    "sourcePathsReadはmanifestに記載されたPOSIX相対パスで列挙した。本文は主に対応するindexed/配下の行番号付きテキストで確認し、referencesには実際に読んだindexedファイルと原文行番号を記録した。一部の呼出し・文字列検索はsources/配下でも行った。",
+    "対象開始点7ファイルすべてを調査した。Excel.jspは1～10行、ExcelViewActionは1～3行、ExcelExportActionは1～23行、PensionExcelExportServiceは1～73行を確認した。PensionRepositoryは店舗別抽出223～246行、SELECT列43～58行、結果変換・JOIN741～783行、電話番号補助843～855行、例外と終了処理916～940行を中心に追跡した。",
+    "ReferenceDataServiceは店舗候補41～73行、店舗名照会184～203行、職員自動確認206～234行、店舗名一覧290～321行、電話番号変換329～355行、正規化・LIKE・例外処理358～388行を確認した。職員・顧客の別参照モードは店舗別Excelに必要な境界確認にとどめ、その全仕様を再収録していない。",
+    "閉包としてExcelViewBean、LookupのJSP・Action・Bean・店舗候補モデル、メニューの遷移元と戻り先、共通認証入口、JNDI接続取得、ダウンロード、Open XML生成、共通アクセス記録を追跡した。日次・月次サービスは対象と形式の差を説明する関連範囲を読んだ。",
+    "site.cssはExcelと参照モーダルの実DOMに一致するセレクター、共有色・入力・ボタン・メッセージ、後方の画面幅上書き、レスポンシブ条件を分割して確認した。全CSSの全行を精読したとは扱わない。app.jsは1～224行を読み、数字入力補助の接続と汎用モーダル処理の未接続を区別した。",
+    "manifestの一括表示には出力切れがあったため、必要な権限キーと対象ファイル位置を検索し直した。切れた出力を全材料の読了とは扱わず、対象処理の必要範囲は個別の行範囲で確認した。収録176ファイル全体を本書の解析済み範囲とはしない。",
+    "関連文書は入力計画で照合した。詳細対応先はDET-SCR-015「詳細仕様書/詳細仕様書_SCR-015_EXCEL出力.md」、店舗参照はSCR-016「基本設計書/基本設計書_SCR-016_店番参照／担当者参照／顧客参照.md」、出力共通はOUTPUT-NENKIN「共通/帳票一覧.md」、Workbook共通はCOM-150「共通/共通仕様書_COM-150_外部ライブラリを使わず、単1シートの Open XML (.xlsx) を生成する.md」である。計画上の対応であり、生成済みとは確認していない。",
+    "共通境界の対応先はAPI-NENKIN「共通/要求処理一覧.md」、COM-012「共通/共通仕様書_COM-012_共通コントロールサーブレット.md」、COM-111「共通/共通仕様書_COM-111_年金業務共通処理.md」、COM-151「共通/共通仕様書_COM-151_画面共通入力・通信制御.md」、DB-OPS「共通/DB仕様書/DB操作仕様書.md」、DB-PHYSICAL「共通/DB仕様書/テーブル定義書.md」である。これらも生成状態は未確認である。",
+    "イベントと図の材料は、初期表示、出力時の職員確認・二段階入力拒否・名称照会・対象検索・0件再表示・生成・送信、店舗参照の検索・ページング・クリア・選択・閉鎖、戻る操作としてfactsへ保持した。名称不在とDB例外、入力拒否と対象0件、Action内例外とJSP描画例外を別経路にした。",
+    "今回の境界に従い、ファイル編集・生成、プログラム・SQL・スクリプト・ビルド・テストの実行、ネットワーク、外部サービス、プラグイン、委譲エージェントは使用していない。原仕様、評価期待値、他ジョブ、親・兄弟ディレクトリ、メモリ・ユーザー設定は読んでいない。",
+    "本応答は解析factsであり、Markdown本文や静的HTML、図、派生形式は生成していない。そのためspec-meta、表の列数、六つのイベント見出し、描画寸法、HTML・PDF・Excel表示の検査済み状態は付与しない。新規の採用設計案は作成せず、正式率はnull相当の未評価として扱う。"
+  ]
+}

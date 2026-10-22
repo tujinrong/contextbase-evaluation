@@ -1,0 +1,371 @@
+--- 1.2
++++ 1.3
+@@ -1,7 +1,7 @@
+-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SCR-014","version":"1.2","path":"基本設計書/基本設計書_SCR-014_日次 _ 月次処理.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"概要"},{"heading":"項目一覧","kind":"LIST","sheet":"項目一覧","key":["No"]},{"heading":"イベント仕様","kind":"GRID","sheet":"イベント仕様"},{"heading":"補足説明","kind":"GRID","sheet":"補足説明"}]} -->
++<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SCR-014","version":"1.3","path":"基本設計書/基本設計書_SCR-014_日次 _ 月次処理.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"概要"},{"heading":"項目一覧","kind":"LIST","sheet":"項目一覧","key":["No"]},{"heading":"イベント仕様","kind":"GRID","sheet":"イベント仕様"},{"heading":"補足説明","kind":"GRID","sheet":"補足説明"}]} -->
+ # 日次 / 月次処理 基本設計書
+ 
+-文書ID：SCR-014　文書種別：基本設計書　文書版：1.2  
++文書ID：SCR-014　文書種別：基本設計書　文書版：1.3  
+ 対象画面：日次 / 月次処理　対象機能：年金予約明細の条件指定出力、出力前の削除明細整理
+ 
+ ## 概要
+@@ -12,7 +12,6 @@
+ 
+ 新規分・変更分は現在の予約本体である年金1_LKを、削除分は年金＿削除明細を読む。新規分・変更分の分類には本体の変更FLGを使うため、同じ予約の変更をすべて蓄積した履歴一覧ではない。また、出力操作には、非表示の基準日以前の削除明細を検索前に削除する処理が含まれる。この整理はファイル生成とは別に確定する。
+ 
+-根拠：`nenkin/JSP/NENKIN/Menu.jsp:9-13`、`nenkin/JSP/NENKIN/Batch.jsp:24-25,64-93`、`nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:58-112`、`nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:353-397,458-480`。
+ 
+ ### 画面入口と呼出し関係
+ 
+@@ -25,7 +24,6 @@
+ 
+ `/Action.do`はcommon.ControlServletへ割り当てられている。ServletはFUNCTION_IDを小文字化し、機能パッケージ名とVIEW_ID、COMMAND_IDからActionクラス名を組み立てて実行する。日次・月次は具体Actionから共通実行処理へ接続されており、この経路に独立したJSON APIはない。
+ 
+-根拠：`nenkin/WEB-INF/web.xml:15-24`、`n2framework/WEB-INF/src/common/ControlServlet.java:309-345`、`nenkin/WEB-INF/src/nenkin/BatchDailyAction.java:1-3`、`nenkin/WEB-INF/src/nenkin/BatchMonthlyAction.java:1-3`、`nenkin/JSP/NENKIN/Batch.jsp:35-40,91-93`。
+ 
+ ```mermaid
+ flowchart TB
+@@ -45,11 +43,22 @@
+ 
+ サーバー処理を伴う初期表示、日次出力、月次出力、戻る操作には、次の順序を共通適用する。画面内だけの入力・カレンダー操作では呼ばない。
+ 
+-1. Servletが受信文字コードをWindows-31Jに設定し、識別パラメータを読む。出力フォームもaccept-charsetにWindows-31Jを指定する。
+-2. 識別値を参照した後、セッションのLoginBeanが存在し、ログイン可否が真であることを確認する。不成立なら「ログイン時間切れです。再度ログインしてください。」をErrorMsgへ設定し、共通エラーJSPを選ぶ。
+-3. 運用可否を確認する。nenkinは業務別管理表による処理中フラグ検査の対象分岐に入らず、共通接続を取得できれば許可される。接続取得等の例外は内部でログへ記録され、運用不可となる。この場合は「現在メンテナンス中のため画面を表示できません。」を設定する。
+-4. 動的にActionを生成して実行する。この生成・実行から伝播したExceptionは共通catchで記録し、一般エラーを設定して共通エラーJSPを選ぶ。Action内部で捕捉して正常に返した結果は、その返却値を引き継ぐ。
+-5. 選択された遷移先またはダウンロード制御値を使い、共通のアクセス記録と応答後処理 Z を行う。Zの契約は補足説明に示す。
++**1. 要求の受付とログイン確認**
++
++　**1.1.** Servletが受信文字コードをWindows-31Jに設定し、識別パラメータを読む。出力フォームもaccept-charsetにWindows-31Jを指定する。
++
++　**1.2.** 識別値を参照した後、セッションのLoginBeanが存在し、ログイン可否が真であることを確認する。不成立なら「ログイン時間切れです。再度ログインしてください。」をErrorMsgへ設定し、共通エラーJSPを選ぶ。
++
++**2. 運用可否とAction実行**
++
++　**2.1.** 運用可否を確認する。nenkinは業務別管理表による処理中フラグ検査の対象分岐に入らず、共通接続を取得できれば許可される。接続取得等の例外は内部でログへ記録され、運用不可となる。この場合は「現在メンテナンス中のため画面を表示できません。」を設定する。
++
++　**2.2.** 動的にActionを生成して実行する。この生成・実行から伝播したExceptionは共通catchで記録し、一般エラーを設定して共通エラーJSPを選ぶ。Action内部で捕捉して正常に返した結果は、その返却値を引き継ぐ。
++
++**3. 応答の後処理**
++
++　**3.1.** 選択された遷移先またはダウンロード制御値を使い、共通のアクセス記録と応答後処理 Z を行う。Zの契約は補足説明に示す。
++
+ 
+ ```mermaid
+ flowchart TD
+@@ -70,7 +79,6 @@
+ 
+ FUNCTION_ID欠落時の小文字化やVIEW_ID欠落時の比較はAction実行catchより前にある。そのため、直接HTTP入力による識別値欠落を、図の一般エラー選択へ一律に合流させない。共通ログイン判定中の型不一致も同じ捕捉範囲の外側である。
+ 
+-根拠：`n2framework/WEB-INF/src/common/ControlServlet.java:107-111,243-246,309-403`、`n2framework/WEB-INF/src/common/OperatePermission.java:26-84`。
+ 
+ ### 静的画面投影
+ 
+@@ -147,7 +155,6 @@
+ 
+ 画面幅は1120px、最小幅は1040pxである。共通条件は職員番号側320pxと出力対象側の2列、出力対象は3列、日次・月次は最小360pxと610pxの2列となる。日付には後段のcalendar-input規則も適用される。月次の日付コントロールは、より詳細なセレクターにより各日付欄の幅100%となる。640px以下では日付範囲が1列になるが、画面全体の最小幅は解除されない。role=alertは通知の意味付けであり、通知の外観はclass=validation-summaryが決める。
+ 
+-根拠：`nenkin/JSP/NENKIN/Batch.jsp:19-88`、`nenkin/assets/css/site.css:1-42,106-168,178-211,261-280,319-375,387-432,479-758,1273-1352,1452-1456,1516-1524,1996-2091`、`nenkin/assets/js/japanese-era-calendar.js:181-203`。
+ 
+ ## 項目一覧
+ 
+@@ -184,13 +191,23 @@
+ 
+ #### 処理手順
+ 
+-1. menuFormのVIEW_IDをBatch、COMMAND_IDをViewへ変更して送信し、共通受付 C を通る。
+-2. BatchViewActionがrequireStaffを呼ぶ。職員確認不成立なら、実体がログインJSPであるSTAFF_JSPを返す。職員確認中のDB例外等が伝播すれば、CのAction実行catchへ進む。
+-3. 職員確認に成功すると新しいBatchViewBeanを作る。職員番号・通知は空文字、3区分はすべてfalseとする。
+-4. サーバー当日を対象日、当月の月初・月末を開始日・終了日へ設定する。別にCalendarの表示時点を2か月戻し、履歴整理基準日へ設定する。日付計算に明示的なタイムゾーン指定はない。
+-5. セッションの共通属性ViewBeanを新しいBeanへ置き換え、Batch.jspを返す。応答後処理 Z を経て画面を表示する。
+-
+-根拠：`nenkin/JSP/NENKIN/Menu.jsp:9-13`、`nenkin/WEB-INF/src/nenkin/BatchViewAction.java:14-25`、`nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java:7-15`、`nenkin/WEB-INF/src/nenkin/util/DateUtil.java:114-136`。
++**1. 要求の受付と職員確認**
++
++　**1.1.** menuFormのVIEW_IDをBatch、COMMAND_IDをViewへ変更して送信し、共通受付 C を通る。
++
++　**1.2.** BatchViewActionがrequireStaffを呼ぶ。職員確認不成立なら、実体がログインJSPであるSTAFF_JSPを返す。職員確認中のDB例外等が伝播すれば、CのAction実行catchへ進む。
++
++**2. 初期条件の設定**
++
++　**2.1.** 職員確認に成功すると新しいBatchViewBeanを作る。職員番号・通知は空文字、3区分はすべてfalseとする。
++
++　**2.2.** サーバー当日を対象日、当月の月初・月末を開始日・終了日へ設定する。別にCalendarの表示時点を2か月戻し、履歴整理基準日へ設定する。日付計算に明示的なタイムゾーン指定はない。
++
++**3. 状態の保持と画面表示**
++
++　**3.1.** セッションの共通属性ViewBeanを新しいBeanへ置き換え、Batch.jspを返す。応答後処理 Z を経て画面を表示する。
++
++
+ 
+ #### 処理フロー
+ 
+@@ -221,7 +238,6 @@
+ 
+ 既存StaffContextがあれば名簿を再照会しない。未保持の場合、LoginBeanの職員番号をtrimし、半角数字1～8桁なら整数化する。職員確認サービスは先に店名テーブル全件をMapへ読み、その後、職員用接続で`WHERE S.職員番号 = ?`をsetIntで実行する。最初の結果行から職員番号、漢字氏名、カナ氏名、所属店番、役職コードを読み、StaffContextへ必要値を移す。抽出対象職員番号の候補検索ではない。
+ 
+-根拠：`nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java:45-86`、`nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java:206-234,289-321`。
+ 
+ #### 結果・例外時の扱い
+ 
+@@ -242,7 +258,6 @@
+ 3. 職員番号を空欄に戻すと、出力時には更新者条件を付けない。各チェックの解除は、その区分を出力対象から外す意味となる。
+ 4. 出力ボタンを選ぶまで現在値はDOM上に保持する。画面に全条件を初期化するクリアボタンはない。サーバー側の区分必須・職員番号検査は、出力イベントで行う。
+ 
+-根拠：`nenkin/JSP/NENKIN/Batch.jsp:42-62,91-93`、`nenkin/assets/js/app.js:6-51,188-223`。
+ 
+ #### 処理フロー
+ 
+@@ -278,14 +293,25 @@
+ 
+ #### 処理手順
+ 
+-1. 各入力をwesternモードでバインドする。初期バインド、blur、change時に解析できる値はyyyy/MM/ddへ変換する。解析できない値はそのまま残す。
+-2. 隣接ボタン、Alt＋下矢印、F4で対象入力のカレンダーを開く。入力日が有効ならその月、無効または空欄ならクライアント当日の月を表示する。サーバー初期日の計算とは別である。
+-3. 前月・翌月を選ぶと表示月だけを変更する。月見出しには西暦と和暦の表示を使い、日ボタンには日曜、選択日、当日を示すclassを付ける。
+-4. 日を選ぶと対象入力だけを書き換え、inputとchangeを発火する。カレンダーを閉じ、入力へフォーカスを戻す。
+-5. 外側クリックまたはEscapeでも閉じる。これらの操作は選択済み入力値を一括クリアしない。
+-6. 出力時は名前付きの可視入力から文字列を送る。本画面にはdata-era-hidden-inputがなく、共通helperが持つ別hidden日付への同期は適用されない。runBatchはform.submitを直接呼び、全日付一括検査を呼ばない。
+-
+-根拠：`nenkin/JSP/NENKIN/Batch.jsp:69-81,91-93`、`nenkin/assets/js/japanese-era-calendar.js:128-203,225-297,335-440`。
++**1. 日付の入力とカレンダー表示**
++
++　**1.1.** 各入力をwesternモードでバインドする。初期バインド、blur、change時に解析できる値はyyyy/MM/ddへ変換する。解析できない値はそのまま残す。
++
++　**1.2.** 隣接ボタン、Alt＋下矢印、F4で対象入力のカレンダーを開く。入力日が有効ならその月、無効または空欄ならクライアント当日の月を表示する。サーバー初期日の計算とは別である。
++
++**2. 表示月・選択日の変更と終了**
++
++　**2.1.** 前月・翌月を選ぶと表示月だけを変更する。月見出しには西暦と和暦の表示を使い、日ボタンには日曜、選択日、当日を示すclassを付ける。
++
++　**2.2.** 日を選ぶと対象入力だけを書き換え、inputとchangeを発火する。カレンダーを閉じ、入力へフォーカスを戻す。
++
++　**2.3.** 外側クリックまたはEscapeでも閉じる。これらの操作は選択済み入力値を一括クリアしない。
++
++**3. 出力要求への引渡し**
++
++　**3.1.** 出力時は名前付きの可視入力から文字列を送る。本画面にはdata-era-hidden-inputがなく、共通helperが持つ別hidden日付への同期は適用されない。runBatchはform.submitを直接呼び、全日付一括検査を呼ばない。
++
++
+ 
+ #### 処理フロー
+ 
+@@ -329,18 +355,35 @@
+ 
+ #### 処理手順
+ 
+-1. COMMAND_IDをDailyへ変更してフォームを送信し、共通受付 C を通る。BatchDailyActionはDAILYを返し、BatchRunActionの処理を実行する。
+-2. tryに入る前にrequireStaffを実行する。不成立ならログインJSPを返す。成立後、受信した条件から新しいBatchViewBeanを作る。文字列の未送信・NULLは空文字へ変え、Javaのtrimで前後空白を除く。チェックは値1、大小文字を問わないtrue・onをtrue、それ以外と未送信をfalseとする。
+-3. POSTかを先に確認し、その後、セッション側と送信側の照合値を比較する。不正なら有効期限通知を設定し、今回条件をViewBeanへ保存してBatch.jspを返す。
+-4. 3区分がすべてfalseなら区分選択通知で再表示する。続いて、職員番号が非空で半角数字以外を含む場合、またはtrim後8桁を超える場合は、職員番号通知で再表示する。いずれもサービスを呼ばない。
+-5. Beanの条件をPensionBatchExportRequestへ移し、runMode=DAILYを設定する。サービス呼出しから送信までを囲むtryへ入る。
+-6. サービスは要求の存在と区分選択を再検査する。runModeを確認し、対象日の正規化前trim値が非空かを確認してDateUtilへ渡す。変換結果を検索開始・終了へ設定する。月次の2項目は日次期間の決定に使わない。
+-7. 職員番号をIntegerへ変換する。空欄はNULLとなる。通常画面を通過した数字の先頭ゼロは失われ、0は整数0となる。サービス単体ではALLもNULLにするが、画面Actionは英字を拒否する。
+-8. 共通整理フロー P を実行する。基準日がtrim後非空なら、出力検索より先に削除明細整理を呼ぶ。呼出省略、正規化後空欄によるDB未実行、commit正常復帰を区別して後段へ引き継ぐ。
+-9. 共通生成フロー G を実行する。選択区分ごとに全件検索し、0件なら通知を追加する。1件以上なら店番・顧客番号・取得時採番IDで再整列し、出力行、帳票上部、単一シートxlsxを生成する。
+-10. 生成数が0なら通知を半角空白で連結し、今回条件をViewBeanへ保存して再表示する。生成数1なら単一xlsx、2以上ならZIPを送信する。ダウンロード経路は今回Beanを保存し直さず、戻り値CSVを返す。
+-
+-根拠：`nenkin/WEB-INF/src/nenkin/BatchRunAction.java:13-21`、`nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java:89-94,119-135`、`nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:58-162,199-219`。
++**1. 要求の受付と事前検査**
++
++　**1.1.** COMMAND_IDをDailyへ変更してフォームを送信し、共通受付 C を通る。BatchDailyActionはDAILYを返し、BatchRunActionの処理を実行する。
++
++　**1.2.** tryに入る前にrequireStaffを実行する。不成立ならログインJSPを返す。成立後、受信した条件から新しいBatchViewBeanを作る。文字列の未送信・NULLは空文字へ変え、Javaのtrimで前後空白を除く。チェックは値1、大小文字を問わないtrue・onをtrue、それ以外と未送信をfalseとする。
++
++　**1.3.** POSTかを先に確認し、その後、セッション側と送信側の照合値を比較する。不正なら有効期限通知を設定し、今回条件をViewBeanへ保存してBatch.jspを返す。
++
++　**1.4.** 3区分がすべてfalseなら区分選択通知で再表示する。続いて、職員番号が非空で半角数字以外を含む場合、またはtrim後8桁を超える場合は、職員番号通知で再表示する。いずれもサービスを呼ばない。
++
++**2. 出力条件の確定**
++
++　**2.1.** Beanの条件をPensionBatchExportRequestへ移し、runMode=DAILYを設定する。サービス呼出しから送信までを囲むtryへ入る。
++
++　**2.2.** サービスは要求の存在と区分選択を再検査する。runModeを確認し、対象日の正規化前trim値が非空かを確認してDateUtilへ渡す。変換結果を検索開始・終了へ設定する。月次の2項目は日次期間の決定に使わない。
++
++　**2.3.** 職員番号をIntegerへ変換する。空欄はNULLとなる。通常画面を通過した数字の先頭ゼロは失われ、0は整数0となる。サービス単体ではALLもNULLにするが、画面Actionは英字を拒否する。
++
++**3. 削除明細の整理とファイル生成**
++
++　**3.1.** 共通整理フロー P を実行する。基準日がtrim後非空なら、出力検索より先に削除明細整理を呼ぶ。呼出省略、正規化後空欄によるDB未実行、commit正常復帰を区別して後段へ引き継ぐ。
++
++　**3.2.** 共通生成フロー G を実行する。選択区分ごとに全件検索し、0件なら通知を追加する。1件以上なら店番・顧客番号・取得時採番IDで再整列し、出力行、帳票上部、単一シートxlsxを生成する。
++
++**4. 結果の返却**
++
++　**4.1.** 生成数が0なら通知を半角空白で連結し、今回条件をViewBeanへ保存して再表示する。生成数1なら単一xlsx、2以上ならZIPを送信する。ダウンロード経路は今回Beanを保存し直さず、戻り値CSVを返す。
++
++
+ 
+ #### 処理フロー
+ 
+@@ -446,7 +489,6 @@
+   X[出力前整理] -- DELETE --> D
+ ```
+ 
+-根拠：`nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:24-30,353-397,458-480,772-778`。
+ 
+ #### DB操作の詳細
+ 
+@@ -484,7 +526,6 @@
+ 
+ 区分ごとに別接続で検索し、結果セット・statement・接続を閉じる。ページング、setMaxRows、件数上限、queryTimeout、明示的cancelは設定していない。検索全体を固定版で読むトランザクション、比較版、SELECT FOR UPDATEはこの経路にない。
+ 
+-根拠：`nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:353-413,458-480,817-824,868-869,916-938`、`nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:199-219`。
+ 
+ #### 結果・例外時の扱い
+ 
+@@ -507,7 +548,6 @@
+ 
+ Action内のcatchは、サービス検査だけでなく、その後の日付の和暦加工や送信までを対象とする。たとえば既存データの日付加工でIllegalArgumentExceptionが生じた場合もE1へ入る。一方、職員確認はtryより前であり、そこでの例外をE1へ含めない。
+ 
+-根拠：`nenkin/WEB-INF/src/nenkin/BatchRunAction.java:14-21`、`nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:77-147,187-196,293-347`、`nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java:35-64`、`nenkin/WEB-INF/src/nenkin/service/NenkinDataAccessException.java:3-8`。
+ 
+ ### 5. 月次データの出力
+ 
+@@ -517,15 +557,27 @@
+ 
+ #### 処理手順
+ 
+-1. COMMAND_IDをMonthlyへ変更してフォームを送信し、共通受付 C を通る。BatchMonthlyActionがMONTHLYを設定してBatchRunActionへ接続する。
+-2. 日次の手順2～4と同じ順序で、職員確認、今回Beanの作成、POST・照合値、区分選択、職員番号形式を検査する。拒否時は対応する通知と今回条件を保持する。職員確認不成立はログインJSPであり、条件エラーの再表示とは分ける。
+-3. runMode=MONTHLYの要求DTOを作り、サービスへ渡す。対象日のDAILY_DATEもBean・DTOへ移されるが、月次の出力期間には使わない。
+-4. サービスは要求と区分、runModeを確認した後、開始日、終了日の順に正規化前の必須検査と日付変換を行う。開始日空欄は「月初日を入力してください。」、終了日空欄は「月末日を入力してください。」となる。
+-5. ISO文字列の開始日が終了日より後なら、「月初日は月末日以前で指定してください。」で拒否する。等しい場合は通過する。同一月、月初・月末、期間長の追加検査はない。
+-6. 職員番号を変換した後、共通整理 Pへ進む。続いて共通生成 Gを実行し、新規、変更、削除の選択区分を順に処理する。Pから引き継ぐ整理状態Sは各枝の値を維持する。
+-7. 生成数0は通知再表示、1は単一xlsx、2以上は月次ZIPとする。try内のIllegalArgumentExceptionはE1、それ以外の伝播ExceptionはCの一般catchへ進む。最終処理はZを使う。
+-
+-根拠：`nenkin/WEB-INF/src/nenkin/BatchMonthlyAction.java:1-3`、`nenkin/WEB-INF/src/nenkin/BatchRunAction.java:13-21`、`nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:58-147`。
++**1. 要求の受付と事前検査**
++
++　**1.1.** COMMAND_IDをMonthlyへ変更してフォームを送信し、共通受付 C を通る。BatchMonthlyActionがMONTHLYを設定してBatchRunActionへ接続する。
++
++　**1.2.** 日次の手順1.2～1.4と同じ順序で、職員確認、今回Beanの作成、POST・照合値、区分選択、職員番号形式を検査する。拒否時は対応する通知と今回条件を保持する。職員確認不成立はログインJSPであり、条件エラーの再表示とは分ける。
++
++**2. 出力期間の確定**
++
++　**2.1.** runMode=MONTHLYの要求DTOを作り、サービスへ渡す。対象日のDAILY_DATEもBean・DTOへ移されるが、月次の出力期間には使わない。
++
++　**2.2.** サービスは要求と区分、runModeを確認した後、開始日、終了日の順に正規化前の必須検査と日付変換を行う。開始日空欄は「月初日を入力してください。」、終了日空欄は「月末日を入力してください。」となる。
++
++　**2.3.** ISO文字列の開始日が終了日より後なら、「月初日は月末日以前で指定してください。」で拒否する。等しい場合は通過する。同一月、月初・月末、期間長の追加検査はない。
++
++**3. 削除明細の整理・ファイル生成と返却**
++
++　**3.1.** 職員番号を変換した後、共通整理 Pへ進む。続いて共通生成 Gを実行し、新規、変更、削除の選択区分を順に処理する。Pから引き継ぐ整理状態Sは各枝の値を維持する。
++
++　**3.2.** 生成数0は通知再表示、1は単一xlsx、2以上は月次ZIPとする。try内のIllegalArgumentExceptionはE1、それ以外の伝播ExceptionはCの一般catchへ進む。最終処理はZを使う。
++
++
+ 
+ #### 処理フロー
+ 
+@@ -574,7 +626,6 @@
+ 
+ 正規化後空欄は、日次と同様に必須保証の例外経路となる。両端が空文字なら比較を通過し、開始側だけ空文字でも下限なしの経路がある。一方、開始側が通常の非空ISO日付で終了側だけが空文字なら、文字列比較で開始日が後と判定され、期間順序エラーとなる。これらを一律の「日付不正で拒否」へまとめない。
+ 
+-根拠：`nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:95-147,187-196`、`nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:358-397`。
+ 
+ ### 6. メニューへ戻る
+ 
+@@ -584,13 +635,23 @@
+ 
+ #### 処理手順
+ 
+-1. 戻るボタンがbatchFormのVIEW_IDをMenu、COMMAND_IDをViewへ変更して送信する。
+-2. 共通受付 C を通り、MenuViewActionが職員確認を行う。不成立ならログインJSPを返す。
+-3. 成立時は新しいMenuViewBeanを作り、ログイン職員番号を最小8桁ゼロ埋めし、氏名とともに設定する。
+-4. 共通セッション属性ViewBeanをMenuViewBeanへ置き換え、Menu.jspを返す。送信されたバッチ条件は保存しない。
+-5. 応答後処理 Z を行う。次に「処理データ」から入り直すと、初期表示イベントによって条件が再初期化される。
+-
+-根拠：`nenkin/JSP/NENKIN/Batch.jsp:29,93`、`nenkin/WEB-INF/src/nenkin/MenuViewAction.java:10-16`、`nenkin/WEB-INF/src/nenkin/BatchViewAction.java:14-25`。
++**1. 戻る要求の受付と職員確認**
++
++　**1.1.** 戻るボタンがbatchFormのVIEW_IDをMenu、COMMAND_IDをViewへ変更して送信する。
++
++　**1.2.** 共通受付 C を通り、MenuViewActionが職員確認を行う。不成立ならログインJSPを返す。
++
++**2. メニュー状態の設定**
++
++　**2.1.** 成立時は新しいMenuViewBeanを作り、ログイン職員番号を最小8桁ゼロ埋めし、氏名とともに設定する。
++
++　**2.2.** 共通セッション属性ViewBeanをMenuViewBeanへ置き換え、Menu.jspを返す。送信されたバッチ条件は保存しない。
++
++**3. 応答と再入場**
++
++　**3.1.** 応答後処理 Z を行う。次に「処理データ」から入り直すと、初期表示イベントによって条件が再初期化される。
++
++
+ 
+ #### 処理フロー
+ 
+@@ -640,7 +701,6 @@
+ 
+ 自動DTOバインドによる数値・日付変換は使わない。ActionがBeanと要求DTOを明示的に作成する。Beanと要求DTOの文字列setterもNULLを空文字へ変える。runModeはenumで、通常画面では具体ActionがDAILYまたはMONTHLYを設定する。サービス単体では要求NULL、区分未選択、runMode=NULLをIllegalArgumentExceptionで拒否する。
+ 
+-根拠：`nenkin/WEB-INF/src/nenkin/BatchRunAction.java:15-21`、`nenkin/WEB-INF/src/nenkin/bean/BatchViewBean.java:16-33`、`nenkin/WEB-INF/src/nenkin/service/PensionBatchExportRequest.java:9-43`、`nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:58-147,257-260`、`nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java:11-24,74-78`。
+ 
+ ### 日付変換と正規化後空欄
+ 
+@@ -652,7 +712,6 @@
+ 
+ また、西暦として有効でも明治元年より前の日付は帳票の和暦加工でIllegalArgumentExceptionとなり得る。期間検査を通過したことだけで後段の帳票生成成功を保証しない。
+ 
+-根拠：`nenkin/WEB-INF/src/nenkin/util/DateUtil.java:15-71,139-179`、`nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:119-135,293-294`、`nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:358-372`。
+ 
+ ### 新規・変更・削除の発生元と整合性
+ 
+@@ -664,7 +723,6 @@
+ 
+ 検索時のauditIdはDB履歴IDではない。各ResultSet走査で1から採番するlongのメモリ値で、auditType、更新日時、Integer更新者、予約のコピーとともにPensionAuditRecordへ保持する。区分内の再整列で使い、帳票へは出力しない。
+ 
+-根拠：`nenkin/WEB-INF/src/nenkin/PensionSaveAction.java:39-47`、`nenkin/WEB-INF/src/nenkin/PensionDeleteAction.java:17-33`、`nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:280-349,399-404,513-531,657-737`、`nenkin/WEB-INF/src/nenkin/model/PensionAuditRecord.java:9-41`、`nenkin/WEB-INF/resources/db/schema.sql:168-171`、`nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql:130-172`。
+ 
+ ### 出力列と取得・加工の対応
+ 
+@@ -695,7 +753,6 @@
+ 
+ 文字列のDB NULLはモデルsetterで空文字へ変わる。IntegerはgetIntの後にwasNullでNULLを復元する。booleanはgetIntの非0判定であり、DB NULLとfalseを区別して保持しない。ExcelはNumberを数値セル、それ以外をinlineStrへ出力する。和暦日付はR8.06.11のような文字列であり、Excelの日付シリアルではない。帳票の見出しには「性\n別」「年金\n種類」等の明示改行も設定される。
+ 
+-根拠：`nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:28-36,222-244,293-298`、`nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:43-58,741-783`、`nenkin/WEB-INF/src/nenkin/model/PensionReservation.java:13-38,115-156,287-288`、`nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java:329-355`、`nenkin/WEB-INF/src/nenkin/util/DateUtil.java:79-103`、`nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java:172-183`。
+ 
+ ### 出力識別、帳票配置、ダウンロード
+ 
+@@ -726,13 +783,11 @@
+ 
+ xlsxのMIMEは`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`、ZIPは`application/zip`である。writeDownloadは応答をresetし、MIME、Content-Dispositionのattachment、fallback filename=download、UTF-8拡張ファイル名、byte配列長のContent-Lengthを設定して書込み・flushする。Actionの戻り値CSVは、JSP forwardを抑止する共通制御値であり、実ファイル形式を表さない。正常復帰はブラウザーの保存完了を確認した結果ではない。
+ 
+-根拠：`nenkin/WEB-INF/src/nenkin/service/PensionBatchExportService.java:23-36,95-112,165-184,250-347`、`nenkin/WEB-INF/src/nenkin/util/OpenXmlWorkbookWriter.java:104-218`、`nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java:204-211`、`n2framework/WEB-INF/src/common/ControlServlet.java:375-383`。
+ 
+ ### DB属性と出力元の保存契約
+ 
+ ヘッダーの職員情報は、提供H2用DDLではDB2.Ｕ職員名簿表の職員番号がDECIMAL(18,0)・PK・NOT NULL、漢字氏名がVARCHAR(40)・NULL可である。名簿検索の職員番号はsetIntで指定し、取得した氏名のNULLはStaffLookupItemで空文字へ変換する。その後StaffContextへ保持し、画面では職員番号を最小8桁でゼロ埋めし、氏名をHTMLエスケープして表示する。これらのDDL属性はローカル用の提示定義であり、本番DBの適用属性や名称保守の業務上限を確認した結果ではない。
+ 
+-根拠：`nenkin/WEB-INF/resources/db/schema.sql:20-29`、`nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java:206-234`、`nenkin/WEB-INF/src/nenkin/model/StaffLookupItem.java:27-34`、`nenkin/JSP/NENKIN/Batch.jsp:5-7,29`。
+ 
+ 次表は本体・削除明細に共通する関連属性である。両表の掲載列はすべてNULL可で、DEFAULTは宣言されていない。型・容量は提供DDLの宣言であり、画面の業務入力上限とは分ける。
+ 
+@@ -772,7 +827,6 @@
+ 
+ H2用DDLの通常索引は、本体のふりがな＋電話番号、店番＋顧客番号、変更FLG＋データ更新日＋更新者、削除明細のデータ更新日＋更新者である。SQL Server用DDLも同じ列構成の通常索引を宣言する。検索JOINはこれらの索引やFKの存在保証と区別する。
+ 
+-根拠：`nenkin/WEB-INF/resources/db/schema.sql:81-171`、`nenkin/WEB-INF/resources/db/schema-raroa-sqlserver.sql:10-172`、`nenkin/WEB-INF/src/nenkin/service/PensionRepository.java:513-531,573-616,704-840`、`nenkin/WEB-INF/src/nenkin/NenkinBaseAction.java:154-180`、`nenkin/WEB-INF/src/nenkin/util/AnsiTextUtil.java:13-46`、`nenkin/WEB-INF/src/nenkin/service/ReferenceDataService.java:237-277`、`nenkin/JSP/NENKIN/Pension.jsp:27-40`、`nenkin/WEB-INF/resources/db/data.sql:55-94`。
+ 
+ ### 保持領域・接続・データ関連
+ 
+@@ -823,7 +877,6 @@
+ 
+ PensionBatchExportResultはファイル名、MIME、byte配列、ファイル情報List、通知Listを持つ。byte配列は複製し、Listは変更不可コピーにする。各ファイル情報はqueryName、fileName、categoryName、rowCountを持つが、Actionはこの件数一覧を画面表示しない。これらは出力履歴表への保存ではない。
+ 
+-根拠：`nenkin/WEB-INF/src/nenkin/service/NenkinDataSource.java:12-59,77-93`、`nenkin/WEB-INF/src/nenkin/H2JndiSetupListener.java:23-35,78-104`、`nenkin/WEB-INF/src/nenkin/service/PensionBatchExportResult.java:11-32`、`nenkin/WEB-INF/src/nenkin/service/PensionBatchExportFileResult.java:8-24`、`nenkin/WEB-INF/src/nenkin/BatchRunAction.java:20-21`。
+ 
+ ### 応答後処理 Z、アクセス記録、再表示境界
+ 
+@@ -850,7 +903,6 @@
+ 
+ 不正日付の再表示ではHtmlUtilがParseExceptionを捕捉して元文字列を返す。その値はエスケープされるため、日付解析失敗を再度サービス入力例外として投げ直す経路ではない。ただしJSP処理全体の成功を保証するものではない。送信途中ですでに応答がcommitされていれば、一般エラーJSPを選んでもforward完了は保証できない。掲載経路には、各拒否・例外を専用HTTPエラーステータスへ設定する処理がない。
+ 
+-根拠：`n2framework/WEB-INF/src/common/ControlServlet.java:332-383`、`n2framework/WEB-INF/src/common/CounterShift.java:25-52`、`n2framework/WEB-INF/src/common/base/InsertCounterShiftBase.java:34-85`、`n2framework/WEB-INF/src/common/base/CommonBase.java:44-62`、`nenkin/WEB-INF/resources/db/schema.sql:55-63`、`nenkin/JSP/NENKIN/Batch.jsp:3-7,69-81`、`nenkin/WEB-INF/src/nenkin/util/HtmlUtil.java:22-24,74-78`。
+ 
+ ### 採用設計（推定）
+ 
