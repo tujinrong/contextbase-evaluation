@@ -1,2 +1,0 @@
-# Synthetic
-synthetic canonical one

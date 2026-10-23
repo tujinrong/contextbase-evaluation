@@ -1,7 +1,0 @@
-# search v3 Gate待機取消の追加照合
-
-CLIのminorは局所図の欠落として確認した。SearchContextStore.UseはGet→await Gate.WaitAsync(ct)→try/operationの順である。待機取消ならSearchAsyncとSQLに進まず、Controller.SearchのWebFaultだけのcatchを越える。E02の図006はUからWebFaultまたはQへの経路だけで、取消をQや後段候補取得からしか示していない。
-
-文書全体の取消説明や配信境界は既にある。MD214はct付き待機、479は取消のcatch外伝播、949は応答未開始時の非WebFault503とエラーHTMLの返却試行、応答開始後・切断後の配信未保証を記載する。したがって「原稿が503 HTML配信を保証していた」という読みは反証される。修正はSQL前のU→共通エラー矢印とその局所説明に限定し、既存の条件付き配信説明を保持する。
-
-同じ版3.0 MDと原文を読み、metadata-01のdiagram-006.pngを新たに実閲覧した。ソースの条件付き経路であり、HTTP取消・Semaphore・middleware・DBを実行再現していない。追加REVIEWと検索専用evidence-manifestのSHA・行範囲・不変性検査を参照する。旧最終REVIEW、画像・meta記録、登録の先行追加記録は変更しない。現行searchは追加REVIEW approved=falseとして次のAI修正へ渡す。

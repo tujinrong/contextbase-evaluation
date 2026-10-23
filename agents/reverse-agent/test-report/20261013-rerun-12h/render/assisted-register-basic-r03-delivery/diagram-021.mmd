@@ -1,9 +1,0 @@
-flowchart TD
-    A[D2のtry内例外] --> C{DBConcurrencyException}
-    C -->|はい| CR[rollback試行<br/>D3へConflict 409]
-    C -->|いいえ| T{SqlException<br/>InvalidOperationException<br/>OperationCanceledException}
-    T -->|いいえ| X[外側へ伝播]
-    T -->|はい| RB[rollback試行]
-    RB --> Q{writeStarted=trueかつ<br/>commitAttempted=true<br/>またはrollback失敗}
-    Q -->|該当| U[D3へ・Unknown 503]
-    Q -->|非該当| S[D3へ・SystemError 503]

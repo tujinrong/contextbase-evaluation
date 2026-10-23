@@ -1,1 +1,0 @@
-ALTER ROLE [student_admin] ADD MEMBER [DELL_DISKTOP1\tujin];

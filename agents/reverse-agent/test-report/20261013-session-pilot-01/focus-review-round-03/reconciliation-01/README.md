@@ -1,9 +1,0 @@
-# editor v3 CLI指摘との独立再照合
-
-2件とも確認した。EV-01/02のmajorは、任意復帰Contextを入口で確認してからDBをawaitし、Loadで現在Revisionを読む前に再取得する順序に由来する。非空Contextがその間に失効した場合、後段GetのWebFault409を共通middlewareが保持する。EV-01図はその後段分岐を欠き、EV-02図は合成したLookup/Input/Snapshotの未捕捉例外を503へ固定している。共通1011の正しいStatus説明だけで局所図の誤分類は解消しない。
-
-EV-07のminorは局所図・局所説明の欠落である。本文723にFormGuard、共通1007/1011に400とStatus保持は既にあり、「全体から400がない」という読みは反証される。それでも図013の状態一覧は400を欠く。本体はFormGuard→identity.Read→IdParser→Snapshot.Get→ModelState.Clearの順。Authorize/CSRF等がController本体に先行することも保持し、入口全体の順序を逆転させない。
-
-対象は同じAI版3.0のstudent-editor.md。新たにmetadata-01のdiagram-001/003/013を実閲覧した。原文・MD・CLIレビュー・PNG・mmd・manifestのSHAと行範囲はevidence-manifest.json。sourceプログラム、MVC、DBは実行していない。評価期待値とspec-evalは読んでいない。参考設計本文も読んでいない。
-
-先の限定レビューではこの2件を検出していなかった。既存の最終REVIEW、31画像のmanifest、metadata追記は変更せず、この追加REVIEW approved=falseを現行editorへの新しい修正要求として残す。他の正しいUI/field/date記述は保持する。未修正のv3を全体承認済みとして扱わず、AIが図・説明を直した次稿を別に再検証する。

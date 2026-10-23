@@ -1,1 +1,0 @@
-synthetic generated fixture only
