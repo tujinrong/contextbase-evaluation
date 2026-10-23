@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AS400_RPG-SPEC-INDEX","version":"8.0","path":"test-project1/srcs/AS400_RPG/spec/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AS400_RPG-SPEC-INDEX","version":"8.1","path":"test-project1/srcs/AS400_RPG/spec/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"}]} -->
 # AS400_RPG 仕様書
 
-版8.0／2026-10-12。
+版8.1／2026-10-23。
 
 ## 対象
 
@@ -22,3 +22,7 @@
 ## 隔離
 
 すべての仕様参照はこのフォルダー内で閉じる。業務項目・規則IDは維持し、文書IDは本方式専用とした。他プロジェクトと共通の仕様ファイル、symlink、外部への相互引用は使用しない。
+
+### 2026-10-23 画面配置改訂
+
+検索は4条件へ整理し、学生編集は保存項目を維持して省スペース化した。方式適合・確認範囲は[画面最適化記録](画面最適化記録.md)。アプリ実装、実DB、ネイティブ実機、正式採点は未実施。formalScore=null。

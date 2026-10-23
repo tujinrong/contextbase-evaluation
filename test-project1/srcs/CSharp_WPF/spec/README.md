@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"CSHARP_WPF-SPEC-INDEX","version":"8.0","path":"test-project1/srcs/CSharp_WPF/spec/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"CSHARP_WPF-SPEC-INDEX","version":"8.1","path":"test-project1/srcs/CSharp_WPF/spec/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"},{"heading":"画面最適化の改訂","kind":"GRID","sheet":"04_画面最適化の改訂"}]} -->
 # CSharp_WPF 仕様書
 
-版8.0／2026-10-12。
+版8.1／2026-10-23。
 
 ## 対象
 
@@ -22,3 +22,7 @@
 ## 隔離
 
 すべての仕様参照はこのフォルダー内で閉じる。業務項目・規則IDは維持し、文書IDは本方式専用とした。他プロジェクトと共通の仕様ファイル、symlink、外部への相互引用は使用しない。
+
+## 画面最適化の改訂
+
+2026-10-23、検索4条件・7列と学生編集の上段基本＋下段3列へ改訂。方式固有のネイティブUIと既存保存契約を維持する。各文書版・確認範囲は[画面最適化記録](画面最適化記録.md)を参照。実装・実DB・実機・正式採点は未実施、formalScore=null。
