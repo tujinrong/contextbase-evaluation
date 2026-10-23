@@ -6,20 +6,10 @@ public sealed class StudentSearchInput
 {
     public string StudentNo { get; set; } = "";
     public string Name { get; set; } = "";
-    public string Kana { get; set; } = "";
-    public int? SchoolYear { get; set; }
-    public string? GradeCode { get; set; }
     public string? ClassId { get; set; }
-    public bool UnassignedOnly { get; set; }
     public string[] StatusCodes { get; set; } = ["01","02"];
-    public string? PrefectureCode { get; set; }
-    public string PhoneNumber { get; set; } = "";
-    public string? AdmissionFrom { get; set; }
-    public string? AdmissionTo { get; set; }
-    public SearchCriteria ToCriteria(int size,string key,string direction) => new() { StudentNo=StudentNo,StudentName=Name,StudentNameKana=Kana,
-        SchoolYear=SchoolYear,GradeCode=GradeCode,ClassId=IdParser.Optional(ClassId,"SRC-006"),UnassignedOnly=UnassignedOnly,
-        EnrollmentStatusCodes=StatusCodes,PrefectureCode=PrefectureCode,PhoneNumber=PhoneNumber,AdmissionFrom=AdmissionFrom,AdmissionTo=AdmissionTo,
-        Page=1,PageSize=size,SortKey=key,SortDirection=direction };
+    public SearchCriteria ToCriteria(int size,string key,string direction) => SearchCriteria.FromRaw(
+        StudentNo,Name,IdParser.Optional(ClassId,"Criteria.ClassId"),StatusCodes,size,key,direction);
 }
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public class ContextRequest { public string ContextId {get;set;}=""; public string ContextRevision {get;set;}=""; }

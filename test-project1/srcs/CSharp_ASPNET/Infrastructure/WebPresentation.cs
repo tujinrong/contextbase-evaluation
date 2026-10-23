@@ -17,7 +17,7 @@ public static class WebPresentation
         });
         return new { codes,classes,years=set.Classes.Select(c=>c.SchoolYear).Distinct().OrderDescending() };
     }
-    public static object Row(StudentRow r)=>new { studentId=r.StudentId.ToString(System.Globalization.CultureInfo.InvariantCulture),r.StudentNo,r.StudentName,r.StudentNameKana,r.BirthDateWareki,r.SchoolYear,r.GradeName,r.ClassCode,r.ClassName,enrollmentName=r.EnrollmentStatusName,addressDisplay=r.Address,r.PhoneNumber,updatedAt=Time(r.UpdatedAt) };
+    public static object Row(StudentListItem r)=>new { studentId=r.StudentId.ToString(System.Globalization.CultureInfo.InvariantCulture),r.StudentNo,r.StudentName,r.StudentNameKana,r.BirthDateWareki,r.SchoolYear,r.GradeName,r.ClassCode,r.ClassName,enrollmentName=r.EnrollmentStatusName };
     public static Dictionary<string,string[]> Errors(IEnumerable<FieldError> errors)=>errors.GroupBy(e=>e.Field).ToDictionary(g=>g.Key,g=>g.Select(e=>e.Message).ToArray());
     public static object Error(string outcome,string message,string id="E-COM-004",IEnumerable<FieldError>? errors=null,string? requestId=null,bool retry=false)=>new { outcome,messageId=id,message,fieldErrors=Errors(errors??[]),correlationId=requestId??Guid.NewGuid().ToString(),retryBySearch=retry };
     public static int Status(Outcome outcome)=>outcome switch { Outcome.Saved=>200,Outcome.NoChange=>200,Outcome.ValidationFailed=>422,Outcome.Forbidden=>403,Outcome.NotFound=>404,Outcome.Conflict or Outcome.ConfirmationRequired=>409,_=>503 };

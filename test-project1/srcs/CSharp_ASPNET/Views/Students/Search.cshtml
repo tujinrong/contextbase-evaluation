@@ -1,8 +1,77 @@
 @model StudentSearchPageModel
-@{var data=Model.Data;var items=data.GetProperty("items");var outcome=data.GetProperty("outcome").GetString();int count=data.GetProperty("totalCount").ValueKind==System.Text.Json.JsonValueKind.Number?data.GetProperty("totalCount").GetInt32():0;int page=data.GetProperty("page").GetInt32();var codes=Model.Lookups.Codes;}
-<h1>学生検索</h1><partial name="_MessagePanel" model="Model.Message" />
-<form method="post" action="/students/search" data-search-form><input type="hidden" name="ContextId" value="@Model.Context.Id"><input type="hidden" name="ContextRevision" value="@Model.Context.Revision"><input type="hidden" name="TabId" value="@Model.Context.Tab"><input type="hidden" name="PageSize" value="@Model.PageSize"><input type="hidden" name="SortKey" value="@Model.SortKey"><input type="hidden" name="SortDirection" value="@Model.SortDirection">@Html.AntiForgeryToken()
-<fieldset><legend>検索条件</legend><div class="fields"><label>学籍番号<input asp-for="Criteria.StudentNo" id="SRC-001" maxlength="30"></label><label>氏名<input asp-for="Criteria.Name" id="SRC-002" maxlength="16"></label><label>氏名カナ<input asp-for="Criteria.Kana" id="SRC-003" maxlength="72"></label><label>年度<select asp-for="Criteria.SchoolYear" id="SRC-004" disabled="@Model.Criteria.UnassignedOnly"><option value="">すべて</option>@foreach(var y in Model.Lookups.Classes.Select(c=>c.SchoolYear).Distinct().OrderDescending()){<option value="@y">@y</option>}</select></label><label>学年<select asp-for="Criteria.GradeCode" id="SRC-005" disabled="@Model.Criteria.UnassignedOnly"><option value="">すべて</option>@foreach(var c in codes.Where(c=>c.CategoryId=="GRADE")){<option value="@c.CodeValue">@c.CodeName</option>}</select></label><label>クラス<select asp-for="Criteria.ClassId" id="SRC-006" disabled="@Model.Criteria.UnassignedOnly"><option value="">すべて</option>@foreach(var c in Model.Lookups.Classes.Where(c=>(Model.Criteria.SchoolYear is null||c.SchoolYear==Model.Criteria.SchoolYear)&&(string.IsNullOrEmpty(Model.Criteria.GradeCode)||c.GradeCode==Model.Criteria.GradeCode))){<option value="@c.ClassId">@c.SchoolYear @c.ClassCode @c.ClassName @(!c.IsActive?"（停止）":"")</option>}</select></label><label class="check"><input asp-for="Criteria.UnassignedOnly" id="SRC-007">未所属のみ</label><fieldset><legend>在籍区分</legend>@foreach(var c in codes.Where(c=>c.CategoryId=="ENROLLMENT_STATUS")){<label class="check"><input type="checkbox" name="Criteria.StatusCodes" value="@c.CodeValue" checked="@Model.Criteria.StatusCodes.Contains(c.CodeValue)">@c.CodeName</label>}<small>全解除はすべて</small></fieldset><label>都道府県<select asp-for="Criteria.PrefectureCode" id="SRC-009"><option value="">すべて</option>@foreach(var c in codes.Where(c=>c.CategoryId=="PREFECTURE")){<option value="@c.CodeValue">@c.CodeName</option>}</select></label><label>電話番号<input asp-for="Criteria.PhoneNumber" id="SRC-010" maxlength="40"></label><label>入学日・開始<input asp-for="Criteria.AdmissionFrom" id="SRC-011" type="date"></label><label>入学日・終了<input asp-for="Criteria.AdmissionTo" id="SRC-012" type="date"></label></div><div class="actions"><button type="submit" class="primary">検索</button><button type="submit" formaction="/students/options">候補を更新</button></div></fieldset></form>
-<div class="actions"><form method="post" action="/students/clear">@Html.AntiForgeryToken()<input type="hidden" name="ContextId" value="@Model.Context.Id"><input type="hidden" name="ContextRevision" value="@Model.Context.Revision"><input type="hidden" name="TabId" value="@Model.Context.Tab"><button>クリア</button></form>@if(Model.User.Role!=Role.Viewer){<a href="/students/new?returnContextId=@Model.Context.Id">新規登録</a>}</div>
-@if(outcome=="tooMany"){<p class="warning">10,000件を超えました。条件を追加してください。</p>}else if(outcome=="empty"){<p>該当する学生はありません。</p>}else if(outcome=="unsearched"){<p>未検索</p>}else{<p>検索結果 @count 件　@data.GetProperty("searchedAt").GetString()</p>}
-<form method="post" action="/students/page">@Html.AntiForgeryToken()<input type="hidden" name="ContextId" value="@Model.Context.Id"><input type="hidden" name="ContextRevision" value="@Model.Context.Revision"><input type="hidden" name="TabId" value="@Model.Context.Tab"><div class="actions"><label>表示件数<select name="PageSize">@foreach(var n in new[]{20,50,100}){<option value="@n" selected="@(n==Model.PageSize)">@n</option>}</select></label><label>並び順<select name="SortKey">@foreach(var s in new[]{("studentNo","学籍番号"),("name","氏名"),("admissionDate","入学日"),("updatedAt","更新日時")}){<option value="@s.Item1" selected="@(s.Item1==Model.SortKey)">@s.Item2</option>}</select></label><select name="SortDirection" aria-label="並び順方向"><option value="asc" selected="@(Model.SortDirection=="asc")">昇順</option><option value="desc" selected="@(Model.SortDirection=="desc")">降順</option></select><button name="Page" value="1" disabled="@(outcome!="found")">並び順・件数を反映</button></div><div class="grid"><table><thead><tr><th>学籍番号</th><th>氏名</th><th>氏名カナ</th><th>生年月日</th><th>年度／学年</th><th>クラス</th><th>在籍区分</th><th>住所</th><th>本人電話</th><th>更新日時</th><th>操作</th></tr></thead><tbody>@foreach(var row in items.EnumerateArray()){<tr><td>@row.GetProperty("studentNo").GetString()</td><td>@row.GetProperty("studentName").GetString()</td><td>@row.GetProperty("studentNameKana").GetString()</td><td>@row.GetProperty("birthDateWareki").GetString()</td><td>@row.GetProperty("schoolYear") @row.GetProperty("gradeName").GetString()</td><td>@row.GetProperty("classCode").GetString() @row.GetProperty("className").GetString()</td><td>@row.GetProperty("enrollmentName").GetString()</td><td>@row.GetProperty("addressDisplay").GetString()</td><td>@(row.GetProperty("phoneNumber").GetString()??"－")</td><td>@row.GetProperty("updatedAt").GetString()</td><td><a href="/students/@row.GetProperty("studentId").GetString()?returnContextId=@Model.Context.Id">@(Model.User.Role==Role.Viewer?"参照":"編集")</a></td></tr>}</tbody></table></div><nav class="pager"><button name="Page" value="@(page-1)" disabled="@(outcome!="found"||page<=1)">前へ</button><span>@(page) / @Math.Max(1,(count+Model.PageSize-1)/Model.PageSize)</span><button name="Page" value="@(page+1)" disabled="@(outcome!="found"||page*Model.PageSize>=count)">次へ</button></nav></form>
+@{
+    var data = Model.Data;
+    var items = data.GetProperty("items");
+    var outcome = data.GetProperty("outcome").GetString();
+    var count = data.GetProperty("totalCount").ValueKind == System.Text.Json.JsonValueKind.Number ? data.GetProperty("totalCount").GetInt32() : 0;
+    var page = data.GetProperty("page").GetInt32();
+    var pages = Math.Max(1, (count + Model.PageSize - 1) / Model.PageSize);
+    var codes = Model.Lookups.Codes;
+    var today = WebPresentation.BusinessDate;
+    var applied = Model.Context.Applied;
+    var appliedClass = Model.Lookups.Classes.FirstOrDefault(c => c.ClassId == applied?.ClassId);
+}
+<section class="student-search" aria-labelledby="search-title">
+    <div class="pagehead"><h1 id="search-title">学生検索</h1><div class="actions">
+        @if (Model.User.Role != Role.Viewer) { <a class="button" data-field-id="SRC-015" href="/students/new?returnContextId=@Model.Context.Id">新規登録</a> }
+        <a class="button" data-field-id="SRC-016" href="/menu">メニューへ</a>
+    </div></div>
+    <partial name="_MessagePanel" model="Model.Message" />
+    <form method="post" action="/students/search" data-search-form data-search-outcome="@outcome" data-applied-input="@System.Text.Json.JsonSerializer.Serialize(Model.Context.Draft)" class="criteria" aria-labelledby="criteria-title">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="ContextId" value="@Model.Context.Id"><input type="hidden" name="ContextRevision" value="@Model.Context.Revision"><input type="hidden" name="TabId" value="@Model.Context.Tab">
+        <input type="hidden" name="PageSize" value="@Model.PageSize"><input type="hidden" name="SortKey" value="@Model.SortKey"><input type="hidden" name="SortDirection" value="@Model.SortDirection">
+        <h2 class="visually-hidden" id="criteria-title">検索条件</h2>
+        <div class="search-fields">
+            <label data-field-id="SRC-001">学籍番号<input asp-for="Criteria.StudentNo" id="SRC-001" maxlength="30" data-business-maxlength="15" aria-describedby="studentno-hint"><small id="studentno-hint">前方一致・15文字まで</small></label>
+            <label data-field-id="SRC-002">氏名<input asp-for="Criteria.Name" id="SRC-002" maxlength="16" data-business-maxlength="8" aria-describedby="name-hint"><small id="name-hint">部分一致・8文字まで</small></label>
+            <label data-field-id="SRC-006">クラス<select asp-for="Criteria.ClassId" id="SRC-006" aria-describedby="class-hint"><option value="">すべて</option>
+                @if (!string.IsNullOrEmpty(Model.Criteria.ClassId) && !Model.Lookups.Classes.Any(c => c.ClassId.ToString(System.Globalization.CultureInfo.InvariantCulture) == Model.Criteria.ClassId)) {
+                    <option value="@Model.Criteria.ClassId">入力値：@Model.Criteria.ClassId（無効なクラス）</option>
+                }
+                @foreach (var c in Model.Lookups.Classes.OrderByDescending(c => c.SchoolYear).ThenBy(c => codes.FirstOrDefault(x => x.CategoryId == "GRADE" && x.CodeValue == c.GradeCode)?.DisplayOrder ?? int.MaxValue).ThenBy(c => c.DisplayOrder).ThenBy(c => c.ClassCode).ThenBy(c => c.ClassId)) {
+                    var grade = codes.FirstOrDefault(x => x.CategoryId == "GRADE" && x.CodeValue == c.GradeCode)?.CodeName ?? "不整合";
+                    var note = !c.IsActive ? "（停止）" : today < c.ValidFrom || today > c.ValidTo ? "（期間外）" : "";
+                    <option value="@c.ClassId">@c.SchoolYear 年度／@grade／@c.ClassCode @c.ClassName @note</option>
+                }
+            </select><small id="class-hint">年度・学年・コード・名称で選択（停止も含む）</small></label>
+            <fieldset class="status-field" data-field-id="SRC-008" aria-describedby="status-hint"><legend>在籍区分</legend><div class="checks">
+                @foreach (var c in codes.Where(c => c.CategoryId == "ENROLLMENT_STATUS").OrderBy(c => c.DisplayOrder).ThenBy(c => c.CodeValue)) {
+                    <label><input type="checkbox" name="Criteria.StatusCodes" value="@c.CodeValue" checked="@Model.Criteria.StatusCodes.Contains(c.CodeValue)">@c.CodeName</label>
+                }
+                @foreach (var invalid in Model.Criteria.StatusCodes.Where(value => !codes.Any(c => c.CategoryId == "ENROLLMENT_STATUS" && c.CodeValue == value)).Distinct()) {
+                    <label><input type="checkbox" name="Criteria.StatusCodes" value="@invalid" checked>入力値：@invalid（無効）</label>
+                }
+            </div><small id="status-hint">すべて解除すると全区分を検索</small></fieldset>
+            <div class="criteria-actions"><button type="submit" class="primary" data-field-id="SRC-013">検索</button><button type="submit" form="clear-search" data-field-id="SRC-014">クリア</button></div>
+        </div>
+    </form>
+    <form id="clear-search" method="post" action="/students/clear" hidden>@Html.AntiForgeryToken()<input type="hidden" name="ContextId" value="@Model.Context.Id"><input type="hidden" name="ContextRevision" value="@Model.Context.Revision"><input type="hidden" name="TabId" value="@Model.Context.Tab"></form>
+    <form method="post" action="/students/page" class="search-results">
+        @Html.AntiForgeryToken()<input type="hidden" name="ContextId" value="@Model.Context.Id"><input type="hidden" name="ContextRevision" value="@Model.Context.Revision"><input type="hidden" name="TabId" value="@Model.Context.Tab">
+        <div class="resultbar"><strong data-field-id="SRC-017" role="status">
+            @if (outcome == "tooMany") { <span class="warning">10,000件を超えました。条件を追加してください。</span> }
+            else if (outcome == "empty") { <span>検索結果 0件　該当する学生はありません。</span> }
+            else if (outcome == "unsearched") { <span>未検索</span> }
+            else { <span>検索結果 @count 件　@((page - 1) * Model.PageSize + 1)–@(Math.Min(page * Model.PageSize, count))件を表示</span> }
+        </strong><div class="result-options">
+            <label data-field-id="SRC-019">表示件数<select name="PageSize">@foreach (var n in new[] { 20, 50, 100 }) { <option value="@n" selected="@(n == Model.PageSize)">@n 件</option> }</select></label>
+            <label data-field-id="SRC-032">並び順<select name="SortKey">@foreach (var s in new[] { ("studentNo", "学籍番号"), ("name", "氏名"), ("admissionDate", "入学日"), ("updatedAt", "更新日時") }) { <option value="@s.Item1" selected="@(s.Item1 == Model.SortKey)">@s.Item2</option> }</select></label>
+            <label data-field-id="SRC-033">昇降順<select name="SortDirection"><option value="asc" selected="@(Model.SortDirection == "asc")">昇順</option><option value="desc" selected="@(Model.SortDirection == "desc")">降順</option></select></label>
+            <button name="Page" value="1" disabled="@(outcome != "found")">反映</button>
+        </div></div>
+        <div class="gridwrap" tabindex="0" role="region" aria-label="学生検索結果一覧。上下キーでスクロール">
+            <table class="student-grid"><colgroup><col><col><col><col><col><col><col></colgroup>
+                <thead><tr><th scope="col" data-field-id="SRC-020">学籍番号</th><th scope="col"><span data-field-id="SRC-021">氏名</span><span class="kana" data-field-id="SRC-022">／カナ</span></th><th scope="col" data-field-id="SRC-023">生年月日（和暦）</th><th scope="col" data-field-id="SRC-024">年度／学年</th><th scope="col" data-field-id="SRC-025">クラス</th><th scope="col" data-field-id="SRC-026">在籍区分</th><th scope="col" data-field-id="SRC-030">操作</th></tr></thead>
+                <tbody>@foreach (var row in items.EnumerateArray()) {
+                    <tr><td>@row.GetProperty("studentNo").GetString()</td><td>@row.GetProperty("studentName").GetString()<span class="cell-sub">@row.GetProperty("studentNameKana").GetString()</span></td><td>@row.GetProperty("birthDateWareki").GetString()</td><td>@(row.GetProperty("schoolYear").ValueKind == System.Text.Json.JsonValueKind.Null ? "－" : row.GetProperty("schoolYear").ToString() + "年度")<span class="cell-sub">@row.GetProperty("gradeName").GetString()</span></td><td>@(row.GetProperty("classCode").GetString() ?? "未所属")<span class="cell-sub">@row.GetProperty("className").GetString()</span></td><td><span class="badge">@row.GetProperty("enrollmentName").GetString()</span></td><td><a class="button row-action" href="/students/@row.GetProperty("studentId").GetString()?returnContextId=@Model.Context.Id">@(Model.User.Role == Role.Viewer ? "参照" : "編集")</a></td></tr>
+                }</tbody>
+            </table>
+        </div>
+        <div class="resultfoot"><nav class="pager" aria-label="検索結果のページ" data-field-id="SRC-031"><button name="Page" value="1" disabled="@(outcome != "found" || page <= 1)">先頭</button><button name="Page" value="@(page - 1)" disabled="@(outcome != "found" || page <= 1)">前へ</button><strong>@(page) / @pages</strong><button name="Page" value="@(page + 1)" disabled="@(outcome != "found" || page >= pages)">次へ</button><button name="Page" value="@pages" disabled="@(outcome != "found" || page >= pages)">最後</button></nav><p class="searched-at" data-field-id="SRC-018">検索日時：@(data.GetProperty("searchedAt").ValueKind == System.Text.Json.JsonValueKind.String ? data.GetProperty("searchedAt").GetString() + "（日本時間）" : "－")</p></div>
+    </form>
+    @if (applied is not null) {
+        <p class="applied-criteria">実行条件：学籍番号 @(string.IsNullOrEmpty(applied.StudentNoPrefix) ? "すべて" : applied.StudentNoPrefix) ／ 氏名 @(string.IsNullOrEmpty(Model.Context.Draft.Name) ? "すべて" : Model.Context.Draft.Name) ／ クラス @(appliedClass is null ? "すべて" : $"{appliedClass.SchoolYear}年度 {appliedClass.ClassCode} {appliedClass.ClassName}") ／ 在籍区分 @(applied.StatusCodes.Length == 0 ? "すべて" : string.Join("・", applied.StatusCodes.Select(value => codes.FirstOrDefault(c => c.CategoryId == "ENROLLMENT_STATUS" && c.CodeValue == value)?.CodeName ?? value)))</p>
+    }
+    <p id="search-criteria-status" class="criteria-status" data-criteria-status aria-live="polite">@(outcome == "unsearched" ? "条件を指定して検索してください。" : "実行した条件を表示しています。")</p>
+</section>

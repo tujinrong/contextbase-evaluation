@@ -1,17 +1,176 @@
 @model StudentEditPageModel
-@{var canEdit=Model.CanEdit;var codes=Model.Lookups.Codes;var today=WebPresentation.BusinessDate;var input=Model.Input;var cls=Model.Lookups.Classes.FirstOrDefault(c=>c.ClassId.ToString()==input.ClassId);}
-<h1>学生登録 @(Model.StudentId is null?"／新規":canEdit?"／編集":"／参照")</h1><partial name="_MessagePanel" model="Model.Message" />
-<p>学生管理番号 @(Model.StudentId?.ToString()??"新規")　更新日時 @(Model.Detail is null?"－":WebPresentation.Time(Model.Detail.UpdatedAt))　更新者 @(Model.Detail?.UpdatedBy??"－")</p>
-<form method="post" action="@(Model.StudentId is null?"/students/create":$"/students/{Model.StudentId}/update")" data-editor-form>@Html.AntiForgeryToken()<input type="hidden" name="SnapshotId" value="@Model.SnapshotId"><input asp-for="Input.ExpectedVersion" type="hidden"><input asp-for="Input.ReturnContextId" type="hidden"><input asp-for="Input.DuplicateToken" type="hidden"><fieldset disabled="@(!canEdit)"><legend>学生基本情報</legend><div class="fields">
-<label>学籍番号 ※必須<input asp-for="Input.StudentNo" id="REG-002" maxlength="30" readonly="@(Model.StudentId is not null)" required></label><label>氏名 ※必須<input asp-for="Input.StudentName" id="REG-003" maxlength="16" required><small>8文字以内</small></label><label>氏名カナ ※必須<input asp-for="Input.StudentNameKana" id="REG-004" maxlength="72" required><small>原入力36、正規化後18文字</small></label>
-<fieldset class="wareki" id="REG-005"><legend>生年月日 ※必須</legend><select asp-for="Input.BirthDateInput.Era" aria-label="元号" required><option value="">元号</option><option value="REIWA">令和</option><option value="HEISEI">平成</option><option value="SHOWA">昭和</option><option value="TAISHO">大正</option><option value="MEIJI">明治</option></select><input asp-for="Input.BirthDateInput.Year" aria-label="元号年" maxlength="4" required><span>年</span><input asp-for="Input.BirthDateInput.Month" aria-label="月" maxlength="2" required><span>月</span><input asp-for="Input.BirthDateInput.Day" aria-label="日" maxlength="2" required><span>日</span></fieldset>
-<label>性別 ※必須<select asp-for="Input.GenderCode" id="REG-006" required>@foreach(var c in codes.Where(c=>c.CategoryId=="GENDER")){bool selectable=c.IsActive&&c.ValidFrom<=today&&(c.ValidTo is null||today<=c.ValidTo)||Model.Detail?.Draft.GenderCode==c.CodeValue;<option value="@c.CodeValue" disabled="@(!selectable)">@c.CodeName @(!selectable?"（停止・期間外）":"")</option>}</select></label>
-<label>郵便番号 ※必須<input asp-for="Input.PostalCode" id="REG-007" maxlength="20" required></label><label>都道府県 ※必須<select asp-for="Input.PrefectureCode" id="REG-008" required><option value="">未選択</option>@foreach(var c in codes.Where(c=>c.CategoryId=="PREFECTURE")){bool selectable=c.IsActive&&c.ValidFrom<=today&&(c.ValidTo is null||today<=c.ValidTo)||Model.Detail?.Draft.PrefectureCode==c.CodeValue;<option value="@c.CodeValue" disabled="@(!selectable)">@c.CodeName @(!selectable?"（停止・期間外）":"")</option>}</select></label>
-<label>住所1 ※必須<input asp-for="Input.AddressLine1" id="REG-009" maxlength="90" required><small>45文字以内</small></label><label>住所2<input asp-for="Input.AddressLine2" id="REG-010" maxlength="90"></label><label>本人電話<input asp-for="Input.PhoneNumber" id="REG-011" maxlength="40"><small>原入力20、正規化後16文字</small></label><label>本人メール<input asp-for="Input.EmailAddress" id="REG-012" maxlength="120"></label>
-<label>入学日 ※必須<input asp-for="Input.AdmissionDate" id="REG-013" type="date" required></label><label>在籍区分 ※必須<select asp-for="Input.EnrollmentStatusCode" id="REG-014" required>@foreach(var c in codes.Where(c=>c.CategoryId=="ENROLLMENT_STATUS")){bool selectable=c.IsActive&&c.ValidFrom<=today&&(c.ValidTo is null||today<=c.ValidTo)||Model.Detail?.Draft.EnrollmentStatusCode==c.CodeValue;<option value="@c.CodeValue" disabled="@(!selectable)">@c.CodeName</option>}</select></label><label>卒業・退学日<input asp-for="Input.EnrollmentEndDate" id="REG-015" type="date"></label>
-<label>年度<select asp-for="Input.SchoolYear" id="REG-016"><option value="">未指定</option>@foreach(var y in Model.Lookups.Classes.Select(c=>c.SchoolYear).Concat(input.SchoolYear.HasValue?[input.SchoolYear.Value]:[]).Distinct().OrderDescending()){<option value="@y">@y</option>}</select></label><label>学年<select asp-for="Input.GradeCode" id="REG-017"><option value="">すべて</option>@foreach(var c in codes.Where(c=>c.CategoryId=="GRADE")){<option value="@c.CodeValue">@c.CodeName</option>}</select></label><label>クラス<select asp-for="Input.ClassId" id="REG-018"><option value="">未所属</option>@foreach(var c in Model.Lookups.Classes){bool active=c.IsActive&&c.ValidFrom<=today&&today<=c.ValidTo;bool terminal=input.EnrollmentStatusCode is "03" or "04";bool overlap=DateOnly.TryParse(input.AdmissionDate,out var a)&&DateOnly.TryParse(input.EnrollmentEndDate,out var e)&&c.ValidFrom<=e&&a<=c.ValidTo;bool keep=Model.Detail?.Draft.ClassId==c.ClassId;bool selectable=keep||(terminal?overlap:active);<option value="@c.ClassId" data-year="@c.SchoolYear" data-grade="@c.GradeCode" disabled="@(!selectable)">@c.SchoolYear @c.GradeCode @c.ClassCode @c.ClassName @(!c.IsActive?"（停止）":!active?"（期間外）":"")</option>}</select><small>人数 @(cls?.Occupied.ToString()??"－")／定員 @(cls?.Capacity.ToString()??"制限なし")（参考）</small></label>
-<label>緊急連絡先氏名<input asp-for="Input.EmergencyContactName" id="REG-020" maxlength="16"></label><label>緊急連絡先続柄<select asp-for="Input.RelationshipCode" id="REG-021"><option value="">未選択</option>@foreach(var c in codes.Where(c=>c.CategoryId=="RELATIONSHIP")){bool selectable=c.IsActive&&c.ValidFrom<=today&&(c.ValidTo is null||today<=c.ValidTo)||Model.Detail?.Draft.RelationshipCode==c.CodeValue;<option value="@c.CodeValue" disabled="@(!selectable)">@c.CodeName</option>}</select></label><label>緊急連絡先電話<input asp-for="Input.EmergencyPhoneNumber" id="REG-022" maxlength="40"></label><label class="full">備考<textarea asp-for="Input.Remarks" id="REG-023" maxlength="240"></textarea></label><label class="full">確認・変更理由<textarea asp-for="Input.OperationReason" id="REG-024" maxlength="120"></textarea></label></div><p>本人電話・メール・緊急電話のいずれか1つ以上。緊急連絡先は3項目すべて入力してください。</p>
-@if(Model.Result?.Outcome==Outcome.ConfirmationRequired){<section role="dialog" aria-labelledby="duplicate-title" class="warning"><h2 id="duplicate-title">同一人物候補の確認</h2><p>全 @Model.Result.CandidateCount 件、最大20件表示</p><table><thead><tr><th>学籍番号</th><th>氏名</th><th>和暦生年月日</th><th>クラス</th></tr></thead><tbody>@foreach(var c in (Model.Result.Candidates??[]).Take(20)){<tr><td>@c.StudentNo</td><td>@c.StudentName</td><td>@c.BirthDateWareki</td><td>@c.ClassName</td></tr>}</tbody></table><p>別人と確認した場合は、確認理由を入力して続行してください。</p><button type="button" data-cancel-duplicate autofocus>確認取消</button><button type="submit" data-confirm="別人として保存しますか。">別人と確認して続行</button></section>}
-<div class="actions"><button type="submit" class="primary">@(Model.StudentId is null?"登録":"更新")</button></div></fieldset></form>
-<div class="actions"><form method="post" action="/students/reset" data-confirm="編集内容を読込時の値へ戻しますか。">@Html.AntiForgeryToken()<input type="hidden" name="SnapshotId" value="@Model.SnapshotId"><input type="hidden" name="StudentId" value="@Model.StudentId"><button>@(Model.StudentId is null?"入力クリア":"編集取消")</button></form>@if(Model.StudentId is not null){<a data-dirty-link data-confirm="編集内容を破棄して最新情報を読み込みますか。" href="/students/@Model.StudentId?returnContextId=@input.ReturnContextId">最新情報を再読込</a>}<a data-dirty-link href="/students?contextId=@input.ReturnContextId&amp;contextRevision=@Model.ReturnRevision">検索へ戻る</a></div>
-@if(Model.StudentId is not null&&Model.User.Role==Role.Administrator){<form method="post" action="/students/@Model.StudentId/delete" data-confirm="対象と理由を確認して論理削除しますか。">@Html.AntiForgeryToken()<input type="hidden" name="SnapshotId" value="@Model.SnapshotId"><input type="hidden" name="ExpectedVersion" value="@input.ExpectedVersion"><input type="hidden" name="ReturnContextId" value="@input.ReturnContextId"><input type="hidden" name="Confirmed" value="true"><label>削除理由 ※必須<textarea name="Reason" id="REG-026" maxlength="120" required></textarea></label><button class="danger">対象を確認して論理削除</button><p>編集中の業務値は保存されません。</p></form>}
+@using System.Text.Json
+@{
+    var canEdit = Model.CanEdit;
+    var canDelete = Model.StudentId is not null && Model.User.Role == Role.Administrator;
+    var codes = Model.Lookups.Codes;
+    var today = WebPresentation.BusinessDate;
+    var input = Model.Input;
+    var cls = Model.Lookups.Classes.FirstOrDefault(c => c.ClassId.ToString() == input.ClassId);
+    var original = StudentSaveInput.From(Model.Detail, input.ReturnContextId, Model.Lookups);
+    var duplicate = Model.Result?.Outcome == Outcome.ConfirmationRequired;
+    var deleteAttempt = Context.Request.Method == "POST" && Context.Request.Path.Value?.EndsWith("/delete", StringComparison.OrdinalIgnoreCase) == true;
+    var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+        ["StudentNo"]="REG-002", ["StudentName"]="REG-003", ["StudentNameKana"]="REG-004", ["BirthDateInput"]="REG-005",
+        ["GenderCode"]="REG-006", ["PostalCode"]="REG-007", ["PrefectureCode"]="REG-008", ["AddressLine1"]="REG-009",
+        ["AddressLine2"]="REG-010", ["PhoneNumber"]="REG-011", ["EmailAddress"]="REG-012", ["AdmissionDate"]="REG-013",
+        ["EnrollmentStatusCode"]="REG-014", ["EnrollmentEndDate"]="REG-015", ["SchoolYear"]="REG-016", ["GradeCode"]="REG-017",
+        ["ClassId"]="REG-018", ["EmergencyContactName"]="REG-020", ["RelationshipCode"]="REG-021", ["EmergencyPhoneNumber"]="REG-022",
+        ["Remarks"]="REG-023", ["OperationReason"]="REG-024", ["Reason"]=deleteAttempt?"REG-026":"REG-024", ["DeleteReason"]="REG-026"
+    };
+    string? ErrorTarget(string key) {
+        if (key.StartsWith("REG-INT-00", StringComparison.OrdinalIgnoreCase) && int.TryParse(key[8..], out var component) && component <= 5) return "REG-005";
+        if (key.StartsWith("REG-", StringComparison.OrdinalIgnoreCase) && key.Length == 7) return key;
+        if (key.StartsWith("Input.", StringComparison.OrdinalIgnoreCase)) key = key[6..];
+        return fields.GetValueOrDefault(key.Split('.')[0]);
+    }
+    string ErrorText(string field) => string.Join(" ", ViewData.ModelState.Where(p => ErrorTarget(p.Key) == field)
+        .SelectMany(p => p.Value!.Errors).Select(e => string.IsNullOrEmpty(e.ErrorMessage) ? "入力内容を確認してください。" : e.ErrorMessage));
+    Microsoft.AspNetCore.Html.IHtmlContent FieldError(string field) {
+        var tag = new Microsoft.AspNetCore.Mvc.Rendering.TagBuilder("p");
+        tag.AddCssClass("field-error"); tag.Attributes["id"] = field + "-error";
+        var error = ErrorText(field); if (error.Length == 0) tag.Attributes["hidden"] = "hidden";
+        tag.InnerHtml.Append(error); return tag;
+    }
+}
+<div class="student-editor" data-screen-state="editor">
+    <div class="pagehead">
+        <h1>学生登録・編集</h1>
+        <div class="header-info">
+            <div class="identity" id="REG-001" data-field-id="REG-001" data-control="StudentId" data-binding="StudentId"><span>学生管理番号</span><strong>@(Model.StudentId?.ToString() ?? "新規")</strong></div>
+            <span class="mode">@(Model.StudentId is null ? "新規" : canEdit ? "編集" : "参照")</span>
+        </div>
+    </div>
+    <p class="notice" role="status"><span>@(Model.StudentId is null ? "学生情報を入力してください。" : canEdit ? "登録済みの学生情報です。学籍番号は変更できません。" : "学生情報を参照しています。")</span><span class="legend"><span class="req">必須</span>：必ず入力　<span class="req">条件付</span>：該当時に入力</span></p>
+    @if (!string.IsNullOrEmpty(Model.Message)) { <p class="notice" role="status">@Model.Message</p> }
+    @if (ViewData.ModelState.ErrorCount > 0) {
+        <div class="error-summary" role="alert" tabindex="-1" data-error-summary>
+            <strong>入力内容を確認してください。</strong>
+            <ul>@foreach (var entry in ViewData.ModelState) { foreach (var error in entry.Value!.Errors) {
+                var target = ErrorTarget(entry.Key);
+                <li>@if (target is not null) { <a href="#@target">@error.ErrorMessage</a> } else { @error.ErrorMessage }</li>
+            } }</ul>
+        </div>
+    }
+    <form id="student-editor-form" method="post" action="@(Model.StudentId is null ? "/students/create" : $"/students/{Model.StudentId}/update")" data-editor-form data-original-values="@JsonSerializer.Serialize(original)" data-business-date="@today.ToString("yyyy-MM-dd")">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="SnapshotId" value="@Model.SnapshotId">
+        <input asp-for="Input.ExpectedVersion" type="hidden">
+        <input asp-for="Input.ReturnContextId" type="hidden">
+        <input asp-for="Input.DuplicateToken" type="hidden">
+        <fieldset class="editor-fields">
+            <legend class="visually-hidden">学生情報</legend>
+            <section class="section basic-strip" aria-labelledby="basic-title">
+                <h2 id="basic-title">基本情報</h2>
+                <div class="fields">
+                    <div class="field" data-field-id="REG-002" data-control="StudentNo" data-binding="StudentSaveInput.StudentNo">
+                        <label class="label" for="REG-002">学籍番号<span class="req">必須</span><span class="label-meta">15文字まで</span></label>
+                        <div class="value"><input asp-for="Input.StudentNo" id="REG-002" maxlength="30" data-business-maxlength="15" data-normalized-maxlength="15" readonly="@(!canEdit || Model.StudentId is not null)" aria-describedby="REG-002-error" aria-invalid="@(ErrorText("REG-002").Length > 0 ? "true" : null)" required>@FieldError("REG-002")</div>
+                    </div>
+                    <div class="field" data-field-id="REG-003" data-control="StudentName" data-binding="StudentSaveInput.StudentName">
+                        <label class="label" for="REG-003">氏名<span class="req">必須</span><span class="label-meta">8文字まで</span></label>
+                        <div class="value"><input asp-for="Input.StudentName" readonly="@(!canEdit)" id="REG-003" maxlength="16" data-business-maxlength="8" data-normalized-maxlength="8" aria-describedby="REG-003-error" aria-invalid="@(ErrorText("REG-003").Length > 0 ? "true" : null)" required>@FieldError("REG-003")</div>
+                    </div>
+                    <div class="field" data-field-id="REG-004" data-control="StudentNameKana" data-binding="StudentSaveInput.StudentNameKana">
+                        <label class="label" for="REG-004">氏名カナ<span class="req">必須</span><span class="label-meta">入力36／保存18字</span></label>
+                        <div class="value"><input asp-for="Input.StudentNameKana" readonly="@(!canEdit)" id="REG-004" maxlength="72" data-business-maxlength="36" data-normalized-maxlength="18" aria-describedby="REG-004-error" aria-invalid="@(ErrorText("REG-004").Length > 0 ? "true" : null)" required>@FieldError("REG-004")</div>
+                    </div>
+                    <div class="field" data-field-id="REG-005" data-control="BirthDateInput" data-binding="StudentSaveInput.BirthDateInput">
+                        <div class="label" id="birth-title">生年月日<span class="req">必須</span><span class="label-meta">和暦・実在日</span></div>
+                        <div class="value"><div class="birth-parts" id="REG-005" role="group" aria-labelledby="birth-title" tabindex="-1" aria-describedby="REG-005-error" aria-invalid="@(ErrorText("REG-005").Length > 0 ? "true" : null)">
+                            <select asp-for="Input.BirthDateInput.Era" disabled="@(!canEdit)" aria-label="元号" data-child-field-id="REG-INT-001" required><option value="">元号</option><option value="REIWA">令和</option><option value="HEISEI">平成</option><option value="SHOWA">昭和</option><option value="TAISHO">大正</option><option value="MEIJI">明治</option></select>
+                            <input asp-for="Input.BirthDateInput.Year" readonly="@(!canEdit)" aria-label="元号年" data-child-field-id="REG-INT-002" data-part="year" maxlength="4" required><span>年</span>
+                            <input asp-for="Input.BirthDateInput.Month" readonly="@(!canEdit)" aria-label="生年月日の月" data-child-field-id="REG-INT-003" maxlength="2" inputmode="numeric" required><span>月</span>
+                            <input asp-for="Input.BirthDateInput.Day" readonly="@(!canEdit)" aria-label="生年月日の日" data-child-field-id="REG-INT-004" maxlength="2" inputmode="numeric" required><span>日</span>
+                        </div>@FieldError("REG-005")</div>
+                    </div>
+                    <div class="field" data-field-id="REG-006" data-control="GenderCode" data-binding="StudentSaveInput.GenderCode">
+                        <label class="label" for="REG-006">性別<span class="req">必須</span></label>
+                        <div class="value"><select asp-for="Input.GenderCode" disabled="@(!canEdit)" id="REG-006" aria-describedby="REG-006-error" required>@foreach (var c in codes.Where(c => c.CategoryId == "GENDER")) {
+                            bool available = c.IsActive && c.ValidFrom <= today && (c.ValidTo is null || today <= c.ValidTo); bool selectable = available || Model.Detail?.Draft.GenderCode == c.CodeValue;
+                            <option value="@c.CodeValue" disabled="@(!selectable)">@c.CodeName @(!c.IsActive ? "（停止）" : !available ? "（期間外）" : "")</option>
+                        }</select>@FieldError("REG-006")</div>
+                    </div>
+                </div>
+            </section>
+            <div class="editor-grid">
+                <div class="column">
+                    <section class="section" aria-labelledby="contact-title"><h2 id="contact-title">住所・連絡先</h2><div class="fields">
+                        <div class="field" data-field-id="REG-007" data-control="PostalCode" data-binding="StudentSaveInput.PostalCode"><label class="label" for="REG-007">郵便番号<span class="req">必須</span></label><div class="value"><input asp-for="Input.PostalCode" readonly="@(!canEdit)" id="REG-007" maxlength="20" data-business-maxlength="10" data-normalized-maxlength="7" aria-describedby="REG-007-error" required>@FieldError("REG-007")</div></div>
+                        <div class="field" data-field-id="REG-008" data-control="PrefectureCode" data-binding="StudentSaveInput.PrefectureCode"><label class="label" for="REG-008">都道府県<span class="req">必須</span></label><div class="value"><select asp-for="Input.PrefectureCode" disabled="@(!canEdit)" id="REG-008" aria-describedby="REG-008-error" required><option value="">未選択</option>@foreach (var c in codes.Where(c => c.CategoryId == "PREFECTURE")) {
+                            bool available = c.IsActive && c.ValidFrom <= today && (c.ValidTo is null || today <= c.ValidTo); bool selectable = available || Model.Detail?.Draft.PrefectureCode == c.CodeValue;
+                            <option value="@c.CodeValue" disabled="@(!selectable)">@c.CodeName @(!c.IsActive ? "（停止）" : !available ? "（期間外）" : "")</option>
+                        }</select>@FieldError("REG-008")</div></div>
+                        <div class="field" data-field-id="REG-009" data-control="AddressLine1" data-binding="StudentSaveInput.AddressLine1"><label class="label" for="REG-009">住所1<span class="req">必須</span><span class="label-meta">45文字まで</span></label><div class="value"><input asp-for="Input.AddressLine1" readonly="@(!canEdit)" id="REG-009" maxlength="90" data-business-maxlength="45" data-normalized-maxlength="45" aria-describedby="REG-009-error" required>@FieldError("REG-009")</div></div>
+                        <div class="field" data-field-id="REG-010" data-control="AddressLine2" data-binding="StudentSaveInput.AddressLine2"><label class="label" for="REG-010">住所2<span class="label-meta">45文字まで</span></label><div class="value"><input asp-for="Input.AddressLine2" readonly="@(!canEdit)" id="REG-010" maxlength="90" data-business-maxlength="45" data-normalized-maxlength="45" aria-describedby="REG-010-error">@FieldError("REG-010")</div></div>
+                        <div class="field" data-field-id="REG-011" data-control="PhoneNumber" data-binding="StudentSaveInput.PhoneNumber"><label class="label" for="REG-011">本人電話<span class="req">条件付</span></label><div class="value"><input asp-for="Input.PhoneNumber" readonly="@(!canEdit)" id="REG-011" maxlength="40" data-business-maxlength="20" data-normalized-maxlength="16" aria-describedby="REG-011-error contact-hint">@FieldError("REG-011")</div></div>
+                        <div class="field" data-field-id="REG-012" data-control="EmailAddress" data-binding="StudentSaveInput.EmailAddress"><label class="label" for="REG-012">本人メール<span class="req">条件付</span></label><div class="value"><input asp-for="Input.EmailAddress" readonly="@(!canEdit)" id="REG-012" maxlength="120" data-business-maxlength="60" data-normalized-maxlength="60" aria-describedby="REG-012-error contact-hint">@FieldError("REG-012")</div></div>
+                    </div><p class="section-hint" id="contact-hint">本人電話・メール・緊急電話のいずれか1つ以上。</p></section>
+                </div>
+                <div class="column">
+                    <section class="section" aria-labelledby="enrollment-title"><h2 id="enrollment-title">在籍・所属</h2><div class="fields">
+                        <div class="field" data-field-id="REG-013" data-control="AdmissionDate" data-binding="StudentSaveInput.AdmissionDate"><label class="label" for="REG-013">入学日<span class="req">必須</span></label><div class="value"><input asp-for="Input.AdmissionDate" readonly="@(!canEdit)" id="REG-013" type="date" aria-describedby="REG-013-error" required>@FieldError("REG-013")</div></div>
+                        <div class="field" data-field-id="REG-014" data-control="EnrollmentStatusCode" data-binding="StudentSaveInput.EnrollmentStatusCode"><label class="label" for="REG-014">在籍区分<span class="req">必須</span></label><div class="value"><select asp-for="Input.EnrollmentStatusCode" disabled="@(!canEdit)" id="REG-014" aria-describedby="REG-014-error" required>@foreach (var c in codes.Where(c => c.CategoryId == "ENROLLMENT_STATUS")) {
+                            bool available = c.IsActive && c.ValidFrom <= today && (c.ValidTo is null || today <= c.ValidTo); bool selectable = available || Model.Detail?.Draft.EnrollmentStatusCode == c.CodeValue;
+                            <option value="@c.CodeValue" disabled="@(!selectable)">@c.CodeName @(!c.IsActive ? "（停止）" : !available ? "（期間外）" : "")</option>
+                        }</select>@FieldError("REG-014")</div></div>
+                        <div class="field" data-field-id="REG-015" data-control="EnrollmentEndDate" data-binding="StudentSaveInput.EnrollmentEndDate"><label class="label" for="REG-015">卒業・退学日<span class="req">条件付</span></label><div class="value"><input asp-for="Input.EnrollmentEndDate" readonly="@(!canEdit)" id="REG-015" type="date" aria-describedby="REG-015-error">@FieldError("REG-015")</div></div>
+                        <div class="field" data-field-id="REG-016" data-control="SchoolYear" data-binding="SchoolYear"><label class="label" for="REG-016">年度</label><div class="value"><select asp-for="Input.SchoolYear" disabled="@(!canEdit)" id="REG-016" aria-describedby="REG-016-error"><option value="">未指定</option>@foreach (var y in Model.Lookups.Classes.Select(c => c.SchoolYear).Concat(input.SchoolYear.HasValue ? [input.SchoolYear.Value] : []).Distinct().OrderDescending()) { <option value="@y">@y</option> }</select>@FieldError("REG-016")</div></div>
+                        <div class="field" data-field-id="REG-017" data-control="GradeCode" data-binding="GradeCode"><label class="label" for="REG-017">学年</label><div class="value"><select asp-for="Input.GradeCode" disabled="@(!canEdit)" id="REG-017" aria-describedby="REG-017-error"><option value="">すべて</option>@foreach (var c in codes.Where(c => c.CategoryId == "GRADE")) { <option value="@c.CodeValue">@c.CodeName</option> }</select>@FieldError("REG-017")</div></div>
+                        <div class="field" data-field-id="REG-018" data-control="ClassId" data-binding="StudentSaveInput.ClassId"><label class="label" for="REG-018">クラス<span class="req">条件付</span></label><div class="value"><select asp-for="Input.ClassId" disabled="@(!canEdit)" id="REG-018" aria-describedby="REG-018-error"><option value="">未所属</option>@foreach (var c in Model.Lookups.Classes) {
+                            bool active = c.IsActive && c.ValidFrom <= today && today <= c.ValidTo; bool terminal = input.EnrollmentStatusCode is "03" or "04";
+                            bool overlap = DateOnly.TryParse(input.AdmissionDate, out var a) && DateOnly.TryParse(input.EnrollmentEndDate, out var e) && c.ValidFrom <= e && a <= c.ValidTo;
+                            bool keep = Model.Detail?.Draft.ClassId == c.ClassId; bool selectable = keep || (terminal ? overlap : active);
+                            <option value="@c.ClassId" data-year="@c.SchoolYear" data-grade="@c.GradeCode" data-occupied="@c.Occupied" data-capacity="@c.Capacity" data-active="@c.IsActive.ToString().ToLowerInvariant()" data-from="@c.ValidFrom.ToString("yyyy-MM-dd")" data-to="@c.ValidTo.ToString("yyyy-MM-dd")" data-existing="@keep.ToString().ToLowerInvariant()" disabled="@(!selectable)">@c.SchoolYear @c.GradeCode @c.ClassCode @c.ClassName @(!c.IsActive ? "（停止）" : !active ? "（期間外）" : "")</option>
+                        }</select>@FieldError("REG-018")</div></div>
+                        <div class="field" data-field-id="REG-019" data-control="Occupancy / Capacity" data-binding="Occupancy / Capacity"><span class="label">所属人数・定員</span><span class="reference-value" id="REG-019" role="status">@(cls?.Occupied.ToString() ?? "－") ／ @(cls is null ? "－" : cls.Capacity?.ToString() ?? "制限なし")（参考）</span></div>
+                    </div><p class="section-hint" id="class-change-status" role="status">在学・休学はクラス必須。人数は保存時に再確認します。</p></section>
+                </div>
+                <div class="column">
+                    <section class="section" aria-labelledby="emergency-title"><h2 id="emergency-title">緊急連絡先</h2><div class="fields">
+                        <div class="field-pair">
+                            <div class="field" data-field-id="REG-020" data-control="EmergencyContactName" data-binding="StudentSaveInput.EmergencyContactName"><label class="label" for="REG-020">氏名<span class="req">条件付</span><span class="label-meta">8文字まで</span></label><div class="value"><input asp-for="Input.EmergencyContactName" readonly="@(!canEdit)" id="REG-020" maxlength="16" data-business-maxlength="8" data-normalized-maxlength="8" aria-describedby="REG-020-error emergency-hint">@FieldError("REG-020")</div></div>
+                            <div class="field" data-field-id="REG-021" data-control="RelationshipCode" data-binding="StudentSaveInput.RelationshipCode"><label class="label" for="REG-021">続柄<span class="req">条件付</span></label><div class="value"><select asp-for="Input.RelationshipCode" disabled="@(!canEdit)" id="REG-021" aria-describedby="REG-021-error emergency-hint"><option value="">未選択</option>@foreach (var c in codes.Where(c => c.CategoryId == "RELATIONSHIP")) {
+                                bool available = c.IsActive && c.ValidFrom <= today && (c.ValidTo is null || today <= c.ValidTo); bool selectable = available || Model.Detail?.Draft.RelationshipCode == c.CodeValue;
+                                <option value="@c.CodeValue" disabled="@(!selectable)">@c.CodeName @(!c.IsActive ? "（停止）" : !available ? "（期間外）" : "")</option>
+                            }</select>@FieldError("REG-021")</div></div>
+                        </div>
+                        <div class="field" data-field-id="REG-022" data-control="EmergencyPhoneNumber" data-binding="StudentSaveInput.EmergencyPhoneNumber"><label class="label" for="REG-022">電話<span class="req">条件付</span></label><div class="value"><input asp-for="Input.EmergencyPhoneNumber" readonly="@(!canEdit)" id="REG-022" maxlength="40" data-business-maxlength="20" data-normalized-maxlength="16" aria-describedby="REG-022-error emergency-hint">@FieldError("REG-022")</div></div>
+                    </div><p class="section-hint" id="emergency-hint">入力する場合は、氏名・続柄・電話の3項目が必要です。</p></section>
+                    <section class="section notes" aria-labelledby="notes-title"><h2 id="notes-title">備考・確認理由</h2><div class="fields">
+                        <div class="field" data-field-id="REG-023" data-control="Remarks" data-binding="StudentSaveInput.Remarks"><label class="label" for="REG-023">備考<span class="label-meta">120文字まで</span></label><div class="value"><textarea asp-for="Input.Remarks" readonly="@(!canEdit)" id="REG-023" maxlength="240" data-business-maxlength="120" data-normalized-maxlength="120" rows="2" aria-describedby="REG-023-error"></textarea>@FieldError("REG-023")</div></div>
+                        <div class="field" data-field-id="REG-024" data-control="OperationReason" data-binding="OperationReason"><label class="label" for="REG-024">確認・変更理由<span class="req">条件付</span><span class="label-meta">60文字まで</span></label><div class="value"><textarea asp-for="Input.OperationReason" readonly="@(!canEdit)" id="REG-024" maxlength="120" data-business-maxlength="60" data-normalized-maxlength="60" rows="2" aria-describedby="REG-024-error reason-hint"></textarea>@FieldError("REG-024")</div></div>
+                    </div><p class="section-hint" id="reason-hint">重複候補の確認続行・卒業／退学からの区分訂正時に入力。</p></section>
+                </div>
+            </div>
+        </fieldset>
+    </form>
+    <p class="updated" id="REG-025" data-field-id="REG-025" data-control="UpdatedAt / UpdatedBy" data-binding="UpdatedAt / UpdatedBy"><span>更新日時 @(Model.Detail is null ? "－" : WebPresentation.Time(Model.Detail.UpdatedAt))</span><span>更新者 @(Model.Detail?.UpdatedBy ?? "－")</span></p>
+    <div class="savebar" role="group" aria-label="学生情報の操作">
+        <button id="REG-027" class="primary" type="submit" form="student-editor-form" data-field-id="REG-027" data-control="Save" data-binding="Save" disabled="@(!canEdit)">@(Model.StudentId is null ? "登録" : "更新")</button>
+        <button id="REG-028" type="submit" form="student-reset-form" data-field-id="REG-028" data-control="Reset" data-binding="Reset" disabled="@(!canEdit)">@(Model.StudentId is null ? "入力クリア" : "編集取消")</button>
+        <a id="REG-029" class="button" data-field-id="REG-029" data-control="Reload" data-binding="Reload" data-dirty-link data-always-confirm="true" data-discard-message="編集中の内容を破棄して、最新情報を読み込みますか。" href="@(Model.StudentId is null ? $"/students/new?returnContextId={input.ReturnContextId}" : $"/students/{Model.StudentId}?returnContextId={input.ReturnContextId}")">最新情報を再読込</a>
+        <a id="REG-030" class="button" data-field-id="REG-030" data-control="Back" data-binding="Back" data-dirty-link href="/students?contextId=@input.ReturnContextId&amp;contextRevision=@Model.ReturnRevision">検索へ戻る</a>
+        <span class="spacer"></span><button id="REG-031" class="danger" type="button" data-field-id="REG-031" data-control="Delete" data-binding="Delete" data-open-delete hidden="@(!canDelete)" disabled="@(!canDelete)">論理削除</button>
+    </div>
+    <form id="student-reset-form" method="post" action="/students/reset" data-reset-form data-discard-message="@(Model.StudentId is null ? "入力内容を破棄して、初期値へ戻しますか。" : "編集内容を破棄して、読込時の値へ戻しますか。")">@Html.AntiForgeryToken()<input type="hidden" name="SnapshotId" value="@Model.SnapshotId"><input type="hidden" name="StudentId" value="@Model.StudentId"></form>
+    <dialog id="REG-032" class="dialog-state" data-field-id="REG-032" data-control="DuplicateCandidates" data-binding="DuplicateCandidates" data-screen-state="duplicate" data-auto-open="@duplicate.ToString().ToLowerInvariant()" hidden aria-modal="true" aria-labelledby="reg-duplicate-title" aria-describedby="duplicate-description">
+        <h2 id="reg-duplicate-title">重複候補の確認</h2><div class="dialog-inside">
+            <p class="notice warn" id="duplicate-description">同じ学生の可能性があります。別人であることを確認してください。</p>
+            <div class="candidate-list" role="region" aria-label="重複候補。最大20件を表示" tabindex="0"><table><thead><tr><th scope="col">学籍番号</th><th scope="col">氏名</th><th scope="col">生年月日</th><th scope="col">クラス</th></tr></thead><tbody>@foreach (var c in (Model.Result?.Candidates ?? []).Take(20)) { <tr><td>@c.StudentNo</td><td>@c.StudentName</td><td>@c.BirthDateWareki</td><td>@c.ClassName</td></tr> }</tbody></table></div>
+            <p class="sub">全候補 @(Model.Result?.CandidateCount ?? 0) 件／表示 @((Model.Result?.Candidates ?? []).Take(20).Count()) 件（最大20件）。</p>
+            <label for="duplicate-reason">確認理由（必須・60文字以内）</label><textarea id="duplicate-reason" maxlength="120" data-business-maxlength="60" data-normalized-maxlength="60" rows="2" required>@input.OperationReason</textarea>
+            <div class="dialog-actions"><button id="REG-034" type="button" data-field-id="REG-034" data-control="Cancel" data-binding="Cancel" data-cancel-duplicate data-dialog-cancel autofocus>取消</button><button id="REG-033" class="primary" type="submit" form="student-editor-form" data-field-id="REG-033" data-control="Confirm" data-binding="Confirm" data-confirm-duplicate>別人と確認して続行</button></div>
+        </div>
+    </dialog>
+    <dialog id="delete-dialog" class="dialog-state" data-screen-state="delete" data-auto-open="@((deleteAttempt && canDelete).ToString().ToLowerInvariant())" hidden aria-modal="true" aria-labelledby="reg-delete-title" aria-describedby="delete-description">
+        <h2 id="reg-delete-title">論理削除の確認</h2><div class="dialog-inside"><p id="delete-description">@input.StudentNo　@input.StudentName を論理削除します。編集中の業務値は保存されません。</p>
+            <form id="student-delete-form" method="post" action="/students/@Model.StudentId/delete" data-delete-form>
+                @Html.AntiForgeryToken()<input type="hidden" name="SnapshotId" value="@Model.SnapshotId"><input type="hidden" name="ExpectedVersion" value="@input.ExpectedVersion"><input type="hidden" name="ReturnContextId" value="@input.ReturnContextId"><input type="hidden" name="Confirmed" value="true">
+                <div data-field-id="REG-026" data-control="DeleteReason" data-binding="DeleteReason"><label for="REG-026">削除理由（必須・60文字以内）</label><textarea name="Reason" id="REG-026" maxlength="120" data-business-maxlength="60" data-normalized-maxlength="60" rows="2" aria-describedby="REG-026-error" required>@(deleteAttempt ? ViewData.ModelState.GetValueOrDefault("Reason")?.AttemptedValue : "")</textarea>@FieldError("REG-026")</div>
+                <div class="dialog-actions"><button type="button" data-dialog-cancel autofocus>取消</button><button type="submit" class="danger" data-confirm-delete disabled="@(!canDelete)">対象を確認して論理削除</button></div>
+            </form>
+        </div>
+    </dialog>
+    <dialog id="discard-dialog" class="dialog-state" data-screen-state="discard" hidden aria-modal="true" aria-labelledby="reg-discard-title" aria-describedby="discard-description"><h2 id="reg-discard-title">変更破棄の確認</h2><div class="dialog-inside"><p id="discard-description">保存していない変更を破棄しますか。</p><div class="dialog-actions"><button type="button" data-dialog-cancel autofocus>取消</button><button type="button" class="primary" data-confirm-discard>変更を破棄する</button></div></div></dialog>
+</div>

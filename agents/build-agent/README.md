@@ -13,6 +13,8 @@ python -X utf8 agents/build-agent/scripts/verify-packages.py UNIQUE-ID
 node agents/build-agent/scripts/manifest.mjs --project test-project1 --run-id UNIQUE-ID
 ```
 
+方式を指定した実行では、preflightとmanifestの両方に同じ `--profile CSharp_ASPNET` を付ける。事前検査は選択方式のspec（JSONの描画記録・画像を含む）と固定の全体規則・Agent・project入口だけを凍結し、共有入口が列挙する他方式の仕様・ソースは検査しない。manifestのソース走査は当該方式内とbuild-agent/scriptsだけに限定する。spec-evalは全実行で走査・出力対象から除外する。方式指定を省略した従来の全方式実行も利用できる。
+
 原仕様を含めない逆生成入力はpackage-source.pyで方式別ZIPを生成する。独立化用のisolate-*.mjsとsplit-dotnet-tests.mjsは旧入力からの一度限りの移送で、完了後の現行生成器ではない。
 verify-packages.pyは各ZIPの全メンバーhashを照合し、当方式build/source-isolation-実行IDへ別々に展開して独立ビルドする。ZIPのproduction入口は除外仕様や試験を要求しない形へ変換し、変換前後hashを方式別に記録する。manifest.mjsは包装後に元ソースが変化していないことも確認する。既存ZIP・実行ID・展開先を上書きしない。
 

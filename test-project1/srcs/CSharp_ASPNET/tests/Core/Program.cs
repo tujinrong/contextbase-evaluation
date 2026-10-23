@@ -83,4 +83,24 @@ Same("DISABLE",AuditOperation.ForMaster(true,false),"R74-14 disable transition")
 Same("ENABLE",AuditOperation.ForMaster(false,true),"R74-14 enable transition");
 Same("CREATE",AuditOperation.ForMaster(null,false),"R74-14 new stopped code");
 Same("CREATE",AuditOperation.ForMaster(null,true),"R74-14 new active code");
+// Search schema 8.1 keeps raw bounds separate from normalized matching keys.
+var search=SearchCriteria.FromRaw("ａｂ-１","㍿",9007199254740993,["０１","02"]);
+Same("AB-1",search.StudentNoPrefix,"SRC normalized identifier");
+Same("株式会社",search.NameKey,"SRC expanded matching key");
+Same(9007199254740993L,search.ClassId,"SRC bigint exact class");
+Same("01",search.StatusCodes[0],"SRC status normalization");
+Same(0,SearchCriteria.FromRaw(" "," ",null,[]).StatusCodes.Length,"SRC all-off status unrestricted");
+Same<string?>(null,SearchCriteria.FromRaw(" "," ",null,[]).NameKey,"SRC blank name unset");
+Reject(()=>SearchCriteria.FromRaw(null,new string('あ',9),null,[]),"SRC raw name9 rejected");
+Reject(()=>SearchCriteria.FromRaw(new string('A',16),null,null,[]),"SRC raw number16 rejected");
+Reject(()=>SearchCriteria.FromRaw(null,null,0,[]),"SRC invalid class rejected");
+Reject(()=>SearchCriteria.FromRaw(null,null,null,["01","０１"]),"SRC duplicate normalized status rejected");
+Reject(()=>SearchCriteria.FromRaw(null,null,null,["99"]),"SRC unknown status rejected");
+Reject(()=>SearchCriteria.FromRaw(null,"\ud800",null,[]),"SRC malformed scalar rejected");
+Reject(()=>SearchCriteria.FromRaw(null,null,null,[],0),"SRC zero page size rejected");
+Reject(()=>SearchCriteria.FromRaw(null,null,null,[],20,"arbitrary"),"SRC arbitrary sort rejected");
+Same(Outcome.ValidationFailed,(await service.SearchAsync(new(){PageSize=21})).Outcome,"SRC invalid page size before DB");
+Same(Outcome.ValidationFailed,(await service.SearchAsync(new(){SortKey="student_no;DROP"})).Outcome,"SRC arbitrary sort before DB");
+Same(Outcome.ValidationFailed,(await service.SearchAsync(new(){StatusCodes=["01","01"]})).Outcome,"SRC repeated statuses before DB");
+Same(Outcome.ValidationFailed,(await service.SearchAsync(new(){ClassId=-1})).Outcome,"SRC negative class before DB");
 Console.WriteLine($"PASS {passed} independent boundary assertions; no DB or UI tests executed.");

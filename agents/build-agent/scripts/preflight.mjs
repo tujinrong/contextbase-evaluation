@@ -7,13 +7,16 @@ import { execFileSync } from 'node:child_process';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const args = process.argv.slice(2);
-let project, runId;
+const profiles = ['VB.NET_WinForms', 'CSharp_WPF', 'CSharp_ASPNET', 'Vue_CSharpAPI', 'COBOL', 'AS400_RPG', 'Access'];
+let project, runId, profile;
+if (args.length % 2) throw new Error('Every option requires a value.');
 for (let i = 0; i < args.length; i += 2) {
   if (args[i] === '--project' && !project) project = args[i + 1];
   else if (args[i] === '--run-id' && !runId) runId = args[i + 1];
-  else throw new Error('Usage: preflight.mjs --project test-projectN --run-id <unique-id>');
+  else if (args[i] === '--profile' && !profile) profile = args[i + 1];
+  else throw new Error('Usage: preflight.mjs --project test-projectN --run-id <unique-id> [--profile <profile-id>]');
 }
-if (!/^test-project[1-9]\d*$/.test(project ?? '') || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId ?? '')) {
+if (!/^test-project[1-9]\d*$/.test(project ?? '') || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId ?? '') || (profile !== undefined && !profiles.includes(profile))) {
   throw new Error('Explicit project and safe unique run-id are required.');
 }
 const projectRoot = path.join(root, project);
@@ -35,25 +38,31 @@ function walk(directory) {
   assertRegular(directory, true);
   for (const entry of fs.readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, 'en'))) {
     const target = path.join(directory, entry.name);
+    if (entry.name === 'spec-eval') continue;
     if (entry.isSymbolicLink()) throw new Error(`Symlink input is not allowed: ${target}`);
     if (entry.isDirectory()) walk(target);
-    else if (/\.(md|html|png)$/i.test(entry.name)) { assertRegular(target); files.push(target); }
+    else if (/\.(md|html|json|png|jpe?g|gif|webp|svg)$/i.test(entry.name)) { assertRegular(target); files.push(target); }
   }
 }
 const fixed = [
   'AGENTS.md', 'agents/README.md', 'agents/spec-agent/AGENT.md',
-  'agents/build-agent/AGENT.md', 'agents/reverse-agent/AGENT.md',
+  'agents/build-agent/AGENT.md', 'agents/build-agent/PROMPT.md', 'agents/build-agent/README.md', 'agents/reverse-agent/AGENT.md',
   'docs/リポジトリ構成.md', 'docs/開発規約.md', 'docs/仕様書作成ルール.md',
   'docs/評価規約.md', 'docs/MD構造・Excel変換規約.md', 'docs/テーブル仕様書記述規約.md',
   `${project}/README.md`, `${project}/プロジェクト情報.md`, `${project}/docs/開発規約.md`,
 ];
 for (const name of fixed) { const target = path.join(root, name); assertRegular(target); files.push(target); }
-walk(path.join(projectRoot, 'docs/開発規約'));
-walk(path.join(projectRoot, 'spec'));
-const isolatedProfiles = ['VB.NET_WinForms','CSharp_WPF','CSharp_ASPNET','Vue_CSharpAPI','COBOL','AS400_RPG','Access'];
-for (const profile of isolatedProfiles) {
-  const localSpec=path.join(projectRoot,'srcs',profile,'spec');
-  if (fs.existsSync(localSpec)) walk(localSpec);
+const selectedSpecPrefix = profile ? `${project}/srcs/${profile}/spec/` : null;
+if (profile) {
+  // An independent profile is the complete business input; do not inspect peers.
+  walk(path.join(projectRoot, 'srcs', profile, 'spec'));
+} else {
+  walk(path.join(projectRoot, 'docs/開発規約'));
+  walk(path.join(projectRoot, 'spec'));
+  for (const isolatedProfile of profiles) {
+    const localSpec = path.join(projectRoot, 'srcs', isolatedProfile, 'spec');
+    if (fs.existsSync(localSpec)) walk(localSpec);
+  }
 }
 const findings = [], records = [], ids = new Map();
 const add = (file, line, code, detail) => findings.push({ file, line, code, detail });
@@ -100,6 +109,8 @@ for (const target of files.sort()) {
   const record = { file, sha256: crypto.createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length };
   records.push(record);
   if (!file.endsWith('.md')) continue;
+  // These operational entrypoints are frozen verbatim but are not spec-md documents.
+  if (file === 'agents/build-agent/PROMPT.md' || file === 'agents/build-agent/README.md') continue;
   const source = bytes.toString('utf8');
   const match = source.match(/^\uFEFF?<!-- spec-meta: (\{[^\r\n]*\}) -->/);
   let meta;
@@ -159,6 +170,8 @@ for (const target of files.sort()) {
       const isolatedPrefix=file.match(new RegExp(`^(${project}/srcs/[^/]+/spec/)`))?.[1];
       if (isolatedPrefix && !local.startsWith(isolatedPrefix)) { add(file,row.line,'LINK_ISOLATION',`Reference leaves independent specification package: ${href}`); continue; }
       if (local.split('/').includes('spec-eval')) continue; // Do not inspect evaluation inputs.
+      // Shared entrypoints can list every profile; their unselected targets are not inputs.
+      if (profile && local.startsWith(`${project}/`) && !fixed.includes(local) && !local.startsWith(selectedSpecPrefix)) continue;
       const allowed = local === 'AGENTS.md' || /^(docs|agents)\//.test(local) || local.startsWith(`${project}/`);
       if (!allowed) { add(file, row.line, 'LINK_SCOPE', `Link outside allowed inputs: ${href}`); continue; }
       if (!fs.existsSync(destination)) add(file, row.line, 'LINK_MISSING', `Missing local reference: ${href}`);
@@ -167,13 +180,14 @@ for (const target of files.sort()) {
 }
 let commit = null;
 try { commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { /* Non-Git inputs still have file hashes. */ }
-const context = { agent: 'AG-BUILD', agentVersion: records.find(record=>record.documentId==='AG-BUILD')?.version, projectId: project, stage: 'build-preflight', runId, recordedAt: new Date().toISOString(), inputCommit: commit, workingTreeHashes: true, excluded: ['spec-eval', 'other projects', 'past reports'], files: records };
-const result = { projectId: project, runId, status: findings.length ? 'interrupted-structure' : 'structure-check-passed', findings, checked: ['metadata', 'chapter/sheet mapping', 'LIST shape/keys', 'TABLE columns/fieldIds/PK', 'event sections', 'local reference existence'], notChecked: ['semantic consistency', 'external URLs', 'rendering/Excel conversion', 'application generation/build/tests', 'reverse generation/scoring'] };
+const context = { agent: 'AG-BUILD', agentVersion: records.find(record=>record.documentId==='AG-BUILD')?.version, projectId: project, ...(profile ? { profileId: profile } : {}), stage: 'build-preflight', runId, recordedAt: new Date().toISOString(), inputCommit: commit, workingTreeHashes: true, excluded: ['spec-eval', 'other projects', 'past reports', ...(profile ? ['other profiles', 'shared business specifications'] : [])], files: records };
+const result = { projectId: project, ...(profile ? { profileId: profile } : {}), runId, status: findings.length ? 'interrupted-structure' : 'structure-check-passed', findings, checked: ['metadata', 'chapter/sheet mapping', 'LIST shape/keys', 'TABLE columns/fieldIds/PK', 'event sections', 'local reference existence within input scope'], notChecked: ['semantic consistency', 'external URLs', 'rendering/Excel conversion', 'application generation/build/tests', 'reverse generation/scoring', ...(profile ? ['shared entrypoint references outside the selected input scope'] : [])] };
 const output = [
-  `# build-agent 構造検査 ${runId}`, '', `対象：${project}。Agent版${context.agentVersion}。入力版・SHA-256は同実行IDのinputs.jsonを参照。`, '',
+  `# build-agent 構造検査 ${runId}`, '', `対象：${project}${profile ? ` / ${profile}` : ''}。Agent版${context.agentVersion}。入力版・SHA-256は同実行IDのinputs.jsonを参照。`, '',
   `判定：${result.status}。現行入力${records.length}ファイルを検査。問題${findings.length}件。`, '',
   ...findings.flatMap((finding, index) => [`- STR-${String(index + 1).padStart(3, '0')}：${finding.file}:${finding.line} / ${finding.code} / ${finding.detail}`]), '',
-  '検査範囲：メタ情報、章/シート対応、LIST矩形・キー、TABLE列/項目ID/PK、イベント6節、ローカル参照先の存在。', '',
+  '検査範囲：メタ情報、章/シート対応、LIST矩形・キー、TABLE列/項目ID/PK、イベント6節、入力範囲内のローカル参照先の存在。', '',
+  ...(profile ? ['方式指定時は方式内specと固定の全体規則・Agent・project入口だけを入力とし、共有入口から範囲外への参照先は検査しない。', ''] : []),
   '未実施：意味上の整合性検査、外部URL確認、画面描画・Excel変換、アプリ生成・コンパイル・業務試験、逆生成・採点。', '',
   '構造検査通過は生成/ビルド/試験合格を意味しない。構造問題は別Agentが修正し、新しい実行IDで再検査してから再開する。', '',
 ].join('\n');
@@ -181,5 +195,5 @@ fs.mkdirSync(reportRoot, { recursive: true });
 fs.writeFileSync(path.join(reportRoot, `${runId}-inputs.json`), JSON.stringify(context, null, 2) + '\n', { flag: 'wx' });
 fs.writeFileSync(path.join(reportRoot, `${runId}-structure.json`), JSON.stringify(result, null, 2) + '\n', { flag: 'wx' });
 fs.writeFileSync(path.join(reportRoot, `${runId}-structure.md`), output, { flag: 'wx' });
-console.log(JSON.stringify({ status: result.status, inputs: records.length, findings: findings.length, report: relative(path.join(reportRoot, `${runId}-structure.md`)) }));
+console.log(JSON.stringify({ status: result.status, ...(profile ? { profileId: profile } : {}), inputs: records.length, findings: findings.length, report: relative(path.join(reportRoot, `${runId}-structure.md`)) }));
 process.exitCode = findings.length ? 2 : 0;
