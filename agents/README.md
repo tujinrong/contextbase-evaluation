@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"7.1","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"7.2","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
 # Agent定義一覧
 
-版7.1／2026-10-23。AG-SPECの作成・改善運用入口を追加。アプリ実装・実機試験・採点の状態は各実行の報告で区別する。
+版7.2／2026-10-23。AG-REVERSE を ContextBase 構築・調査・独立検証の統一入口として同期。アプリ実装・実機試験・採点の状態は各実行の報告で区別する。
 
 ## 概要
 
@@ -13,7 +13,9 @@
 | --- | --- | --- |
 | AG-SPEC | 指定project・方式の仕様書作成・既存改善。検索条件と画面配置の改善を含む | [契約](spec-agent/AGENT.md)・[実行指示](spec-agent/PROMPT.md)・[運用案内](spec-agent/README.md) |
 | AG-BUILD | 仕様からシステム生成 | [build-agent](build-agent/AGENT.md) |
-| AG-REVERSE | プログラムから仕様生成 | [reverse-agent](reverse-agent/AGENT.md) |
+| AG-REVERSE | ソースから ContextBase を構築し、目標に応じた追加調査と独立検証を行う | [契約](reverse-agent/AGENT.md)・[実行指示](reverse-agent/PROMPT.md)・[運用案内](reverse-agent/README.md) |
+
+AG-REVERSE の内部役割は discovery-agent（取得・初期理解）、investigation-agent（関係調査・動作深化）、review-agent（各段階の独立原文確認）とする。共通制御が候補の採用と範囲受入れを管理する。仕様書の構成・執筆・変換・公開は下流の責務とし、担当と旧コードの移管は未決定である。新しい3役割の自動実行機構は未実装であり、現存する旧仕様書生成 CLI と区別する。
 
 ## 実行コンテキスト
 
