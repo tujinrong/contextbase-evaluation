@@ -40,18 +40,10 @@ Namespace GuiEvidence
             Return Task.FromResult(New LookupSet(codes,classes))
         End Function
         Private Shared Function Matches(v As Dictionary(Of String,String),c As SearchCriteria) As Boolean
-            Return (String.IsNullOrEmpty(c.StudentNo) OrElse v("StudentNo").Contains(c.StudentNo,StringComparison.OrdinalIgnoreCase)) AndAlso
-                (String.IsNullOrEmpty(c.StudentName) OrElse v("StudentName").Contains(c.StudentName,StringComparison.Ordinal)) AndAlso
-                (String.IsNullOrEmpty(c.StudentNameKana) OrElse v("StudentNameKana").Contains(c.StudentNameKana,StringComparison.Ordinal)) AndAlso
+            Return (String.IsNullOrEmpty(c.StudentNo) OrElse StudentNormalizer.Identifier(v("StudentNo"),15,"StudentNo").StartsWith(StudentNormalizer.Identifier(c.StudentNo,15,"StudentNo"),StringComparison.Ordinal)) AndAlso
+                (String.IsNullOrEmpty(c.StudentName) OrElse StudentNormalizer.NameKey(v("StudentName")).Contains(StudentNormalizer.NameKey(c.StudentName),StringComparison.Ordinal)) AndAlso
                 (c.EnrollmentStatusCodes.Length=0 OrElse c.EnrollmentStatusCodes.Contains(v("EnrollmentStatusCode"))) AndAlso
-                (Not c.SchoolYear.HasValue OrElse v("SchoolYear")=c.SchoolYear.Value.ToString(CultureInfo.InvariantCulture)) AndAlso
-                (String.IsNullOrEmpty(c.GradeCode) OrElse v("GradeCode")=c.GradeCode) AndAlso
-                (Not c.ClassId.HasValue OrElse v("ClassId")=c.ClassId.Value.ToString(CultureInfo.InvariantCulture)) AndAlso
-                (Not c.UnassignedOnly OrElse v("ClassId")="") AndAlso
-                (String.IsNullOrEmpty(c.PrefectureCode) OrElse v("PrefectureCode")=c.PrefectureCode) AndAlso
-                (String.IsNullOrEmpty(c.PhoneNumber) OrElse v("PhoneNumber").Contains(c.PhoneNumber,StringComparison.Ordinal)) AndAlso
-                (String.IsNullOrEmpty(c.AdmissionFrom) OrElse String.CompareOrdinal(v("AdmissionDate"),c.AdmissionFrom)>=0) AndAlso
-                (String.IsNullOrEmpty(c.AdmissionTo) OrElse String.CompareOrdinal(v("AdmissionDate"),c.AdmissionTo)<=0)
+                (Not c.ClassId.HasValue OrElse v("ClassId")=c.ClassId.Value.ToString(CultureInfo.InvariantCulture))
         End Function
         Private Shared Function SortKey(s As JsonElement,c As SearchCriteria) As String
             Dim v=Values(s)
@@ -73,7 +65,7 @@ Namespace GuiEvidence
             Dim v=Values(s)
             Dim cls=data.RootElement.GetProperty("classes").EnumerateArray().Single(Function(c) c.GetProperty("id").GetInt64().ToString(CultureInfo.InvariantCulture)=v("ClassId"))
             Dim state=data.RootElement.GetProperty("codes").EnumerateArray().Single(Function(c) c.GetProperty("category").GetString()="ENROLLMENT_STATUS" AndAlso c.GetProperty("value").GetString()=v("EnrollmentStatusCode")).GetProperty("name").GetString()
-            Return New StudentRow(s.GetProperty("id").GetInt64(),v("StudentNo"),v("StudentName"),v("StudentNameKana"),DateOnly.Parse(s.GetProperty("birthDate").GetString(),CultureInfo.InvariantCulture),2026,"1年",cls.GetProperty("code").GetString(),cls.GetProperty("name").GetString(),state,"東京都 " & v("AddressLine1") & " " & v("AddressLine2"),v("PhoneNumber"),DateOnly.Parse(v("AdmissionDate"),CultureInfo.InvariantCulture),DateTimeOffset.Parse(s.GetProperty("updatedAt").GetString(),CultureInfo.InvariantCulture),s.GetProperty("version").GetInt64())
+            Return New StudentRow(s.GetProperty("id").GetInt64(),v("StudentNo"),v("StudentName"),v("StudentNameKana"),DateOnly.Parse(s.GetProperty("birthDate").GetString(),CultureInfo.InvariantCulture),2026,"1年",cls.GetProperty("code").GetString(),cls.GetProperty("name").GetString(),state)
         End Function
         Public Function GetAsync(id As Long,Optional ct As CancellationToken=Nothing) As Task(Of StudentDetail) Implements IStudentService.GetAsync
             ct.ThrowIfCancellationRequested()

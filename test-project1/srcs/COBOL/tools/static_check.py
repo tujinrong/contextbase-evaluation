@@ -3,7 +3,8 @@ from pathlib import Path
 import re,json,hashlib,datetime,os,sys
 ROOT=Path(__file__).resolve().parents[1]
 report=Path(os.environ.get('COBOL_TEST_REPORT_DIR',ROOT/'test-report')).resolve();report.mkdir(parents=True,exist_ok=True)
-prefix=report/f'20261012-build-04-cobol-{sys.argv[1]}-static'
+run_id=os.environ.get('COBOL_RUN_ID','local-cobol')
+prefix=report/f'{run_id}-{sys.argv[1]}-static'
 if prefix.with_suffix('.json').exists():raise SystemExit('Existing report preserved')
 results=[]
 def check(name,good,detail):results.append({'id':name,'passed':bool(good),'detail':detail})
@@ -39,7 +40,7 @@ for p in paths:
  for pat in [r'srcs[/\\](?:Shared|Database|_tools|AS400_RPG|CSharp_ASPNET|Vue_CSharpAPI|AccessVBA|VB_NET|VB_WPF|CSharp_WPF)',r'ROOT\.parents\[1\]',r'project[^\n]*[\x22\x27]\.\./\.\./\.\.',r'(?i)spec-eval']:
   if re.search(pat,s):bad.append(p.relative_to(ROOT).as_posix()+': '+pat)
 check('project-isolation',not bad,bad)
-result={'runId':'20261012-build-04','inputManifest':'build/input-manifest.json','inputManifestSha256':hashlib.sha256((ROOT/'build/input-manifest.json').read_bytes()).hexdigest(),'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'profile':'static, not DB/runtime integration','passed':sum(x['passed'] for x in results),'total':len(results),'results':results}
+result={'runId':run_id,'inputManifest':'build/input-manifest.json','inputManifestSha256':hashlib.sha256((ROOT/'build/input-manifest.json').read_bytes()).hexdigest(),'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'profile':'static, not DB/runtime integration','passed':sum(x['passed'] for x in results),'total':len(results),'results':results}
 prefix.with_suffix('.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 prefix.with_suffix('.raw.log').write_text('\n'.join(x['id']+' '+('PASS' if x['passed'] else 'FAIL')+' '+json.dumps(x['detail'],ensure_ascii=False) for x in results)+'\n',encoding='utf-8')
 print(f"{result['passed']}/{result['total']} static checks passed")

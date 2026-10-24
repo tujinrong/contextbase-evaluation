@@ -100,70 +100,55 @@ public sealed class SqlServerStudentService : IStudentService
             """);
         await command.ExecuteNonQueryAsync(ct);
     }
+    private static StudentListItem ListItem(SqlDataReader r)=>new(Long(r,"student_id"),String(r,"student_no")!,String(r,"student_name")!,String(r,"student_name_kana")!,Date(r,"birth_date"),r.IsDBNull(r.GetOrdinal("school_year"))?null:Convert.ToInt32(r["school_year"]),String(r,"grade_name"),String(r,"class_code"),String(r,"class_name"),String(r,"status_name"));
+    private const string ListSelect = """
+        SELECT s.student_id,s.student_no,s.student_name,s.student_name_kana,s.birth_date,
+               c.school_year,c.class_code,c.class_name,g.code_name grade_name,e.code_name status_name
+        FROM dbo.m_student s LEFT JOIN dbo.m_class c ON c.class_id=s.class_id
+        LEFT JOIN dbo.m_code g ON g.category_id=c.grade_category AND g.code_value=c.grade_code
+        LEFT JOIN dbo.m_code e ON e.category_id=s.enrollment_category AND e.code_value=s.enrollment_status_code
+        """;
     public async Task<SearchResult> SearchAsync(SearchCriteria criteria, CancellationToken ct = default)
     {
         _ = User(); var now = Now; var day = BusinessDay(now);
         try {
             if (criteria.Page < 1 || criteria.PageSize is not (20 or 50 or 100) || criteria.SortDirection is not ("asc" or "desc")) throw new ArgumentException("E-COM-003: ページ指定が不正です。");
             var order = criteria.SortKey switch { "studentNo" => "s.student_no", "name" => "s.name_key", "admissionDate" => "s.admission_date", "updatedAt" => "s.updated_at", _ => throw new ArgumentException("E-COM-003: 並び順が不正です。") };
-            if (criteria.SchoolYear is < 1900 or > 9998 || criteria.ClassId is <= 0) throw new ArgumentException("E-DATE-003: 年度またはクラスが不正です。");
-            if (criteria.UnassignedOnly && (criteria.SchoolYear is not null || criteria.GradeCode is not null || criteria.ClassId is not null)) throw new ArgumentException("E-SRC-001: 未所属と年度・学年・クラスは同時指定できません。");
-            var statuses = criteria.EnrollmentStatusCodes;
-            if (statuses.Length > 4 || statuses.Distinct(StringComparer.Ordinal).Count() != statuses.Length || statuses.Any(value => value is not ("01" or "02" or "03" or "04"))) throw new ArgumentException("E-STU-009: 在籍区分が不正です。");
-            var no = string.IsNullOrEmpty(criteria.StudentNo) ? null : StudentNormalizer.Identifier(criteria.StudentNo,15,"StudentNo");
-            var name = StudentNormalizer.Text(criteria.StudentName,8,8,"StudentName");
-            name = name is null ? null : StudentNormalizer.NameKey(name);
-            var kana = string.IsNullOrEmpty(criteria.StudentNameKana) ? null : StudentNormalizer.Kana(criteria.StudentNameKana,false).Replace(" ","");
-            var phone = StudentNormalizer.Phone(criteria.PhoneNumber,"PhoneNumber");
-            var grade = StudentNormalizer.Code(criteria.GradeCode,2,"GradeCode",false);
-            var prefecture = StudentNormalizer.Code(criteria.PrefectureCode,2,"PrefectureCode",false);
-            DateOnly? from = string.IsNullOrEmpty(criteria.AdmissionFrom) ? null : JapaneseDateService.ParseIso(criteria.AdmissionFrom,day);
-            DateOnly? to = string.IsNullOrEmpty(criteria.AdmissionTo) ? null : JapaneseDateService.ParseIso(criteria.AdmissionTo,day);
-            if (from > to) throw new ArgumentException("E-STU-006: 開始日は終了日以前にしてください。");
+            if(criteria.ClassId is <=0)throw new ArgumentException("E-SRC-002: クラスIDが不正です。");
+            var statuses=criteria.StatusCodes;
+            if(statuses is null||statuses.Length>4||statuses.Distinct(StringComparer.Ordinal).Count()!=statuses.Length||statuses.Any(value=>value is not ("01" or "02" or "03" or "04")))throw new ArgumentException("E-SRC-002: 在籍区分が不正です。");
+            var no=string.IsNullOrEmpty(criteria.StudentNoPrefix)?null:StudentNormalizer.Identifier(criteria.StudentNoPrefix,15,"SRC-001");
+            var name=StudentNormalizer.Text(criteria.NameKey,160,160,"SRC-002");
             await using var connection = await Open(ct);
             await using var tx = (SqlTransaction)await connection.BeginTransactionAsync(IsolationLevel.Snapshot,ct);
-            if (grade is not null && !await CodeExists(connection,tx,"GRADE",grade,ct) || prefecture is not null && !await CodeExists(connection,tx,"PREFECTURE",prefecture,ct)) throw new ArgumentException("E-STU-009: 指定コードが存在しません。");
-            if (criteria.SchoolYear is not null) {
-                await using var yearCheck = Command(connection,tx,"SELECT COUNT_BIG(*) FROM dbo.m_class WHERE school_year=@year");
-                Param(yearCheck,"@year",SqlDbType.SmallInt,criteria.SchoolYear);
-                if ((long)(await yearCheck.ExecuteScalarAsync(ct))! == 0) throw new ArgumentException("E-STU-014: 年度候補が存在しません。");
-            }
-            if (criteria.ClassId is { } classId) {
-                await using var classCheck = Command(connection,tx,"SELECT school_year,grade_code FROM dbo.m_class WHERE class_id=@id");
-                Param(classCheck,"@id",SqlDbType.BigInt,classId);
-                await using var reader = await classCheck.ExecuteReaderAsync(ct);
-                if (!await reader.ReadAsync(ct) || criteria.SchoolYear is not null && Convert.ToInt32(reader[0]) != criteria.SchoolYear || grade is not null && reader.GetString(1) != grade) throw new ArgumentException("E-STU-014: 年度・学年・クラスが一致しません。");
+            foreach(var status in statuses)if(!await CodeExists(connection,tx,"ENROLLMENT_STATUS",status,ct))throw new ArgumentException("E-SRC-002: 在籍区分が存在しません。");
+            if(criteria.ClassId is long classId){
+                await using var exists=Command(connection,tx,"SELECT COUNT_BIG(*) FROM dbo.m_class WHERE class_id=@id");
+                Param(exists,"@id",SqlDbType.BigInt,classId);
+                if((long)(await exists.ExecuteScalarAsync(ct))! !=1)throw new ArgumentException("E-SRC-002: クラスが存在しません。");
             }
             var predicates = new List<string>{ "s.is_deleted=0" };
             var parameters = new List<(string Name, SqlDbType Type, object? Value, int Size)>();
             void Where(string sql, string key, SqlDbType type, object? value, int size = 0) { if (value is not null) { predicates.Add(sql); parameters.Add((key,type,value,size)); } }
             Where("s.student_no LIKE @no ESCAPE '!'","@no",SqlDbType.VarChar,no is null ? null : StudentNormalizer.EscapeLike(no)+"%",31);
             Where("s.name_key LIKE @name ESCAPE '!'","@name",SqlDbType.NVarChar,name is null ? null : "%"+StudentNormalizer.EscapeLike(name)+"%",642);
-            Where("s.kana_key LIKE @kana ESCAPE '!'","@kana",SqlDbType.NVarChar,kana is null ? null : "%"+StudentNormalizer.EscapeLike(kana)+"%",74);
-            Where("c.school_year=@year","@year",SqlDbType.SmallInt,criteria.SchoolYear);
-            Where("c.grade_code=@grade","@grade",SqlDbType.VarChar,grade,2);
             Where("s.class_id=@class","@class",SqlDbType.BigInt,criteria.ClassId);
-            if(criteria.UnassignedOnly) predicates.Add("s.class_id IS NULL");
-            Where("s.prefecture_code=@prefecture","@prefecture",SqlDbType.VarChar,prefecture,2);
-            Where("(s.phone_number=@phone OR s.emergency_phone_number=@phone)","@phone",SqlDbType.VarChar,phone,16);
-            Where("s.admission_date>=@from","@from",SqlDbType.Date,from);
-            Where("s.admission_date<=@to","@to",SqlDbType.Date,to);
             if(statuses.Length>0) {
                 predicates.Add("s.enrollment_status_code IN ("+string.Join(',',statuses.Select((_,index)=>"@status"+index))+")");
                 parameters.AddRange(statuses.Select((value,index)=>("@status"+index,SqlDbType.VarChar,(object?)value,2)));
             }
             var where = " WHERE "+string.Join(" AND ",predicates);
-            await using var countCommand = Command(connection,tx,"SELECT COUNT_BIG(*) FROM (SELECT TOP (10001) s.student_id FROM dbo.m_student s LEFT JOIN dbo.m_class c ON c.class_id=s.class_id"+where+") limited");
+            await using var countCommand = Command(connection,tx,"SELECT COUNT_BIG(*) FROM (SELECT TOP (10001) s.student_id FROM dbo.m_student s"+where+") limited");
             foreach(var p in parameters) Param(countCommand,p.Name,p.Type,p.Value,p.Size);
             var count = (int)(long)(await countCommand.ExecuteScalarAsync(ct))!;
             if(count>10000) { await tx.CommitAsync(ct); return new(Outcome.NoChange,count,[],now,true,[]); }
             var lastPage = Math.Max(1,(count+criteria.PageSize-1)/criteria.PageSize);
             var page = Math.Min(criteria.Page,lastPage);
-            await using var pageCommand = Command(connection,tx,RowSelect+where+" ORDER BY "+order+" "+criteria.SortDirection+",s.student_id ASC OFFSET @offset ROWS FETCH NEXT @size ROWS ONLY");
+            await using var pageCommand = Command(connection,tx,ListSelect+where+" ORDER BY "+order+" "+criteria.SortDirection+",s.student_id ASC OFFSET @offset ROWS FETCH NEXT @size ROWS ONLY");
             foreach(var p in parameters) Param(pageCommand,p.Name,p.Type,p.Value,p.Size);
             Param(pageCommand,"@offset",SqlDbType.Int,checked((page-1)*criteria.PageSize)); Param(pageCommand,"@size",SqlDbType.Int,criteria.PageSize);
-            var rows = new List<StudentRow>();
-            await using(var reader = await pageCommand.ExecuteReaderAsync(ct)) while(await reader.ReadAsync(ct)) rows.Add(Row(reader));
+            var rows = new List<StudentListItem>();
+            await using(var reader = await pageCommand.ExecuteReaderAsync(ct)) while(await reader.ReadAsync(ct)) rows.Add(ListItem(reader));
             await tx.CommitAsync(ct);
             return new(Outcome.NoChange,count,rows,now,false,[]);
         } catch(InputValidationException e) { return new(Outcome.ValidationFailed,0,[],now,false,e.Errors); }

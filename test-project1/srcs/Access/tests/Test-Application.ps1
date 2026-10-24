@@ -24,6 +24,10 @@ try {
     $taskResults.Add(@{function='RunExtendedTests';output=$taskResult;passed=($taskResult -match '^\d+ assertions passed$');checks=$taskAccess.Run('TestCheckLog')})
  }
  if (@($taskResults | Where-Object { -not $_.passed }).Count -eq 0) {
+    $taskResult=$taskAccess.Run('RunSearchContractTests'); Write-Output $taskResult
+    $taskResults.Add(@{function='RunSearchContractTests';output=$taskResult;passed=($taskResult -match '^\d+ assertions passed$');checks=$taskAccess.Run('TestCheckLog')})
+ }
+ if (@($taskResults | Where-Object { -not $_.passed }).Count -eq 0) {
     $taskResult=$taskAccess.Run('RunFormTests'); Write-Output $taskResult
     $taskResults.Add(@{function='RunFormTests';output=$taskResult;passed=($taskResult -match '^\d+ assertions passed$');checks=$taskAccess.Run('TestCheckLog')})
  }

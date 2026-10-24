@@ -162,6 +162,18 @@ Module Program
         Using form As New VB.Forms.FrmStudentEdit(appService,Nothing)
             Same(True,form.Controls.Count>0,"edit construction")
         End Using
+        For Each field In {"StudentNameKana","SchoolYear","GradeCode","UnassignedOnly","PrefectureCode","PhoneNumber","AdmissionFrom","AdmissionTo","Unknown"}
+            Dim rejected=False
+            Try
+                System.Text.Json.JsonSerializer.Deserialize(Of SearchCriteria)("{""" & field & """:""old""}")
+            Catch ex As System.Text.Json.JsonException
+                rejected=True
+            End Try
+            Same(True,rejected,"compact typed boundary rejects " & field)
+        Next
+        For Each field In {"Address","PhoneNumber","UpdatedAt","AdmissionDate","RowVersion"}
+            Same(True,GetType(StudentRow).GetProperty(field) Is Nothing,"compact projection omits " & field)
+        Next
         Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(New With {.profile="VB.NET_WinForms", .passed=count,.failed=0,.cases=outcomes,.database="NOT_RUN",.interactiveUI="NOT_RUN"}))
     End Sub
 End Module

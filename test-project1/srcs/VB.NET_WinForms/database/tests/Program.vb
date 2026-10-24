@@ -121,7 +121,7 @@ Module Program
    Dim duplicateDraft=Draft(runId & "-2",classId)
    Dim waiting=Await service.SaveAsync(New SaveRequest(duplicateDraft))
    Check(waiting.Outcome=Outcome.ConfirmationRequired AndAlso waiting.ConfirmationToken IsNot Nothing,"confirmation persisted")
-   Check(waiting.Candidates.Count=1 AndAlso waiting.Candidates(0).Address="" AndAlso waiting.Candidates(0).PhoneNumber Is Nothing AndAlso waiting.Candidates(0).EnrollmentStatusName Is Nothing,"duplicate candidates omit unrelated personal fields")
+   Check(waiting.Candidates.Count=1 AndAlso GetType(StudentRow).GetProperty("Address") Is Nothing AndAlso GetType(StudentRow).GetProperty("PhoneNumber") Is Nothing AndAlso waiting.Candidates(0).EnrollmentStatusName Is Nothing,"duplicate candidates omit unrelated personal fields")
    Dim second=Await service.SaveAsync(New SaveRequest(duplicateDraft,ConfirmationToken:=waiting.ConfirmationToken,Reason:="別人であることを確認"))
    Check(second.Outcome=Outcome.Saved,"native confirm and create")
    Dim replay=Await service.SaveAsync(New SaveRequest(duplicateDraft,ConfirmationToken:=waiting.ConfirmationToken,Reason:="別人であることを確認"))

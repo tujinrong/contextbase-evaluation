@@ -17,6 +17,7 @@ internal sealed class FixtureGateway : IStudentGateway
         if (role is not ("admin" or "staff" or "viewer")) throw new ArgumentException("Fixture role must be admin/staff/viewer.");
         this.role = role;
     }
+    public string SessionId => "fixture-session";
     public bool CanEdit => role != "viewer";
     public bool CanDelete => role == "admin";
     public string Principal => $"FIXTURE-{role}: 撮影用・DB未接続";
@@ -40,24 +41,16 @@ internal sealed class FixtureGateway : IStudentGateway
         return Task.FromResult(new SearchResult("Success", items.Length, rows, items.Length == 0 ? "I-SRC-001 該当なし（fixture・DB未接続）" : "検索完了（fixture・DB未接続）", DateTimeOffset.Parse(data.RootElement.GetProperty("searchedAt").GetString()!, CultureInfo.InvariantCulture)));
     }
     private static bool Matches(Dictionary<string, string> v, SearchDraft d) =>
-        (string.IsNullOrEmpty(d.StudentNo) || v["StudentNo"].Contains(d.StudentNo, StringComparison.OrdinalIgnoreCase)) &&
-        (string.IsNullOrEmpty(d.Name) || v["StudentName"].Contains(d.Name, StringComparison.Ordinal)) &&
-        (string.IsNullOrEmpty(d.Kana) || v["StudentNameKana"].Contains(d.Kana, StringComparison.Ordinal)) &&
+        (string.IsNullOrEmpty(d.StudentNo) || StudentManagement.Core.StudentNormalizer.Identifier(v["StudentNo"],15,"StudentNo").StartsWith(StudentManagement.Core.StudentNormalizer.Identifier(d.StudentNo,15,"StudentNo"), StringComparison.Ordinal)) &&
+        (string.IsNullOrEmpty(d.Name) || StudentManagement.Core.StudentNormalizer.NameKey(v["StudentName"]).Contains(StudentManagement.Core.StudentNormalizer.NameKey(d.Name), StringComparison.Ordinal)) &&
         (d.StatusCodes.Length == 0 || d.StatusCodes.Contains(v["EnrollmentStatusCode"])) &&
-        (d.SchoolYear is null || v["SchoolYear"] == d.SchoolYear.Value.ToString(CultureInfo.InvariantCulture)) &&
-        (string.IsNullOrEmpty(d.GradeCode) || v["GradeCode"] == d.GradeCode) &&
-        (d.ClassId is null || v["ClassId"] == d.ClassId.Value.ToString(CultureInfo.InvariantCulture)) &&
-        (!d.UnassignedOnly || v["ClassId"] == "") &&
-        (string.IsNullOrEmpty(d.PrefectureCode) || v["PrefectureCode"] == d.PrefectureCode) &&
-        (string.IsNullOrEmpty(d.PhoneNumber) || v["PhoneNumber"].Contains(d.PhoneNumber, StringComparison.Ordinal)) &&
-        (string.IsNullOrEmpty(d.AdmissionFrom) || string.CompareOrdinal(v["AdmissionDate"], d.AdmissionFrom) >= 0) &&
-        (string.IsNullOrEmpty(d.AdmissionTo) || string.CompareOrdinal(v["AdmissionDate"], d.AdmissionTo) <= 0);
+        (d.ClassId is null || v["ClassId"] == d.ClassId.Value.ToString(CultureInfo.InvariantCulture));
     private StudentListItem ToRow(JsonElement s)
     {
         var v = Values(s);
         var cls = data.RootElement.GetProperty("classes").EnumerateArray().Single(c => c.GetProperty("id").GetInt64().ToString(CultureInfo.InvariantCulture) == v["ClassId"]);
         var status = data.RootElement.GetProperty("codes").EnumerateArray().Single(c => c.GetProperty("category").GetString() == "ENROLLMENT_STATUS" && c.GetProperty("value").GetString() == v["EnrollmentStatusCode"]).GetProperty("name").GetString()!;
-        return new(s.GetProperty("id").GetInt64(), v["StudentNo"], v["StudentName"], v["StudentNameKana"], StudentManagement.Core.JapaneseDateService.ToWareki(DateOnly.Parse(s.GetProperty("birthDate").GetString()!, CultureInfo.InvariantCulture)), v["SchoolYear"] + " / 1年", cls.GetProperty("name").GetString()!, status, "東京都 " + v["AddressLine1"] + " " + v["AddressLine2"], v["PhoneNumber"], "2026/10/12 09:00:00");
+        return new(s.GetProperty("id").GetInt64(), v["StudentNo"], v["StudentName"], v["StudentNameKana"], StudentManagement.Core.JapaneseDateService.ToWareki(DateOnly.Parse(s.GetProperty("birthDate").GetString()!, CultureInfo.InvariantCulture)), v["SchoolYear"] + " / 1年", cls.GetProperty("name").GetString()!, status);
     }
     public Task<StudentRecord> GetAsync(long id, CancellationToken ct)
     {

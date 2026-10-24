@@ -17,7 +17,9 @@ End Function
 Public Sub RefreshClassChoices(ByVal frm As Access.Form, ByVal originalId As Variant)
     Dim where As String, year As String, grade As String, day As String, activeOnly As Boolean
     where = " WHERE 1=1": day = BusinessDay(UtcNow())
-    year = NFKC(Nz(SearchFilterValue(frm, "cboSchoolYear"), "")): grade = NFKC(Nz(SearchFilterValue(frm, "cboGrade"), ""))
+    If frm.Name = "frmStudentEdit" Then
+        year = NFKC(Nz(frm!cboSchoolYear, "")): grade = NFKC(Nz(frm!cboGrade, ""))
+    End If
     If year <> "" Then
         If Not Match(year, "^[0-9]{4}$") Then Err.Raise vbObjectError + 144, , "E-DATE-003"
         where = where & " AND school_year=" & CStr(CLng(year))
@@ -40,12 +42,6 @@ End Sub
 Public Sub RefreshSearchChoices(ByVal frm As Access.Form)
     Dim pair As Variant
     If frm.Name <> "frmStudentSearch" Then Err.Raise vbObjectError + 144, , "Search form required"
-    frm!cboSchoolYear.RowSource = "SELECT 0 AS option_value,'すべて' AS option_name,0 AS option_group FROM t_write_guard WHERE guard_id=1 UNION ALL SELECT DISTINCT school_year,CStr(school_year),1 FROM m_class ORDER BY option_group,option_value DESC"
-    frm!cboSchoolYear.Requery
-    For Each pair In Array(Array("GRADE", "cboGrade"), Array("PREFECTURE", "cboPrefecture"))
-        frm.Controls(pair(1)).RowSource = "SELECT '*' AS option_value,'すべて' AS option_name,0 AS option_group,0 AS code_order FROM t_write_guard WHERE guard_id=1 UNION ALL SELECT code_value,code_name,1,display_order FROM m_code WHERE category_id='" & pair(0) & "' ORDER BY option_group,code_order,option_value"
-        frm.Controls(pair(1)).Requery
-    Next
     RefreshClassChoices frm, Null
 End Sub
 Public Sub RefreshCodeChoices(ByVal frm As Access.Form, ByVal old As Object)

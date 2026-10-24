@@ -1,2 +1,2 @@
-import { onMounted, onUnmounted, type Ref } from 'vue';
-export function useDirtyGuard(dirty:Ref<boolean>){const unload=(e:BeforeUnloadEvent)=>{if(dirty.value){e.preventDefault();e.returnValue='';}};onMounted(()=>window.addEventListener('beforeunload',unload));onUnmounted(()=>window.removeEventListener('beforeunload',unload));return ()=>!dirty.value||window.confirm('保存していない変更を破棄しますか。');}
+import {onMounted,onUnmounted,type Ref} from 'vue';import {askConfirmation} from './useConfirmation';
+export function useDirtyGuard(dirty:Ref<boolean>){const unload=(e:BeforeUnloadEvent)=>{if(dirty.value){e.preventDefault();e.returnValue='';}};onMounted(()=>window.addEventListener('beforeunload',unload));onUnmounted(()=>window.removeEventListener('beforeunload',unload));return async()=>!dirty.value||await askConfirmation('保存していない変更を破棄しますか。');}

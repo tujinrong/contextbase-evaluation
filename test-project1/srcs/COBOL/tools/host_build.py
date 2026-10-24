@@ -9,7 +9,8 @@ os.chdir(ROOT)
 out=ROOT/'build/host';out.mkdir(parents=True,exist_ok=True)
 report=Path(os.environ.get('COBOL_TEST_REPORT_DIR',ROOT/'test-report')).resolve()
 report.mkdir(parents=True,exist_ok=True)
-prefix=report/f'20261012-build-04-cobol-{sequence}-host-build'
+run_id=os.environ.get('COBOL_RUN_ID','local-cobol')
+prefix=report/f'{run_id}-{sequence}-host-build'
 if prefix.with_suffix('.json').exists():raise RuntimeError('Old evidence must not be overwritten')
 sdk=ROOT/'build/toolchain/msys2/ucrt64'
 env=os.environ.copy();env['ZIG_GLOBAL_CACHE_DIR']=str(out/'zig-global-cache');env['ZIG_LOCAL_CACHE_DIR']=str(out/'zig-local-cache')
@@ -31,7 +32,7 @@ try:
  sources=list((ROOT/'cobol').glob('*.cob'))+list((ROOT/'tests').glob('*.cob'))
  for p in sources:
   run([cobc,'-free','-fsyntax-only','-Wall','-I','copy',p.relative_to(ROOT)])
-  main=p.stem in ['STMAIN','STMAINT','date-probe','abi-probe','validation-probe']
+  main=p.stem in ['STMAIN','STMAINT','date-probe','abi-probe','validation-probe','render-probe','prompt-probe']
   run([cobc,'-C','-free','-fstatic-call','-I','copy',*(['-x'] if main else []),'-o',f'build/host/{p.stem}.c',p.relative_to(ROOT)])
  flags=[zig,'cc','-std=c11','-Wno-deprecated-non-prototype','-target','x86_64-windows-gnu','-I','bridge','-I',sdk/'include']
  run(flags+['-Wall','-Wextra','-Werror','-c','bridge/student_bridge.c','-o','build/host/student_bridge.o'])
@@ -43,8 +44,11 @@ try:
  run(flags+['build/host/abi-probe.c','tests/abi-helper.c',sdk/'lib/libcob.dll.a','-o',out/'abi-probe.exe'])
  run(flags+['tests/boundary-probe.c','build/host/student_bridge.o',*libs,'-o',out/'boundary-probe.exe'])
  run(flags+['build/host/validation-probe.c',*common,'build/host/student_bridge.o',*libs,'-o',out/'validation-probe.exe'])
+ run(flags+['build/host/render-probe.c','build/host/render-lookup-fixture.c',*[s for s in common if not s.endswith('/STMLOOK.c')],'build/host/student_bridge.o',*libs,'-o',out/'render-probe.exe'])
+ run(flags+['-Wall','-Wextra','-Werror','-DSTSTATEIO=STSTATEIO_PRODUCTION','-c','bridge/student_bridge.c','-o','build/host/prompt_bridge.o'])
+ run(flags+['build/host/prompt-probe.c','tests/prompt-state-fixture.c',*common,'build/host/prompt_bridge.o',*libs,'-o',out/'prompt-probe.exe'])
  succeeded=True
  buildEvidence.write_text(json.dumps({'succeeded':True,'buildRecord':prefix.name+'.json','compiledInputs':compiled_inputs(),'binaries':binary_hashes()},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 finally:
  prefix.with_suffix('.raw.log').write_text('\n'.join(log),encoding='utf-8')
- prefix.with_suffix('.json').write_text(json.dumps({'runId':'20261012-build-04','succeeded':succeeded,'compiledInputs':compiled_inputs(),'binaryHashes':binary_hashes(),'inputManifest':'build/input-manifest.json','inputManifestSha256':hashlib.sha256((ROOT/'build/input-manifest.json').read_bytes()).hexdigest(),'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'profile':'Windows x64 host, not Linux deployment','results':results},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+ prefix.with_suffix('.json').write_text(json.dumps({'runId':run_id,'succeeded':succeeded,'compiledInputs':compiled_inputs(),'binaryHashes':binary_hashes(),'inputManifest':'build/input-manifest.json','inputManifestSha256':hashlib.sha256((ROOT/'build/input-manifest.json').read_bytes()).hexdigest(),'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'profile':'Windows x64 host, not Linux deployment','results':results},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')

@@ -2,6 +2,7 @@ using StudentManagement.Core;
 
 var passed=0;
 void Same<T>(T expected,T actual,string id) { if(!Equals(expected,actual)) throw new Exception($"{id}: expected {expected}, got {actual}"); passed++; }
+void Check(bool value,string id)=>Same(true,value,id);
 void Reject(Action action,string id) { try { action(); } catch(ArgumentException) { passed++; return; } catch(InputValidationException) { passed++; return; } throw new Exception(id+": invalid input accepted"); }
 var day=new DateOnly(2026,10,10);
 DateOnly Parse(string era,string year,string month,string date)=>JapaneseDateService.Parse(new(era,year,month,date),day);
@@ -53,6 +54,12 @@ Reject(()=>StudentNormalizer.Text("a\tb",120,120,"Remarks",multiline:true),"N01 
 Same("a\nb",StudentNormalizer.Text("a\r\nb",120,120,"Remarks",multiline:true),"N01 LF");
 // All these saves fail before Open(): verify combined-field rules without a database.
 var service=new SqlServerStudentService("Server=unconnected.invalid;Database=never_opened;Integrated Security=True",()=>new("test-staff",Guid.Empty.ToString(),Role.Staff));
+var four=SearchCriteria.Create("ａｂ-１","㍿",9007199254740993,["01","02"]);
+Check(four.StudentNoPrefix=="AB-1"&&four.NameKey=="株式会社"&&four.ClassId==9007199254740993,"compact criteria normalize raw before storage");
+Check(SearchCriteria.Create(null,null,null,[]).StatusCodes.Length==0,"all-off search statuses mean all");
+foreach(var badSize in new[]{0,19,21})try{SearchCriteria.Create(null,null,null,[],badSize);throw new Exception("bad size accepted");}catch(InputValidationException){Check(true,"invalid page size rejected");}
+foreach(var statuses in new[]{new[]{"01","01"},new[]{"99"},new[]{"01","02","03","04","01"}})try{SearchCriteria.Create(null,null,null,statuses);throw new Exception("bad statuses accepted");}catch(InputValidationException){Check(true,"duplicate undefined excess statuses rejected");}
+try{SearchCriteria.Create(null,"あいうえおかきくけ",null,[]);throw new Exception("overlong search name accepted");}catch(InputValidationException){Check(true,"raw name guard precedes name key");}
 StudentDraft Draft()=>new() { StudentNo="S2026-0001",StudentName="見本 太郎",StudentNameKana="ミホン タロウ",BirthDateInput=new("HEISEI","20","05","15"),GenderCode="0",PostalCode="1000001",PrefectureCode="13",AddressLine1="見本町1",PhoneNumber="0312345678",AdmissionDate="2026-04-01",EnrollmentStatusCode="03",EnrollmentEndDate="2026-10-10" };
 async Task<SaveResult> Invalid(Action<StudentDraft> edit) { var input=Draft();edit(input);var result=await service.SaveAsync(new(input));Same(Outcome.ValidationFailed,result.Outcome,"combined validation before DB");return result; }
 var supplementary=await Invalid(d=> {d.StudentName=string.Concat(Enumerable.Repeat("𠮷",8));d.PostalCode="bad";});

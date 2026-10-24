@@ -6,6 +6,7 @@ Public ConfirmationAccepted As Boolean
 Public ConfirmationReason As Variant
 Public ConfirmationMode As String
 Public ConfirmationStudentNo As String
+Private discardAccepted As Boolean
 
 Public Function InitConfirmation(ByVal frm As Access.Form) As Boolean
     ConfirmationAccepted = False
@@ -55,4 +56,18 @@ Public Function CandidateListCallback(ctl As Control, id As Variant, row As Vari
         Case 3: CandidateListCallback = item("class_display")
         End Select
     End Select
+End Function
+
+Public Function ConfirmDiscard() As Boolean
+    discardAccepted = False
+    DoCmd.OpenForm "frmDiscardConfirm", , , , , acDialog
+    ConfirmDiscard = discardAccepted
+End Function
+Public Function DiscardOk() As Boolean
+    discardAccepted = True
+    DoCmd.Close acForm, "frmDiscardConfirm"
+End Function
+Public Function DiscardCancel() As Boolean
+    discardAccepted = False
+    DoCmd.Close acForm, "frmDiscardConfirm"
 End Function

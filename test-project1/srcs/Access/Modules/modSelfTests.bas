@@ -64,9 +64,7 @@ Public Function RunSelfTests() As String
     Set result = service.SaveStudent(raw, Null, Null, "third", confirm, False, Null)
     Check result("message") = "E-STU-102", "capacity rejects final additional seat"
     Set criteria = Map()
-    criteria.Add "studentNo", Null: criteria.Add "name", Null: criteria.Add "kana", Null: criteria.Add "phone", Null
-    criteria.Add "year", Null: criteria.Add "grade", Null: criteria.Add "class", Null: criteria.Add "prefecture", Null
-    criteria.Add "unassigned", False: criteria.Add "from", Null: criteria.Add "to", Null
+    criteria.Add "studentNo", Null: criteria.Add "name", Null: criteria.Add "class", Null
     criteria.Add "status01", True: criteria.Add "status02", True: criteria.Add "status03", False: criteria.Add "status04", False
     Set normalized = NormalizeCriteria(criteria, day)
     Set result = SearchStudents(normalized, 1, 20, "studentNo", "asc")
@@ -235,7 +233,7 @@ Rejected:
     Check Not accepted And number = 3200, label & " DAO=" & CStr(number)
 End Sub
 Public Function RunFormTests() As String
-    Dim frm As Access.Form, service As New clsStudentService, old As Object, id As Long, savedName As String, item As Object, i As Long
+    Dim frm As Access.Form, service As New clsStudentService, old As Object, id As Long, savedName As String, item As Object, i As Long, receivedRevision As Long
     On Error GoTo Failed
     checks = 0: checkLog = "": Authorize "Master": CheckFixture
     DoCmd.OpenForm "frmStudentSearch"
@@ -246,6 +244,12 @@ Public Function RunFormTests() As String
     Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 0, "initial form does not load students"
     SearchClick "SEARCH"
     Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 2, "native list callback rows"
+    receivedRevision = CLng(frm!txtContextRevision)
+    frm!txtContextRevision = receivedRevision - 1: SearchClick "NEXT"
+    Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 2, "stale search revision preserves current list"
+    ClearSearch
+    Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 2, "stale clear revision cannot erase results"
+    frm!txtContextRevision = receivedRevision
     id = StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetValue)
     frm!lstStudents = id: SelectedStudentDetails
     Check InStr(frm!txtSelectedDetails, "山田太郎") > 0, "selected full text presentation"
@@ -256,14 +260,23 @@ Public Function RunFormTests() As String
     Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 0, "explicit search applies changed conditions"
     ClearSearch
     Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 0 And frm!lblCount.Caption = "未検索", "clear resets results/context"
-    frm!chkUnassignedOnly = True: ClassChanged "UNASSIGNED"
-    Check Not frm!cboSchoolYear.Enabled And Not frm!cboGrade.Enabled And Not frm!cboClass.Enabled, "unassigned selection disables class filters"
-    ClearSearch
-    Check frm!cboSchoolYear.Enabled And frm!cboGrade.Enabled And frm!cboClass.Enabled, "clear re-enables class filters"
+    Check frm!cboClass.Enabled And frm!cboClass = 0, "clear restores all-class filter"
+    Check frm!lstStudents.ColumnCount = 8, "hidden ID and seven visible native columns"
+    Check frm.Width <= 19200 And frm.Section(acDetail).Height <= 9750, "search fits 1280x650 at 96 dpi"
+    Check frm!cmdOpenSelected.OnClick = "=OpenStudent(False)", "explicit selected row action"
+    Check frm!txtName.Height >= 510 And frm!txtName.FontSize >= 9, "search minimum input size and font"
+    DoCmd.OpenForm "frmDiscardConfirm"
+    Check Forms("frmDiscardConfirm").Modal And Forms("frmDiscardConfirm").PopUp, "discard is a separate modal popup"
+    Check Forms("frmDiscardConfirm")!cmdCancel.Default And Forms("frmDiscardConfirm")!cmdCancel.Cancel, "discard default and escape cancel"
+    DiscardCancel
+    frm.SetFocus
     DoCmd.Close acForm, frm.Name
     DoCmd.OpenForm "frmStudentEdit", , , , , , CStr(id) & "|form-test"
     Set frm = Forms("frmStudentEdit")
     Check frm.RecordSource = "", "edit form unbound"
+    Check frm.Width <= 19200 And frm.Section(acDetail).Height <= 9750, "editor fits 1280x650 at 96 dpi"
+    Check frm!txtRemarks.EnterKeyBehavior And frm!txtRemarks.Height > 510, "multiline memo remains editable"
+    Check frm!txtOperationReason.EnterKeyBehavior And frm!cmdSave.Top + frm!cmdSave.Height <= 9750, "reason and save fit compact editor"
     Check frm!txtStudentNo.Locked And frm!cmdDelete.Visible, "existing no immutable and Admin delete action"
     Check InStr(frm!lblCapacity.Caption, "2／2") > 0, "occupancy/capacity reference display"
     Check frm!cboBirthEra = "HEISEI" And CLng(frm!txtBirthYear) = 15 And CLng(frm!txtBirthMonth) = 4 And CLng(frm!txtBirthDay) = 2, "saved birth -> four era controls"
@@ -339,7 +352,8 @@ Private Sub CheckFixture()
     Dim path As String
     path = CurrentDb.Properties("StudentBackendPath")
     If path = "SELF" Then path = CurrentProject.FullName
-    If InStr(path, "20261012-build-04-access-data-") = 0 And InStr(path, "20261012-build-04-access-single-") = 0 Then Err.Raise vbObjectError + 191, , "Disposable build-04 fixture required"
+    If InStr(1, path, CurrentProject.Path & "\", vbTextCompare) <> 1 Or InStr(1, path, "\Access\build\", vbTextCompare) = 0 Then Err.Raise vbObjectError + 191, , "Disposable Access build fixture required"
+    If Not CurrentDb.Properties("StudentTestFixture") Then Err.Raise vbObjectError + 191, , "Generated test-only fixture required"
 End Sub
 Private Sub FixtureRole(ByVal role As String)
     Dim fs As Object, stream As Object, q As DAO.QueryDef, db As DAO.Database
@@ -392,4 +406,67 @@ Private Function LatestMasterOperation() As String
     Dim tx As New clsUnitOfWork, rs As DAO.Recordset
     tx.BeginWork: Set rs = tx.Database.OpenRecordset("SELECT TOP 1 operation_type FROM t_operation_log WHERE target_table='m_code' ORDER BY log_id DESC")
     LatestMasterOperation = rs!operation_type: rs.Close: tx.CloseWork
+End Function
+
+Private Function CriteriaFixture() As Object
+    Dim raw As Object
+    Set raw = Map()
+    raw.Add "studentNo", Null: raw.Add "name", Null: raw.Add "class", Null
+    raw.Add "status01", True: raw.Add "status02", True: raw.Add "status03", False: raw.Add "status04", False
+    Set CriteriaFixture = raw
+End Function
+Private Function CriteriaRejected(ByVal raw As Object, ByVal expected As String) As Boolean
+    Dim d As clsSearchCriteria
+    On Error GoTo Rejected
+    Set d = NormalizeCriteria(raw, BusinessDay(UtcNow()))
+    Exit Function
+Rejected:
+    CriteriaRejected = Err.Description = expected
+End Function
+Public Function RunSearchContractTests() As String
+    Dim raw As Object, d As clsSearchCriteria, result As Object, key As Variant, row As Object
+    Dim ctx As New clsSearchContext, oldRevision As Long, frm As Access.Form
+    On Error GoTo Failed
+    checks = 0: checkLog = "": Authorize "Master": CheckFixture
+    Set raw = CriteriaFixture(): Set d = NormalizeCriteria(raw, BusinessDay(UtcNow()))
+    Check d.StudentNoPrefix = "" And d.NameKey = "" And IsNull(d.ClassId), "four criteria empty optional fields"
+    For Each key In Array("kana", "phone", "year", "grade", "prefecture", "unassigned", "from", "to", "unknown")
+        raw.Add CStr(key), Null
+        Check CriteriaRejected(raw, "E-SRC-001"), "reject even empty retired or unknown key " & CStr(key)
+        raw.Remove key
+    Next
+    raw("status01") = "true": Check CriteriaRejected(raw, "E-SRC-001"), "reject nonboolean native status"
+    raw("status01") = True: raw("studentNo") = "ＴＥＳＴ－"
+    Set d = NormalizeCriteria(raw, BusinessDay(UtcNow())): Check d.StudentNoPrefix = "TEST-", "prefix normalization"
+    Set result = SearchStudents(d, 1, 20, "updatedAt", "desc")
+    Check result("kind") = "Found" And result("rows").Count = 2, "updated timestamp remains permitted internal sort"
+    For Each row In result("rows")
+        For Each key In Array("address_display", "address_line1", "phone_number", "updated_at", "name_key", "admission_date", "class_id", "enrollment_status_code")
+            Check Not row.Exists(key), "display DTO omits " & CStr(key)
+        Next
+        Check row.Count = 9, "display DTO has eight values plus hidden student ID"
+    Next
+    raw("name") = "*": Set d = NormalizeCriteria(raw, BusinessDay(UtcNow()))
+    Set result = SearchStudents(d, 1, 20, "studentNo", "asc")
+    Check result("total") = 0, "name wildcard is compared as literal"
+    Set raw = CriteriaFixture(): Set d = NormalizeCriteria(raw, BusinessDay(UtcNow()))
+    d.ClassId = 2147483647: Set result = SearchStudents(d, 1, 20, "studentNo", "asc")
+    Check result("message") = "E-STU-010", "nonexistent class rejected"
+    ctx.Reset "test-form": oldRevision = ctx.Revision
+    Check ctx.CriteriaFormatVersion = 2 And oldRevision > 0, "fresh version two context"
+    Check ctx.RequestError("test-form", ctx.ContextId, oldRevision) = "", "valid context owner session form revision"
+    Check ctx.RequestError("another-form", ctx.ContextId, oldRevision) = "E-COM-002", "foreign form rejected"
+    Check ctx.RequestError("test-form", "wrong-state", oldRevision) = "E-COM-002", "foreign state identifier rejected"
+    Check ctx.RequestError("test-form", ctx.ContextId, Null) = "E-SRC-002", "missing revision rejected"
+    ctx.Acquire "test-form", ctx.ContextId, oldRevision
+    Check ctx.RequestError("test-form", ctx.ContextId, oldRevision) = "E-SRC-002", "same-revision reentry rejected"
+    ctx.Advance: ctx.ReleaseUpdate
+    Check ctx.RequestError("test-form", ctx.ContextId, oldRevision) = "E-SRC-002", "old revision rejected after update"
+    ctx.CriteriaFormatVersion = 1
+    Check ctx.RequestError("test-form", ctx.ContextId, ctx.Revision) = "W-SRC-002", "old format expires"
+    ctx.Reset "test-form": ctx.LastUsedAt = DateAdd("n", -30, UtcNow())
+    Check ctx.RequestError("test-form", ctx.ContextId, ctx.Revision) = "W-SRC-002", "thirty minute expiry"
+    RunSearchContractTests = CStr(checks) & " assertions passed": Exit Function
+Failed:
+    RunSearchContractTests = "FAILED after " & CStr(checks) & " checks: " & CStr(Err.Number) & " " & Err.Description
 End Function

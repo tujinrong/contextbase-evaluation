@@ -1,18 +1,19 @@
 # Access 仕様と実装の対応
 
-仕様正本はすべて `spec` 内です。配置・認証の４文書は8.1、DB索引は書式修正版8.2、それ以外は8.0。生成時のファイル別 SHA は配布検査 JSON に保存しました。
+実行ID `20261023-access-build-01`。各入力版・SHA-256は凍結入力 `20261023-access-build-01-inputs.json`、出力は `20261023-access-build-01-outputs.json` を参照する。仕様変更なし。
 
-| 仕様 | 実装 | 状態・実検査 |
+| 仕様ID・範囲 | 実装 | 今回の検査 |
 | --- | --- | --- |
-| 学生検索詳細 / 共通12 | modStudentSearch、clsSearchContext、modStudentForms、frmStudentSearch | 実 DAO 検索、最小一覧 DTO、AppliedCriteria、ソート・ページ、30分状態、停止値表示、全文欄。フォーム起動・検索・編集条件と適用条件の分離を検査 |
-| 学生登録詳細 / 共通06〜11 | clsStudentDraft、clsStudentService、clsStudentRepository、frmStudentEdit | 正規化後の19入力、所属・期間・人数・状態、変更なし、版一致更新・論理削除、全候補確認。実 CRUD・古い版・定員・権限を検査 |
-| 共通01〜03 / 方式別共通8.1 | modSecurity、modClock、clsUnitOfWork | Windows 実主体＋内包役割、UTC時点・日本業務日、同一ファイル専用 DAO Workspace・ゲート。Reader/Staff/Admin と不成立、別プロセス競合を検査 |
-| 共通04〜05 / 共通07 | modUnicode、modJapaneseDate、modStudentRules | NFKC・スカラー数・英字・カナ・電話・厳密 ISO・和暦。補助文字往復、昭和/平成/令和境界、フォーム4原入力を検査 |
-| 共通11 / 登録の確認 | clsConfirmation、modConfirmationForms、modCandidates、frmDuplicateConfirm、frmDeleteConfirm | 主体・認証世代・フォーム・対象・版・19入力・全候補集合・10分期限。別フォーム拒否、全候補消失時の再確認、実ダイアログ0/21候補・理由・既定取消を検査 |
-| 共通13〜14 / DB制約C-001〜018 | clsUnitOfWork、clsStudentRepository、Build-Access.ps1、database | 同一ゲート・業務＋履歴一括確定、失敗取消、採番、属性0の参照整合 FK。監査失敗の両方取消、緊急4項目の全16NULL組合せ、親参照拒否を検査 |
-| 共通15 / メッセージ一覧 | modMessages、modFailure | 58メッセージ、項目キー・ラベル・上限、受付番号、DAO番号の診断。E-COM001/002/004、E-STU105、長さパラメーターを検査。SQLや学生原値を診断へ出力しない |
-| 基本クラス / 共通10 / 保守 | modMasterMaintenance、modInitialMasters、modApprovedSeed | クラス/コード CRUD入口、固定意味と保護、在籍人数、同名警告、状態遷移の CREATE/UPDATE/DISABLE/ENABLE 監査。保護拒否・停止中名称変更・初期同値/差分を検査 |
-| DB索引8.1 / 物理6文書8.0 | tools/generate_schema.py、database、Build-Access.ps1 | 業務89列＋ゲート＋評価役割表。5分類70コード。単体成果の７FK、双方NULL列プロパティ、初期０学生/クラス/監査、外部リンク０を検査 |
-| 配置8.1 | StudentManagement.accdb、modDeployment、tests/Test-Deployment.ps1 | １ファイル、４フォーム、VBAと全物理表内包、起動画面。試験モジュールなし、初期状態19項目通過 |
+| SCR-STU-001 SRC-001/002/006/008、EV-SRC-001～006、COM12、OP-COUNT/PAGE | clsSearchCriteria、modStudentSearch、clsSearchContext、modStudentForms、frmStudentSearch | 4業務プロパティ、廃止/未知rawキー拒否、型付きクラス/在籍パラメーター、リテラル照合、7表示列、表示DTOの縮小、状態ID/認証セッション/フォーム/期限/版/Revision、旧検索・クリア拒否。検索42・実フォーム検査内で確認 |
+| SCR-STU-001 SRC-020～026/030、SRC-019/031～033 | StudentListCallback、SelectedStudentDetails、SearchClick | 氏名/カナ合成、和暦、年度/学年、クラス、在籍、操作案内。隠し学生IDで編集/参照。20/50/100・許可4ソート・IDタイブレークを維持 |
+| SCR-STU-002 REG-001～034、EV-REG-001～008 | frmStudentEdit、modStudentForms、clsStudentDraft、clsStudentService、clsStudentRepository | 34論理項目、19業務入力、新規19/通常更新18、連動・定員・権限・版・確認・履歴の境界を維持。業務31・拡張77・フォーム39 |
+| COM-STU-004 UI01～15、編集省スペース | Build-Access.ps1、frmStudentSearch/frmStudentEdit、frmDuplicateConfirm/frmDeleteConfirm/frmDiscardConfirm | 18400×9600twips、9pt、入力510twips、3列編集、複数行備考/理由、別モーダル・既定取消。COM寸法/設定確認。手動ピクセル・キーボード確認は未実施 |
+| 共通01～03 / Access配置・認証 | modSecurity、modClock、clsUnitOfWork | 実Windows主体/内包役割、UTC、日本業務日、単体専用Workspace、ゲート。既存業務/権限検査を今回再実行 |
+| 共通04～05/07/16/17 | modUnicode、modJapaneseDate、modStudentRules | Unicodeスカラー・NFKC・和暦境界・厳密ISOの既存試験を今回再実行 |
+| 共通11/13/14、DB制約 | clsConfirmation、modConfirmationForms、clsUnitOfWork、clsStudentRepository、database | 全候補確認、10分、業務/監査同一Tx、続柄4項目NULL、複合FK21、2プロセス最終1席 |
+| 共通10、保守・初期値 | modMasterMaintenance、modInitialMasters、modApprovedSeed | 固定コード/保護/人数/監査/初期同値と差分検出の拡張試験を今回再実行 |
+| Access単体成果、配備初期状態 | StudentManagement.accdb、Build-Access.ps1、modDeployment、tests/Test-Deployment.ps1 | 同一バイトコピー19検査。5フォーム、初期5分類70値、学生/クラス/監査0、試験モジュールなし、外部リンク0 |
 
-実機試験の成功と未実施の範囲は README と新規試験報告に記載しています。設計で列挙した全共通試験や複数 Office 環境の成功を意味しません。
+REG-025の更新日時/者は既存の合成 `lblUpdated`、REG-026は `frmDeleteConfirm.txtReason`、REG-032～034は `frmDuplicateConfirm.lstCandidates/cmdConfirm/cmdCancel` へ対応する。論理削除理由は確認フォーム内だけに置き、一般入力を保存しない。
+
+生成、ネイティブコンパイル、DAO/フォーム自動検査の通過は実施範囲だけの結果であり、実利用・受入・逆生成・正式採点の完了を意味しない。

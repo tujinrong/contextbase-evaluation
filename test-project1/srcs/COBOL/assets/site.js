@@ -10,8 +10,4 @@ for(const form of document.forms)form.addEventListener("submit",e=>{
 document.querySelector(".cancel-duplicate")?.addEventListener("click",()=>{
  document.querySelector('[name="confirmationToken"]')?.remove();document.querySelector(".duplicates")?.remove();
 });
-const unassigned=document.querySelector('[name="unassignedOnly"]');
-const upper=["schoolYear","gradeCode","classId"];
-function assignControls(){if(!unassigned)return;for(const name of upper){const el=document.querySelector(`[name="${name}"]`);if(el){el.disabled=unassigned.checked;if(unassigned.checked)el.value="";}}}
-unassigned?.addEventListener("change",assignControls);assignControls();
 for(const name of ["schoolYear","gradeCode"])document.querySelector(`form.editor [name="${name}"]`)?.addEventListener("change",()=>{const c=document.querySelector('form.editor [name="classId"]');if(c)c.value="";});

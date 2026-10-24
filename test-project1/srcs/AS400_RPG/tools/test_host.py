@@ -14,7 +14,7 @@ def run(name,command,env=None):
  return dict(command=[str(x) for x in command],exitCode=r.returncode,stdout=r.stdout,stderr=r.stderr)
 zig=next((B/'build/toolchain/zig').rglob('zig.exe'))
 icu=B/'build/toolchain/icu';exe=B/'build/STUNICODE_TEST.exe'
-cmd=[zig,'cc','-std=c11','-Wall','-Wextra','-Werror','-Wno-deprecated-declarations','-target','x86_64-windows-gnu','-I'+str(icu/'include'),B/'c/STUNICODE.c',B/'c/STUINPUT.c',B/'c/STUNICODE_TEST.c',icu/'lib64/icuuc.lib','-o',exe]
+cmd=[zig,'cc','-std=c11','-Wall','-Wextra','-Werror','-Wno-deprecated-declarations','-target','x86_64-windows-gnu','-I'+str(icu/'include'),B/'c/STUNICODE.c',B/'c/STUINPUT.c',B/'c/STUSTATE.c',B/'c/STUNICODE_TEST.c',icu/'lib64/icuuc.lib','-o',exe]
 compile=run('c-compile',cmd)
 environment=os.environ.copy();environment['PATH']=str(icu/'bin64')+os.pathsep+environment['PATH']
 execute=run('c-run',[exe],environment) if compile['exitCode']==0 else dict(exitCode=None,stdout='',stderr='compile failed')
@@ -36,7 +36,7 @@ for name in ['STUCOMMON','STUSVC']:
  exports={x.upper() for x in re.findall(r'dcl-proc\s+(\w+)\s+export\s*;',text,re.I)}
  binder=set(re.findall(r"EXPORT SYMBOL\('([^']+)'\)",(B/'binder'/f'{name}.bnd').read_text('utf8')))
  check('binder:'+name,exports==binder,dict(exports=sorted(exports),binder=sorted(binder)))
-ctext=(B/'c/STUNICODE.c').read_text('utf8')+(B/'c/STUINPUT.c').read_text('utf8')
+ctext=(B/'c/STUNICODE.c').read_text('utf8')+(B/'c/STUINPUT.c').read_text('utf8')+(B/'c/STUSTATE.c').read_text('utf8')
 c_exports=set(re.findall(r'(?:int32_t|void)\s+(St\w+)\s*\(',ctext))
 c_binder=set(re.findall(r"EXPORT SYMBOL\('([^']+)'\)",(B/'binder/STUNICODE.bnd').read_text('utf8')))
 check('binder:STUNICODE',c_exports==c_binder,dict(exports=sorted(c_exports),binder=sorted(c_binder)))
@@ -76,7 +76,7 @@ for path in sorted((B/'spec').rglob('*')):
   spec_inputs.append(dict(file=str(path.relative_to(B)).replace('\\','/'),sha256=digest(path),bytes=path.stat().st_size,version=json.loads(meta.group(1))['version'] if meta else None))
 versions=sorted({x['version'] for x in spec_inputs if x['version']})
 (B/'metadata/spec-inputs.json').write_text(json.dumps(dict(versions=versions,files=spec_inputs),ensure_ascii=False,indent=2)+'\n','utf8')
-record=dict(project='AS400_RPG',recordedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),originPreIsolationManifest='20261012-build-06-inputs.json',currentInput='metadata/spec-inputs.json',inputVersions=versions,host=platform.platform(),toolchain=json.loads((B/'build/toolchain/acquisition.json').read_text('utf8')),compile=compile,execution=execute,cCases=[dict(id=x[1],passed=x[0]=='PASS') for x in cases],cTests=len(cases),cFailures=sum(x[0]=='FAIL' for x in cases),staticChecks=checks,staticFailures=failures,skipped=[dict(id=x,status='NOT_RUN',reason='IBM i environment/toolchain/Db2/5250 unavailable') for x in ['IBM_i_SQLRPGLE_compile','IBM_i_ILE_C_compile','DDS_compile','CL_compile_and_bind','Db2_DDL_seed_CRUD_audit_rollback','5250_UI_and_CCSID_display','two_jobs_conflict_and_commit_unknown','approved_IFS_positive_read']],sourceHashes={str(x.relative_to(B)).replace('\\','/'):digest(x) for x in sources+[B/'c/STUNICODE.c',B/'c/STUINPUT.c',B/'c/STUNICODE_TEST.c']},scope='Static checks do not prove RPG syntax, bind, DB behavior or specification compliance.')
+record=dict(project='AS400_RPG',recordedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),originPreIsolationManifest='20261012-build-06-inputs.json',currentInput='metadata/spec-inputs.json',inputVersions=versions,host=platform.platform(),toolchain=json.loads((B/'build/toolchain/acquisition.json').read_text('utf8')),compile=compile,execution=execute,cCases=[dict(id=x[1],passed=x[0]=='PASS') for x in cases],cTests=len(cases),cFailures=sum(x[0]=='FAIL' for x in cases),staticChecks=checks,staticFailures=failures,skipped=[dict(id=x,status='NOT_RUN',reason='IBM i environment/toolchain/Db2/5250 unavailable') for x in ['IBM_i_SQLRPGLE_compile','IBM_i_ILE_C_compile','DDS_compile','CL_compile_and_bind','Db2_DDL_seed_CRUD_audit_rollback','5250_UI_and_CCSID_display','two_jobs_conflict_and_commit_unknown','approved_IFS_positive_read']],sourceHashes={str(x.relative_to(B)).replace('\\','/'):digest(x) for x in sources+[B/'c/STUNICODE.c',B/'c/STUINPUT.c',B/'c/STUSTATE.c',B/'c/STUNICODE_TEST.c']},scope='Static checks do not prove RPG syntax, bind, DB behavior or specification compliance.')
 record['hostSucceeded']=compile['exitCode']==0 and execute['exitCode']==0 and len(cases)==35 and not record['cFailures']
 record['currentInput']='metadata/spec-inputs.json (profile-local current hashes)'
 record['inputVersions']=versions

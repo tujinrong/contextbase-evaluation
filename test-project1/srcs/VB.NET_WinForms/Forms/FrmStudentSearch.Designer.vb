@@ -6,16 +6,8 @@ Namespace Forms
     Partial Public Class FrmStudentSearch
         Public ReadOnly txtStudentNo As New TextBox With {.MaxLength = 30}
         Public ReadOnly txtName As New TextBox With {.MaxLength = 16}
-        Public ReadOnly txtKana As New TextBox With {.MaxLength = 72}
-        Public ReadOnly cboSchoolYear As New ComboBox
-        Public ReadOnly cboGrade As New ComboBox
         Public ReadOnly cboClass As New ComboBox
-        Public ReadOnly chkUnassignedOnly As New CheckBox With {.Text = "未所属のみ"}
-        Public ReadOnly clbStatuses As New CheckedListBox With {.CheckOnClick = True, .Height = 70}
-        Public ReadOnly cboPrefecture As New ComboBox
-        Public ReadOnly txtPhone As New TextBox With {.MaxLength = 40}
-        Public ReadOnly txtAdmissionFrom As New TextBox With {.MaxLength = 10}
-        Public ReadOnly txtAdmissionTo As New TextBox With {.MaxLength = 10}
+        Public ReadOnly clbStatuses As New CheckedListBox With {.CheckOnClick = True, .Height = 38, .MultiColumn = True, .ColumnWidth = 85}
         Public ReadOnly btnSearch As New Button With {.Text = "検索"}
         Public ReadOnly btnClear As New Button With {.Text = "クリア"}
         Public ReadOnly btnNew As New Button With {.Text = "新規登録"}
@@ -33,19 +25,21 @@ Namespace Forms
         Public ReadOnly lblSearchedAt As New Label With {.AutoSize = True}
         Public ReadOnly dgvStudents As New DataGridView With {.Dock = DockStyle.Fill, .ReadOnly = True, .AllowUserToAddRows = False, .AllowUserToDeleteRows = False, .AutoGenerateColumns = False, .SelectionMode = DataGridViewSelectionMode.FullRowSelect}
         Private Sub InitializeComponent()
-            Text = "学生管理：検索" : Width = 1350 : Height = 900 : MinimumSize = New Size(1000, 700)
-            AutoScaleMode = AutoScaleMode.Dpi : Font = New Font("Yu Gothic UI", 10)
-            Dim panel As New TableLayoutPanel With {.Dock = DockStyle.Top, .ColumnCount = 4, .RowCount = 6, .Height = 285}
-            panel.ColumnStyles.Add(New ColumnStyle(SizeType.Absolute, 175)) : panel.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 50))
-            panel.ColumnStyles.Add(New ColumnStyle(SizeType.Absolute, 175)) : panel.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 50))
-            Dim labels = {"学籍番号（15文字）", "氏名（8文字）", "氏名カナ（入力36文字）", "年度", "学年", "クラス", "未所属のみ", "在籍区分（全解除は全区分）", "都道府県", "電話（入力20文字）", "入学日・開始 yyyy-MM-dd", "入学日・終了 yyyy-MM-dd"}
-            Dim fields As Control() = {txtStudentNo, txtName, txtKana, cboSchoolYear, cboGrade, cboClass, chkUnassignedOnly, clbStatuses, cboPrefecture, txtPhone, txtAdmissionFrom, txtAdmissionTo}
-            For i = 0 To fields.Length - 1
-                Dim row = i \ 2 : Dim col = (i Mod 2) * 2
-                panel.Controls.Add(New Label With {.Text = labels(i), .Dock = DockStyle.Fill, .TextAlign = ContentAlignment.MiddleLeft}, col, row)
-                fields(i).Dock = DockStyle.Fill : fields(i).AccessibleName = labels(i) : panel.Controls.Add(fields(i), col + 1, row)
+            Text = "学生管理：検索" : ClientSize = New Size(1280, 650) : MinimumSize = New Size(850, 500)
+            AutoScaleDimensions = New SizeF(96.0F, 96.0F) : AutoScaleMode = AutoScaleMode.Dpi : Font = New Font("Yu Gothic UI", 9)
+            Dim panel As New TableLayoutPanel With {.Dock = DockStyle.Top, .ColumnCount = 6, .RowCount = 2, .Height = 90, .Padding = New Padding(6)}
+            For i = 0 To 2
+                panel.ColumnStyles.Add(New ColumnStyle(SizeType.Absolute, 90)) : panel.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 33.33F))
             Next
-            For Each combo In {cboSchoolYear, cboGrade, cboClass, cboPrefecture, cboPageSize, cboSortKey, cboSortDirection}
+            Dim labels = {"学籍番号", "氏名", "クラス", "在籍区分（全解除は全区分）"}
+            Dim fields As Control() = {txtStudentNo, txtName, cboClass, clbStatuses}
+            For i = 0 To 2
+                panel.Controls.Add(New Label With {.Text = labels(i), .Dock = DockStyle.Fill, .TextAlign = ContentAlignment.MiddleLeft}, i * 2, 0)
+                fields(i).MinimumSize = New Size(0,34) : fields(i).Dock = DockStyle.Fill : fields(i).AccessibleName = labels(i) : fields(i).TabIndex = i : panel.Controls.Add(fields(i), i * 2 + 1, 0)
+            Next
+            panel.Controls.Add(New Label With {.Text = labels(3), .Dock = DockStyle.Fill}, 0, 1)
+            panel.Controls.Add(clbStatuses, 1, 1) : panel.SetColumnSpan(clbStatuses, 5) : clbStatuses.Dock = DockStyle.Fill : clbStatuses.AccessibleName = "在籍区分" : clbStatuses.TabIndex = 3
+            For Each combo In {cboClass, cboPageSize, cboSortKey, cboSortDirection}
                 combo.DropDownStyle = ComboBoxStyle.DropDownList
             Next
             clbStatuses.Items.AddRange({New Choice("01", "在学"), New Choice("02", "休学"), New Choice("03", "卒業"), New Choice("04", "退学")})
@@ -59,12 +53,15 @@ Namespace Forms
             result.Controls.AddRange({lblCount, cboPageSize, cboSortKey, cboSortDirection, btnSort})
             Dim pager As New FlowLayoutPanel With {.Dock = DockStyle.Bottom, .Height = 45}
             pager.Controls.AddRange({btnFirst, btnPrev, btnNext, btnLast, lblSearchedAt})
-            Dim properties = {"StudentNo", "StudentName", "StudentNameKana", "BirthDateWareki", "YearGrade", "ClassDisplay", "EnrollmentStatusName", "Address", "PhoneNumber", "UpdatedAt"}
-            Dim captions = {"学籍番号", "氏名", "氏名カナ", "生年月日（和暦）", "年度／学年", "クラス", "在籍区分", "住所", "本人電話", "更新日時"}
+            dgvStudents.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+            dgvStudents.DefaultCellStyle.WrapMode = DataGridViewTriState.True : dgvStudents.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells
+            Dim properties = {"StudentNo", "NameDisplay", "BirthDateWareki", "YearGrade", "ClassDisplay", "EnrollmentStatusName"}
+            Dim captions = {"学籍番号", "氏名／カナ", "生年月日（和暦）", "年度／学年", "クラス", "在籍区分"}
+            Dim widths = {15, 21, 16, 13, 18, 9}
             For i = 0 To properties.Length - 1
-                dgvStudents.Columns.Add(New DataGridViewTextBoxColumn With {.DataPropertyName = properties(i), .HeaderText = captions(i), .Width = If(i = 7, 220, 125), .SortMode = DataGridViewColumnSortMode.NotSortable})
+                dgvStudents.Columns.Add(New DataGridViewTextBoxColumn With {.DataPropertyName = properties(i), .HeaderText = captions(i), .FillWeight = widths(i), .MinimumWidth = 70, .SortMode = DataGridViewColumnSortMode.NotSortable})
             Next
-            dgvStudents.Columns.Add(New DataGridViewButtonColumn With {.Name = "colAction", .HeaderText = "編集／参照", .Text = "開く", .UseColumnTextForButtonValue = True})
+            dgvStudents.Columns.Add(New DataGridViewButtonColumn With {.Name = "colAction", .HeaderText = "操作", .Text = "開く", .FillWeight = 8, .UseColumnTextForButtonValue = True})
             Controls.Add(dgvStudents) : Controls.Add(pager) : Controls.Add(result) : Controls.Add(actions) : Controls.Add(panel) : Controls.Add(lblMessage)
         End Sub
     End Class

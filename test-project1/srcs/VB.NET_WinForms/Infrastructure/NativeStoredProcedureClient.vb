@@ -183,7 +183,7 @@ Namespace Global.StudentManagement.WinForms.Domain
                 If Await reader.NextResultAsync(ct) Then
                     While Await reader.ReadAsync(ct)
                         ' Confirmation exposes only the four permitted display categories.
-                        candidates.Add(New Global.StudentManagement.WinForms.Domain.StudentRow(0, Text(reader, "student_no"), Text(reader, "student_name"), "", DateOnly.FromDateTime(reader.GetDateTime(reader.GetOrdinal("birth_date"))), Nothing, Nothing, Nothing, Text(reader, "class_name"), Nothing, "", Nothing, DateOnly.MinValue, DateTimeOffset.MinValue, 0))
+                        candidates.Add(New Global.StudentManagement.WinForms.Domain.StudentRow(0, Text(reader, "student_no"), Text(reader, "student_name"), "", DateOnly.FromDateTime(reader.GetDateTime(reader.GetOrdinal("birth_date"))), Nothing, Nothing, Nothing, Text(reader, "class_name"), Nothing))
                     End While
                 End If
 

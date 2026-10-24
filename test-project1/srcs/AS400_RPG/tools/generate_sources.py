@@ -7,7 +7,7 @@ import json
 BASE = Path(__file__).resolve().parents[1]
 FIELDS = [
     ('studentNo','student_no','varchar(15)',15,15,5,True,'ESTUNO',30),
-    ('studentName','student_name','varucs2(16) ccsid(1200)',8,8,0,True,'ENAME',40),
+    ('studentName','student_name','varucs2(16) ccsid(1200)',8,8,0,True,'ENAME',16),
     ('studentNameKana','student_name_kana','varucs2(36) ccsid(1200)',36,18,3,True,'EKANA',72),
     ('birthDate','birth_date','date',0,0,0,True,'',0),
     ('genderCode','gender_code','varchar(1)',1,1,6,True,'EGENDER',1),
@@ -21,168 +21,214 @@ FIELDS = [
     ('enrollmentStatusCode','enrollment_status_code','varchar(2)',2,2,6,True,'ESTATUS',2),
     ('enrollmentEndDate','enrollment_end_date','date',10,10,10,False,'EENDDATE',10),
     ('classId','class_id','int(20)',19,19,12,False,'ECLASS',19),
-    ('emergencyContactName','emergency_contact_name','varucs2(16) ccsid(1200)',8,8,0,False,'EEMGNAME',40),
+    ('emergencyContactName','emergency_contact_name','varucs2(16) ccsid(1200)',8,8,0,False,'EEMGNAME',16),
     ('relationshipCode','relationship_code','varchar(2)',2,2,6,False,'EREL',2),
     ('emergencyPhoneNumber','emergency_phone_number','varchar(16)',20,16,8,False,'EEMGPHONE',40),
-    ('remarks','remarks','varucs2(240) ccsid(1200)',120,120,1,False,'EREMARKS',120),
+    ('remarks','remarks','varucs2(240) ccsid(1200)',120,120,1,False,'EREMARKS',90),
 ]
 def write(path, content):
     target=BASE/path
     target.parent.mkdir(parents=True,exist_ok=True)
     target.write_text(content.rstrip()+'\n',encoding='utf-8')
 
-types='''// STUTYPES V1: SQL bigints are signed 64bit; UTF16 regions are 2N.
+types=r'''// STUTYPES V1: SQL bigints are signed 64bit; UTF16 regions are 2N.
 /if not defined(STUTYPES_DEFINED)
 /define STUTYPES_DEFINED
-dcl-c RK_SAVED 1;
-dcl-c RK_NOCHANGE 2;
-dcl-c RK_VALIDATION 3;
-dcl-c RK_FORBIDDEN 4;
-dcl-c RK_NOTFOUND 5;
-dcl-c RK_CONFLICT 6;
-dcl-c RK_CONFIRM 7;
-dcl-c RK_SYSTEM 8;
-dcl-c RK_UNKNOWN 9;
-dcl-c RK_LIMIT 10;
-dcl-ds FieldError_t qualified template;
-  field varchar(32);
-  messageId char(16);
-end-ds;
-dcl-ds StudentRaw_t qualified template;
-  values varucs2(320) ccsid(1200) dim(19);
-  birthEra varchar(10);
-  birthYear varucs2(8) ccsid(1200);
-  birthMonth varucs2(4) ccsid(1200);
-  birthDay varucs2(4) ccsid(1200);
-end-ds;
-dcl-ds StudentHints_t qualified template;
-  schoolYear varchar(4);
-  gradeCode varchar(2);
-  reason varucs2(120) ccsid(1200);
-  instanceId char(36);
-end-ds;
-dcl-ds StudentWork_t qualified template;
-'''
-for prop,col,typ,rawmax,normmax,mode,required,ctl,width in FIELDS:
-    types+=f'  {prop} {typ};\n'
-    if not required: types+=f'  {prop}Ind int(5) inz(-1);\n'
-types+='''  relationshipCategory varchar(24);
-  relationshipCategoryInd int(5) inz(-1);
-  nameKey varucs2(320) ccsid(1200);
-  kanaKey varucs2(36) ccsid(1200);
-end-ds;
-dcl-ds StudentRecord_t qualified template;
-  studentId int(20);
-  rowVersion int(20);
-  work likeds(StudentWork_t);
-  updatedAt timestamp;
-  updatedBy varucs2(128) ccsid(1200);
-  schoolYear int(10);
-  schoolYearInd int(5);
-  gradeCode varchar(2);
-  gradeInd int(5);
-  gradeName varucs2(24) ccsid(1200);
-  classCode varchar(9);
-  className varucs2(36) ccsid(1200);
-  enrollmentName varucs2(24) ccsid(1200);
-  prefectureName varucs2(24) ccsid(1200);
-end-ds;
-dcl-ds Result_t qualified template;
-  kind int(10);
-  messageId char(16);
-  errorCount int(10);
-  fieldErrors likeds(FieldError_t) dim(30);
-  studentId int(20);
-  rowVersion int(20);
-  requestId char(36);
-  token char(36);
-  candidateCount int(10);
-  candidates likeds(StudentRecord_t) dim(20);
-end-ds;
-dcl-ds SearchRaw_t qualified template;
-  values varucs2(320) ccsid(1200) dim(12);
-  selected ind dim(4);
-end-ds;
-dcl-ds SearchCriteria_t qualified template;
-  studentNo varchar(32);
-  nameKey varucs2(642) ccsid(1200);
-  kanaKey varucs2(74) ccsid(1200);
-  schoolYear int(10);
-  gradeCode varchar(2);
-  classId int(20);
-  unassigned int(5);
-  anyStatus int(5);
-  status int(5) dim(4);
-  prefectureCode varchar(2);
-  phone varchar(16);
-  fromFlag int(5);
-  fromDate date;
-  toFlag int(5);
-  toDate date;
-end-ds;
-dcl-ds SearchContext_t qualified template;
-  owner varchar(128);
-  instanceId char(36);
-  applied likeds(SearchCriteria_t);
-  hasApplied ind;
-  lastUsed timestamp;
-  page int(10) inz(1);
-  pageSize int(10) inz(20);
-  sortKey varchar(16) inz('studentNo');
-  direction varchar(4) inz('asc');
-end-ds;
-dcl-ds SearchPage_t qualified template;
-  result likeds(Result_t);
-  total int(10);
-  rowCount int(10);
-  rangeFrom int(10);
-  rangeTo int(10);
-  searchedAt timestamp;
-  rows likeds(StudentRecord_t) dim(100);
-end-ds;
-dcl-ds Confirmation_t qualified template;
-  token char(36);
-  owner varchar(128);
-  job varchar(28);
-  instanceId char(36);
-  studentId int(20);
-  expectedVersion int(20);
-  businessHash char(64);
-  candidatesHash char(64);
-  expiresAt timestamp;
-  consumed ind;
-end-ds;
-dcl-ds ClassWork_t qualified template;
-  classId int(20);
-  expectedVersion int(20);
-  schoolYear int(10);
-  gradeCode varchar(2);
-  classCode varchar(9);
-  className varucs2(36) ccsid(1200);
-  validFrom date;
-  validTo date;
-  capacity int(10);
-  capacityInd int(5);
-  displayOrder int(10);
-  isActive int(5);
-  remarks varucs2(240) ccsid(1200);
-  remarksInd int(5);
-  reason varucs2(120) ccsid(1200);
-end-ds;
-dcl-ds CodeWork_t qualified template;
-  categoryId varchar(24);
-  codeValue varchar(10);
-  expectedVersion int(20);
-  codeName varucs2(24) ccsid(1200);
-  displayOrder int(10);
-  isActive int(5);
-  validFrom date;
-  validTo date;
-  validToInd int(5);
-  remarks varucs2(240) ccsid(1200);
-  remarksInd int(5);
-  reason varucs2(120) ccsid(1200);
-end-ds;
+ dcl-c RK_SAVED 1 ;
+ dcl-c RK_NOCHANGE 2 ;
+ dcl-c RK_VALIDATION 3 ;
+ dcl-c RK_FORBIDDEN 4 ;
+ dcl-c RK_NOTFOUND 5 ;
+ dcl-c RK_CONFLICT 6 ;
+ dcl-c RK_CONFIRM 7 ;
+ dcl-c RK_SYSTEM 8 ;
+ dcl-c RK_UNKNOWN 9 ;
+ dcl-c RK_LIMIT 10 ;
+ dcl-ds FieldError_t qualified template ;
+ field varchar( 32 ) ;
+ messageId char( 16 ) ;
+ end-ds ;
+ dcl-ds StudentRaw_t qualified template ;
+ values varucs2( 320 ) ccsid( 1200 ) dim( 19 ) ;
+ birthEra varchar( 10 ) ;
+ birthYear varucs2( 8 ) ccsid( 1200 ) ;
+ birthMonth varucs2( 4 ) ccsid( 1200 ) ;
+ birthDay varucs2( 4 ) ccsid( 1200 ) ;
+ end-ds ;
+ dcl-ds StudentHints_t qualified template ;
+ schoolYear varchar( 4 ) ;
+ gradeCode varchar( 2 ) ;
+ reason varucs2( 120 ) ccsid( 1200 ) ;
+ instanceId char( 36 ) ;
+ end-ds ;
+ dcl-ds StudentWork_t qualified template ;
+ studentNo varchar( 15 ) ;
+ studentName varucs2( 16 ) ccsid( 1200 ) ;
+ studentNameKana varucs2( 36 ) ccsid( 1200 ) ;
+ birthDate date ;
+ genderCode varchar( 1 ) ;
+ postalCode varchar( 7 ) ;
+ prefectureCode varchar( 2 ) ;
+ addressLine1 varucs2( 90 ) ccsid( 1200 ) ;
+ addressLine2 varucs2( 90 ) ccsid( 1200 ) ;
+ addressLine2Ind int( 5 ) inz( -1 ) ;
+ phoneNumber varchar( 16 ) ;
+ phoneNumberInd int( 5 ) inz( -1 ) ;
+ emailAddress varchar( 60 ) ;
+ emailAddressInd int( 5 ) inz( -1 ) ;
+ admissionDate date ;
+ enrollmentStatusCode varchar( 2 ) ;
+ enrollmentEndDate date ;
+ enrollmentEndDateInd int( 5 ) inz( -1 ) ;
+ classId int( 20 ) ;
+ classIdInd int( 5 ) inz( -1 ) ;
+ emergencyContactName varucs2( 16 ) ccsid( 1200 ) ;
+ emergencyContactNameInd int( 5 ) inz( -1 ) ;
+ relationshipCode varchar( 2 ) ;
+ relationshipCodeInd int( 5 ) inz( -1 ) ;
+ emergencyPhoneNumber varchar( 16 ) ;
+ emergencyPhoneNumberInd int( 5 ) inz( -1 ) ;
+ remarks varucs2( 240 ) ccsid( 1200 ) ;
+ remarksInd int( 5 ) inz( -1 ) ;
+ relationshipCategory varchar( 24 ) ;
+ relationshipCategoryInd int( 5 ) inz( -1 ) ;
+ nameKey varucs2( 320 ) ccsid( 1200 ) ;
+ kanaKey varucs2( 36 ) ccsid( 1200 ) ;
+ end-ds ;
+ dcl-ds StudentRecord_t qualified template ;
+ studentId int( 20 ) ;
+ rowVersion int( 20 ) ;
+ work likeds( StudentWork_t ) ;
+ updatedAt timestamp ;
+ updatedBy varucs2( 128 ) ccsid( 1200 ) ;
+ schoolYear int( 10 ) ;
+ schoolYearInd int( 5 ) ;
+ gradeCode varchar( 2 ) ;
+ gradeInd int( 5 ) ;
+ gradeName varucs2( 24 ) ccsid( 1200 ) ;
+ classCode varchar( 9 ) ;
+ className varucs2( 36 ) ccsid( 1200 ) ;
+ enrollmentName varucs2( 24 ) ccsid( 1200 ) ;
+ prefectureName varucs2( 24 ) ccsid( 1200 ) ;
+ end-ds ;
+ dcl-ds DuplicateCandidate_t qualified template ;
+ studentNo varchar( 15 ) ;
+ studentName varucs2( 16 ) ccsid( 1200 ) ;
+ birthDate date ;
+ classCode varchar( 9 ) ;
+ className varucs2( 36 ) ccsid( 1200 ) ;
+ end-ds ;
+ dcl-ds Result_t qualified template ;
+ kind int( 10 ) ;
+ messageId char( 16 ) ;
+ errorCount int( 10 ) ;
+ fieldErrors likeds( FieldError_t ) dim( 30 ) ;
+ studentId int( 20 ) ;
+ rowVersion int( 20 ) ;
+ requestId char( 36 ) ;
+ token char( 36 ) ;
+ candidateCount int( 10 ) ;
+ candidates likeds( DuplicateCandidate_t ) dim( 20 ) ;
+ end-ds ;
+// SRC-001/002/006/008: raw text is separate from normalized criteria.
+ dcl-ds SearchRaw_t qualified template ;
+ criteriaFormatVersion int( 10 ) ;
+ keyNames varchar( 128 ) ;
+ values varucs2( 320 ) ccsid( 1200 ) dim( 3 ) ;
+ selected ind dim( 4 ) ;
+ end-ds ;
+ dcl-ds SearchCriteria_t qualified template ;
+ studentNo varchar( 32 ) ;
+ nameKey varucs2( 642 ) ccsid( 1200 ) ;
+ classId int( 20 ) ;
+ anyStatus int( 5 ) ;
+ status int( 5 ) dim( 4 ) ;
+ end-ds ;
+ dcl-ds StudentListWork_t qualified template ;
+ studentNo varchar( 15 ) ;
+ studentName varucs2( 16 ) ccsid( 1200 ) ;
+ studentNameKana varucs2( 36 ) ccsid( 1200 ) ;
+ birthDate date ;
+ classId int( 20 ) ;
+ classIdInd int( 5 ) ;
+ end-ds ;
+ dcl-ds StudentListRow_t qualified template ;
+ studentId int( 20 ) ;
+ work likeds( StudentListWork_t ) ;
+ schoolYear int( 10 ) ;
+ schoolYearInd int( 5 ) ;
+ gradeName varucs2( 24 ) ccsid( 1200 ) ;
+ classCode varchar( 9 ) ;
+ className varucs2( 36 ) ccsid( 1200 ) ;
+ enrollmentName varucs2( 24 ) ccsid( 1200 ) ;
+ end-ds ;
+ dcl-ds SearchContext_t qualified template ;
+ criteriaFormatVersion int( 10 ) ;
+ owner varchar( 128 ) ;
+ session varchar( 28 ) ;
+ revision int( 20 ) ;
+ expectedRevision int( 20 ) ;
+ instanceId char( 36 ) ;
+ applied likeds( SearchCriteria_t ) ;
+ hasApplied ind ;
+ lastUsed timestamp ;
+ page int( 10 ) inz( 1 ) ;
+ pageSize int( 10 ) inz( 20 ) ;
+ sortKey varchar( 16 ) inz( 'studentNo' ) ;
+ direction varchar( 4 ) inz( 'asc' ) ;
+ end-ds ;
+ dcl-ds SearchPage_t qualified template ;
+ result likeds( Result_t ) ;
+ total int( 10 ) ;
+ rowCount int( 10 ) ;
+ rangeFrom int( 10 ) ;
+ rangeTo int( 10 ) ;
+ searchedAt timestamp ;
+ rows likeds( StudentListRow_t ) dim( 100 ) ;
+ end-ds ;
+ dcl-ds Confirmation_t qualified template ;
+ token char( 36 ) ;
+ owner varchar( 128 ) ;
+ job varchar( 28 ) ;
+ instanceId char( 36 ) ;
+ studentId int( 20 ) ;
+ expectedVersion int( 20 ) ;
+ businessHash char( 64 ) ;
+ candidatesHash char( 64 ) ;
+ expiresAt timestamp ;
+ consumed ind ;
+ end-ds ;
+ dcl-ds ClassWork_t qualified template ;
+ classId int( 20 ) ;
+ expectedVersion int( 20 ) ;
+ schoolYear int( 10 ) ;
+ gradeCode varchar( 2 ) ;
+ classCode varchar( 9 ) ;
+ className varucs2( 36 ) ccsid( 1200 ) ;
+ validFrom date ;
+ validTo date ;
+ capacity int( 10 ) ;
+ capacityInd int( 5 ) ;
+ displayOrder int( 10 ) ;
+ isActive int( 5 ) ;
+ remarks varucs2( 240 ) ccsid( 1200 ) ;
+ remarksInd int( 5 ) ;
+ reason varucs2( 120 ) ccsid( 1200 ) ;
+ end-ds ;
+ dcl-ds CodeWork_t qualified template ;
+ categoryId varchar( 24 ) ;
+ codeValue varchar( 10 ) ;
+ expectedVersion int( 20 ) ;
+ codeName varucs2( 24 ) ccsid( 1200 ) ;
+ displayOrder int( 10 ) ;
+ isActive int( 5 ) ;
+ validFrom date ;
+ validTo date ;
+ validToInd int( 5 ) ;
+ remarks varucs2( 240 ) ccsid( 1200 ) ;
+ remarksInd int( 5 ) ;
+ reason varucs2( 120 ) ccsid( 1200 ) ;
+ end-ds ;
 /endif
 '''
 write('copy/STUTYPES.rpgleinc',types)
@@ -208,7 +254,11 @@ PROCS={
  'StBusinessHash':[('work','likeds(StudentWork_t) const')],
  'StMessage':[('code','char(16) const')],
  'StLoadStudent':[('studentId','int(20) const'),('record','likeds(StudentRecord_t)'),('result','likeds(Result_t)')],
- 'StSearchStudents':[('raw','likeds(SearchRaw_t) const'),('context','likeds(SearchContext_t)'),('newSearch','ind const'),('page','likeds(SearchPage_t)')],
+ 'StCancelConfirmation':[('instance','char(36) const'),('result','likeds(Result_t)')],
+ 'StCreateSearchContext':[('raw','likeds(SearchRaw_t)'),('context','likeds(SearchContext_t)'),('page','likeds(SearchPage_t)')],
+ 'StClearSearchContext':[('raw','likeds(SearchRaw_t)'),('context','likeds(SearchContext_t)'),('page','likeds(SearchPage_t)')],
+ 'StCloseSearchContext':[('context','likeds(SearchContext_t)'),('result','likeds(Result_t)')],
+ 'StSearchStudents':[('raw','likeds(SearchRaw_t)'),('context','likeds(SearchContext_t)'),('newSearch','ind const'),('page','likeds(SearchPage_t)')],
  'StSaveStudent':[('input','likeds(StudentWork_t) const'),('hints','likeds(StudentHints_t) const'),('studentId','int(20) const'),('expectedVersion','int(20) const'),('confirmation','char(36) const'),('result','likeds(Result_t)')],
  'StDeleteStudent':[('studentId','int(20) const'),('expectedVersion','int(20) const'),('reason','varucs2(120) ccsid(1200) const'),('result','likeds(Result_t)')],
  'StLookupChoice':[('kind','varchar(24) const'),('page','int(10) const'),('schoolYear','int(10) const'),('grade','varchar(2) const'),('values','varchar(24) dim(20)'),('labels','varucs2(320) ccsid(1200) dim(20)'),('count','int(10)'),('result','likeds(Result_t)')],
@@ -219,6 +269,17 @@ PROCS={
 returns={'StNormalizeText':'varucs2(320) ccsid(1200)','StLong':'int(20)','StEscapeLike':'varucs2(642) ccsid(1200)','StHash':'char(64)','StBusinessHash':'char(64)','StMessage':'varucs2(320) ccsid(1200)'}
 for name,args in PROCS.items():
     protos+=f'dcl-pr {name} {returns.get(name,"")};\n'+''.join(f'  {a} {t};\n' for a,t in args)+'end-pr;\n'
+protos+='''dcl-pr StSearchStateCheck int(10) extproc('StSearchStateCheck');
+ identity int(10) value; expected int(20) value; actual int(20) value;
+ storedFormat int(10) value; requestFormat int(10) value; expired int(10) value;
+end-pr;
+dcl-pr StSearchKeysValid int(10) extproc('StSearchKeysValid');
+ keys pointer value; length int(10) value;
+end-pr;
+dcl-pr StSearchBlock int(10) extproc('StSearchBlock');
+ block int(10) value; count int(10) value;
+end-pr;
+'''
 protos+='''dcl-pr StUnicodeNormalize int(10) extproc('StUnicodeNormalize');
   input pointer value; units int(10) value; rawMax int(10) value;
   savedMax int(10) value; mode int(10) value; required int(10) value;

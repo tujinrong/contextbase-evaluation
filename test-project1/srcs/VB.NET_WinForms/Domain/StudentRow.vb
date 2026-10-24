@@ -27,13 +27,8 @@ Namespace Global.StudentManagement.WinForms.Domain
         Public ReadOnly Property ClassCode As String
         Public ReadOnly Property ClassName As String
         Public ReadOnly Property EnrollmentStatusName As String
-        Public ReadOnly Property Address As String
-        Public ReadOnly Property PhoneNumber As String
-        Public ReadOnly Property AdmissionDate As DateOnly
-        Public ReadOnly Property UpdatedAt As DateTimeOffset
-        Public ReadOnly Property RowVersion As Long
 
-        Public Sub New(StudentId As Long, StudentNo As String, StudentName As String, StudentNameKana As String, BirthDate As DateOnly, SchoolYear As Integer?, GradeName As String, ClassCode As String, ClassName As String, EnrollmentStatusName As String, Address As String, PhoneNumber As String, AdmissionDate As DateOnly, UpdatedAt As DateTimeOffset, RowVersion As Long)
+        Public Sub New(StudentId As Long, StudentNo As String, StudentName As String, StudentNameKana As String, BirthDate As DateOnly, SchoolYear As Integer?, GradeName As String, ClassCode As String, ClassName As String, EnrollmentStatusName As String)
             Me.StudentId = StudentId
             Me.StudentNo = StudentNo
             Me.StudentName = StudentName
@@ -44,11 +39,6 @@ Namespace Global.StudentManagement.WinForms.Domain
             Me.ClassCode = ClassCode
             Me.ClassName = ClassName
             Me.EnrollmentStatusName = EnrollmentStatusName
-            Me.Address = Address
-            Me.PhoneNumber = PhoneNumber
-            Me.AdmissionDate = AdmissionDate
-            Me.UpdatedAt = UpdatedAt
-            Me.RowVersion = RowVersion
         End Sub
 
         Public ReadOnly Property BirthDateWareki As String

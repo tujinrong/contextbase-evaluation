@@ -10,14 +10,14 @@ public static class WebPresentation
         if(usage is not ("search" or "register")) throw new WebFault(400,"候補用途が不正です。");
         var today=BusinessDate; bool search=usage=="search"; var draft=existing?.Draft;
         var codes=set.Codes.Select(c=>new { categoryId=c.CategoryId,value=c.CodeValue,name=c.CodeName,selectable=search||(c.IsActive&&c.ValidFrom<=today&&(c.ValidTo is null||today<=c.ValidTo)),note=c.IsActive?"":"停止" });
-        var classes=set.Classes.Where(c=>(year is null||c.SchoolYear==year)&&(string.IsNullOrEmpty(grade)||c.GradeCode==grade)).Select(c=> {
+        var classes=set.Classes.Where(c=>search||(year is null||c.SchoolYear==year)&&(string.IsNullOrEmpty(grade)||c.GradeCode==grade)).Select(c=> {
             bool terminal=status is "03" or "04"; bool overlap=DateOnly.TryParse(admission,out var a)&&DateOnly.TryParse(end,out var e)&&c.ValidFrom<=e&&a<=c.ValidTo;
             bool active=c.IsActive&&c.ValidFrom<=today&&today<=c.ValidTo; bool same=draft?.ClassId==c.ClassId;
             return new { classId=c.ClassId.ToString(System.Globalization.CultureInfo.InvariantCulture),c.SchoolYear,c.GradeCode,gradeName=set.Codes.FirstOrDefault(x=>x.CategoryId=="GRADE"&&x.CodeValue==c.GradeCode)?.CodeName??"不整合",c.ClassCode,c.ClassName,selectable=search||same||(terminal?overlap:active),note=!c.IsActive?"停止":today<c.ValidFrom||today>c.ValidTo?"期間外":"",occupancy=(int?)c.Occupied,c.Capacity };
         });
         return new { codes,classes,years=set.Classes.Select(c=>c.SchoolYear).Distinct().OrderDescending() };
     }
-    public static object Row(StudentRow r)=>new { studentId=r.StudentId.ToString(System.Globalization.CultureInfo.InvariantCulture),r.StudentNo,r.StudentName,r.StudentNameKana,r.BirthDateWareki,r.SchoolYear,r.GradeName,r.ClassCode,r.ClassName,enrollmentName=r.EnrollmentStatusName,addressDisplay=r.Address,r.PhoneNumber,updatedAt=Time(r.UpdatedAt) };
+    public static object Row(StudentListItem r)=>new { studentId=r.StudentId.ToString(System.Globalization.CultureInfo.InvariantCulture),r.StudentNo,r.StudentName,r.StudentNameKana,r.BirthDateWareki,r.SchoolYear,r.GradeName,r.ClassCode,r.ClassName,enrollmentName=r.EnrollmentStatusName };
     public static Dictionary<string,string[]> Errors(IEnumerable<FieldError> errors)=>errors.GroupBy(e=>e.Field).ToDictionary(g=>g.Key,g=>g.Select(e=>e.Message).ToArray());
     public static object Error(string outcome,string message,string id="E-COM-004",IEnumerable<FieldError>? errors=null,string? requestId=null,bool retry=false)=>new { outcome,messageId=id,message,fieldErrors=Errors(errors??[]),correlationId=requestId??Guid.NewGuid().ToString(),retryBySearch=retry };
     public static int Status(Outcome outcome)=>outcome switch { Outcome.Saved=>200,Outcome.NoChange=>200,Outcome.ValidationFailed=>422,Outcome.Forbidden=>403,Outcome.NotFound=>404,Outcome.Conflict or Outcome.ConfirmationRequired=>409,_=>503 };

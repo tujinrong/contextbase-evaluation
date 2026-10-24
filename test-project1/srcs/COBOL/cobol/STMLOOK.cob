@@ -42,9 +42,9 @@ procedure division.
       ELSE
         IF UI-CATEGORY = "CLASS"
           MOVE LOOKUP-VALUE(1) TO TMP-VALUE
-          IF N-NULL(27) = 0 AND LOOKUP-DATA(2) NOT = N-DATA(27)
+          IF VIEW-MODE = "Edit" AND N-NULL(27) = 0 AND LOOKUP-DATA(2) NOT = N-DATA(27)
             MOVE 0 TO SHOW-OPTION END-IF
-          IF N-NULL(26) = 0 AND LOOKUP-DATA(3) NOT = N-DATA(26)
+          IF VIEW-MODE = "Edit" AND N-NULL(26) = 0 AND LOOKUP-DATA(3) NOT = N-DATA(26)
             MOVE 0 TO SHOW-OPTION END-IF
           IF VIEW-MODE = "Edit"
             IF N-DATA(28)(1:2) = "03" OR "04"

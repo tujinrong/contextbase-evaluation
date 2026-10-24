@@ -37,7 +37,7 @@ internal static class Program
         Check(gateway.LookupAsync(default).Result.Classes.Sum(c => c.Occupancy) == 2, "FIX-WPF-002 editor lookup fixture occupancy");
         using var search = new StudentSearchViewModel(gateway, new NavigationService(gateway));
         search.InitializeAsync().GetAwaiter().GetResult();
-        Check(search.Grades[0].SearchValue is null && search.Prefectures[0].SearchValue is null && search.Classes[0].SearchId is null && search.Draft.GradeCode is null && search.Draft.PrefectureCode is null && search.Draft.ClassId is null, "FIX-WPF-015 search all options match NULL criteria");
+        Check(search.Classes[0].SearchId is null && search.Draft.ClassId is null, "FIX-WPF-015 all-class matches NULL criteria");
         search.SearchCommand.Execute(null);
         Check(search.Items.Count == 2 && search.CountText.StartsWith("2件"), "FIX-WPF-003 production search VM default status filter");
         search.Draft.StudentNo = "TEST-WPF-002"; search.SearchCommand.Execute(null);
@@ -45,6 +45,32 @@ internal static class Program
         search.Draft.StudentNo = "TEST-NONE"; search.SearchCommand.Execute(null);
         Check(search.Items.Count == 0 && search.CountText == "0件 0–0", "FIX-WPF-005 production zero-results state");
         search.Clear(); Check(!search.HasSearched && search.Items.Count == 0, "FIX-WPF-006 production clear state");
+        search.SearchCommand.Execute(null);
+        var context=search.CaptureContext(); var revision=search.ContextRevision;
+        Check(search.RestoreContext(context,revision),"COMPACT-WPF-001 current context restores");
+        foreach(var field in new[]{"Owner","Session","StateId","WindowId"}) {
+            var bad=System.Text.Json.Nodes.JsonNode.Parse(context)!.AsObject(); bad[field]="wrong"; var rejected=false;
+            try { search.RestoreContext(bad.ToJsonString(),revision); } catch(InvalidOperationException ex) { rejected=ex.Message.Contains("E-COM-003"); }
+            Check(rejected,"COMPACT-WPF-002 ownership boundary "+field);
+        }
+        var stale=false; try { search.RestoreContext(context,revision-1); } catch(InvalidOperationException) { stale=true; }
+        Check(stale,"COMPACT-WPF-003 stale revision rejected");
+        foreach(var field in new[]{"Kana","SchoolYear","GradeCode","UnassignedOnly","PrefectureCode","PhoneNumber","AdmissionFrom","AdmissionTo","Unexpected"}) {
+            var bad=System.Text.Json.Nodes.JsonNode.Parse(context)!.AsObject(); bad["Criteria"]!.AsObject()[field]="obsolete"; var rejected=false;
+            try { search.RestoreContext(bad.ToJsonString(),revision); } catch(InvalidOperationException ex) { rejected=ex.Message.Contains("E-COM-003"); }
+            Check(rejected,"COMPACT-WPF-004 retired criteria "+field);
+        }
+        var state=System.Text.Json.Nodes.JsonNode.Parse(context)!.AsObject();state["SchemaVersion"]="student-search-old";
+        Check(!search.RestoreContext(state.ToJsonString(),revision) && !search.HasSearched && search.Message.Contains("旧形式") && search.PageSize==20 && search.SortKey=="studentNo","COMPACT-WPF-005 legacy state fully resets");
+        search.SearchCommand.Execute(null);state=System.Text.Json.Nodes.JsonNode.Parse(search.CaptureContext())!.AsObject();revision=search.ContextRevision;state.Remove("SchemaVersion");
+        Check(!search.RestoreContext(state.ToJsonString(),revision) && search.Message.Contains("旧形式"),"COMPACT-WPF-006 missing schema resets");
+        search.SearchCommand.Execute(null);state=System.Text.Json.Nodes.JsonNode.Parse(search.CaptureContext())!.AsObject();revision=search.ContextRevision;state["ExpiresAt"]=DateTimeOffset.UtcNow.AddMinutes(-1).ToString("O");
+        Check(!search.RestoreContext(state.ToJsonString(),revision) && search.Message.Contains("W-SRC-002"),"COMPACT-WPF-007 expiry resets");
+        search.Status01=search.Status02=search.Status03=search.Status04=false;search.SearchCommand.Execute(null);
+        Check(search.Items.Count==3,"COMPACT-WPF-008 empty statuses means all");
+        search.Draft.StudentNo="WPF-001";search.SearchCommand.Execute(null);
+        Check(search.Items.Count==0,"COMPACT-WPF-009 student number prefix only");
+        search.Clear();
         using var edit = new StudentEditViewModel(gateway, new DialogService(), 1);
         edit.InitializeAsync().GetAwaiter().GetResult();
         Check(edit.Model.StudentNo == "TEST-WPF-001" && edit.Model.StudentName == "仮名 太郎" && !edit.CanEditNumber, "FIX-WPF-007 production editor loads fixture immutable number");
@@ -71,6 +97,7 @@ internal static class Program
         public bool CanEdit => inner.CanEdit;
         public bool CanDelete => inner.CanDelete;
         public string Principal => inner.Principal;
+        public string SessionId => inner.SessionId;
         public void HoldNextSearch() => pending = new();
         public void ReleaseSearch() { var held = pending; pending = null; held?.SetResult(result ?? throw new InvalidOperationException("No held search result")); }
         public Task<LookupSet> LookupAsync(CancellationToken ct, bool includeOccupancy = true) => inner.LookupAsync(ct, includeOccupancy);
@@ -116,54 +143,43 @@ internal static class Program
                     var searchChecks = new List<string>();
                     if (screen == "search" && window.DataContext is StudentSearchViewModel search)
                     {
-                        IEnumerable<DependencyObject> Descendants(DependencyObject parent)
-                        {
-                            foreach (var child in LogicalTreeHelper.GetChildren(parent).OfType<DependencyObject>())
-                            { yield return child; foreach(var next in Descendants(child)) yield return next; }
-                        }
-                        var filterNames=new[] {"年度","学年","クラス","都道府県"};
-                        var combos=Descendants(window).OfType<ComboBox>().Where(c => filterNames.Contains(AutomationProperties.GetName(c))).ToDictionary(AutomationProperties.GetName);
-                        void FlushBindings() { window.Dispatcher.Invoke(() => {},DispatcherPriority.DataBind); window.UpdateLayout(); }
-                        void All(string state,params string[] names)
-                        {
-                            FlushBindings();
-                            foreach(var name in names) if(combos[name].SelectedItem is null || combos[name].Text != "すべて" || combos[name].SelectedValue is not null) throw new Exception(state+" "+name+" did not select visible all/NULL option: "+JsonSerializer.Serialize(new {combos[name].Text,combos[name].SelectedIndex,Item=combos[name].SelectedItem?.ToString(),combos[name].SelectedValue}));
-                            searchChecks.Add(state);
-                        }
-                        All("initial", "年度","学年","クラス","都道府県");
-                        combos["クラス"].SelectedItem=search.Classes.Single(x => x.Id == 101);FlushBindings();
-                        if(search.Draft.ClassId != 101 || search.Draft.SchoolYear != 2026 || search.Draft.GradeCode != "01") throw new Exception("Actual class selection did not synchronize NULL-compatible model/year/grade.");
-                        search.RefreshClasses();FlushBindings();
-                        if(search.Draft.ClassId != 101 || combos["クラス"].SelectedItem is not ClassOption {Id:101}) throw new Exception("Candidate refresh lost a compatible selected class.");
-                        searchChecks.Add("compatible-class-selected-and-preserved");
-                        search.SearchCommand.Execute(null);FlushBindings();
-                        if(!search.HasSearched) throw new Exception("Warning regression needs an applied search.");
-                        combos["学年"].SelectedItem=search.Grades.Single(x => x.Value == "02");FlushBindings();
-                        if(search.Draft.ClassId is not null || !search.Message.Contains("W-STU-107")) throw new Exception("R4 applied-search incompatible class must clear ID and retain W-STU-107: "+search.Message);
-                        searchChecks.Add("applied-incompatible-class-warning-preserved");
-                        search.Draft.Name="仮名";FlushBindings();
-                        if(!search.Message.Contains("まだ反映されていません")) throw new Exception("R4 normal draft change notice lost.");
-                        searchChecks.Add("normal-draft-change-notice-preserved");
-                        search.Draft.SchoolYear=2026;search.Draft.GradeCode="01";search.Draft.ClassId=101;search.Draft.PrefectureCode="13";
-                        search.Clear();All("clear", "年度","学年","クラス","都道府県");
-                        search.Draft.UnassignedOnly=true;search.RefreshClasses();All("unassigned", "年度","学年","クラス");
-                        if(new[] {"年度","学年","クラス"}.Any(name => combos[name].IsEnabled)) throw new Exception("R4 unassigned must disable all three class criteria.");
-                        searchChecks.Add("unassigned-three-criteria-disabled");
-                        search.Draft.UnassignedOnly=false;search.RefreshClasses();FlushBindings();
-                        if(new[] {"年度","学年","クラス"}.Any(name => !combos[name].IsEnabled) || search.Draft.SchoolYear is not null || search.Draft.GradeCode is not null || search.Draft.ClassId is not null) throw new Exception("R4 unassigned OFF must re-enable criteria without restoring old values.");
-                        searchChecks.Add("unassigned-off-enabled-null-preserved");
-                        if(gateway is not PausableFixtureGateway held) throw new Exception("Expected pausable fixture for busy regression.");
-                        held.HoldNextSearch();search.SearchCommand.Execute(null);FlushBindings();
-                        bool busyDisabled=!search.IsIdle && new[] {"年度","学年","クラス"}.All(name => !combos[name].IsEnabled);
-                        held.ReleaseSearch();FlushBindings();
-                        if(!busyDisabled) throw new Exception("R4 busy search must keep class criteria disabled.");
-                        searchChecks.Add("busy-three-criteria-disabled");
-                        if(!search.IsIdle || new[] {"年度","学年","クラス"}.Any(name => !combos[name].IsEnabled)) throw new Exception("R4 completed search must restore class criteria.");
-                        searchChecks.Add("busy-complete-criteria-restored");
-                        search.Draft.UnassignedOnly=false;search.Draft.SchoolYear=2026;search.Draft.GradeCode="01";search.RefreshClasses();search.Draft.ClassId=101;
-                        search.Draft.GradeCode="02";search.RefreshClasses();All("incompatible-class-cleared", "クラス");
+                        IEnumerable<DependencyObject> Descendants(DependencyObject parent) { for(int i=0;i<System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent);i++) { var child=System.Windows.Media.VisualTreeHelper.GetChild(parent,i); yield return child; foreach(var nested in Descendants(child)) yield return nested; } }
+                        var grid=Descendants(window).OfType<DataGrid>().Single();
+                        if(grid.Columns.Count != 7) throw new Exception("Compact grid must expose 7 columns.");
+                        searchChecks.Add("compact-seven-columns");
+                        var combos=Descendants(window).OfType<ComboBox>().Where(c=>AutomationProperties.GetName(c)=="クラス").ToArray();
+                        if(combos.Length!=1 || search.Classes[0].SearchId is not null) throw new Exception("Class selector must retain all option.");
+                        combos[0].SelectedItem=search.Classes.Single(c=>c.Id==101);
+                        window.Dispatcher.Invoke(()=>{},DispatcherPriority.DataBind);
+                        if(search.Draft.ClassId!=101) throw new Exception("Class selector must bind Int64 ID.");
+                        searchChecks.Add("class-id-only-selection");
+                        if(gateway is not PausableFixtureGateway held) throw new Exception("Pausable fixture required.");
+                        held.HoldNextSearch();search.SearchCommand.Execute(null);
+                        window.Dispatcher.Invoke(()=>{},DispatcherPriority.DataBind);
+                        if(search.IsIdle || combos[0].IsEnabled) throw new Exception("Busy search must disable criteria.");
+                        held.ReleaseSearch();
+                        window.Dispatcher.Invoke(()=>{},DispatcherPriority.DataBind);
+                        if(!search.IsIdle || !combos[0].IsEnabled) throw new Exception("Completed search must enable criteria.");
+                        searchChecks.Add("busy-reentry-controls");
+                        search.Clear();
+                        if(search.Draft.ClassId is not null || search.Classes[0].SearchId is not null) throw new Exception("Clear must restore all classes.");
+                        searchChecks.Add("clear-all-classes");
                     }
-                    Console.WriteLine(JsonSerializer.Serialize(new {profile="CSharp_WPF",screen,passed=true,window=window.GetType().FullName,title=window.Title,visible=window.IsVisible,loaded=window.IsLoaded,hwnd=new WindowInteropHelper(window).Handle.ToInt64(),resourceCount=Resources.Count,searchChecks,backend="fixture",database="NOT_RUN",interactiveUI=(screen == "search" ? "STARTUP_AND_FIXTURE_FILTER_DEFAULTS" : "STARTUP_ONLY_NO_OPERATIONS"),screenshots="NOT_RUN"}));
+                    if(screen != "search") {
+                        foreach(var width in new[]{1280,1366}) {
+                            window.Width=width;window.Height=650;window.UpdateLayout();
+                            var root=(ScrollViewer)window.Content;
+                            if(root.ComputedHorizontalScrollBarVisibility==Visibility.Visible || root.ComputedVerticalScrollBarVisibility==Visibility.Visible) throw new Exception($"Compact editor unexpectedly scrolls at {width}x650: extent={root.ExtentWidth}x{root.ExtentHeight}, viewport={root.ViewportWidth}x{root.ViewportHeight}");
+                            var evidence=Environment.GetEnvironmentVariable("STUDENT_UI_EVIDENCE_DIR");
+                            if(!string.IsNullOrEmpty(evidence)) {
+                                Directory.CreateDirectory(evidence);
+                                var bitmap=new System.Windows.Media.Imaging.RenderTargetBitmap((int)window.ActualWidth,(int)window.ActualHeight,96,96,System.Windows.Media.PixelFormats.Pbgra32);bitmap.Render(window);
+                                var encoder=new System.Windows.Media.Imaging.PngBitmapEncoder();encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));using var output=File.Create(Path.Combine(evidence,$"{screen}-{width}.png"));encoder.Save(output);
+                            }
+                            searchChecks.Add($"compact-editor-visible-{width}x650");
+                        }
+                    }
+                    Console.WriteLine(JsonSerializer.Serialize(new {profile="CSharp_WPF",screen,passed=true,window=window.GetType().FullName,title=window.Title,visible=window.IsVisible,loaded=window.IsLoaded,hwnd=new WindowInteropHelper(window).Handle.ToInt64(),resourceCount=Resources.Count,searchChecks,backend="fixture",database="NOT_RUN",interactiveUI=(screen == "search" ? "STARTUP_AND_FIXTURE_FILTER_DEFAULTS" : "STARTUP_ONLY_NO_OPERATIONS"),screenshots="RenderTargetBitmap when STUDENT_UI_EVIDENCE_DIR is set"}));
                     window.Close();
                 }
                 catch(Exception ex) { Console.Error.WriteLine(ex.ToString()); Shutdown(1); }

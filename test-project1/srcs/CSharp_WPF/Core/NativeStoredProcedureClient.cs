@@ -142,7 +142,7 @@ public static class NativeStoredProcedureClient
         var classOrdinal=row.GetOrdinal("class_name");
         return new(0,row.GetString(row.GetOrdinal("student_no")),row.GetString(row.GetOrdinal("student_name")),"",
             DateOnly.FromDateTime(row.GetDateTime(row.GetOrdinal("birth_date"))),null,null,null,
-            row.IsDBNull(classOrdinal)?null:row.GetString(classOrdinal),null,"",null,default,default,0);
+            row.IsDBNull(classOrdinal)?null:row.GetString(classOrdinal),null);
     }
     private static SaveResult? KnownFailure(SqlException error,Guid requestId) => error.Number switch {
         2601 or 2627 => Failure(Outcome.ValidationFailed,"E-STU-101","StudentNo",requestId),

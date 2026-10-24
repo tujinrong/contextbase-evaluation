@@ -13,7 +13,7 @@ Namespace GuiEvidence
             Dim path=IO.Path.Combine(AppContext.BaseDirectory,"fixture.json")
             If args.SequenceEqual({"--self-test"}) Then Return SelfTest(path)
             If args.SequenceEqual({"--ui-regression"}) Then
-                System.Windows.Forms.Application.SetHighDpiMode(HighDpiMode.PerMonitorV2)
+                System.Windows.Forms.Application.SetHighDpiMode(HighDpiMode.DpiUnaware)
                 System.Windows.Forms.Application.EnableVisualStyles()
                 System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(False)
                 Return InitialFocusRegression.Run(path)
@@ -59,6 +59,39 @@ Namespace GuiEvidence
                 form.txtStudentNo.Text="TEST-NONE" : presenter.SearchAsync().GetAwaiter().GetResult()
                 check(form.dgvStudents.RowCount=0 AndAlso form.lblCount.Text="0件 0–0","FIX-VB-005 zero results")
                 presenter.Clear() : check(form.lblCount.Text="未検索","FIX-VB-006 original clear state")
+                check(form.dgvStudents.Columns.Count=7,"COMPACT-VB-001 seven result columns")
+                presenter.SearchAsync().GetAwaiter().GetResult()
+                Dim context=presenter.CaptureContext() : Dim revision=presenter.ContextRevision
+                check(presenter.RestoreContext(context,revision),"COMPACT-VB-002 current context restores")
+                Dim state=System.Text.Json.Nodes.JsonNode.Parse(context).AsObject()
+                For Each key In {"Owner","Session","WindowId","StateId"}
+                    Dim wrong=System.Text.Json.Nodes.JsonNode.Parse(context).AsObject() : wrong(key)="wrong"
+                    Dim denied=False
+                    Try : presenter.RestoreContext(wrong.ToJsonString(),revision) : Catch ex As InvalidOperationException : denied=ex.Message.Contains("E-COM-003") : End Try
+                    check(denied,"COMPACT-VB-003 ownership boundary " & key)
+                Next
+                Dim stale=False
+                Try : presenter.RestoreContext(context,revision-1) : Catch ex As InvalidOperationException : stale=True : End Try
+                check(stale,"COMPACT-VB-004 stale revision rejected")
+                For Each field In {"StudentNameKana","SchoolYear","GradeCode","UnassignedOnly","PrefectureCode","PhoneNumber","AdmissionFrom","AdmissionTo","Unexpected"}
+                    Dim invalid=System.Text.Json.Nodes.JsonNode.Parse(context).AsObject()
+                    invalid("Criteria").AsObject()(field)="obsolete"
+                    Dim denied=False
+                    Try : presenter.RestoreContext(invalid.ToJsonString(),revision) : Catch ex As InvalidOperationException : denied=ex.Message.Contains("E-COM-003") : End Try
+                    check(denied,"COMPACT-VB-005 unknown criteria rejected " & field)
+                Next
+                state("SchemaVersion")="student-search-old"
+                check(Not presenter.RestoreContext(state.ToJsonString(),revision) AndAlso form.lblCount.Text="未検索" AndAlso form.lblMessage.Text.Contains("旧形式") AndAlso CInt(form.cboPageSize.SelectedItem)=20,"COMPACT-VB-006 old schema resets whole state")
+                presenter.SearchAsync().GetAwaiter().GetResult() : state=System.Text.Json.Nodes.JsonNode.Parse(presenter.CaptureContext()).AsObject() : revision=presenter.ContextRevision : state.Remove("SchemaVersion")
+                check(Not presenter.RestoreContext(state.ToJsonString(),revision) AndAlso form.lblMessage.Text.Contains("旧形式"),"COMPACT-VB-007 missing schema resets")
+                presenter.SearchAsync().GetAwaiter().GetResult() : state=System.Text.Json.Nodes.JsonNode.Parse(presenter.CaptureContext()).AsObject() : revision=presenter.ContextRevision : state("ExpiresAt")=DateTimeOffset.UtcNow.AddMinutes(-1).ToString("O")
+                check(Not presenter.RestoreContext(state.ToJsonString(),revision) AndAlso form.lblMessage.Text.Contains("W-SRC-002"),"COMPACT-VB-008 expired context resets")
+                form.txtStudentNo.Text="TEST-VB-00"
+                For i=0 To form.clbStatuses.Items.Count-1 : form.clbStatuses.SetItemChecked(i,False) : Next
+                presenter.SearchAsync().GetAwaiter().GetResult()
+                check(form.dgvStudents.RowCount=3,"COMPACT-VB-009 empty statuses means all")
+                form.txtStudentNo.Text="VB-001" : presenter.SearchAsync().GetAwaiter().GetResult()
+                check(form.dgvStudents.RowCount=0,"COMPACT-VB-010 student number is prefix")
             End Using
             Using form As New FrmStudentEdit(service,1), presenter As New StudentEditPresenter(form,service,1)
                 presenter.InitializeAsync().GetAwaiter().GetResult()

@@ -41,12 +41,14 @@ function Insert-SeedRow([string]$table, $pairs) {
     $taskDb.Execute("INSERT INTO $table ($($taskColumns -join ',')) VALUES ($($taskValues -join ','))",128)
 }
 function Add-Control($form, [string]$name, [int]$kind, [int]$left, [int]$top, [string]$label, [int]$width = 2500) {
-    $taskControl = $taskAccess.CreateControl($form.Name, $kind, 0, '', '', $left, $top, $width, 330)
+    $taskControl = $taskAccess.CreateControl($form.Name, $kind, 0, '', '', $left, $top, $width, 510)
     $taskControl.Name = $name
+    if($kind -ne 106){$taskControl.FontName = "Yu Gothic UI"; $taskControl.FontSize = 9}
     if ($kind -in @(100,104)) { $taskControl.Caption = $label }
     elseif ($label) {
         $taskLabel = $taskAccess.CreateControl($form.Name, 100, 0, $name, '', $left, $top - 300, $width, 270)
         $taskLabel.Caption = $label
+        $taskLabel.FontName="Yu Gothic UI"; $taskLabel.FontSize=9
     }
     return $taskControl
 }
@@ -65,6 +67,15 @@ function Save-Form($form, [string]$name) {
     $taskOldName = $form.Name
     $taskAccess.DoCmd.Save(2, $taskOldName); $taskAccess.DoCmd.Close(2, $taskOldName, 1)
     if ($taskOldName -ne $name) { $taskAccess.DoCmd.Rename($name, 2, $taskOldName) }
+}
+function Compile-Vba {
+    $taskCompiler=$taskAccess.VBE.CommandBars.FindControl(1,578)
+    if($null -eq $taskCompiler){throw 'Native VBE compiler command unavailable.'}
+    if($taskCompiler.Enabled){
+        try{$taskCompiler.Execute()}catch{if($taskCompiler.Enabled){throw}}
+    }
+    if($taskCompiler.Enabled){throw 'Native VBE compilation failed; compiler remains enabled.'}
+    Write-Output 'Native VBE compiler completed (command 578 disabled).'
 }
 function Create-NamedForm([string]$name) {
     $taskAccess.DoCmd.OpenForm($name,1)
@@ -126,7 +137,9 @@ try {
     $taskAccess.DoCmd.CopyObject('', 'frmStudentEdit', 2, 'frmStudentSearch')
     $taskAccess.DoCmd.CopyObject('', 'frmDuplicateConfirm', 2, 'frmStudentSearch')
     $taskAccess.DoCmd.CopyObject('', 'frmDeleteConfirm', 2, 'frmStudentSearch')
+    $taskAccess.DoCmd.CopyObject('', 'frmDiscardConfirm', 2, 'frmStudentSearch')
     $taskDb = $taskAccess.CurrentDb()
+    Set-DaoProperty $taskDb 'StudentTestFixture' 1 ([bool]$IncludeTests)
     Set-DaoProperty $taskDb 'StudentBackendPath' 10 $(if ($SingleFile) { 'SELF' } else { [IO.Path]::GetFullPath($Backend) })
     if (Test-Path -LiteralPath $Backend) {
         $taskSchema = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'database/schema.json') -Encoding UTF8 -Raw | ConvertFrom-Json
@@ -174,53 +187,71 @@ try {
         $taskComponent.CodeModule.AddFromString($taskCode)
         $taskAccess.DoCmd.Save(5,$taskSource.BaseName)
     }
-    if ($Compile) { $taskAccess.DoCmd.RunCommand(126); Write-Output 'VBA modules compiled.' }
+    if ($Compile) { Compile-Vba }
     $taskCodeSql=@{}
     foreach ($taskCategory in @('GENDER','PREFECTURE','ENROLLMENT_STATUS','RELATIONSHIP','GRADE')) { $taskCodeSql[$taskCategory]="SELECT code_value,code_name FROM m_code WHERE category_id='$taskCategory' ORDER BY display_order,code_value" }
     $taskClassSql='SELECT class_id, CStr(school_year) & " " & class_code & " " & class_name & IIf(is_active,""," [停止]") FROM m_class ORDER BY school_year,display_order,class_code,class_id'
     $taskYearSql='SELECT DISTINCT school_year,school_year FROM m_class ORDER BY school_year DESC'
-    $taskForm=Create-NamedForm 'frmStudentSearch'; $taskForm.RecordSource=''; $taskForm.Width=15000; $taskForm.Section(0).Height=10500; $taskForm.Caption='学生検索'; $taskForm.OnLoad='[Event Procedure]'
+    $taskForm=Create-NamedForm 'frmStudentSearch'; $taskForm.RecordSource=''; $taskForm.Width=18400; $taskForm.Section(0).Height=9600; $taskForm.Caption='学生検索'; $taskForm.OnLoad='[Event Procedure]'; $taskForm.ScrollBars=2; $taskForm.AutoCenter=$true
+    $null=Add-Control $taskForm 'lblTitle' 100 300 150 '学生検索 ／ 4条件' 15000
+    $taskMsg=Add-Control $taskForm 'lblMessage' 100 300 650 '' 17800; $taskMsg.Height=300
+    $taskCtl=Add-Text $taskForm 'txtStudentNo' 300 1250 '学籍番号'; $taskCtl.Width=3300; $taskCtl.AfterUpdate='=ClassChanged()'
+    $taskCtl=Add-Text $taskForm 'txtName' 3900 1250 '氏名'; $taskCtl.Width=3300; $taskCtl.AfterUpdate='=ClassChanged()'
+    $taskCtl=Add-Combo $taskForm 'cboClass' 7500 1250 'クラス（全年度・学年・コード・名称）' $taskClassSql; $taskCtl.Width=10600; $taskCtl.ColumnWidths='0cm;17cm'; $taskCtl.ListWidth=11000; $taskCtl.AfterUpdate='=ClassChanged()'
+    foreach ($taskItem in @(@('chkEnrolled','在学'),@('chkLeave','休学'),@('chkGraduated','卒業'),@('chkWithdrawn','退学'))) {
+        $taskIndex=[Array]::IndexOf(@('chkEnrolled','chkLeave','chkGraduated','chkWithdrawn'),$taskItem[0]); $taskCtl=Add-Control $taskForm $taskItem[0] 106 (600+$taskIndex*2400) 2100 $taskItem[1] 1800; $taskCtl.AfterUpdate='=ClassChanged()'
+    }
+    $null=Add-Button $taskForm 'cmdSearch' 300 2800 '検索' 'SearchClick("SEARCH")'; $null=Add-Button $taskForm 'cmdClear' 2000 2800 'クリア' 'ClearSearch()'
+    $null=Add-Button $taskForm 'cmdNew' 14600 2800 '新規登録' 'OpenStudent(True)'; $null=Add-Button $taskForm 'cmdMenu' 16300 2800 'メニューへ' 'SearchMenu()'
+    $null=Add-Control $taskForm 'lblCount' 100 300 3570 '未検索' 7200
+    foreach ($taskItem in @(@('cboPageSize','取得件数','20;50;100'),@('cboSortKey','並び順','studentNo;学籍番号;name;氏名;admissionDate;入学日;updatedAt;更新日時'),@('cboSortDirection','方向','asc;昇順;desc;降順'))) {
+        $taskIndex=[Array]::IndexOf(@('cboPageSize','cboSortKey','cboSortDirection'),$taskItem[0]); $taskCtl=Add-Combo $taskForm $taskItem[0] (10000+$taskIndex*2700) 3570 $taskItem[1] $taskItem[2]; $taskCtl.RowSourceType='Value List'; $taskCtl.Width=2400; $taskCtl.AfterUpdate='=SearchClick("SORT")'
+        if($taskItem[0] -eq 'cboPageSize'){$taskCtl.ColumnCount=1;$taskCtl.ColumnWidths='4cm'}
+    }
+    $null=Add-Control $taskForm 'lblListHeaders' 100 300 4150 '学籍番号                  氏名 ／ カナ                                       生年月日                 年度／学年              クラス                            在籍         操作案内' 17800
+    $taskList=Add-Control $taskForm 'lstStudents' 110 300 4600 '' 17800; $taskList.Height=2800; $taskList.ColumnCount=8; $taskList.ColumnWidths='0cm;2.8cm;7.2cm;3.8cm;3.6cm;7.5cm;2cm;3.8cm'; $taskList.BoundColumn=1; $taskList.RowSourceType='StudentListCallback'; $taskList.OnDblClick='=OpenStudent(False)'; $taskList.AfterUpdate='=SelectedStudentDetails()'
+    $taskDetails=Add-Text $taskForm 'txtSelectedDetails' 300 7850 '選択行全文（長い値は Shift+F2 で拡大）'; $taskDetails.Width=17800; $taskDetails.Height=650; $taskDetails.Locked=$true; $taskDetails.TabStop=$true; $taskDetails.ScrollBars=2; $taskDetails.TextFormat=0
+    foreach($taskHidden in @('IsBusy','txtContextId','txtContextRevision')){$taskCtl=Add-Text $taskForm $taskHidden 100 100 ''; $taskCtl.Visible=$false}
+    $taskCtl=Add-Button $taskForm 'cmdOpenSelected' 300 8700 '選択行の編集／参照' 'OpenStudent(False)'; $taskCtl.Width=3300
+    foreach($taskItem in @(@('cmdFirst','先頭','FIRST'),@('cmdPrev','前へ','PREV'),@('cmdNext','次へ','NEXT'),@('cmdLast','最後','LAST'))){$taskIndex=[Array]::IndexOf(@('cmdFirst','cmdPrev','cmdNext','cmdLast'),$taskItem[0]);$taskCtl=Add-Button $taskForm $taskItem[0] (11100+$taskIndex*1700) 8700 $taskItem[1] ('SearchClick("'+$taskItem[2]+'")');$taskCtl.Enabled=$false}
+    $taskCtl=Add-Control $taskForm 'lblSearchedAt' 100 300 9250 '' 17800; $taskCtl.Height=300
     $taskForm.HasModule=$true; $taskFormModule=$taskForm.Module
     if ($taskFormModule.CountOfLines -gt 0) { $taskFormModule.DeleteLines(1,$taskFormModule.CountOfLines) }
     $taskForm.OnUnload='[Event Procedure]'
     $taskFormModule.AddFromString("Option Explicit`r`nOption Compare Binary`r`nPrivate Sub Form_Load()`r`n    InitSearch Me`r`nEnd Sub`r`nPrivate Sub Form_Unload(Cancel As Integer)`r`n    CloseSearch Me`r`nEnd Sub")
-    foreach ($taskItem in @(@('txtStudentNo','学生番号'),@('txtName','氏名'),@('txtKana','フリガナ'),@('txtPhone','電話番号'),@('txtAdmissionFrom','入学日 From'),@('txtAdmissionTo','入学日 To'))) {
-        $taskIndex=[Array]::IndexOf(@('txtStudentNo','txtName','txtKana','txtPhone','txtAdmissionFrom','txtAdmissionTo'),$taskItem[0]); $null=Add-Text $taskForm $taskItem[0] (300+($taskIndex%3)*4600) (650+[Math]::Floor($taskIndex/3)*800) $taskItem[1]
-    }
-    $null=Add-Combo $taskForm 'cboSchoolYear' 300 2250 '年度' $taskYearSql; $null=Add-Combo $taskForm 'cboGrade' 4900 2250 '学年' $taskCodeSql.GRADE; $null=Add-Combo $taskForm 'cboClass' 9500 2250 'クラス' $taskClassSql
-    foreach ($taskBinding in @(@('cboSchoolYear','YEAR'),@('cboGrade','GRADE'),@('cboClass','CLASS'))) { $taskControl=$taskForm.Controls.Item($taskBinding[0]); $taskControl.AfterUpdate='=ClassChanged("' + $taskBinding[1] + '")' }
-    $null=Add-Combo $taskForm 'cboPrefecture' 300 3050 '都道府県' $taskCodeSql.PREFECTURE
-    foreach ($taskItem in @(@('chkEnrolled','在学'),@('chkLeave','休学'),@('chkGraduated','卒業'),@('chkWithdrawn','退学'),@('chkUnassignedOnly','クラス未割当'))) {
-        $taskIndex=[Array]::IndexOf(@('chkEnrolled','chkLeave','chkGraduated','chkWithdrawn','chkUnassignedOnly'),$taskItem[0]); $taskCtl=Add-Control $taskForm $taskItem[0] 106 (300+$taskIndex*2700) 3750 $taskItem[1]; $taskCtl.AfterUpdate='=ClassChanged()'
-    }
-    foreach ($taskItem in @(@('cboPageSize','ページ件数','20;50;100'),@('cboSortKey','並び順','studentNo;name;admissionDate;updatedAt'),@('cboSortDirection','方向','asc;desc'))) {
-        $taskIndex=[Array]::IndexOf(@('cboPageSize','cboSortKey','cboSortDirection'),$taskItem[0]); $taskCtl=Add-Combo $taskForm $taskItem[0] (300+$taskIndex*4600) 4500 $taskItem[1] $taskItem[2]; $taskCtl.RowSourceType='Value List'; $taskCtl.ColumnCount=1; $taskCtl.ColumnWidths='4cm'; $taskCtl.AfterUpdate='=SearchClick("SORT")'
-    }
-    $taskList=Add-Control $taskForm 'lstStudents' 110 300 5700 '' 14400; $taskList.Height=3100; $taskList.ColumnCount=12; $taskList.ColumnWidths='0cm;2cm;2cm;2cm;2.5cm;2cm;3cm;2cm;4cm;2cm;3cm;1cm'; $taskList.BoundColumn=1; $taskList.RowSourceType='StudentListCallback'; $taskList.OnDblClick='=OpenStudent(False)'; $taskList.AfterUpdate='=SelectedStudentDetails()'
-    $taskDetails=Add-Text $taskForm 'txtSelectedDetails' 300 10400 '選択行の全文'; $taskDetails.Width=14000; $taskDetails.Height=2200; $taskDetails.Locked=$true; $taskDetails.TabStop=$false; $taskDetails.ScrollBars=2; $taskDetails.TextFormat=0; $taskForm.Section(0).Height=13000
-    $null=Add-Control $taskForm 'lblCount' 100 300 5100 '未検索'; $null=Add-Control $taskForm 'lblSearchedAt' 100 4900 5100 ''; $taskMsg=Add-Control $taskForm 'lblMessage' 100 300 9500 '' 14000; $taskMsg.Height=600
-    $taskBusy=Add-Text $taskForm 'IsBusy' 100 100 ''; $taskBusy.Visible=$false
-    $null=Add-Button $taskForm 'cmdSearch' 300 8900 '検索' 'SearchClick("SEARCH")'; $null=Add-Button $taskForm 'cmdClear' 2100 8900 'クリア' 'ClearSearch()'; $null=Add-Button $taskForm 'cmdNew' 3900 8900 '新規登録' 'OpenStudent(True)'
-    $null=Add-Button $taskForm 'cmdFirst' 6500 8900 '先頭' 'SearchClick("FIRST")'; $null=Add-Button $taskForm 'cmdPrev' 8300 8900 '前' 'SearchClick("PREV")'; $null=Add-Button $taskForm 'cmdNext' 10100 8900 '次' 'SearchClick("NEXT")'; $null=Add-Button $taskForm 'cmdLast' 11900 8900 '末尾' 'SearchClick("LAST")'
+    $taskForm.Section(0).Height=9600
     Save-Form $taskForm 'frmStudentSearch'
-    $taskForm=Create-NamedForm 'frmStudentEdit'; $taskForm.RecordSource=''; $taskForm.Width=12000; $taskForm.Section(0).Height=15200; $taskForm.Caption='学生登録・編集'; $taskForm.OnLoad='[Event Procedure]'; $taskForm.OnUnload='[Event Procedure]'
+    $taskForm=Create-NamedForm 'frmStudentEdit'; $taskForm.RecordSource=''; $taskForm.Width=18400; $taskForm.Section(0).Height=9600; $taskForm.Caption='学生登録・編集'; $taskForm.OnLoad='[Event Procedure]'; $taskForm.OnUnload='[Event Procedure]'; $taskForm.ScrollBars=2; $taskForm.AutoCenter=$true
+    $null=Add-Control $taskForm 'lblTitle' 100 300 150 '学生登録・編集 ／ 必須項目は * ／ 長文は Shift+F2 で拡大' 17800
+    foreach($taskItem in @(@('txtStudentId','学生ID',300,1700),@('txtStudentNo','学籍番号 *',2300,3000),@('txtStudentName','氏名 *',5600,4000),@('txtStudentNameKana','氏名カナ *',9900,8200))){$taskCtl=Add-Text $taskForm $taskItem[0] $taskItem[2] 950 $taskItem[1];$taskCtl.Width=$taskItem[3];$taskCtl.AfterUpdate='=DirtyEdit()'}
+    $taskForm.Controls.Item('txtStudentId').Locked=$true
+    $taskEra=Add-Combo $taskForm 'cboBirthEra' 300 1800 '生年月日 元号 *' 'MEIJI;明治;TAISHO;大正;SHOWA;昭和;HEISEI;平成;REIWA;令和'; $taskEra.RowSourceType='Value List';$taskEra.Width=1700
+    foreach($taskItem in @(@('txtBirthYear','年 *',2300,1200),@('txtBirthMonth','月 *',3800,900),@('txtBirthDay','日 *',5000,900))){$taskCtl=Add-Text $taskForm $taskItem[0] $taskItem[2] 1800 $taskItem[1];$taskCtl.Width=$taskItem[3];$taskCtl.AfterUpdate='=DirtyEdit()'}
+    $taskCtl=Add-Combo $taskForm 'cboGender' 6300 1800 '性別 *' $taskCodeSql.GENDER;$taskCtl.Width=3300
+    foreach($taskItem in @(@('lblAddressSection','住所・連絡先',300),@('lblEnrollmentSection','在籍・所属',6300),@('lblEmergencySection','緊急連絡先・備考・確認理由',12300))){$taskCtl=Add-Control $taskForm $taskItem[0] 100 $taskItem[2] 2450 $taskItem[1] 5800;$taskCtl.Height=300}
+    foreach($taskItem in @(@('txtPostalCode','郵便番号',300,3050),@('txtAddressLine1','住所1 *',300,4650),@('txtAddressLine2','住所2',300,5450),@('txtPhoneNumber','本人電話（連絡手段いずれか必須）',300,6250),@('txtEmailAddress','メールアドレス',300,7050),@('txtAdmissionDate','入学日 * YYYY-MM-DD',6300,3050),@('txtEnrollmentEndDate','在籍終了日 YYYY-MM-DD',6300,4650),@('txtEmergencyContactName','緊急連絡先 氏名',12300,3050),@('txtEmergencyPhoneNumber','緊急連絡先 電話',12300,4650),@('txtRemarks','備考（500文字）',12300,5450),@('txtOperationReason','別人確認理由（60文字）',12300,7250))){$taskCtl=Add-Text $taskForm $taskItem[0] $taskItem[2] $taskItem[3] $taskItem[1];$taskCtl.Width=5800;$taskCtl.AfterUpdate='=DirtyEdit()';if($taskItem[0] -in @('txtRemarks','txtOperationReason')){$taskCtl.EnterKeyBehavior=$true;$taskCtl.ScrollBars=2;$taskCtl.Height=if($taskItem[0] -eq 'txtRemarks'){1350}else{650}}}
+    $taskCtl=Add-Combo $taskForm 'cboPrefecture' 300 3850 '都道府県 *' $taskCodeSql.PREFECTURE;$taskCtl.Width=5800
+    $taskStatus=Add-Combo $taskForm 'cboEnrollmentStatus' 6300 3850 '在籍区分 *' $taskCodeSql.ENROLLMENT_STATUS; $taskStatus.Width=5800;$taskStatus.AfterUpdate='=StatusChanged()'
+    $taskCtl=Add-Combo $taskForm 'cboSchoolYear' 6300 5450 '年度 *' $taskYearSql;$taskCtl.Width=2750
+    $taskCtl=Add-Combo $taskForm 'cboGrade' 9350 5450 '学年 *' $taskCodeSql.GRADE;$taskCtl.Width=2750
+    $taskCtl=Add-Combo $taskForm 'cboClass' 6300 6250 'クラス（在学・休学は必須）' $taskClassSql;$taskCtl.Width=5800;$taskCtl.ColumnWidths='0cm;10cm';$taskCtl.ListWidth=9000
+    $taskCtl=Add-Combo $taskForm 'cboRelationship' 12300 3850 '続柄' $taskCodeSql.RELATIONSHIP;$taskCtl.Width=5800
+    foreach ($taskControlName in @('cboBirthEra','cboGender','cboPrefecture','cboRelationship')) { $taskControl=$taskForm.Controls.Item($taskControlName); $taskControl.AfterUpdate='=DirtyEdit()' }
+    foreach ($taskBinding in @(@('cboSchoolYear','YEAR'),@('cboGrade','GRADE'),@('cboClass','CLASS'))) { $taskControl=$taskForm.Controls.Item($taskBinding[0]); $taskControl.AfterUpdate='=ClassChanged("' + $taskBinding[1] + '")' }
+    $taskCtl=Add-Control $taskForm 'lblCapacity' 100 6300 7050 '人数／定員：－' 5800;$taskCtl.Height=350
+    $taskCtl=Add-Control $taskForm 'lblUpdated' 100 300 8200 '' 17800;$taskCtl.Height=300
+    $null=Add-Button $taskForm 'cmdSave' 300 8650 '保存' 'SaveEdit()'; $null=Add-Button $taskForm 'cmdDelete' 16300 8650 '論理削除' 'DeleteEdit()'; $null=Add-Button $taskForm 'cmdReset' 2100 8650 '編集取消' 'ResetEdit(False)'; $null=Add-Button $taskForm 'cmdReload' 3900 8650 '最新再読込' 'ResetEdit(True)'; $null=Add-Button $taskForm 'cmdBack' 5700 8650 '戻る' 'BackEdit()'
+    $taskMsg=Add-Control $taskForm 'lblMessage' 100 300 9250 '' 17800; $taskMsg.Height=300
     $taskForm.HasModule=$true; $taskFormModule=$taskForm.Module
     if ($taskFormModule.CountOfLines -gt 0) { $taskFormModule.DeleteLines(1,$taskFormModule.CountOfLines) }
     $taskFormModule.AddFromString("Option Explicit`r`nOption Compare Binary`r`nPrivate Sub Form_Load()`r`n    InitEdit Me`r`nEnd Sub`r`nPrivate Sub Form_Unload(Cancel As Integer)`r`n    Cancel = Not CanCloseEdit(Me)`r`nEnd Sub")
-    $taskInput=@(@('txtStudentNo','学生番号'),@('txtStudentName','氏名'),@('txtStudentNameKana','フリガナ'),@('txtBirthYear','年'),@('txtBirthMonth','月'),@('txtBirthDay','日'),@('txtPostalCode','郵便番号'),@('txtAddressLine1','住所1'),@('txtAddressLine2','住所2'),@('txtPhoneNumber','電話番号'),@('txtEmailAddress','メールアドレス'),@('txtAdmissionDate','入学日 YYYY-MM-DD'),@('txtEnrollmentEndDate','在籍終了日 YYYY-MM-DD'),@('txtEmergencyContactName','緊急連絡先氏名'),@('txtEmergencyPhoneNumber','緊急連絡先電話'),@('txtRemarks','備考'),@('txtOperationReason','操作理由'))
-    for ($taskIndex=0;$taskIndex -lt $taskInput.Count;$taskIndex++) { $taskCtl=Add-Text $taskForm $taskInput[$taskIndex][0] (300+($taskIndex%2)*5700) (650+[Math]::Floor($taskIndex/2)*800) $taskInput[$taskIndex][1]; $taskCtl.AfterUpdate='=DirtyEdit()'; if ($taskCtl.Name -eq 'txtRemarks') { $taskCtl.EnterKeyBehavior=$true } }
-    $taskEra=Add-Combo $taskForm 'cboBirthEra' 300 8050 '元号' 'MEIJI;明治;TAISHO;大正;SHOWA;昭和;HEISEI;平成;REIWA;令和'; $taskEra.RowSourceType='Value List'
-    $null=Add-Combo $taskForm 'cboGender' 6000 8050 '性別' $taskCodeSql.GENDER; $null=Add-Combo $taskForm 'cboPrefecture' 300 8850 '都道府県' $taskCodeSql.PREFECTURE
-    $taskStatus=Add-Combo $taskForm 'cboEnrollmentStatus' 6000 8850 '在籍区分' $taskCodeSql.ENROLLMENT_STATUS; $taskStatus.AfterUpdate='=StatusChanged()'
-    $null=Add-Combo $taskForm 'cboSchoolYear' 300 9650 '年度' $taskYearSql; $null=Add-Combo $taskForm 'cboGrade' 6000 9650 '学年' $taskCodeSql.GRADE
-    $null=Add-Combo $taskForm 'cboClass' 300 10450 'クラス' $taskClassSql; $null=Add-Combo $taskForm 'cboRelationship' 6000 10450 '続柄' $taskCodeSql.RELATIONSHIP
-    foreach ($taskControlName in @('cboBirthEra','cboGender','cboPrefecture','cboSchoolYear','cboGrade','cboClass','cboRelationship')) { $taskControl=$taskForm.Controls.Item($taskControlName); $taskControl.AfterUpdate='=DirtyEdit()' }
-    foreach ($taskBinding in @(@('cboSchoolYear','YEAR'),@('cboGrade','GRADE'),@('cboClass','CLASS'))) { $taskControl=$taskForm.Controls.Item($taskBinding[0]); $taskControl.AfterUpdate='=ClassChanged("' + $taskBinding[1] + '")' }
-    $taskId=Add-Text $taskForm 'txtStudentId' 300 11250 '学生ID'; $taskId.Locked=$true
-    $null=Add-Control $taskForm 'lblCapacity' 100 300 11500 '人数／定員：－' 11000
-    $null=Add-Control $taskForm 'lblUpdated' 100 300 11900 '' 11000; $taskMsg=Add-Control $taskForm 'lblMessage' 100 300 13600 '' 11000; $taskMsg.Height=1200
-    $null=Add-Button $taskForm 'cmdSave' 300 12800 '保存' 'SaveEdit()'; $null=Add-Button $taskForm 'cmdDelete' 2100 12800 '削除' 'DeleteEdit()'; $null=Add-Button $taskForm 'cmdReset' 3900 12800 '元に戻す' 'ResetEdit(False)'; $null=Add-Button $taskForm 'cmdReload' 5700 12800 '最新再読込' 'ResetEdit(True)'; $null=Add-Button $taskForm 'cmdBack' 7500 12800 '戻る' 'BackEdit()'
+    $taskForm.Section(0).Height=9600
     Save-Form $taskForm 'frmStudentEdit'
+    $taskForm=Create-NamedForm 'frmDiscardConfirm';$taskForm.RecordSource='';$taskForm.Width=9000;$taskForm.Section(0).Height=2400;$taskForm.Caption='未保存変更の確認';$taskForm.Modal=$true;$taskForm.PopUp=$true
+    $taskCtl=Add-Control $taskForm 'lblPrompt' 100 300 300 '保存していない入力を破棄しますか。' 8400;$taskCtl.Height=900
+    $null=Add-Button $taskForm 'cmdConfirm' 300 1600 '変更を破棄' 'DiscardOk()'
+    $taskCtl=Add-Button $taskForm 'cmdCancel' 2300 1600 '取消' 'DiscardCancel()';$taskCtl.Default=$true;$taskCtl.Cancel=$true
+    Save-Form $taskForm 'frmDiscardConfirm'
     foreach ($taskDialogName in @('frmDuplicateConfirm','frmDeleteConfirm')) {
         $taskForm=Create-NamedForm $taskDialogName; $taskForm.RecordSource=''; $taskForm.Width=11000; $taskForm.Section(0).Height=6700; $taskForm.Caption='操作の確認'; $taskForm.Modal=$true; $taskForm.PopUp=$true; $taskForm.OnLoad='[Event Procedure]'
         $taskForm.HasModule=$true; $taskFormModule=$taskForm.Module
@@ -236,7 +267,7 @@ try {
     }
     if (-not $NoStartup) { Set-DaoProperty $taskDb 'StartupForm' 10 'frmStudentSearch' }
     $taskDb.Close()
-    if ($Compile) { $taskAccess.DoCmd.RunCommand(126) }
+    if ($Compile) { Compile-Vba }
     Write-Output "Frontend generated: $Frontend"
 } catch {
     try {

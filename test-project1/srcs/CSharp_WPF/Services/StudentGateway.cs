@@ -22,6 +22,7 @@ public sealed class StudentGateway : IStudentGateway
     public bool CanEdit => authenticated && current.Role != Core.Role.Viewer;
     public bool CanDelete => authenticated && current.Role == Core.Role.Administrator;
     public string Principal => current.Principal;
+    public string SessionId => current.SessionId;
     private async Task AuthenticateAsync(CancellationToken ct)
     {
         await using var connection = new SqlConnection(connectionString);
@@ -40,17 +41,17 @@ public sealed class StudentGateway : IStudentGateway
         var data = await service.LookupAsync(includeOccupancy,ct);
         var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTimeOffset.UtcNow, "Tokyo Standard Time").DateTime);
         return new(data.Codes.GroupBy(x => x.CategoryId).ToDictionary(g => g.Key, g => (IReadOnlyList<CodeOption>)g.OrderBy(x => x.DisplayOrder).ThenBy(x => x.CodeValue).Select(x => new CodeOption(x.CodeValue, x.CodeName, x.IsActive && x.ValidFrom <= today && (x.ValidTo is null || today <= x.ValidTo))).ToArray()),
-            data.Classes.Select(x => new ClassOption(x.ClassId, x.SchoolYear, x.GradeCode, $"{x.SchoolYear} / {x.ClassCode} / {x.ClassName}", x.IsActive && x.ValidFrom <= today && today <= x.ValidTo, x.Occupied, x.Capacity)).ToArray());
+            data.Classes.Select(x => new ClassOption(x.ClassId, x.SchoolYear, x.GradeCode, $"{x.SchoolYear} / {data.Codes.FirstOrDefault(c => c.CategoryId == "GRADE" && c.CodeValue == x.GradeCode)?.CodeName ?? "不整合"} / {x.ClassCode} / {x.ClassName}", x.IsActive && x.ValidFrom <= today && today <= x.ValidTo, x.Occupied, x.Capacity)).ToArray());
     }
     public async Task<SearchResult> SearchAsync(SearchDraft draft, int page, int pageSize, string sort, string direction, CancellationToken ct)
     {
         await AuthenticateAsync(ct);
-        var result = await service.SearchAsync(new() { StudentNo = draft.StudentNo, StudentName = draft.Name, StudentNameKana = draft.Kana, SchoolYear = draft.SchoolYear, GradeCode = draft.GradeCode, ClassId = draft.ClassId, UnassignedOnly = draft.UnassignedOnly, EnrollmentStatusCodes = [.. draft.StatusCodes], PrefectureCode = draft.PrefectureCode, PhoneNumber = draft.PhoneNumber, AdmissionFrom = draft.AdmissionFrom, AdmissionTo = draft.AdmissionTo, Page = page, PageSize = pageSize, SortKey = sort, SortDirection = direction }, ct);
+        var result = await service.SearchAsync(new() { StudentNo = draft.StudentNo, StudentName = draft.Name, ClassId = draft.ClassId, EnrollmentStatusCodes = [.. draft.StatusCodes], Page = page, PageSize = pageSize, SortKey = sort, SortDirection = direction }, ct);
         var errors = string.Join(Environment.NewLine, result.Errors.Select(x => x.Code + " " + x.Message));
         var message = result.LimitExceeded ? "W-SRC-001 検索結果が10,000件を超えています。検索条件を追加してください。" : errors.Length > 0 ? errors : result.Count == 0 ? "I-SRC-001 該当する学生がありません。" : "検索が完了しました。";
         return new(result.LimitExceeded ? "LimitExceeded" : result.Errors.Count == 0 && result.Outcome is not (Core.Outcome.SystemError or Core.Outcome.Forbidden or Core.Outcome.Unknown) ? "Success" : result.Outcome.ToString(), result.LimitExceeded || result.Errors.Count > 0 ? null : result.Count, result.Items.Select(ToRow).ToArray(), message, result.SearchedAt);
     }
-    private static StudentListItem ToRow(Core.StudentRow row) => new(row.StudentId, row.StudentNo, row.StudentName, row.StudentNameKana, row.BirthDateWareki, row.SchoolYear is null ? "－" : $"{row.SchoolYear} / {row.GradeName ?? "不整合"}", row.ClassName ?? "－", row.EnrollmentStatusName ?? "不整合", row.Address, row.PhoneNumber ?? "－", row.UpdatedAt.ToOffset(TimeSpan.FromHours(9)).ToString("yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture));
+    private static StudentListItem ToRow(Core.StudentRow row) => new(row.StudentId, row.StudentNo, row.StudentName, row.StudentNameKana, row.BirthDateWareki, row.SchoolYear is null ? "－" : $"{row.SchoolYear} / {row.GradeName ?? "不整合"}", (row.ClassCode ?? "－") + " / " + (row.ClassName ?? "－"), row.EnrollmentStatusName ?? "不整合");
     public async Task<StudentRecord> GetAsync(long id, CancellationToken ct)
     {
         await AuthenticateAsync(ct);

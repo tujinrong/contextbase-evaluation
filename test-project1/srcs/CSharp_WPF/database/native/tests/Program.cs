@@ -140,7 +140,7 @@ using(var fourFields=candidatesTable.CreateDataReader()) {
     Check(fourFields.Read(),"four-column duplicate fixture read");
     var candidate=NativeStoredProcedureClient.ReadDuplicateCandidate(fourFields);
     Check(candidate.StudentNo=="S2026-01" && candidate.StudentName=="山田 太郎" && candidate.BirthDateWareki.Contains("平成15年") && candidate.ClassName=="１年Ａ組","duplicate mapper requires only four permitted fields and displays wareki");
-    Check(candidate.StudentId==0 && candidate.RowVersion==0 && candidate.StudentNameKana=="" && candidate.SchoolYear is null && candidate.GradeName is null && candidate.ClassCode is null && candidate.EnrollmentStatusName is null && candidate.Address=="" && candidate.PhoneNumber is null && candidate.AdmissionDate==default && candidate.UpdatedAt==default,"duplicate mapper has no address/contact/status/history/technical data");
+    Check(candidate.StudentId==0 && candidate.StudentNameKana=="" && candidate.SchoolYear is null && candidate.GradeName is null && candidate.ClassCode is null && candidate.EnrollmentStatusName is null && typeof(StudentRow).GetProperty("Address") is null && typeof(StudentRow).GetProperty("PhoneNumber") is null && typeof(StudentRow).GetProperty("UpdatedAt") is null,"duplicate mapper has no address/contact/status/history/technical data");
     Check(fourFields.Read() && NativeStoredProcedureClient.ReadDuplicateCandidate(fourFields).ClassName is null,"duplicate mapper preserves no-class NULL");
 }
 Console.WriteLine($"PASS: {checks} native normalization/wire boundary assertions");

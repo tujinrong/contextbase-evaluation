@@ -6,6 +6,8 @@
 // Activation-group storage belongs to one job. Entries are keyed by the editor
 // instance and token, not a shared confirmation flag. No transaction crosses EXFMT.
  dcl-ds confirmations likeds( Confirmation_t ) dim( 64 ) inz ;
+// Current search state is authoritative here, never in a caller-supplied DS.
+ dcl-ds searchStates likeds( SearchContext_t ) dim( 64 ) inz ;
  dcl-pr StBeginWork ;
  result likeds( Result_t ) ;
  end-pr ;
@@ -73,6 +75,23 @@
  criteria likeds( SearchCriteria_t ) ;
  day date const ;
  result likeds( Result_t ) ;
+ end-pr ;
+ dcl-pr LoadListRow ;
+ id int( 20 ) const ;
+ row likeds( StudentListRow_t ) ;
+ result likeds( Result_t ) ;
+ end-pr ;
+ dcl-pr SearchSlot int( 10 ) ;
+ context likeds( SearchContext_t ) const ;
+ result likeds( Result_t ) ;
+ verdict int( 10 ) ;
+ end-pr ;
+ dcl-pr ResetSearch ;
+ slot int( 10 ) const ;
+ raw likeds( SearchRaw_t ) ;
+ context likeds( SearchContext_t ) ;
+ page likeds( SearchPage_t ) ;
+ message char( 16 ) const ;
  end-pr ;
  dcl-proc StBeginWork export ;
  dcl-pi *n ;
@@ -379,7 +398,7 @@
  digest char( 64 ) ;
  result likeds( Result_t ) ;
  end-pi ;
- dcl-ds candidate likeds( StudentRecord_t ) ;
+ dcl-ds candidate likeds( DuplicateCandidate_t ) ;
  dcl-s id int( 20 ) ;
  dcl-s version int( 20 ) ;
  dcl-s piece varucs2( 8000 ) ccsid( 1200 ) ;
@@ -406,12 +425,14 @@
  piece=%ucs2( digest+ '|' +%char( id ) + ':' +%char( version ) ) ;
  digest=StHash( piece ) ;
  if result.candidateCount<=20 ;
- exec sql SELECT student_no , student_name , student_name_kana , birth_date
- INTO :candidate.work.studentNo ,
- :candidate.work.studentName ,
- :candidate.work.studentNameKana ,
- :candidate.work.birthDate
- FROM STUDAPP.M_STUDENT WHERE student_id= :id ;
+ clear candidate ;
+ exec sql SELECT s.student_no , s.student_name , s.birth_date ,
+ COALESCE( c.class_code , '' ) ,
+ COALESCE( c.class_name , CAST( '未所属' AS VARGRAPHIC( 36 ) CCSID 1200 ) )
+ INTO :candidate.studentNo , :candidate.studentName , :candidate.birthDate ,
+ :candidate.classCode , :candidate.className
+ FROM STUDAPP.M_STUDENT s LEFT JOIN STUDAPP.M_CLASS c ON c.class_id=s.class_id
+ WHERE s.student_id= :id ;
  if SQLCOD<>0 ;
  SqlFailure( result :SQLSTT ) ;
  leave ;
@@ -564,12 +585,10 @@
  endif ;
  endfor ;
  if slot=0 ;
- slot=1 ;
- for i=2 to 64 ;
- if confirmations( i ).expiresAt<confirmations( slot ).expiresAt ;
- slot=i ;
- endif ;
- endfor ;
+ result.kind=RK_SYSTEM ;
+ result.messageId= 'E-COM-004' ;
+ StEndWork( *off :result ) ;
+ return ;
  endif ;
  clear confirmations( slot ) ;
  StNewId( confirmations( slot ).token ) ;
@@ -724,13 +743,17 @@
  STUDAPP.M_CODE c WHERE
  category_id= :kind ) q
  WHERE rn BETWEEN :first AND :last ORDER BY rn ;
- exec sql DECLARE classChoice CURSOR FOR SELECT VARCHAR( class_id ) , VARCHAR( school_year )
- CONCAT
- ' / ' CONCAT class_code CONCAT ' / ' CONCAT class_name , is_active , valid_from , valid_to FROM
- ( SELECT c.* , ROW_NUMBER( ) OVER( ORDER BY school_year
- DESC , grade_code , display_order , class_code , class_id ) rn FROM STUDAPP.M_CLASS c
- WHERE( :schoolYear=0 OR school_year= :schoolYear ) AND( :grade= '' OR grade_code= :grade
- ) ) q
+ exec sql DECLARE classChoice CURSOR FOR SELECT VARCHAR( class_id ) ,
+ VARCHAR( school_year ) CONCAT ' / ' CONCAT grade_name CONCAT ' / ' CONCAT
+ class_code CONCAT ' / ' CONCAT class_name , is_active , valid_from , valid_to
+ FROM( SELECT c.* , COALESCE( g.code_name ,
+ CAST( '不整合' AS VARGRAPHIC( 24 ) CCSID 1200 ) ) grade_name ,
+ ROW_NUMBER( ) OVER( ORDER BY c.school_year DESC , g.display_order ,
+ c.display_order , c.class_code , c.class_id ) rn
+ FROM STUDAPP.M_CLASS c LEFT JOIN STUDAPP.M_CODE g
+ ON g.category_id= 'GRADE' AND g.code_value=c.grade_code
+ WHERE( :schoolYear=0 OR c.school_year= :schoolYear )
+ AND( :grade= '' OR c.grade_code= :grade ) ) q
  WHERE rn BETWEEN :first AND :last ORDER BY rn ;
  exec sql DECLARE yearChoice CURSOR FOR SELECT VARCHAR( school_year ) , VARCHAR( school_year )
  FROM
@@ -884,6 +907,246 @@
  result.messageId= 'E-COM-004' ;
  endmon ;
  end-proc ;
+// Confirmation cancellation releases only this authenticated editor's entries.
+ dcl-proc StCancelConfirmation export ;
+ dcl-pi *n ;
+ instance char( 36 ) const ;
+ result likeds( Result_t ) ;
+ end-pi ;
+ dcl-s principal varchar( 128 ) ;
+ dcl-s role int( 10 ) ;
+ dcl-s job varchar( 28 ) ;
+ dcl-s i int( 10 ) ;
+ clear result ;
+ StAuthorize( 'READ' :principal :role :result ) ;
+ if result.kind<>0 ;
+ return ;
+ endif ;
+ exec sql VALUES QSYS2.JOB_NAME INTO :job ;
+ if SQLCOD<>0 ;
+ SqlFailure( result :SQLSTT ) ;
+ return ;
+ endif ;
+ if instance= '' ;
+ return ;
+ endif ;
+ for i=1 to 64 ;
+ if confirmations( i ).owner=principal and confirmations( i ).job=job and
+ confirmations( i ).instanceId=instance ;
+ clear confirmations( i ) ;
+ endif ;
+ endfor ;
+ end-proc ;
+// Per-job activation-group registry; 64 live windows maximum, no live eviction.
+ dcl-proc StCreateSearchContext export ;
+ dcl-pi *n ;
+ raw likeds( SearchRaw_t ) ;
+ context likeds( SearchContext_t ) ;
+ page likeds( SearchPage_t ) ;
+ end-pi ;
+ dcl-s principal varchar( 128 ) ;
+ dcl-s role int( 10 ) ;
+ dcl-s job varchar( 28 ) ;
+ dcl-s utc timestamp ;
+ dcl-s day date ;
+ dcl-s slot int( 10 ) ;
+ dcl-s i int( 10 ) ;
+ clear page ;
+ StAuthorize( 'READ' :principal :role :page.result ) ;
+ if page.result.kind<>0 ;
+ return ;
+ endif ;
+ StClock( utc :day ) ;
+ exec sql VALUES QSYS2.JOB_NAME INTO :job ;
+ if SQLCOD<>0 ;
+ SqlFailure( page.result :SQLSTT ) ;
+ return ;
+ endif ;
+ for i=1 to 64 ;
+ if searchStates( i ).instanceId= '' or utc>=searchStates( i ).lastUsed+%minutes( 30 ) ;
+ slot=i ;
+ leave ;
+ endif ;
+ endfor ;
+ if slot=0 ;
+// Keep the UI unsearched even when no replacement registry slot can be issued.
+ clear raw ;
+ clear context ;
+ raw.criteriaFormatVersion=2 ;
+ raw.keyNames= 'studentNo,name,classId,statusCodes' ;
+ raw.selected( 1 ) =*on ;
+ raw.selected( 2 ) =*on ;
+ context.criteriaFormatVersion=2 ;
+ context.page=1 ;
+ context.pageSize=20 ;
+ context.sortKey= 'studentNo' ;
+ context.direction= 'asc' ;
+ context.owner=principal ;
+ context.session=job ;
+ page.result.kind=RK_SYSTEM ;
+ page.result.messageId= 'E-COM-004' ;
+ return ;
+ endif ;
+ clear searchStates( slot ) ;
+ StNewId( searchStates( slot ).instanceId ) ;
+ searchStates( slot ).owner=principal ;
+ searchStates( slot ).session=job ;
+ ResetSearch( slot :raw :context :page :'' ) ;
+ end-proc ;
+ dcl-proc SearchSlot ;
+ dcl-pi *n int( 10 ) ;
+ context likeds( SearchContext_t ) const ;
+ result likeds( Result_t ) ;
+ verdict int( 10 ) ;
+ end-pi ;
+ dcl-s principal varchar( 128 ) ;
+ dcl-s role int( 10 ) ;
+ dcl-s job varchar( 28 ) ;
+ dcl-s utc timestamp ;
+ dcl-s day date ;
+ dcl-s slot int( 10 ) ;
+ dcl-s i int( 10 ) ;
+ dcl-s flags int( 10 ) ;
+ dcl-s expired int( 10 ) ;
+ clear result ;
+ verdict=0 ;
+ StAuthorize( 'READ' :principal :role :result ) ;
+ if result.kind<>0 ;
+ return 0 ;
+ endif ;
+ StClock( utc :day ) ;
+ exec sql VALUES QSYS2.JOB_NAME INTO :job ;
+ if SQLCOD<>0 ;
+ SqlFailure( result :SQLSTT ) ;
+ return 0 ;
+ endif ;
+ for i=1 to 64 ;
+ if context.instanceId<> '' and searchStates( i ).instanceId=context.instanceId ;
+ slot=i ;
+ leave ;
+ endif ;
+ endfor ;
+ if slot=0 ;
+// A retired ID cannot restore data. Only the current user/job can request a fresh state.
+ if context.owner<>principal or context.session<>job ;
+ result.kind=RK_FORBIDDEN ;
+ result.messageId= 'E-COM-002' ;
+ return 0 ;
+ endif ;
+ if context.instanceId= '' or context.revision<=0 or
+ context.expectedRevision<>context.revision ;
+ result.kind=RK_CONFLICT ;
+ result.messageId= 'E-COM-003' ;
+ return 0 ;
+ endif ;
+ verdict=5 ;
+ result.kind=RK_CONFLICT ;
+ result.messageId= 'W-SRC-002' ;
+ return 0 ;
+ endif ;
+ if context.owner=principal and searchStates( slot ).owner=principal ;
+ flags+=1 ;
+ endif ;
+ if context.session=job and searchStates( slot ).session=job ;
+ flags+=2 ;
+ endif ;
+ if context.instanceId=searchStates( slot ).instanceId ;
+ flags+=4 ;
+ endif ;
+ if utc>=searchStates( slot ).lastUsed+%minutes( 30 ) ;
+ expired=1 ;
+ endif ;
+ verdict=StSearchStateCheck( flags :context.expectedRevision :searchStates( slot ).revision :
+ searchStates( slot ).criteriaFormatVersion :context.criteriaFormatVersion :expired ) ;
+ if verdict=3 ;
+ result.kind=RK_FORBIDDEN ;
+ result.messageId= 'E-COM-002' ;
+ return 0 ;
+ endif ;
+ if verdict=4 ;
+ result.kind=RK_CONFLICT ;
+ result.messageId= 'E-COM-003' ;
+ return 0 ;
+ endif ;
+ return slot ;
+ end-proc ;
+ dcl-proc ResetSearch ;
+ dcl-pi *n ;
+ slot int( 10 ) const ;
+ raw likeds( SearchRaw_t ) ;
+ context likeds( SearchContext_t ) ;
+ page likeds( SearchPage_t ) ;
+ message char( 16 ) const ;
+ end-pi ;
+ dcl-ds fresh likeds( SearchContext_t ) ;
+ dcl-s utc timestamp ;
+ dcl-s day date ;
+ clear fresh ;
+ clear raw ;
+ clear page ;
+ fresh.instanceId=searchStates( slot ).instanceId ;
+ fresh.owner=searchStates( slot ).owner ;
+ fresh.session=searchStates( slot ).session ;
+ fresh.revision=searchStates( slot ).revision+1 ;
+ fresh.expectedRevision=fresh.revision ;
+ fresh.criteriaFormatVersion=2 ;
+ fresh.page=1 ;
+ fresh.pageSize=20 ;
+ fresh.sortKey= 'studentNo' ;
+ fresh.direction= 'asc' ;
+ StClock( utc :day ) ;
+ fresh.lastUsed=utc ;
+ raw.criteriaFormatVersion=2 ;
+ raw.keyNames= 'studentNo,name,classId,statusCodes' ;
+ raw.selected( 1 ) =*on ;
+ raw.selected( 2 ) =*on ;
+ searchStates( slot ) =fresh ;
+ context=fresh ;
+ page.result.messageId=message ;
+ end-proc ;
+ dcl-proc StClearSearchContext export ;
+ dcl-pi *n ;
+ raw likeds( SearchRaw_t ) ;
+ context likeds( SearchContext_t ) ;
+ page likeds( SearchPage_t ) ;
+ end-pi ;
+ dcl-ds result likeds( Result_t ) ;
+ dcl-s verdict int( 10 ) ;
+ dcl-s slot int( 10 ) ;
+ slot=SearchSlot( context :result :verdict ) ;
+ if slot=0 ;
+ if verdict=5 ;
+ StCreateSearchContext( raw :context :page ) ;
+ if page.result.kind=0 ;
+ page.result.messageId= 'W-SRC-002' ;
+ endif ;
+ else ;
+ page.result=result ;
+ endif ;
+ return ;
+ endif ;
+ if verdict=1 or verdict=2 ;
+ ResetSearch( slot :raw :context :page :'W-SRC-002' ) ;
+ else ;
+ ResetSearch( slot :raw :context :page :'' ) ;
+ endif ;
+ end-proc ;
+ dcl-proc StCloseSearchContext export ;
+ dcl-pi *n ;
+ context likeds( SearchContext_t ) ;
+ result likeds( Result_t ) ;
+ end-pi ;
+ dcl-s slot int( 10 ) ;
+ dcl-s verdict int( 10 ) ;
+ slot=SearchSlot( context :result :verdict ) ;
+ if slot>0 ;
+ clear searchStates( slot ) ;
+ clear context ;
+ elseif verdict=5 ;
+ clear context ;
+ clear result ;
+ endif ;
+ end-proc ;
  dcl-proc NormalizeSearch ;
  dcl-pi *n ;
  raw likeds( SearchRaw_t ) const ;
@@ -892,57 +1155,34 @@
  result likeds( Result_t ) ;
  end-pi ;
  dcl-s temp varucs2( 320 ) ccsid( 1200 ) ;
- dcl-ds rec likeds( ClassWork_t ) ;
  dcl-s count int( 10 ) ;
  dcl-s i int( 10 ) ;
+ if raw.criteriaFormatVersion<>2 or
+ StSearchKeysValid( %addr( raw.keyNames :*data ) :%len( raw.keyNames ) ) =0 ;
+ StError( result :'criteria' :'E-SRC-001' ) ;
+ return ;
+ endif ;
  clear criteria ;
  temp=StNormalizeText( raw.values( 1 ) :15 :15 :5 :*off :'studentNo' :result ) ;
  criteria.studentNo=%char( StEscapeLike( temp :*on ) ) ;
  temp=StNormalizeText( raw.values( 2 ) :8 :160 :2 :*off :'studentName' :result ) ;
  criteria.nameKey=StEscapeLike( temp :*off ) ;
- temp=StNormalizeText( raw.values( 3 ) :36 :18 :4 :*off :'studentNameKana' :result ) ;
- criteria.kanaKey=StEscapeLike( temp :*off ) ;
- if %len( raw.values( 4 ) ) >0 ;
- temp=StNormalizeText( raw.values( 4 ) :4 :4 :11 :*on :'schoolYear' :result ) ;
- criteria.schoolYear=StLong( temp :*on :'schoolYear' :result ) ;
- if criteria.schoolYear<1900 or criteria.schoolYear>9998 ;
- StError( result :'schoolYear' :'E-DATE-003' ) ;
+ temp=StNormalizeText( raw.values( 3 ) :19 :19 :11 :*off :'classId' :result ) ;
+ criteria.classId=StLong( temp :*off :'classId' :result ) ;
+ if %len( temp ) >0 and criteria.classId<=0 ;
+ StError( result :'classId' :'E-COM-003' ) ;
  endif ;
- exec sql SELECT COUNT( * ) INTO :count FROM STUDAPP.M_CLASS WHERE
- school_year= :criteria.schoolYear ;
+ if result.kind<>0 ;
+ return ;
+ endif ;
+ if criteria.classId>0 ;
+ exec sql SELECT COUNT( * ) INTO :count FROM STUDAPP.M_CLASS
+ WHERE class_id= :criteria.classId ;
  if SQLCOD<>0 ;
  SqlFailure( result :SQLSTT ) ;
  return ;
- endif ;
- if count=0 ;
- StError( result :'schoolYear' :'E-STU-010' ) ;
- endif ;
- endif ;
- temp=StNormalizeText( raw.values( 5 ) :2 :2 :6 :*off :'gradeCode' :result ) ;
- criteria.gradeCode=%char( temp ) ;
- CheckCode( 'GRADE' :criteria.gradeCode :'' :*off :day :'gradeCode' :result ) ;
- criteria.classId=StLong( raw.values( 6 ) :*off :'classId' :result ) ;
- if raw.values( 7 ) =%ucs2( '1' ) ;
- criteria.unassigned=1 ;
- elseif %len( raw.values( 7 ) ) >0 and raw.values( 7 ) <>%ucs2( '0' ) ;
- StError( result :'unassignedOnly' :'E-COM-003' ) ;
- endif ;
- if criteria.unassigned=1 and( criteria.schoolYear<>0 or criteria.gradeCode<> '' or
- criteria.classId<>0 ) ;
- StError( result :'unassignedOnly' :'E-SRC-001' ) ;
- endif ;
- if criteria.classId>0 ;
- exec sql SELECT school_year , grade_code INTO :rec.schoolYear , :rec.gradeCode FROM
- STUDAPP.M_CLASS
- WHERE class_id= :criteria.classId ;
- if SQLCOD=100 ;
+ elseif count<>1 ;
  StError( result :'classId' :'E-STU-010' ) ;
- elseif SQLCOD<>0 ;
- SqlFailure( result :SQLSTT ) ;
- return ;
- elseif( criteria.schoolYear<>0 and criteria.schoolYear<>rec.schoolYear ) or
- ( criteria.gradeCode<> '' and criteria.gradeCode<>rec.gradeCode ) ;
- StError( result :'classId' :'E-STU-014' ) ;
  endif ;
  endif ;
  for i=1 to 4 ;
@@ -951,34 +1191,45 @@
  criteria.anyStatus=1 ;
  endif ;
  endfor ;
- temp=StNormalizeText( raw.values( 9 ) :2 :2 :6 :*off :'prefectureCode' :result ) ;
- criteria.prefectureCode=%char( temp ) ;
- CheckCode( 'PREFECTURE' :criteria.prefectureCode :'' :*off :day :'prefectureCode' :
- result ) ;
- temp=StNormalizeText( raw.values( 10 ) :20 :16 :8 :*off :'phoneNumber' :result ) ;
- criteria.phone=%char( temp ) ;
- if %len( raw.values( 11 ) ) >0 ;
- criteria.fromFlag=1 ;
- temp=StNormalizeText( raw.values( 11 ) :10 :10 :10 :*on :'admissionFrom' :result ) ;
- StIsoDate( temp :day :criteria.fromDate :'admissionFrom' :result ) ;
- endif ;
- if %len( raw.values( 12 ) ) >0 ;
- criteria.toFlag=1 ;
- temp=StNormalizeText( raw.values( 12 ) :10 :10 :10 :*on :'admissionTo' :result ) ;
- StIsoDate( temp :day :criteria.toDate :'admissionTo' :result ) ;
- endif ;
- if criteria.fromFlag=1 and criteria.toFlag=1 and criteria.fromDate>criteria.toDate ;
- StError( result :'admissionTo' :'E-STU-007' ) ;
+ end-proc ;
+// Search projection intentionally contains no address, telephone or update metadata.
+ dcl-proc LoadListRow ;
+ dcl-pi *n ;
+ id int( 20 ) const ;
+ row likeds( StudentListRow_t ) ;
+ result likeds( Result_t ) ;
+ end-pi ;
+ clear row ;
+ exec sql SELECT s.student_id , s.student_no , s.student_name , s.student_name_kana ,
+ s.birth_date , s.class_id , c.school_year ,
+ COALESCE( g.code_name , CAST( '不整合' AS VARGRAPHIC( 24 ) CCSID 1200 ) ) ,
+ COALESCE( c.class_code , '' ) ,
+ COALESCE( c.class_name , CAST( '' AS VARGRAPHIC( 36 ) CCSID 1200 ) ) ,
+ COALESCE( e.code_name , CAST( '不整合' AS VARGRAPHIC( 24 ) CCSID 1200 ) )
+ INTO :row.studentId , :row.work.studentNo , :row.work.studentName ,
+ :row.work.studentNameKana , :row.work.birthDate , :row.work.classId :row.work.classIdInd ,
+ :row.schoolYear :row.schoolYearInd , :row.gradeName , :row.classCode ,
+ :row.className , :row.enrollmentName
+ FROM STUDAPP.M_STUDENT s LEFT JOIN STUDAPP.M_CLASS c ON c.class_id=s.class_id
+ LEFT JOIN STUDAPP.M_CODE g ON g.category_id= 'GRADE' AND g.code_value=c.grade_code
+ LEFT JOIN STUDAPP.M_CODE e ON e.category_id= 'ENROLLMENT_STATUS'
+ AND e.code_value=s.enrollment_status_code
+ WHERE s.student_id= :id AND s.is_deleted=0 ;
+ if SQLCOD<>0 ;
+ SqlFailure( result :SQLSTT ) ;
  endif ;
  end-proc ;
  dcl-proc StSearchStudents export ;
  dcl-pi *n ;
- raw likeds( SearchRaw_t ) const ;
+ raw likeds( SearchRaw_t ) ;
  context likeds( SearchContext_t ) ;
  newSearch ind const ;
  page likeds( SearchPage_t ) ;
  end-pi ;
  dcl-ds c likeds( SearchCriteria_t ) ;
+ dcl-ds gateResult likeds( Result_t ) ;
+ dcl-s slot int( 10 ) ;
+ dcl-s verdict int( 10 ) ;
  dcl-s principal varchar( 128 ) ;
  dcl-s role int( 10 ) ;
  dcl-s utc timestamp ;
@@ -992,18 +1243,25 @@
  dcl-s maxPage int( 10 ) ;
  exec sql DECLARE countCursor CURSOR FOR countStmt ;
  exec sql DECLARE pageCursor CURSOR FOR pageStmt ;
+ slot=SearchSlot( context :gateResult :verdict ) ;
+ if slot=0 ;
+ if verdict=5 ;
+ StCreateSearchContext( raw :context :page ) ;
+ if page.result.kind=0 ;
+ page.result.messageId= 'W-SRC-002' ;
+ endif ;
+ else ;
+ page.result=gateResult ;
+ endif ;
+ return ;
+ endif ;
+ if verdict=1 or verdict=2 ;
+ ResetSearch( slot :raw :context :page :'W-SRC-002' ) ;
+ return ;
+ endif ;
  clear page ;
  StNewId( page.result.requestId ) ;
- StAuthorize( 'READ' :principal :role :page.result ) ;
- if page.result.kind<>0 ;
- return ;
- endif ;
  StClock( utc :day ) ;
- if context.owner<> '' and context.owner<>principal ;
- page.result.kind=RK_FORBIDDEN ;
- page.result.messageId= 'E-COM-002' ;
- return ;
- endif ;
  if context.pageSize<>20 and context.pageSize<>50 and context.pageSize<>100 ;
  StError( page.result :'pageSize' :'E-COM-003' ) ;
  return ;
@@ -1016,7 +1274,7 @@
  when context.sortKey= 'studentNo' ;
  order= 's.student_no' ;
  when context.sortKey= 'name' ;
- order= 's.student_name' ;
+ order= 's.name_key' ;
  when context.sortKey= 'admissionDate' ;
  order= 's.admission_date' ;
  when context.sortKey= 'updatedAt' ;
@@ -1037,28 +1295,17 @@
  endif ;
  context.page=1 ;
  else ;
- if not context.hasApplied ;
+ if not searchStates( slot ).hasApplied ;
  return ;
  endif ;
- if utc>context.lastUsed+%minutes( 30 ) ;
- context.hasApplied=*off ;
- page.result.messageId= 'W-SRC-002' ;
- return ;
+ c=searchStates( slot ).applied ;
  endif ;
- c=context.applied ;
- endif ;
- predicate= ' FROM STUDAPP.M_STUDENT s LEFT JOIN STUDAPP.M_CLASS ' +
- 'c ON c.class_id=s.class_id WHERE s.is_deleted=0' +
- ' AND s.student_no LIKE ? ESCAPE ''!'' AND s.name_key' +
- ' LIKE ? ESCAPE ''!'' AND s.kana_key LIKE ? ESCAPE ''' + '!''' +
- ' AND(?=0 OR c.school_year=?) AND(?='''' OR c.grade' + '_code=?) AND(?=0 OR s.class_id=?)' +
- ' AND(?=0 OR s.class_id IS NULL) AND(?=0 OR(?=1 AN' +
- 'D s.enrollment_status_code=''01'') OR(?=1 AND s.enr' +
- 'ollment_status_code=''02'') OR(?=1 AND s.enrollment' +
- '_status_code=''03'') OR(?=1 AND s.enrollment_status' + '_code=''04''))' +
- ' AND(?='''' OR s.prefecture_code=?) AND(?='''' OR ' +
- 's.phone_number=? OR s.emergency_phone_number=?)' +
- ' AND(?=0 OR s.admission_date>=?) AND(?=0 OR s.admission_date<=?)' ;
+ predicate= ' FROM STUDAPP.M_STUDENT s WHERE s.is_deleted=0' +
+ ' AND s.student_no LIKE ? ESCAPE ''!'' AND s.name_key LIKE ? ESCAPE ''!''' +
+ ' AND(?=0 OR s.class_id=?) AND(?=0 OR(?=1 AND s.enrol' + 'lment_status_code=''01'')' +
+ ' OR(?=1 AND s.enrollment_status_code=''02'') OR(?=1 ' + 'AND s.enrollment_status_code=''03'')'
+ +
+ ' OR(?=1 AND s.enrollment_status_code=''04''))' ;
  monitor ;
  StBeginWork( page.result ) ;
  if page.result.kind<>0 ;
@@ -1072,13 +1319,8 @@
  StEndWork( *off :page.result ) ;
  return ;
  endif ;
- exec sql OPEN countCursor USING :c.studentNo , :c.nameKey , :c.kanaKey , :c.schoolYear , :
- c.schoolYear ,
- :c.gradeCode , :c.gradeCode , :c.classId , :c.classId , :c.unassigned , :c.anyStatus , :
- c.status( 1 ) , :c.status( 2 ) , :c.status( 3 ) , :c.status( 4 ) ,
- :c.prefectureCode , :c.prefectureCode , :c.phone , :c.phone , :c.phone , :c.fromFlag , :
- c.fromDate , :c.toFlag , :c.toDate
- ;
+ exec sql OPEN countCursor USING :c.studentNo , :c.nameKey , :c.classId , :c.classId ,
+ :c.anyStatus , :c.status( 1 ) , :c.status( 2 ) , :c.status( 3 ) , :c.status( 4 ) ;
  if SQLCOD<>0 ;
  SqlFailure( page.result :SQLSTT ) ;
  StEndWork( *off :page.result ) ;
@@ -1104,6 +1346,15 @@
  page.result.kind=RK_LIMIT ;
  page.result.messageId= 'W-SRC-001' ;
  StEndWork( *off :page.result ) ;
+ if page.result.kind<>RK_LIMIT ;
+ return ;
+ endif ;
+ context.applied=c ;
+ context.hasApplied=*on ;
+ context.lastUsed=utc ;
+ context.revision=searchStates( slot ).revision+1 ;
+ context.expectedRevision=context.revision ;
+ searchStates( slot ) =context ;
  return ;
  endif ;
  maxPage=%div( page.total+context.pageSize-1 :context.pageSize ) ;
@@ -1124,13 +1375,9 @@
  StEndWork( *off :page.result ) ;
  return ;
  endif ;
- exec sql OPEN pageCursor USING :c.studentNo , :c.nameKey , :c.kanaKey , :c.schoolYear , :
- c.schoolYear ,
- :c.gradeCode , :c.gradeCode , :c.classId , :c.classId , :c.unassigned , :c.anyStatus , :
- c.status( 1 ) , :c.status( 2 ) , :c.status( 3 ) , :c.status( 4 ) ,
- :c.prefectureCode , :c.prefectureCode , :c.phone , :c.phone , :c.phone , :c.fromFlag , :
- c.fromDate , :c.toFlag , :c.toDate , :first , :last
- ;
+ exec sql OPEN pageCursor USING :c.studentNo , :c.nameKey , :c.classId , :c.classId ,
+ :c.anyStatus , :c.status( 1 ) , :c.status( 2 ) , :c.status( 3 ) , :c.status( 4 ) , :first , :
+ last ;
  if SQLCOD<>0 ;
  SqlFailure( page.result :SQLSTT ) ;
  StEndWork( *off :page.result ) ;
@@ -1146,7 +1393,7 @@
  leave ;
  endif ;
  page.rowCount+=1 ;
- LoadRow( id :page.rows( page.rowCount ) :page.result ) ;
+ LoadListRow( id :page.rows( page.rowCount ) :page.result ) ;
  if page.result.kind<>0 ;
  leave ;
  endif ;
@@ -1157,10 +1404,12 @@
  page.rowCount=0 ;
  return ;
  endif ;
- context.owner=principal ;
  context.applied=c ;
  context.hasApplied=*on ;
  context.lastUsed=utc ;
+ context.revision=searchStates( slot ).revision+1 ;
+ context.expectedRevision=context.revision ;
+ searchStates( slot ) =context ;
  page.searchedAt=utc ;
  if page.total=0 ;
  page.rangeFrom=0 ;

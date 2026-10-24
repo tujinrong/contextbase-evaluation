@@ -29,7 +29,7 @@ Namespace Forms
         End Sub
         Private Sub FocusInitialField()
             If IsDisposed Then Return
-            Dim first = Fields.Values.Where(Function(control) control.CanSelect AndAlso control.TabStop).OrderBy(Function(control) control.TabIndex).FirstOrDefault()
+            Dim first As Control = If(txtStudentNo.CanSelect, DirectCast(txtStudentNo, Control), If(txtStudentName.CanSelect, DirectCast(txtStudentName, Control), Nothing))
             If first IsNot Nothing Then
                 first.Focus()
             Else

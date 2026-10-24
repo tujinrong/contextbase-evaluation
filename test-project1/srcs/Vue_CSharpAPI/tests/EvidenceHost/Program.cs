@@ -75,12 +75,9 @@ sealed class EvidenceFixture : IStudentService {
     public async Task<int> Smoke(){
         var passed=0;void Assert(bool condition,string name){if(!condition)throw new InvalidDataException("Fixture smoke failed: "+name);passed++;}
         var found=await SearchAsync(new());Assert(found.Count==2&&found.Items.Count==2,"default status rows");Assert(found.Items.All(x=>x.StudentNo.StartsWith("TEST")),"synthetic numbers");
-        Assert((await SearchAsync(new(){StudentNo="TEST2026-0002"})).Count==1,"literal prefix filter");
-        Assert((await SearchAsync(new(){EnrollmentStatusCodes=[]})).Count==3,"unfiltered statuses");
-        Assert((await SearchAsync(new(){UnassignedOnly=true,EnrollmentStatusCodes=[]})).Count==1,"unassigned terminal row");
-        Assert((await SearchAsync(new(){GradeCode="01"})).Count==1,"grade reference");
-        Assert((await SearchAsync(new(){PhoneNumber="000000"})).Count==2,"phone substring");
-        Assert((await SearchAsync(new(){StudentNo="MISSING"})).Count==0,"empty result");
+        Assert((await SearchAsync(new(){StudentNoPrefix="TEST2026-0002"})).Count==1,"literal prefix filter");
+        Assert((await SearchAsync(new(){StatusCodes=[]})).Count==3,"unfiltered statuses");
+        Assert((await SearchAsync(new(){StudentNoPrefix="MISSING"})).Count==0,"empty result");
         var detail=await GetAsync(9007199254740993);Assert(detail?.Draft.StudentNo=="TEST2026-0001"&&detail.StudentId>9007199254740991,"exact Int64 detail");
         Assert(await GetAsync(1) is null,"missing detail");
         var lookup=await LookupAsync();Assert(lookup.Codes.Count==70&&lookup.Classes.Count==2,"complete lookups");
@@ -92,25 +89,17 @@ sealed class EvidenceFixture : IStudentService {
         return passed;
     }
     StudentDraft Copy(StudentDraft value)=>JsonSerializer.Deserialize<StudentDraft>(JsonSerializer.Serialize(value,json),json)!;
-    StudentRow Row(FixtureStudent s){
+    StudentListItem Row(FixtureStudent s){
         var c=data.Classes.SingleOrDefault(x=>x.ClassId==s.Draft.ClassId);
         string? Code(string category,string value)=>data.Codes.FirstOrDefault(x=>x.CategoryId==category&&x.CodeValue==value)?.CodeName;
-        return new(s.StudentId,s.Draft.StudentNo,s.Draft.StudentName,s.Draft.StudentNameKana,s.BirthDate,c?.SchoolYear,c is null?null:Code("GRADE",c.GradeCode),c?.ClassCode,c?.ClassName,Code("ENROLLMENT_STATUS",s.Draft.EnrollmentStatusCode),s.Draft.AddressLine1,s.Draft.PhoneNumber,DateOnly.Parse(s.Draft.AdmissionDate,CultureInfo.InvariantCulture),data.UpdatedAt,s.RowVersion);
+        return new(s.StudentId,s.Draft.StudentNo,s.Draft.StudentName,s.Draft.StudentNameKana,s.BirthDate,c?.SchoolYear,c is null?null:Code("GRADE",c.GradeCode),c?.ClassCode,c?.ClassName,Code("ENROLLMENT_STATUS",s.Draft.EnrollmentStatusCode));
     }
     public Task<SearchResult> SearchAsync(SearchCriteria c,CancellationToken ct=default){
         ct.ThrowIfCancellationRequested();IEnumerable<FixtureStudent> q=data.Students;
-        if(!string.IsNullOrEmpty(c.StudentNo))q=q.Where(x=>x.Draft.StudentNo.StartsWith(c.StudentNo,StringComparison.OrdinalIgnoreCase));
-        if(!string.IsNullOrEmpty(c.StudentName))q=q.Where(x=>StudentNormalizer.NameKey(x.Draft.StudentName).Contains(StudentNormalizer.NameKey(c.StudentName),StringComparison.Ordinal));
-        if(!string.IsNullOrEmpty(c.StudentNameKana))q=q.Where(x=>StudentNormalizer.Kana(x.Draft.StudentNameKana).Contains(StudentNormalizer.Kana(c.StudentNameKana),StringComparison.Ordinal));
-        if(c.EnrollmentStatusCodes.Length>0)q=q.Where(x=>c.EnrollmentStatusCodes.Contains(x.Draft.EnrollmentStatusCode));
+        if(!string.IsNullOrEmpty(c.StudentNoPrefix))q=q.Where(x=>x.Draft.StudentNo.StartsWith(c.StudentNoPrefix,StringComparison.OrdinalIgnoreCase));
+        if(!string.IsNullOrEmpty(c.NameKey))q=q.Where(x=>StudentNormalizer.NameKey(x.Draft.StudentName).Contains(StudentNormalizer.NameKey(c.NameKey),StringComparison.Ordinal));
+        if(c.StatusCodes.Length>0)q=q.Where(x=>c.StatusCodes.Contains(x.Draft.EnrollmentStatusCode));
         if(c.ClassId is long id)q=q.Where(x=>x.Draft.ClassId==id);
-        if(c.UnassignedOnly)q=q.Where(x=>x.Draft.ClassId is null);
-        if(c.SchoolYear is int y)q=q.Where(x=>data.Classes.Any(k=>k.ClassId==x.Draft.ClassId&&k.SchoolYear==y));
-        if(!string.IsNullOrEmpty(c.GradeCode))q=q.Where(x=>data.Classes.Any(k=>k.ClassId==x.Draft.ClassId&&k.GradeCode==c.GradeCode));
-        if(!string.IsNullOrEmpty(c.PrefectureCode))q=q.Where(x=>x.Draft.PrefectureCode==c.PrefectureCode);
-        if(!string.IsNullOrEmpty(c.PhoneNumber))q=q.Where(x=>(x.Draft.PhoneNumber??"").Contains(c.PhoneNumber,StringComparison.Ordinal)||(x.Draft.EmergencyPhoneNumber??"").Contains(c.PhoneNumber,StringComparison.Ordinal));
-        if(!string.IsNullOrEmpty(c.AdmissionFrom))q=q.Where(x=>string.CompareOrdinal(x.Draft.AdmissionDate,c.AdmissionFrom)>=0);
-        if(!string.IsNullOrEmpty(c.AdmissionTo))q=q.Where(x=>string.CompareOrdinal(x.Draft.AdmissionDate,c.AdmissionTo)<=0);
         var count=q.Count();Func<FixtureStudent,string> key=c.SortKey switch {"name"=>x=>StudentNormalizer.NameKey(x.Draft.StudentName),"admissionDate"=>x=>x.Draft.AdmissionDate,"updatedAt"=>x=>data.UpdatedAt.ToString("O"),_=>x=>x.Draft.StudentNo};
         q=c.SortDirection=="desc"?q.OrderByDescending(key,StringComparer.Ordinal).ThenBy(x=>x.StudentId):q.OrderBy(key,StringComparer.Ordinal).ThenBy(x=>x.StudentId);
         return Task.FromResult(new SearchResult(Outcome.NoChange,count,q.Skip((Math.Max(1,c.Page)-1)*c.PageSize).Take(c.PageSize).Select(Row).ToArray(),DateTimeOffset.UtcNow,false,[]));

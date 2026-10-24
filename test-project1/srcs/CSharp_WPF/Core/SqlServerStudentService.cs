@@ -61,17 +61,14 @@ public sealed class SqlServerStudentService : IStudentService
     private static StudentRow Row(SqlDataReader reader) => new(
         Long(reader,"student_id"), String(reader,"student_no")!, String(reader,"student_name")!, String(reader,"student_name_kana")!, Date(reader,"birth_date"),
         reader.IsDBNull(reader.GetOrdinal("school_year")) ? null : Convert.ToInt32(reader["school_year"]), String(reader,"grade_name"), String(reader,"class_code"), String(reader,"class_name"),
-        String(reader,"status_name"), (String(reader,"prefecture_name") ?? "[不整合]") + String(reader,"address_line1"), String(reader,"phone_number"), Date(reader,"admission_date"),
-        reader.GetFieldValue<DateTimeOffset>(reader.GetOrdinal("updated_at")), Long(reader,"row_version"));
+        String(reader,"status_name"));
     private const string RowSelect = """
         SELECT s.student_id,s.student_no,s.student_name,s.student_name_kana,s.birth_date,
-               c.school_year,c.class_code,c.class_name,g.code_name grade_name,e.code_name status_name,
-               p.code_name prefecture_name,s.address_line1,s.phone_number,s.admission_date,s.updated_at,s.row_version
+               c.school_year,c.class_code,c.class_name,g.code_name grade_name,e.code_name status_name
           FROM dbo.m_student s
           LEFT JOIN dbo.m_class c ON c.class_id=s.class_id
           LEFT JOIN dbo.m_code g ON g.category_id=c.grade_category AND g.code_value=c.grade_code
           LEFT JOIN dbo.m_code e ON e.category_id=s.enrollment_category AND e.code_value=s.enrollment_status_code
-          LEFT JOIN dbo.m_code p ON p.category_id=s.prefecture_category AND p.code_value=s.prefecture_code
         """;
     internal static async Task Gate(SqlConnection connection, SqlTransaction tx, CancellationToken ct)
     {
@@ -90,48 +87,25 @@ public sealed class SqlServerStudentService : IStudentService
         try {
             if (criteria.Page < 1 || criteria.PageSize is not (20 or 50 or 100) || criteria.SortDirection is not ("asc" or "desc")) throw new ArgumentException("E-COM-003: ページ指定が不正です。");
             var order = criteria.SortKey switch { "studentNo" => "s.student_no", "name" => "s.name_key", "admissionDate" => "s.admission_date", "updatedAt" => "s.updated_at", _ => throw new ArgumentException("E-COM-003: 並び順が不正です。") };
-            if (criteria.SchoolYear is < 1900 or > 9998 || criteria.ClassId is <= 0) throw new ArgumentException("E-DATE-003: 年度またはクラスが不正です。");
-            if (criteria.UnassignedOnly && (criteria.SchoolYear is not null || criteria.GradeCode is not null || criteria.ClassId is not null)) throw new ArgumentException("E-SRC-001: 未所属と年度・学年・クラスは同時指定できません。");
-            var statuses = criteria.EnrollmentStatusCodes;
+            if (criteria.ClassId is <= 0) throw new ArgumentException("E-COM-003: クラスが不正です。");
+            var statuses = criteria.EnrollmentStatusCodes ?? throw new ArgumentException("E-COM-003: 在籍区分が不正です。");
             if (statuses.Length > 4 || statuses.Distinct(StringComparer.Ordinal).Count() != statuses.Length || statuses.Any(value => value is not ("01" or "02" or "03" or "04"))) throw new ArgumentException("E-STU-009: 在籍区分が不正です。");
             var no = string.IsNullOrEmpty(criteria.StudentNo) ? null : StudentNormalizer.Identifier(criteria.StudentNo,15,"StudentNo");
             var name = StudentNormalizer.Text(criteria.StudentName,8,8,"StudentName");
             name = name is null ? null : StudentNormalizer.NameKey(name);
-            var kana = string.IsNullOrEmpty(criteria.StudentNameKana) ? null : StudentNormalizer.Kana(criteria.StudentNameKana,false).Replace(" ","");
-            var phone = StudentNormalizer.Phone(criteria.PhoneNumber,"PhoneNumber");
-            var grade = StudentNormalizer.Code(criteria.GradeCode,2,"GradeCode",false);
-            var prefecture = StudentNormalizer.Code(criteria.PrefectureCode,2,"PrefectureCode",false);
-            DateOnly? from = string.IsNullOrEmpty(criteria.AdmissionFrom) ? null : JapaneseDateService.ParseIso(criteria.AdmissionFrom,day);
-            DateOnly? to = string.IsNullOrEmpty(criteria.AdmissionTo) ? null : JapaneseDateService.ParseIso(criteria.AdmissionTo,day);
-            if (from > to) throw new ArgumentException("E-STU-006: 開始日は終了日以前にしてください。");
             await using var connection = await Open(ct);
             await using var tx = (SqlTransaction)await connection.BeginTransactionAsync(IsolationLevel.Snapshot,ct);
-            if (grade is not null && !await CodeExists(connection,tx,"GRADE",grade,ct) || prefecture is not null && !await CodeExists(connection,tx,"PREFECTURE",prefecture,ct)) throw new ArgumentException("E-STU-009: 指定コードが存在しません。");
-            if (criteria.SchoolYear is not null) {
-                await using var yearCheck = Command(connection,tx,"SELECT COUNT_BIG(*) FROM dbo.m_class WHERE school_year=@year");
-                Param(yearCheck,"@year",SqlDbType.SmallInt,criteria.SchoolYear);
-                if ((long)(await yearCheck.ExecuteScalarAsync(ct))! == 0) throw new ArgumentException("E-STU-014: 年度候補が存在しません。");
-            }
             if (criteria.ClassId is { } classId) {
-                await using var classCheck = Command(connection,tx,"SELECT school_year,grade_code FROM dbo.m_class WHERE class_id=@id");
+                await using var classCheck = Command(connection,tx,"SELECT COUNT_BIG(*) FROM dbo.m_class WHERE class_id=@id");
                 Param(classCheck,"@id",SqlDbType.BigInt,classId);
-                await using var reader = await classCheck.ExecuteReaderAsync(ct);
-                if (!await reader.ReadAsync(ct) || criteria.SchoolYear is not null && Convert.ToInt32(reader[0]) != criteria.SchoolYear || grade is not null && reader.GetString(1) != grade) throw new ArgumentException("E-STU-014: 年度・学年・クラスが一致しません。");
+                if ((long)(await classCheck.ExecuteScalarAsync(ct))! == 0) throw new ArgumentException("E-STU-014: クラスが存在しません。");
             }
             var predicates = new List<string>{ "s.is_deleted=0" };
             var parameters = new List<(string Name, SqlDbType Type, object? Value, int Size)>();
             void Where(string sql, string key, SqlDbType type, object? value, int size = 0) { if (value is not null) { predicates.Add(sql); parameters.Add((key,type,value,size)); } }
             Where("s.student_no LIKE @no ESCAPE '!'","@no",SqlDbType.VarChar,no is null ? null : StudentNormalizer.EscapeLike(no)+"%",31);
             Where("s.name_key LIKE @name ESCAPE '!'","@name",SqlDbType.NVarChar,name is null ? null : "%"+StudentNormalizer.EscapeLike(name)+"%",642);
-            Where("s.kana_key LIKE @kana ESCAPE '!'","@kana",SqlDbType.NVarChar,kana is null ? null : "%"+StudentNormalizer.EscapeLike(kana)+"%",74);
-            Where("c.school_year=@year","@year",SqlDbType.SmallInt,criteria.SchoolYear);
-            Where("c.grade_code=@grade","@grade",SqlDbType.VarChar,grade,2);
             Where("s.class_id=@class","@class",SqlDbType.BigInt,criteria.ClassId);
-            if(criteria.UnassignedOnly) predicates.Add("s.class_id IS NULL");
-            Where("s.prefecture_code=@prefecture","@prefecture",SqlDbType.VarChar,prefecture,2);
-            Where("(s.phone_number=@phone OR s.emergency_phone_number=@phone)","@phone",SqlDbType.VarChar,phone,16);
-            Where("s.admission_date>=@from","@from",SqlDbType.Date,from);
-            Where("s.admission_date<=@to","@to",SqlDbType.Date,to);
             if(statuses.Length>0) {
                 predicates.Add("s.enrollment_status_code IN ("+string.Join(',',statuses.Select((_,index)=>"@status"+index))+")");
                 parameters.AddRange(statuses.Select((value,index)=>("@status"+index,SqlDbType.VarChar,(object?)value,2)));

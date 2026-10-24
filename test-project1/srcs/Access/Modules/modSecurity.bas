@@ -71,3 +71,12 @@ Public Function AuthorizationStamp() As String
     Set file = fs.GetFile(CurrentProject.Path & "\roles.conf")
     AuthorizationStamp = CurrentUserId() & "|" & CurrentRole() & "|" & CStr(authenticationGeneration) & "|" & CStr(file.DateLastModified) & "|" & CStr(file.Size)
 End Function
+
+Private Function NewSessionId() As String
+    NewSessionId = GuidText()
+End Function
+Public Function AuthenticationSessionId() As String
+    Static session As String
+    If session = "" Then session = NewSessionId()
+    AuthenticationSessionId = session
+End Function

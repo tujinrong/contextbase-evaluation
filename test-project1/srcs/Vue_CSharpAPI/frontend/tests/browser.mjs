@@ -1,73 +1,70 @@
-// Real Vue/Edge workflow with isolated API responses. No business DB is opened.
+// Real Vue and Edge with an explicit synthetic API. No business DB is opened.
 import {chromium,expect} from '@playwright/test';
 import {createServer} from 'vite';
-import fs from 'node:fs';
-import path from 'node:path';
-import {fileURLToPath} from 'node:url';
-const frontend=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const runId=process.argv[2];if(!/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(runId??''))throw new Error('Pass unique run ID.');
-const report=path.resolve(process.argv[3]??path.join(frontend,'test-report'));fs.mkdirSync(report,{recursive:true});
-const prefix=path.join(report,runId+'-vue-browser');
-for(const suffix of ['.json','.raw.log','.png'])if(fs.existsSync(prefix+suffix))throw new Error('Report exists.');
-const checks=[],requests=[],errors=[];let failure=null;
-const server=await createServer({root:frontend,server:{host:'127.0.0.1',port:0,strictPort:true,watch:{ignored:['**/build/**']}},logLevel:'error'});await server.listen();
-const address=server.httpServer.address();
-const browser=await chromium.launchPersistentContext(path.join(frontend,'build/browser-profile',runId),{channel:'msedge',headless:true,viewport:{width:1440,height:1100},artifactsDir:path.join(frontend,'build/browser-artifacts',runId)});
-const page=await browser.newPage();page.on('pageerror',e=>errors.push(String(e)));
-const check=(ok,name)=>{if(!ok)throw new Error('FAILED: '+name);checks.push(name);};
-const assert=async(name,operation)=>{await operation();checks.push(name);};
-const context='a'.repeat(64);let revision=1,lastCriteria=null;const permissions={read:true,create:true,update:true,delete:false,maintain:false};
-const lookups={years:[2026],codes:[['GENDER','0','未回答'],['PREFECTURE','13','東京都'],['GRADE','00','学年なし'],['ENROLLMENT_STATUS','01','在学'],['ENROLLMENT_STATUS','02','休学'],['ENROLLMENT_STATUS','03','卒業'],['RELATIONSHIP','01','父']].map(([categoryId,value,name])=>({categoryId,value,name,selectable:true})),classes:[{classId:'9007199254740993',schoolYear:2026,gradeCode:'00',gradeName:'学年なし',classCode:'C-A',className:'Aクラス',selectable:true,note:'',occupancy:0,capacity:30}]};
-const initial={studentNo:'',name:'',kana:'',schoolYear:null,gradeCode:null,classId:null,unassignedOnly:false,statusCodes:['01','02'],prefectureCode:null,phoneNumber:'',admissionFrom:null,admissionTo:null};
-const row={studentId:'9007199254740993',studentNo:'S2026-0001',studentName:'見本 太郎',studentNameKana:'ミホン タロウ',birthDateWareki:'平成20年05月15日',schoolYear:2026,gradeName:'学年なし',classCode:'C-A',className:'Aクラス',enrollmentName:'在学',addressDisplay:'東京都試験町',phoneNumber:null,updatedAt:'2026/10/12 10:00:00'};
-const draft={studentNo:'',studentName:'',studentNameKana:'',birthDateInput:{era:'',year:'',month:'',day:''},genderCode:'0',postalCode:'',prefectureCode:'',addressLine1:'',addressLine2:null,phoneNumber:null,emailAddress:null,admissionDate:'',enrollmentStatusCode:'01',enrollmentEndDate:null,classId:null,emergencyContactName:null,relationshipCode:null,emergencyPhoneNumber:null,remarks:null,schoolYear:null,gradeCode:null,expectedVersion:null,duplicateToken:null,operationReason:null,returnContextId:context};
-const result=(criteria,unsearched=false)=>({outcome:unsearched?'unsearched':'found',totalCount:unsearched?null:1,items:unsearched?[]:[row],page:1,pageSize:20,sortKey:'studentNo',sortDirection:'asc',searchedAt:unsearched?null:'2026/10/12 10:00:00',contextId:context,contextRevision:String(++revision),criteria});
+import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const run=process.argv[2];if(!/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(run??''))throw Error('Pass unique run ID.');
+const report=path.resolve(process.argv[3]??path.join(root,'test-report'));fs.mkdirSync(report,{recursive:true});
+const prefix=path.join(report,run+'-vue-browser');if(fs.existsSync(prefix+'.json'))throw Error('Report already exists.');
+const checks=[],requests=[],errors=[],geometry=[];let failure=null;
+const check=(ok,name)=>{if(!ok)throw Error(name);checks.push(name);};
+const server=await createServer({root,server:{host:'127.0.0.1',port:0,strictPort:true},logLevel:'error'});await server.listen();
+const browser=await chromium.launch({channel:'msedge',headless:true});const context=await browser.newContext({viewport:{width:1366,height:650}});const page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)));
+const permissions={read:true,create:true,update:true,delete:true,maintain:true};
+const lookups={years:[2026,2025],codes:[['GENDER','0','未回答'],['PREFECTURE','13','東京都'],['GRADE','00','学年なし'],['ENROLLMENT_STATUS','01','在学'],['ENROLLMENT_STATUS','02','休学'],['ENROLLMENT_STATUS','03','卒業'],['ENROLLMENT_STATUS','04','退学'],['RELATIONSHIP','01','父']].map(([categoryId,value,name])=>({categoryId,value,name,selectable:true})),classes:[{classId:'9007199254740993',schoolYear:2026,gradeCode:'00',gradeName:'学年なし',classCode:'C-A',className:'Aクラス',selectable:true,note:'',occupancy:1,capacity:30},{classId:'9007199254740994',schoolYear:2025,gradeCode:'00',gradeName:'学年なし',classCode:'OLD',className:'旧クラス',selectable:false,note:'停止',occupancy:0,capacity:30}]};
+const initial=()=>({studentNo:'',name:'',classId:null,statusCodes:['01','02']});
+const row={studentId:'9007199254740993',studentNo:'TEST-01',studentName:'試験 太郎',studentNameKana:'シケン タロウ',birthDateWareki:'平成20年05月15日',schoolYear:2026,gradeName:'学年なし',classCode:'C-A',className:'Aクラス',enrollmentName:'在学'};
+const rows=Array.from({length:24},(_,i)=>({...row,studentId:(9007199254740993n+BigInt(i)).toString(),studentNo:`TEST-${String(i+1).padStart(2,'0')}`}));
+const draft=()=>({studentNo:'',studentName:'',studentNameKana:'',birthDateInput:{era:'',year:'',month:'',day:''},genderCode:'0',postalCode:'',prefectureCode:'',addressLine1:'',addressLine2:null,phoneNumber:null,emailAddress:null,admissionDate:'',enrollmentStatusCode:'01',enrollmentEndDate:null,classId:null,emergencyContactName:null,relationshipCode:null,emergencyPhoneNumber:null,remarks:null,schoolYear:null,gradeCode:null,expectedVersion:null,duplicateToken:null,operationReason:null,returnContextId:'a'.repeat(64)});
+let delayedEdit=false;let revision=1,applied=initial(),pageNumber=1,pageSize=20,sortKey='studentNo',direction='asc';
+function result(unsearched=false){const found=applied.name==='存在しない'?[]:rows;return {outcome:unsearched?'unsearched':found.length?'found':'empty',totalCount:unsearched?null:found.length,items:unsearched?[]:found.slice((pageNumber-1)*pageSize,pageNumber*pageSize),page:pageNumber,pageSize,sortKey,sortDirection:direction,searchedAt:unsearched?null:'2026/10/23 10:00:00',contextId:'a'.repeat(64),contextRevision:String(++revision),formatVersion:'search-compact-1',criteria:structuredClone(applied)};}
+const error=()=>({outcome:'validationFailed',messageId:'E-STU-005',message:'日付が正しくありません。',fieldErrors:{'REG-005':['日付が正しくありません。']},correlationId:'synthetic',retryBySearch:false});
 await page.route('**/api/students**',async route=>{
- const request=route.request(),url=new URL(request.url()),body=request.method()==='GET'?null:request.postDataJSON();requests.push({path:url.pathname,method:request.method(),body,csrf:request.headers()['requestverificationtoken'],tab:request.headers()['x-tab-id']});
- let data,status=200;
- if(url.pathname.endsWith('/bootstrap'))data={...lookups,csrfToken:'test-csrf',user:'browser-test',permissions,businessDate:'2026-10-12',schoolYear:2026,contextId:context,contextRevision:String(revision)};
+ const req=route.request(),url=new URL(req.url()),body=req.method()==='GET'?null:req.postDataJSON();requests.push({path:url.pathname,method:req.method(),body,csrf:req.headers()['requestverificationtoken'],tab:req.headers()['x-tab-id']});let data,status=200;
+ if(url.pathname.endsWith('/bootstrap'))data={...lookups,csrfToken:'fixture-csrf',user:'テスト管理者',permissions,businessDate:'2026-10-23',schoolYear:2026,contextId:'a'.repeat(64),contextRevision:String(revision),formatVersion:'search-compact-1'};
+ else if(url.pathname.endsWith('/search')){applied=structuredClone(body.criteria);pageNumber=1;pageSize=body.pageSize;sortKey=body.sortKey;direction=body.sortDirection;data=result();}
+ else if(url.pathname.endsWith('/page')){pageNumber=pageSize!==body.pageSize||sortKey!==body.sortKey||direction!==body.sortDirection?1:body.page;pageSize=body.pageSize;sortKey=body.sortKey;direction=body.sortDirection;data=result();}
+ else if(url.pathname.endsWith('/clear')){applied=initial();pageNumber=1;pageSize=20;sortKey='studentNo';direction='asc';data=result(true);}
+ else if(url.pathname.endsWith('/resume'))data=result();
  else if(url.pathname.endsWith('/options'))data=lookups;
- else if(url.pathname.endsWith('/search')){lastCriteria=structuredClone(body.criteria);data=result(lastCriteria);}
- else if(url.pathname.endsWith('/page')){data={...result(lastCriteria),pageSize:body.pageSize};}
- else if(url.pathname.endsWith('/clear')){lastCriteria=structuredClone(initial);data=result(lastCriteria,true);}
- else if(url.pathname.endsWith('/resume'))data=result(lastCriteria,true);
- else if(url.pathname.endsWith('/new'))data={...lookups,studentId:null,form:structuredClone(draft),updatedAt:null,updatedBy:null,permissions};
- else if(url.pathname==='/api/students'&&request.method()==='POST'){
-  if(body.birthDateInput.day==='31'){status=422;data={outcome:'validationFailed',messageId:'E-STU-005',message:'日付が正しくありません。',fieldErrors:{'REG-005':['日付が正しくありません。']},correlationId:'browser-fixture',retryBySearch:false};}
-  else data={outcome:'saved',studentId:'9007199254740993',rowVersion:'1',message:'保存しました。'};
- }else{status=404;data={outcome:'notFound',message:'Test route absent',fieldErrors:{}};}
+ else if(url.pathname.endsWith('/new'))data={...lookups,studentId:null,form:draft(),updatedAt:null,updatedBy:null,permissions};
+ else if(req.method()==='GET'){if(delayedEdit)await new Promise(resolve=>setTimeout(resolve,350));data={...lookups,studentId:row.studentId,form:{...draft(),studentNo:row.studentNo,studentName:row.studentName,studentNameKana:row.studentNameKana,birthDateInput:{era:'HEISEI',year:'20',month:'05',day:'15'},prefectureCode:'13',postalCode:'1000000',addressLine1:'東京都試験町1',phoneNumber:'0300000000',admissionDate:'2026-04-01',classId:row.studentId,schoolYear:2026,gradeCode:'00',expectedVersion:'2'},updatedAt:'2026/10/23 09:00:00',updatedBy:'test',permissions};}
+ else if(req.method()==='POST'||req.method()==='PUT'){
+  if(body.birthDateInput?.day==='31'){status=422;data=error();}
+  else if(body.studentNo==='DUP-01'&&!body.duplicateToken){status=409;data={outcome:'confirmationRequired',messageId:'W-STU-101',message:'同一人物候補を確認してください。',fieldErrors:{},correlationId:'fixture',retryBySearch:false,duplicateToken:'test-token',candidateCount:1,candidates:[{...row,classLabel:'Aクラス'}]};}
+  else if(body.duplicateToken){status=422;data={...error(),message:'保存失敗の試験です。'};}
+  else data={outcome:'saved',studentId:row.studentId,rowVersion:'3',message:'保存しました。'};
+ }else{status=404;data={outcome:'notFound',message:'Fixture route absent',fieldErrors:{}};}
  await route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
 });
+async function dimensions(state,width){await page.setViewportSize({width,height:650});const m=await page.evaluate(()=>({width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,grid:document.querySelector('.gridwrap')?{client:document.querySelector('.gridwrap').clientHeight,scroll:document.querySelector('.gridwrap').scrollHeight}:null,actions:document.querySelector('.savebar,.resultfoot')?.getBoundingClientRect().bottom}));geometry.push({state,...m});await page.screenshot({path:`${prefix}-${state}-${width}.png`,fullPage:true});check(m.scrollWidth<=width&&m.scrollHeight<=650&&m.actions<=650,`${state} fits ${width}x650`);return m;}
 try{
- await page.goto(`http://127.0.0.1:${address.port}`);
- await assert('search page initializes',()=>expect(page.getByRole('heading',{name:'学生検索'})).toBeVisible());
- await assert('new registration enabled after bootstrap',()=>expect(page.getByRole('button',{name:'新規登録'})).toBeEnabled());
- await page.getByRole('button',{name:'検索',exact:true}).click();await assert('list renders wareki',()=>expect(page.getByRole('cell',{name:'平成20年05月15日'})).toBeVisible());
- check(requests.find(r=>r.path.endsWith('/search')).body.contextRevision==='1','first received revision is sent');
- await page.locator('#SRC-002').fill('変更');await assert('draft change warning shown',()=>expect(page.getByText('条件を変更しました。',{exact:false})).toBeVisible());
- await assert('applied results remain while editing criteria',()=>expect(page.getByRole('cell',{name:'見本 太郎',exact:true})).toBeVisible());
- await page.getByLabel('表示件数').selectOption('50');await assert('page size update finishes',()=>expect(page.getByLabel('表示件数')).toHaveValue('50'));
- await expect.poll(()=>requests.filter(r=>r.path.endsWith('/page')).length).toBe(1);const paged=requests.find(r=>r.path.endsWith('/page'));check(paged.body.contextRevision==='2'&&!('criteria' in paged.body),'paging uses received revision and applied server criteria');
- await page.getByLabel('在学',{exact:true}).uncheck();await page.getByLabel('休学',{exact:true}).uncheck();await page.getByRole('button',{name:'検索',exact:true}).click();await expect.poll(()=>requests.filter(r=>r.path.endsWith('/search')).length).toBe(2);check(requests.filter(r=>r.path.endsWith('/search'))[1].body.criteria.statusCodes.length===0,'all-off statuses serialized as empty array');
- await page.locator('#SRC-004').selectOption('2026');await page.locator('#SRC-005').selectOption('00');await page.locator('#SRC-006').selectOption('9007199254740993');await page.locator('#SRC-007').check();
- await assert('unassigned clears year',()=>expect(page.locator('#SRC-004')).toHaveValue('すべて'));await assert('unassigned disables class',()=>expect(page.locator('#SRC-006')).toBeDisabled());
- await page.getByRole('button',{name:'検索',exact:true}).click();await expect.poll(()=>requests.filter(r=>r.path.endsWith('/search')).length).toBe(3);const unassigned=requests.filter(r=>r.path.endsWith('/search'))[2].body.criteria;check(unassigned.unassignedOnly&&unassigned.schoolYear===null&&unassigned.gradeCode===null&&unassigned.classId===null,'unassigned sends null hierarchy without precision conversion');
- await page.getByRole('button',{name:'クリア',exact:true}).click();await assert('clear resets raw name',()=>expect(page.locator('#SRC-002')).toHaveValue(''));
- await page.getByRole('button',{name:'新規登録'}).click();await assert('registration renders all fields',()=>expect(page.locator('#REG-024')).toBeVisible());
- await page.locator('#REG-002').fill('T-0001');await page.locator('#REG-003').fill('試験 太郎');await page.locator('#REG-004').fill('シケン タロウ');await page.locator('#REG-007').fill('1000001');await page.locator('#REG-009').fill('試験町');await page.locator('#REG-011').fill('0312345678');await page.locator('#REG-008').selectOption('13');await page.locator('#REG-013').fill('2026-04-01');
- await page.getByLabel('元号',{exact:true}).selectOption('HEISEI');await page.getByLabel('元号年',{exact:true}).fill('20');await page.getByLabel('月',{exact:true}).fill('02');await page.getByLabel('日',{exact:true}).fill('31');
- await page.getByRole('button',{name:'登録',exact:true}).click();await assert('server validation is displayed',()=>expect(page.locator('.message.error')).toContainText('日付が正しくありません。'));
- await assert('invalid day remains raw',()=>expect(page.getByLabel('日',{exact:true})).toHaveValue('31'));
- const firstSave=requests.find(r=>r.path==='/api/students'&&r.method==='POST');check(firstSave.body.birthDateInput.month==='02'&&firstSave.body.birthDateInput.day==='31'&&!('birthDate' in firstSave.body),'raw four-component birth input sent without normalized birthDate');check(!('relationshipCategory' in firstSave.body)&&!('updatedBy' in firstSave.body),'derived and management fields not accepted from UI');
- page.once('dialog',dialog=>dialog.dismiss());await page.getByRole('button',{name:'入力クリア',exact:true}).click();await assert('reset cancellation preserves draft',()=>expect(page.locator('#REG-003')).toHaveValue('試験 太郎'));
- await page.getByLabel('月',{exact:true}).fill('05');await page.getByLabel('日',{exact:true}).fill('15');await page.getByRole('button',{name:'登録',exact:true}).click();await assert('successful save returns to search',()=>expect(page.getByRole('heading',{name:'学生検索'})).toBeVisible());
- check(requests.filter(r=>r.path==='/api/students'&&r.method==='POST').length===2,'one explicit retry after correction');
- const postRequests=requests.filter(r=>r.method!=='GET');check(postRequests.every(r=>r.csrf==='test-csrf'&&/^[0-9a-f]{64}$/.test(r.tab)),'all API commands carry CSRF and tab identity');check(errors.length===0,'no browser JavaScript errors');
- await page.screenshot({path:prefix+'.png',fullPage:true});
-}catch(e){failure=String(e.stack??e);process.exitCode=1;await page.screenshot({path:prefix+'.png',fullPage:true});}
-finally{
- const browserVersion=browser.browser()?.version()??'Edge';await browser.close();await server.close();
- fs.writeFileSync(prefix+'.raw.log',checks.map(n=>'PASS '+n).join('\n')+'\n'+(failure??'PASS all browser workflow checks')+'\n',{flag:'wx'});
- fs.writeFileSync(prefix+'.json',JSON.stringify({runId,recordedAt:new Date().toISOString(),status:failure?'FAILED':'PASSED',browserVersion,checks:checks.length,assertions:checks,failure,scope:'real Vue UI and Edge; mocked API responses',notExecuted:['SQL Server integration','production authentication'],documentation:['https://playwright.dev/docs/api/class-browsertype','https://playwright.dev/docs/mock']},null,2)+'\n',{flag:'wx'});
- console.log(JSON.stringify({status:failure?'FAILED':'PASSED',checks:checks.length,report:prefix+'.json',failure}));
-}
+ await page.goto(`http://127.0.0.1:${server.httpServer.address().port}`);await expect(page.getByRole('button',{name:'新規登録',exact:true})).toBeEnabled();
+ check(await page.locator('#SRC-003,#SRC-004,#SRC-005,#SRC-007,#SRC-009,#SRC-010,#SRC-011,#SRC-012').count()===0,'retired search fields absent');
+ await page.locator('#SRC-002').fill('初期入力');await expect(page.locator('.criteria-status')).toContainText('条件を指定');await page.locator('#SRC-002').fill('');
+ await page.getByRole('button',{name:'検索',exact:true}).click();await expect(page.locator('.student-grid tbody tr')).toHaveCount(20);check((await page.locator('.student-grid th').count())===7,'seven columns');
+ for(const width of [1366,1280]){const m=await dimensions('search',width);check(m.grid.scroll>m.grid.client,'20 rows scroll internally '+width);}
+ const before=requests.length;await page.locator('#SRC-002').fill('変更');await expect(page.locator('.criteria-status')).toContainText('未反映');check(requests.length===before,'draft change never fetches options/search');await page.locator('#SRC-002').fill('');await expect(page.locator('.criteria-status')).not.toContainText('未反映');checks.push('reverting draft clears pending marker');
+ await page.locator('#SRC-002').fill('未適用');await page.getByRole('button',{name:'次へ',exact:true}).click();await expect(page.locator('.student-grid tbody tr')).toHaveCount(4);check(!('criteria' in requests.find(r=>r.path.endsWith('/page')).body),'page uses held applied criteria');
+ await page.locator('#SRC-002').fill('存在しない');await page.getByRole('button',{name:'検索',exact:true}).click();await expect(page.locator('.student-grid tbody tr')).toHaveCount(0);await expect(page.locator('[data-field-id="SRC-017"]')).toContainText('0件');
+ await page.getByRole('button',{name:'クリア',exact:true}).click();await expect(page.locator('#SRC-002')).toHaveValue('');check(await page.getByLabel('在学',{exact:true}).isChecked()&&await page.getByLabel('休学',{exact:true}).isChecked(),'clear restores default statuses');
+ await page.getByRole('button',{name:'検索',exact:true}).click();await expect(page.locator('.student-grid tbody tr')).toHaveCount(20);delayedEdit=true;const beforeEdit=requests.filter(r=>r.method==='GET'&&!r.path.endsWith('/bootstrap')).length;await page.getByRole('button',{name:'編集',exact:true}).first().click();await page.getByRole('button',{name:'編集',exact:true}).nth(1).click();await expect(page.locator('#REG-024')).toBeVisible();check(requests.filter(r=>r.method==='GET'&&!r.path.endsWith('/bootstrap')).length===beforeEdit+1,'second edit click cannot race pending GET');delayedEdit=false;
+ for(const width of [1366,1280])await dimensions('editor',width);
+ check(await page.locator('#REG-002').getAttribute('readonly')!==null,'existing number read only');check(await page.locator('dialog[open]').count()===0,'normal form has no open dialogs');
+ await page.locator('#REG-009').fill('編集した住所');await page.getByRole('button',{name:'検索へ戻る',exact:true}).click();await expect(page.locator('dialog[open]')).toBeVisible();check(await page.locator('dialog [data-cancel]').evaluate(e=>e===document.activeElement),'discard defaults to cancel');await page.keyboard.press('Escape');await expect(page.locator('dialog[open]')).toHaveCount(0);await expect(page.locator('#REG-009')).toHaveValue('編集した住所');checks.push('discard cancellation retains raw form');
+ await page.getByRole('button',{name:'論理削除',exact:true}).click();await expect(page.locator('dialog[open]')).toContainText('編集中の氏名・住所などは保存されません。');check(await page.locator('dialog [data-cancel]').evaluate(e=>e===document.activeElement),'delete defaults to cancel');await page.screenshot({path:prefix+'-delete.png',fullPage:true});await page.keyboard.press('Escape');
+ await page.getByRole('button',{name:'検索へ戻る',exact:true}).click();await page.getByRole('button',{name:'変更を破棄する',exact:true}).click();await expect(page.getByRole('heading',{name:'学生検索',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'新規登録',exact:true}).click();check(await page.locator('#REG-013').inputValue()===''&&await page.getByLabel('元号',{exact:true}).inputValue()==='','new raw dates empty');
+ await page.locator('#REG-002').fill('DUP-01');await page.locator('#REG-003').fill('試験 太郎');await page.locator('#REG-004').fill('シケン タロウ');await page.locator('#REG-007').fill('1000000');await page.locator('#REG-008').selectOption('13');await page.locator('#REG-009').fill('試験町');await page.locator('#REG-011').fill('0300000000');await page.locator('#REG-013').fill('2026-04-01');await page.locator('#REG-018').selectOption(row.studentId);await page.getByLabel('元号',{exact:true}).selectOption('HEISEI');await page.getByLabel('元号年',{exact:true}).fill('20');await page.getByLabel('月',{exact:true}).fill('02');await page.getByLabel('日',{exact:true}).fill('31');
+ await page.getByRole('button',{name:'登録',exact:true}).click();await expect(page.locator('.message.error')).toContainText('日付が正しくありません。');await expect(page.getByLabel('日',{exact:true})).toHaveValue('31');checks.push('invalid wareki raw retained after API422');
+ await page.getByLabel('月',{exact:true}).fill('05');await page.getByLabel('日',{exact:true}).fill('15');await page.getByRole('button',{name:'登録',exact:true}).click();await expect(page.locator('dialog[open]')).toContainText('重複候補の確認');check(await page.locator('dialog [data-cancel]').evaluate(e=>e===document.activeElement),'duplicate defaults to cancel');await page.screenshot({path:prefix+'-duplicate.png',fullPage:true});
+ await page.locator('dialog textarea').fill('別人と確認しました。');await page.getByRole('button',{name:'別人と確認して続行',exact:true}).click();await expect(page.locator('.message.error')).toContainText('保存失敗の試験');await expect(page.locator('dialog[open]')).toHaveCount(0);await page.getByRole('button',{name:'検索へ戻る',exact:true}).click();await expect(page.locator('dialog[open]')).toContainText('変更破棄');await page.keyboard.press('Escape');checks.push('failed save keeps dirty protection');
+ await page.setViewportSize({width:600,height:650});check(await page.evaluate(()=>document.documentElement.scrollWidth)<=600,'narrow editor no horizontal overflow');await page.getByRole('button',{name:'検索へ戻る',exact:true}).scrollIntoViewIfNeeded();check(await page.getByRole('button',{name:'検索へ戻る',exact:true}).isVisible(),'narrow actions reachable');
+ await page.setViewportSize({width:640,height:325});check(await page.evaluate(()=>document.documentElement.scrollWidth)<=640,'200 percent equivalent editor reflows');await page.getByRole('button',{name:'検索へ戻る',exact:true}).scrollIntoViewIfNeeded();check(await page.getByRole('button',{name:'検索へ戻る',exact:true}).isVisible(),'200 percent equivalent actions reachable');
+ await page.locator('#REG-002').fill('SAVE-OK');await page.getByRole('button',{name:'登録',exact:true}).click();await expect(page.getByRole('heading',{name:'学生検索',exact:true})).toBeVisible();checks.push('successful save returns without dirty warning');
+ permissions.create=false;permissions.update=false;permissions.delete=false;permissions.maintain=false;
+ await page.setViewportSize({width:1280,height:650});await page.reload();await expect(page.getByRole('button',{name:'検索',exact:true})).toBeEnabled();check(await page.getByRole('button',{name:'新規登録',exact:true}).count()===0,'viewer cannot create');
+ await page.getByRole('button',{name:'検索',exact:true}).click();await page.getByRole('button',{name:'参照',exact:true}).first().click();await expect(page.locator('#REG-009')).toBeVisible();check(!await page.locator('#REG-009').isEditable(),'viewer field read only');await page.locator('#REG-009').focus();check(await page.locator('#REG-009').evaluate(e=>e===document.activeElement),'viewer can focus full-value text');check(await page.getByRole('button',{name:'更新',exact:true}).count()===0&&await page.getByRole('button',{name:'論理削除',exact:true}).count()===0,'viewer has no update/delete actions');await page.screenshot({path:prefix+'-viewer.png',fullPage:true});
+ check(requests.filter(r=>r.method!=='GET').every(r=>r.csrf==='fixture-csrf'&&/^[0-9a-f]{64}$/.test(r.tab)),'API calls preserve CSRF and tab identity');check(errors.length===0,'no JS runtime errors');
+}catch(e){failure=String(e.stack||e);process.exitCode=1;await page.screenshot({path:prefix+'-failure.png',fullPage:true});}
+finally{const browserVersion=browser.version();await browser.close();await server.close();fs.writeFileSync(prefix+'.raw.log',checks.map(c=>'PASS '+c).join('\n')+'\n'+(failure||'PASS all workflow checks')+'\n',{flag:'wx'});fs.writeFileSync(prefix+'.json',JSON.stringify({status:failure?'FAILED':'PASSED',runId:run,checks:checks.length,assertions:checks,browserVersion,geometry,failure,scope:'real Vue/Edge with synthetic API; SQL/auth deployment not tested'},null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({status:failure?'FAILED':'PASSED',checks:checks.length,report:prefix+'.json',failure}));}

@@ -93,4 +93,10 @@ Same("DISABLE",AuditOperation.ForMaster(true,false),"R74-14 disable transition")
 Same("ENABLE",AuditOperation.ForMaster(false,true),"R74-14 enable transition");
 Same("CREATE",AuditOperation.ForMaster(null,false),"R74-14 new stopped code");
 Same("CREATE",AuditOperation.ForMaster(null,true),"R74-14 new active code");
+foreach(var field in new[]{"StudentNameKana","SchoolYear","GradeCode","UnassignedOnly","PrefectureCode","PhoneNumber","AdmissionFrom","AdmissionTo","Unknown"}) {
+    var rejected=false;
+    try { System.Text.Json.JsonSerializer.Deserialize<SearchCriteria>("{\""+field+"\":\"old\"}"); } catch(System.Text.Json.JsonException) { rejected=true; }
+    Same(true,rejected,"compact typed boundary rejects "+field);
+}
+foreach(var field in new[]{"Address","PhoneNumber","UpdatedAt","AdmissionDate","RowVersion"}) Same(true,typeof(StudentRow).GetProperty(field) is null,"compact projection omits "+field);
 Console.WriteLine($"PASS {passed} independent boundary assertions; no DB or UI tests executed.");

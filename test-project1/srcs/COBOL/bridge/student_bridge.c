@@ -45,9 +45,47 @@ static void value(ST_VALUE *v,const char *s,int n){memset(v,0,sizeof(*v));memset
 static int field(const char *s){for(int i=0;i<FIELD_COUNT;i++)if(!strcmp(s,field_names[i]))return i;return -1;}
 static int hexdigit(char c){if(c>='0'&&c<='9')return c-'0';if(c>='a'&&c<='f')return c-'a'+10;if(c>='A'&&c<='F')return c-'A'+10;return -1;}
 static int decode(const char *s,size_t n,char *out,size_t cap){size_t j=0;for(size_t i=0;i<n;i++){unsigned char c=(unsigned char)s[i];if(c=='%'){if(i+2>=n||hexdigit(s[i+1])<0||hexdigit(s[i+2])<0)return -1;c=(unsigned char)(hexdigit(s[i+1])*16+hexdigit(s[i+2]));i+=2;}else if(c=='+')c=' ';if(c==0||j+1>=cap)return -1;out[j++]=(char)c;}out[j]=0;if(scalar(out,(int)j)<0)return -1;return (int)j;}
-static int parse(const char *s,ST_VALUE *fields){while(*s){const char *end=strchr(s,'&');if(!end)end=s+strlen(s);const char *eq=memchr(s,'=',(size_t)(end-s));if(!eq)return -1;char key[80],val[1025];int kn=decode(s,(size_t)(eq-s),key,sizeof key);int vn=decode(eq+1,(size_t)(end-eq-1),val,sizeof val);int f=field(key);if(kn<0||vn<0||f<0||fields[f].null_flag==0)return -1;value(fields+f,val,vn);s=*end?end+1:end;}return 0;}
-int32_t STHTTP(ST_VALUE *f){for(int i=0;i<64;i++)value(f+i,NULL,-1);const char *method=getenv("REQUEST_METHOD");if(!method)return -1;if(strcmp(method,"GET")&&strcmp(method,"POST"))return -1;const char *query=getenv("QUERY_STRING");if(query&&strlen(query)>8192)return -1;if(query&&parse(query,f))return -1;if(!strcmp(method,"POST")){const char *ct=getenv("CONTENT_TYPE"),*cl=getenv("CONTENT_LENGTH");if(!ct||strcmp(ct,"application/x-www-form-urlencoded")||!cl||!*cl)return -1;uint64_t n=0;for(const char *p=cl;*p;p++){if(*p<'0'||*p>'9'||n>65536)return -1;n=n*10+(uint64_t)(*p-'0');}if(n>65536)return -1;char *b=calloc((size_t)n+1,1);if(!b)return -1;size_t read=fread(b,1,(size_t)n,stdin);int extra=fgetc(stdin);int ok=read==n&&extra==EOF&&!memchr(b,0,(size_t)n)&&parse(b,f)==0;OPENSSL_cleanse(b,(size_t)n);free(b);if(!ok)return -1;}else{if(f[0].null_flag==0&&strncmp(f[0].data,"SEARCH",6)==0)return -1;}return 0;}
-int32_t STCLIREAD(const char *path,int32_t length,ST_VALUE *f){if(length<1||length>4095)return -1;char name[4096];memcpy(name,path,(size_t)length);name[length]=0;FILE *file=fopen(name,"rb");if(!file)return -1;char body[65538];size_t n=fread(body,1,sizeof body-1,file);int bad=ferror(file)||n>65536||!feof(file);fclose(file);if(bad||memchr(body,0,n))return -1;while(n>0&&(body[n-1]=='\r'||body[n-1]=='\n'))n--;body[n]=0;for(int i=0;i<64;i++)value(f+i,NULL,-1);return parse(body,f);}
+static int parse(const char *s,ST_VALUE *fields,int http){int invalid=0;while(*s){const char *end=strchr(s,'&');if(!end)end=s+strlen(s);const char *eq=memchr(s,'=',(size_t)(end-s));if(!eq)return -1;char key[80],val[1025];int kn=decode(s,(size_t)(eq-s),key,sizeof key);int vn=decode(eq+1,(size_t)(end-eq-1),val,sizeof val);int f=field(key);if(kn<0||vn<0)return -1;
+if(f<0||(http&&f>=41&&f<=44)){invalid=-2;s=*end?end+1:end;continue;}
+if(http&&!strcmp(key,"statusCode")){if(vn!=2||val[0]!='0'||val[1]<'1'||val[1]>'4'){invalid=-2;s=*end?end+1:end;continue;}int target=41+val[1]-'1';if(fields[target].null_flag==0){invalid=-2;s=*end?end+1:end;continue;}value(fields+target,"1",1);value(fields+f,val,vn);}
+else{if(fields[f].null_flag==0)return -1;value(fields+f,val,vn);}
+s=*end?end+1:end;}return invalid;}
+static int http_contract(const ST_VALUE *f){
+  char action[17]={0};if(f[0].length>16)return -1;
+  if(f[0].null_flag==0)memcpy(action,f[0].data,(size_t)f[0].length);
+  const char *common="|action|contextId|contextRevision|tabId|csrfToken|flashId|";
+  const char *search="|studentNo|name|classId|statusCode|page|pageSize|sortKey|sortDirection|openStudentId|pageTarget|studentId|navigation|";
+  const char *editor="|studentId|expectedVersion|studentNo|studentName|studentNameKana|birthEra|birthYear|birthMonth|birthDay|genderCode|postalCode|prefectureCode|addressLine1|addressLine2|phoneNumber|emailAddress|admissionDate|enrollmentStatusCode|enrollmentEndDate|classId|emergencyContactName|relationshipCode|emergencyPhoneNumber|remarks|schoolYear|gradeCode|reason|editorId|confirmationToken|deleteReason|";
+  const char *actions="|INITIAL|SEARCH|PAGE|RESUME|CLEAR|OPTIONS|NEW|EDIT|CREATE|UPDATE|DELETE|RESET|RELOAD|BACK|CONFIRM|CANCEL|";
+  if(*action){char token[32];snprintf(token,sizeof token,"|%s|",action);if(!strstr(actions,token))return -1;}
+  const char *method=getenv("REQUEST_METHOD");
+  if(method&&!strcmp(method,"POST")&&!*action)return -1;
+  if(method&&!strcmp(method,"POST")&&(!strcmp(action,"NEW")||!strcmp(action,"EDIT")||!strcmp(action,"RESUME")||!strcmp(action,"INITIAL")))return -1;
+  int search_request=f[30].null_flag==-1 && (!*action||!strcmp(action,"INITIAL")||!strcmp(action,"SEARCH")||!strcmp(action,"PAGE")||!strcmp(action,"RESUME")||!strcmp(action,"CLEAR")||!strcmp(action,"OPTIONS")||!strcmp(action,"NEW")||!strcmp(action,"EDIT"));
+  for(int i=0;i<FIELD_COUNT;i++)if(f[i].null_flag==0){
+    if(search_request&&i>=41&&i<=44)continue;
+    if(i==34)return -1;
+    char token[96];snprintf(token,sizeof token,"|%s|",field_names[i]);
+    if(!strstr(common,token)&&!strstr(search_request?search:editor,token))return search_request?-2:-1;
+  }
+  return 0;
+}
+int32_t STHTTP(ST_VALUE *f){
+ for(int i=0;i<64;i++)value(f+i,NULL,-1);
+ const char *method=getenv("REQUEST_METHOD");if(!method||(strcmp(method,"GET")&&strcmp(method,"POST")))return -1;
+ const char *query=getenv("QUERY_STRING");if(query&&strlen(query)>8192)return -1;
+ int invalid=0;if(query){int r=parse(query,f,1);if(r==-1)return -1;if(r)invalid=-2;}
+ if(!strcmp(method,"POST")){
+  const char *ct=getenv("CONTENT_TYPE"),*cl=getenv("CONTENT_LENGTH");if(!ct||strcmp(ct,"application/x-www-form-urlencoded")||!cl||!*cl)return -1;
+  uint64_t n=0;for(const char *p=cl;*p;p++){if(*p<'0'||*p>'9'||n>65536)return -1;n=n*10+(uint64_t)(*p-'0');}if(n>65536)return -1;
+  char *b=calloc((size_t)n+1,1);if(!b)return -1;size_t read=fread(b,1,(size_t)n,stdin);int extra=fgetc(stdin);
+  int r=(read==n&&extra==EOF&&!memchr(b,0,(size_t)n))?parse(b,f,1):-1;OPENSSL_cleanse(b,(size_t)n);free(b);if(r==-1)return -1;if(r)invalid=-2;
+ }else if(f[0].null_flag==0&&f[0].length==6&&!memcmp(f[0].data,"SEARCH",6))return -1;
+ int contract=http_contract(f);if(contract)return contract;
+ if(invalid){int search=f[30].null_flag==-1&&(f[0].null_flag==-1||!memcmp(f[0].data,"SEARCH",6)||!memcmp(f[0].data,"PAGE",4)||!memcmp(f[0].data,"CLEAR",5)||!memcmp(f[0].data,"OPTIONS",7)||!memcmp(f[0].data,"INITIAL",7)||!memcmp(f[0].data,"RESUME",6));return search?-2:-1;}
+ if(f[61].null_flag==0)f[4]=f[61];return 0;
+}
+int32_t STCLIREAD(const char *path,int32_t length,ST_VALUE *f){if(length<1||length>4095)return -1;char name[4096];memcpy(name,path,(size_t)length);name[length]=0;FILE *file=fopen(name,"rb");if(!file)return -1;char body[65538];size_t n=fread(body,1,sizeof body-1,file);int bad=ferror(file)||n>65536||!feof(file);fclose(file);if(bad||memchr(body,0,n))return -1;while(n>0&&(body[n-1]=='\r'||body[n-1]=='\n'))n--;body[n]=0;for(int i=0;i<64;i++)value(f+i,NULL,-1);return parse(body,f,0);}
 static int key(unsigned char out[32]){const char *v=getenv("STUDENT_STATE_KEY_HEX");if(!v||strlen(v)!=64)return -1;for(int i=0;i<32;i++){int a=hexdigit(v[2*i]),b=hexdigit(v[2*i+1]);if(a<0||b<0)return -1;out[i]=(unsigned char)(a*16+b);}return 0;}
 int32_t STRANDOM(char *out){unsigned char b[32];if(RAND_bytes(b,32)!=1)return -1;const char *hex="0123456789abcdef";for(int i=0;i<32;i++){out[2*i]=hex[b[i]>>4];out[2*i+1]=hex[b[i]&15];}return 0;}
 int32_t STIDENTITY(ST_VALUE *owner,ST_VALUE *session,int32_t *role,char *csrf){const char *u=getenv("REMOTE_USER"),*s=getenv("ST_LOGIN_SESSION_ID"),*r=getenv("ST_TRUSTED_ROLE");if(!u||!s||!r||!*u||scalar(u,(int)strlen(u))>64||scalar(u,(int)strlen(u))<1||strlen(s)<1||strlen(s)>64)return -1;for(const char *p=s;*p;p++)if(!(isalnum((unsigned char)*p)||*p=='-'))return -1;*role=!strcmp(r,"Viewer")?0:!strcmp(r,"Staff")?1:!strcmp(r,"Administrator")?2:-1;if(*role<0)return -1;value(owner,u,(int)strlen(u));value(session,s,(int)strlen(s));unsigned char k[32],digest[32];unsigned int length=0;char data[512];int n=snprintf(data,sizeof data,"csrf\n%s\n%s",u,s);if(key(k)||!HMAC(EVP_sha256(),k,32,(unsigned char*)data,(size_t)n,digest,&length)||length!=32)return -1;const char *hex="0123456789abcdef";for(int i=0;i<32;i++){csrf[i*2]=hex[digest[i]>>4];csrf[i*2+1]=hex[digest[i]&15];}OPENSSL_cleanse(k,32);return 0;}
@@ -100,11 +138,17 @@ if(operation==3){if(crypt(1,payload,capacity,buf,&bytes,aad))goto done;BIND(SQL_
 BIND(SQL_C_CHAR,SQL_VARCHAR,64,sid,64,64);BIND(SQL_C_WCHAR,SQL_WVARCHAR,128,ow,ol*2,ol*2);BIND(SQL_C_CHAR,SQL_VARCHAR,64,ses,session->length,session->length);BIND(SQL_C_CHAR,SQL_VARCHAR,16,knd,strlen(knd),strlen(knd));
 if(operation==1){if(crypt(1,payload,capacity,buf,&bytes,aad))goto done;BIND(SQL_C_BINARY,SQL_LONGVARBINARY,bytes,buf,bytes,bytes);BIND(SQL_C_SLONG,SQL_INTEGER,10,&minutes,sizeof minutes,sizeof minutes);}
 if(operation==3||operation==4)BIND(SQL_C_SBIGINT,SQL_BIGINT,19,revision,8,8);
-if(!SQL_SUCCEEDED(SQLExecute(st)))goto done;if(operation==2||operation==5){SQLLEN n=0,revind=0;if(SQLFetch(st)!=SQL_SUCCESS||SQLGetData(st,1,SQL_C_BINARY,buf,capacity+28,&n)!=SQL_SUCCESS||n<28||n>capacity+28||SQLGetData(st,2,SQL_C_SBIGINT,revision,8,&revind)!=SQL_SUCCESS)goto done;int written;if(crypt(0,buf,(int)n,payload,&written,aad)||written!=capacity)goto done;result=0;}else{SQLLEN affected=0;if(SQLRowCount(st,&affected)!=SQL_SUCCESS||affected!=1)goto done;if(operation==3)(*revision)++;result=0;}
+if(!SQL_SUCCEEDED(SQLExecute(st)))goto done;if(operation==2||operation==5){SQLLEN n=0,revind=0;if(SQLFetch(st)!=SQL_SUCCESS||SQLGetData(st,1,SQL_C_BINARY,buf,capacity+28,&n)!=SQL_SUCCESS||n<28||n>capacity+28||SQLGetData(st,2,SQL_C_SBIGINT,revision,8,&revind)!=SQL_SUCCESS)goto done;int written;if(crypt(0,buf,(int)n,payload,&written,aad))goto done;if(written!=capacity){if(strcmp(knd,"Search"))goto done;memset(payload,0,(size_t)capacity);}result=0;}else{SQLLEN affected=0;if(SQLRowCount(st,&affected)!=SQL_SUCCESS||affected!=1)goto done;if(operation==3)(*revision)++;result=0;}
 done:if(st)SQLFreeHandle(SQL_HANDLE_STMT,st);OPENSSL_cleanse(buf,(size_t)capacity+28);free(buf);return result;
 #undef BIND
 }
 int32_t STESC(const char *s,int32_t n){for(int i=0;i<n;i++){switch(s[i]){case '&':fputs("&amp;",stdout);break;case '<':fputs("&lt;",stdout);break;case '>':fputs("&gt;",stdout);break;case '"':fputs("&quot;",stdout);break;case '\'':fputs("&#39;",stdout);break;default:fputc((unsigned char)s[i],stdout);}}return 0;}
+int32_t STEDITORREDIRECT(const char *context,const char *tab,const char *action,int64_t revision,int64_t student){
+ const char *operation=!memcmp(action,"EDIT",4)?"EDIT":"NEW";
+ printf("Status: 303\r\nCache-Control: no-store\r\nLocation: student.cgi?action=%s&contextId=%.*s&tabId=%.*s&contextRevision=%" PRId64,operation,64,context,64,tab,revision);
+ if(student>0)printf("&studentId=%" PRId64,student);
+ printf("\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n");return 0;
+}
 int32_t STHEADER(int32_t status){printf("Status: %d\r\nContent-Type: text/html; charset=UTF-8\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nReferrer-Policy: no-referrer\r\nContent-Security-Policy: default-src 'none'; style-src 'self'; script-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'\r\n\r\n",status);return 0;}
 /* Rendering performs lookup I/O. Defer headers until that work has finished. */
 static FILE *render_output;

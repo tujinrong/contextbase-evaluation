@@ -128,9 +128,9 @@ lookup='''    IF UI-CATEGORY = "CLASS" OR "YEAR"
       ELSE
         IF UI-CATEGORY = "CLASS"
           MOVE LOOKUP-VALUE(1) TO TMP-VALUE
-          IF N-NULL(27) = 0 AND LOOKUP-DATA(2) NOT = N-DATA(27)
+          IF VIEW-MODE = "Edit" AND N-NULL(27) = 0 AND LOOKUP-DATA(2) NOT = N-DATA(27)
             MOVE 0 TO SHOW-OPTION END-IF
-          IF N-NULL(26) = 0 AND LOOKUP-DATA(3) NOT = N-DATA(26)
+          IF VIEW-MODE = "Edit" AND N-NULL(26) = 0 AND LOOKUP-DATA(3) NOT = N-DATA(26)
             MOVE 0 TO SHOW-OPTION END-IF
           IF VIEW-MODE = "Edit"
             IF N-DATA(28)(1:2) = "03" OR "04"
@@ -229,8 +229,22 @@ render='''    CALL "STMSG" END-CALL
     IF DB-HANDLE = NULL OR APP-STATUS = 401 OR 400 OR 405
       DISPLAY '</main></body></html>'
       CALL "STOUTPUTEND" USING BY VALUE APP-STATUS END-CALL GOBACK END-IF
+    IF EDITOR-PENDING = "DELETE" AND APP-STATUS NOT = 200
+      MOVE "ActionConfirmation" TO APP-OUTCOME END-IF
+    IF EDITOR-PENDING = "DUPLICATE" AND APP-STATUS NOT = 200
+      IF DUP-COUNT > 0 MOVE "ConfirmationRequired" TO APP-OUTCOME
+      ELSE MOVE "ActionConfirmation" TO APP-OUTCOME END-IF
+    END-IF
+    IF APP-OUTCOME = "ActionConfirmation"
+      PERFORM ACTION-CONFIRMATION
+    ELSE
+      IF APP-OUTCOME = "ConfirmationRequired"
+        PERFORM DUPLICATE-CONFIRMATION
+      ELSE
     IF VIEW-MODE = "Edit" PERFORM EDIT-SCREEN
     ELSE PERFORM SEARCH-SCREEN END-IF
+      END-IF
+    END-IF
     DISPLAY '</main></body></html>'
     CALL "STOUTPUTEND" USING BY VALUE APP-STATUS END-CALL GOBACK.
 COMMON-HIDDEN.
@@ -245,13 +259,14 @@ EDITOR-HIDDEN.
 SEARCH-SCREEN.
 '''+html('<h1>学生検索</h1><form method="post" action="student.cgi"><fieldset><legend>検索条件</legend>')+'''    PERFORM COMMON-HIDDEN
 '''
-for name,label,index,maxlen in [('studentNo','学籍番号',4,15),('studentName','氏名',5,8),('studentNameKana','氏名カナ',6,36)]:render+=inputfield(name,label,index,maxlen=maxlen)
-render+=selectfield('schoolYear','年度',26,'YEAR')+selectfield('gradeCode','学年',27,'GRADE')+selectfield('classId','クラス',21,'CLASS')
-for name,label,index in [('unassignedOnly','未所属のみ',41),('status01','在学',42),('status02','休学',43),('status03','卒業',44),('status04','退学',45)]:
- render+=html(f'<label><input type="checkbox" name="{name}" value="1"')+f'    IF R-DATA({index})(1:1) = "1" DISPLAY " checked" WITH NO ADVANCING END-IF\n'+html(f'>{label}</label>')
-render+=selectfield('prefectureCode','都道府県',13,'PREFECTURE')+inputfield('phoneNumber','電話（本人・緊急）',16,maxlen=20)+inputfield('admissionFrom','入学日開始',46,'date',10)+inputfield('admissionTo','入学日終了',47,'date',10)
-render+=html('</fieldset><button name="action" value="SEARCH">検索</button><button name="action" value="OPTIONS">候補更新</button><button name="action" value="CLEAR" data-confirm="検索条件を初期化しますか。">クリア</button>')+'''    PERFORM DISPLAY-SETTINGS
-'''+'''    IF ROLE-CODE > 0 DISPLAY '<button name="action" value="NEW">新規登録</button>' WITH NO ADVANCING END-IF
+for name,label,index,maxlen in [('studentNo','学籍番号',4,15),('name','氏名',5,8)]:render+=inputfield(name,label,index,maxlen=maxlen)
+render+=selectfield('classId','クラス（全年度・停止を含む）',21,'CLASS')
+render+=html('<div class="statuses"><span>在籍区分</span>')
+for name,label,index in [('status01','在学',42),('status02','休学',43),('status03','卒業',44),('status04','退学',45)]:
+ render+=html(f'<label><input type="checkbox" name="statusCode" value="{index-41:02}"')+f'    IF R-DATA({index})(1:1) = "1" DISPLAY " checked" WITH NO ADVANCING END-IF\n'+html(f'>{label}</label>')
+render+=html('</div>')
+render+=html('</fieldset><button name="action" value="SEARCH">検索</button><button name="action" value="CLEAR" data-confirm="検索条件を初期化しますか。">クリア</button>')+'''    PERFORM DISPLAY-SETTINGS
+'''+'''    IF ROLE-CODE > 0 DISPLAY '<button name="action" value="OPTIONS" formaction="student.cgi?navigation=NEW">新規登録</button>' WITH NO ADVANCING END-IF
 '''+'''    IF SEARCH-EXECUTED = 0
       DISPLAY '<p>未検索</p>' WITH NO ADVANCING
     ELSE
@@ -267,8 +282,7 @@ render+=html('</fieldset><button name="action" value="SEARCH">検索</button><bu
       DISPLAY '</p>' WITH NO ADVANCING
       MOVE SEARCH-RAW TO APPLIED-COPY MOVE 0 TO DIRTY-FLAG
       PERFORM VARYING K FROM 1 BY 1 UNTIL K > 64
-        IF K = 4 OR 5 OR 6 OR 26 OR 27 OR 21 OR 41 OR 42 OR 43 OR 44
-          OR 45 OR 13 OR 16 OR 46 OR 47
+        IF K = 4 OR 5 OR 21 OR 42 OR 43 OR 44 OR 45
           IF R-VALUE(K) NOT = APPLIED-VALUE(K) MOVE 1 TO DIRTY-FLAG END-IF
         END-IF
       END-PERFORM
@@ -277,11 +291,11 @@ render+=html('</fieldset><button name="action" value="SEARCH">検索</button><bu
       END-IF
     END-IF
     IF ROW-COUNT > 0
-      DISPLAY '<table><thead><tr><th>学籍番号</th><th>氏名</th><th>カナ</th><th>生年月日</th><th>年度・学年</th><th>クラス</th><th>在籍</th><th>住所</th><th>本人電話</th><th>更新日時</th><th>編集／参照</th></tr></thead><tbody>' WITH NO ADVANCING
+      DISPLAY '<table><thead><tr><th>学籍番号</th><th>氏名／カナ</th><th>生年月日</th><th>年度・学年</th><th>クラス</th><th>在籍</th><th>編集／参照</th></tr></thead><tbody>' WITH NO ADVANCING
       PERFORM VARYING I FROM 1 BY 1 UNTIL I > ROW-COUNT
         DISPLAY '<tr>' WITH NO ADVANCING
-        PERFORM VARYING J FROM 2 BY 1 UNTIL J > 13
-          IF J NOT = 7 AND 9 DISPLAY '<td>' WITH NO ADVANCING END-IF
+        PERFORM VARYING J FROM 2 BY 1 UNTIL J > 10
+          IF J NOT = 4 AND 7 AND 9 DISPLAY '<td>' WITH NO ADVANCING END-IF
           IF J = 5
             CALL "STDATEOUT" USING ROW-DATA(I,J) DATE-E DATE-Y DATE-M DATE-D
               WAREKI-OUT WAREKI-LENGTH RETURNING RC END-CALL
@@ -290,10 +304,14 @@ render+=html('</fieldset><button name="action" value="SEARCH">検索</button><bu
             IF ROW-NULL(I,J) = -1 DISPLAY '－' WITH NO ADVANCING
             ELSE CALL "STESC" USING ROW-DATA(I,J) BY VALUE ROW-LENGTH(I,J) END-CALL END-IF
           END-IF
-          IF J NOT = 6 AND 8 DISPLAY '</td>' WITH NO ADVANCING
-          ELSE DISPLAY '／' WITH NO ADVANCING END-IF
+          IF J = 4 DISPLAY '</small>' WITH NO ADVANCING END-IF
+          IF J NOT = 3 AND 6 AND 8 DISPLAY '</td>' WITH NO ADVANCING
+          ELSE
+            IF J = 3 DISPLAY '<br><small>' WITH NO ADVANCING
+            ELSE DISPLAY '／' WITH NO ADVANCING END-IF
+          END-IF
         END-PERFORM
-        DISPLAY '<td><button name="openStudentId" value="' WITH NO ADVANCING
+        DISPLAY '<td><button name="action" value="OPTIONS" formaction="student.cgi?navigation=EDIT&amp;openStudentId=' WITH NO ADVANCING
         CALL "STESC" USING ROW-DATA(I,1) BY VALUE ROW-LENGTH(I,1) END-CALL
         DISPLAY '">編集／参照</button></td></tr>' WITH NO ADVANCING
       END-PERFORM
@@ -311,7 +329,7 @@ render+=html('</fieldset><button name="action" value="SEARCH">検索</button><bu
     DISPLAY '</form>' WITH NO ADVANCING.
 PAGE-BUTTON.
     MOVE PAGE-TARGET TO V PERFORM ID-AS-TEMP
-    DISPLAY '<button name="pageTarget" value="' WITH NO ADVANCING
+    DISPLAY '<button name="action" value="PAGE" formaction="student.cgi?pageTarget=' WITH NO ADVANCING
     CALL "STESC" USING TMP-DATA BY VALUE TMP-LENGTH END-CALL
     DISPLAY '"' WITH NO ADVANCING
     IF PAGE-TARGET = CURRENT-PAGE DISPLAY ' disabled' WITH NO ADVANCING END-IF
@@ -347,36 +365,30 @@ EDIT-SCREEN.
     IF ROLE-CODE = 0 DISPLAY '<fieldset disabled>' WITH NO ADVANCING
     ELSE DISPLAY '<fieldset>' WITH NO ADVANCING END-IF
 '''
-render+=inputfield('studentNo','学籍番号（既存は変更不可）',4,maxlen=15)+inputfield('studentName','氏名',5,maxlen=8)+inputfield('studentNameKana','氏名カナ',6,maxlen=36)
+render+=html('<div class="basic-fields">')+inputfield('studentNo','学籍番号（既存は変更不可）',4,maxlen=15)+inputfield('studentName','氏名',5,maxlen=8)+inputfield('studentNameKana','氏名カナ',6,maxlen=36)
 render+=html('<label>生年月日元号<select name="birthEra"><option value="">未選択</option>')
 for key,label in [('REIWA','令和'),('HEISEI','平成'),('SHOWA','昭和'),('TAISHO','大正'),('MEIJI','明治')]:render+=html(f'<option value="{key}"')+f'    IF R-DATA(F-BIRTHERA) = "{key}" DISPLAY " selected" WITH NO ADVANCING END-IF\n'+html(f'>{label}</option>')
 render+=html('</select></label>')
 for name,label,index,maxlen in [('birthYear','元号年（元も可）',8,4),('birthMonth','月',9,2),('birthDay','日',10,2)]:render+=inputfield(name,label,index,maxlen=maxlen)
-for name,label,index,cat,old in [('genderCode','性別',11,'GENDER',5),('prefectureCode','都道府県',13,'PREFECTURE',7),('enrollmentStatusCode','在籍区分',19,'ENROLLMENT_STATUS',13),('relationshipCode','緊急連絡先続柄',23,'RELATIONSHIP',17)]:
- render+=f'    MOVE O-DATA({old}) TO UI-CURRENT\n'+selectfield(name,label,index,cat)
-for name,label,index,kind,maxlen in [('postalCode','郵便番号',12,'text',10),('addressLine1','住所1',14,'text',45),('addressLine2','住所2',15,'text',45),('phoneNumber','本人電話',16,'text',20),('emailAddress','本人メール',17,'text',60),('admissionDate','入学日',18,'date',10),('enrollmentEndDate','卒業・退学日',20,'date',10),('emergencyContactName','緊急連絡先氏名',22,'text',8),('emergencyPhoneNumber','緊急連絡先電話',24,'text',20),('reason','確認・変更理由',28,'text',60)]:render+=inputfield(name,label,index,kind,maxlen)
-render+=selectfield('schoolYear','年度',26,'YEAR')+selectfield('gradeCode','学年',27,'GRADE')+'''    MOVE O-DATA(15) TO UI-CURRENT
-'''+selectfield('classId','クラス・人数参考',21,'CLASS')+html('<label>備考<textarea name="remarks" maxlength="240">')+'''    CALL "STESC" USING R-DATA(F-REMARKS) BY VALUE R-LENGTH(F-REMARKS) END-CALL
-'''+html('</textarea></label></fieldset>')+'''    IF ROLE-CODE > 0
-      DISPLAY '<button name="action" value="SAVE">保存</button><button name="action" value="EDITOPTIONS">候補更新</button>' WITH NO ADVANCING
-    END-IF
-    IF APP-OUTCOME = "ConfirmationRequired"
-      PERFORM DUPLICATE-PANEL
-    ELSE
-      IF R-NULL(F-CONFIRMATIONTOKEN) = 0
-        DISPLAY '<input type="hidden" name="confirmationToken" value="' WITH NO ADVANCING
-        CALL "STESC" USING R-DATA(F-CONFIRMATIONTOKEN) BY VALUE R-LENGTH(F-CONFIRMATIONTOKEN) END-CALL
-        DISPLAY '">' WITH NO ADVANCING
+render+=selectfield('genderCode','性別',11,'GENDER')+html('</div><div class="editor-columns"><section><h2>住所・本人連絡先</h2>')
+render+=selectfield('prefectureCode','都道府県',13,'PREFECTURE')
+for name,label,index,kind,limit in [('postalCode','郵便番号',12,'text',10),('addressLine1','住所1',14,'text',45),('addressLine2','住所2',15,'text',45),('phoneNumber','本人電話',16,'text',20),('emailAddress','本人メール',17,'text',60)]:render+=inputfield(name,label,index,kind,limit)
+render+=html('</section><section><h2>在籍・所属</h2>')+inputfield('admissionDate','入学日',18,'date',10)+selectfield('enrollmentStatusCode','在籍区分',19,'ENROLLMENT_STATUS')+inputfield('enrollmentEndDate','卒業・退学日',20,'date',10)+html('<div class="assist-pair">')+selectfield('schoolYear','年度',26,'YEAR')+selectfield('gradeCode','学年',27,'GRADE')+html('</div>')+selectfield('classId','クラス・人数参考',21,'CLASS')+html('</section><section><h2>緊急連絡先・備考・理由</h2>')
+render+=inputfield('emergencyContactName','氏名',22,maxlen=8)+selectfield('relationshipCode','続柄',23,'RELATIONSHIP')+inputfield('emergencyPhoneNumber','電話',24,maxlen=20)+html('<label>備考<textarea name="remarks" maxlength="240">')+'''    CALL "STESC" USING R-DATA(F-REMARKS) BY VALUE R-LENGTH(F-REMARKS) END-CALL
+'''+html('</textarea></label>')+inputfield('reason','確認・変更理由',28,maxlen=60)+html('</section></div></fieldset>')+'''    IF ROLE-CODE > 0
+      IF STUDENT-ID > 0
+        DISPLAY '<button name="action" value="UPDATE">更新</button>' WITH NO ADVANCING
+      ELSE
+        DISPLAY '<button name="action" value="CREATE">登録</button>' WITH NO ADVANCING
       END-IF
+      DISPLAY '<button name="action" value="OPTIONS">候補更新</button>' WITH NO ADVANCING
     END-IF
-'''+html('</form><form method="post" action="student.cgi" data-confirm="入力内容を取り消しますか。">')+'''    PERFORM EDITOR-HIDDEN
-'''+html('<input type="hidden" name="confirmed" value="1"><button name="action" value="RESET">取消</button></form><form method="post" action="student.cgi" data-confirm="最新情報へ再読込しますか。">')+'''    PERFORM EDITOR-HIDDEN
-'''+html('<input type="hidden" name="confirmed" value="1"><button name="action" value="RELOAD">再読込</button></form><form method="get" action="student.cgi" data-leave="1"><input type="hidden" name="action" value="RESUME">')+hidden('contextId','CONTEXT-ID',64)+hidden('tabId','TAB-ID',64)+'''    MOVE CONTEXT-REVISION TO V PERFORM ID-AS-TEMP
-'''+hidden('contextRevision','TMP-DATA','TMP-LENGTH')+html('<button>検索へ戻る</button></form>')+'''    IF ROLE-CODE = 2 AND STUDENT-ID > 0
-      DISPLAY '<form method="post" action="student.cgi" data-confirm="この学生を論理削除しますか。">' WITH NO ADVANCING
-      PERFORM EDITOR-HIDDEN
-      DISPLAY '<label>削除理由<input name="deleteReason" maxlength="120"></label><input type="hidden" name="confirmed" value="1"><button name="action" value="DELETE">論理削除</button></form>' WITH NO ADVANCING
-    END-IF.
+    IF APP-OUTCOME = "ConfirmationRequired" PERFORM DUPLICATE-PANEL END-IF
+'''
+render+=html('<button name="action" value="RESET">編集取消</button><button name="action" value="RELOAD">最新情報を再読込</button><button name="action" value="BACK">検索へ戻る</button>')+'''    IF ROLE-CODE = 2 AND STUDENT-ID > 0
+      DISPLAY '<button name="action" value="DELETE">論理削除</button>' WITH NO ADVANCING
+    END-IF
+'''+html('</form>')+'''.
 DUPLICATE-PANEL.
     MOVE DUP-COUNT TO NUM-OUT
     DISPLAY '<section class="duplicates"><h2>重複候補 ' FUNCTION TRIM(NUM-OUT) '件（最大20件表示）</h2><table><tr><th>学籍番号</th><th>氏名</th><th>和暦生年月日</th><th>クラス</th></tr>' WITH NO ADVANCING
@@ -399,11 +411,60 @@ DUPLICATE-PANEL.
     DISPLAY '</table>' WITH NO ADVANCING
 '''+hidden('confirmationToken','CONFIRM-ID',64)+html('<button name="action" value="CANCEL" autofocus>取消</button><button name="action" value="CONFIRM">別人確認後、理由を付けて続行</button></section>')+'''.
 '''
-local='01 DIRTY-FLAG PIC S9(9) COMP-5.\n01 APPLIED-COPY.\n  05 APPLIED-VALUE OCCURS 64 TIMES PIC X(1032).\n01 PAGE-TARGET PIC S9(9) COMP-5.\n01 PAGE-LABEL PIC X(12).\n'
+render+='''ACTION-CONFIRMATION.
+'''+html('<section class="confirmation" role="dialog" aria-modal="true"><h1>操作の確認</h1><form method="post" action="student.cgi">')+'''    PERFORM EDITOR-HIDDEN
+    DISPLAY '<p>' FUNCTION TRIM(EDITOR-PENDING) '：保存していない変更を破棄して続行しますか。</p>' WITH NO ADVANCING
+    IF EDITOR-PENDING = "DUPLICATE"
+      MOVE R-VALUE(F-REASON) TO RENDER-REASON
+      MOVE EDITOR-DRAFT TO ST-RAW
+      MOVE RENDER-REASON TO R-VALUE(F-REASON)
+      DISPLAY '<p>重複確認の理由を入力し、続行時に候補を再照合します。</p><input type="hidden" name="confirmationToken" value="' WITH NO ADVANCING
+      CALL "STESC" USING R-DATA(F-CONFIRMATIONTOKEN) BY VALUE 64 END-CALL
+      DISPLAY '"><label>確認理由<textarea name="reason" maxlength="120">' WITH NO ADVANCING
+      CALL "STESC" USING R-DATA(F-REASON) BY VALUE R-LENGTH(F-REASON) END-CALL
+      DISPLAY '</textarea></label>' WITH NO ADVANCING
+    END-IF
+    IF EDITOR-PENDING = "DELETE"
+      DISPLAY '<label>削除理由（必須・60文字以内）<textarea name="deleteReason" maxlength="120">' WITH NO ADVANCING
+      CALL "STESC" USING R-DATA(F-DELETEREASON) BY VALUE R-LENGTH(F-DELETEREASON) END-CALL
+      DISPLAY '</textarea></label>' WITH NO ADVANCING
+    END-IF
+'''+html('<button name="action" value="CANCEL" autofocus>取消（既定）</button><button name="action" value="CONFIRM">続行</button></form></section>')+'''.
+DUPLICATE-CONFIRMATION.
+'''+html('<section class="confirmation" role="dialog" aria-modal="true"><form method="post" action="student.cgi">')+'''    PERFORM EDITOR-HIDDEN
+'''
+render+=hidden('studentNo','R-DATA(4)','R-LENGTH(4)')
+render+=hidden('studentName','R-DATA(5)','R-LENGTH(5)')
+render+=hidden('studentNameKana','R-DATA(6)','R-LENGTH(6)')
+render+=hidden('birthEra','R-DATA(7)','R-LENGTH(7)')
+render+=hidden('birthYear','R-DATA(8)','R-LENGTH(8)')
+render+=hidden('birthMonth','R-DATA(9)','R-LENGTH(9)')
+render+=hidden('birthDay','R-DATA(10)','R-LENGTH(10)')
+render+=hidden('genderCode','R-DATA(11)','R-LENGTH(11)')
+render+=hidden('postalCode','R-DATA(12)','R-LENGTH(12)')
+render+=hidden('prefectureCode','R-DATA(13)','R-LENGTH(13)')
+render+=hidden('addressLine1','R-DATA(14)','R-LENGTH(14)')
+render+=hidden('addressLine2','R-DATA(15)','R-LENGTH(15)')
+render+=hidden('phoneNumber','R-DATA(16)','R-LENGTH(16)')
+render+=hidden('emailAddress','R-DATA(17)','R-LENGTH(17)')
+render+=hidden('admissionDate','R-DATA(18)','R-LENGTH(18)')
+render+=hidden('enrollmentStatusCode','R-DATA(19)','R-LENGTH(19)')
+render+=hidden('enrollmentEndDate','R-DATA(20)','R-LENGTH(20)')
+render+=hidden('classId','R-DATA(21)','R-LENGTH(21)')
+render+=hidden('emergencyContactName','R-DATA(22)','R-LENGTH(22)')
+render+=hidden('relationshipCode','R-DATA(23)','R-LENGTH(23)')
+render+=hidden('emergencyPhoneNumber','R-DATA(24)','R-LENGTH(24)')
+render+=hidden('remarks','R-DATA(25)','R-LENGTH(25)')
+render+=hidden('schoolYear','R-DATA(26)','R-LENGTH(26)')
+render+=hidden('gradeCode','R-DATA(27)','R-LENGTH(27)')
+render+=inputfield('reason','確認理由（必須）',28,maxlen=60)+'''    PERFORM DUPLICATE-PANEL
+'''+html('</form></section>')+'''.
+'''
+local='01 RENDER-REASON PIC X(1032).\n01 DIRTY-FLAG PIC S9(9) COMP-5.\n01 APPLIED-COPY.\n  05 APPLIED-VALUE OCCURS 64 TIMES PIC X(1032).\n01 PAGE-TARGET PIC S9(9) COMP-5.\n01 PAGE-LABEL PIC X(12).\n'
 for n in ['E','Y','M','D']:local+=f'01 DATE-{n}.\n  05 filler pic X(1032).\n'
 program('STRENDER',render,local)
 (program.__globals__['ROOT']/'assets').mkdir(exist_ok=True)
-put('assets/style.css','''*{box-sizing:border-box}body{font-family:"Yu Gothic",Meiryo,sans-serif;background:#f2f5f9;color:#243448;margin:0}header{background:#153654;color:#fff;padding:1rem 2rem}main{max-width:1440px;margin:auto;padding:1.5rem;background:#fff}fieldset{display:grid;grid-template-columns:10rem 1fr 10rem 1fr;gap:.75rem;border:1px solid #ccd9e6;padding:1rem}input,select,textarea,button{font:inherit;padding:.5rem;border:1px solid #afbece;border-radius:3px}textarea{min-height:7rem}button{margin:.5rem;background:#edf4fa;cursor:pointer}table{border-collapse:collapse;width:100%;font-size:.85rem}th,td{border:1px solid #ccd9e6;padding:.5rem;vertical-align:top}th{background:#e6eef6}tr:nth-child(even){background:#f8fafc}pre{white-space:pre-wrap;background:#fff0ed;border:1px solid #c54e4e;padding:1rem}p[role=status]{padding:1rem;background:#edf7f3}.duplicates{background:#fff8eb;padding:1rem}form{margin-bottom:1rem}@media(max-width:900px){fieldset{grid-template-columns:9rem 1fr}table{display:block;overflow:auto}}
+put('assets/style.css','''*{box-sizing:border-box}body{font-family:"Yu Gothic",Meiryo,sans-serif;background:#f2f5f9;color:#243448;margin:0;font-size:13px}header{background:#153654;color:#fff;padding:8px 20px}main{max-width:1440px;margin:auto;padding:12px 20px;background:#fff}h1{font-size:20px;margin:6px 0}h2{font-size:14px;margin:0 0 8px}fieldset{display:grid;grid-template-columns:100px minmax(0,1fr) 100px minmax(0,1fr);gap:6px 10px;border:1px solid #ccd9e6;padding:10px}input,select,textarea,button{font:inherit;padding:4px;border:1px solid #afbece;border-radius:3px;min-width:0}textarea{height:54px;width:100%}button{margin:4px;background:#edf4fa;cursor:pointer}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ccd9e6;padding:5px;vertical-align:top}th{background:#e6eef6}pre{white-space:pre-wrap;background:#fff0ed;padding:8px}p[role=status]{padding:8px;background:#edf7f3}.statuses{display:flex;align-items:center;gap:10px;grid-column:1/-1}.editor fieldset{display:block}.basic-fields{display:grid;grid-template-columns:90px 1fr 60px 1fr 80px 1fr;gap:6px;align-items:center}.editor-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}.editor-columns section{display:grid;grid-template-columns:90px minmax(0,1fr);gap:6px;align-content:start;border:1px solid #ccd9e6;padding:8px}.editor-columns h2,.assist-pair{grid-column:1/-1}.assist-pair{display:grid;grid-template-columns:40px 1fr 40px 1fr;gap:5px}.duplicates{background:#fff8eb;padding:10px}.confirmation{max-width:720px;margin:auto;border:2px solid #afbece;padding:16px}.editor-columns label:has(textarea){grid-column:1/-1}@media(max-width:900px){.editor-columns{grid-template-columns:1fr}.basic-fields,fieldset{grid-template-columns:100px 1fr}table{display:block;overflow:auto}}
 ''')
 put('assets/site.js','''"use strict";
 let dirty=false;const editor=document.querySelector("form.editor");
@@ -417,10 +478,6 @@ for(const form of document.forms)form.addEventListener("submit",e=>{
 document.querySelector(".cancel-duplicate")?.addEventListener("click",()=>{
  document.querySelector('[name="confirmationToken"]')?.remove();document.querySelector(".duplicates")?.remove();
 });
-const unassigned=document.querySelector('[name="unassignedOnly"]');
-const upper=["schoolYear","gradeCode","classId"];
-function assignControls(){if(!unassigned)return;for(const name of upper){const el=document.querySelector(`[name="${name}"]`);if(el){el.disabled=unassigned.checked;if(unassigned.checked)el.value="";}}}
-unassigned?.addEventListener("change",assignControls);assignControls();
 for(const name of ["schoolYear","gradeCode"])document.querySelector(`form.editor [name="${name}"]`)?.addEventListener("change",()=>{const c=document.querySelector('form.editor [name="classId"]');if(c)c.value="";});
 ''')
 print('Generated COBOL lookup, master diagnostics, messages, Flash and full two HTML forms/assets.')

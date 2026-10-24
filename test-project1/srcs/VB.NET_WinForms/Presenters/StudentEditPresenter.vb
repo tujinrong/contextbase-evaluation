@@ -27,6 +27,7 @@ Namespace Presenters
         Private _acceptClose As Boolean
         Public Sub New(view As FrmStudentEdit, service As StudentApplicationService, id As Long?)
             _view = view : _service = service : _id = id
+            _view.lblStudentId.Text = If(id.HasValue, id.ToString(), "自動採番")
             _view.Text = If(id.HasValue, If(service.CanEdit, "学生登録：編集", "学生登録：参照"), "学生登録：新規")
         End Sub
         Public Async Function InitializeAsync() As Task

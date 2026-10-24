@@ -45,7 +45,7 @@ try {
  }
  foreach ($taskComponent in $taskAccess.VBE.ActiveVBProject.VBComponents) { $taskModules+=@{name=$taskComponent.Name;kind=$taskComponent.Type;lines=$taskComponent.CodeModule.CountOfLines} }
  foreach ($taskObject in $taskAccess.CurrentProject.AllForms) { $taskForms+=$taskObject.Name }
- Check-Deployment ($taskForms.Count -eq 4) 'all four generated executable forms'
+ Check-Deployment ($taskForms.Count -eq 5) 'all five generated executable forms'
  Check-Deployment (@($taskModules | Where-Object {$_.name -eq 'modSelfTests'}).Count -eq 0) 'test-only module excluded from final binary'
  Check-Deployment ($taskDb.Properties.Item('StartupForm').Value -eq 'frmStudentSearch' -and $taskDb.Properties.Item('StudentBackendPath').Value -eq 'SELF') 'single file is configured as startup executable'
  $taskSeed=Get-Content -LiteralPath (Join-Path $PSScriptRoot '../database/seed.json') -Encoding UTF8 -Raw | ConvertFrom-Json

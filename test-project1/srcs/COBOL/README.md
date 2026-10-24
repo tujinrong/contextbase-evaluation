@@ -1,6 +1,10 @@
 # COBOL 学生管理
 
-このディレクトリだけで仕様、COBOL/Cソース、SQLServer DDL・初期値、画面資源、ビルド・試験を扱います。生成入力は `spec/` 版8.0／8.1の46ファイル、SHA256と文書版は `build/input-manifest.json` に固定しています。
+このディレクトリだけで仕様、COBOL/Cソース、SQLServer DDL・初期値、画面資源、ビルド・試験を扱います。2026-10-23の生成入力は `spec/` 版8.0／8.1／8.2の49ファイル、SHA256と文書版は `build/input-manifest.json` に固定しています。旧ロックは `build/input-manifest-before-20261023.json` に保持しました。
+
+検索の外部名はstudentNo／name／classId／statusCodeの4名（statusCodeだけ反復可）で、一覧は氏名／カナを同じセルにした7列へ更新しました。旧検索キーは空値でも拒否し、暗号化検索状態の所有者・セッション・画面・Revisionを確認してから `search-compact-1` を検査します。氏名raw8文字と照合値160文字を分けています。編集は全REG-001～034を維持する基本情報横並び＋下段3列です。重複、削除、取消・再読込・復帰はサーバー保持状態による別HTML確認画面で操作し、JavaScriptなしでも確認できます。
+
+今回のWindowsホストはGnuCOBOL構文検査・C変換・リンク成功、境界／日付／保存入力86件、今回追加のHTTP／確認状態／生成HTML／SQL形状95件、静的閉包12件がPASSです。HTML試験の候補と確認状態I/Oはfixtureであり、SQL・暗号化状態テーブル・実時間による期限判定・確認後保存の実結合試験ではありません。[今回の試験記録](../../test-report/20261023-cobol-build-02/README.md)。Linux CGI配備、実SQL、実ブラウザーと正式採点は未実施です。
 
 学生検索と学生登録・編集・参照は `STMAIN` を入口とするCGI、クラス・コード保守は公開しない `student-maint` CLIです。業務判定はCOBOL、HTTP/Unicode/暗号/ODBCの境界はCです。[仕様対応・ABI](IMPLEMENTATION.md)、[配備手順](deploy/README.md)、[DB手順](database/README.md)を参照してください。
 
@@ -24,9 +28,11 @@ Linux x86_64/little-endian、GnuCOBOL3.2、C11、ICU、OpenSSL、unixODBC開発�
 処理系・DLLはすべて `build/toolchain/` 内です。永続PATH変更は不要です。版・取得先・SHA256は `dependencies.lock.json` と `build/toolchain/msys2/packages.lock.json` に記録しています。試験の既定出力は方式内 `test-report/`、既存の連番は上書きしません。
 
 ```powershell
-python tools/host_build.py 20
-python tools/host_tests.py 21
-python tools/static_check.py 22
+$env:COBOL_RUN_ID='UNIQUE-RUN-ID'
+python tools/host_build.py attempt01
+python tools/host_tests.py attempt01
+python tools/static_check.py attempt01
+python tools/test_compact.py --run-id UNIQUE-ATTEMPT --report-dir test-report
 ```
 
 手書きCは `-Wall -Wextra -Werror` で検査します。GnuCOBOL生成Cの旧形式プロトタイプ警告だけを `-Wno-deprecated-non-prototype` で抑制しています。DB実行をmockで代替して合格を付けていません。

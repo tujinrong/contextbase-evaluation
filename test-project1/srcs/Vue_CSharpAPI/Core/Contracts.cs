@@ -30,23 +30,29 @@ public sealed class StudentDraft
 }
 public sealed class SearchCriteria
 {
-    public string? StudentNo { get; set; }
-    public string? StudentName { get; set; }
-    public string? StudentNameKana { get; set; }
-    public int? SchoolYear { get; set; }
-    public string? GradeCode { get; set; }
+    public string? StudentNoPrefix { get; set; }
+    public string? NameKey { get; set; }
     public long? ClassId { get; set; }
-    public bool UnassignedOnly { get; set; }
-    public string[] EnrollmentStatusCodes { get; set; } = ["01", "02"];
-    public string? PrefectureCode { get; set; }
-    public string? PhoneNumber { get; set; }
-    public string? AdmissionFrom { get; set; }
-    public string? AdmissionTo { get; set; }
+    public string[] StatusCodes { get; set; } = ["01", "02"];
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 20;
     public string SortKey { get; set; } = "studentNo";
     public string SortDirection { get; set; } = "asc";
+    public static SearchCriteria Create(string? rawNo,string? rawName,long? classId,string[] statuses,int pageSize=20,string sortKey="studentNo",string direction="asc")
+    {
+        var number=StudentNormalizer.Text(rawNo,15,15,"SRC-001");
+        var name=StudentNormalizer.Text(rawName,8,8,"SRC-002");
+        if(classId is <=0)throw new InputValidationException([new("SRC-006","E-SRC-002","クラスIDを確認してください。")]);
+        if(statuses is null||statuses.Length>4||statuses.Distinct(StringComparer.Ordinal).Count()!=statuses.Length||statuses.Any(s=>s is not ("01" or "02" or "03" or "04")))
+            throw new InputValidationException([new("SRC-008","E-SRC-002","在籍区分を確認してください。")]);
+        if(pageSize is not (20 or 50 or 100)||sortKey is not ("studentNo" or "name" or "admissionDate" or "updatedAt")||direction is not ("asc" or "desc"))
+            throw new InputValidationException([new("PageSize","E-COM-003","表示件数・並び順を確認してください。")]);
+        return new(){StudentNoPrefix=number is null?null:StudentNormalizer.Identifier(number,15,"SRC-001"),NameKey=name is null?null:StudentNormalizer.NameKey(name),ClassId=classId,StatusCodes=[..statuses],PageSize=pageSize,SortKey=sortKey,SortDirection=direction};
+    }
 }
+public sealed record StudentListItem(long StudentId,string StudentNo,string StudentName,string StudentNameKana,
+    DateOnly BirthDate,int? SchoolYear,string? GradeName,string? ClassCode,string? ClassName,string? EnrollmentStatusName)
+{ public string BirthDateWareki=>JapaneseDateService.ToWareki(BirthDate); }
 public sealed record StudentRow(long StudentId, string StudentNo, string StudentName, string StudentNameKana,
     DateOnly BirthDate, int? SchoolYear, string? GradeName, string? ClassCode, string? ClassName,
     string? EnrollmentStatusName, string Address, string? PhoneNumber, DateOnly AdmissionDate,
@@ -54,7 +60,7 @@ public sealed record StudentRow(long StudentId, string StudentNo, string Student
 {
     public string BirthDateWareki => JapaneseDateService.ToWareki(BirthDate);
 }
-public sealed record SearchResult(Outcome Outcome, int Count, IReadOnlyList<StudentRow> Items,
+public sealed record SearchResult(Outcome Outcome, int Count, IReadOnlyList<StudentListItem> Items,
     DateTimeOffset SearchedAt, bool LimitExceeded, IReadOnlyList<FieldError> Errors);
 public sealed record StudentDetail(long StudentId, long RowVersion, StudentDraft Draft,
     DateOnly BirthDate, DateTimeOffset UpdatedAt, string UpdatedBy);

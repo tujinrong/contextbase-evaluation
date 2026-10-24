@@ -64,6 +64,9 @@
  dcl-s m varucs2( 4 ) ccsid( 1200 ) ;
  dcl-s d varucs2( 4 ) ccsid( 1200 ) ;
  dcl-s wareki varucs2( 80 ) ccsid( 1200 ) ;
+ if result.kind=0 and result.messageId= '' and result.errorCount=0 ;
+ return %ucs2( '' ) ;
+ endif ;
  text=StMessage( result.messageId ) ;
  if result.errorCount>0 ;
  text=%ucs2( '' ) ;
@@ -233,10 +236,11 @@
  for i=1 to 10 ;
  item=first+i ;
  if item<=%min( result.candidateCount :20 ) ;
- StFormatBirthDate( result.candidates( item ).work.birthDate :era :y :m :d :birth ) ;
- text=%ucs2( result.candidates( item ).work.studentNo ) +%ucs2( ' '
- ) +result.candidates( item ).work.studentName+%ucs2( ' '
- ) +result.candidates( item ).work.studentNameKana+%ucs2( ' ' ) +birth ;
+ StFormatBirthDate( result.candidates( item ).birthDate :era :y :m :d :birth ) ;
+ text=%ucs2( result.candidates( item ).studentNo ) +%ucs2( ' '
+ ) +result.candidates( item ).studentName+%ucs2( ' '
+ ) +birth+%ucs2( ' ' +result.candidates( item ).classCode+ ' ' ) +
+ result.candidates( item ).className ;
  rows( i ) =Render( text :122 ) ;
  full( item ) =text ;
  endif ;

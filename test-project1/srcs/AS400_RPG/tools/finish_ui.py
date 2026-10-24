@@ -1,4 +1,5 @@
 """Generate executable UI members and UI metadata procedures; no spec-eval access."""
+raise SystemExit("Historical bootstrap retired: use current src/COPY and tools/generate_dds.py; this script would overwrite reviewed compact UI.")
 from pathlib import Path
 import runpy,json
 B=Path(__file__).resolve().parents[1]

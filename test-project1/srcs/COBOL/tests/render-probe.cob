@@ -1,0 +1,53 @@
+       >>SOURCE FORMAT FREE
+identification division.
+program-id. render-probe.
+environment division.
+configuration section.
+repository. function all intrinsic.
+data division.
+working-storage section.
+copy "ST-FIELDS.cpy".
+copy "ST-APP.cpy".
+01 MODE-NAME PIC X(32).
+01 I PIC S9(9) COMP-5.
+01 HANDLE-MARKER PIC X.
+procedure division.
+    INITIALIZE APP
+    MOVE 200 TO APP-STATUS MOVE 1 TO APP-ERRORS-LENGTH
+    MOVE 2 TO ROLE-CODE MOVE "2026-10-23" TO BUSINESS-DAY
+    SET DB-HANDLE TO ADDRESS OF HANDLE-MARKER
+    PERFORM VARYING I FROM 1 BY 1 UNTIL I > 64
+      MOVE -1 TO R-NULL(I)
+    END-PERFORM
+    MOVE "studentNo" TO R-DATA(F-SORTKEY)
+    MOVE "asc" TO R-DATA(F-SORTDIRECTION)
+    MOVE 1 TO CURRENT-PAGE LAST-PAGE MOVE 20 TO PAGE-SIZE
+    ACCEPT MODE-NAME FROM COMMAND-LINE
+    MOVE "Edit" TO VIEW-MODE
+    EVALUATE MODE-NAME
+      WHEN "search"
+        MOVE "Search" TO VIEW-MODE
+        MOVE 1 TO SEARCH-EXECUTED ROW-COUNT TOTAL-COUNT
+        MOVE "1" TO ROW-DATA(1,1) MOVE 1 TO ROW-LENGTH(1,1)
+        MOVE "S-1" TO ROW-DATA(1,2) MOVE 3 TO ROW-LENGTH(1,2)
+        MOVE "2008-05-15" TO ROW-DATA(1,5) MOVE 10 TO ROW-LENGTH(1,5)
+      WHEN "delete"
+        MOVE "ActionConfirmation" TO APP-OUTCOME
+        MOVE "DELETE" TO EDITOR-PENDING
+      WHEN "duplicate"
+        MOVE "ConfirmationRequired" TO APP-OUTCOME
+        MOVE 1 TO DUP-COUNT
+        MOVE "2008-05-15" TO ROW-DATA(1,5) MOVE 10 TO ROW-LENGTH(1,5)
+      WHEN "dup-error"
+        MOVE ST-RAW TO EDITOR-DRAFT
+        MOVE 422 TO APP-STATUS MOVE "DUPLICATE" TO EDITOR-PENDING
+        MOVE ALL "x" TO R-DATA(F-REASON)(1:61)
+        MOVE 61 TO R-LENGTH(F-REASON) MOVE 0 TO R-NULL(F-REASON)
+      WHEN "delete-error"
+        MOVE 422 TO APP-STATUS MOVE "DELETE" TO EDITOR-PENDING
+        MOVE ALL "x" TO R-DATA(F-DELETEREASON)(1:61)
+        MOVE 61 TO R-LENGTH(F-DELETEREASON) MOVE 0 TO R-NULL(F-DELETEREASON)
+    END-EVALUATE
+    CALL "STRENDER" END-CALL
+    STOP RUN.
+end program render-probe.

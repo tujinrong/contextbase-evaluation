@@ -1,3 +1,5 @@
+# Historical migration preserved for audit; current V2 contracts must not be downgraded.
+raise SystemExit("Historical one-time migrator is disabled. Use the current checked-in production sources.")
 """Idempotent final server/UI corrections; leave DB generation to database owner."""
 from pathlib import Path
 B=Path(__file__).resolve().parents[1]

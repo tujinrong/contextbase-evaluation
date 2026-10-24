@@ -5,10 +5,10 @@ Namespace Controls
     ' REG-005 / UI-15. Each raw component is preserved rather than DateTimePicker coercion.
     Public Class JapaneseBirthDateControl
         Inherits UserControl
-        Public ReadOnly Era As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Width = 95}
-        Public ReadOnly Year As New TextBox With {.MaxLength = 4, .Width = 65, .AccessibleName = "元号年"}
-        Public ReadOnly Month As New TextBox With {.MaxLength = 2, .Width = 45, .AccessibleName = "生年月日の月"}
-        Public ReadOnly Day As New TextBox With {.MaxLength = 2, .Width = 45, .AccessibleName = "生年月日の日"}
+        Public ReadOnly Era As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Width = 72}
+        Public ReadOnly Year As New TextBox With {.MaxLength = 4, .Width = 42, .AccessibleName = "元号年"}
+        Public ReadOnly Month As New TextBox With {.MaxLength = 2, .Width = 30, .AccessibleName = "生年月日の月"}
+        Public ReadOnly Day As New TextBox With {.MaxLength = 2, .Width = 30, .AccessibleName = "生年月日の日"}
         Public Sub New()
             Height = 38 : Dock = DockStyle.Fill
             Era.AccessibleName = "元号"

@@ -1,0 +1,2 @@
+<script setup lang="ts">defineProps<{id:string;label:string;value:string|null;limit:number;hint?:string;required?:boolean;readonly?:boolean}>();defineEmits<{change:[value:string]}>();</script>
+<template><label class="field" :data-field-id="id"><span class="field-label">{{label}}<span v-if="required" class="required"> 必須</span><small v-if="hint">{{hint}}</small></span><input :id="id" :value="value||''" :maxlength="limit" :required="required" :readonly="readonly" @input="$emit('change',($event.target as HTMLInputElement).value)"></label></template>

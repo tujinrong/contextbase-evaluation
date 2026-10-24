@@ -1,6 +1,6 @@
 # 撮影用fixtureホスト
 
-2026-10-12／Vue_CSharpAPI／20261012-evidence-01。実API Controllerとbackend/wwwrootの既存Vue配信物を同じHTTPSホストで配信します。 本番コードやSQL Serverのテーブルを変更せず、tests内のIStudentServiceだけを合成データへ差し替えます。
+2026-10-23／Vue_CSharpAPI／20261023-vue-csharpapi-build-01。実API Controllerとbackend/wwwrootの既存Vue配信物を同じHTTPSホストで配信します。 本番コードやSQL Serverのテーブルを変更せず、tests内のIStudentServiceだけを合成データへ差し替えます。
 
 `fixture-data.json`は仮名3学生（TEST2026-0001～0003）、テスト2クラス、当方式の002_seed.sqlから取得した70コード。学生IDはInt64の正確性を確認する9007199254740993～9007199254740995です。個人情報の実データは含みません。既定状態01/02では2件、状態をすべて外すと3件、未所属の卒業fixtureは1件です。
 
@@ -20,5 +20,5 @@ Cookie/CSRF cookie名はこのホスト専用。既存.NET開発証明書を使�
 
 最大60分で自動終了（--minutes=1～60）。Ctrl+C、またはループバックの /__evidence/stop へPOSTして停止します。既存QA開発証明書の停止確認だけなら `curl.exe -k -X POST https://localhost:7442/__evidence/stop`。この-kを本番接続の設定へ転用しません。停止後もfixtureファイルは保持され、再起動すれば同じ合成データを読めます。
 
-現行の独立テストは `dotnet run --project tests/ApiContracts.csproj -c Release --no-restore`、Core境界は `dotnet run --project tests/Core/StudentManagement.Core.Tests.csproj -c Release --no-restore`。本回の新規実行記録はtest-project1/test-reportの20261012-evidence-01-Vue_CSharpAPI関連ファイルです。共有role/SQLCLR構造衝突の修正・SQL Server統合は未実施です。
+現行の独立テストは `dotnet run --project tests/ApiContracts.csproj -c Release --no-restore`、Core境界は `dotnet run --project tests/Core/StudentManagement.Core.Tests.csproj -c Release --no-restore`。今回の13件自己検査とビルド済Vue→実API接続検査はtest-project1/test-report/20261023-vue-csharpapi-build-01へ保存しています。検索は4条件だけで、専用の未所属条件はありません。共有role/SQLCLR構造衝突の修正・SQL Server統合は未実施です。
 

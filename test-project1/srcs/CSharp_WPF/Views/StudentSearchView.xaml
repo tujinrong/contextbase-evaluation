@@ -1,40 +1,26 @@
-<Window x:Class="StudentManagement.Wpf.Views.StudentSearchView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="学生管理：検索" Width="1320" Height="900" MinWidth="1000" MinHeight="720">
- <DockPanel Margin="16">
+<Window x:Class="StudentManagement.Wpf.Views.StudentSearchView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="学生管理：検索" Width="1300" Height="700" MinWidth="850" MinHeight="500" FontSize="12">
+ <DockPanel Margin="8">
   <StackPanel DockPanel.Dock="Top" IsEnabled="{Binding IsIdle}">
-   <TextBlock Text="学生検索" FontSize="24" FontWeight="Bold"/><TextBlock Text="{Binding Principal}"/>
-   <TextBox Text="{Binding Message, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" MinHeight="50" Foreground="#8B2835"/>
-   <UniformGrid Columns="4">
-    <Label Content="学籍番号（15文字）"/><TextBox Text="{Binding Draft.StudentNo, UpdateSourceTrigger=PropertyChanged}" MaxLength="30" AutomationProperties.Name="学籍番号"/>
-    <Label Content="氏名（8文字）"/><TextBox Text="{Binding Draft.Name, UpdateSourceTrigger=PropertyChanged}" MaxLength="16" AutomationProperties.Name="氏名"/>
-    <Label Content="氏名カナ（入力36文字）"/><TextBox Text="{Binding Draft.Kana, UpdateSourceTrigger=PropertyChanged}" MaxLength="72" AutomationProperties.Name="氏名カナ"/>
-    <Label Content="年度"/><ComboBox IsEnabled="{Binding CanSelectClassCriteria}" ItemsSource="{Binding Years}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Draft.SchoolYear}" SelectionChanged="FilterChanged" AutomationProperties.Name="年度"/>
-    <Label Content="学年"/><ComboBox IsEnabled="{Binding CanSelectClassCriteria}" ItemsSource="{Binding Grades}" DisplayMemberPath="Name" SelectedValuePath="SearchValue" SelectedValue="{Binding Draft.GradeCode}" SelectionChanged="FilterChanged" AutomationProperties.Name="学年"/>
-    <Label Content="クラス"/><ComboBox IsEnabled="{Binding CanSelectClassCriteria}" ItemsSource="{Binding Classes}" DisplayMemberPath="Name" SelectedValuePath="SearchId" SelectedItem="{Binding SelectedClass}" SelectionChanged="ClassChanged" AutomationProperties.Name="クラス"/>
-    <Label Content="未所属のみ"/><CheckBox IsChecked="{Binding Draft.UnassignedOnly}" Checked="UnassignedChanged" Unchecked="UnassignedChanged" Content="年度・学年・クラスを解除" VerticalAlignment="Center"/>
-    <Label Content="在籍区分（全解除は全区分）"/><WrapPanel><CheckBox Content="在学" IsChecked="{Binding Status01}"/><CheckBox Content="休学" IsChecked="{Binding Status02}"/><CheckBox Content="卒業" IsChecked="{Binding Status03}"/><CheckBox Content="退学" IsChecked="{Binding Status04}"/></WrapPanel>
-    <Label Content="都道府県"/><ComboBox ItemsSource="{Binding Prefectures}" DisplayMemberPath="Name" SelectedValuePath="SearchValue" SelectedValue="{Binding Draft.PrefectureCode}" AutomationProperties.Name="都道府県"/>
-    <Label Content="電話番号（入力20文字）"/><TextBox Text="{Binding Draft.PhoneNumber, UpdateSourceTrigger=PropertyChanged}" MaxLength="40" AutomationProperties.Name="電話番号"/>
-    <Label Content="入学日・開始 yyyy-MM-dd"/><TextBox Text="{Binding Draft.AdmissionFrom, UpdateSourceTrigger=PropertyChanged}" MaxLength="10" AutomationProperties.Name="入学日・開始"/>
-    <Label Content="入学日・終了 yyyy-MM-dd"/><TextBox Text="{Binding Draft.AdmissionTo, UpdateSourceTrigger=PropertyChanged}" MaxLength="10" AutomationProperties.Name="入学日・終了"/>
-   </UniformGrid>
-   <WrapPanel><Button Content="検索" Command="{Binding SearchCommand}"/><Button Content="クリア" Command="{Binding ClearCommand}"/><Button Content="新規登録" Command="{Binding NewCommand}"/><Button Content="メニューへ" Click="MenuClick"/></WrapPanel>
-   <WrapPanel>
-    <TextBlock Text="{Binding CountText}" VerticalAlignment="Center" Margin="6"/>
-    <Label Content="表示件数"/><ComboBox Width="85" ItemsSource="{Binding PageSizes}" SelectedItem="{Binding PageSize}"/>
-    <Label Content="並び順"/><ComboBox Width="140" ItemsSource="{Binding SortKeys}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding SortKey}"/>
-    <ComboBox Width="100" ItemsSource="{Binding Directions}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding SortDirection}"/>
-    <Button Content="並び順・件数を反映" Command="{Binding SortCommand}"/>
-   </WrapPanel>
+   <TextBlock Text="学生検索" FontSize="20" FontWeight="Bold"/><TextBlock Text="{Binding Principal}"/>
+   <TextBox Text="{Binding Message, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" MinHeight="34" MaxHeight="60" VerticalScrollBarVisibility="Auto" Foreground="#8B2835"/>
+   <Grid>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="80"/><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/><ColumnDefinition Width="*"/><ColumnDefinition Width="70"/><ColumnDefinition Width="1.4*"/></Grid.ColumnDefinitions>
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <Label Content="学籍番号"/><TextBox Grid.Column="1" Text="{Binding Draft.StudentNo, UpdateSourceTrigger=PropertyChanged}" MaxLength="30" AutomationProperties.Name="学籍番号"/>
+    <Label Grid.Column="2" Content="氏名"/><TextBox Grid.Column="3" Text="{Binding Draft.Name, UpdateSourceTrigger=PropertyChanged}" MaxLength="16" AutomationProperties.Name="氏名"/>
+    <Label Grid.Column="4" Content="クラス"/><ComboBox Grid.Column="5" ItemsSource="{Binding Classes}" SelectedItem="{Binding SelectedClass}" AutomationProperties.Name="クラス"/>
+    <Label Grid.Row="1" Content="在籍区分"/><WrapPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="5" VerticalAlignment="Center"><CheckBox Content="在学" IsChecked="{Binding Status01}" Margin="6"/><CheckBox Content="休学" IsChecked="{Binding Status02}" Margin="6"/><CheckBox Content="卒業" IsChecked="{Binding Status03}" Margin="6"/><CheckBox Content="退学" IsChecked="{Binding Status04}" Margin="6"/><TextBlock Text="全解除は全区分" VerticalAlignment="Center"/></WrapPanel>
+   </Grid>
+   <WrapPanel><Button Content="検索" Command="{Binding SearchCommand}"/><Button Content="クリア" Command="{Binding ClearCommand}"/><Button Content="新規登録" Command="{Binding NewCommand}" Visibility="{Binding NewVisibility}"/><Button Content="メニューへ" Click="MenuClick"/></WrapPanel>
+   <WrapPanel><TextBlock Text="{Binding CountText}" VerticalAlignment="Center" Margin="6"/><Label Content="表示件数"/><ComboBox Width="70" ItemsSource="{Binding PageSizes}" SelectedItem="{Binding PageSize}"/><Label Content="並び順"/><ComboBox Width="120" ItemsSource="{Binding SortKeys}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding SortKey}"/><ComboBox Width="90" ItemsSource="{Binding Directions}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding SortDirection}"/><Button Content="並び順・件数を反映" Command="{Binding SortCommand}"/></WrapPanel>
   </StackPanel>
   <StackPanel DockPanel.Dock="Bottom" IsEnabled="{Binding IsIdle}"><WrapPanel HorizontalAlignment="Center"><Button Content="先頭" Command="{Binding FirstCommand}"/><Button Content="前へ" Command="{Binding PreviousCommand}"/><Button Content="次へ" Command="{Binding NextCommand}"/><Button Content="最後" Command="{Binding LastCommand}"/></WrapPanel><TextBlock Text="{Binding SearchedAt}"/></StackPanel>
   <DataGrid ItemsSource="{Binding Items}" IsEnabled="{Binding IsIdle}" IsReadOnly="True" AutoGenerateColumns="False" CanUserAddRows="False" CanUserSortColumns="False" SelectionMode="Single" AutomationProperties.Name="学生一覧">
    <DataGrid.Columns>
-    <DataGridTextColumn Header="学籍番号" Binding="{Binding StudentNo}"/><DataGridTextColumn Header="氏名" Binding="{Binding StudentName}"/>
-    <DataGridTextColumn Header="氏名カナ" Binding="{Binding StudentNameKana}"/><DataGridTextColumn Header="生年月日（和暦）" Binding="{Binding BirthDateWareki}"/>
-    <DataGridTextColumn Header="年度／学年" Binding="{Binding YearGrade}"/><DataGridTextColumn Header="クラス" Binding="{Binding ClassName}"/>
-    <DataGridTextColumn Header="在籍区分" Binding="{Binding EnrollmentName}"/><DataGridTextColumn Header="住所" Binding="{Binding AddressDisplay}" Width="220"/>
-    <DataGridTextColumn Header="本人電話" Binding="{Binding PhoneNumber}"/><DataGridTextColumn Header="更新日時" Binding="{Binding UpdatedAt}"/>
-    <DataGridTemplateColumn Header="編集／参照"><DataGridTemplateColumn.CellTemplate><DataTemplate><Button Content="開く" Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+    <DataGridTextColumn Header="学籍番号" Binding="{Binding StudentNo}" Width="15*"/>
+    <DataGridTemplateColumn Header="氏名／カナ" Width="21*"><DataGridTemplateColumn.CellTemplate><DataTemplate><StackPanel><TextBlock Text="{Binding StudentName}"/><TextBlock Text="{Binding StudentNameKana}" Foreground="#516476"/></StackPanel></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+    <DataGridTextColumn Header="生年月日（和暦）" Binding="{Binding BirthDateWareki}" Width="16*"/><DataGridTextColumn Header="年度／学年" Binding="{Binding YearGrade}" Width="13*"/><DataGridTextColumn Header="クラス" Binding="{Binding ClassName}" Width="18*"/><DataGridTextColumn Header="在籍区分" Binding="{Binding EnrollmentName}" Width="9*"/>
+    <DataGridTemplateColumn Header="操作" Width="8*"><DataGridTemplateColumn.CellTemplate><DataTemplate><Button Content="{Binding DataContext.OpenLabel, RelativeSource={RelativeSource AncestorType=Window}}" Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
    </DataGrid.Columns>
   </DataGrid>
  </DockPanel>

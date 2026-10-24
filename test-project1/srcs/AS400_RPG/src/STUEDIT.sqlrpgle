@@ -24,6 +24,8 @@
  dcl-pr EditFull ;
  field int( 10 ) const ;
  end-pr ;
+ dcl-pr ShowErrors ;
+ end-pr ;
  dcl-pr SaveForm ;
  end-pr ;
  dcl-pr Pick ;
@@ -107,19 +109,17 @@
  select ;
  when panel=1 ;
  exfmt EDBASE ;
- when panel=2 ;
- exfmt EDENROLL ;
  other ;
- exfmt EDNOTE ;
+ exfmt EDENROLL ;
  endsl ;
  ReadForm( ) ;
- if uiError ;
+ if uiError and not( *in08 or *in03 or *in12 or *in05 or *in14 ) ;
  result.kind=RK_VALIDATION ;
  result.messageId= 'E-COM-003' ;
  iter ;
  endif ;
  if *in03 or *in12 ;
- if not Dirty( ) or Question( 'W-STU-103' :reason :*off :result ) ;
+ if( not Dirty( ) and not uiError ) or Question( 'W-STU-103' :reason :*off :result ) ;
  closed=*on ;
  endif ;
  iter ;
@@ -129,7 +129,7 @@
  iter ;
  endif ;
  if *in09 ;
- panel=%min( 3 :panel+1 ) ;
+ panel=3-panel ;
  iter ;
  endif ;
  if *in20 ;
@@ -137,17 +137,19 @@
  iter ;
  endif ;
  if *in05 ;
- if not Dirty( ) or Question( 'W-STU-104' :reason :*off :result ) ;
+ if( not Dirty( ) and not uiError ) or Question( 'W-STU-104' :reason :*off :result ) ;
+ StCancelConfirmation( hints.instanceId :lookupResult ) ;
  raw=original ;
  hints.schoolYear=oldHints.schoolYear ;
  hints.gradeCode=oldHints.gradeCode ;
  hints.reason=%ucs2( '' ) ;
  clear result ;
+ uiError=*off ;
  endif ;
  iter ;
  endif ;
  if *in14 ;
- if not Dirty( ) or Question( 'W-STU-109' :reason :*off :result ) ;
+ if( not Dirty( ) and not uiError ) or Question( 'W-STU-109' :reason :*off :result ) ;
  LoadForm( ) ;
  endif ;
  iter ;
@@ -157,16 +159,15 @@
  select ;
  when panel=1 ;
  field=%int( %trim( EFIELD ) ) ;
- when panel=2 ;
- field=%int( %trim( EFIELD2 ) ) ;
  other ;
- field=%int( %trim( EFIELD3 ) ) ;
+ field=%int( %trim( EFIELD2 ) ) ;
  endsl ;
  on-error ;
  field=0 ;
  endmon ;
  if *in08 ;
  EditFull( field ) ;
+ uiError=*off ;
  iter ;
  endif ;
  if *in04 and not protected ;
@@ -190,14 +191,17 @@
  notice=Render( UiMessage( result ) :128 ) ;
  closed=*on ;
  elseif result.kind=RK_VALIDATION ;
- ErrorList( result ) ;
+ ShowErrors( ) ;
  endif ;
  endif ;
  endif ;
  enddo ;
+ StCancelConfirmation( hints.instanceId :lookupResult ) ;
  *inlr=*on ;
  return ;
  dcl-proc LoadForm ;
+ uiError=*off ;
+ StCancelConfirmation( hints.instanceId :lookupResult ) ;
  clear result ;
  if studentId>0 ;
  StLoadStudent( studentId :rec :result ) ;
@@ -251,7 +255,7 @@
  priorHintYear=EYEAR ;
  EGRADE=hints.gradeCode ;
  priorHintGrade=EGRADE ;
- EREASON=Render( hints.reason :122 ) ;
+ EREASON=Render( hints.reason :90 ) ;
  priorReason=EREASON ;
  ESTUID=%char( studentId ) ;
  EVERSION=%char( rec.rowVersion ) ;
@@ -259,7 +263,6 @@
  UPDATEDBY=Render( rec.updatedBy :90 ) ;
  EMSG1=Render( UiMessage( result ) :128 ) ;
  EMSG2=EMSG1 ;
- EMSG3=EMSG1 ;
  OCCUPANCY= '' ;
  if %len( raw.values( 15 ) ) >0 ;
  monitor ;
@@ -387,6 +390,26 @@
  endif ;
  endif ;
  end-proc ;
+ dcl-proc ShowErrors ;
+ panel=2 ;
+ if result.errorCount>0 ;
+ select ;
+ when result.fieldErrors( 1 ).field= 'studentNo' or
+ result.fieldErrors( 1 ).field= 'studentName' or
+ result.fieldErrors( 1 ).field= 'studentNameKana' or
+ result.fieldErrors( 1 ).field= 'birthDate' or
+ result.fieldErrors( 1 ).field= 'genderCode' or
+ result.fieldErrors( 1 ).field= 'postalCode' or
+ result.fieldErrors( 1 ).field= 'prefectureCode' or
+ result.fieldErrors( 1 ).field= 'addressLine1' or
+ result.fieldErrors( 1 ).field= 'addressLine2' or
+ result.fieldErrors( 1 ).field= 'phoneNumber' or
+ result.fieldErrors( 1 ).field= 'emailAddress' ;
+ panel=1 ;
+ endsl ;
+ endif ;
+ ErrorList( result ) ;
+ end-proc ;
  dcl-proc SaveForm ;
  dcl-s token char( 36 ) ;
  StClock( utc :day ) ;
@@ -395,13 +418,14 @@
  StValidate( work :result ) ;
  endif ;
  if result.kind<>0 ;
- ErrorList( result ) ;
+ ShowErrors( ) ;
  return ;
  endif ;
  dou *off ;
  StSaveStudent( work :hints :studentId :rec.rowVersion :token :result ) ;
  if result.kind=RK_CONFIRM ;
  if not Question( result.messageId :hints.reason :*on :result ) ;
+ StCancelConfirmation( hints.instanceId :lookupResult ) ;
  return ;
  endif ;
  token=result.token ;
@@ -414,7 +438,7 @@
  notice=Render( UiMessage( result :work.studentNo ) :128 ) ;
  closed=*on ;
  elseif result.kind=RK_VALIDATION ;
- ErrorList( result ) ;
+ ShowErrors( ) ;
  elseif result.kind=RK_CONFLICT ;
  if Question( 'E-STU-105' :reason :*off :result ) ;
  LoadForm( ) ;

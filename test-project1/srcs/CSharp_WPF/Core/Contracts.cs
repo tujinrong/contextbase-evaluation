@@ -28,20 +28,13 @@ public sealed class StudentDraft
     public string? EmergencyPhoneNumber { get; set; }
     public string? Remarks { get; set; }
 }
+[System.Text.Json.Serialization.JsonUnmappedMemberHandling(System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow)]
 public sealed class SearchCriteria
 {
     public string? StudentNo { get; set; }
     public string? StudentName { get; set; }
-    public string? StudentNameKana { get; set; }
-    public int? SchoolYear { get; set; }
-    public string? GradeCode { get; set; }
     public long? ClassId { get; set; }
-    public bool UnassignedOnly { get; set; }
     public string[] EnrollmentStatusCodes { get; set; } = ["01", "02"];
-    public string? PrefectureCode { get; set; }
-    public string? PhoneNumber { get; set; }
-    public string? AdmissionFrom { get; set; }
-    public string? AdmissionTo { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 20;
     public string SortKey { get; set; } = "studentNo";
@@ -49,8 +42,7 @@ public sealed class SearchCriteria
 }
 public sealed record StudentRow(long StudentId, string StudentNo, string StudentName, string StudentNameKana,
     DateOnly BirthDate, int? SchoolYear, string? GradeName, string? ClassCode, string? ClassName,
-    string? EnrollmentStatusName, string Address, string? PhoneNumber, DateOnly AdmissionDate,
-    DateTimeOffset UpdatedAt, long RowVersion)
+    string? EnrollmentStatusName)
 {
     public string BirthDateWareki => JapaneseDateService.ToWareki(BirthDate);
 }

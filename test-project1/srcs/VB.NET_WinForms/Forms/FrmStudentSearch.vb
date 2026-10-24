@@ -19,13 +19,14 @@ Namespace Forms
             AddHandler btnPrev.Click, Async Sub(sender, e) Await _presenter.MoveRelativeAsync(-1)
             AddHandler btnNext.Click, Async Sub(sender, e) Await _presenter.MoveRelativeAsync(1)
             AddHandler btnLast.Click, Async Sub(sender, e) Await _presenter.MoveLastAsync()
-            AddHandler cboSchoolYear.SelectedIndexChanged, Sub(sender, e) _presenter.RefreshClasses()
-            AddHandler cboGrade.SelectedIndexChanged, Sub(sender, e) _presenter.RefreshClasses()
-            AddHandler cboClass.SelectedIndexChanged, Sub(sender, e) _presenter.SelectClass()
-            AddHandler chkUnassignedOnly.CheckedChanged, Sub(sender, e) _presenter.RefreshClasses()
             AddHandler dgvStudents.CellContentClick, Async Sub(sender, e)
                                                         If e.RowIndex >= 0 AndAlso dgvStudents.Columns(e.ColumnIndex).Name = "colAction" Then Await _presenter.OpenRowAsync(e.RowIndex)
                                                     End Sub
+            For Each field As Control In {txtStudentNo, txtName}
+                AddHandler field.TextChanged, Sub(sender, e) _presenter.MarkDraftChanged()
+            Next
+            AddHandler cboClass.SelectedIndexChanged, Sub(sender, e) _presenter.MarkDraftChanged()
+            AddHandler clbStatuses.ItemCheck, Sub(sender, e) _presenter.MarkDraftChanged()
             AddHandler FormClosed, Sub(sender, e) _presenter.Dispose()
         End Sub
     End Class

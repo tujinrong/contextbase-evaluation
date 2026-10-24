@@ -1,6 +1,6 @@
 # 仕様ID・生成物・境界
 
-入力正本は方式内spec版8.0、46ファイルです。
+入力正本は方式内spec版8.0／8.1／8.2、49ファイルです。今回の実行IDは `20261023-cobol-build-02`、入力ハッシュは方式内ロックとプロジェクトreportへ保存しています。
 
 | 仕様・操作 | 生成ファイル | 内容 |
 | --- | --- | --- |
@@ -15,7 +15,9 @@
 | マスタ保守・コード70値 | STMAINT; sql/MC-*.sql, MK-*.sql, MAINT-LOG.sql; database/002_seed.sql | 保護コード、追加可否、年度・名称一意、参照時学年/期間、定員、状態遷移監査 |
 | SQLServer定義 | database/001_schema.sql,002_seed.sql; tools/generate_database.mjs | 業務5表89列、技術2表、複合FK・nullable続柄分類/値、UTC・版・監査制約 |
 
-表のPROGRAM-IDは `cobol/<名称>.cob` に対応します。19rawの正確な並びは `tools/emit_cobol.py` のrawmapです。生年月日は19論理項目のうち1項目、元号/年/月/日4入力で受けます。12検索項目は番号、氏名、カナ、年度、学年、クラス、未所属、在籍集合、都道府県、電話、開始日、終了日。11一覧項目は番号、氏名、カナ、生年月日、年度・学年、クラス、在籍、住所、本人電話、更新日時、編集/参照です。技術IDと複合表示を分けるためSQL一覧は13物理列です。
+表のPROGRAM-IDは `cobol/<名称>.cob` に対応します。19rawの正確な並びは `tools/emit_cobol.py` のrawmapです。生年月日は19論理項目のうち1項目、元号/年/月/日4入力で受けます。現行検索は番号、氏名、クラス、在籍集合の4条件です。一覧は番号、氏名／カナ、生年月日、年度・学年、クラス、在籍、編集／参照の7列。SQL一覧は非表示IDを含む10物理列だけを取得し、住所・電話・更新日時は取得しません。更新日時による並べ替えは継続します。
+
+`STPROMPT` は編集取消・再読込・復帰・削除のpendingActionと編集中rawを暗号化Editor状態へ退避し、CONFIRM／CANCELを処理します。クライアントのconfirmed値はHTTP境界で拒否します。重複確認も独立HTMLへ表示し、全候補ID／版の再照合は既存STDUP/STSAVEが担います。HTML候補fixtureによるレンダー試験は、この状態I/Oや実DBの確認後保存を検証していません。
 
 ## ABIとトランザクション
 
@@ -30,3 +32,5 @@
 ## 検査範囲
 
 生成・構文・ホストリンク・境界実行は実施済みです。Linux再ビルド/依存確定、SQLServer DDL/seed/CRUD/保守、CGI再起動状態復帰、2接続競合、監査失敗、COMMIT後応答喪失、実ブラウザー操作は未実施です。これらをmock成功や完成した配備として扱いません。
+
+2026-10-23最終補正：外部POSTはCREATE／UPDATE／OPTIONS等の明示action、空・旧actionを拒否する。検索nameと反復statusCodeを内部RAWへ変換し、空の廃止キーも400/E-SRC-002。OPTIONSはeditorIdの有無で分岐する。検索からの遷移はPOST OPTIONSでdraftをCAS保存した後、個人情報を含まないmetadataだけの303 GETへ移す。STPENDはSearchとEditorへpendingを結合し、10分期限とSearchRevision更新で背景GET／POST・古い確認を拒否する。未変更のRESET／RELOAD／BACKは直接実行し、重複・削除の理由エラーはrawを保持して同じ確認へ戻す。重複／削除成功時は学生・監査と同じTx内でpendingを解除する。

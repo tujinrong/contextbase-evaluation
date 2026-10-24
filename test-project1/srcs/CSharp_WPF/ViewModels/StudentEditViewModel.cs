@@ -62,6 +62,7 @@ public sealed class StudentEditViewModel : Bindable, IDisposable
     public bool CanDelete => gateway.CanDelete && id is not null && !IsBusy;
     public bool CanEditNumber => CanEdit && id is null;
     public bool IsDirty => JsonSerializer.Serialize(Model.Snapshot().OrderBy(x => x.Key)) != JsonSerializer.Serialize(original.OrderBy(x => x.Key));
+    public string StudentIdDisplay => id?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "自動採番";
     public string Title => id is null ? "学生登録：新規" : CanEdit ? "学生登録：編集" : "学生登録：参照";
     public string Message { get => message; private set => Set(ref message, value); }
     public string UpdatedInfo { get; private set; } = "";
