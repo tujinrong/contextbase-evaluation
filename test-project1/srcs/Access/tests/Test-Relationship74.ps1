@@ -1,4 +1,4 @@
-param([ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId='relationship',[string]$ReportDirectory='')
+﻿param([ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId='relationship',[string]$ReportDirectory='')
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot '../tools/GeneratedPaths.ps1')
 if (-not $ReportDirectory) { $ReportDirectory=Join-Path $script:AccessMethodRoot 'build/test-results' }
@@ -62,7 +62,7 @@ try {
  $taskState='Passed'
 } catch { $taskState='Failed'; $taskFatal=$_.Exception.Message; Write-Output $taskFatal }
 finally {
- $taskOutput=[ordered]@{runId=$RunId;completedAt=[DateTime]::UtcNow.ToString('o');specConfigurationVersion='8.1';specDatabaseIndexVersion='8.2';specBusinessVersion='8.0';relationshipRuleOriginVersion='7.4';inputs=$taskInputs;problemId='STR-ACCESS-001';status=$taskState;fatal=$taskFatal;engineVersion=$taskEngine.Version;fixtureOnly=$true;fixture=[IO.Path]::GetFullPath($taskFixture);ddl=$taskDdl;validationRule=$taskRule;relationAttributes=0;tests=$taskResults;readback=$taskReadback}
+ $taskOutput=[ordered]@{runId=$RunId;completedAt=[DateTime]::UtcNow.ToString('o');specConfigurationVersion='8.5';specDatabaseIndexVersion='8.5';specDetailedVersion='8.4';relationshipRuleOriginVersion='7.4';inputs=$taskInputs;problemId='STR-ACCESS-001';status=$taskState;fatal=$taskFatal;engineVersion=$taskEngine.Version;fixtureOnly=$true;fixture=[IO.Path]::GetFullPath($taskFixture);ddl=$taskDdl;validationRule=$taskRule;relationAttributes=0;tests=$taskResults;readback=$taskReadback}
  $taskDb.Close()
  $taskOutput.fixtureSha256=(Get-FileHash -LiteralPath $taskFixture -Algorithm SHA256).Hash
  $taskOutput | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $taskReport 'relationship.json') -Encoding UTF8

@@ -1,4 +1,6 @@
 """Executes the production C gate/key/block code; RPG integration checks are static."""
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import argparse,subprocess,json,re,hashlib,tempfile,shutil,sys,os
 from output_paths import result_dir
@@ -36,11 +38,11 @@ can=types[types.index(' dcl-ds DuplicateCandidate_t'):types.index(' dcl-ds Resul
 check('candidate-dto-contains-only-four-categories',all(x not in can for x in ['studentNameKana','address','phone','rowVersion','studentId','StudentRecord_t']) and all(x in can for x in ['studentNo','studentName','birthDate','className']))
 show=ui[ui.index(' dcl-proc Question'):ui.index(' dcl-proc Choice')]
 check('candidate-display-four-fields-only','studentNameKana' not in show and '.className' in show and '.birthDate' in show)
-check('reset-display-is-unsearched-without-synthetic-date', "ifnotcontext.hasApplied;RESULT_CNT='未検索';SEARCH_AT='';" in compact_search)
+check('reset-display-is-unsearched-without-synthetic-date', "ifnotcontext.hasApplied;DBPAGE='';RCOUNT='未検索';SRCHTIME='';" in compact_search)
 check('candidate-result-uses-restricted-type','candidates likeds( DuplicateCandidate_t )' in types)
 # Execute the real fixed-contract emitter in a disposable method-local root.
 with tempfile.TemporaryDirectory(prefix='rpg-emitter-',dir=B/'.tmp') as temp:
- temp=Path(temp);(temp/'tools').mkdir();shutil.copyfile(B/'tools/generate_sources.py',temp/'tools/generate_sources.py')
+ temp=Path(temp);(temp/'tools').mkdir();shutil.copyfile(B/'tools/generate_sources.py',temp/'tools/generate_sources.py');shutil.copyfile(B/'tools/generate_text_bindings.py',temp/'tools/generate_text_bindings.py')
  generated=subprocess.run([sys.executable,'-X','utf8',str(temp/'tools/generate_sources.py')],capture_output=True,text=True,encoding='utf8')
  (R/('emitter.log')).write_text('EXIT '+str(generated.returncode)+'\n'+generated.stdout+'\n'+generated.stderr,'utf8')
  check('actual-fixed-contract-emitter-runs',generated.returncode==0)
@@ -51,7 +53,7 @@ with tempfile.TemporaryDirectory(prefix='rpg-emitter-',dir=B/'.tmp') as temp:
    return re.sub(r'\s+','',m[0]) if m else ''
   check('emitter-matches-production-'+name,bool(structure(types)) and structure(types)==structure(emitted))
  ep=(temp/'copy/STUPROTO.rpgleinc').read_text('utf8') if generated.returncode==0 else ''
- check('emitter-exports-state-entry-and-C-gates',all(x in ep for x in ['StCreateSearchContext','StClearSearchContext','StCloseSearchContext','StSearchStateCheck','StSearchKeysValid','StSearchBlock']))
+ check('emitter-exports-state-entry-and-C-gates',all(x in ep for x in ['StCreateSearchContext','StClearSearchContext','StCloseSearchContext','StSearchStateCheck','StSearchKeysValid','StSearchBlock','StConfirm','StEndWork','StLookupCodes','StLookupClasses','registration']))
 cases=re.findall(r'^(PASS|FAIL) (.+)$',runs[-1]['stdout'],re.M)
 record=dict(runId=a.run_id,runs=runs,cCases=[dict(id=n,passed=s=='PASS') for s,n in cases],cTests=len(cases),staticChecks=checks,passed=len(runs)==2 and all(r['exitCode']==0 for r in runs) and bool(cases) and all(s=='PASS' for s,n in cases) and all(c['passed'] for c in checks),scope='Production C gate/key/block executed on Windows; native RPG registry, DDS, SQL and IBM i behavior NOT_RUN',formalScore=None,sourceHashes={n:hashlib.sha256((B/n).read_bytes()).hexdigest() for n in ['c/STUSTATE.c','c/STUSTATE.h','src/STUSVC.sqlrpgle','src/STUSRCH.sqlrpgle','copy/STUTYPES.rpgleinc','copy/STUDSP.rpgleinc']})
 dest.write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n','utf8');print(json.dumps(dict(passed=record['passed'],cTests=len(cases),static=len(checks),failed=[x['id'] for x in checks if not x['passed']]),ensure_ascii=False));raise SystemExit(0 if record['passed'] else 1)

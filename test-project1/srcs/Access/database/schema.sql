@@ -1,4 +1,4 @@
--- Generated exclusively from Access/spec. Apply DAO properties/relations through Build-Access.ps1.
+-- Generated exclusively from test-project1/spec/Access. Apply DAO properties/relations through Build-Access.ps1.
 
 CREATE TABLE m_code_category (
   category_id TEXT(48) NOT NULL,

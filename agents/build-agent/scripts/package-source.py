@@ -1,6 +1,7 @@
 """Package each source independently, without original/evaluation specifications or test oracles."""
 from pathlib import Path
 import argparse,hashlib,json,re,sys,zipfile,os
+sys.dont_write_bytecode=True
 from output_layout import ensure_directory, regular_destination, staging_file, write_json_latest
 
 ROOT=Path(__file__).resolve().parents[3]
@@ -35,6 +36,10 @@ def source_files(folder):
 
 for profile in selected:
     folder=ROOT/'test-project1/srcs'/profile
+    state_file=folder/'build/generation/regeneration.json'
+    state=json.loads(state_file.read_text('utf-8')) if state_file.is_file() else None
+    if state and (state.get('runId')!=run or state.get('profileId')!=profile):raise RuntimeError('Generation status belongs to another run/profile')
+    generation_status=state.get('status','NOT_RECORDED') if state else 'NOT_RECORDED'
     final=folder/'build/source.zip'
     scratch=folder/'.tmp/source-package'
     regular_destination(final)
@@ -51,7 +56,7 @@ for profile in selected:
             data=source.read_bytes();original_hash=hashlib.sha256(data).hexdigest();transformation=None
             if relative.as_posix()=='README.md':
                 command={'VB.NET_WinForms':'dotnet publish StudentManagement.WinForms.vbproj -c Release -o build/app -p:RestoreLockedMode=true','CSharp_WPF':'dotnet publish StudentManagement.Wpf.csproj -c Release -o build/app -p:RestoreLockedMode=true','CSharp_ASPNET':'dotnet publish StudentManagement.Web.csproj -c Release -o build/publish -p:RestoreLockedMode=true','Vue_CSharpAPI':'python -X utf8 frontend/build.py publish','COBOL':'Linux: make all (GnuCOBOL, C11, ICU, OpenSSL, unixODBC, pkg-config)','AS400_RPG':'IBM i: follow docs/deployment.md and compile cl/BUILD.clle','Access':'Windows Access: ./Build-Access.ps1 -SingleFile -CreateBackend -Compile'}[profile]
-                data=('# '+profile+' source material\n\nThis archive is independent. Original specifications, evaluation criteria, test expectations and input evidence are excluded.\n\nBuild: '+command+'\n\nRequired external SDKs, runtimes and configured database are supplied by the execution environment. Generated program and database sources are included; original-spec regeneration is outside this source-only input. Database/deployment instructions are local to this archive.\n').encode()
+                data=('# '+profile+' source material\n\nThis archive is independent. Original specifications, evaluation criteria, test expectations and input evidence are excluded.\n\nGeneration status: '+generation_status+'. Packaging and hash verification do not establish feature completion or runtime acceptance. Consult the accompanying generation record for incomplete scope.\n\nBuild: '+command+'\n\nRequired external SDKs, runtimes and configured database are supplied by the execution environment. Generated program and database sources are included; original-spec regeneration is outside this source-only input. Database/deployment instructions are local to this archive.\n').encode()
                 transformation='source-input readme replaces generation readme'
             elif relative.as_posix()=='Makefile' and profile=='COBOL':
                 text=data.decode('utf-8')
@@ -109,7 +114,7 @@ for profile in selected:
             if Path(item.filename).name in OMIT or re.search(r'test',Path(item.filename).name,re.I):raise RuntimeError('Forbidden test or evidence member')
         if not entries:raise RuntimeError('Empty package')
     os.replace(filename,final)
-    packages.append({'profile':profile,'file':final.relative_to(ROOT).as_posix(),'bytes':final.stat().st_size,'sha256':hashlib.sha256(final.read_bytes()).hexdigest(),'entries':entries})
+    packages.append({'profile':profile,'generationStatus':generation_status,'file':final.relative_to(ROOT).as_posix(),'bytes':final.stat().st_size,'sha256':hashlib.sha256(final.read_bytes()).hexdigest(),'entries':entries})
 record={'runId':run,'sourceOnly':True,'historyPolicy':'git-only; latest fixed paths','excluded':sorted(SKIP|OMIT),'packages':packages}
 scratch=ROOT/'test-project1'/('srcs/'+args.profile if args.profile else '')/'.tmp/source-package'
 write_json_latest(manifest,record,scratch)

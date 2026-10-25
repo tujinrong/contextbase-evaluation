@@ -1,4 +1,6 @@
 """Generate only ABI/COPY and the fixed SQL catalog from the same schema."""
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import json
 ROOT=Path(__file__).resolve().parents[1]

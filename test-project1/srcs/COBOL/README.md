@@ -1,16 +1,12 @@
 # COBOL 学生管理
 
-2026-10-25 配置更新：仕様入力は `test-project1/spec/COBOL/`、ソースと生成出力は `test-project1/srcs/COBOL/` に分離します。入力ロックは生成時の版・ハッシュを保持し、新しい仕様で再生成する際に検査して更新します。この配置更新ではアプリ・DBの再生成と実行試験を行っていません。
+2026-10-25 / `20261025-regenerate`。入力は `../../spec/COBOL/` の43ファイル（README8.5、方式別共通8.4）と全体規則16ファイルです。通常preflight59ファイルを凍結し、今回の入力版・差分・中断条件は [生成記録](build/generation/generation.md) に保存しています。
 
-COBOL/Cソース、SQLServer DDL・初期値、画面資源、ビルド・試験はこのディレクトリで扱い、仕様正本は [専用仕様](../../spec/COBOL/README.md) へ配置します。前回生成時の入力（旧 `spec/` 版8.0／8.1／8.2の49ファイル）のSHA256と文書版は `build/input-manifest.json` に保存されています。入力更新時は同名ロックを置換し、過去版はGit履歴で管理します。
+**新Text画面の生成は QA-TEXT-COBOL により中断しています。** 最新仕様は27×132の固定端末へ変更されましたが、端末製品、描画ライブラリ、入力/認証アダプターと実証環境が未決です。仕様が要求する選定・実証を推測で補えないため、既存のCGIとHTML画面は旧実装として保持します。これを新Textシステムの完成とは扱いません。`tools/regenerate.py` は通常の全再生成を停止し、`--reusable-only` でSQLカタログとDDLだけを更新できます。
 
-検索の外部名はstudentNo／name／classId／statusCodeの4名（statusCodeだけ反復可）で、一覧は氏名／カナを同じセルにした7列へ更新しました。旧検索キーは空値でも拒否し、暗号化検索状態の所有者・セッション・画面・Revisionを確認してから `search-compact-1` を検査します。氏名raw8文字と照合値160文字を分けています。編集は全REG-001～034を維持する基本情報横並び＋下段3列です。重複、削除、取消・再読込・復帰はサーバー保持状態による別HTML確認画面で操作し、JavaScriptなしでも確認できます。
+今回、再利用SQL38命令の型・バインドカタログと、方式専用SQLServer DDL/seedを再生成しました。DBには接続・適用していません。旧CGI/保守CLIを既存 GnuCOBOL3.2 と Zig0.14.1 で再コンパイルし、業務境界86件、既存HTTP/確認/HTML回帰95件、静的12件を新規実行しました。[今回の検査](build/test-results/README.md) は旧実装と再利用境界だけの結果です。Text描画・キー・IME・Unicode往復・信頼認証の適合、Linux配備、実SQL、正式採点は未実施です。formalScore=null。
 
-今回のWindowsホストはGnuCOBOL構文検査・C変換・リンク成功、境界／日付／保存入力86件、今回追加のHTTP／確認状態／生成HTML／SQL形状95件、静的閉包12件がPASSです。HTML試験の候補と確認状態I/Oはfixtureであり、SQL・暗号化状態テーブル・実時間による期限判定・確認後保存の実結合試験ではありません。[今回の試験記録](build/test-results/README.md)。Linux CGI配備、実SQL、実ブラウザーと正式採点は未実施です。
-
-学生検索と学生登録・編集・参照は `STMAIN` を入口とするCGI、クラス・コード保守は公開しない `student-maint` CLIです。業務判定はCOBOL、HTTP/Unicode/暗号/ODBCの境界はCです。[仕様対応・ABI](IMPLEMENTATION.md)、[配備手順](deploy/README.md)、[DB手順](database/README.md)を参照してください。
-
-WindowsではGnuCOBOL3.2による構文検査・C変換、Zig0.14.1のリンク、実バイナリーの境界・入力検証テストを実施しています。Linux CGI、SQLServer実接続、ブラウザー操作、競合・応答喪失試験は未実施です。ホストの成功をLinux配備の合格へ移し替えません。
+ソース、SQLServer資源、生成器、試験はこの方式内で完結します。仕様ID対応は [IMPLEMENTATION.md](IMPLEMENTATION.md)、中断に必要な情報は [中断記録](build/generation/interruption.json) を参照してください。
 
 ## 生成・Linuxビルド
 
@@ -18,7 +14,7 @@ COBOLディレクトリを作業ディレクトリにします。生成器はDB�
 
 ```sh
 python3 tools/input_lock.py
-python3 tools/regenerate.py
+python3 tools/regenerate.py --reusable-only
 make all
 make check
 ```

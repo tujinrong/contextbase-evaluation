@@ -1,30 +1,32 @@
 """Generate fixed column assignments and COPY contracts. Does not read spec-eval.
 Run from this directory with Python 3.11+. Handwritten behavior lives in src/.
 """
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import json
 
 BASE = Path(__file__).resolve().parents[1]
 FIELDS = [
-    ('studentNo','student_no','varchar(15)',15,15,5,True,'ESTUNO',30),
-    ('studentName','student_name','varucs2(16) ccsid(1200)',8,8,0,True,'ENAME',16),
-    ('studentNameKana','student_name_kana','varucs2(36) ccsid(1200)',36,18,3,True,'EKANA',72),
+    ('studentNo','student_no','varchar(15)',15,15,5,True,'ESTUNO',15),
+    ('studentName','student_name','varucs2(16) ccsid(1200)',8,8,0,True,'ENAME',20),
+    ('studentNameKana','student_name_kana','varucs2(36) ccsid(1200)',36,18,3,True,'EKANA',74),
     ('birthDate','birth_date','date',0,0,0,True,'',0),
     ('genderCode','gender_code','varchar(1)',1,1,6,True,'EGENDER',1),
-    ('postalCode','postal_code','varchar(7)',10,7,7,True,'EPOSTAL',20),
+    ('postalCode','postal_code','varchar(7)',10,7,7,True,'EPOSTAL',10),
     ('prefectureCode','prefecture_code','varchar(2)',2,2,6,True,'EPREF',2),
-    ('addressLine1','address_line1','varucs2(90) ccsid(1200)',45,45,0,True,'EADDR1',90),
-    ('addressLine2','address_line2','varucs2(90) ccsid(1200)',45,45,0,False,'EADDR2',90),
-    ('phoneNumber','phone_number','varchar(16)',20,16,8,False,'EPHONE',40),
-    ('emailAddress','email_address','varchar(60)',60,60,9,False,'EEMAIL',60),
+    ('addressLine1','address_line1','varucs2(90) ccsid(1200)',45,45,0,True,'EADDR1',112),
+    ('addressLine2','address_line2','varucs2(90) ccsid(1200)',45,45,0,False,'EADDR2',112),
+    ('phoneNumber','phone_number','varchar(16)',20,16,8,False,'EPHONE',20),
+    ('emailAddress','email_address','varchar(60)',60,60,9,False,'EEMAIL',100),
     ('admissionDate','admission_date','date',10,10,10,True,'EADMDATE',10),
     ('enrollmentStatusCode','enrollment_status_code','varchar(2)',2,2,6,True,'ESTATUS',2),
     ('enrollmentEndDate','enrollment_end_date','date',10,10,10,False,'EENDDATE',10),
     ('classId','class_id','int(20)',19,19,12,False,'ECLASS',19),
-    ('emergencyContactName','emergency_contact_name','varucs2(16) ccsid(1200)',8,8,0,False,'EEMGNAME',16),
+    ('emergencyContactName','emergency_contact_name','varucs2(16) ccsid(1200)',8,8,0,False,'EEMGNAME',20),
     ('relationshipCode','relationship_code','varchar(2)',2,2,6,False,'EREL',2),
-    ('emergencyPhoneNumber','emergency_phone_number','varchar(16)',20,16,8,False,'EEMGPHONE',40),
-    ('remarks','remarks','varucs2(240) ccsid(1200)',120,120,1,False,'EREMARKS',90),
+    ('emergencyPhoneNumber','emergency_phone_number','varchar(16)',20,16,8,False,'EEMGPHONE',20),
+    ('remarks','remarks','varucs2(240) ccsid(1200)',120,120,1,False,'',0),
 ]
 def write(path, content):
     target=BASE/path
@@ -50,12 +52,14 @@ types=r'''// STUTYPES V1: SQL bigints are signed 64bit; UTF16 regions are 2N.
  end-ds ;
  dcl-ds StudentRaw_t qualified template ;
  values varucs2( 320 ) ccsid( 1200 ) dim( 19 ) ;
- birthEra varchar( 10 ) ;
+ birthEra varucs2( 20 ) ccsid( 1200 ) ;
  birthYear varucs2( 8 ) ccsid( 1200 ) ;
  birthMonth varucs2( 4 ) ccsid( 1200 ) ;
  birthDay varucs2( 4 ) ccsid( 1200 ) ;
  end-ds ;
  dcl-ds StudentHints_t qualified template ;
+ rawSchoolYear varucs2( 8 ) ccsid( 1200 ) ;
+ rawGradeCode varucs2( 4 ) ccsid( 1200 ) ;
  schoolYear varchar( 4 ) ;
  gradeCode varchar( 2 ) ;
  reason varucs2( 120 ) ccsid( 1200 ) ;
@@ -244,7 +248,7 @@ PROCS={
  'StStartup':[('result','likeds(Result_t)')],
  'StNormalize':[('raw','likeds(StudentRaw_t) const'),('work','likeds(StudentWork_t)'),('businessDay','date const'),('result','likeds(Result_t)')],
  'StValidate':[('work','likeds(StudentWork_t) const'),('result','likeds(Result_t)')],
- 'StParseBirthDate':[('era','varchar(10) const'),('year','varucs2(8) ccsid(1200) const'),('month','varucs2(4) ccsid(1200) const'),('day','varucs2(4) ccsid(1200) const'),('businessDay','date const'),('birth','date'),('result','likeds(Result_t)')],
+ 'StParseBirthDate':[('era','varucs2(20) ccsid(1200) const'),('year','varucs2(8) ccsid(1200) const'),('month','varucs2(4) ccsid(1200) const'),('day','varucs2(4) ccsid(1200) const'),('businessDay','date const'),('birth','date'),('result','likeds(Result_t)')],
  'StFormatBirthDate':[('birth','date const'),('era','varchar(10)'),('year','varucs2(8) ccsid(1200)'),('month','varucs2(4) ccsid(1200)'),('day','varucs2(4) ccsid(1200)'),('display','varucs2(80) ccsid(1200)')],
  'StNormalizeText':[('raw','varucs2(320) ccsid(1200) const'),('rawMax','int(10) const'),('savedMax','int(10) const'),('mode','int(10) const'),('required','ind const'),('field','varchar(32) const'),('result','likeds(Result_t)')],
  'StIsoDate':[('raw','varucs2(320) ccsid(1200) const'),('maximum','date const'),('value','date'),('field','varchar(32) const'),('result','likeds(Result_t)')],
@@ -262,11 +266,17 @@ PROCS={
  'StSaveStudent':[('input','likeds(StudentWork_t) const'),('hints','likeds(StudentHints_t) const'),('studentId','int(20) const'),('expectedVersion','int(20) const'),('confirmation','char(36) const'),('result','likeds(Result_t)')],
  'StDeleteStudent':[('studentId','int(20) const'),('expectedVersion','int(20) const'),('reason','varucs2(120) ccsid(1200) const'),('result','likeds(Result_t)')],
  'StLookupChoice':[('kind','varchar(24) const'),('page','int(10) const'),('schoolYear','int(10) const'),('grade','varchar(2) const'),('values','varchar(24) dim(20)'),('labels','varucs2(320) ccsid(1200) dim(20)'),('count','int(10)'),('result','likeds(Result_t)')],
- 'StClassInfo':[('classId','int(20) const'),('year','varchar(4)'),('grade','varchar(2)'),('occupancy','int(10)'),('capacity','int(10)'),('capacityInd','int(5)'),('result','likeds(Result_t)')],
+ 'StClassInfo':[('classId','int(20) const'),('year','varchar(4)'),('grade','varchar(2)'),('occupancy','int(10)'),('capacity','int(10)'),('capacityInd','int(5)'),('result','likeds(Result_t)'),('registration','ind const options(*nopass)')],
  'StMaintainClass':[('work','likeds(ClassWork_t) const'),('result','likeds(Result_t)')],
  'StMaintainCode':[('work','likeds(CodeWork_t) const'),('result','likeds(Result_t)')],
 }
-returns={'StNormalizeText':'varucs2(320) ccsid(1200)','StLong':'int(20)','StEscapeLike':'varucs2(642) ccsid(1200)','StHash':'char(64)','StBusinessHash':'char(64)','StMessage':'varucs2(320) ccsid(1200)'}
+PROCS.update({
+ 'StConfirm':[('value','likeds(Confirmation_t) const'),('owner','varchar(128) const'),('job','varchar(28) const'),('instance','char(36) const'),('id','int(20) const'),('version','int(20) const'),('business','char(64) const'),('candidates','char(64) const'),('utc','timestamp const'),('reason','varucs2(120) ccsid(1200) const')],
+ 'StEndWork':[('commit','ind const'),('result','likeds(Result_t)')],
+ 'StLookupCodes':[('kind','varchar(24) const'),('page','int(10) const'),('values','varchar(24) dim(20)'),('labels','varucs2(320) ccsid(1200) dim(20)'),('count','int(10)'),('result','likeds(Result_t)')],
+ 'StLookupClasses':[('page','int(10) const'),('year','int(10) const'),('grade','varchar(2) const'),('values','varchar(24) dim(20)'),('labels','varucs2(320) ccsid(1200) dim(20)'),('count','int(10)'),('result','likeds(Result_t)')],
+})
+returns={'StConfirm':'ind','StNormalizeText':'varucs2(320) ccsid(1200)','StLong':'int(20)','StEscapeLike':'varucs2(642) ccsid(1200)','StHash':'char(64)','StBusinessHash':'char(64)','StMessage':'varucs2(320) ccsid(1200)'}
 for name,args in PROCS.items():
     protos+=f'dcl-pr {name} {returns.get(name,"")};\n'+''.join(f'  {a} {t};\n' for a,t in args)+'end-pr;\n'
 protos+='''dcl-pr StSearchStateCheck int(10) extproc('StSearchStateCheck');
@@ -315,8 +325,8 @@ def hv(prefix, f):
     p,c,t,rm,nm,mode,req,ctl,width=f
     return ':'+prefix+p+(' :'+prefix+p+'Ind' if not req else '')
 cols=', '.join(x[1] for x in FIELDS)+', name_key, kana_key'
-host=',\n    '.join(hv('rec.work.',x) for x in FIELDS)+',\n    :rec.work.nameKey, :rec.work.kanaKey'
-select=',\n    '.join('s.'+x[1] for x in FIELDS)+',\n    s.name_key, s.kana_key'
+host=',\n    '.join(hv('rec.work.',x) for x in FIELDS)+',\n    :rec.work.relationshipCategory :rec.work.relationshipCategoryInd, :rec.work.nameKey, :rec.work.kanaKey'
+select=',\n    '.join('s.'+x[1] for x in FIELDS)+',\n    s.relationship_category, s.name_key, s.kana_key'
 load=f'''// Explicit fixed host variables. Caller owns the commitment gate.
 exec sql SELECT s.student_id, s.row_version, {select}, s.updated_at, s.updated_by
   INTO :rec.studentId, :rec.rowVersion, {host}, :rec.updatedAt, :rec.updatedBy
@@ -372,9 +382,10 @@ for i,f in enumerate(FIELDS,1):
     condition=f'work.{p}<>old.work.{p}'
     if not req: condition=f'(work.{p}Ind<>old.work.{p}Ind) or (work.{p}Ind=0 and {condition})'
     changes+=f"if studentId=0 or {condition}; if changed<>'['; changed+=','; endif; changed+='\"{c}\"'; endif;\n"
-changes+="""if studentId=0 or work.nameKey<>old.work.nameKey;if changed<>'[';changed+=',';endif;changed+='\"name_key\"';endif;
+changes+="""if studentId=0 or work.relationshipCategoryInd<>old.work.relationshipCategoryInd or (work.relationshipCategoryInd=0 and work.relationshipCategory<>old.work.relationshipCategory);if changed<>'[';changed+=',';endif;changed+='\"relationship_category\"';endif;
+if studentId=0 or work.nameKey<>old.work.nameKey;if changed<>'[';changed+=',';endif;changed+='\"name_key\"';endif;
 if studentId=0 or work.kanaKey<>old.work.kanaKey;if changed<>'[';changed+=',';endif;changed+='\"kana_key\"';endif;
-if studentId=0;changed+=',\"gender_category\",\"prefecture_category\",\"enrollment_category\",\"relationship_category\",\"created_at\",\"created_by\",\"is_deleted\"';endif;
+if studentId=0;changed+=',\"gender_category\",\"prefecture_category\",\"enrollment_category\",\"created_at\",\"created_by\",\"is_deleted\"';endif;
 changed+=',\"updated_at\",\"updated_by\",\"row_version\"]';
 """
 write('copy/STUHASH.rpgleinc',hashtext)
@@ -386,9 +397,12 @@ for i,f in enumerate(FIELDS,1):
     value=f'rec.work.{p}' if t.startswith('varucs2') else f'%ucs2(%char(rec.work.{p}))'
     if not req: reload+=f"if rec.work.{p}Ind<0; raw.values({i})=%ucs2(''); else; raw.values({i})={value}; endif;\n"
     else: reload+=f'raw.values({i})={value};\n'
-reload+='''StFormatBirthDate(rec.work.birthDate:raw.birthEra:raw.birthYear:raw.birthMonth:raw.birthDay:wareki);
+reload+='''StFormatBirthDate(rec.work.birthDate:era:raw.birthYear:raw.birthMonth:raw.birthDay:wareki);
+raw.birthEra=%ucs2(era);
 '''
 write('copy/STUTORAW.rpgleinc',reload)
 write('copy/STUEDITIO.rpgleinc','\n'.join(f"ReadEdited({i}:{ctl});" for i,f in enumerate(FIELDS,1) if (ctl:=f[7]))+'\n')
 write('copy/STUEDITOUT.rpgleinc','\n'.join(f"{f[7]}=Render(raw.values({i}):{f[8]}); prior({i})={f[7]};" for i,f in enumerate(FIELDS,1) if f[7])+'\n')
+import runpy
+runpy.run_path(str(BASE/'tools/generate_text_bindings.py'))
 print('generated COPY contracts, 19 fixed CRUD/normalize/binding assignments, field map')

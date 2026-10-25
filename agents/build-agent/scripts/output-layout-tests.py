@@ -1,6 +1,7 @@
 """Exercise actual fixed-output tools in disposable, method-local fixtures."""
 from pathlib import Path
 import copy, hashlib, io, json, os, shutil, subprocess, sys, tempfile, unittest, zipfile
+sys.dont_write_bytecode=True
 from output_layout import write_json_latest, ensure_directory
 
 HERE=Path(__file__).resolve().parent

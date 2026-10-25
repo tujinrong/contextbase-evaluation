@@ -10,6 +10,10 @@ Namespace GuiEvidence
     Public NotInheritable Class FixtureService
         Implements IStudentService
         Private ReadOnly data As JsonDocument
+        Public Property OverrideRows As IReadOnlyList(Of StudentRow)
+        Public Property SearchCalls As Integer
+        Public Property LastCriteria As SearchCriteria
+        Public Property LastSort As String
         Public Sub New(path As String)
             data=JsonDocument.Parse(File.ReadAllText(path))
             If data.RootElement.GetProperty("profile").GetString() <> "VB.NET_WinForms" OrElse data.RootElement.GetProperty("databaseConnected").GetBoolean() Then Throw New InvalidDataException("Expected isolated VB fixture.")
@@ -45,20 +49,22 @@ Namespace GuiEvidence
                 (c.EnrollmentStatusCodes.Length=0 OrElse c.EnrollmentStatusCodes.Contains(v("EnrollmentStatusCode"))) AndAlso
                 (Not c.ClassId.HasValue OrElse v("ClassId")=c.ClassId.Value.ToString(CultureInfo.InvariantCulture))
         End Function
-        Private Shared Function SortKey(s As JsonElement,c As SearchCriteria) As String
+        Private Shared Function SortKey(s As JsonElement,key As String) As String
             Dim v=Values(s)
-            Select Case c.SortKey
+            Select Case key
                 Case "name" : Return v("StudentName")
                 Case "admissionDate" : Return v("AdmissionDate")
                 Case "updatedAt" : Return s.GetProperty("updatedAt").GetString()
                 Case Else : Return v("StudentNo")
             End Select
         End Function
-        Public Function SearchAsync(criteria As SearchCriteria,Optional ct As CancellationToken=Nothing) As Task(Of SearchResult) Implements IStudentService.SearchAsync
+        Public Function SearchAsync(criteria As SearchCriteria,Optional sort As String="studentNo",Optional direction As String="asc",Optional ct As CancellationToken=Nothing) As Task(Of SearchResult) Implements IStudentService.SearchAsync
             ct.ThrowIfCancellationRequested()
+            SearchCalls+=1 : LastCriteria=criteria : LastSort=sort & ":" & direction
+            If OverrideRows IsNot Nothing Then Return Task.FromResult(New SearchResult(Outcome.NoChange,OverrideRows.Count,If(OverrideRows.Count>10000,Array.Empty(Of StudentRow)(),OverrideRows),DateTimeOffset.UtcNow,OverrideRows.Count>10000,Array.Empty(Of FieldError)()))
             Dim selected=Students().Where(Function(s) Matches(Values(s),criteria))
-            Dim ordered=If(criteria.SortDirection="desc",selected.OrderByDescending(Function(s) SortKey(s,criteria),StringComparer.Ordinal),selected.OrderBy(Function(s) SortKey(s,criteria),StringComparer.Ordinal)).ThenBy(Function(s) s.GetProperty("id").GetInt64()).ToArray()
-            Dim rows=ordered.Skip((criteria.Page-1)*criteria.PageSize).Take(criteria.PageSize).Select(Function(s) ToRow(s)).ToArray()
+            Dim ordered=If(direction="desc",selected.OrderByDescending(Function(s) SortKey(s,sort),StringComparer.Ordinal),selected.OrderBy(Function(s) SortKey(s,sort),StringComparer.Ordinal)).ThenBy(Function(s) s.GetProperty("id").GetInt64()).ToArray()
+            Dim rows=ordered.Select(Function(s) ToRow(s)).ToArray()
             Return Task.FromResult(New SearchResult(Outcome.NoChange,ordered.Length,rows,DateTimeOffset.Parse(data.RootElement.GetProperty("searchedAt").GetString(),CultureInfo.InvariantCulture),False,Array.Empty(Of FieldError)()))
         End Function
         Private Function ToRow(s As JsonElement) As StudentRow

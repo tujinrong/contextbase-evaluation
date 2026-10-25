@@ -1,3 +1,5 @@
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import re,json
 B=Path(__file__).resolve().parents[1]

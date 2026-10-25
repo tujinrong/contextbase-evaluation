@@ -1,4 +1,4 @@
--- Source: SQLServer table definitions (including student 8.0); generated 2026-10-12.
+-- Generated from the current method SQLServer table definitions; input SHA256 52ec98fa7d6af808b6b73347276bca25bbe342ec0af0612abba955346d7e57e0.
 -- Apply to an EMPTY selected evaluation database only. No migration/drop is performed.
 SET XACT_ABORT ON;
 GO

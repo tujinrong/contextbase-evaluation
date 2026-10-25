@@ -1,6 +1,6 @@
 # C# / ASP.NET Core MVC 学生管理
 
-2026-10-25 配置更新：仕様入力は `test-project1/spec/CSharp_ASPNET/`、ソースと生成出力は `test-project1/srcs/CSharp_ASPNET/` に分離します。入力ロックは生成時の版・ハッシュを保持し、新しい仕様で再生成する際に検査して更新します。この配置更新ではアプリ・DBの再生成と実行試験を行っていません。
+2026-10-25 再生成（`20261025-regenerate`）：`test-project1/spec/CSharp_ASPNET/` の索引8.5、検索詳細8.4、登録詳細8.5を入力凍結しました。独立DB定義からDDL・初期コードを再生成し、現在のソースをビルド・試験しました。検索4条件・7列と登録34項目の既存Razor/C#実装は最新契約と一致するため維持しています。詳細は [今回の生成記録](build/generation/generation.md) を参照してください。
 
 2026-10-24 配置更新。最終アプリは `build/publish/`、現在の検査は `build/test-results/`、生成記録は `build/generation/`、ソース配布は `build/source.zip` へ固定更新します。これらはGit管理し、日付・run-idごとの履歴ディレクトリーは増やしません。コンパイラのbin/obj、NuGet、npm、キャッシュ、試行ログは方式内 `.tmp/`（Git除外）です。`Directory.Build.props` は通常のdotnetコマンドにも適用します。
 
@@ -10,7 +10,7 @@ python -X utf8 tools/build.py
 python -X utf8 tools/build.py --no-audit
 ```
 
-この配置更新で Core 114件、MVC HTTPS契約129件、ログイン契約47件 がPASS。実DB・配備・今回の手動GUI受入は未実施です。既存の固定依存System.Security.Cryptography.Pkcs 9.0.21を維持し、今回の最終検査はNuGet監査有効で実行しました。詳細は[現在の結果](build/test-results/README.md)を参照してください。
+今回の再実行で Core 114件、MVC HTTPS契約129件、ログイン契約47件、実Razor/JavaScriptのブラウザー操作53件がPASS。実DB・配備・手動GUI受入は未実施です。固定依存System.Security.Cryptography.Pkcs 9.0.21を維持し、NuGet監査有効で実行しました。ブラウザー検査は不変の合成サービスを使い、SQL Serverへ接続していません。詳細は[現在の結果](build/test-results/README.md)を参照してください。
 
 単独ビルド／`--skip-tests` は検査済みPASSにしません。helper開始時に前回結果を失効し、今回実行した検査だけを記録します。`source.zip` は試験・toolsを含まない配布ソースなので、solutionではなくproduction projectを直接指定します。
 

@@ -1,4 +1,6 @@
 """Inventory already acquired local host tools; do not install or download."""
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import hashlib,json
 ROOT=Path(__file__).resolve().parents[1]

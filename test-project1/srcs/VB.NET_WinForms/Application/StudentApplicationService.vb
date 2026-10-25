@@ -49,9 +49,9 @@ Namespace Application
             Await AuthenticateAsync(ct)
             Return Await _service.LookupAsync(includeOccupancy, ct)
         End Function
-        Public Async Function SearchAsync(criteria As Core.SearchCriteria, ct As CancellationToken) As Task(Of Core.SearchResult)
+        Public Async Function SearchAsync(criteria As Core.SearchCriteria, sortKey As String, sortDirection As String, ct As CancellationToken) As Task(Of Core.SearchResult)
             Await AuthenticateAsync(ct)
-            Return Await _service.SearchAsync(criteria, ct)
+            Return Await _service.SearchAsync(criteria, sortKey, sortDirection, ct)
         End Function
         Public Async Function GetAsync(id As Long, ct As CancellationToken) As Task(Of Core.StudentDetail)
             Await AuthenticateAsync(ct)

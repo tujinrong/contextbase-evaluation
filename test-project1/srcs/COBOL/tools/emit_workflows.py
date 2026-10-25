@@ -1,3 +1,5 @@
+import sys
+sys.dont_write_bytecode = True
 from emit_cobol import program,put,rawmap
 # All calls below are COBOL business flow; the bridge performs fixed bound SQL.
 program('STSTATE','''    MOVE "Search" TO STATE-KIND

@@ -1,3 +1,5 @@
+import sys
+sys.dont_write_bytecode = True
 # Historical migration preserved for audit; current V2 contracts must not be downgraded.
 raise SystemExit("Historical one-time migrator is disabled. Use the current checked-in production sources.")
 """Idempotent final server/UI corrections; leave DB generation to database owner."""

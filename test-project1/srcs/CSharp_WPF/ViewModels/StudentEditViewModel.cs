@@ -48,7 +48,7 @@ public sealed class StudentEditViewModel : Bindable, IDisposable
     private Dictionary<string, string> original = [];
     private string message = "";
     private bool busy;
-    public bool IsBusy { get => busy; private set { Set(ref busy, value); Changed(nameof(CanEdit)); Changed(nameof(CanEditNumber)); Changed(nameof(CanDelete)); foreach (var command in new[] { SaveCommand, DeleteCommand, ResetCommand, ReloadCommand, BackCommand }) command?.RaiseCanExecuteChanged(); } }
+    public bool IsBusy { get => busy; private set { Set(ref busy, value); Changed(nameof(CanEdit)); Changed(nameof(CanEditNumber)); Changed(nameof(CanDelete)); Changed(nameof(IsReadOnly)); Changed(nameof(IsNumberReadOnly)); foreach (var command in new[] { SaveCommand, DeleteCommand, ResetCommand, ReloadCommand, BackCommand }) command?.RaiseCanExecuteChanged(); } }
     public EditModel Model { get; } = new();
     public LookupSet Lookup { get; private set; } = new(new Dictionary<string, IReadOnlyList<CodeOption>>(), []);
     public IReadOnlyList<CodeOption> Genders => Options("GENDER");
@@ -61,6 +61,11 @@ public sealed class StudentEditViewModel : Bindable, IDisposable
     public bool CanEdit => gateway.CanEdit && !IsBusy;
     public bool CanDelete => gateway.CanDelete && id is not null && !IsBusy;
     public bool CanEditNumber => CanEdit && id is null;
+    public bool IsReadOnly => !CanEdit;
+    public bool IsNumberReadOnly => !CanEditNumber;
+    public string OccupancyText {
+        get { var cls=Lookup.Classes.FirstOrDefault(option=>option.Id.ToString()==Model.ClassId); return cls is null ? "－ ／ －（参考）" : $"{cls.Occupancy} ／ {cls.Capacity?.ToString() ?? "制限なし"}（参考）"; }
+    }
     public bool IsDirty => JsonSerializer.Serialize(Model.Snapshot().OrderBy(x => x.Key)) != JsonSerializer.Serialize(original.OrderBy(x => x.Key));
     public string StudentIdDisplay => id?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "自動採番";
     public string Title => id is null ? "学生登録：新規" : CanEdit ? "学生登録：編集" : "学生登録：参照";
@@ -82,7 +87,7 @@ public sealed class StudentEditViewModel : Bindable, IDisposable
         ResetCommand = new(_ => { if (dialogs.Discard("入力内容を取り消しますか。")) Model.Load(original); return Task.CompletedTask; }, () => !IsBusy, Error);
         ReloadCommand = new(async _ => { if (dialogs.Discard("最新情報を再読み込みしますか。入力中の変更は破棄されます。")) await RunAsync(LoadAsync); }, () => id is not null && !IsBusy, Error);
         BackCommand = new(_ => { CloseRequested?.Invoke(); return Task.CompletedTask; }, () => !IsBusy, Error);
-        Model.PropertyChanged += (_, _) => { Changed(nameof(IsDirty)); Changed(nameof(Classes)); };
+        Model.PropertyChanged += (_, _) => { Changed(nameof(IsDirty)); Changed(nameof(Classes)); Changed(nameof(OccupancyText)); };
     }
     private IReadOnlyList<CodeOption> Options(string category) => Lookup.Codes.GetValueOrDefault(category) ?? [];
     private async Task RunAsync(Func<Task> operation) { if (IsBusy) return; IsBusy = true; try { await operation(); } finally { IsBusy = false; } }
@@ -110,7 +115,7 @@ public sealed class StudentEditViewModel : Bindable, IDisposable
     public void SelectClass()
     {
         var cls = Lookup.Classes.FirstOrDefault(x => x.Id.ToString() == Model["ClassId"]);
-        if (cls is not null) { Model["SchoolYear"] = cls.Year.ToString(); Model["GradeCode"] = cls.Grade; Message = $"所属人数 {cls.Occupancy} / 定員 {(cls.Capacity?.ToString() ?? "制限なし")}（参考値）"; }
+        if (cls is not null) { Model["SchoolYear"] = cls.Year.ToString(); Model["GradeCode"] = cls.Grade; }
         if (Model["ClassId"] == "0") Model["ClassId"] = "";
     }
     private async Task SaveAsync()

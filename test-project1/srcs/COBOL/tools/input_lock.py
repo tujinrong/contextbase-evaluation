@@ -1,4 +1,6 @@
 """Lock/check only this project's fully expanded specification inputs."""
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import hashlib,json,sys,re,datetime,os
 ROOT=Path(__file__).resolve().parents[1]
@@ -18,7 +20,7 @@ def records():
 current=records()
 if len(sys.argv)>1 and sys.argv[1]=='lock':
  manifest.parent.mkdir(parents=True,exist_ok=True)
- manifest.write_text(json.dumps({'project':'COBOL','version':'8.0','createdAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'inputs':current},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+ manifest.write_text(json.dumps({'project':'COBOL','version':next(x['version'] for x in current if x['path'].endswith('/README.md')),'createdAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'inputs':current},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 else:
  expected=json.loads(manifest.read_text(encoding='utf-8'))['inputs']
  if current!=expected:raise SystemExit('Specification input drift; review and fix the input lock before generation/build.')

@@ -1,18 +1,27 @@
-// DBDEF-SQLSERVER 7.4 + COM-STU-010. Generate local SQL files; never connect/run DDL.
+// Regenerate this method's SQL sources from its current, independent specification.
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 const output=path.dirname(fileURLToPath(import.meta.url));
 const project=path.resolve(output,'..');
 const specRoot=path.resolve(project,'../../spec',path.basename(project));
+const inputs=[];
+function readInput(target) {
+  const data=fs.readFileSync(target);const text=data.toString('utf8');
+  const meta=JSON.parse(text.match(/<!-- spec-meta: (.*?) -->/)[1]);
+  inputs.push({file:path.relative(specRoot,target).split(path.sep).join('/'),documentId:meta.documentId,version:meta.version,sha256:crypto.createHash('sha256').update(data).digest('hex')});
+  return text;
+}
 const spec=path.join(specRoot,'DB定義/SQLServer/テーブル');
 const tables=fs.readdirSync(spec).filter(name=>name.endsWith('.md')).map(name=>{
-  const text=fs.readFileSync(path.join(spec,name),'utf8');
+  const text=readInput(path.join(spec,name));
   const meta=JSON.parse(text.match(/<!-- spec-meta: (.*?) -->/)[1]);
   const rows=text.split('## 項目詳細')[1].split(/\r?\n/).filter(line=>/^\| \d+ \|/.test(line)).map(line=>line.split('|').slice(1,-1).map(cell=>cell.trim()));
   return {name:meta.table.physicalName,pk:meta.table.primaryKey,rows};
 });
-const sql=["-- Source: SQLServer table definitions (including student 8.0); generated 2026-10-12.","-- Apply to an EMPTY selected evaluation database only. No migration/drop is performed.","SET XACT_ABORT ON;", "GO", "ALTER DATABASE CURRENT SET ALLOW_SNAPSHOT_ISOLATION ON;", "GO"];
+const tableInputHash=crypto.createHash('sha256').update(JSON.stringify(inputs)).digest('hex');
+const sql=[`-- Generated from the current method SQLServer table definitions; input SHA256 ${tableInputHash}.`,"-- Apply to an EMPTY selected evaluation database only. No migration/drop is performed.","SET XACT_ABORT ON;", "GO", "ALTER DATABASE CURRENT SET ALLOW_SNAPSHOT_ISOLATION ON;", "GO"];
 for(const table of tables) {
   sql.push(`CREATE TABLE dbo.${table.name} (`);
   const fields=table.rows.map(row=>{
@@ -68,7 +77,7 @@ GO
 `);
 fs.writeFileSync(path.join(output,'001_schema.sql'),sql.join('\n'));
 const mappings={'性別':'GENDER','在籍区分':'ENROLLMENT_STATUS','都道府県':'PREFECTURE','緊急連絡先続柄':'RELATIONSHIP','学年':'GRADE'};
-const text=fs.readFileSync(path.join(specRoot,'共通/10_業務コード定義.md'),'utf8');
+const text=readInput(path.join(specRoot,'共通/10_業務コード定義.md'));
 const codes=text.split('## 項目一覧')[1].split('## 分類一覧')[0].split(/\r?\n/).filter(line=>/^\| (性別-|在籍区分-|都道府県-|緊急連絡先続柄-|学年-)/.test(line)).map(line=>line.split('|').slice(1,-1).map(cell=>cell.trim()));
 if(codes.length!==70) throw new Error(`Expected 70 business codes, got ${codes.length}`);
 const quote=value=>"N'"+value.replaceAll("'","''")+"'";
@@ -95,4 +104,7 @@ INSERT dbo.m_code(category_id,code_value,code_name,display_order,is_active,valid
 COMMIT;
 GO
 `);
-console.log(JSON.stringify({tables:tables.length,businessColumns:tables.filter(table=>table.name!=='t_confirmation'&&table.name!=='t_runtime_state').reduce((count,table)=>count+table.rows.length,0),categories:5,codes:codes.length,executedDatabase:false}));
+const record={profileId:path.basename(project),specRoot:path.relative(path.resolve(project,'../../..'),specRoot).split(path.sep).join('/'),tables:tables.length,businessColumns:tables.filter(table=>table.name!=='t_confirmation'&&table.name!=='t_runtime_state').reduce((count,table)=>count+table.rows.length,0),categories:5,codes:codes.length,executedDatabase:false,inputs,outputs:['001_schema.sql','002_seed.sql'].map(file=>({file:'database/'+file,sha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(output,file))).digest('hex')}))};
+const generation=path.join(project,'build/generation');fs.mkdirSync(generation,{recursive:true});
+fs.writeFileSync(path.join(generation,'database-inputs.json'),JSON.stringify(record,null,2)+'\n');
+console.log(JSON.stringify(record));

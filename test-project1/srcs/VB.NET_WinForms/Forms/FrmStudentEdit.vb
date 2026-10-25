@@ -23,13 +23,15 @@ Namespace Forms
             AddHandler cboSchoolYear.SelectedIndexChanged, Sub(sender, e) _presenter.RefreshClasses()
             AddHandler cboGrade.SelectedIndexChanged, Sub(sender, e) _presenter.RefreshClasses()
             AddHandler cboClass.SelectedIndexChanged, Sub(sender, e) _presenter.SelectClass()
+            AddHandler dtpAdmissionDate.TextChanged, Sub(sender,e) _presenter.RefreshClasses()
+            AddHandler dtpEnrollmentEndDate.TextChanged, Sub(sender,e) _presenter.StatusChanged()
             AddHandler cboEnrollmentStatus.SelectedIndexChanged, Sub(sender, e) _presenter.StatusChanged()
             AddHandler FormClosing, Sub(sender, e) e.Cancel = Not _presenter.CanClose()
             AddHandler FormClosed, Sub(sender, e) _presenter.Dispose()
         End Sub
         Private Sub FocusInitialField()
             If IsDisposed Then Return
-            Dim first As Control = If(txtStudentNo.CanSelect, DirectCast(txtStudentNo, Control), If(txtStudentName.CanSelect, DirectCast(txtStudentName, Control), Nothing))
+            Dim first As Control = If(Not txtStudentName.ReadOnly AndAlso txtStudentNo.CanSelect, DirectCast(txtStudentNo, Control), If(Not txtStudentName.ReadOnly AndAlso txtStudentName.CanSelect, DirectCast(txtStudentName, Control), Nothing))
             If first IsNot Nothing Then
                 first.Focus()
             Else

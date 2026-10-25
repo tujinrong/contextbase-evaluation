@@ -1,4 +1,6 @@
 """DDS positions 1..44 are explicit; numeric/ASCII identifiers are never DBCS."""
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 BASE=Path(__file__).resolve().parents[1]
 def keyword(value,condition=''):
@@ -31,7 +33,7 @@ def literal(text,row,col):
         lines.append(''.join(chars)+"'"+chunk+"'")
     return '\n'.join(lines)
 def header():
-    return [keyword('DSPSIZ(27 132 *DS4)')]+[keyword(f'CF{key:02d}({key:02d})') for key in (3,4,5,6,7,8,9,10,12,14,16,17,18,19,20,23)]+[keyword('ROLLUP(25)'),keyword('ROLLDOWN(26)')]
+    return [keyword('DSPSIZ(27 132 *DS4)')]+[keyword(f'CF{key:02d}({key:02d})') for key in (3,4,5,6,7,8,9,10,11,12,14,15,16,20,23)]+[keyword('ROLLUP(25)'),keyword('ROLLDOWN(26)')]
 def aux(lines):
     lines+=record('CNFRM')
     lines+=field('CTITLE',100,2,3,'O')

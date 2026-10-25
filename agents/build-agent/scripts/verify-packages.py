@@ -1,6 +1,7 @@
 """Validate current source-only archives; isolated work stays in each method .tmp."""
 from pathlib import Path, PurePosixPath
 import argparse, datetime, hashlib, json, os, re, shutil, stat, subprocess, sys, zipfile
+sys.dont_write_bytecode=True
 from output_layout import ensure_directory, regular_destination, write_json_latest, write_latest
 
 ROOT=Path(__file__).resolve().parents[3]

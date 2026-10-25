@@ -1,4 +1,6 @@
 """Actual portable C build/run plus static RPG inventory; never opens a Db2 database."""
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import argparse,hashlib,json,subprocess,os,re,platform,datetime
 from output_paths import result_dir
@@ -42,8 +44,23 @@ ctext=(B/'c/STUNICODE.c').read_text('utf8')+(B/'c/STUINPUT.c').read_text('utf8')
 c_exports=set(re.findall(r'(?:int32_t|void)\s+(St\w+)\s*\(',ctext))
 c_binder=set(re.findall(r"EXPORT SYMBOL\('([^']+)'\)",(B/'binder/STUNICODE.bnd').read_text('utf8')))
 check('binder:STUNICODE',c_exports==c_binder,dict(exports=sorted(c_exports),binder=sorted(c_binder)))
+# Source-level ABI closure catches generator regressions before native compilation.
+prototype=(B/'copy/STUPROTO.rpgleinc').read_text('utf8')
+production='\n'.join(p.read_text('utf8') for p in sources)
+def signature(body):
+ parts=body.split(';')
+ return [re.sub(r'\s+','',parts[0]).lower()]+[re.sub(r'\s+','',re.sub(r'^\s*\w+\s+','',p)).lower() for p in parts[1:] if p.strip()]
+compared=[];mismatches=[]
+for declaration in re.finditer(r'dcl-pr\s+(St\w+)\b(.*?)end-pr\s*;',prototype,re.S|re.I):
+ name=declaration[1]
+ implementation=re.search(r'dcl-proc\s+'+name+r'\s+export\s*;\s*dcl-pi\s+\*n\b(.*?)end-pi\s*;',production,re.S|re.I)
+ if implementation:
+  compared.append(name)
+  if signature(declaration[2])!=signature(implementation[1]):mismatches.append(name)
+required={'StConfirm','StEndWork','StLookupCodes','StLookupClasses','StClassInfo','StParseBirthDate','StSaveStudent'}
+check('public-prototype-signatures',required<=set(compared) and not mismatches,dict(compared=compared,mismatches=mismatches))
 for file,program in [('STUSCHD','STUSRCH'),('STUEDTD','STUEDIT')]:
- dds=(B/'dds'/f'{file}.dspf').read_text('utf8');src=(B/'src'/f'{program}.sqlrpgle').read_text('utf8')
+ dds=(B/'dds'/f'{file}.dspf').read_text('utf8');src=(B/'src'/f'{program}.sqlrpgle').read_text('utf8');src=re.sub(r'//[^\n]*','',src)
  formats={line[18:28].strip().upper() for line in dds.splitlines() if len(line)>18 and line[16]=='R'}
  used={x.upper() for x in re.findall(r'\b(?:exfmt|write|readc)\s+(\w+)',src,re.I)}
  used|={x.upper() for x in re.findall(r'\bexfmt\s+(\w+)',(B/'copy/STUDSP.rpgleinc').read_text('utf8'),re.I)}
@@ -92,7 +109,7 @@ for path in sorted(SPEC.rglob('*')):
 versions=sorted({x['version'] for x in spec_inputs if x['version']})
 (B/'build/input-manifest.json').write_text(json.dumps(dict(versions=versions,files=spec_inputs),ensure_ascii=False,indent=2)+'\n','utf8')
 record=dict(project='AS400_RPG',recordedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),originPreIsolationManifest='20261012-build-06-inputs.json',currentInput='build/input-manifest.json',inputVersions=versions,host=platform.platform(),toolchain=json.loads((B/'.tmp/toolchain/acquisition.json').read_text('utf8')),compile=compile,execution=execute,cCases=[dict(id=x[1],passed=x[0]=='PASS') for x in cases],cTests=len(cases),cFailures=sum(x[0]=='FAIL' for x in cases),staticChecks=checks,staticFailures=failures,skipped=[dict(id=x,status='NOT_RUN',reason='IBM i environment/toolchain/Db2/5250 unavailable') for x in ['IBM_i_SQLRPGLE_compile','IBM_i_ILE_C_compile','DDS_compile','CL_compile_and_bind','Db2_DDL_seed_CRUD_audit_rollback','5250_UI_and_CCSID_display','two_jobs_conflict_and_commit_unknown','approved_IFS_positive_read']],sourceHashes={str(x.relative_to(B)).replace('\\','/'):digest(x) for x in sources+[B/'c/STUNICODE.c',B/'c/STUINPUT.c',B/'c/STUSTATE.c',B/'c/STUNICODE_TEST.c']},scope='Static checks do not prove RPG syntax, bind, DB behavior or specification compliance.')
-record['hostSucceeded']=compile['exitCode']==0 and execute['exitCode']==0 and len(cases)==35 and not record['cFailures']
+record['hostSucceeded']=compile['exitCode']==0 and execute['exitCode']==0 and len(cases)==57 and not record['cFailures']
 record['currentInput']='build/input-manifest.json (profile-local current hashes)'
 record['inputVersions']=versions
 record['staticSucceeded']=not failures

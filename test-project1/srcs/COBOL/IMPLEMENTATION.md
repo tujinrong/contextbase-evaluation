@@ -1,6 +1,6 @@
 # 仕様ID・生成物・境界
 
-入力正本は方式内spec版8.0／8.1／8.2、49ファイルです。入力ハッシュは `build/input-manifest.json`、現行結果は `build/test-results/summary.json` に保存し、過去版はGit履歴で管理します。
+今回入力正本は `../../spec/COBOL/` の43ファイル（README8.5、方式別共通8.4）です。新Text描画・入力・認証境界はQA-TEXT-COBOLで未確定のため未生成です。以下のCOBOL/CGI対応表は再利用可能な既存業務境界と旧画面の所在を示し、Text適合表ではありません。入力ハッシュは `build/input-manifest.json`、現行結果は `build/test-results/summary.json` に保存し、過去版はGit履歴で管理します。
 
 | 仕様・操作 | 生成ファイル | 内容 |
 | --- | --- | --- |

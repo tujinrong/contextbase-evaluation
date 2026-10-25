@@ -33,6 +33,7 @@ Namespace Presenters
         Public Async Function InitializeAsync() As Task
             Await RunAsync(Async Function()
                                _lookup = Await _service.LookupAsync(_lifetime.Token)
+                               If _view.IsDisposed OrElse _lifetime.IsCancellationRequested Then Return
                                _refreshing = True
                                For Each pair In New Dictionary(Of ComboBox, String) From {{_view.cboGender, "GENDER"}, {_view.cboPrefecture, "PREFECTURE"}, {_view.cboEnrollmentStatus, "ENROLLMENT_STATUS"}, {_view.cboGrade, "GRADE"}, {_view.cboRelationship, "RELATIONSHIP"}}
                                    FillCodes(pair.Key, pair.Value)
@@ -50,7 +51,17 @@ Namespace Presenters
         Private Sub FillCodes(combo As ComboBox, category As String)
             combo.Items.Clear() : combo.Items.Add(New Choice("", "未選択"))
             Dim today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(9)).DateTime)
-            For Each code In _lookup.Codes.Where(Function(x) x.CategoryId = category).OrderBy(Function(x) x.DisplayOrder).ThenBy(Function(x) x.CodeValue)
+            Dim existing As String=Nothing
+            If _original IsNot Nothing Then
+                Select Case category
+                    Case "GENDER" : existing=_original.GenderCode
+                    Case "PREFECTURE" : existing=_original.PrefectureCode
+                    Case "ENROLLMENT_STATUS" : existing=_original.EnrollmentStatusCode
+                    Case "GRADE" : existing=_originalGrade
+                    Case "RELATIONSHIP" : existing=_original.RelationshipCode
+                End Select
+            End If
+            For Each code In _lookup.Codes.Where(Function(x) x.CategoryId = category AndAlso (x.CodeValue=existing OrElse (x.IsActive AndAlso x.ValidFrom<=today AndAlso (Not x.ValidTo.HasValue OrElse today<=x.ValidTo.Value)))).OrderBy(Function(x) x.DisplayOrder).ThenBy(Function(x) x.CodeValue)
                 combo.Items.Add(New Choice(code.CodeValue, code.CodeName, code.IsActive AndAlso code.ValidFrom <= today AndAlso (Not code.ValidTo.HasValue OrElse today <= code.ValidTo.Value)))
             Next
             combo.SelectedIndex = 0
@@ -58,6 +69,7 @@ Namespace Presenters
         Private Async Function LoadAsync() As Task
             If _id.HasValue Then
                 Dim data = Await _service.GetAsync(_id.Value, _lifetime.Token)
+                If _view.IsDisposed OrElse _lifetime.IsCancellationRequested Then Return
                 If data Is Nothing Then Throw New InvalidOperationException("E-STU-103 対象の学生が見つからないか、既に削除されています。")
                 _version = data.RowVersion : _original = data.Draft
                 _original.BirthDateInput = Core.JapaneseDateService.ToInput(data.BirthDate)
@@ -69,6 +81,11 @@ Namespace Presenters
                 Dim today = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(9))
                 _originalYear = If(today.Month < 4, today.Year - 1, today.Year).ToString() : _originalGrade = ""
             End If
+            _refreshing=True
+            For Each pair In New Dictionary(Of ComboBox,String) From {{_view.cboGender,"GENDER"},{_view.cboPrefecture,"PREFECTURE"},{_view.cboEnrollmentStatus,"ENROLLMENT_STATUS"},{_view.cboGrade,"GRADE"},{_view.cboRelationship,"RELATIONSHIP"}}
+                FillCodes(pair.Key,pair.Value)
+            Next
+            _refreshing=False
             LoadDraft(_original)
             _view.lblMessage.Text = If(_lookup.Classes.Count = 0, "W-STU-108 登録可能なクラスがありません。", "")
         End Function
@@ -110,7 +127,7 @@ Namespace Presenters
                 Dim oldId = Value(_view.cboClass) : Dim year = Value(_view.cboSchoolYear) : Dim grade = Value(_view.cboGrade)
                 _view.cboClass.Items.Clear() : _view.cboClass.Items.Add(New Choice("", "未選択"))
                 Dim today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(9)).DateTime)
-                For Each cls In _lookup.Classes.Where(Function(x) (year = "" OrElse x.SchoolYear.ToString() = year) AndAlso (grade = "" OrElse x.GradeCode = grade))
+                For Each cls In _lookup.Classes.Where(Function(x) (year = "" OrElse x.SchoolYear.ToString() = year) AndAlso (grade = "" OrElse x.GradeCode = grade) AndAlso ClassCandidate(x,today))
                     _view.cboClass.Items.Add(New Choice(cls.ClassId.ToString(), $"{cls.SchoolYear} / {cls.ClassCode} / {cls.ClassName}", cls.IsActive AndAlso cls.ValidFrom <= today AndAlso today <= cls.ValidTo))
                 Next
                 _view.cboClass.SelectedIndex = 0
@@ -121,7 +138,16 @@ Namespace Presenters
             Finally
                 _refreshing = False
             End Try
+            SelectClass()
         End Sub
+        Private Function ClassCandidate(cls As Core.SchoolClass,today As DateOnly) As Boolean
+            If _original IsNot Nothing AndAlso _original.ClassId.HasValue AndAlso _original.ClassId.Value=cls.ClassId Then Return True
+            Dim active=Value(_view.cboEnrollmentStatus)="01" OrElse Value(_view.cboEnrollmentStatus)="02"
+            If active Then Return cls.IsActive AndAlso cls.ValidFrom<=today AndAlso today<=cls.ValidTo
+            Dim admitted As DateOnly, ended As DateOnly
+            If Not DateOnly.TryParseExact(_view.dtpAdmissionDate.RawText,"yyyy-MM-dd",CultureInfo.InvariantCulture,DateTimeStyles.None,admitted) OrElse Not DateOnly.TryParseExact(_view.dtpEnrollmentEndDate.RawText,"yyyy-MM-dd",CultureInfo.InvariantCulture,DateTimeStyles.None,ended) Then Return False
+            Return admitted<=ended AndAlso admitted<=cls.ValidTo AndAlso cls.ValidFrom<=ended
+        End Function
         Public Sub SelectClass()
             If _lookup Is Nothing OrElse _refreshing Then Return
             Dim selected = _lookup.Classes.FirstOrDefault(Function(x) x.ClassId.ToString() = Value(_view.cboClass))
@@ -135,7 +161,10 @@ Namespace Presenters
             End Try
         End Sub
         Public Sub StatusChanged()
-            If Not _refreshing AndAlso (Value(_view.cboEnrollmentStatus) = "01" OrElse Value(_view.cboEnrollmentStatus) = "02") Then _view.dtpEnrollmentEndDate.RawText = ""
+            If _refreshing Then Return
+            Dim active=Value(_view.cboEnrollmentStatus)="01" OrElse Value(_view.cboEnrollmentStatus)="02"
+            _view.dtpEnrollmentEndDate.Enabled=Not _busy AndAlso _service.CanEdit AndAlso (Not active OrElse _view.dtpEnrollmentEndDate.RawText<>"")
+            RefreshClasses()
         End Sub
         Private Function ReadDraft() As Core.StudentDraft
             Dim idValue As Long
@@ -153,6 +182,7 @@ Namespace Presenters
                                Dim year As Integer? = If(Integer.TryParse(Value(_view.cboSchoolYear), yearValue), CType(yearValue, Integer?), Nothing)
                                Dim command As New Core.SaveRequest(ReadDraft(), _id, _version, year, Value(_view.cboGrade), Nothing, _view.txtOperationReason.Text)
                                Dim result = Await _service.SaveAsync(command, _lifetime.Token)
+                               If _view.IsDisposed OrElse _lifetime.IsCancellationRequested Then Return
                                If result.Outcome = Core.Outcome.ConfirmationRequired Then
                                    Dim candidates = If(result.Candidates, Array.Empty(Of Core.StudentRow)())
                                    Dim content = $"同一人物候補 {result.CandidateCount}件（最大20件表示）。別人であることを確認してください。" & Environment.NewLine & String.Join(Environment.NewLine, candidates.Select(Function(x) $"{x.StudentNo}  {x.StudentName}  {x.BirthDateWareki}  {If(x.ClassName, "－")}"))
@@ -161,6 +191,7 @@ Namespace Presenters
                                        _view.txtOperationReason.Text = dialog.Reason
                                        command = New Core.SaveRequest(ReadDraft(), _id, _version, year, Value(_view.cboGrade), result.ConfirmationToken, dialog.Reason)
                                        result = Await _service.SaveAsync(command, _lifetime.Token)
+                                       If _view.IsDisposed OrElse _lifetime.IsCancellationRequested Then Return
                                    End Using
                                End If
                                DisplayResult(result)
@@ -176,6 +207,7 @@ Namespace Presenters
                            End Function)
         End Function
         Private Sub DisplayResult(result As Core.SaveResult)
+            If _view.IsDisposed OrElse _lifetime.IsCancellationRequested Then Return
             Dim notice = If(result.Errors.Count > 0, String.Join(Environment.NewLine, result.Errors.Select(Function(x) x.Code & " " & x.Message)), If(result.Outcome = Core.Outcome.Saved, "保存しました。", If(result.Outcome = Core.Outcome.NoChange, "I-STU-004 変更内容がありません。", If(result.Outcome = Core.Outcome.Unknown, "E-COM-004 保存結果が不明です。再保存の前に検索で確認してください。", result.Outcome.ToString()))))
             _view.lblMessage.Text = notice & If(result.RequestId Is Nothing, "", " 受付番号：" & result.RequestId)
             Dim first As Control = Nothing
@@ -183,23 +215,27 @@ Namespace Presenters
                 Dim control As Control = Nothing
                 If _view.Fields.TryGetValue(issue.Field, control) Then _view.Errors.SetError(control, issue.Message) : If first Is Nothing Then first = control
             Next
-            first?.Focus()
+            If first IsNot Nothing Then
+                Dim scroll = TryCast(first.Parent, ScrollableControl)
+                scroll?.ScrollControlIntoView(first)
+                first.Focus()
+            End If
             If result.Outcome = Core.Outcome.Saved Then
                 _view.ResultNotice = notice : _acceptClose = True : _view.Close()
             End If
         End Sub
         Public Sub Reset()
             If _busy OrElse _original Is Nothing Then Return
-            If MessageBox.Show("入力内容を取り消しますか。", "確認", MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) = DialogResult.OK Then LoadDraft(_original)
+            If MessageBox.Show(_view, "入力内容を取り消しますか。", "確認", MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) = DialogResult.OK Then LoadDraft(_original)
         End Sub
         Public Async Function ReloadAsync() As Task
             If Not _id.HasValue OrElse _busy Then Return
-            If MessageBox.Show("最新情報を再読み込みしますか。入力中の変更は破棄されます。", "確認", MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) = DialogResult.OK Then Await RunAsync(Function() LoadAsync())
+            If MessageBox.Show(_view, "最新情報を再読み込みしますか。入力中の変更は破棄されます。", "確認", MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) = DialogResult.OK Then Await RunAsync(Function() LoadAsync())
         End Function
         Public Function CanClose() As Boolean
             If _acceptClose Then Return True
             If _busy Then Return False
-            Return _originalUi = "" OrElse SnapshotText() = _originalUi OrElse MessageBox.Show("保存していない変更を破棄しますか。", "確認", MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) = DialogResult.OK
+            Return _originalUi = "" OrElse SnapshotText() = _originalUi OrElse MessageBox.Show(_view, "保存していない変更を破棄しますか。", "確認", MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) = DialogResult.OK
         End Function
         Private Async Function RunAsync(operation As Func(Of Task)) As Task
             If _busy Then Return
@@ -215,9 +251,15 @@ Namespace Presenters
         End Function
         Private Sub SetEnabled()
             For Each control In _view.Fields.Values
-                If TypeOf control IsNot Label Then control.Enabled = Not _busy AndAlso _service.CanEdit
+                If TypeOf control Is TextBox Then
+                    DirectCast(control,TextBox).ReadOnly=Not _service.CanEdit
+                    control.Enabled=Not _busy
+                ElseIf TypeOf control IsNot Label Then
+                    control.Enabled=Not _busy AndAlso _service.CanEdit
+                End If
             Next
             _view.txtStudentNo.Enabled = Not _busy AndAlso _service.CanEdit AndAlso Not _id.HasValue
+            StatusChanged()
             _view.btnSave.Enabled = Not _busy AndAlso _service.CanEdit : _view.btnDelete.Enabled = Not _busy AndAlso _service.CanDelete AndAlso _id.HasValue
             _view.btnReset.Enabled = Not _busy : _view.btnReload.Enabled = Not _busy AndAlso _id.HasValue : _view.btnBack.Enabled = Not _busy
         End Sub

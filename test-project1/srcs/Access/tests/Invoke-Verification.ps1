@@ -1,4 +1,4 @@
-param()
+﻿param([ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId='manual')
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot '../tools/GeneratedPaths.ps1')
 $taskRoot=$script:AccessMethodRoot
@@ -15,14 +15,14 @@ $taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $taskRoot '../../spec/Access
 $taskInputs | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $taskReport 'inputs.json') -Encoding UTF8
 $taskStarted=[DateTime]::UtcNow.ToString('o')
 $taskSteps=New-Object 'Collections.Generic.List[object]'
-foreach($taskName in @('application','relationship','race','deployment','build','build-fixture','path-validation','syntax')) {
+foreach($taskName in @('application','relationship','race','deployment','build','build-fixture','path-validation','syntax','format-initial-state','message-encoding')) {
     foreach($taskExtension in @('json','log')) {
         $taskPrevious=Resolve-AccessReportPath (Join-Path $taskReport ($taskName+'.'+$taskExtension))
         if(Test-Path -LiteralPath $taskPrevious){Remove-Item -LiteralPath $taskPrevious -Force}
     }
 }
 function Save-Verification([string]$Status,[string]$Failure) {
-    $taskSummary=[ordered]@{status=$Status;startedAt=$taskStarted;completedAt=[DateTime]::UtcNow.ToString('o');steps=$taskSteps;failure=$Failure;specificationChanged=$false;formalScore=$null;notExecuted=@('Office 32-bit','manual pixel and keyboard acceptance','10000/10001 row performance','network interruption','commit-response loss','production deployment','shared SQL migration','reverse generation','formal scoring')}
+    $taskSummary=[ordered]@{status=$Status;runId=$RunId;startedAt=$taskStarted;completedAt=[DateTime]::UtcNow.ToString('o');steps=$taskSteps;failure=$Failure;specificationChangedDuringVerification=$false;preFreezeLocalSpecFixes='build/generation/local-spec-fix.json';formalScore=$null;notExecuted=@('Office 32-bit','manual pixel and keyboard acceptance','100000-row / 20-user performance benchmark','network interruption','commit-response loss','production deployment','shared SQL migration','reverse generation','formal scoring')}
     if(Test-Path -LiteralPath $taskFinal){$taskSummary.artifact=[ordered]@{file='build/StudentManagement.accdb';sha256=(Get-FileHash -LiteralPath $taskFinal -Algorithm SHA256).Hash;bytes=(Get-Item -LiteralPath $taskFinal).Length}}
     $taskSummary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $taskReport 'summary.json') -Encoding UTF8
 }
@@ -41,22 +41,30 @@ function Invoke-VerificationStep([string]$Name,[string]$Script,[string[]]$Argume
 }
 Save-Verification 'Running' ''
 try {
-    Invoke-VerificationStep 'build' (Join-Path $taskRoot 'Build-Access.ps1') @()
+    Invoke-VerificationStep 'build' (Join-Path $taskRoot 'Build-Access.ps1') @('-RunId',$RunId)
     $taskPublication=Get-Content -LiteralPath (Join-Path $taskReport 'summary.json') -Raw | ConvertFrom-Json
     if($taskPublication.status -ne 'VerificationRequired' -or $taskPublication.artifact.sha256 -ne (Get-FileHash -LiteralPath $taskFinal -Algorithm SHA256).Hash){throw 'Newly generated artifact inherited stale verification.'}
     [ordered]@{status='Passed';completedAt=[DateTime]::UtcNow.ToString('o');generatedStatus=$taskPublication.status;sha256=$taskPublication.artifact.sha256;previousAcceptanceInherited=$false} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $taskReport 'build-publication.json') -Encoding UTF8
     Save-Verification 'Running' ''
     Invoke-VerificationStep 'path-validation' (Join-Path $PSScriptRoot 'Test-GeneratedPaths.ps1') @()
-    Invoke-VerificationStep 'build-fixture' (Join-Path $taskRoot 'Build-Access.ps1') @('-Frontend',$taskFixture,'-IncludeTests','-NoStartup')
-    Invoke-VerificationStep 'application' (Join-Path $PSScriptRoot 'Test-Application.ps1') @('-Frontend',$taskFixture,'-Backend',$taskFixture,'-InputManifest','build/test-results/inputs.json')
-    Invoke-VerificationStep 'relationship' (Join-Path $PSScriptRoot 'Test-Relationship74.ps1') @()
+    Invoke-VerificationStep 'build-fixture' (Join-Path $taskRoot 'Build-Access.ps1') @('-Frontend',$taskFixture,'-IncludeTests','-NoStartup','-RunId',$RunId)
+    Invoke-VerificationStep 'application' (Join-Path $PSScriptRoot 'Test-Application.ps1') @('-Frontend',$taskFixture,'-Backend',$taskFixture,'-InputManifest','build/generation/inputs.json','-RunId',$RunId)
+    Invoke-VerificationStep 'relationship' (Join-Path $PSScriptRoot 'Test-Relationship74.ps1') @('-RunId',$RunId)
     Copy-Item -LiteralPath $taskFixture -Destination $taskRace -Force
-    Invoke-VerificationStep 'race' (Join-Path $PSScriptRoot 'Test-Race.ps1') @('-Fixture',$taskRace)
-    Invoke-VerificationStep 'deployment' (Join-Path $PSScriptRoot 'Test-Deployment.ps1') @()
+    Invoke-VerificationStep 'race' (Join-Path $PSScriptRoot 'Test-Race.ps1') @('-Fixture',$taskRace,'-RunId',$RunId)
+    Invoke-VerificationStep 'deployment' (Join-Path $PSScriptRoot 'Test-Deployment.ps1') @('-RunId',$RunId)
+    $taskEvidence=Resolve-AccessGeneratedPath (Join-Path $taskRoot '.tmp/evidence/current.accdb') '.tmp'
+    $taskEvidenceReport=Resolve-AccessGeneratedPath (Join-Path $taskScratch 'evidence') '.tmp'
+    New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($taskEvidence)) -Force | Out-Null
+    Copy-Item -LiteralPath $taskFinal -Destination $taskEvidence -Force
+    Invoke-VerificationStep 'format-initial-state' (Join-Path $PSScriptRoot 'Evidence/Test-FormatAndInitialState.ps1') @('-Frontend',$taskEvidence,'-Backend',$taskEvidence,'-RunId',$RunId,'-ReportDirectory',$taskEvidenceReport)
+    Invoke-VerificationStep 'message-encoding' (Join-Path $PSScriptRoot 'Evidence/Test-MessageEncodingR6.ps1') @('-Database',$taskEvidence,'-RunId',$RunId,'-ReportDirectory',$taskEvidenceReport,'-Phase','After')
+    foreach($taskName in @('format-initial-state.json','message-encoding.json')){Copy-Item -LiteralPath (Join-Path $taskEvidenceReport $taskName) -Destination (Join-Path $taskReport $taskName) -Force}
+
     $taskSyntax=@(Get-ChildItem -LiteralPath $taskRoot -Recurse -Filter '*.ps1' | Where-Object {$_.FullName -notmatch '\\(?:build|\.tmp)\\'} | ForEach-Object {
         $taskTokens=$null;$taskErrors=$null
         [System.Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$taskTokens,[ref]$taskErrors)|Out-Null
-        [ordered]@{file=('../../spec/Access/'+$_.FullName.Substring(([IO.Path]::GetFullPath((Join-Path $taskRoot '../../spec/Access'))).Length+1).Replace('\','/'));passed=$taskErrors.Count -eq 0;errors=@($taskErrors|ForEach-Object {$_.Message})}
+        [ordered]@{file=$_.FullName.Substring($taskRoot.Length+1).Replace('\','/');passed=$taskErrors.Count -eq 0;errors=@($taskErrors|ForEach-Object {$_.Message})}
     })
     $taskSyntax | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $taskReport 'syntax.json') -Encoding UTF8
     if(@($taskSyntax|Where-Object {-not $_.passed}).Count){throw 'PowerShell syntax check failed.'}

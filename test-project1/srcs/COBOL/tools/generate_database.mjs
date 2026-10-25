@@ -1,4 +1,4 @@
-// COBOL/spec 8.0. Generate local SQL files; never connect/run DDL.
+// Canonical COBOL specification. Generate local SQL files; never connect/run DDL.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,9 +10,9 @@ const tables=fs.readdirSync(spec).filter(name=>name.endsWith('.md')).map(name=>{
   const text=fs.readFileSync(path.join(spec,name),'utf8');
   const meta=JSON.parse(text.match(/<!-- spec-meta: (.*?) -->/)[1]);
   const rows=text.split('## 項目詳細')[1].split(/\r?\n/).filter(line=>/^\| \d+ \|/.test(line)).map(line=>line.split('|').slice(1,-1).map(cell=>cell.trim()));
-  return {name:meta.table.physicalName,pk:meta.table.primaryKey,rows};
+  return {name:meta.table.physicalName,version:meta.version,pk:meta.table.primaryKey,rows};
 });
-const sql=["-- Source: COBOL/spec 8.0 SQLServer table definitions; generated 2026-10-12.","-- Apply to an EMPTY selected evaluation database only. No migration/drop is performed.","SET XACT_ABORT ON;", "GO", "ALTER DATABASE CURRENT SET ALLOW_SNAPSHOT_ISOLATION ON;", "GO"];
+const sql=[`-- Source: ../../spec/COBOL/DB定義/SQLServer/テーブル; versions ${[...new Set(tables.map(t=>t.version))].sort().join(', ')}.`,"-- Apply to an EMPTY selected evaluation database only. No migration/drop is performed.","SET XACT_ABORT ON;", "GO", "ALTER DATABASE CURRENT SET ALLOW_SNAPSHOT_ISOLATION ON;", "GO"];
 for(const table of tables) {
   sql.push(`CREATE TABLE dbo.${table.name} (`);
   const fields=table.rows.map(row=>{

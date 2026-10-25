@@ -1,4 +1,6 @@
 """Materialize COBOL programs; business branches remain visible in *.cob."""
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 def put(name,text):

@@ -1,6 +1,6 @@
 # 撮影用fixtureホスト
 
-2026-10-23／Vue_CSharpAPI／20261023-vue-csharpapi-build-01。実API Controllerとbackend/wwwrootの既存Vue配信物を同じHTTPSホストで配信します。 本番コードやSQL Serverのテーブルを変更せず、tests内のIStudentServiceだけを合成データへ差し替えます。
+2026-10-25／Vue_CSharpAPI／20261025-regenerate。実API Controllerと今回の `build/publish/wwwroot` を同じHTTPSホストで配信します。先に `tools/build.py` で生成してください。ソース上の旧bundleやDevelopmentの静的アセットmanifestを使わず、Productionの設定で配信先を固定します。本番コードやSQL Serverのテーブルを変更せず、tests内のIStudentServiceだけを合成データへ差し替えます。
 
 `fixture-data.json`は仮名3学生（TEST2026-0001～0003）、テスト2クラス、当方式の002_seed.sqlから取得した70コード。学生IDはInt64の正確性を確認する9007199254740993～9007199254740995です。個人情報の実データは含みません。既定状態01/02では2件、状態をすべて外すと3件、未所属の卒業fixtureは1件です。
 

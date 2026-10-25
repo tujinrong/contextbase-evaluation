@@ -1,4 +1,6 @@
 """Optional local portable C test toolchain; no OS installation or PATH mutation."""
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 import json, urllib.request, hashlib, zipfile

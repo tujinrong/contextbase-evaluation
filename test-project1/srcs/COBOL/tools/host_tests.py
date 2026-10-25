@@ -1,4 +1,6 @@
 """Run compiled production boundary/date programs, never replace SQL with a fake DB."""
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import os,sys,subprocess,json,datetime,hashlib,urllib.parse
 from evidence import compiled_inputs,binary_hashes,binary_path

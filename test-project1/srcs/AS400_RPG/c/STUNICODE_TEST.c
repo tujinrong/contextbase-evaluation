@@ -59,5 +59,51 @@ int main(void) {
  check("approved_path_traversal",open_path("/stuapp/approved/../input.txt")!=0);
  check("approved_path_nested",open_path("/stuapp/approved/sub/input.txt")!=0);
  check("approved_path_command_chars",open_path("/stuapp/approved/a;cmd.txt")!=0);
+
+ {int32_t used=0,advance=0,w=0;
+ n=convert("ABCDE",a);r=StTextWindow(a,n,0,37,bytes,3,&used,&advance);
+ check("text_window_bounded_prefix",r==0&&used==3&&advance==3);
+ r=StUnicodeFromJob(bytes,3,37,out,1024,&m);
+ check("text_window_roundtrip_prefix",r==0&&m==3&&!memcmp(a,out,6));
+ n=convert("AB\\nCD",a); /* literal backslash-n is ordinary text */
+ r=StTextWindow(a,n,0,37,bytes,128,&used,&advance);
+ check("text_normal_backslash_literal",r==0&&used==n&&advance==n);
+ n=convert("AB\nCD",a);a[2]=0x0a;a[3]='C';a[4]='D';n=5;
+ r=StTextWindow(a,n,0,37,bytes,128,&used,&advance);
+ check("text_original_lf_boundary",r==0&&used==2&&advance==3);
+ m=convert("X",b);r=StTextSplice(a,n,0,used,b,m,out,1024,&w);
+ check("text_splice_preserves_lf_and_tail",r==0&&w==4&&out[0]=='X'&&out[1]==10&&out[2]=='C'&&out[3]=='D');
+ /* Explicit supplementary scalar to test UTF16 boundary preservation. */
+ a[0]='A';a[1]=0xd83d;a[2]=0xde00;a[3]='B';n=4;
+ r=StTextWindow(a,n,2,37,bytes,128,&used,&advance);
+ check("text_window_rejects_surrogate_midpoint",r!=0);
+ r=StTextSplice(a,n,1,1,b,m,out,1024,&w);
+ check("text_splice_rejects_partial_surrogate",r!=0);
+ r=StTextWindow(a,n,0,37,bytes,128,&used,&advance);
+ check("text_unrepresentable_retains_raw",r==4&&a[1]==0xd83d&&a[2]==0xde00);
+ r=StTextEscapeWindow(a,n,1,out,8,&used,&w);
+ check("text_escape_no_partial_token",r==0&&used==0&&w==0);
+ r=StTextEscapeWindow(a,n,1,out,9,&used,&w);
+ check("text_escape_complete_scalar_token",r==0&&used==2&&w==9);
+ r=StUnicodeEscape(out,w,1,b,3200,&m);
+ check("text_escape_window_roundtrip",r==0&&m==2&&b[0]==0xd83d&&b[1]==0xde00);
+ a[0]=10;n=1;r=StUnicodeEscape(a,n,0,b,3200,&m);
+ check("text_unicode_lf_explicit_token",r==0&&m==2&&b[0]==0x5c&&b[1]=='n');
+ r=StUnicodeEscape(b,m,1,out,1024,&w);
+ check("text_unicode_lf_roundtrip",r==0&&w==1&&out[0]==10);
+ r=StTextSplice(a,n,0,0,b,2,out,1,&w);
+ check("text_splice_capacity_refusal",r!=0&&a[0]==10);
+ }
+
+ n=convert("123456789",a);check("text_apply_year_capacity_refused",StTextLimit(a,n,8,4)!=0);
+ n=convert("12345",a);check("text_apply_year_scalar_limit_refused",StTextLimit(a,n,8,4)!=0);
+ n=convert("1234",a);check("text_apply_year_exact_limit",StTextLimit(a,n,8,4)==0);
+ a[0]=0xd83d;a[1]=0xde00;a[2]=0xd83d;a[3]=0xde00;a[4]=0xd83d;a[5]=0xde00;a[6]=0xd83d;a[7]=0xde00;
+ check("text_apply_supplementary_exact_raw_budget",StTextLimit(a,8,8,4)==0);
+ a[0]=0xd800;check("text_apply_invalid_utf16_refused",StTextLimit(a,1,8,4)!=0);
+ for(n=0;n<61;n++)a[n]='A';
+ check("text_apply_reason_scalar_limit_refused",StTextLimit(a,61,120,60)!=0);
+ check("text_apply_reason_exact_limit",StTextLimit(a,60,120,60)==0);
+ check("text_apply_invalid_target_capacity_refused",StTextLimit(a,60,-1,60)!=0);
  printf("RESULT tests=%d failures=%d\n",tests,failures);return failures?1:0;
 }

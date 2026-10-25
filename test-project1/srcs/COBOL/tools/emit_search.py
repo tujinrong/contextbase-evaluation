@@ -1,3 +1,5 @@
+import sys
+sys.dont_write_bytecode = True
 from emit_cobol import program
 body='''    MOVE "Search" TO VIEW-MODE MOVE 0 TO ROW-COUNT
     CALL "STSTATE" END-CALL IF APP-STATUS NOT = 200 GOBACK END-IF

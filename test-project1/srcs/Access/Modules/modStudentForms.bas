@@ -26,12 +26,10 @@ Public Function InitSearch(ByVal frm As Access.Form) As Boolean
     SetSearchAllSelections frm
     stage = "Defaults": frm!chkEnrolled = True: frm!chkLeave = True
     frm!chkGraduated = False: frm!chkWithdrawn = False
-    frm!cboPageSize = 20
     frm!cboSortKey = "studentNo": frm!cboSortDirection = "asc"
     frm!lblTitle.Caption = "学生検索 ／ " & CurrentRole() & " ／ " & CurrentUserId()
     frm!cmdNew.Visible = CurrentRole() <> "Reader"
     frm!cmdOpenSelected.Caption = IIf(CurrentRole() = "Reader", "選択行の参照", "選択行の編集／参照")
-    frm!cmdFirst.Enabled = False: frm!cmdPrev.Enabled = False: frm!cmdNext.Enabled = False: frm!cmdLast.Enabled = False
     Dim emptyRows As New Collection
     stage = "AddRows": listRows.Add frm.Tag, emptyRows
     initializes = False: InitSearch = True
@@ -47,7 +45,7 @@ End Function
 Private Function ReadCriteria(ByVal frm As Access.Form) As clsSearchCriteria
     Dim raw As Object
     Set raw = Map()
-    raw.Add "studentNo", frm!txtStudentNo: raw.Add "name", frm!txtName
+    raw.Add "studentNo", frm!txtStudentNo.Value: raw.Add "name", frm!txtName.Value
     raw.Add "class", SearchFilterValue(frm, "cboClass")
     raw.Add "status01", Nz(frm!chkEnrolled, False): raw.Add "status02", Nz(frm!chkLeave, False)
     raw.Add "status03", Nz(frm!chkGraduated, False): raw.Add "status04", Nz(frm!chkWithdrawn, False)
@@ -64,7 +62,7 @@ Private Sub SetSearchAllSelections(ByVal frm As Access.Form)
 End Sub
 Public Function SearchClick(Optional ByVal operation As String = "SEARCH") As Boolean
     Dim frm As Access.Form, ctx As clsSearchContext, d As clsSearchCriteria, result As Object, rows As Collection
-    Dim acquired As Boolean, requestError As String
+    Dim acquired As Boolean, requestError As String, selectedId As Variant, position As Long, sortKey As String, direction As String
     On Error GoTo Failed
     Set frm = Screen.ActiveForm: Set ctx = contexts(frm.Tag)
     If Nz(frm!IsBusy, False) Then Exit Function
@@ -73,48 +71,45 @@ Public Function SearchClick(Optional ByVal operation As String = "SEARCH") As Bo
         If requestError = "W-SRC-002" Then ResetSearchForm frm, ctx
         frm!lblMessage.Caption = MessageText(requestError): Exit Function
     End If
+    If operation <> "SEARCH" And operation <> "SORT" And operation <> "REFRESH" Then Err.Raise vbObjectError + 150, , "E-SRC-001"
     ctx.Acquire frm.Tag, Nz(frm!txtContextId, ""), frm!txtContextRevision: acquired = True: frm!IsBusy = True
+    selectedId = ctx.SelectedStudentId: position = ctx.ScrollPosition
     If operation = "SEARCH" Then
-        Set d = ReadCriteria(frm): ctx.Page = 1
+        Set d = ReadCriteria(frm): selectedId = Null: position = 0
     Else
         If ctx.AppliedCriteria Is Nothing Then GoTo Done
         Set d = ctx.AppliedCriteria.Clone()
-        Select Case operation
-        Case "NEXT": ctx.Page = ctx.Page + 1
-        Case "PREV": If ctx.Page > 1 Then ctx.Page = ctx.Page - 1
-        Case "FIRST": ctx.Page = 1
-        Case "LAST": ctx.Page = 500
-        Case "SORT": ctx.Page = 1
-        Case "REFRESH"
-        Case Else: Err.Raise vbObjectError + 150, , "E-SRC-002"
-        End Select
+        position = SearchScrollPosition(frm)
     End If
-    ctx.PageSize = CLng(frm!cboPageSize): ctx.SortKey = frm!cboSortKey: ctx.Direction = frm!cboSortDirection
-    Set result = SearchStudents(d, ctx.Page, ctx.PageSize, ctx.SortKey, ctx.Direction)
+    sortKey = Nz(frm!cboSortKey, ""): direction = Nz(frm!cboSortDirection, "")
+    Set result = SearchStudents(d, sortKey, direction)
     frm!lblMessage.Caption = "": frm!txtSelectedDetails = Null
     If result("kind") = "Found" Or result("kind") = "LimitExceeded" Then
         Set ctx.AppliedCriteria = d.Clone()
-        If result.Exists("page") Then ctx.Page = result("page")
+        ctx.SortKey = sortKey: ctx.Direction = direction
         Set rows = result("rows"): Set listRows(frm.Tag) = rows
         If result("kind") = "LimitExceeded" Then
             frm!lblCount.Caption = "10,000件超過"
         ElseIf result("total") = 0 Then
             frm!lblCount.Caption = "検索結果 0件"
         Else
-            frm!lblCount.Caption = CStr(result("total")) & "件／取得範囲 " & CStr((ctx.Page - 1) * ctx.PageSize + 1) & "－" & CStr((ctx.Page - 1) * ctx.PageSize + rows.Count)
+            frm!lblCount.Caption = "検索結果 全" & CStr(result("total")) & "件"
         End If
         frm!lblSearchedAt.Caption = "検索日時：" & Format$(DateAdd("h", 9, result("at")), "yyyy/mm/dd hh:nn:ss")
     Else
         Set rows = New Collection: Set listRows(frm.Tag) = rows
         frm!lblCount.Caption = "検索失敗"
     End If
-    If result("kind") = "Found" Or result("kind") = "LimitExceeded" Then ctx.Advance: frm!txtContextRevision = ctx.Revision: frm!txtContextId = ctx.ContextId
+    If result("kind") = "Found" Or result("kind") = "LimitExceeded" Then
+        ctx.SelectedStudentId = selectedId: ctx.ScrollPosition = position
+        ctx.Advance: frm!txtContextRevision = ctx.Revision: frm!txtContextId = ctx.ContextId
+    End If
     frm!lstStudents.Requery
-    frm!cmdFirst.Enabled = result("kind") = "Found" And ctx.Page > 1
-    frm!cmdPrev.Enabled = frm!cmdFirst.Enabled
-    frm!cmdNext.Enabled = result("kind") = "Found" And ctx.Page * ctx.PageSize < result("total")
-    frm!cmdLast.Enabled = frm!cmdNext.Enabled
+    frm.Repaint
+    DoEvents
+    RestoreSearchViewport frm, ctx
     If result("message") <> "" Then frm!lblMessage.Caption = MessageText(result("message"))
+    If operation <> "SEARCH" And SearchConditionsPending(frm, ctx) Then frm!lblMessage.Caption = frm!lblMessage.Caption & " 条件変更未反映。検索を実行してください。"
 Done:
     ctx.ReleaseUpdate: frm!IsBusy = False: SearchClick = True
     Exit Function
@@ -129,6 +124,32 @@ Failed:
     End If
     frm!IsBusy = False: frm!lblMessage.Caption = MessageText(msg)
 End Function
+Private Function SearchConditionsPending(ByVal frm As Access.Form, ByVal ctx As clsSearchContext) As Boolean
+    Dim draft As clsSearchCriteria, i As Long
+    On Error GoTo Pending
+    If ctx.AppliedCriteria Is Nothing Then Exit Function
+    Set draft = ReadCriteria(frm)
+    If draft.StudentNoPrefix <> ctx.AppliedCriteria.StudentNoPrefix Or draft.NameKey <> ctx.AppliedCriteria.NameKey Or Not EqualValue(draft.ClassId, ctx.AppliedCriteria.ClassId) Then GoTo Pending
+    For i = 1 To 4
+        If draft.StatusSelected(i) <> ctx.AppliedCriteria.StatusSelected(i) Then GoTo Pending
+    Next
+    Exit Function
+Pending:
+    SearchConditionsPending = True
+End Function
+Private Sub RestoreSearchViewport(ByVal frm As Access.Form, ByVal ctx As clsSearchContext)
+    Dim item As Object, present As Boolean
+    If Not IsNull(ctx.SelectedStudentId) Then
+        For Each item In listRows(frm.Tag)
+            If item("student_id") = ctx.SelectedStudentId Then present = True: Exit For
+        Next
+    End If
+    If Not present Then ctx.SelectedStudentId = Null
+    frm!lstStudents = ctx.SelectedStudentId
+    RestoreSearchScroll frm, ctx.ScrollPosition
+    ctx.ScrollPosition = SearchScrollPosition(frm)
+    SelectedStudentDetails
+End Sub
 Public Function StudentListCallback(ctl As Control, id As Variant, row As Variant, col As Variant, code As Variant) As Variant
     Dim key As String, rows As Collection, item As Object
     On Error GoTo NotReady
@@ -202,8 +223,14 @@ Public Function ClassChanged(Optional ByVal changed As String = "") As Boolean
     If frm.Name = "frmStudentEdit" Then RefreshCapacity frm
 End Function
 Public Function OpenStudent(ByVal fresh As Boolean) As Boolean
-    Dim frm As Access.Form, id As Variant, expectedRevision As Long
+    Dim frm As Access.Form, id As Variant, expectedRevision As Long, ctx As clsSearchContext, message As String
     Set frm = Screen.ActiveForm: id = Null
+    Set ctx = contexts(frm.Tag)
+    message = ctx.RequestError(frm.Tag, Nz(frm!txtContextId, ""), frm!txtContextRevision)
+    If message <> "" Then
+        If message = "W-SRC-002" Then ResetSearchForm frm, ctx
+        frm!lblMessage.Caption = MessageText(message): Exit Function
+    End If
     expectedRevision = CLng(frm!txtContextRevision)
     If fresh Then
         Authorize "Save"
@@ -211,6 +238,7 @@ Public Function OpenStudent(ByVal fresh As Boolean) As Boolean
         If IsNull(frm!lstStudents) Then Exit Function
         id = frm!lstStudents
     End If
+    ctx.SelectedStudentId = frm!lstStudents: ctx.ScrollPosition = SearchScrollPosition(frm)
     DoCmd.OpenForm "frmStudentEdit", , , , , acDialog, Nz(id, "") & "|" & frm.Tag
     If CLng(frm!txtContextRevision) <> expectedRevision Then Exit Function
     If contexts(frm.Tag).AppliedCriteria Is Nothing Then Exit Function
@@ -232,11 +260,13 @@ Private Sub ResetSearchForm(ByVal frm As Access.Form, ByVal ctx As clsSearchCont
     frm!txtStudentNo = Null: frm!txtName = Null: frm!txtSelectedDetails = Null
     SetSearchAllSelections frm
     frm!chkEnrolled = True: frm!chkLeave = True: frm!chkGraduated = False: frm!chkWithdrawn = False
-    frm!cboPageSize = 20: frm!cboSortKey = "studentNo": frm!cboSortDirection = "asc"
+    frm!cboSortKey = "studentNo": frm!cboSortDirection = "asc"
     ctx.Reset frm.Tag: frm!txtContextRevision = ctx.Revision: frm!txtContextId = ctx.ContextId: Set listRows(frm.Tag) = emptyRows
     RefreshClassChoices frm, Null
-    frm!cmdFirst.Enabled = False: frm!cmdPrev.Enabled = False: frm!cmdNext.Enabled = False: frm!cmdLast.Enabled = False
     frm!lstStudents.Requery: frm!lblCount.Caption = "未検索": frm!lblSearchedAt.Caption = "": frm!lblMessage.Caption = "": initializes = False
+    frm.Repaint
+    DoEvents
+    RestoreSearchScroll frm, 0
 End Sub
 Public Function SearchMenu() As Boolean
     If Nz(Screen.ActiveForm!IsBusy, False) Then Exit Function
@@ -250,6 +280,7 @@ Public Function InitEdit(ByVal frm As Access.Form) As Boolean
     frm.Tag = GuidText(): Set state = Map(): args = Split(Nz(frm.OpenArgs, "|"), "|")
     state.Add "id", Null: state.Add "version", Null: state.Add "original", Nothing
     state.Add "confirmation", conf: state.Add "busy", False: state.Add "dirty", False
+    state.Add "originalRaw", Nothing: state.Add "allowClose", False
     edits.Add frm.Tag, state
     If args(0) <> "" Then
         Set old = service.LoadStudent(PositiveId(args(0)))
@@ -280,7 +311,8 @@ Public Function InitEdit(ByVal frm As Access.Form) As Boolean
         Next
         frm!cmdSave.Visible = False: frm!cmdReset.Visible = False
     End If
-    frm!lblTitle.Caption = "学生登録・編集 ／ " & IIf(CurrentRole() = "Reader", "参照", IIf(IsNull(state("id")), "新規", "編集")) & " ／ " & CurrentUserId() & " ／ *必須・長文は Shift+F2"
+    frm!lblTitle.Caption = "学生登録" & ChrW(&H30FB) & "編集 ／ " & IIf(CurrentRole() = "Reader", "参照", IIf(IsNull(state("id")), "新規", "編集")) & " ／ " & CurrentUserId() & " ／ *必須" & ChrW(&H30FB) & "長文は Shift+F2"
+    Set state("originalRaw") = ReadEditSnapshot(frm)
     InitEdit = True
 End Function
 Public Function FieldControls() As Variant
@@ -311,14 +343,31 @@ Private Function ReadDraft(ByVal frm As Access.Form) As Object
     For i = 0 To UBound(fields)
         If fields(i) <> "birth_date" Then d.Add fields(i), frm.Controls(controls(i)).Value
     Next
-    d.Add "birth_era", frm!cboBirthEra: d.Add "birth_year", frm!txtBirthYear
-    d.Add "birth_month", frm!txtBirthMonth: d.Add "birth_day", frm!txtBirthDay
-    d.Add "school_year", frm!cboSchoolYear: d.Add "grade_code", frm!cboGrade
+    d.Add "birth_era", frm!cboBirthEra.Value: d.Add "birth_year", frm!txtBirthYear.Value
+    d.Add "birth_month", frm!txtBirthMonth.Value: d.Add "birth_day", frm!txtBirthDay.Value
+    d.Add "school_year", frm!cboSchoolYear.Value: d.Add "grade_code", frm!cboGrade.Value
     Set ReadDraft = d
+End Function
+Private Function ReadEditSnapshot(ByVal frm As Access.Form) As Object
+    Dim raw As Object
+    Set raw = ReadDraft(frm)
+    raw.Add "operation_reason_raw", frm!txtOperationReason.Value
+    Set ReadEditSnapshot = raw
 End Function
 Public Function DirtyEdit() As Boolean
     If initializes Then Exit Function
-    edits(Screen.ActiveForm.Tag)("dirty") = True
+    edits(Screen.ActiveForm.Tag)("dirty") = EditHasChanges(Screen.ActiveForm)
+End Function
+Public Function EditHasChanges(ByVal frm As Access.Form) As Boolean
+    Dim state As Object, raw As Object, original As Object, key As Variant
+    Set state = edits(frm.Tag)
+    If state("allowClose") Then Exit Function
+    Set original = state("originalRaw")
+    If original Is Nothing Then Exit Function
+    Set raw = ReadEditSnapshot(frm)
+    For Each key In raw.Keys
+        If Not EqualValue(raw(key), original(key)) Then EditHasChanges = True: Exit Function
+    Next
 End Function
 Public Function StatusChanged() As Boolean
     Dim frm As Access.Form
@@ -351,7 +400,7 @@ Public Function SaveEdit(Optional ByVal confirmed As Boolean = False) As Boolean
         If ConfirmationAccepted Then frm!txtOperationReason = ConfirmationReason: SaveEdit True
         Set ConfirmationRows = Nothing
     ElseIf result("kind") = "Saved" Then
-        state("dirty") = False
+        state("dirty") = False: state("allowClose") = True
         Dim savedMessage As String
         savedMessage = MessageText(result("message"), "studentNo", result("student_no"))
         If result.Exists("warning") Then If result("warning") <> "" Then savedMessage = savedMessage & vbCrLf & MessageText(result("warning"))
@@ -376,13 +425,13 @@ Public Function DeleteEdit() As Boolean
     If Not ConfirmationAccepted Then Exit Function
     reason = ConfirmationReason
     Set result = service.DeleteStudent(state("id"), state("version"), reason, True)
-    If result("kind") = "Saved" Then state("dirty") = False: DoCmd.Close acForm, frm.Name Else frm!lblMessage.Caption = MessageText(result("message"))
+    If result("kind") = "Saved" Then state("dirty") = False: state("allowClose") = True: DoCmd.Close acForm, frm.Name Else frm!lblMessage.Caption = MessageText(result("message"))
 End Function
 Public Function ResetEdit(Optional ByVal reload As Boolean = False) As Boolean
     Dim frm As Access.Form, state As Object, service As New clsStudentService, old As Object
     Set frm = Screen.ActiveForm: Set state = edits(frm.Tag)
     If state("busy") Then Exit Function
-    If Not ConfirmDiscard() Then Exit Function
+    If EditHasChanges(frm) Then If Not ConfirmDiscard() Then Exit Function
     If IsNull(state("id")) Then
         Dim ctl As Access.Control
         initializes = True
@@ -402,6 +451,8 @@ Public Function ResetEdit(Optional ByVal reload As Boolean = False) As Boolean
     RefreshCodeChoices frm, old: RefreshClassChoices frm, ValueOrClass(old): RefreshCapacity frm
     frm!txtEnrollmentEndDate.Enabled = Nz(frm!cboEnrollmentStatus, "") = "03" Or Nz(frm!cboEnrollmentStatus, "") = "04"
     state("confirmation").Consumed = True
+    frm!txtOperationReason = Null
+    Set state("originalRaw") = ReadEditSnapshot(frm)
     state("dirty") = False
 End Function
 Private Function CurrentSchoolYear() As Long
@@ -447,32 +498,34 @@ Public Function BackEdit() As Boolean
     Dim state As Object
     Set state = edits(Screen.ActiveForm.Tag)
     If state("busy") Then Exit Function
-    If state("dirty") Then
+    If EditHasChanges(Screen.ActiveForm) Then
         If Not ConfirmDiscard() Then Exit Function
     End If
-    state("dirty") = False: DoCmd.Close acForm, Screen.ActiveForm.Name
+    state("dirty") = False: state("allowClose") = True: DoCmd.Close acForm, Screen.ActiveForm.Name
 End Function
 Public Function CanCloseEdit(ByVal frm As Access.Form) As Boolean
     Dim state As Object
     If edits Is Nothing Then CanCloseEdit = True: Exit Function
     If Not edits.Exists(frm.Tag) Then CanCloseEdit = True: Exit Function
     Set state = edits(frm.Tag)
-    CanCloseEdit = Not state("dirty")
+    CanCloseEdit = Not EditHasChanges(frm)
     If Not CanCloseEdit Then CanCloseEdit = ConfirmDiscard()
     If CanCloseEdit Then edits.Remove frm.Tag
 End Function
 Public Sub CloseSearch(ByVal frm As Access.Form)
+    ReleaseSearchScroll frm
     If Not contexts Is Nothing Then If contexts.Exists(frm.Tag) Then contexts.Remove frm.Tag
     If Not listRows Is Nothing Then If listRows.Exists(frm.Tag) Then listRows.Remove frm.Tag
 End Sub
 Public Function SelectedStudentDetails() As Boolean
     Dim frm As Access.Form, rows As Collection, item As Object, i As Long
     Set frm = Screen.ActiveForm: frm!txtSelectedDetails = Null
-    If IsNull(frm!lstStudents) Then Exit Function
+    If IsNull(frm!lstStudents) Then contexts(frm.Tag).SelectedStudentId = Null: Exit Function
     Set rows = listRows(frm.Tag)
     For i = 1 To rows.Count
         Set item = rows(i)
         If item("student_id") = frm!lstStudents Then
+            contexts(frm.Tag).SelectedStudentId = item("student_id")
             frm!txtSelectedDetails = item("student_no") & "　" & item("student_name") & " ／ " & item("student_name_kana") & "　" & FormatBirthDate(item("birth_date")) & vbCrLf & Nz(item("school_year"), "－") & "／" & item("grade_name") & "　" & item("class_display") & "　" & item("enrollment_name")
             Exit For
         End If

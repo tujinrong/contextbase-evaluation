@@ -491,6 +491,7 @@
  dcl-ds raw likeds( StudentRaw_t ) ;
  dcl-ds rec likeds( StudentRecord_t ) ;
  dcl-s wareki varucs2( 80 ) ccsid( 1200 ) ;
+ dcl-s era varchar( 10 ) ;
  dcl-ds work likeds( StudentWork_t ) ;
  dcl-ds old likeds( StudentRecord_t ) ;
  dcl-s principal varchar( 128 ) ;

@@ -1,3 +1,5 @@
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 base=Path(__file__).resolve().parents[1]
 for path in [base/'src/STUSVC.sqlrpgle',base/'src/STUMASTER.rpgleinc']:

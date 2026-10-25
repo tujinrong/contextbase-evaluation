@@ -1,4 +1,6 @@
 """Read-only closure/ABI/input checks; no DB or compiler success is inferred."""
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import re,json,hashlib,datetime,os,sys
 ROOT=Path(__file__).resolve().parents[1]

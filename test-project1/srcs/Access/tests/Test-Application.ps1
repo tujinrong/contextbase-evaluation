@@ -1,4 +1,4 @@
-param([string]$Frontend='',[string]$Backend='',[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId='application',[string]$SpecVersion='8.1/8.2',[string]$InputManifest='test-project1/spec/Access local hash manifest',[string]$ReportDirectory='')
+param([string]$Frontend='',[string]$Backend='',[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId='application',[string]$SpecVersion='8.4/8.5/8.6',[string]$InputManifest='test-project1/spec/Access local hash manifest',[string]$ReportDirectory='')
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot '../tools/GeneratedPaths.ps1')
 if (-not $ReportDirectory) { $ReportDirectory=Join-Path $script:AccessMethodRoot 'build/test-results' }
@@ -32,6 +32,10 @@ try {
  if (@($taskResults | Where-Object { -not $_.passed }).Count -eq 0) {
     $taskResult=$taskAccess.Run('RunSearchContractTests'); Write-Output $taskResult
     $taskResults.Add(@{function='RunSearchContractTests';output=$taskResult;passed=($taskResult -match '^\d+ assertions passed$');checks=$taskAccess.Run('TestCheckLog')})
+ }
+ if (@($taskResults | Where-Object { -not $_.passed }).Count -eq 0) {
+    $taskResult=$taskAccess.Run('RunAllRowsTests'); Write-Output $taskResult
+    $taskResults.Add(@{function='RunAllRowsTests';output=$taskResult;passed=($taskResult -match '^\d+ assertions passed$');checks=$taskAccess.Run('TestCheckLog')})
  }
  if (@($taskResults | Where-Object { -not $_.passed }).Count -eq 0) {
     $taskResult=$taskAccess.Run('RunFormTests'); Write-Output $taskResult

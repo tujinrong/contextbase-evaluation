@@ -1,4 +1,6 @@
 """Publish one current result set; IBM i compilation is reported separately."""
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import datetime,hashlib,json
 B=Path(__file__).resolve().parents[1];R=B/'build/test-results'
@@ -7,7 +9,7 @@ host=read('host/rpg-results.json');compact=read('compact/compact-static.json');s
 assert host['hostSucceeded'] and host['staticSucceeded'] and state['passed'] and compact['passed']==compact['total']
 for item in [host,compact,state]:
  assert all(hashlib.sha256((B/p).read_bytes()).hexdigest()==h for p,h in item['sourceHashes'].items())
-result=dict(projectId='test-project1',profileId='AS400_RPG',runId=state['runId'],recordedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),inputManifest='build/input-manifest.json',inputManifestSha256=hashlib.sha256((B/'build/input-manifest.json').read_bytes()).hexdigest(),hostSucceeded=True,cTests=host['cTests'],cFailures=host['cFailures'],hostStaticChecks=len(host['staticChecks']),compactStaticChecks=compact['total'],stateGateCTests=state['cTests'],stateGateStaticChecks=len(state['staticChecks']),sourceHashesMatch=True,nativeRegistryExecution='NOT_RUN',formalScore=None,scope=state['scope'],skipped=host['skipped'],evidence=['host/rpg-results.json','compact/compact-static.json','state/state.json'])
+result=dict(projectId='test-project1',profileId='AS400_RPG',runId=state['runId'],recordedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),inputManifest='build/input-manifest.json',inputManifestSha256=hashlib.sha256((B/'build/input-manifest.json').read_bytes()).hexdigest(),hostSucceeded=True,cTests=host['cTests'],cFailures=host['cFailures'],hostStaticChecks=len(host['staticChecks']),compactStaticChecks=compact['total'],stateGateCTests=state['cTests'],stateGateStaticChecks=len(state['staticChecks']),sourceHashesMatch=True,generationStatus='SOURCE_UPDATED_NATIVE_NOT_RUN',targetUi='5250 Text 27x132 EDSTUDENT',nativeRegistryExecution='NOT_RUN',formalScore=None,scope=state['scope'],skipped=host['skipped'],evidence=['host/rpg-results.json','compact/compact-static.json','state/state.json'])
 (R/'summary.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n','utf8')
 (R/'README.md').write_text(f"""# AS400_RPG 現行検査結果
 

@@ -120,21 +120,21 @@ Namespace Global.StudentManagement.WinForms.Domain
             End Using
         End Function
 
-        Public Async Function SearchAsync(criteria As SearchCriteria, Optional ct As CancellationToken = Nothing) As Task(Of SearchResult) Implements IStudentService.SearchAsync
+        Public Async Function SearchAsync(criteria As SearchCriteria, Optional sortKey As String = "studentNo", Optional sortDirection As String = "asc", Optional ct As CancellationToken = Nothing) As Task(Of SearchResult) Implements IStudentService.SearchAsync
             User()
             Dim now = Me.Now
             Dim day = BusinessDay(now)
 
             Dim classId As Long = Nothing
             Try
-                If criteria.Page < 1 OrElse Not (criteria.PageSize = 20 OrElse criteria.PageSize = 50 OrElse criteria.PageSize = 100) OrElse Not (Equals(criteria.SortDirection, "asc") OrElse Equals(criteria.SortDirection, "desc")) Then Throw New ArgumentException("E-COM-003: ページ指定が不正です。")
-                Dim order = (If(Equals(criteria.SortKey, "studentNo"), "s.student_no", (If(Equals(criteria.SortKey, "name"), "s.name_key", (If(Equals(criteria.SortKey, "admissionDate"), "s.admission_date", (If(Equals(criteria.SortKey, "updatedAt"), "s.updated_at", ConversionSupport.__Throw(Of String)(New ArgumentException("E-COM-003: 並び順が不正です。"))))))))))
+                If criteria Is Nothing OrElse Not (Equals(sortDirection, "asc") OrElse Equals(sortDirection, "desc")) Then Throw New ArgumentException("E-COM-003: 並び順が不正です。")
+                Dim order = (If(Equals(sortKey, "studentNo"), "s.student_no", (If(Equals(sortKey, "name"), "s.name_key", (If(Equals(sortKey, "admissionDate"), "s.admission_date", (If(Equals(sortKey, "updatedAt"), "s.updated_at", ConversionSupport.__Throw(Of String)(New ArgumentException("E-COM-003: 並び順が不正です。"))))))))))
                 If criteria.ClassId <= 0 Then Throw New ArgumentException("E-COM-003: クラスが不正です。")
                 Dim statuses = criteria.EnrollmentStatusCodes
                 If statuses Is Nothing Then Throw New ArgumentException("E-COM-003: 在籍区分が不正です。")
                 If statuses.Length > 4 OrElse statuses.Distinct(StringComparer.Ordinal).Count() <> statuses.Length OrElse statuses.Any(Function(value) Not (Equals(value, "01") OrElse Equals(value, "02") OrElse Equals(value, "03") OrElse Equals(value, "04"))) Then Throw New ArgumentException("E-STU-009: 在籍区分が不正です。")
                 Dim no = If(String.IsNullOrEmpty(criteria.StudentNo), Nothing, Identifier(criteria.StudentNo, 15, "StudentNo"))
-                Dim name = Text(criteria.StudentName, 8, 8, "StudentName")
+                Dim name = Text(criteria.StudentName, 160, 160, "StudentName")
                 name = If(Equals(name, Nothing), Nothing, NameKey(name))
                 Using connection = Await Open(ct)
                     Using tx = CType(Await connection.BeginTransactionAsync(IsolationLevel.Snapshot, ct), SqlTransaction)
@@ -144,6 +144,12 @@ Namespace Global.StudentManagement.WinForms.Domain
                                 If CLng(Await classCheck.ExecuteScalarAsync(ct)) = 0 Then Throw New ArgumentException("E-STU-014: クラスが存在しません。")
                             End Using
                         End If
+                        For Each status In statuses
+                            Using statusCheck = Command(connection, tx, "SELECT COUNT_BIG(*) FROM dbo.m_code WHERE category_id='ENROLLMENT_STATUS' AND code_value=@code")
+                                Param(statusCheck, "@code", SqlDbType.VarChar, status, 2)
+                                If CLng(Await statusCheck.ExecuteScalarAsync(ct)) <> 1 Then Throw New ArgumentException("E-STU-009: 在籍区分が存在しません。")
+                            End Using
+                        Next
                         Dim predicates = New List(Of String) From {
     "s.is_deleted=0"
 }
@@ -173,16 +179,12 @@ Namespace Global.StudentManagement.WinForms.Domain
                                 Return New Global.StudentManagement.WinForms.Domain.SearchResult(Outcome.NoChange, count, New Global.StudentManagement.WinForms.Domain.StudentRow() {}, now, True, New Global.StudentManagement.WinForms.Domain.FieldError() {})
                             End If
 
-                            Dim lastPage = Math.Max(1, (count + criteria.PageSize - 1) \ criteria.PageSize)
-                            Dim page = Math.Min(criteria.Page, lastPage)
-                            Using pageCommand = Command(connection, tx, RowSelect & where & " ORDER BY " & order & " " & criteria.SortDirection & ",s.student_id ASC OFFSET @offset ROWS FETCH NEXT @size ROWS ONLY")
+                            Using listCommand = Command(connection, tx, RowSelect & where & " ORDER BY " & order & " " & sortDirection & ",s.student_id ASC")
                                 For Each p In parameters
-                                    SqlServerStudentService.Param(pageCommand, p.Item1, p.Item2, p.Item3, p.Item4)
+                                    SqlServerStudentService.Param(listCommand, p.Item1, p.Item2, p.Item3, p.Item4)
                                 Next
-                                Param(pageCommand, "@offset", SqlDbType.Int, (page - 1) * criteria.PageSize)
-                                Param(pageCommand, "@size", SqlDbType.Int, criteria.PageSize)
                                 Dim rows = New List(Of StudentRow)()
-                                Using reader = Await pageCommand.ExecuteReaderAsync(ct)
+                                Using reader = Await listCommand.ExecuteReaderAsync(ct)
                                     While Await reader.ReadAsync(ct)
                                         rows.Add(Row(reader))
                                     End While

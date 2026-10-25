@@ -12,7 +12,7 @@ const tables=fs.readdirSync(spec).filter(name=>name.endsWith('.md')).map(name=>{
   const rows=text.split('## 項目詳細')[1].split(/\r?\n/).filter(line=>/^\| \d+ \|/.test(line)).map(line=>line.split('|').slice(1,-1).map(cell=>cell.trim()));
   return {name:meta.table.physicalName,pk:meta.table.primaryKey,rows};
 });
-const sql=["-- Source: SQLServer table definitions (including student 8.0); generated 2026-10-12.","-- Apply to an EMPTY selected evaluation database only. No migration/drop is performed.","SET XACT_ABORT ON;", "GO", "ALTER DATABASE CURRENT SET ALLOW_SNAPSHOT_ISOLATION ON;", "GO"];
+const sql=["-- Regenerated from this method's current SQLServer definitions; input versions and hashes are in build/generation/inputs.json.","-- Apply to an EMPTY selected evaluation database only. No migration/drop is performed.","SET XACT_ABORT ON;", "GO", "ALTER DATABASE CURRENT SET ALLOW_SNAPSHOT_ISOLATION ON;", "GO"];
 for(const table of tables) {
   sql.push(`CREATE TABLE dbo.${table.name} (`);
   const fields=table.rows.map(row=>{

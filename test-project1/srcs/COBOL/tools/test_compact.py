@@ -2,6 +2,8 @@
 
 No database connection is made; rendering fixtures do not prove workflow/state I/O.
 """
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import argparse,subprocess,os,json,hashlib,re,urllib.parse
 from html.parser import HTMLParser

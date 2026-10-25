@@ -1,4 +1,6 @@
 """Current source/DDS contract checks. Never claims RPG compilation or 5250 execution."""
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import argparse,json,re,hashlib,unicodedata
 from output_paths import result_dir
@@ -27,10 +29,25 @@ check('native-db-page-keys',all(x in search for x in ['*in07','*in10','*in15','*
 check('roll-does-not-cross-db-page',search.index(' if *in25 or *in26 ;')<search.index(' if *in07 or *in10 or *in15 or *in16 ;') and 'block+8<page.rowCount' in search)
 for size,expected in [(20,[8,8,4]),(50,[8]*6+[2]),(100,[8]*12+[4])]:
  actual=[min(8,size-i) for i in range(0,size,8)];check('terminal-partitions-'+str(size),actual==expected,actual)
-check('two-editor-panels','exfmt EDBASE' in editor and 'exfmt EDENROLL' in editor and 'EDNOTE' not in editor and 'panel=3-panel' in editor)
-check('full-raw-before-switch',editor.index(' ReadForm( ) ;')<editor.index(' panel=3-panel ;'))
-check('first-error-panel','dcl-proc ShowErrors' in editor and editor.count('ShowErrors( )')>=2)
-check('confirm-does-not-save-auxiliary','LongEdit( raw.values' in editor and "Question( result.messageId :hints.reason :*on :result )" in editor)
+flat=re.sub(r'\s+','',editor);uiflat=re.sub(r'\s+','',text('copy/STUDSP.rpgleinc'))
+check('single-editor-all-inputs','exfmtEDSTUDENT;' in flat and 'EDBASE' not in editor and 'EDENROLL' not in editor)
+check('raw-read-before-editor-keys',editor.index(' ReadForm( ) ;')<editor.index(' if *in09'))
+check('f9-error-focus','errorIndex=%rem(errorIndex:result.errorCount)+1;' in flat and 'CSRROW=13;CSRCOL=12;' in flat)
+check('new-admission-empty',"raw.values(12)=%ucs2(%char(day:*iso))" not in flat and 'REG-013' in editor)
+check('unicode-era-raw-buffer','birthEra varucs2( 20 )' in types and 'rawSchoolYear varucs2( 8 )' in types)
+check('full-raw-before-auxiliary','LongEdit( raw.values' in editor and "Question( result.messageId :hints.reason :*on :result )" in editor)
+check('cursor-addressed-native-fields','CSRFLD=' in search and 'CSRREL' in search and 'QFIELD' not in search and 'EFIELD' not in editor)
+check('row-selection-validated-before-open','ifcount<>1;' in re.sub(r'\s+','',search) and search.index("if count<>1")<search.index(' StEdit( id :viewOnly :notice )',search.index(' dcl-proc SelectRow')))
+check('row-options-survive-readc', 'selectedOptions' in search and 'selectedOptions( rrn ) =ROPT' in search and 'clear selectedOptions' in search)
+check('fixed-sort-page-pickers',"Choice( 'PAGE'" in search and "Choice( 'SORT'" in search and "kind='SORT';offset=0;count=8;" in uiflat)
+check('candidate-frozen-until-page', 'ifnotfetched;' in uiflat and 'fetched=*on;' in uiflat and 'exfmtPICK;' in uiflat)
+check('candidate-enter-one-selection',"iftotal<>1orchosen<0orchosen>count;" in uiflat and "selections(i)<>'1'" in uiflat)
+check('longtext-explicit-mode', 'if*in06;unicode=notunicode;' in uiflat and 'StTextEscapeWindow' in uiflat and 'StTextSplice' in uiflat)
+check('confirmation-explicit-delete-key',"if(deletingand*in23)or(notdeletingand*in10);" in uiflat and 'CSRROW=26;CSRCOL=2;' in uiflat)
+longflat=uiflat[uiflat.index('dcl-procLongEdit;'):uiflat.index('dcl-procQuestion;')]
+check('aux-limit-before-apply',longflat.index('rc=StTextLimit(')<longflat.index('value=draft;') and "ifrc<>0;LMSG='Rawfieldlimitexceeded:correctthiswindoworF12cancel';iter;endif;" in uiflat)
+check('narrow-edit-limit-explicit',all(x in flat for x in ['LongEdit(text:protected:20:10)','LongEdit(text:protected:8:4)','LongEdit(text:protected:4:2)','LongEdit(text:protected:120:60)']) and 'LongEdit(reasonDraft:*off:120:60)' in uiflat)
+check('continuation-raw-lf-independent','StTextWindow' in text('c/STUNICODE.c') and 'cp==0x0a' in text('c/STUNICODE.c') and 'MergeParts' in editor)
 fields={};formats={}
 for path in ['dds/STUSCHD.dspf','dds/STUEDTD.dspf']:
  source=text(path);current=None;fields[path]={};formats[path]=set();bad=[];overlap=[];occupied={}
@@ -49,10 +66,12 @@ for path in ['dds/STUSCHD.dspf','dds/STUEDTD.dspf']:
  check(path+'-source80',all(len(line.encode('utf8'))<=80 for line in source.splitlines()))
  check(path+'-cells',not bad,bad);check(path+'-overlap',not overlap,overlap)
 check('search-four-native-fields',all(x not in text('dds/STUSCHD.dspf') for x in ['QKANA','QYEAR','QGRADE','QUNASS','QPREF','QPHONE','QADMFROM','QADMTO']))
-check('two-line-eight-records',all(x in text('dds/STUSCHD.dspf') for x in ['SFLPAG(8)','SFLSIZ(101)','SKANA']))
-editfields=fields['dds/STUEDTD.dspf'];check('base-twelve-reg-items',{'ESTUNO','ENAME','EKANA','EBERA','EBYEAR','EBMONTH','EBDAY','EGENDER','EPOSTAL','EPREF','EADDR1','EADDR2','EPHONE','EEMAIL'}<=editfields['EDBASE'])
-check('enrollment-twelve-reg-items',{'EADMDATE','ESTATUS','EENDDATE','EYEAR','EGRADE','ECLASS','OCCUPANCY','EEMGNAME','EREL','EEMGPHONE','EREMARKS','EREASON'}<=editfields['EDENROLL'])
-check('both-panels-update-info',all({'ESTUID','EVERSION','UPDATEDAT','UPDATEDBY'}<=editfields[x] for x in ['EDBASE','EDENROLL']))
-check('confirmation-and-fulltext-present',{'CNFRM','LONGTXT'}<=formats['dds/STUEDTD.dspf'])
+check('two-line-eight-records',all(x in text('dds/STUSCHD.dspf') for x in ['SFLPAG(8)','SFLSIZ(101)','RKANA']))
+editfields=fields['dds/STUEDTD.dspf'];normal=editfields['EDSTUDENT']
+check('all-editor-inputs-one-record',{'STUID','ESTUNO','ENAME','EKANA','EBERA','EBYEAR','EBMONTH','EBDAY','EGENDER','EPOSTAL','EPREF','EADDR1','EADDR2','EPHONE','EEMAIL','EADMDATE','ESTATUS','EENDDATE','EYEAR','EGRADE','ECLASS','CLCOUNT','EEMGNAME','EREL','EEMGPHONE','EREM1','EREM2','EREM3','EREAS1','EREAS2','UPDINFO'}<=normal)
+check('separate-auxiliary-records',{'PICK','CNFRM','LONGTXT'}<=formats['dds/STUEDTD.dspf'])
+check('single-longtext-window',fields['dds/STUEDTD.dspf']['LONGTXT']>={'TEXT','LTITLE','LPOS','LMSG'} and 'LTXT1' not in text('dds/STUEDTD.dspf'))
+check('eight-pick-inputs',{'PSEL'+str(i) for i in range(1,9)}<=fields['dds/STUEDTD.dspf']['PICK'] and 'PSEL9' not in text('dds/STUEDTD.dspf'))
+check('cursor-native-return',all(k in text('dds/STUSCHD.dspf') for k in ['RTNCSRLOC','SFLCSRRRN','CSRLOC']))
 record=dict(runId=a.run_id,scope='Static source/DDS layout and reference checks only; no IBM i compile, bind, Db2, CCSID roundtrip or 5250 execution',formalScore=None,checks=checks,passed=sum(x['passed'] for x in checks),total=len(checks),sourceHashes={p.relative_to(B).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for folder in ['src','copy','dds','c','tools'] for p in sorted((B/folder).rglob('*')) if p.is_file() and '__pycache__' not in p.parts})
 dest.write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n','utf8');print(json.dumps(dict(passed=record['passed'],total=record['total'],failed=[x['id'] for x in checks if not x['passed']]),ensure_ascii=False));raise SystemExit(0 if record['passed']==record['total'] else 1)

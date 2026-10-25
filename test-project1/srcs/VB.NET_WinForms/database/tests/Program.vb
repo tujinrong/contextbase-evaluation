@@ -129,7 +129,7 @@ Module Program
    Dim lookup=Await service.LookupAsync(False)
    Check(lookup.Classes.All(Function(x) x.Occupied=0),"search lookup no occupancy")
    Dim search=Await service.SearchAsync(New SearchCriteria With {.EnrollmentStatusCodes={"01","02"}})
-   Check(search.Outcome=Outcome.Saved AndAlso search.Count=2,"search native saved rows")
+   Check(search.Status=SearchStatus.Success AndAlso search.Count.GetValueOrDefault(-1)=2,"search native saved rows")
    detail=Await service.GetAsync(id)
    Dim removed=Await service.DeleteAsync(id,detail.RowVersion,"評価用の論理削除")
    Check(removed.Outcome=Outcome.Saved,"native logical delete COMMIT")

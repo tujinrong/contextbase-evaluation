@@ -67,15 +67,15 @@ Public Function RunSelfTests() As String
     criteria.Add "studentNo", Null: criteria.Add "name", Null: criteria.Add "class", Null
     criteria.Add "status01", True: criteria.Add "status02", True: criteria.Add "status03", False: criteria.Add "status04", False
     Set normalized = NormalizeCriteria(criteria, day)
-    Set result = SearchStudents(normalized, 1, 20, "studentNo", "asc")
+    Set result = SearchStudents(normalized, "studentNo", "asc")
     Check result("kind") = "Found", "search succeeds": Check result("total") = 2, "count snapshot"
-    Check result("rows").Count = 2, "page projection"
+    Check result("rows").Count = 2, "full matching projection"
     Check Not result("rows")(1).Exists("email_address"), "list excludes undisplayed personal data"
     classRaw("capacity") = "1"
     Set result = MaintainClass(classRaw, classId, 1): Check result("message") = "E-MST-004", "master cannot shrink below occupancy"
     Set result = service.DeleteStudent(otherId, 1, "検証データの削除", True)
     Check result("kind") = "Saved", "logical delete commit"
-    Set result = SearchStudents(normalized, 1, 20, "studentNo", "asc")
+    Set result = SearchStudents(normalized, "studentNo", "asc")
     Check result("total") = 1, "logical deletion excluded from search"
     tx.BeginWork: Set repo.Database = tx.Database
     Set rs = repo.Database.OpenRecordset("SELECT Count(*) AS n FROM t_operation_log")
@@ -239,13 +239,14 @@ Public Function RunFormTests() As String
     DoCmd.OpenForm "frmStudentSearch"
     Set frm = Forms("frmStudentSearch")
     Check frm.RecordSource = "", "search form unbound"
-    Check frm!cboPageSize = 20 And frm!cboSortKey = "studentNo" And frm!cboSortDirection = "asc", "initial search page/sort defaults"
+    Check frm!cboSortKey = "studentNo" And frm!cboSortDirection = "asc", "initial search sort defaults"
+    Check Not HasFormControl(frm, "cboPageSize") And Not HasFormControl(frm, "cmdFirst") And Not HasFormControl(frm, "cmdPrev") And Not HasFormControl(frm, "cmdNext") And Not HasFormControl(frm, "cmdLast"), "retired range controls are absent"
     Check frm!chkEnrolled And frm!chkLeave And Not Nz(frm!chkGraduated, False) And Not Nz(frm!chkWithdrawn, False), "initial 01/02 statuses"
     Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 0, "initial form does not load students"
     SearchClick "SEARCH"
     Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 2, "native list callback rows"
     receivedRevision = CLng(frm!txtContextRevision)
-    frm!txtContextRevision = receivedRevision - 1: SearchClick "NEXT"
+    frm!txtContextRevision = receivedRevision - 1: SearchClick "REFRESH"
     Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 2, "stale search revision preserves current list"
     ClearSearch
     Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 2, "stale clear revision cannot erase results"
@@ -254,8 +255,9 @@ Public Function RunFormTests() As String
     frm!lstStudents = id: SelectedStudentDetails
     Check InStr(frm!txtSelectedDetails, "山田太郎") > 0, "selected full text presentation"
     frm!txtName = "一致なし"
-    SearchClick "NEXT"
-    Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 2, "page uses AppliedCriteria, not edited raw conditions"
+    SearchClick "SORT"
+    Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 2, "sort uses AppliedCriteria, not edited raw conditions"
+    Check InStr(frm!lblMessage.Caption, "条件変更未反映") > 0, "sort preserves unapplied condition notice"
     SearchClick "SEARCH"
     Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 0, "explicit search applies changed conditions"
     ClearSearch
@@ -264,7 +266,26 @@ Public Function RunFormTests() As String
     Check frm!lstStudents.ColumnCount = 8, "hidden ID and seven visible native columns"
     Check frm.Width <= 19200 And frm.Section(acDetail).Height <= 9750, "search fits 1280x650 at 96 dpi"
     Check frm!cmdOpenSelected.OnClick = "=OpenStudent(False)", "explicit selected row action"
-    Check frm!txtName.Height >= 510 And frm!txtName.FontSize >= 9, "search minimum input size and font"
+    Check frm!txtName.Height = 360 And frm!txtName.FontSize = 9, "native input height and font match current design"
+    Check frm!txtStudentNo.Width = 2040 And frm!txtName.Width = 1800 And frm!cboClass.Width = 6600, "search widths follow field lengths"
+    Check frm!lstStudents.Height = 4020 And frm.Width = 18240, "native full-list dimensions"
+    Check CLng(Split(frm!lstStudents.ColumnWidths, ";")(2)) = 5100, "name and kana column has 340px equivalent width"
+    Check frm.DefaultView = 0, "search is native Single Form"
+    Dim bulkId As Long, expectedPosition As Long
+    AddListFixtureRows 1, 40
+    SearchClick "SEARCH"
+    Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 42, "native list includes every match beyond old page size"
+    bulkId = DLookup("student_id", "m_student", "student_no='BULK-000001'")
+    frm!lstStudents = bulkId: SelectedStudentDetails
+    RestoreSearchScroll frm, 20: expectedPosition = SearchScrollPosition(frm)
+    Check expectedPosition = 20, "native scrollbar moves independently of selected student"
+    SearchClick "REFRESH"
+    Check frm!lstStudents = bulkId And SearchScrollPosition(frm) = expectedPosition, "refresh restores selected ID and actual scroll position"
+    frm!cboSortDirection = "desc": SearchClick "SORT"
+    Check frm!lstStudents = bulkId And SearchScrollPosition(frm) = expectedPosition, "sort preserves selected ID and clamps actual viewport over the full set"
+    ClearListFixtureRows
+    SearchClick "REFRESH"
+    Check IsNull(frm!lstStudents) And SearchScrollPosition(frm) = 0, "disappeared ID clears selection and clamps scroll; value=" & Nz(frm!lstStudents, "NULL") & "; scroll=" & CStr(SearchScrollPosition(frm)) & "; count=" & CStr(frm!lstStudents.ListCount)
     DoCmd.OpenForm "frmDiscardConfirm"
     Check Forms("frmDiscardConfirm").Modal And Forms("frmDiscardConfirm").PopUp, "discard is a separate modal popup"
     Check Forms("frmDiscardConfirm")!cmdCancel.Default And Forms("frmDiscardConfirm")!cmdCancel.Cancel, "discard default and escape cancel"
@@ -274,15 +295,33 @@ Public Function RunFormTests() As String
     DoCmd.OpenForm "frmStudentEdit", , , , , , CStr(id) & "|form-test"
     Set frm = Forms("frmStudentEdit")
     Check frm.RecordSource = "", "edit form unbound"
+    Check frm.DefaultView = 0 And frm.Width = 18240, "editor is standard Single Form at current width"
     Check frm.Width <= 19200 And frm.Section(acDetail).Height <= 9750, "editor fits 1280x650 at 96 dpi"
     Check frm!txtRemarks.EnterKeyBehavior And frm!txtRemarks.Height > 510, "multiline memo remains editable"
+    Check frm!txtRemarks.Height = 690 And frm!txtOperationReason.Height = 690, "memo and reason use current multiline dimensions"
+    Check frm!txtStudentName.Width = 1800 And frm!txtStudentNameKana.Width = 6600 And frm!txtStudentNo.Width = 2040, "editor widths follow individual field lengths"
+    Check frm!txtStudentId.Left = frm!txtStudentName.Left And frm!txtPostalCode.Left = frm!txtAddressLine1.Left, "left-column input starts align"
+    Check frm!txtAdmissionDate.Left = frm!cboClass.Left And frm!txtEmergencyContactName.Left = frm!txtRemarks.Left, "right-column input starts align"
+    Check frm!cboBirthEra.Width = 1200 And frm!txtBirthYear.Width = 780 And frm!txtBirthMonth.Width = 630 And frm!txtBirthDay.Width = 630, "four era controls retain individual native widths"
+    Check UBound(FieldControls()) + 1 = 19 And HasFormControl(frm, "grpBasic") And HasFormControl(frm, "grpRemarks"), "nineteen saved inputs and native grouped two-column layout remain"
     Check frm!txtOperationReason.EnterKeyBehavior And frm!cmdSave.Top + frm!cmdSave.Height <= 9750, "reason and save fit compact editor"
     Check frm!txtStudentNo.Locked And frm!cmdDelete.Visible, "existing no immutable and Admin delete action"
     Check InStr(frm!lblCapacity.Caption, "2／2") > 0, "occupancy/capacity reference display"
     Check frm!cboBirthEra = "HEISEI" And CLng(frm!txtBirthYear) = 15 And CLng(frm!txtBirthMonth) = 4 And CLng(frm!txtBirthDay) = 2, "saved birth -> four era controls"
     Set old = service.LoadStudent(id): savedName = old("student_name")
-    frm!txtStudentName = "移動未保存": DoCmd.Close acForm, frm.Name
+    Check Not EditHasChanges(frm), "unchanged editor has no discard confirmation state"
+    frm!txtOperationReason = "入力中の理由": Check EditHasChanges(frm), "unsaved reason participates in raw snapshot comparison"
+    frm!txtOperationReason = Null: Check Not EditHasChanges(frm), "reverting unsaved reason clears change state"
+    Dim originalYear As Variant, originalSchoolYear As Variant
+    originalYear = frm!txtBirthYear.Value: originalSchoolYear = frm!cboSchoolYear.Value
+    frm!txtBirthYear = "不正原入力": Check EditHasChanges(frm), "date raw snapshot is a copied value, not a live control"
+    frm!txtBirthYear = originalYear: Check Not EditHasChanges(frm), "reverted date raw clears change state"
+    frm!cboSchoolYear = CLng(originalSchoolYear) + 1: Check EditHasChanges(frm), "selection helper participates in immutable raw snapshot"
+    frm!cboSchoolYear = originalSchoolYear: Check Not EditHasChanges(frm), "reverted selection helper clears change state"
+    frm!txtStudentName = "移動未保存": Check EditHasChanges(frm), "unsaved raw input differs from loaded snapshot"
     Set old = service.LoadStudent(id): Check old("student_name") = savedName, "form movement does not auto-save"
+    frm!txtStudentName = savedName: Check Not EditHasChanges(frm), "reverting raw input clears unsaved state"
+    DoCmd.Close acForm, frm.Name
     FixtureRole "Reader"
     DoCmd.OpenForm "frmStudentEdit", , , , , , CStr(id) & "|reader-test"
     Set frm = Forms("frmStudentEdit")
@@ -320,8 +359,78 @@ Public Function RunFormTests() As String
     Exit Function
 Failed:
     RunFormTests = "FAILED after " & CStr(checks) & " checks: " & CStr(Err.Number) & " " & Err.Description
-    On Error Resume Next: FixtureRole "Admin"
+    On Error Resume Next: ClearListFixtureRows: FixtureRole "Admin"
     DoCmd.Close acForm, "frmStudentEdit": DoCmd.Close acForm, "frmStudentSearch": DoCmd.Close acForm, "frmDuplicateConfirm": DoCmd.Close acForm, "frmDeleteConfirm"
+End Function
+
+Private Function HasFormControl(ByVal frm As Access.Form, ByVal name As String) As Boolean
+    Dim ctl As Access.Control
+    On Error GoTo Missing
+    Set ctl = frm.Controls(name): HasFormControl = True
+Missing:
+End Function
+Private Sub AddListFixtureRows(ByVal first As Long, ByVal last As Long)
+    Dim db As DAO.Database, source As DAO.Recordset, target As DAO.Recordset, field As DAO.Field
+    Dim ws As DAO.Workspace, i As Long, inTx As Boolean, number As Long, description As String
+    CheckFixture
+    On Error GoTo Failed
+    Set ws = DBEngine.Workspaces(0): Set db = CurrentDb()
+    Set source = db.OpenRecordset("SELECT TOP 1 * FROM m_student WHERE is_deleted=False AND Left(student_no,5)<>'BULK-' ORDER BY student_id", dbOpenSnapshot)
+    If source.EOF Then Err.Raise vbObjectError + 180, , "Fixture template missing"
+    Set target = db.OpenRecordset("m_student", dbOpenDynaset)
+    ws.BeginTrans: inTx = True
+    For i = first To last
+        target.AddNew
+        For Each field In source.Fields
+            If field.Name <> "student_id" Then target.Fields(field.Name).Value = field.Value
+        Next
+        target!student_no = "BULK-" & Format$(i, "000000")
+        target!name_key = IIf(i = 10001, "TAIL-KEY", "BULKKEY")
+        target.Update
+    Next
+    ws.CommitTrans dbForceOSFlush: inTx = False
+    target.Close: source.Close: db.Close
+    Exit Sub
+Failed:
+    number = Err.Number: description = Err.Description
+    On Error Resume Next
+    If inTx Then ws.Rollback
+    If Not target Is Nothing Then target.Close
+    If Not source Is Nothing Then source.Close
+    If Not db Is Nothing Then db.Close
+    On Error GoTo 0
+    Err.Raise number, , description
+End Sub
+Private Sub ClearListFixtureRows()
+    Dim db As DAO.Database
+    CheckFixture
+    Set db = CurrentDb()
+    db.Execute "DELETE FROM m_student WHERE Left(student_no,5)='BULK-'", dbFailOnError
+    db.Close
+End Sub
+Public Function RunAllRowsTests() As String
+    Dim raw As Object, d As clsSearchCriteria, result As Object, rows As Collection, row As Object
+    On Error GoTo Failed
+    checks = 0: checkLog = "": Authorize "Master": CheckFixture
+    ClearListFixtureRows: AddListFixtureRows 1, 10000
+    Set raw = CriteriaFixture(): raw("studentNo") = "BULK-": Set d = NormalizeCriteria(raw, BusinessDay(UtcNow()))
+    Set result = SearchStudents(d, "studentNo", "asc"): Set rows = result("rows")
+    Check result("kind") = "Found" And result("total") = 10000 And rows.Count = 10000, "ten thousand matches are returned together"
+    Set row = rows(1): Check row("student_no") = "BULK-000001", "full ascending list starts at first match"
+    Set row = rows(10000): Check row("student_no") = "BULK-010000", "full ascending list reaches last match"
+    Set result = SearchStudents(d, "studentNo", "desc"): Set rows = result("rows")
+    Set row = rows(1): Check rows.Count = 10000 And row("student_no") = "BULK-010000", "sorting applies to the entire matching set"
+    AddListFixtureRows 10001, 10001
+    Set result = SearchStudents(d, "studentNo", "asc")
+    Check result("kind") = "LimitExceeded" And result("total") = 10001 And result("rows").Count = 0 And result("message") = "W-SRC-001", "ten thousand and one clears every partial result"
+    d.NameKey = "TAIL-KEY": Set result = SearchStudents(d, "studentNo", "asc"): Set rows = result("rows")
+    Check result("kind") = "Found" And result("total") = 1 And rows.Count = 1, "all predicates run before the matching-row limit"
+    Set row = rows(1): Check row("student_no") = "BULK-010001", "late matching row is not lost after raw row cap"
+    ClearListFixtureRows
+    RunAllRowsTests = CStr(checks) & " assertions passed": Exit Function
+Failed:
+    RunAllRowsTests = "FAILED after " & CStr(checks) & " checks: " & CStr(Err.Number) & " " & Err.Description
+    On Error Resume Next: ClearListFixtureRows
 End Function
 Public Function PrepareRaceFixture() As String
     Dim raw As Object, day As String, year As Long, result As Object
@@ -430,7 +539,7 @@ Public Function RunSearchContractTests() As String
     checks = 0: checkLog = "": Authorize "Master": CheckFixture
     Set raw = CriteriaFixture(): Set d = NormalizeCriteria(raw, BusinessDay(UtcNow()))
     Check d.StudentNoPrefix = "" And d.NameKey = "" And IsNull(d.ClassId), "four criteria empty optional fields"
-    For Each key In Array("kana", "phone", "year", "grade", "prefecture", "unassigned", "from", "to", "unknown")
+    For Each key In Array("kana", "phone", "year", "grade", "prefecture", "unassigned", "from", "to", "unknown", "Page", "PageSize", "page", "pageSize", "offset", "limit")
         raw.Add CStr(key), Null
         Check CriteriaRejected(raw, "E-SRC-001"), "reject even empty retired or unknown key " & CStr(key)
         raw.Remove key
@@ -438,7 +547,7 @@ Public Function RunSearchContractTests() As String
     raw("status01") = "true": Check CriteriaRejected(raw, "E-SRC-001"), "reject nonboolean native status"
     raw("status01") = True: raw("studentNo") = "ＴＥＳＴ－"
     Set d = NormalizeCriteria(raw, BusinessDay(UtcNow())): Check d.StudentNoPrefix = "TEST-", "prefix normalization"
-    Set result = SearchStudents(d, 1, 20, "updatedAt", "desc")
+    Set result = SearchStudents(d, "updatedAt", "desc")
     Check result("kind") = "Found" And result("rows").Count = 2, "updated timestamp remains permitted internal sort"
     For Each row In result("rows")
         For Each key In Array("address_display", "address_line1", "phone_number", "updated_at", "name_key", "admission_date", "class_id", "enrollment_status_code")
@@ -447,13 +556,13 @@ Public Function RunSearchContractTests() As String
         Check row.Count = 9, "display DTO has eight values plus hidden student ID"
     Next
     raw("name") = "*": Set d = NormalizeCriteria(raw, BusinessDay(UtcNow()))
-    Set result = SearchStudents(d, 1, 20, "studentNo", "asc")
+    Set result = SearchStudents(d, "studentNo", "asc")
     Check result("total") = 0, "name wildcard is compared as literal"
     Set raw = CriteriaFixture(): Set d = NormalizeCriteria(raw, BusinessDay(UtcNow()))
-    d.ClassId = 2147483647: Set result = SearchStudents(d, 1, 20, "studentNo", "asc")
+    d.ClassId = 2147483647: Set result = SearchStudents(d, "studentNo", "asc")
     Check result("message") = "E-STU-010", "nonexistent class rejected"
     ctx.Reset "test-form": oldRevision = ctx.Revision
-    Check ctx.CriteriaFormatVersion = 2 And oldRevision > 0, "fresh version two context"
+    Check ctx.CriteriaFormatVersion = 3 And oldRevision > 0 And IsNull(ctx.SelectedStudentId) And ctx.ScrollPosition = 0, "fresh version three context and viewport"
     Check ctx.RequestError("test-form", ctx.ContextId, oldRevision) = "", "valid context owner session form revision"
     Check ctx.RequestError("another-form", ctx.ContextId, oldRevision) = "E-COM-002", "foreign form rejected"
     Check ctx.RequestError("test-form", "wrong-state", oldRevision) = "E-COM-002", "foreign state identifier rejected"
@@ -464,6 +573,10 @@ Public Function RunSearchContractTests() As String
     Check ctx.RequestError("test-form", ctx.ContextId, oldRevision) = "E-SRC-002", "old revision rejected after update"
     ctx.CriteriaFormatVersion = 1
     Check ctx.RequestError("test-form", ctx.ContextId, ctx.Revision) = "W-SRC-002", "old format expires"
+    ctx.CriteriaFormatVersion = 2
+    Check ctx.RequestError("test-form", ctx.ContextId, Null) = "W-SRC-002", "version two resets without importing old range state"
+    ctx.CriteriaFormatVersion = 0
+    Check ctx.RequestError("test-form", ctx.ContextId, ctx.Revision) = "W-SRC-002", "unknown format resets"
     ctx.Reset "test-form": ctx.LastUsedAt = DateAdd("n", -30, UtcNow())
     Check ctx.RequestError("test-form", ctx.ContextId, ctx.Revision) = "W-SRC-002", "thirty minute expiry"
     RunSearchContractTests = CStr(checks) & " assertions passed": Exit Function

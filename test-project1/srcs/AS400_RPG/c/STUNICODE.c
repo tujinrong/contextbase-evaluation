@@ -141,6 +141,7 @@ int32_t StUnicodeEscape(const uint16_t *input,int32_t units,int32_t decode,uint1
         if(decode&&cp==0x5c) {
             if(i>=units)return 3;
             if(input[i]==0x5c) { i++;cp=0x5c; }
+            else if(input[i]==0x6e) { i++;cp=0x0a; }
             else if(input[i]==0x75&&i+1<units&&input[i+1]==0x7b) {
                 int digits=0;i+=2;cp=0;
                 while(i<units&&input[i]!=0x7d) {
@@ -152,7 +153,8 @@ int32_t StUnicodeEscape(const uint16_t *input,int32_t units,int32_t decode,uint1
             } else return 3;
             if(!put(out,capacity,&n,cp))return 3;
         } else if(!decode) {
-            if(cp==0x5c) { if(!put(out,capacity,&n,0x5c)||!put(out,capacity,&n,0x5c))return 2; }
+            if(cp==0x0a) { if(!put(out,capacity,&n,0x5c)||!put(out,capacity,&n,0x6e))return 2; }
+            else if(cp==0x5c) { if(!put(out,capacity,&n,0x5c)||!put(out,capacity,&n,0x5c))return 2; }
             else if(cp>=0x20&&cp<0x7f) { if(!put(out,capacity,&n,cp))return 2; }
             else {
                 uint32_t v=cp;int k=0,j;uint16_t buf[6];
@@ -188,4 +190,53 @@ void StUnicodeDigest(const uint16_t *s,int32_t units,char out[64]) {
  p[n++]=0x80;if(n>56){memset(p+n,0,64-n);block(h,p);n=0;}memset(p+n,0,56-n);
  for(i=0;i<8;i++)p[63-i]=(unsigned char)(bits>>(i*8));block(h,p);
  for(i=0;i<32;i++){unsigned char v=(unsigned char)(h[i/4]>>(24-8*(i%4)));out[2*i]=hex[v>>4];out[2*i+1]=hex[v&15];}
+}
+
+/* A physical continuation never invents LF or splits a surrogate/shift sequence. */
+int32_t StTextWindow(const uint16_t *s,int32_t units,int32_t start,int32_t ccsid,char *out,int32_t capacity,int32_t *used,int32_t *advance) {
+ int32_t i=start,end=start,written=0,n=0,rc;uint32_t cp;char trial[256],best[256],blank;uint16_t space=0x20;
+ *used=0;*advance=0;
+ if(capacity<1||capacity>128||start<0||start>units||StUnicodeScalars(s,units)<0)return 2;
+ if(start>0&&start<units&&s[start]>=0xdc00&&s[start]<=0xdfff)return 2;
+ rc=StUnicodeToJob(&space,1,ccsid,&blank,1,&n);if(rc||n!=1)return 4;
+ memset(out,(unsigned char)blank,(size_t)capacity);memset(best,(unsigned char)blank,(size_t)capacity);
+ while(i<units){int32_t next=i; if(scalar(s,units,&next,&cp)<1)return 2;
+  if(cp==0x0a){*used=end-start;*advance=next-start;memcpy(out,best,(size_t)capacity);return 0;}
+  if(cp<0x20||cp==0x7f)return 2;
+  rc=StUnicodeToJob(s+start,next-start,ccsid,trial,capacity,&n);
+  if(rc){ /* Distinguish an overfull window from a nonrepresentable scalar. */
+   int32_t full=0;char probe[32];if(StUnicodeToJob(s+i,next-i,ccsid,probe,32,&full))return 4;
+   break;
+  }
+  memcpy(best,trial,(size_t)n);if(n<capacity)memset(best+n,(unsigned char)blank,(size_t)(capacity-n));
+  written=n;end=next;i=next;
+ }
+ (void)written;*used=end-start;*advance=end-start;memcpy(out,best,(size_t)capacity);return 0;
+}
+int32_t StTextSplice(const uint16_t *s,int32_t units,int32_t start,int32_t count,const uint16_t *value,int32_t added,uint16_t *out,int32_t capacity,int32_t *written){
+ int32_t total;*written=0;
+ if(start<0||count<0||start>units||count>units-start||added<0||StUnicodeScalars(s,units)<0||StUnicodeScalars(value,added)<0)return 2;
+ if((start<units&&s[start]>=0xdc00&&s[start]<=0xdfff)||(start+count<units&&s[start+count]>=0xdc00&&s[start+count]<=0xdfff))return 2;
+ total=units-count+added;if(total>capacity)return 2;
+ memmove(out,s,(size_t)start*2);memmove(out+start,value,(size_t)added*2);memmove(out+start+added,s+start+count,(size_t)(units-start-count)*2);*written=total;return 0;
+}
+
+int32_t StTextEscapeWindow(const uint16_t *s,int32_t units,int32_t start,uint16_t *out,int32_t capacity,int32_t *used,int32_t *written){
+ int32_t i=start,n=0;uint32_t cp;*used=0;*written=0;
+ if(start<0||start>units||capacity<1||StUnicodeScalars(s,units)<0)return 2;
+ if(start<units&&s[start]>=0xdc00&&s[start]<=0xdfff)return 2;
+ while(i<units){int32_t next=i,k=0;uint16_t token[16];if(scalar(s,units,&next,&cp)<1)return 2;
+  if(StUnicodeEscape(s+i,next-i,0,token,16,&k))return 2;
+  if(n+k>capacity)break;
+  memcpy(out+n,token,(size_t)k*2);n+=k;i=next;
+ }
+ *used=i-start;*written=n;return 0;
+}
+
+/* Check the target raw DS and scalar budget before auxiliary Apply mutates it. */
+int32_t StTextLimit(const uint16_t *s,int32_t units,int32_t max_units,int32_t max_scalars) {
+ int32_t scalars;
+ if(units<0||max_units<0||max_units>320||max_scalars<0||max_scalars>320||units>max_units)return 2;
+ scalars=StUnicodeScalars(s,units);
+ return scalars<0||scalars>max_scalars?2:0;
 }

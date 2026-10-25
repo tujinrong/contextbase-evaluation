@@ -1,4 +1,6 @@
 """POST the draft, then redirect to a GET address containing only opaque state and IDs."""
+import sys
+sys.dont_write_bytecode = True
 from emit_cobol import program
 program('STNAV','''    IF R-DATA(F-ACTION) NOT = "OPTIONS" OR
       (R-DATA(F-NAVIGATION) NOT = "NEW" AND "EDIT")

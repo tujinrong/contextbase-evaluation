@@ -25,18 +25,18 @@ Public Function NormalizeCriteria(ByVal raw As Object, ByVal day As String) As c
     Set NormalizeCriteria = d
 End Function
 
-Public Function SearchStudents(ByVal d As clsSearchCriteria, ByVal page As Long, ByVal pageSize As Long, ByVal sortKey As String, ByVal direction As String) As Object
+Public Function SearchStudents(ByVal d As clsSearchCriteria, ByVal sortKey As String, ByVal direction As String) As Object
     Dim tx As New clsUnitOfWork, repo As New clsStudentRepository, rs As DAO.Recordset, rows(0 To 10000) As Object
     Dim item As Object, c As Object, result As Object, view As Collection, count As Long, include As Boolean
-    Dim statusAny As Boolean, k As Variant, i As Long, first As Long, last As Long, params(0 To 4) As Variant
+    Dim k As Variant, i As Long, params(0 To 4) As Variant, classes As Object, names As Object, lookupKey As String
     Set result = Map(): Set SearchStudents = result
     On Error GoTo Failed
     Authorize "Read"
     If d Is Nothing Then Err.Raise vbObjectError + 141, , "E-SRC-001"
-    If page < 1 Or (pageSize <> 20 And pageSize <> 50 And pageSize <> 100) Then Err.Raise vbObjectError + 141, , "E-SRC-002"
     If sortKey <> "studentNo" And sortKey <> "name" And sortKey <> "admissionDate" And sortKey <> "updatedAt" Then Err.Raise vbObjectError + 141, , "E-SRC-002"
     If direction <> "asc" And direction <> "desc" Then Err.Raise vbObjectError + 141, , "E-SRC-002"
     tx.BeginWork: Set repo.Database = tx.Database
+    Set classes = Map(): Set names = Map()
     If Not IsNull(d.ClassId) Then
         Set c = repo.ClassById(PositiveId(d.ClassId))
         If c Is Nothing Then Err.Raise vbObjectError + 142, , "E-STU-010"
@@ -57,17 +57,25 @@ Public Function SearchStudents(ByVal d As clsSearchCriteria, ByVal page As Long,
         If d.NameKey <> "" Then include = include And InStr(1, rs!name_key, d.NameKey, vbBinaryCompare) > 0
         If include Then
             Set c = Nothing
-            If Not IsNull(rs!class_id) Then Set c = repo.ClassById(rs!class_id)
+            If Not IsNull(rs!class_id) Then
+                lookupKey = CStr(rs!class_id)
+                If Not classes.Exists(lookupKey) Then classes.Add lookupKey, repo.ClassById(rs!class_id)
+                Set c = classes(lookupKey)
+            End If
             Set item = repo.RowMap(rs)
             If c Is Nothing Then
                 item.Add "school_year", Null: item.Add "grade_name", "－": item.Add "class_display", "－"
             Else
                 item.Add "school_year", c("school_year")
-                item.Add "grade_name", repo.CodeName("GRADE", c("grade_code"))
+                lookupKey = "GRADE|" & c("grade_code")
+                If Not names.Exists(lookupKey) Then names.Add lookupKey, repo.CodeName("GRADE", c("grade_code"))
+                item.Add "grade_name", names(lookupKey)
                 item.Add "class_display", c("class_code") & " " & c("class_name")
                 If Not c("is_active") Or c("valid_from") > BusinessDay(UtcNow()) Or c("valid_to") < BusinessDay(UtcNow()) Then item("class_display") = item("class_display") & " [停止" & ChrW(&H30FB) & "期間外]"
             End If
-            item.Add "enrollment_name", repo.CodeName("ENROLLMENT_STATUS", rs!enrollment_status_code)
+            lookupKey = "ENROLLMENT_STATUS|" & rs!enrollment_status_code
+            If Not names.Exists(lookupKey) Then names.Add lookupKey, repo.CodeName("ENROLLMENT_STATUS", rs!enrollment_status_code)
+            item.Add "enrollment_name", names(lookupKey)
             Set rows(count) = item: count = count + 1
             If count = 10001 Then Exit Do
         End If
@@ -77,18 +85,15 @@ Public Function SearchStudents(ByVal d As clsSearchCriteria, ByVal page As Long,
     result.Add "total", count: result.Add "at", UtcNow()
     Set view = New Collection: result.Add "rows", view
     If count > 10000 Then result.Add "kind", "LimitExceeded": result.Add "message", "W-SRC-001": Exit Function
-    If count = 0 Then result.Add "kind", "Found": result.Add "message", "I-SRC-001": result.Add "page", 1: Exit Function
+    If count = 0 Then result.Add "kind", "Found": result.Add "message", "I-SRC-001": Exit Function
     SortRows rows, 0, count - 1, SortColumn(sortKey), direction
-    If page > (count + pageSize - 1) \ pageSize Then page = (count + pageSize - 1) \ pageSize
-    first = (page - 1) * pageSize: last = first + pageSize - 1
-    If last >= count Then last = count - 1
-    For i = first To last
+    For i = 0 To count - 1
         For Each k In Array("name_key", "admission_date", "updated_at", "class_id", "enrollment_status_code")
             rows(i).Remove k
         Next
         view.Add rows(i)
     Next
-    result.Add "page", page: result.Add "kind", "Found": result.Add "message", ""
+    result.Add "kind", "Found": result.Add "message", ""
     Exit Function
 Failed:
     Dim e As String

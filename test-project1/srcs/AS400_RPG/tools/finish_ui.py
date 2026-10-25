@@ -1,4 +1,6 @@
 """Generate executable UI members and UI metadata procedures; no spec-eval access."""
+import sys
+sys.dont_write_bytecode = True
 raise SystemExit("Historical bootstrap retired: use current src/COPY and tools/generate_dds.py; this script would overwrite reviewed compact UI.")
 from pathlib import Path
 import runpy,json

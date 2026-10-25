@@ -1,3 +1,7 @@
+# 最新Text仕様について
+
+2026-10-25の端末描画・入力・信頼認証adapterはQA-TEXT-COBOLで未決です。以下は保持している旧CGIの配備資料で、新Textシステムの配備手順ではありません。今回Linux/DB配備は未実施です。
+
 # Linux CGI配備
 
 1. Linux x86_64にGnuCOBOL3.2/C11、ICU/OpenSSL/unixODBC開発ファイル、Microsoft ODBC Driver18を準備し取得版・ハッシュを確定します。このホストではLinux実機未実施です。

@@ -22,10 +22,6 @@ Namespace Global.StudentManagement.WinForms.Domain
         Public Property StudentName As String
         Public Property ClassId As Long?
         Public Property EnrollmentStatusCodes As String() = New String() {"01", "02"}
-        Public Property Page As Integer = 1
-        Public Property PageSize As Integer = 20
-        Public Property SortKey As String = "studentNo"
-        Public Property SortDirection As String = "asc"
     End Class
 
 End Namespace

@@ -1,4 +1,6 @@
 """Dedicated server-rendered confirmations; CGI operates with JavaScript disabled."""
+import sys
+sys.dont_write_bytecode = True
 from emit_cobol import program
 program('STPROMPT','''    IF R-NULL(F-EDITORID) = -1 GOBACK END-IF
     MOVE "Edit" TO VIEW-MODE

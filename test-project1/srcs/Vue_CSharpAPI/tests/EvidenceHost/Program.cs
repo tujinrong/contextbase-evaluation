@@ -27,7 +27,10 @@ var port=7442;var lifetime=60;
 foreach(var arg in args) {if(arg.StartsWith("--port="))port=int.Parse(arg[7..],CultureInfo.InvariantCulture);if(arg.StartsWith("--minutes="))lifetime=int.Parse(arg[10..],CultureInfo.InvariantCulture);}
 if(port is <1024 or >65535||lifetime is <1 or >60)throw new ArgumentException("Loopback port 1024..65535 and lifetime 1..60 minutes required.");
 var contentRoot=Path.Combine(root,"backend");
-var builder=WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName="Development",ApplicationName=typeof(StudentsApiController).Assembly.GetName().Name,ContentRootPath=contentRoot,WebRootPath=Path.Combine(contentRoot,"wwwroot") });
+var publishedWebRoot=Path.Combine(root,"build","publish","wwwroot");
+if(!File.Exists(Path.Combine(publishedWebRoot,"index.html")))throw new DirectoryNotFoundException("Build the current method with tools/build.py before testing its published Vue assets.");
+// Published assets are served directly; Development's cached source-assets manifest is excluded.
+var builder=WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName="Production",ApplicationName=typeof(StudentsApiController).Assembly.GetName().Name,ContentRootPath=contentRoot,WebRootPath=publishedWebRoot });
 builder.WebHost.UseUrls($"https://localhost:{port}");
 builder.Configuration["ConnectionStrings:StudentDb"]=null;
 builder.Configuration["EvaluationSession:Secret"]=null;

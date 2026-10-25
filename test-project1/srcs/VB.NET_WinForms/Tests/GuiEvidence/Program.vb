@@ -52,15 +52,15 @@ Namespace GuiEvidence
             check(backend.LookupAsync().Result.Classes.Sum(Function(c) c.Occupied)=2,"FIX-VB-002 editor occupancy")
             Using form As New FrmStudentSearch(service), presenter As New StudentSearchPresenter(form,service)
                 presenter.InitializeAsync().GetAwaiter().GetResult()
-                presenter.SearchAsync().GetAwaiter().GetResult()
+                presenter.SearchAsync(presenter.ContextRevision).GetAwaiter().GetResult()
                 check(form.dgvStudents.RowCount=2 AndAlso form.lblCount.Text.StartsWith("2件"),"FIX-VB-003 original presenter default status filter")
-                form.txtStudentNo.Text="TEST-VB-002" : presenter.SearchAsync().GetAwaiter().GetResult()
+                form.txtStudentNo.Text="TEST-VB-002" : presenter.SearchAsync(presenter.ContextRevision).GetAwaiter().GetResult()
                 check(form.dgvStudents.RowCount=1,"FIX-VB-004 original presenter selected fixture")
-                form.txtStudentNo.Text="TEST-NONE" : presenter.SearchAsync().GetAwaiter().GetResult()
-                check(form.dgvStudents.RowCount=0 AndAlso form.lblCount.Text="0件 0–0","FIX-VB-005 zero results")
-                presenter.Clear() : check(form.lblCount.Text="未検索","FIX-VB-006 original clear state")
+                form.txtStudentNo.Text="TEST-NONE" : presenter.SearchAsync(presenter.ContextRevision).GetAwaiter().GetResult()
+                check(form.dgvStudents.RowCount=0 AndAlso form.lblCount.Text.StartsWith("0件"),"FIX-VB-005 zero results")
+                presenter.Clear(presenter.ContextRevision) : check(form.lblCount.Text="未検索","FIX-VB-006 original clear state")
                 check(form.dgvStudents.Columns.Count=7,"COMPACT-VB-001 seven result columns")
-                presenter.SearchAsync().GetAwaiter().GetResult()
+                presenter.SearchAsync(presenter.ContextRevision).GetAwaiter().GetResult()
                 Dim context=presenter.CaptureContext() : Dim revision=presenter.ContextRevision
                 check(presenter.RestoreContext(context,revision),"COMPACT-VB-002 current context restores")
                 Dim state=System.Text.Json.Nodes.JsonNode.Parse(context).AsObject()
@@ -73,7 +73,7 @@ Namespace GuiEvidence
                 Dim stale=False
                 Try : presenter.RestoreContext(context,revision-1) : Catch ex As InvalidOperationException : stale=True : End Try
                 check(stale,"COMPACT-VB-004 stale revision rejected")
-                For Each field In {"StudentNameKana","SchoolYear","GradeCode","UnassignedOnly","PrefectureCode","PhoneNumber","AdmissionFrom","AdmissionTo","Unexpected"}
+                For Each field In {"StudentNameKana","SchoolYear","GradeCode","UnassignedOnly","PrefectureCode","PhoneNumber","AdmissionFrom","AdmissionTo","Unexpected","Page","PageSize","Offset"}
                     Dim invalid=System.Text.Json.Nodes.JsonNode.Parse(context).AsObject()
                     invalid("Criteria").AsObject()(field)="obsolete"
                     Dim denied=False
@@ -81,16 +81,16 @@ Namespace GuiEvidence
                     check(denied,"COMPACT-VB-005 unknown criteria rejected " & field)
                 Next
                 state("SchemaVersion")="student-search-old"
-                check(Not presenter.RestoreContext(state.ToJsonString(),revision) AndAlso form.lblCount.Text="未検索" AndAlso form.lblMessage.Text.Contains("旧形式") AndAlso CInt(form.cboPageSize.SelectedItem)=20,"COMPACT-VB-006 old schema resets whole state")
-                presenter.SearchAsync().GetAwaiter().GetResult() : state=System.Text.Json.Nodes.JsonNode.Parse(presenter.CaptureContext()).AsObject() : revision=presenter.ContextRevision : state.Remove("SchemaVersion")
+                check(Not presenter.RestoreContext(state.ToJsonString(),revision) AndAlso form.lblCount.Text="未検索" AndAlso form.lblMessage.Text.Contains("旧形式") AndAlso form.StatusChecks(0).Checked AndAlso form.StatusChecks(1).Checked AndAlso form.dgvStudents.RowCount=0,"COMPACT-VB-006 old schema resets whole state")
+                presenter.SearchAsync(presenter.ContextRevision).GetAwaiter().GetResult() : state=System.Text.Json.Nodes.JsonNode.Parse(presenter.CaptureContext()).AsObject() : revision=presenter.ContextRevision : state.Remove("SchemaVersion")
                 check(Not presenter.RestoreContext(state.ToJsonString(),revision) AndAlso form.lblMessage.Text.Contains("旧形式"),"COMPACT-VB-007 missing schema resets")
-                presenter.SearchAsync().GetAwaiter().GetResult() : state=System.Text.Json.Nodes.JsonNode.Parse(presenter.CaptureContext()).AsObject() : revision=presenter.ContextRevision : state("ExpiresAt")=DateTimeOffset.UtcNow.AddMinutes(-1).ToString("O")
+                presenter.SearchAsync(presenter.ContextRevision).GetAwaiter().GetResult() : state=System.Text.Json.Nodes.JsonNode.Parse(presenter.CaptureContext()).AsObject() : revision=presenter.ContextRevision : state("ExpiresAt")=DateTimeOffset.UtcNow.AddMinutes(-1).ToString("O")
                 check(Not presenter.RestoreContext(state.ToJsonString(),revision) AndAlso form.lblMessage.Text.Contains("W-SRC-002"),"COMPACT-VB-008 expired context resets")
                 form.txtStudentNo.Text="TEST-VB-00"
-                For i=0 To form.clbStatuses.Items.Count-1 : form.clbStatuses.SetItemChecked(i,False) : Next
-                presenter.SearchAsync().GetAwaiter().GetResult()
+                For Each status In form.StatusChecks : status.Checked=False : Next
+                presenter.SearchAsync(presenter.ContextRevision).GetAwaiter().GetResult()
                 check(form.dgvStudents.RowCount=3,"COMPACT-VB-009 empty statuses means all")
-                form.txtStudentNo.Text="VB-001" : presenter.SearchAsync().GetAwaiter().GetResult()
+                form.txtStudentNo.Text="VB-001" : presenter.SearchAsync(presenter.ContextRevision).GetAwaiter().GetResult()
                 check(form.dgvStudents.RowCount=0,"COMPACT-VB-010 student number is prefix")
             End Using
             Using form As New FrmStudentEdit(service,1), presenter As New StudentEditPresenter(form,service,1)

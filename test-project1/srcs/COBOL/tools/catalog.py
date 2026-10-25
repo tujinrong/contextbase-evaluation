@@ -1,4 +1,6 @@
 """Fixed SQL parameter metadata; never infer the SQL type from user values."""
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import json,re
 ROOT=Path(__file__).resolve().parents[1]

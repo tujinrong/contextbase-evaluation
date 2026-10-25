@@ -1,6 +1,8 @@
 """Wrap UTF8 SQLRPGLE source safely below precompiler source columns.
 Only statement/layout formatting, preserving literal values and escaped quotes.
 """
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import re
 B=Path(__file__).resolve().parents[1]
@@ -17,7 +19,7 @@ def tokens(s):
      i+=1;break
     i+=1
    literal=s[start:i]
-   if out and re.search(r'(?:^|[=(,:])[dDtTxXzZ]$',out[-1]):out[-1]+=literal
+   if out and re.search(r'(?:^|[=(,:])[dDtTxXzZuU]$',out[-1]):out[-1]+=literal
    else:out.append(literal)
    continue
   j=i
@@ -49,7 +51,7 @@ def fmt(line):
 for p in [*B.joinpath('src').glob('*.sqlrpgle'),*B.joinpath('src').glob('*.rpgleinc'),*B.joinpath('copy').glob('*.rpgleinc')]:
  lines=[]
  for line in p.read_text('utf8').splitlines():
-  line=re.sub(r"\b([dDtTxXzZ]) +(?=')",r'\1',line)
+  line=re.sub(r"\b([dDtTxXzZuU]) +(?=')",r'\1',line)
   lines+=fmt(line)
  p.write_text('\n'.join(lines)+'\n','utf8')
 print('RPG/COPY source statements wrapped to UTF8<=96 bytes')

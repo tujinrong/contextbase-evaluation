@@ -72,7 +72,7 @@ DEST.mkdir(parents=True, exist_ok=True)
 for name, value in [("schema", tables), ("relations", [dict(child=o, name=n, child_columns=c.split(","), parent=t, parent_columns=r.split(",")) for o,n,c,t,r in foreign]),
                     ("seed", dict(categories=[dict(id=x[0], name=k, length=x[1], allow_add=x[2]) for k,x in categories.items()], codes=codes))]:
     (DEST / (name + ".json")).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-sql = ["-- Generated exclusively from Access/spec. Apply DAO properties/relations through Build-Access.ps1."]
+sql = ["-- Generated exclusively from test-project1/spec/Access. Apply DAO properties/relations through Build-Access.ps1."]
 for t in tables:
     columns = []
     for c in t["columns"]:
@@ -90,7 +90,7 @@ for name, columns in [("birth", "birth_date"), ("class_status", "is_deleted,clas
 sql += ["CREATE INDEX ix_operation_target ON t_operation_log(target_table,target_key,executed_at);", "INSERT INTO t_write_guard(guard_id,lock_bit) VALUES(1,False);"]
 (DEST / "schema.sql").write_text("\n\n".join(sql) + "\n", encoding="utf-8")
 module = ['Attribute VB_Name = "modApprovedSeed"', 'Option Explicit', 'Option Compare Binary',
-          "' Generated exclusively from this project's spec/共通/10_業務コード定義.md.",
+          "' Generated exclusively from test-project1/spec/Access/共通/10_業務コード定義.md.",
           'Public Function ApprovedCategories() As Collection', '    Set ApprovedCategories = New Collection']
 for k, x in categories.items():
     module.append("    ApprovedCategories.Add Array(" + ",".join(vb(v) for v in (x[0], k, x[1], x[2])) + ")")

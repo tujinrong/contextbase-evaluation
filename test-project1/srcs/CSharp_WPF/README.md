@@ -1,6 +1,6 @@
 # C# / WPF 学生管理
 
-2026-10-25 配置更新：仕様入力は `test-project1/spec/CSharp_WPF/`、ソースと生成出力は `test-project1/srcs/CSharp_WPF/` に分離します。入力ロックは生成時の版・ハッシュを保持し、新しい仕様で再生成する際に検査して更新します。この配置更新ではアプリ・DBの再生成と実行試験を行っていません。
+2026-10-25 再生成（`20261025-regenerate`）：`test-project1/spec/CSharp_WPF/` の最新59入力からXAML、SQL、メッセージ、配布物を更新しました。WEB系の配色・基本情報3列×2行・下段3列、狭幅での縦再配置、参照文字の全文確認、所属人数・定員の参考表示を実装しました。方式別共通の旧一覧件数だけを局所修正し、8.5で入力を再凍結しています。詳細は [今回の生成記録](build/generation/generation.md) を参照してください。
 
 2026-10-24 配置更新。最終アプリは `build/app/`、現在の検査は `build/test-results/`、生成記録は `build/generation/`、ソース配布は `build/source.zip` へ固定更新します。これらはGit管理し、日付・run-idごとの履歴ディレクトリーは増やしません。コンパイラのbin/obj、NuGet、npm、キャッシュ、試行ログは方式内 `.tmp/`（Git除外）です。`Directory.Build.props` は通常のdotnetコマンドにも適用します。
 
@@ -10,7 +10,7 @@ python -X utf8 tools/build.py
 python -X utf8 tools/build.py --no-audit
 ```
 
-この配置更新で Core 110件、非表示GUI fixture 35件、Smoke 8件、native境界102件、実.NET Framework 27件 がPASS。実DB・配備・今回の手動GUI受入は未実施です。通常restoreでは固定依存System.Security.Cryptography.Pkcs 9.0.4のNU1902/NU1903を検出します。監査を警告として扱う方式以外は通常restoreが失敗するため、今回のコンパイル検査は実行限定 `--no-audit` で切り分けました。監査は既定で有効であり、このリスクの修正は未実施です。詳細は[現在の結果](build/test-results/README.md)を参照してください。
+今回の再実行でCore110・fixture35・Smoke8・native境界102・実.NET Framework27件、ネイティブWindow起動4ケースがPASS。1280×650・1366×650の編集、狭幅リフロー、参照文字のフォーカスを確認しました。SQL構文・埋込みSQLCLRの指紋も再検査済みですが、実DB・配備・手動全操作受入は未実施です。通常restoreは固定依存System.Security.Cryptography.Pkcs 9.0.4のNU1902/NU1903で失敗したため、コンパイル検査は実行限定 `--no-audit` で切り分けました。監査の既定値・依存版は変更していません。詳細は[現在の結果](build/test-results/README.md)を参照してください。
 
 単独ビルド／`--skip-tests` は検査済みPASSにしません。helper開始時に前回結果を失効し、今回実行した検査だけを記録します。`source.zip` は試験・toolsを含まない配布ソースなので、solutionではなくproduction projectを直接指定します。
 

@@ -1,4 +1,4 @@
-﻿Attribute VB_Name = "modMessages"
+Attribute VB_Name = "modMessages"
 Option Explicit
 Option Compare Binary
 
@@ -12,7 +12,7 @@ Public Function MessageText(ByVal value As String, Optional ByVal name As String
     Case "I-STU-003": template = "学生情報を論理削除しました。"
     Case "I-STU-004": template = "変更内容がありません。"
     Case "W-SRC-001": template = "検索結果が10,000件を超えています。検索条件を追加してください。"
-    Case "W-SRC-002": template = "検索条件の保持期限が切れました。条件を再指定してください。"
+    Case "W-SRC-002": template = "検索状態の期限または形式が現在の仕様と一致しません。条件を再指定してください。"
     Case "W-STU-101": template = "同じ生年月日で氏名または氏名カナが一致する学生が{count}件あります。別人であることを確認してください。"
     Case "W-STU-102": template = "入力内容または重複候補が変わりました。もう一度確認してください。"
     Case "W-STU-103": template = "変更内容を破棄して戻りますか。"
@@ -50,7 +50,7 @@ Public Function MessageText(ByVal value As String, Optional ByVal name As String
     Case "E-STU-105": template = "他の操作で更新されています。入力内容を控え、最新情報を再読み込みしてください。"
     Case "E-STU-106": template = "卒業" & ChrW(&H30FB) & "退学からの在籍区分変更には管理者権限と変更理由が必要です。"
     Case "E-STU-107": template = "確認" & ChrW(&H30FB) & "変更理由を60文字以内で入力してください。"
-    Case "E-SRC-001": template = "未所属のみを検索する場合、年度" & ChrW(&H30FB) & "学年" & ChrW(&H30FB) & "クラスは指定できません。"
+    Case "E-SRC-001": template = "検索条件の形式が現在の仕様と一致しません。条件を初期化して再入力してください。"
     Case "E-SRC-002": template = "検索条件または表示指定が正しくありません。"
     Case "E-MST-001": template = "マスタの初期設定が不足しています。管理者に連絡してください。"
     Case "E-MST-002": template = "このコードまたはクラスコードは既に登録されています。"

@@ -141,9 +141,9 @@ internal static class Program
                     };
                     if (!populated) throw new Exception("Production Window did not bind fixture data/defaults.");
                     var searchChecks = new List<string>();
+                    IEnumerable<DependencyObject> Descendants(DependencyObject parent) { for(int i=0;i<System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent);i++) { var child=System.Windows.Media.VisualTreeHelper.GetChild(parent,i); yield return child; foreach(var nested in Descendants(child)) yield return nested; } }
                     if (screen == "search" && window.DataContext is StudentSearchViewModel search)
                     {
-                        IEnumerable<DependencyObject> Descendants(DependencyObject parent) { for(int i=0;i<System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent);i++) { var child=System.Windows.Media.VisualTreeHelper.GetChild(parent,i); yield return child; foreach(var nested in Descendants(child)) yield return nested; } }
                         var grid=Descendants(window).OfType<DataGrid>().Single();
                         if(grid.Columns.Count != 7) throw new Exception("Compact grid must expose 7 columns.");
                         searchChecks.Add("compact-seven-columns");
@@ -178,6 +178,21 @@ internal static class Program
                             }
                             searchChecks.Add($"compact-editor-visible-{width}x650");
                         }
+                        var editorModel=(StudentEditViewModel)window.DataContext;
+                        var address=Descendants(window).OfType<TextBox>().Single(box=>AutomationProperties.GetName(box)=="住所1");
+                        if(!editorModel.CanEdit && (!address.IsReadOnly || !address.IsEnabled || !address.Focus()))throw new Exception("Viewer must be able to focus and inspect the full readonly value.");
+                        if(!editorModel.CanEdit)searchChecks.Add("viewer-readonly-full-value-focus");
+                        var reference=Descendants(window).OfType<TextBlock>().Single(block=>AutomationProperties.GetName(block)=="所属人数・定員");
+                        if(!reference.Text.Contains("参考"))throw new Exception("Occupancy must remain visible as reference data.");
+                        searchChecks.Add("dedicated-occupancy-reference");
+                        window.Width=760;window.Height=650;window.UpdateLayout();
+                        var narrow=(ScrollViewer)window.Content;
+                        if(narrow.ComputedHorizontalScrollBarVisibility==Visibility.Visible || narrow.ComputedVerticalScrollBarVisibility!=Visibility.Visible)throw new Exception("Narrow editor must reflow vertically without horizontal scrolling.");
+                        var back=Descendants(window).OfType<Button>().Single(button=>ReferenceEquals(button.Command,editorModel.BackCommand));
+                        back.BringIntoView();window.UpdateLayout();
+                        var bounds=back.TransformToAncestor(narrow).TransformBounds(new Rect(back.RenderSize));
+                        if(bounds.Top<0 || bounds.Bottom>narrow.ActualHeight)throw new Exception("Narrow editor back action must remain reachable.");
+                        searchChecks.Add("narrow-editor-reflow-and-actions-reachable");
                     }
                     Console.WriteLine(JsonSerializer.Serialize(new {profile="CSharp_WPF",screen,passed=true,window=window.GetType().FullName,title=window.Title,visible=window.IsVisible,loaded=window.IsLoaded,hwnd=new WindowInteropHelper(window).Handle.ToInt64(),resourceCount=Resources.Count,searchChecks,backend="fixture",database="NOT_RUN",interactiveUI=(screen == "search" ? "STARTUP_AND_FIXTURE_FILTER_DEFAULTS" : "STARTUP_ONLY_NO_OPERATIONS"),screenshots="RenderTargetBitmap when STUDENT_UI_EVIDENCE_DIR is set"}));
                     window.Close();

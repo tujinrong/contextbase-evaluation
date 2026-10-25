@@ -17,7 +17,11 @@ Public Function DeploymentHealth() As String
     DoCmd.OpenForm "frmStudentSearch"
     Dim frm As Access.Form
     Set frm = Forms("frmStudentSearch")
-    If Nz(frm!cboPageSize, 0) <> 20 Or frm!lblCount.Caption <> "未検索" Then Err.Raise vbObjectError + 194, , "Initial form state invalid"
+    If frm!lblCount.Caption <> "未検索" Or frm!cboSortKey <> "studentNo" Or frm!cboSortDirection <> "asc" Then Err.Raise vbObjectError + 194, , "Initial form state invalid"
+    Dim ctl As Access.Control
+    For Each ctl In frm.Controls
+        If ctl.Name = "cboPageSize" Or ctl.Name = "cmdFirst" Or ctl.Name = "cmdPrev" Or ctl.Name = "cmdNext" Or ctl.Name = "cmdLast" Then Err.Raise vbObjectError + 194, , "Retired range control found"
+    Next
     DoCmd.Close acForm, "frmStudentSearch"
     DeploymentHealth = "PASS|" & counts & "noExternalLinks=True|searchFormInitialized=True|role=" & CurrentRole()
     Exit Function

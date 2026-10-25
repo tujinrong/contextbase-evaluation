@@ -78,6 +78,9 @@ try:
    if name=='framework':command=[target.with_suffix('.exe')]
    else:command=['dotnet',target]
    if name=='fixture':command+=['--self-test']
+   if name=='native-ui':
+    env['STUDENT_UI_EVIDENCE_DIR']=str(paths.mkdir(final/'ui'))
+    command+=['--ui-regression']
    run(name,command)
  if C.get('native'):run('build-native',['powershell','-NoProfile','-ExecutionPolicy','Bypass','-File','database/native/Build-Native.ps1','-Configuration',a.configuration,*(['-NoAudit'] if a.no_audit else [])])
  stage=work/'publish'

@@ -1,0 +1,60 @@
+Attribute VB_Name = "modListScroll"
+Option Explicit
+Option Compare Binary
+
+Private Declare PtrSafe Function GetFocus Lib "user32" () As LongPtr
+Private Declare PtrSafe Function IsWindow Lib "user32" (ByVal hWnd As LongPtr) As Long
+Private Declare PtrSafe Function IsChild Lib "user32" (ByVal parent As LongPtr, ByVal child As LongPtr) As Long
+Private Declare PtrSafe Function GetScrollPos Lib "user32" (ByVal hWnd As LongPtr, ByVal bar As Long) As Long
+Private Type NativeScrollInfo
+    size As Long
+    mask As Long
+    minimum As Long
+    maximum As Long
+    visibleRows As Long
+    position As Long
+    trackingPosition As Long
+End Type
+Private Declare PtrSafe Function GetScrollInfo Lib "user32" (ByVal hWnd As LongPtr, ByVal bar As Long, ByRef info As NativeScrollInfo) As Long
+Private Declare PtrSafe Function SendMessageW Lib "user32" (ByVal hWnd As LongPtr, ByVal message As Long, ByVal wParam As LongPtr, ByVal lParam As LongPtr) As LongPtr
+Private listWindows As Object
+
+' Access exposes no ListBox.TopIndex. Capture its own focused child once, then use
+' the native vertical scrollbar without changing selection or fetching any rows.
+Private Function ListWindow(ByVal frm As Access.Form) As LongPtr
+    Dim h As LongPtr, previous As Access.Control
+    If listWindows Is Nothing Then Set listWindows = Map()
+    If listWindows.Exists(frm.Tag) Then
+        h = listWindows(frm.Tag)
+        If IsWindow(h) <> 0 And IsChild(frm.hWnd, h) <> 0 Then ListWindow = h: Exit Function
+        listWindows.Remove frm.Tag
+    End If
+    On Error Resume Next: Set previous = frm.ActiveControl: On Error GoTo 0
+    frm!lstStudents.SetFocus: h = GetFocus()
+    If h = 0 Or IsChild(frm.hWnd, h) = 0 Then Err.Raise vbObjectError + 151, , "E-COM-004"
+    listWindows.Add frm.Tag, h
+    If Not previous Is Nothing Then previous.SetFocus
+    ListWindow = h
+End Function
+Public Function SearchScrollPosition(ByVal frm As Access.Form) As Long
+    SearchScrollPosition = GetScrollPos(ListWindow(frm), 1)
+End Function
+Public Sub RestoreSearchScroll(ByVal frm As Access.Form, ByVal position As Long)
+    Dim h As LongPtr, count As Long, maxPosition As Long, info As NativeScrollInfo
+    count = frm!lstStudents.ListCount
+    h = ListWindow(frm)
+    info.size = LenB(info): info.mask = 3
+    maxPosition = count - 1
+    If GetScrollInfo(h, 1, info) <> 0 Then
+        If info.visibleRows > 0 Then maxPosition = count - info.visibleRows
+    End If
+    If maxPosition < 0 Then maxPosition = 0
+    If position < 0 Then position = 0
+    If position > maxPosition Then position = maxPosition
+    SendMessageW h, &H115, CLngPtr(position) * 65536 + 4, 0
+    SendMessageW h, &H115, 8, 0
+End Sub
+Public Sub ReleaseSearchScroll(ByVal frm As Access.Form)
+    If listWindows Is Nothing Then Exit Sub
+    If listWindows.Exists(frm.Tag) Then listWindows.Remove frm.Tag
+End Sub

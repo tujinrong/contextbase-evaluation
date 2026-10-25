@@ -1,4 +1,4 @@
--- Source: SQLServer table definitions (including student 8.0); generated 2026-10-12.
+-- Regenerated from this method's current SQLServer definitions; input versions and hashes are in build/generation/inputs.json.
 -- Apply to an EMPTY selected evaluation database only. No migration/drop is performed.
 SET XACT_ABORT ON;
 GO

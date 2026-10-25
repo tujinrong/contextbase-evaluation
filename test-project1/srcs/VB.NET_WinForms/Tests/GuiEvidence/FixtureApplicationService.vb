@@ -28,8 +28,8 @@ Namespace Application
         Public Function LookupAsync(ct As CancellationToken,Optional includeOccupancy As Boolean=True) As Task(Of Core.LookupSet)
             Return _service.LookupAsync(includeOccupancy,ct)
         End Function
-        Public Function SearchAsync(criteria As Core.SearchCriteria,ct As CancellationToken) As Task(Of Core.SearchResult)
-            Return _service.SearchAsync(criteria,ct)
+        Public Function SearchAsync(criteria As Core.SearchCriteria,sortKey As String,sortDirection As String,ct As CancellationToken) As Task(Of Core.SearchResult)
+            Return _service.SearchAsync(criteria,sortKey,sortDirection,ct)
         End Function
         Public Function GetAsync(id As Long,ct As CancellationToken) As Task(Of Core.StudentDetail)
             Return _service.GetAsync(id,ct)

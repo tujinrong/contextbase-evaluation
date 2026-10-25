@@ -1,3 +1,5 @@
+import sys
+sys.dont_write_bytecode = True
 from emit_cobol import program,ROOT
 from pathlib import Path
 import json

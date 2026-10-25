@@ -1,3 +1,5 @@
+import sys
+sys.dont_write_bytecode = True
 from emit_cobol import program,put
 def html(text):return "    DISPLAY '"+text.replace("'","''")+"' WITH NO ADVANCING\n"
 def inputfield(name,label,index,kind='text',maxlen=120):

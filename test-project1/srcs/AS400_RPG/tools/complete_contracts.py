@@ -1,6 +1,8 @@
 """Regenerate fixed COPY and current message catalogue from permitted specs.
 Does not alter specifications, database resources, reports or another profile.
 """
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import re, runpy, json
 BASE=Path(__file__).resolve().parents[1]

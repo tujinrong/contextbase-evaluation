@@ -4,11 +4,11 @@ Imports System.Windows.Forms
 Namespace Controls
     Public Class NullableDateControl
         Inherits UserControl
-        Private ReadOnly _raw As New TextBox With {.MinimumSize = New System.Drawing.Size(0,34), .Dock = DockStyle.Fill, .MaxLength = 10}
-        Private ReadOnly _calendar As New DateTimePicker With {.Dock = DockStyle.Right, .Width = 28, .Format = DateTimePickerFormat.Custom, .CustomFormat = " ", .ShowCheckBox = False, .AccessibleName = "西暦日付のカレンダー"}
+        Private ReadOnly _raw As New TextBox With {.MinimumSize = New System.Drawing.Size(0,23), .Dock = DockStyle.Fill, .MaxLength = 10}
+        Private ReadOnly _calendar As New DateTimePicker With {.Dock = DockStyle.Right, .Width = 24, .Format = DateTimePickerFormat.Custom, .CustomFormat = " ", .ShowCheckBox = False, .AccessibleName = "西暦日付のカレンダー"}
         Private _syncing As Boolean
         Public Sub New()
-            MinimumSize = New System.Drawing.Size(0,34) : Height = 34 : Dock = DockStyle.Fill : _calendar.Checked = False
+            MinimumSize = New System.Drawing.Size(0,23) : Height = 24 : _calendar.Checked = False
             Controls.Add(_raw) : Controls.Add(_calendar)
             AddHandler _calendar.ValueChanged, Sub(sender, e)
                                                     If _syncing Then Return

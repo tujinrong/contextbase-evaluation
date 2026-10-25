@@ -22,6 +22,9 @@ const report=outputLayout.generation;
 const output=path.join(report,'outputs.json');
 const input=JSON.parse(fs.readFileSync(path.join(report,'inputs.json'),'utf8'));
 const structure=JSON.parse(fs.readFileSync(path.join(report,'structure.json'),'utf8'));
+const generationStateFile=path.join(report,'regeneration.json');
+const generationState=fs.existsSync(generationStateFile)?JSON.parse(fs.readFileSync(generationStateFile,'utf8')):null;
+if(generationState&&(generationState.runId!==runId||generationState.profileId!==profile))throw new Error('Generation status must describe the current profile/run.');
 if(input.projectId!==project||input.runId!==runId||input.profileId!==profile||structure.runId!==runId||structure.profileId!==profile||structure.status!=='structure-check-passed') throw new Error('Matching successful preflight and profile scope required.');
 if(input.inspectionOnly!==false||structure.inspectionOnly!==false||input.specificationLayout!=='project/spec/profile')throw new Error('Current publishing preflight required; inspection-only and legacy layouts are not generation authorization.');
 const hash=data=>crypto.createHash('sha256').update(data).digest('hex');
@@ -76,7 +79,13 @@ if(fs.existsSync(packagesPath)){
  }
 }
 const delivery=[];
-for(const file of [`${project}/test-report/README.md`,`${project}/agent-input/README.md`,...['inputs.json','structure.json','structure.md','generation.md','routing-notes.md','source-packages.json'].map(name=>relativeArtifact(path.join(report,name)))]){
+const generationFiles=[];
+for(const entry of fs.readdirSync(report,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name,'en'))) {
+ if(entry.name==='outputs.json')continue;
+ if(!entry.isFile()||entry.isSymbolicLink())throw new Error(`Only fixed regular generation records may be published: ${entry.name}`);
+ generationFiles.push(relativeArtifact(path.join(report,entry.name)));
+}
+for(const file of [`${project}/test-report/README.md`,`${project}/agent-input/README.md`,...generationFiles]){
  const target=path.join(root,file);if(fs.existsSync(target)){const data=fs.readFileSync(target);delivery.push({file,bytes:data.length,sha256:hash(data)});}
 }
 // Final app/test files are delivered separately from the source-only inventory.
@@ -95,6 +104,6 @@ function finalFiles(directory) {
  }
 }
 for(const method of profile?[profile]:profiles)finalFiles(path.join(root,project,'srcs',method,'build'));
-const result={projectId:project,...(profile?{profileId:profile}:{}),runId,inputCommit:input.inputCommit,recordedAt:new Date().toISOString(),outputVersion:runId,inputManifest:'inputs.json',structureReport:'structure.json',sourceOnly:true,historyPolicy:'git-only; fixed latest build paths',excluded:['.tmp/bin/obj/node_modules/dist/build/__pycache__/.vs in source inventory','spec-eval','local secrets/configuration',...(profile?['other profiles','build-agent files outside scripts']:[])],artifacts,delivery,documentChanges,files};
+const result={projectId:project,...(profile?{profileId:profile}:{}),runId,inputCommit:input.inputCommit,recordedAt:new Date().toISOString(),outputVersion:runId,inputManifest:'inputs.json',structureReport:'structure.json',generationStatus:generationState?.status??'NOT_RECORDED',sourceOnly:true,historyPolicy:'git-only; fixed latest build paths',excluded:['.tmp/bin/obj/node_modules/dist/build/__pycache__/.vs in source inventory','spec-eval','local secrets/configuration',...(profile?['other profiles','build-agent files outside scripts']:[])],artifacts,delivery,documentChanges,files};
 writeJson(output,result,outputLayout.scratch);
 console.log(JSON.stringify({projectId:project,...(profile?{profileId:profile}:{}),runId,files:files.length,documentChanges:documentChanges.length,inputHashesVerified:true,output:path.relative(root,output).split(path.sep).join('/')}));

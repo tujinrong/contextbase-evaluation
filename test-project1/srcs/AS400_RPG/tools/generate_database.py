@@ -3,6 +3,8 @@
 This generator never reads spec-eval. It only emits artifacts; it opens no DB.
 """
 from __future__ import annotations
+import sys
+sys.dont_write_bytecode = True
 import json
 import os
 import re

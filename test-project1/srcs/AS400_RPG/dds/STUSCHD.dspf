@@ -7,58 +7,32 @@
      A                                      CF08(08)
      A                                      CF09(09)
      A                                      CF10(10)
+     A                                      CF11(11)
      A                                      CF12(12)
      A                                      CF14(14)
+     A                                      CF15(15)
      A                                      CF16(16)
-     A                                      CF17(17)
-     A                                      CF18(18)
-     A                                      CF19(19)
      A                                      CF20(20)
      A                                      CF23(23)
      A                                      ROLLUP(25)
      A                                      ROLLDOWN(26)
-     A                                      CF11(11)
-     A                                      CF15(15)
      A          R COND
      A                                      OVERLAY
-     A                                  1  3'学生検索 Enter=検索 F4=全'
-     A                                  1 28'年度クラス候補'
-     A            QSTUNO        30O  B  2 12
-     A            QNAME         16O  B  2 66
-     A            QCLASS        19A  B  3 12
-     A            QST01          1A  B  4 12
-     A            QST02          1A  B  4 29
-     A            QST03          1A  B  4 46
-     A            QST04          1A  B  4 63
-     A            QSIZE          3A  B  5 12
-     A            QSORT         16A  B  5 33
-     A            QDIR           4A  B  5 65
-     A            QFIELD         2A  B  5 97
-     A                                  2  2'学籍番号'
-     A                                  2 55'氏名'
-     A                                  3  2'クラスID'
-     A                                  4  3'在学'
-     A                                  4 20'休学'
-     A                                  4 37'卒業'
-     A                                  4 54'退学'
-     A                                  5  2'件数'
-     A                                  5 23'順序'
-     A                                  5 55'方向'
-     A                                  5 80'F4/F8項目'
-     A            QMSG         128O  O  6  3
-     A                                  7  3'選 学籍番号       氏名 / '
-     A                                  7 28'カナ    生年月日 / 年度'
-     A                                  7 51'学年 / クラス / 在籍'
+     A                                  1  2'学生管理 / 学生検索'
      A          R SFLROW
      A                                      SFL
-     A            SOPT           1A  B  8  3
-     A            SNO           15A  O  8  6
-     A            SNAME         16O  O  8 23
-     A            SBIRTH        26O  O  8 43
-     A            SYEARGR       22O  O  8 72
-     A            SSTATUS       24O  O  8106
-     A            SKANA         72O  O  9  6
-     A            SCLASS        48O  O  9 81
+     A            ROPT           1A  B  8  2
+     A  75                                  DSPATR(PR)
+     A                                      DSPATR(UL)
+     A            RSTUNO        15A  O  8  6
+     A            RNAME         18O  O  8 24
+     A            RKANA         38O  O  8 44
+     A            RBIRTH        24O  O  8 84
+     A            RYEAR          4A  O  9  6
+     A            RGRADE        22O  O  9 13
+     A            RCCODE        15A  O  9 38
+     A            RCNAME        48O  O  9 56
+     A            RSTATUS       14O  O  9108
      A            SROWID        19A  H
      A          R SFLCTL
      A                                      SFLCTL(SFLROW)
@@ -68,46 +42,168 @@
      A  90                                  SFLDSP
      A  91                                  SFLDSPCTL
      A  92                                  SFLCLR
-     A            RESULT_CNT   128O  O 24  3
-     A            SEARCH_AT     30O  O 25  3
-     A                                 26  3'PageUp/Down=8学生 F7=前DB頁 '
-     A                                 26 31'F10=次DB頁 F15=先頭 F16=最'
-     A                                 26 57'後'
-     A                                 27  3'2編集 5参照 9全文 F9順序'
-     A                                 27 27' F11件数 F5クリア F6新規 '
-     A                                 27 52'F12戻る'
-     A          R CNFRM
-     A            CTITLE       100O  O  2  3
-     A                                 24  3'F10=Confirm F12=Cancel PgUp/PgDn'
-     A            CREASON      122O  B  4  3
-     A            CTOTAL       100O  O  6  3
-     A            CSEL           3A  B  7  5
-     A            C01          122O  O 10  3
-     A            C02          122O  O 11  3
-     A            C03          122O  O 12  3
-     A            C04          122O  O 13  3
-     A            C05          122O  O 14  3
-     A            C06          122O  O 15  3
-     A            C07          122O  O 16  3
-     A            C08          122O  O 17  3
-     A            C09          122O  O 18  3
-     A            C10          122O  O 19  3
-     A            CMSG         128O  O 26  3
+     A                                      SFLCSRRRN(&CSRREL)
+     A            CSRREL         5S0 H
+     A                                      RTNCSRLOC(&CSRRCD &CSRFLD &CSRPOS)
+     A                                      CSRLOC(&CSRROW &CSRCOL)
+     A            CSRRCD        10A  H
+     A            CSRFLD        10A  H
+     A            CSRPOS         4S0 H
+     A            CSRROW         3S0 H
+     A            CSRCOL         3S0 H
+     A            QSTUNO        15A  B  2 12
+     A  75                                  DSPATR(PR)
+     A                                      DSPATR(UL)
+     A            QNAME         20O  B  2 38
+     A  75                                  DSPATR(PR)
+     A                                      DSPATR(UL)
+     A            QCLASS        19A  B  3 12
+     A  75                                  DSPATR(PR)
+     A                                      DSPATR(UL)
+     A            QST01          1A  B  4 12
+     A  75                                  DSPATR(PR)
+     A                                      DSPATR(UL)
+     A            QST02          1A  B  4 22
+     A  75                                  DSPATR(PR)
+     A                                      DSPATR(UL)
+     A            QST03          1A  B  4 32
+     A  75                                  DSPATR(PR)
+     A                                      DSPATR(UL)
+     A            QST04          1A  B  4 42
+     A  75                                  DSPATR(PR)
+     A                                      DSPATR(UL)
+     A            RCOUNT        24O  O  5  2
+     A            QSIZE          3A  O  5 34
+     A            QSORT         16O  O  5 46
+     A            QDIR           4O  O  5 64
+     A            SRCHTIME     110O  O 25  2
+     A            QMSG         128O  O  6  2
+     A            DBPAGE        54O  O  5 72
+     A            PAGING       100O  O 24  2
+     A                                  1  2'学生管理'
+     A                                  1 12'学生検索'
+     A                                  1100'TEXT'
+     A                                  1105'/'
+     A                                  1107'5250'
+     A                                  2  2'学籍番号'
+     A                                  2 32'氏名'
+     A                                  2 64'前方一致'
+     A                                  2 73'/'
+     A                                  2 75'氏名部分一致'
+     A                                  3  2'クラス'
+     A                                  3 34'すべて（全年度・停止'
+     A                                  3 54'・期間外を含む）'
+     A                                  3 71'F4候補'
+     A                                  4  2'在籍'
+     A                                  4 15'在学'
+     A                                  4 25'休学'
+     A                                  4 35'卒業'
+     A                                  4 45'退学'
+     A                                  4 52'1=選択'
+     A                                  4 59'0=解除'
+     A                                  4 66'/'
+     A                                  4 68'全0=全区分'
+     A                                  5 28'取得'
+     A                                  5 40'順序'
+     A                                  7  2'選'
+     A                                  7  6'学籍番号'
+     A                                  7 24'氏名'
+     A                                  7 44'カナ'
+     A                                  7 84'生年月日（和暦）'
+     A                                 26  2'Enter検索'
+     A                                 26 16'F5クリア'
+     A                                 26 30'F6新規'
+     A                                 26 42'F12メニュー'
+     A                                 26 58'F4候補'
+     A                                 26 65'F8全文'
+     A                                 26 72'F9順序'
+     A                                 26 79'F11件数'
+     A                                 27  2'選択欄2=編集'
+     A                                 27 15'/'
+     A                                 27 17'5=参照を入力しEnter。選'
+     A                                 27 40'択がないEnterだけが検索'
+     A                                 27 63'。Tab=次入力欄。'
+     A          R PICK
+     A                                      RTNCSRLOC(&CSRRCD &CSRFLD &CSRPOS)
+     A                                      CSRLOC(&CSRROW &CSRCOL)
+     A            CSRRCD        10A  H
+     A            CSRFLD        10A  H
+     A            CSRPOS         4S0 H
+     A            CSRROW         3S0 H
+     A            CSRCOL         3S0 H
+     A            PTITLE       124O  O  1  2
+     A            PMSG         128O  O 21  2
+     A            PSEL1          1A  B  3  2
+     A                                      DSPATR(UL)
+     A            PVAL1        124O  O  3  6
+     A            PSEL2          1A  B  5  2
+     A                                      DSPATR(UL)
+     A            PVAL2        124O  O  5  6
+     A            PSEL3          1A  B  7  2
+     A                                      DSPATR(UL)
+     A            PVAL3        124O  O  7  6
+     A            PSEL4          1A  B  9  2
+     A                                      DSPATR(UL)
+     A            PVAL4        124O  O  9  6
+     A            PSEL5          1A  B 11  2
+     A                                      DSPATR(UL)
+     A            PVAL5        124O  O 11  6
+     A            PSEL6          1A  B 13  2
+     A                                      DSPATR(UL)
+     A            PVAL6        124O  O 13  6
+     A            PSEL7          1A  B 15  2
+     A                                      DSPATR(UL)
+     A            PVAL7        124O  O 15  6
+     A            PSEL8          1A  B 17  2
+     A                                      DSPATR(UL)
+     A            PVAL8        124O  O 17  6
+     A                                 25  2'Enter=選択1を1件確定 F8='
+     A                                 25 26'カーソル候補全文'
+     A                                 26  2'F12=取消 PageUp/Down=8候補'
      A          R LONGTXT
-     A            LTITLE       100O  O  2  3
-     A            LPOS          80O  O  3  3
-     A                                  5  3'Unicode escapes / doubled slash'
-     A            LTXT1        120O  B  7  3
+     A                                      RTNCSRLOC(&CSRRCD &CSRFLD &CSRPOS)
+     A                                      CSRLOC(&CSRROW &CSRCOL)
+     A            CSRRCD        10A  H
+     A            CSRFLD        10A  H
+     A            CSRPOS         4S0 H
+     A            CSRROW         3S0 H
+     A            CSRCOL         3S0 H
+     A            LTITLE       124O  O  1  2
+     A            LPOS         124O  O  2  2
+     A            TEXT         128A  B  5  2
      A  75                                  DSPATR(PR)
-     A            LTXT2        120O  B  9  3
+     A                                      DSPATR(UL)
+     A            LMSG         128O  O 21  2
+     A                                 25  2'F6=通常/Unicode F10=原入力'
+     A                                 25 28'へ反映 F12=補助取消'
+     A                                 26  2'PageUp/Down=文字範囲 Enter='
+     A                                 26 29'補助内反映・保存しな'
+     A                                 26 49'い'
+     A          R CNFRM
+     A                                      RTNCSRLOC(&CSRRCD &CSRFLD &CSRPOS)
+     A                                      CSRLOC(&CSRROW &CSRCOL)
+     A            CSRRCD        10A  H
+     A            CSRFLD        10A  H
+     A            CSRPOS         4S0 H
+     A            CSRROW         3S0 H
+     A            CSRCOL         3S0 H
+     A            CTITLE       124O  O  1  2
+     A            DUPCNT       124O  O  2  2
+     A            DELREAS1     112O  B  3 14
      A  75                                  DSPATR(PR)
-     A            LTXT3        120O  B 11  3
+     A  74                                  DSPATR(ND)
+     A            DELREAS2     112O  B  4 14
      A  75                                  DSPATR(PR)
-     A            LTXT4        120O  B 13  3
-     A  75                                  DSPATR(PR)
-     A            LTXT5        120O  B 15  3
-     A  75                                  DSPATR(PR)
-     A            LTXT6        120O  B 17  3
-     A  75                                  DSPATR(PR)
-     A                                 23  3'F10=Apply F12=Cancel PgUp/PgDn'
-     A            LMSG         128O  O 26  3
+     A  74                                  DSPATR(ND)
+     A            C01          124O  O  5  2
+     A            C02          124O  O  7  2
+     A            C03          124O  O  9  2
+     A            C04          124O  O 11  2
+     A            C05          124O  O 13  2
+     A            C06          124O  O 15  2
+     A            C07          124O  O 17  2
+     A            C08          124O  O 19  2
+     A            CMSG         128O  O 22  2
+     A            CKEYS        128O  O 25  2
+     A                                 26  2'F12=取消（既定） Enterで'
+     A                                 26 26'は続行しない F8=全文'

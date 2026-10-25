@@ -1,4 +1,6 @@
 """Windows host evidence only: GnuCOBOL 3.2 translator + Zig C linker."""
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
 import os,sys,subprocess,json,datetime,hashlib,shutil
 from output_paths import result_dir,reset_work
@@ -21,7 +23,7 @@ buildEvidence=out/'build-evidence.json'
 buildEvidence.write_text('{"succeeded":false,"status":"BUILD_RUNNING"}\n',encoding='utf-8')
 def run(args):
  p=subprocess.run(list(map(str,args)),env=env,capture_output=True)
- text=(p.stdout+p.stderr).decode('utf-8','replace')
+ text=(p.stdout+p.stderr).decode('utf-8','replace').replace('\r\n','\n')
  log.append('COMMAND '+subprocess.list2cmdline(list(map(str,args)))+'\nEXIT '+str(p.returncode)+'\n'+text)
  results.append({'command':list(map(str,args)),'exitCode':p.returncode})
  print(f'[{p.returncode}] {Path(str(args[0])).name} {len(text)} diagnostic bytes',flush=True);
@@ -48,7 +50,7 @@ try:
  run(flags+['-Wall','-Wextra','-Werror','-DSTSTATEIO=STSTATEIO_PRODUCTION','-c','bridge/student_bridge.c','-o','.tmp/host/prompt_bridge.o'])
  run(flags+['.tmp/host/prompt-probe.c','tests/prompt-state-fixture.c',*common,'.tmp/host/prompt_bridge.o',*libs,'-o',out/'prompt-probe.exe'])
  for name in ['student.cgi.exe','student-maint.exe']:shutil.copy2(out/name,app/name)
- (app/'runtime.json').write_text(json.dumps({'profile':'Windows host, not Linux deployment','runtimeDirectory':'.tmp/toolchain/msys2/ucrt64/bin','binaries':{name:hashlib.sha256((app/name).read_bytes()).hexdigest() for name in ['student.cgi.exe','student-maint.exe']}},indent=2)+'\n',encoding='utf-8')
+ (app/'runtime.json').write_text(json.dumps({'profile':'Windows host, not Linux deployment','implementationMode':'legacy CGI retained','targetTextStatus':'BLOCKED QA-TEXT-COBOL','runtimeDirectory':'.tmp/toolchain/msys2/ucrt64/bin','binaries':{name:hashlib.sha256((app/name).read_bytes()).hexdigest() for name in ['student.cgi.exe','student-maint.exe']}},indent=2)+'\n',encoding='utf-8')
  succeeded=True
  buildEvidence.write_text(json.dumps({'succeeded':True,'buildRecord':prefix.name+'.json','compiledInputs':compiled_inputs(),'binaries':binary_hashes()},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 finally:

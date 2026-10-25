@@ -174,6 +174,29 @@ Module Program
         For Each field In {"Address","PhoneNumber","UpdatedAt","AdmissionDate","RowVersion"}
             Same(True,GetType(StudentRow).GetProperty(field) Is Nothing,"compact projection omits " & field)
         Next
+        For Each field In {"Page","PageSize","Offset","SortKey","SortDirection"}
+            Dim rejected=False
+            Try : System.Text.Json.JsonSerializer.Deserialize(Of SearchCriteria)("{""" & field & """:null}")
+            Catch ex As System.Text.Json.JsonException : rejected=True
+            End Try
+            Same(True,rejected,"scroll query rejects retired member " & field)
+        Next
+        Dim query=New SearchDraft With {.StudentNo=" Ａ-1 ",.StudentName=" Ａ ｶﾞ ",.ClassId="1",.EnrollmentStatusCodes={}}
+        Dim normalizedQuery=query.Normalize()
+        Same(" Ａ-1 ",query.StudentNo,"scroll raw is retained")
+        Same("A-1",normalizedQuery.StudentNo,"scroll normalized identifier")
+        Same(StudentNormalizer.NameKey("Ａ ｶﾞ"),normalizedQuery.StudentName,"scroll normalized name key")
+        Dim emptyResult=New SearchResult(Outcome.NoChange,0,Array.Empty(Of StudentRow)(),DateTimeOffset.UtcNow,False,Array.Empty(Of FieldError)())
+        Same(SearchStatus.Success,emptyResult.Status,"scroll zero is success")
+        Same(0,emptyResult.Count.Value,"scroll zero count")
+        Dim limited=New SearchResult(Outcome.NoChange,10001,Array.Empty(Of StudentRow)(),DateTimeOffset.UtcNow,True,Array.Empty(Of FieldError)())
+        Same(SearchStatus.LimitExceeded,limited.Status,"scroll limit status")
+        Same(False,limited.Count.HasValue,"scroll limit has no total count")
+        Dim mismatch=False
+        Try : Dim invalid=New SearchResult(Outcome.NoChange,1,Array.Empty(Of StudentRow)(),DateTimeOffset.UtcNow,False,Array.Empty(Of FieldError)())
+        Catch ex As ArgumentException : mismatch=True
+        End Try
+        Same(True,mismatch,"scroll successful count must equal all rows")
         Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(New With {.profile="VB.NET_WinForms", .passed=count,.failed=0,.cases=outcomes,.database="NOT_RUN",.interactiveUI="NOT_RUN"}))
     End Sub
 End Module

@@ -1,4 +1,4 @@
--- Source: COBOL/spec 8.0 SQLServer table definitions; generated 2026-10-12.
+-- Source: ../../spec/COBOL/DB定義/SQLServer/テーブル; versions 8.1.
 -- Apply to an EMPTY selected evaluation database only. No migration/drop is performed.
 SET XACT_ABORT ON;
 GO

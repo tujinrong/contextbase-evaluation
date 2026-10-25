@@ -1,7 +1,7 @@
 Attribute VB_Name = "modApprovedSeed"
 Option Explicit
 Option Compare Binary
-' Generated exclusively from this project's spec/共通/10_業務コード定義.md.
+' Generated exclusively from test-project1/spec/Access/共通/10_業務コード定義.md.
 Public Function ApprovedCategories() As Collection
     Set ApprovedCategories = New Collection
     ApprovedCategories.Add Array("GENDER","性別",1,False)
