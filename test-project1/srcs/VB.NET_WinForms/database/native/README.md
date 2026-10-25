@@ -15,3 +15,5 @@ prepare_save/persist_student/delete_student/save_class/save_codeはDBの実主�
 学校年度はraw Unicode scalar最大4→共通NFKC/trim→ASCII西暦4桁・1900～9998の順で検査する。重複候補の返却列はstudent_no/student_name/birth_date/class_nameのみで、住所・電話・在籍区分などを返さない。生年月日はVB側が和暦に表示変換する。候補集合のID/版はDB内の確認用hash計算にだけ使用する。
 
 database/native/tests/Framework/NativeFramework.Tests.csprojは当方式の配備対象と同じDLLを実CLR4.0.30319.42000上で試験し、23件PASS。000_sqlclr.sqlのSHA512と試験ロードDLLの一致も確認した。SQL Server内でのホスト実行は未実施。
+
+配置更新: Build-Native.ps1の最終生成SQLは `build/database/native/`、SQLCLR DLL/bin/objは `.tmp/dotnet/`。原本のdatabase/native SQLとメッセージソースは通常buildでは変更しない。配備には今回生成されたbuild/database/nativeの000/010/020を使う。構文結果はbuild/test-results/sql-syntax.jsonへ固定更新する。

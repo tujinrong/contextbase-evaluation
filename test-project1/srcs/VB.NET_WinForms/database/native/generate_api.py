@@ -1,8 +1,12 @@
 """Emit fixed native SQL from this VB.NET project's physical schema only."""
 from pathlib import Path
+import os
 import re
 
 BASE=Path(__file__).resolve().parent
+OUTPUT=Path(os.environ.get("STUDENT_NATIVE_OUTPUT",str(BASE.parents[1]/"build/database/native"))).resolve()
+if not OUTPUT.is_relative_to(BASE.parents[1]):raise ValueError("Output must remain within this method")
+OUTPUT.mkdir(parents=True,exist_ok=True)
 schema=(BASE.parent/"001_schema.sql").read_text(encoding="utf-8")
 fields=["student_no","student_name","student_name_kana","name_key","kana_key","birth_date","gender_code","postal_code","prefecture_code","address_line1","address_line2","phone_number","email_address","admission_date","enrollment_status_code","enrollment_end_date","class_id","emergency_contact_name","relationship_category","relationship_code","emergency_phone_number","remarks"]
 types={}
@@ -165,5 +169,5 @@ GRANT SELECT ON dbo.m_code_category TO student_viewer,student_staff,student_admi
 GO
 '''
 for key,value in {"__DECLARE__":declare,"__CHANGES__":changes,"__INSERT_COLUMNS__":insert_columns,"__INSERT_VALUES__":insert_values,"__UPDATE__":update,"__ROWSELECT__":rowselect}.items():template=template.replace(key,value)
-(BASE/"010_student_api.sql").write_text(template,encoding="utf-8")
+(OUTPUT/"010_student_api.sql").write_text(template,encoding="utf-8")
 print("Generated fixed native API for "+str(len(fields))+" normalized physical columns.")

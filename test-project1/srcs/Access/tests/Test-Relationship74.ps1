@@ -1,12 +1,13 @@
-param([ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId=('access-fk-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmssfff')+'-'+[Guid]::NewGuid().ToString('N').Substring(0,8)),[string]$ReportDirectory=(Join-Path $PSScriptRoot '../test-report'))
+param([ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId='relationship',[string]$ReportDirectory='')
 $ErrorActionPreference='Stop'
-$taskReport=[IO.Path]::GetFullPath($ReportDirectory)
-$taskFixture=Join-Path $PSScriptRoot "../build/$RunId.accdb"
+. (Join-Path $PSScriptRoot '../tools/GeneratedPaths.ps1')
+if (-not $ReportDirectory) { $ReportDirectory=Join-Path $script:AccessMethodRoot 'build/test-results' }
+$taskReport=Resolve-AccessReportPath $ReportDirectory
+$taskFixture=Resolve-AccessGeneratedPath (Join-Path $PSScriptRoot '../.tmp/tests/relationship.accdb') '.tmp'
 New-Item -ItemType Directory -Path $taskReport -Force | Out-Null
-if (Test-Path -LiteralPath (Join-Path $taskReport "$RunId.json")) { throw 'Report already exists; choose a new RunId.' }
-New-Item -ItemType Directory -Path (Join-Path $PSScriptRoot '../build') -Force | Out-Null
+New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($taskFixture)) -Force | Out-Null
 $taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../spec') -Recurse -File | Sort-Object FullName | ForEach-Object { @{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} })
-if (Test-Path -LiteralPath $taskFixture) { throw 'A new fixture is required.' }
+Remove-AccessIntermediate $taskFixture
 $taskEngine=New-Object -ComObject DAO.DBEngine.120
 $taskDb=$taskEngine.CreateDatabase([IO.Path]::GetFullPath($taskFixture),';LANGID=0x0409;CP=1252;COUNTRY=0',128)
 $taskResults=[Collections.Generic.List[object]]::new()
@@ -61,10 +62,10 @@ try {
  $taskState='Passed'
 } catch { $taskState='Failed'; $taskFatal=$_.Exception.Message; Write-Output $taskFatal }
 finally {
- $taskOutput=[ordered]@{runId=$RunId;specConfigurationVersion='8.1';specDatabaseIndexVersion='8.2';specBusinessVersion='8.0';relationshipRuleOriginVersion='7.4';inputs=$taskInputs;problemId='STR-ACCESS-001';status=$taskState;fatal=$taskFatal;engineVersion=$taskEngine.Version;fixtureOnly=$true;fixture=[IO.Path]::GetFullPath($taskFixture);ddl=$taskDdl;validationRule=$taskRule;relationAttributes=0;tests=$taskResults;readback=$taskReadback}
+ $taskOutput=[ordered]@{runId=$RunId;completedAt=[DateTime]::UtcNow.ToString('o');specConfigurationVersion='8.1';specDatabaseIndexVersion='8.2';specBusinessVersion='8.0';relationshipRuleOriginVersion='7.4';inputs=$taskInputs;problemId='STR-ACCESS-001';status=$taskState;fatal=$taskFatal;engineVersion=$taskEngine.Version;fixtureOnly=$true;fixture=[IO.Path]::GetFullPath($taskFixture);ddl=$taskDdl;validationRule=$taskRule;relationAttributes=0;tests=$taskResults;readback=$taskReadback}
  $taskDb.Close()
  $taskOutput.fixtureSha256=(Get-FileHash -LiteralPath $taskFixture -Algorithm SHA256).Hash
- $taskOutput | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $taskReport "$RunId.json") -Encoding UTF8
+ $taskOutput | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $taskReport 'relationship.json') -Encoding UTF8
  [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskDb) | Out-Null
  [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskEngine) | Out-Null
 }

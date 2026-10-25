@@ -1,13 +1,13 @@
 [CmdletBinding()]
 param([Parameter(Mandatory=$true)][string]$Frontend,[Parameter(Mandatory=$true)][string]$ReportDirectory)
 $ErrorActionPreference='Stop'
+. (Join-Path $PSScriptRoot '../../tools/GeneratedPaths.ps1')
 $profileRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
-$owned=[IO.Path]::GetFullPath((Join-Path $profileRoot 'build/20261012-evidence-01-r5'))
-$fixture=[IO.Path]::GetFullPath($Frontend)
+$owned=[IO.Path]::GetFullPath((Join-Path $profileRoot '.tmp/evidence'))
+$fixture=Resolve-AccessGeneratedPath $Frontend '.tmp'
 if(-not $fixture.StartsWith($owned+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Disposable R5 build required.'}
-$report=[IO.Path]::GetFullPath($ReportDirectory)
+$report=Resolve-AccessGeneratedPath $ReportDirectory '.tmp'
 $resultPath=Join-Path $report 'search-all-regression.json'
-if(Test-Path -LiteralPath $resultPath){throw 'New evidence required; preserve historical report.'}
 New-Item -ItemType Directory -Path $report -Force|Out-Null
 $access=$null;$component=$null
 try {

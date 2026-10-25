@@ -1,14 +1,14 @@
-﻿param([Parameter(Mandatory=$true)][string]$Fixture,[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId=('access-race-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmssfff')+'-'+[Guid]::NewGuid().ToString('N').Substring(0,8)),[string]$ReportDirectory=(Join-Path $PSScriptRoot '../test-report'))
+﻿param([Parameter(Mandatory=$true)][string]$Fixture,[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId='race',[string]$ReportDirectory='')
 $ErrorActionPreference='Stop'
-$taskFixture=[IO.Path]::GetFullPath($Fixture)
-$taskOwned=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../build'))
-if (-not $taskFixture.StartsWith($taskOwned+'\',[StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetExtension($taskFixture) -ne '.accdb') { throw 'Disposable Access single-file fixture under Access/build required.' }
-$taskReport=[IO.Path]::GetFullPath($ReportDirectory)
+. (Join-Path $PSScriptRoot '../tools/GeneratedPaths.ps1')
+if (-not $ReportDirectory) { $ReportDirectory=Join-Path $script:AccessMethodRoot 'build/test-results' }
+$taskFixture=Resolve-AccessGeneratedPath $Fixture '.tmp'
+$taskOwned=Resolve-AccessGeneratedPath (Join-Path $PSScriptRoot '../.tmp/tests') '.tmp'
+$taskReport=Resolve-AccessReportPath $ReportDirectory
 New-Item -ItemType Directory -Path $taskReport -Force | Out-Null
-if (Test-Path -LiteralPath (Join-Path $taskReport "$RunId.json")) { throw 'Report already exists; choose a new RunId.' }
 $taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../spec') -Recurse -File | Sort-Object FullName | ForEach-Object { @{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} })
-$taskBarrier=Join-Path $taskOwned $RunId
-if (Test-Path -LiteralPath $taskBarrier) { throw 'Race run directory already exists.' }
+$taskBarrier=Resolve-AccessGeneratedPath (Join-Path $taskOwned 'race-barrier') '.tmp'
+Remove-AccessIntermediate $taskBarrier
 New-Item -ItemType Directory -Path $taskBarrier | Out-Null
 $taskAccess=New-Object -ComObject Access.Application
 try {
@@ -65,8 +65,8 @@ try {
  $taskRs=$taskDb.OpenRecordset('SELECT lock_bit FROM t_write_guard WHERE guard_id=1'); $taskGuard=$taskRs.Fields.Item('lock_bit').Value; $taskRs.Close()
 } finally { $taskAccess.Quit(2); [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskAccess) | Out-Null }
 $taskPassed=$taskWorkerResults.Count -eq 2 -and @($taskWorkerResults | Where-Object { $_.result -like 'Saved|*' }).Count -eq 1 -and @($taskWorkerResults | Where-Object { $_.result -match '^(ValidationFailed|Conflict)\|E-STU-(102|105)' }).Count -eq 1 -and $taskSeats -eq 1 -and $taskAudits -eq 1 -and $taskGuard -eq (-not $taskGuardBefore)
-$taskOutput=[ordered]@{runId=$RunId;specConfigurationVersion='8.1';specDatabaseIndexVersion='8.2';specBusinessVersion='8.0';inputs=$taskInputs;fixtureOnly=$true;fixture=$taskFixture;status=$(if ($taskPassed) {'Passed'} else {'Failed'});workers=$taskWorkerResults;distinctAccessProcesses=$true;finalOccupancy=$taskSeats;capacity=1;committedStudentCreateAudits=$taskAudits;guardBefore=$taskGuardBefore;guardAfter=$taskGuard;guardExpected='exactly one committed toggle';fixtureSha256=(Get-FileHash -LiteralPath $taskFixture -Algorithm SHA256).Hash}
-$taskOutput | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $taskReport "$RunId.json") -Encoding UTF8
+$taskOutput=[ordered]@{runId=$RunId;completedAt=[DateTime]::UtcNow.ToString('o');specConfigurationVersion='8.1';specDatabaseIndexVersion='8.2';specBusinessVersion='8.0';inputs=$taskInputs;fixtureOnly=$true;fixture=$taskFixture;status=$(if ($taskPassed) {'Passed'} else {'Failed'});workers=$taskWorkerResults;distinctAccessProcesses=$true;finalOccupancy=$taskSeats;capacity=1;committedStudentCreateAudits=$taskAudits;guardBefore=$taskGuardBefore;guardAfter=$taskGuard;guardExpected='exactly one committed toggle';fixtureSha256=(Get-FileHash -LiteralPath $taskFixture -Algorithm SHA256).Hash}
+$taskOutput | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $taskReport 'race.json') -Encoding UTF8
 $taskWorkerResults | ForEach-Object { Write-Output "Worker $($_.worker): $($_.result) $($_.fatal)" }
 Write-Output "Result: $($taskOutput.status), occupancy=$taskSeats / 1, student-create audits=$taskAudits"
 if (-not $taskPassed) { exit 1 }

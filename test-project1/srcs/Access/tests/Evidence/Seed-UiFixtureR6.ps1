@@ -1,18 +1,20 @@
 ﻿[CmdletBinding()]
 param([Parameter(Mandatory=$true)][ValidatePattern('^[0-9A-Fa-f]{64}$')][string]$ExpectedProductionSha256)
 $ErrorActionPreference='Stop'
+. (Join-Path $PSScriptRoot '../../tools/GeneratedPaths.ps1')
 $profileRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $projectRoot=[IO.Path]::GetFullPath((Join-Path $profileRoot '../..'))
-$outputRoot=Join-Path $profileRoot 'build/20261012-evidence-01-ui-r6'
-$frontend=Join-Path $outputRoot '20261012-build-04-access-single-evidence-01-ui-r6.accdb'
+$outputRoot=Join-Path $profileRoot '.tmp/evidence/ui-r6'
+$frontend=Join-Path $outputRoot 'fixture.accdb'
 $backend=Join-Path $outputRoot 'initial-staging.accdb'
-$reportRoot=Join-Path $projectRoot 'test-report/20261012-evidence-01/Access-ui-r6'
-$production=Join-Path $profileRoot 'StudentManagement.accdb'
+$reportRoot=Join-Path $outputRoot 'results'
+$production=Join-Path $profileRoot 'build/StudentManagement.accdb'
 $expectedProduction=$ExpectedProductionSha256.ToUpperInvariant()
 if((Get-FileHash -LiteralPath $production -Algorithm SHA256).Hash -ne $expectedProduction){throw 'Production hash differs; stop without opening it.'}
-if(Test-Path -LiteralPath $outputRoot){throw 'Historical fixture directory exists; do not overwrite.'}
-if(Test-Path -LiteralPath $reportRoot){throw 'Historical UI report directory exists; do not overwrite.'}
-New-Item -ItemType Directory -Path $outputRoot,$reportRoot | Out-Null
+$outputRoot=Resolve-AccessGeneratedPath $outputRoot '.tmp'
+Remove-AccessIntermediate $outputRoot
+$reportRoot=Resolve-AccessReportPath $reportRoot
+New-Item -ItemType Directory -Path $outputRoot,$reportRoot -Force | Out-Null
 $inputFiles=@(Get-ChildItem -LiteralPath (Join-Path $profileRoot 'spec'),(Join-Path $profileRoot 'Modules'),(Join-Path $profileRoot 'Classes'),(Join-Path $profileRoot 'database') -Recurse -File | Where-Object {$_.FullName -notmatch '[\/](bin|obj|build)[\/]'} | Sort-Object FullName | ForEach-Object {
     $meta=if($_.Extension -eq '.md'){Get-Content -LiteralPath $_.FullName -TotalCount 1}else{''}
     $version=if($meta -match '"version"\s*:\s*"([^"]+)"'){$Matches[1]}else{$null}

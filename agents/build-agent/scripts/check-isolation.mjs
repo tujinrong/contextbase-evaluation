@@ -1,12 +1,13 @@
 import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
+import {layout,writeLatest,writeJson} from './output-layout.mjs';
+import {sourceFiles} from './source-files.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../..');const base=path.join(root,'test-project1/srcs');
 const profiles=['VB.NET_WinForms','CSharp_WPF','CSharp_ASPNET','Vue_CSharpAPI','COBOL','AS400_RPG','Access'];
 const runId=process.argv[2];if(!/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(runId??''))throw new Error('Fresh run ID required.');
-const prefix=path.join(root,'test-project1/test-report',runId+'-isolation');for(const ext of ['.json','.md'])if(fs.existsSync(prefix+ext))throw new Error('Report already exists.');
-const findings=[],checks=[],files=[];const skip=new Set(['build','bin','obj','node_modules','dist','.vs','__pycache__','test-report']);
+const outputLayout=layout(root,'test-project1');const prefix=path.join(outputLayout.tests,'isolation');
+const findings=[],checks=[],files=[];
 const slash=p=>p.split(path.sep).join('/');const within=(p,base)=>p===base||p.startsWith(base+path.sep);
-function walk(dir,profile){for(const e of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isSymbolicLink()){findings.push({file:slash(path.relative(root,p)),code:'SYMLINK'});continue;}if(e.isDirectory()){if(!skip.has(e.name))walk(p,profile);}else if(e.isFile())files.push({p,profile});}}
-for(const profile of profiles){const directory=path.join(base,profile);if(!fs.existsSync(path.join(directory,'spec/README.md')))findings.push({profile,code:'MISSING_OWN_SPEC'});walk(directory,profile);}
+for(const profile of profiles){const directory=path.join(base,profile);if(!fs.existsSync(path.join(directory,'spec/README.md')))findings.push({profile,code:'MISSING_OWN_SPEC'});for(const p of sourceFiles(directory))files.push({p,profile});}
 for(const {p,profile} of files){const own=path.join(base,profile),file=slash(path.relative(root,p));
  if(!/\.(csproj|vbproj|slnx|md|py|mjs|ps1|sql|rpgle|sqlrpgle|cob|cpy|c|h|ts|vue|json)$/i.test(p))continue;
  const text=fs.readFileSync(p,'utf8');
@@ -17,4 +18,4 @@ for(const {p,profile} of files){const own=path.join(base,profile),file=slash(pat
  if(!/[/\\](?:tests|Tests)[/\\]|(?:static_check|test_host)\./.test(file)&&/(?:\.\.\/|srcs\/)(?:Shared|Database|_tools)\//.test(text))findings.push({file,code:'SHARED_RESOURCE_PATH'});
 }
 const result={runId,recordedAt:new Date().toISOString(),status:findings.length?'FAILED':'PASSED',profiles,files:files.length,references:checks.length,findings,scope:['local project and source links','specification link closure','shared/cross-profile path absence','no symlinks'],notChecked:['external runtime/toolchain availability','dynamic paths beyond the static checks']};
-fs.mkdirSync(path.dirname(prefix),{recursive:true});fs.writeFileSync(prefix+'.json',JSON.stringify(result,null,2)+'\n',{flag:'wx'});fs.writeFileSync(prefix+'.md',`# 独立配置検査 ${runId}\n\n${result.status}。7方式、${files.length}ファイル、${checks.length}参照。\n\n`+findings.map(f=>`- ${f.file??f.profile}: ${f.code} ${f.reference??f.other??''}`).join('\n')+'\n\nローカル参照・ProjectReference・独立specの閉鎖・共有元不使用を検査。外部処理系や動的経路全体の保証ではない。\n',{flag:'wx'});console.log(JSON.stringify(result));process.exitCode=findings.length?1:0;
+fs.mkdirSync(path.dirname(prefix),{recursive:true});writeJson(prefix+'.json',result,outputLayout.scratch);writeLatest(prefix+'.md',`# 独立配置検査 ${runId}\n\n${result.status}。7方式、${files.length}ファイル、${checks.length}参照。\n\n`+findings.map(f=>`- ${f.file??f.profile}: ${f.code} ${f.reference??f.other??''}`).join('\n')+'\n\nローカル参照・ProjectReference・独立specの閉鎖・共有元不使用を検査。外部処理系や動的経路全体の保証ではない。\n',outputLayout.scratch);console.log(JSON.stringify(result));process.exitCode=findings.length?1:0;

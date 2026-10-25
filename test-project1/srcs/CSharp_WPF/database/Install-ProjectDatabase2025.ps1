@@ -10,11 +10,16 @@ param(
     [switch]$PrepareOnly,
     [ValidateSet('student_viewer','student_staff','student_admin')][string]$ApplicationRole='student_admin',
     [ValidateSet(160,170)][int]$CompatibilityLevel=160,
-    [string]$RunId=''
+    [string]$RunId='latest'
 )
 $ErrorActionPreference='Stop'
 if($Mode -ne 'Plan' -and -not $PrepareOnly) { throw 'Deployment stopped: user changed the database policy to one shared SQL Server database. The separate-project DB plan must not execute.' }
 Set-StrictMode -Version Latest
+$methodRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+function Resource([string]$Relative) {
+    if($Relative.StartsWith('native/')) { return Join-Path $methodRoot ('build/database/'+$Relative) }
+    return Join-Path $PSScriptRoot $Relative
+}
 $projectProfile='CSharp_WPF'
 $database='contextbase_test_project1_wpf'
 $sqlFiles=@('001_schema.sql','002_seed.sql','native/000_sqlclr.sql','native/010_student_api.sql','native/020_master_api.sql')
@@ -44,11 +49,11 @@ function Resolve-ProjectSqlcmd([string]$Requested) {
 }
 $inputs=@()
 foreach($relative in $sqlFiles) {
-    $full=Join-Path $PSScriptRoot $relative
+    $full=Resource $relative
     if(-not [IO.File]::Exists($full)) { throw "Missing project resource: $relative" }
     $inputs+= [ordered]@{file=$relative;sha256=(HashBytes ([IO.File]::ReadAllBytes($full)) 'SHA256')}
 }
-$clr=[IO.File]::ReadAllText((Join-Path $PSScriptRoot 'native/000_sqlclr.sql'))
+$clr=[IO.File]::ReadAllText((Resource 'native/000_sqlclr.sql'))
 $hashMatch=[regex]::Match($clr,'sys\.trusted_assemblies WHERE hash=0x([0-9A-Fa-f]{128})\)')
 $hexMatch=[regex]::Match($clr,'CREATE ASSEMBLY StudentNativeNormalization FROM 0x([0-9A-Fa-f]+) WITH')
 if(-not $hashMatch.Success -or -not $hexMatch.Success) { throw 'Exact SQLCLR bytes/hash are required; run the local Build-Native first.' }
@@ -64,11 +69,11 @@ $sqlcmd=Resolve-ProjectSqlcmd $SqlcmdPath
 $toolInfo=[Diagnostics.FileVersionInfo]::GetVersionInfo($sqlcmd)
 $record.sqlcmd=[ordered]@{path=$sqlcmd;productVersion=$toolInfo.ProductVersion;productMajor=$toolInfo.ProductMajorPart;fileVersion=$toolInfo.FileVersion}
 if($Mode -eq 'Plan') { $record | ConvertTo-Json -Depth 8; return }
-if($RunId -notmatch '^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$') { throw 'A safe, new RunId is required for evidence preservation.' }
-$reportDirectory=Join-Path (Split-Path $PSScriptRoot -Parent) 'test-report'
+$reportDirectory=Join-Path $methodRoot 'build/test-results/database-deployment'
+$workDirectory=Join-Path $methodRoot '.tmp/deployment'
+[void][IO.Directory]::CreateDirectory($workDirectory)
 [IO.Directory]::CreateDirectory($reportDirectory) | Out-Null
-if(@(Get-ChildItem -LiteralPath $reportDirectory -Filter ($RunId+'-*')).Count -ne 0) { throw 'Evidence for this RunId already exists; use a different RunId.' }
-$recordPath=Join-Path $reportDirectory ($RunId+'-sql2025-deployment.json')
+$recordPath=Join-Path $reportDirectory 'sql2025-deployment.json'
 $machine=[regex]::Escape($env:COMPUTERNAME)
 if($Server -notmatch ('^(?:(?:tcp|lpc):)?(?:localhost|127\.0\.0\.1|\.|'+$machine+')(?:\\SQLEXPRESS)?(?:,[0-9]+)?$')) { throw 'Only the local explicitly selected SQLEXPRESS endpoint is permitted.' }
 $endpointHost=$Server -replace '^(?:tcp|lpc):','' -replace '(?:\\.*|,.*)$',''
@@ -82,13 +87,13 @@ $step=0
 function Invoke-ProjectSql([string]$Name,[string]$Catalog,[string]$Query,[string]$InputFile='') {
     $script:step++
     if($PrepareOnly) {
-        $preparedFile=Join-Path $reportDirectory ($RunId+'-'+$script:step.ToString('00')+'-'+$Name+'.sql')
+        $preparedFile=Join-Path $workDirectory ($script:step.ToString('00')+'-'+$Name+'.sql')
         if($InputFile -ne '') { $Query=[IO.File]::ReadAllText($InputFile) }
         [IO.File]::WriteAllText($preparedFile,$Query,$encoding)
         $script:record.phases+= [ordered]@{name=$Name;database=$Catalog;executed=$false;sql=[IO.Path]::GetFileName($preparedFile)}
         return
     }
-    $outputFile=Join-Path $reportDirectory ($RunId+'-'+$script:step.ToString('00')+'-'+$Name+'.log')
+    $outputFile=Join-Path $reportDirectory ($script:step.ToString('00')+'-'+$Name+'.log')
     $arguments=@('-S',$Server,'-d',$Catalog,'-E','-N','-b','-r','1','-l','15','-t','120','-x','-X1','-u','-o',$outputFile)
     if($InputFile -ne '') { $arguments+=@('-f','65001','-i',$InputFile) } else { $arguments+=@('-Q',$Query) }
     & $sqlcmd @arguments
@@ -142,11 +147,11 @@ EXEC(N'ALTER DATABASE $(Identifier $database) SET COMPATIBILITY_LEVEL = $Compati
         }
         if($Mode -eq 'DeployNew') {
             foreach($relative in $sqlFiles) {
-                $file=Join-Path $PSScriptRoot $relative
+                $file=Resource $relative
                 if($relative -eq 'native/000_sqlclr.sql') {
                     # Only DB batches are executed; the server-trust registration batch is omitted.
                     $batches=[regex]::Split($clr,'(?im)^GO\s*\r?$')
-                    $file=Join-Path $reportDirectory ($RunId+'-000-database-only.sql')
+                    $file=Join-Path $workDirectory '000-database-only.sql'
                     [IO.File]::WriteAllText($file,($batches | Select-Object -Skip 1) -join "`r`nGO`r`n",$encoding)
                 }
                 Invoke-ProjectSql ('deploy-'+[IO.Path]::GetFileNameWithoutExtension($relative)) $database '' $file

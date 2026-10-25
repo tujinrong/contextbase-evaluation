@@ -9,8 +9,8 @@ Public Function EvidenceSeedUiR6() As String
     Dim confirmation As clsConfirmation, day As String, year As Long, classId As Long, i As Long
     Dim names As Variant, kana As Variant, states As Variant, log As String
     On Error GoTo Failed
-    If InStr(1, CurrentProject.FullName, "\build\20261012-evidence-01-ui-r6\", vbTextCompare) = 0 Then Err.Raise vbObjectError + 210, , "Owned evidence build folder required"
-    If CurrentProject.Name <> "20261012-build-04-access-single-evidence-01-ui-r6.accdb" Then Err.Raise vbObjectError + 210, , "Exact fresh evidence filename required"
+    If InStr(1, CurrentProject.FullName, "\.tmp\evidence\ui-r6\", vbTextCompare) = 0 Then Err.Raise vbObjectError + 210, , "Owned evidence build folder required"
+    If CurrentProject.Name <> "fixture.accdb" Then Err.Raise vbObjectError + 210, , "Exact fresh evidence filename required"
     Set db = CurrentDb()
     If db.Properties("StudentBackendPath") <> "SELF" Then Err.Raise vbObjectError + 210, , "SingleFile SELF required"
     For Each td In db.TableDefs

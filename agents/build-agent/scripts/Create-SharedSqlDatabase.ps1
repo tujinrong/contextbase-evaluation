@@ -7,12 +7,11 @@ param(
 $ErrorActionPreference='Stop'
 if($Execute -and $VerifyOnly){throw 'Choose Execute or VerifyOnly.'}
 $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
-$report=Join-Path $workspace ('test-project1\test-report\'+$RunId)
+$report=Join-Path $workspace 'test-project1\build\shared-db'
 $database='contextbase_test_project1'
 $state=[ordered]@{status='PLAN_ONLY';project='test-project1';server='tcp:127.0.0.1,1433';provider='ODBC Driver 18 for SQL Server';hostnameInCertificate='localhost';database=$database;authentication='Windows only';encrypt=$true;trustServerCertificate=$false;compatibilityLevel=160;schemaStatus='EMPTY_PENDING_SHARED_DATABASE_CONTRACT';existingDatabasePolicy='Refuse creation if present; never drop or overwrite';notRun=@('Shared schema/roles/normalization/locking deployment','Non-sysadmin application authentication and CRUD','Access linked SQL backend migration','IBM i connection and Windows identity mapping')}
 if(-not $Execute -and -not $VerifyOnly){$state | ConvertTo-Json -Depth 6;return}
-if(Test-Path -LiteralPath $report){throw 'Choose a new RunId; historical reports are retained.'}
-New-Item -ItemType Directory -Path $report | Out-Null
+New-Item -ItemType Directory -Path $report -Force | Out-Null
 $state.status='RUNNING';$state.started=(Get-Date).ToString('o');$state.databaseCreated=$false;$state.error=$null
 function Save-State {$state | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $report 'shared-database.json') -Encoding UTF8}
 $cn=New-Object System.Data.Odbc.OdbcConnection('Driver={ODBC Driver 18 for SQL Server};Server=tcp:127.0.0.1,1433;HostnameInCertificate=localhost;Database=master;Trusted_Connection=Yes;Encrypt=Yes;TrustServerCertificate=No;APP=contextbase shared DB provisioning;')

@@ -20,7 +20,7 @@ Cookie/CSRF cookie名はこのホスト専用。既存.NET開発証明書を使�
 
 最大60分で自動終了（--minutes=1～60）。Ctrl+C、またはループバックの /__evidence/stop へPOSTして停止します。既存QA開発証明書の停止確認だけなら `curl.exe -k -X POST https://localhost:7441/__evidence/stop`。この-kを本番接続の設定へ転用しません。停止後もfixtureファイルは保持され、再起動すれば同じ合成データを読めます。
 
-独立テストの実行入口は `dotnet run --project tests/WebContracts.csproj -c Release --no-restore`、Core境界は `dotnet run --project tests/Core/StudentManagement.Core.Tests.csproj -c Release --no-restore`。実行結果は該当実行IDのtest-project1/test-reportを参照してください。SQL Server統合はこのfixtureホストでは実施しません。
+独立テストの実行入口は `dotnet run --project tests/WebContracts.csproj -c Release --no-restore`、Core境界は `dotnet run --project tests/Core/StudentManagement.Core.Tests.csproj -c Release --no-restore`。現在の実行結果は当方式build/test-resultsを参照してください。SQL Server統合はこのfixtureホストでは実施しません。
 
 
 `--ui-scenarios` はブラウザー操作専用の合成シナリオです。同じ不変3学生fixtureからプロセス内だけで24学生を生成し、20件＋4件のページングを確認できます。保存はテスト用の重複確認応答を返し、確認後の保存は意図した入力エラーを返します。業務・fixtureファイル・DBへの書込みはありません。`/__evidence/status` と `X-Evidence-UI-Scenarios` ヘッダーでこの状態を明示します。既定の3学生・保存削除拒否は維持します。

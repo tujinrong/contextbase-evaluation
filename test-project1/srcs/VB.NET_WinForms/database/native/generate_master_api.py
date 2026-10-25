@@ -1,7 +1,11 @@
 """Generate fixed administrator-only class/code procedures using local DB definitions."""
 from pathlib import Path
+import os
 import re
 BASE=Path(__file__).resolve().parent
+OUTPUT=Path(os.environ.get("STUDENT_NATIVE_OUTPUT",str(BASE.parents[1]/"build/database/native"))).resolve()
+if not OUTPUT.is_relative_to(BASE.parents[1]):raise ValueError("Output must remain within this method")
+OUTPUT.mkdir(parents=True,exist_ok=True)
 schema=(BASE.parent/'001_schema.sql').read_text(encoding='utf-8')
 output=['-- VB.NET WinForms-only master maintenance. Caller commits; all operations use the student gate.']
 for kind,keys in [('class',['school_year','grade_code','class_code','class_name','valid_from','valid_to','capacity','display_order','is_active','remarks']),('code',['category_id','code_value','code_name','display_order','is_active','valid_from','valid_to','remarks'])]:
@@ -97,5 +101,5 @@ GO
  replacements={'__KIND__':kind,'__EXTRA__':extra_params,'__INPUT__':input_check,'__DECLARE__':decl,'__TABLE__':table,'__OLD__':old,'__RULES__':class_rules if kind=='class' else code_rules,'__COMPARE__':compare,'__COLS__':','.join(cols),'__VALS__':','.join(vals),'__WRITTEN__':written,'__CREATE_CHANGED__':create_changed,'__UPDATE__':update,'__SETKEY__':setkey,'__UPDATEKEY__':"INSERT @written VALUES(@target_id);" if kind=='class' else ''}
  for a,b in replacements.items():text=text.replace(a,b)
  output.append(text)
-(BASE/'020_master_api.sql').write_text('\n'.join(output),encoding='utf-8')
+(OUTPUT/'020_master_api.sql').write_text('\n'.join(output),encoding='utf-8')
 print('Generated fixed administrator class/code API.')

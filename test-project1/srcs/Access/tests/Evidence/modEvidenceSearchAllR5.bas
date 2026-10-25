@@ -12,8 +12,8 @@ Public Function EvidenceSearchAllR5() As String
     Dim frm As Access.Form, db As DAO.Database, rs As DAO.Recordset, name As Variant
     Dim classId As Long, year As Long, grade As String, gradeName As String
     On Error GoTo Failed
-    If InStr(1, CurrentProject.FullName, "\build\20261012-evidence-01-r5\", vbTextCompare) = 0 Then Err.Raise vbObjectError + 221, , "Disposable R5 test build required"
-    If InStr(1, CurrentProject.Name, "20261012-build-04-access-single-", vbTextCompare) <> 1 Then Err.Raise vbObjectError + 221, , "Test-only filename required"
+    If InStr(1, CurrentProject.FullName, "\.tmp\evidence\", vbTextCompare) = 0 Then Err.Raise vbObjectError + 221, , "Disposable R5 test build required"
+    If CurrentProject.Name <> "fixture.accdb" Then Err.Raise vbObjectError + 221, , "Test-only filename required"
     checks = 0: checkLog = ""
     Set db = CurrentDb()
     Set rs = db.OpenRecordset("SELECT TOP 1 c.class_id,c.school_year,c.grade_code,g.code_name FROM m_class c INNER JOIN m_code g ON c.grade_category=g.category_id AND c.grade_code=g.code_value ORDER BY c.class_id", dbOpenSnapshot)

@@ -156,7 +156,7 @@ static int render_saved_fd=-1;
 static char render_path[2048];
 int32_t STOUTPUTBEGIN(void){
  if(render_output)return -1;
- const char *dir=getenv("STUDENT_RENDER_DIR");if(!dir||!*dir)dir="build";
+ const char *dir=getenv("STUDENT_RENDER_DIR");if(!dir||!*dir)dir=".tmp";
  unsigned char random[16];if(RAND_bytes(random,16)!=1)return -1;
  char hex[33];for(int i=0;i<16;i++)snprintf(hex+i*2,3,"%02x",random[i]);
  int n=snprintf(render_path,sizeof render_path,"%s/render-%s.tmp",dir,hex);

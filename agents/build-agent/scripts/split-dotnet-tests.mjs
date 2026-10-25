@@ -1,3 +1,4 @@
+// LEGACY one-time migration resource. Current generation uses build/ and .tmp/.
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';

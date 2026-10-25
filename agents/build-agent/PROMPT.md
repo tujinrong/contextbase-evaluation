@@ -1,21 +1,11 @@
 # build-agent 実行指示
 
-定義版7.5／2026-10-12。Codexの作業指示として使用する。
+定義版7.6／2026-10-24。[契約](AGENT.md)と全体docsを読み、projectId・工程・方式・許可範囲・入力版を固定する。原仕様は各方式specだけ、spec-eval・他方式の仕様／ソース・過去PASSは実装入力にしない。
 
-`agents/build-agent/AGENT.md`を読んでAG-BUILDとして作業する。実行要求からprojectId・工程・許可範囲を固定し、全体docs/agentsを読んだ後、選択projectの仕様・開発規約を検査する。入力セットの各版とSHA-256をreportに記録する。spec-evalを実装の入力にしない。
+preflight.mjs --project <projectId> --profile <方式ID> --run-id <今回識別>を実行し、build/generation/inputs.json・structure.jsonで構造と入力hashを固定する。構造PASSとは別に意味整合を確認する。構造問題は同固定先へ記録して中断し、未決の業務／DB共有契約を推測補完しない。
 
-生成後は同じ実行IDの `scripts/manifest.mjs` で入力が変わっていないことを確認し、出力ファイルのSHA-256を記録する。入力が変わった場合は新規実行IDで再検査する。既存レポートを上書きしない。
+各方式のソース・DDL・画面・手順は方式内の正本を更新する。中間生成・失敗試行・cache・隔離展開は同方式.tmp/だけで処理する。最終配布物はbuild/、今回の最終検査結果はbuild/test-results/、仕様ID対応と入出力manifestはbuild/generation/の固定名へ更新する。実行ID別フォルダー・backup・archiveで旧生成物を残さず、Git履歴を使う。正式な入力・QA・試験コード・fixtureは保持する。
 
-各方式のプログラムは選択projectの`srcs/方式ID/`へ作成する。仕様の局所バグは、業務判断なしで一意に直せる場合に修正する。仕様構造や共有契約の問題は`report/`に根拠付きで報告して中断し、別Agentへ修正を委ねる。明示的な指示がない限り`agents/build-agent/`と選択project以外を変更しない。
+生成後は今回の入力版で利用可能な検査を実行し、実行コマンド・処理系・終了値・検査範囲・未実施を記録する。失敗・未検証を過去のPASSで補わない。原仕様を含まない逆生成入力は方式内build/source.zipへ更新する。最後に同じproject/profile/run-idでmanifest.mjsを実行し、凍結入力と最終出力のhashを再照合してbuild/generation/outputs.jsonを更新する。
 
-事前検査は次のように実行する。実行IDは毎回変更する。
-
-```powershell
-node agents/build-agent/scripts/preflight.mjs --project test-project1 --run-id 20261012-build-01
-```
-
-終了コード0でも意味上の整合性検査が必要。2なら生成を中断して出力された構造検査報告を読む。生成再開時は別Agentの修正を新しい入力セットとして検査し直す。入力コミットと作業ツリーの差分を区別し、全方式の生成/コンパイル/試験/未実施を最終報告する。
-
-テストを指示された実行では、実行可能な生成プログラムを新入力版でテストし、結果・実行コマンド・生ログ・未実施を選択projectの`test-report/`へ保存する。過去のPASSを新改訂の結果として転記しない。配備初期DBとテスト用fixtureは別資源にする。
-
-仕様は各 `srcs/方式ID/spec/` に完全展開し、コード・DB資源・生成器・ビルド・試験も各方式の内部で完結させる。方式の言語に適したプロジェクトを作り、他方式への相互引用やProjectReferenceを残さない。2026-10-12の追加指示により実行時SQL Server DBは1個を共有する。仕様/コードの横断共通化は引き続き禁止する。Accessは1個のaccdbを最終成果とし、Access/AS400も可能なら共有DBを使う。現行仕様との接続・認証・権限・排他・正規化契約の衝突はreportへ記録して移行を中断し、別Agentの仕様修正を待つ。逆生成のコード入力からspecを除外する。
+全方式集約だけproject/build/、その中間物だけproject/.tmp/を使う。出力先の利用者指定は優先する。コード／仕様の横断共用は引き続き禁止。共有SQL Server、AccessのSQLフロントエンド化、IBM i接続などの未確定契約を配置修正だけで変更しない。生成・build・単体・結合・実機・正式受入・逆生成採点は別状態で報告する。

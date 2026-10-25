@@ -1,19 +1,20 @@
 """Actual portable C build/run plus static RPG inventory; never opens a Db2 database."""
 from pathlib import Path
 import argparse,hashlib,json,subprocess,os,re,platform,datetime
+from output_paths import result_dir
 B=Path(__file__).resolve().parents[1]
-p=argparse.ArgumentParser();p.add_argument('--report-dir',type=Path,default=B/'test-report');p.add_argument('--run-id',required=True);args=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--report-dir',type=Path);p.add_argument('--run-id',default='current');args=p.parse_args()
 if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,79}',args.run_id):raise SystemExit('Safe unique run ID required')
-R=args.report_dir.resolve();R.mkdir(parents=True,exist_ok=True)
-prefix=args.run_id+'-rpg'
-if any(R.glob(prefix+'-*')):raise SystemExit('Existing report is preserved; use another run ID')
+R=result_dir('host',args.report_dir)
+prefix='rpg'
 def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def run(name,command,env=None):
  r=subprocess.run([str(x) for x in command],cwd=B,capture_output=True,text=True,encoding='utf8',errors='replace',env=env)
  (R/f'{prefix}-{name}.log').write_text('COMMAND '+subprocess.list2cmdline([str(x) for x in command])+'\nEXIT '+str(r.returncode)+'\nSTDOUT\n'+r.stdout+'\nSTDERR\n'+r.stderr,'utf8')
  return dict(command=[str(x) for x in command],exitCode=r.returncode,stdout=r.stdout,stderr=r.stderr)
-zig=next((B/'build/toolchain/zig').rglob('zig.exe'))
-icu=B/'build/toolchain/icu';exe=B/'build/STUNICODE_TEST.exe'
+os.environ['ZIG_GLOBAL_CACHE_DIR']=str(B/'.tmp/cache/zig-global');os.environ['ZIG_LOCAL_CACHE_DIR']=str(B/'.tmp/cache/zig-local')
+zig=next((B/'.tmp/toolchain/zig').rglob('zig.exe'))
+icu=B/'.tmp/toolchain/icu';exe=B/'.tmp/host/STUNICODE_TEST.exe';exe.parent.mkdir(parents=True,exist_ok=True)
 cmd=[zig,'cc','-std=c11','-Wall','-Wextra','-Werror','-Wno-deprecated-declarations','-target','x86_64-windows-gnu','-I'+str(icu/'include'),B/'c/STUNICODE.c',B/'c/STUINPUT.c',B/'c/STUSTATE.c',B/'c/STUNICODE_TEST.c',icu/'lib64/icuuc.lib','-o',exe]
 compile=run('c-compile',cmd)
 environment=os.environ.copy();environment['PATH']=str(icu/'bin64')+os.pathsep+environment['PATH']
@@ -75,14 +76,14 @@ for path in sorted((B/'spec').rglob('*')):
   meta=re.search(r'<!-- spec-meta: (.*?) -->',path.read_text('utf8')) if path.suffix=='.md' else None
   spec_inputs.append(dict(file=str(path.relative_to(B)).replace('\\','/'),sha256=digest(path),bytes=path.stat().st_size,version=json.loads(meta.group(1))['version'] if meta else None))
 versions=sorted({x['version'] for x in spec_inputs if x['version']})
-(B/'metadata/spec-inputs.json').write_text(json.dumps(dict(versions=versions,files=spec_inputs),ensure_ascii=False,indent=2)+'\n','utf8')
-record=dict(project='AS400_RPG',recordedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),originPreIsolationManifest='20261012-build-06-inputs.json',currentInput='metadata/spec-inputs.json',inputVersions=versions,host=platform.platform(),toolchain=json.loads((B/'build/toolchain/acquisition.json').read_text('utf8')),compile=compile,execution=execute,cCases=[dict(id=x[1],passed=x[0]=='PASS') for x in cases],cTests=len(cases),cFailures=sum(x[0]=='FAIL' for x in cases),staticChecks=checks,staticFailures=failures,skipped=[dict(id=x,status='NOT_RUN',reason='IBM i environment/toolchain/Db2/5250 unavailable') for x in ['IBM_i_SQLRPGLE_compile','IBM_i_ILE_C_compile','DDS_compile','CL_compile_and_bind','Db2_DDL_seed_CRUD_audit_rollback','5250_UI_and_CCSID_display','two_jobs_conflict_and_commit_unknown','approved_IFS_positive_read']],sourceHashes={str(x.relative_to(B)).replace('\\','/'):digest(x) for x in sources+[B/'c/STUNICODE.c',B/'c/STUINPUT.c',B/'c/STUSTATE.c',B/'c/STUNICODE_TEST.c']},scope='Static checks do not prove RPG syntax, bind, DB behavior or specification compliance.')
+(B/'build/input-manifest.json').write_text(json.dumps(dict(versions=versions,files=spec_inputs),ensure_ascii=False,indent=2)+'\n','utf8')
+record=dict(project='AS400_RPG',recordedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),originPreIsolationManifest='20261012-build-06-inputs.json',currentInput='build/input-manifest.json',inputVersions=versions,host=platform.platform(),toolchain=json.loads((B/'.tmp/toolchain/acquisition.json').read_text('utf8')),compile=compile,execution=execute,cCases=[dict(id=x[1],passed=x[0]=='PASS') for x in cases],cTests=len(cases),cFailures=sum(x[0]=='FAIL' for x in cases),staticChecks=checks,staticFailures=failures,skipped=[dict(id=x,status='NOT_RUN',reason='IBM i environment/toolchain/Db2/5250 unavailable') for x in ['IBM_i_SQLRPGLE_compile','IBM_i_ILE_C_compile','DDS_compile','CL_compile_and_bind','Db2_DDL_seed_CRUD_audit_rollback','5250_UI_and_CCSID_display','two_jobs_conflict_and_commit_unknown','approved_IFS_positive_read']],sourceHashes={str(x.relative_to(B)).replace('\\','/'):digest(x) for x in sources+[B/'c/STUNICODE.c',B/'c/STUINPUT.c',B/'c/STUSTATE.c',B/'c/STUNICODE_TEST.c']},scope='Static checks do not prove RPG syntax, bind, DB behavior or specification compliance.')
 record['hostSucceeded']=compile['exitCode']==0 and execute['exitCode']==0 and len(cases)==35 and not record['cFailures']
-record['currentInput']='metadata/spec-inputs.json (profile-local current hashes)'
+record['currentInput']='build/input-manifest.json (profile-local current hashes)'
 record['inputVersions']=versions
 record['staticSucceeded']=not failures
 (R/f'{prefix}-results.json').write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n','utf8')
 (R/f'{prefix}-static.log').write_text('\n'.join(('PASS ' if x['passed'] else 'FAIL ')+x['id']+' '+str(x['detail']) for x in checks)+'\n','utf8')
-(B/'metadata/test-status.json').write_text(json.dumps({k:record[k] for k in ['recordedAt','currentInput','hostSucceeded','cTests','cFailures','staticSucceeded','staticFailures','skipped','scope']},ensure_ascii=False,indent=2)+'\n','utf8')
+(R/'test-status.json').write_text(json.dumps({k:record[k] for k in ['recordedAt','currentInput','hostSucceeded','cTests','cFailures','staticSucceeded','staticFailures','skipped','scope']},ensure_ascii=False,indent=2)+'\n','utf8')
 print(json.dumps(dict(cTests=record['cTests'],cFailures=record['cFailures'],hostSucceeded=record['hostSucceeded'],staticChecks=len(checks),staticFailures=failures,reportDirectory=str(R)),ensure_ascii=False))
 raise SystemExit(0 if record['hostSucceeded'] and record['staticSucceeded'] else 1)

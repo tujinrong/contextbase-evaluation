@@ -5,22 +5,22 @@ No database connection is made; rendering fixtures do not prove workflow/state I
 from pathlib import Path
 import argparse,subprocess,os,json,hashlib,re,urllib.parse
 from html.parser import HTMLParser
-from evidence import compiled_inputs,binary_hashes
+from evidence import compiled_inputs,binary_hashes,binary_path
+from output_paths import result_dir
 B=Path(__file__).resolve().parents[1]
-p=argparse.ArgumentParser();p.add_argument('--report-dir',type=Path,required=True);p.add_argument('--run-id',required=True);a=p.parse_args();R=a.report_dir.resolve();R.mkdir(parents=True,exist_ok=True)
-dest=R/(a.run_id+'-compact.json')
-if dest.exists():raise SystemExit('Existing attempt is preserved')
-e=json.loads((B/'build/host/build-evidence.json').read_text('utf8'))
+p=argparse.ArgumentParser();p.add_argument('--report-dir',type=Path);p.add_argument('--run-id',default='current');a=p.parse_args();R=result_dir('compact',a.report_dir)
+dest=R/'compact.json'
+e=json.loads((B/'.tmp/host/build-evidence.json').read_text('utf8'))
 if not e.get('succeeded') or e.get('compiledInputs')!=compiled_inputs() or e.get('binaries')!=binary_hashes():raise SystemExit('Current source/binary mismatch')
-env=os.environ.copy();env['PATH']=str(B/'build/toolchain/msys2/ucrt64/bin')+os.pathsep+env.get('PATH','');env['COB_CONFIG_DIR']=str(B/'build/toolchain/msys2/ucrt64/share/gnucobol/config')
+env=os.environ.copy();env['PATH']=str(B/'.tmp/toolchain/msys2/ucrt64/bin')+os.pathsep+env.get('PATH','');env['COB_CONFIG_DIR']=str(B/'.tmp/toolchain/msys2/ucrt64/share/gnucobol/config')
 checks=[];commands=[]
 def check(id,ok,detail=''):checks.append(dict(id=id,passed=bool(ok),detail=detail))
 def run(id,exe,args=(),body=None,extra=None):
- command=[str(B/'build/host'/exe),*args];en=env.copy()
+ command=[str(binary_path(exe)),*args];en=env.copy()
  if body is not None:en.update(REQUEST_METHOD='POST',CONTENT_TYPE='application/x-www-form-urlencoded',CONTENT_LENGTH=str(len(body)),QUERY_STRING='')
  en.update(extra or {})
  x=subprocess.run(command,input=body,env=en,cwd=B,capture_output=True);out=x.stdout.decode('utf8','replace');err=x.stderr.decode('utf8','replace')
- (R/(a.run_id+'-'+id+'.log')).write_text('COMMAND '+subprocess.list2cmdline(command)+'\nBODY '+repr(body)+'\nEXIT '+str(x.returncode)+'\nSTDOUT\n'+out+'\nSTDERR\n'+err,'utf8')
+ (R/(id+'.log')).write_text('COMMAND '+subprocess.list2cmdline(command)+'\nBODY '+repr(body)+'\nEXIT '+str(x.returncode)+'\nSTDOUT\n'+out+'\nSTDERR\n'+err,'utf8')
  commands.append(dict(id=id,command=command,exitCode=x.returncode));return x.returncode,out
 for key in ['studentName','studentNameKana','schoolYear','gradeCode','unassignedOnly','prefectureCode','phoneNumber','admissionFrom','admissionTo','status01','status02','status03','status04','isDeleted','unknown']:
  body=urllib.parse.urlencode(dict(action='SEARCH',**{key:''})).encode();rc,out=run('reject-'+key,'boundary-probe.exe',['http'],body);check('reject-empty-'+key,rc==0 and out.strip()=='-2')
@@ -50,9 +50,9 @@ class Page(HTMLParser):
 pages={}
 for mode in ['search','edit','delete','duplicate','dup-error','delete-error']:
  rc,out=run('render-'+mode,'render-probe.exe',[mode]);check('render-'+mode,rc==0 and ('Status: 422' if mode.endswith('error') else 'Status: 200') in out)
- html=out.split('\r\n\r\n',1)[-1] if '\r\n\r\n' in out else out.split('\n\n',1)[-1];(R/(a.run_id+'-'+mode+'.html')).write_text(html,'utf8');page=Page();page.feed(html);pages[mode]=page
+ html=out.split('\r\n\r\n',1)[-1] if '\r\n\r\n' in out else out.split('\n\n',1)[-1];(R/(mode+'.html')).write_text(html,'utf8');page=Page();page.feed(html);pages[mode]=page
 for mode in ['dup-error','delete-error']:
- page=pages[mode];html=(R/(a.run_id+'-'+mode+'.html')).read_text('utf8');check('reason-error-'+mode,page.dialog and not page.editor and 'x'*61 in html and [b.get('value') for b in page.buttons]==['CANCEL','CONFIRM'] and 'autofocus' in page.buttons[0])
+ page=pages[mode];html=(R/(mode+'.html')).read_text('utf8');check('reason-error-'+mode,page.dialog and not page.editor and 'x'*61 in html and [b.get('value') for b in page.buttons]==['CANCEL','CONFIRM'] and 'autofocus' in page.buttons[0])
 check('post-options-navigation',all('formmethod' not in b for b in pages['search'].buttons) and any('navigation=NEW' in b.get('formaction','') and b.get('value')=='OPTIONS' for b in pages['search'].buttons))
 check('no-pii-in-form-urls',all(not ({'name','studentNo','statusCode','studentName'}&set(urllib.parse.parse_qs(urllib.parse.urlsplit(url).query))) for url in pages['search'].urls))
 check('editor-candidate-options',any(b.get('value')=='OPTIONS' for b in pages['edit'].buttons) and all(b.get('value')!='EDITOPTIONS' for b in pages['edit'].buttons))

@@ -1,3 +1,4 @@
+// LEGACY one-time migration resource. Current generation uses build/ and .tmp/.
 // One-time materialization of seven independent specification packages.
 // Every link in each result resolves within that package. No spec-eval input.
 import fs from 'node:fs';

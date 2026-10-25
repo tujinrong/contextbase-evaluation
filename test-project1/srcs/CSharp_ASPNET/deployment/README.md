@@ -28,7 +28,7 @@ python ./deployment/Verify-AzureRemoteDatabase.py
 ./deployment/Get-AzureWebLogin.ps1 -CopyPassword       # 复制网页登录密码
 ```
 
-密码由随机数生成，保存在 build/azure-free-state 下的 Windows DPAPI 加密凭据文件中，仅当前 Windows 用户和机器可以解密；不提交 Git，不包含在发布包内。Azure 的连接字符串只配置到该新应用。需要从其他电脑或 SSMS 连接时，在该 SQL Server 的网络设置中添加自己的公网 IP；不要开放所有 IP。部署脚本只临时开放部署来源，并在 finally 中移除该规则。长期规则仅允许应用出站 IP；计划迁移或出站地址变化后需重新配置。
+密码由随机数生成，保存在 .tmp/deployment-state 下的 Windows DPAPI 加密凭据文件中，仅当前 Windows 用户和机器可以解密；不提交 Git，不包含在发布包内。Azure 的连接字符串只配置到该新应用。需要从其他电脑或 SSMS 连接时，在该 SQL Server 的网络设置中添加自己的公网 IP；不要开放所有 IP。部署脚本只临时开放部署来源，并在 finally 中移除该规则。长期规则仅允许应用出站 IP；计划迁移或出站地址变化后需重新配置。
 
 ## SQL 部署适配与验证范围
 
@@ -46,6 +46,6 @@ Production 模式下未开启 evaluation 登录，/health 返回200。/health �
 
 匿名访问业务页时跳转登录；API及未认证的写入请求仍返回401。登录与退出均要求CSRF令牌。会话Cookie为Secure、HttpOnly、SameSite=Strict，闲置30分钟失效；每次登录产生新会话ID。连续失败5次后在当前进程内限制登录5分钟，拦截请求不延长限制；F1回收会清除此失败计数。密码、用户名、角色或Enabled改变后，既有本地登录Cookie会在下次请求时失效。运行 Configure-AzureWebLogin.ps1 -ResetPassword 可生成新密码并更新服务器；普通重配也会重新加盐并使既有登录失效。
 
-从应用目录执行 Get-AzureWebLogin.ps1 -ShowPassword 查看凭据；其Windows DPAPI文件位于 build/azure-free-state/web-login.credential.xml，仅当前Windows用户/机器可读取。密码重置需Azure CLI已登录并有该应用配置权限。验证脚本 Verify-AzureWebLogin.py 从 CB_WEB_LOGIN_PASSWORD 环境变量读取密码，用真实Chromium测试登录、错误密码、查询与退出；不记录请求正文、浏览器trace或密码。
+从应用目录执行 Get-AzureWebLogin.ps1 -ShowPassword 查看凭据；其Windows DPAPI文件位于 .tmp/deployment-state/web-login.credential.xml，仅当前Windows用户/机器可读取。密码重置需Azure CLI已登录并有该应用配置权限。验证脚本 Verify-AzureWebLogin.py 从 CB_WEB_LOGIN_PASSWORD 环境变量读取密码，用真实Chromium测试登录、错误密码、查询与退出；不记录请求正文、浏览器trace或密码。
 
 重置密码先保存为web-login.pending.credential.xml，Azure配置成功后才替换当前本机凭据。若更新失败或结果不明确，原凭据和待生效凭据均保留；再次运行Configure-AzureWebLogin.ps1会重试同一待生效密码。

@@ -3,9 +3,9 @@ import {chromium,expect} from '@playwright/test';
 import {createServer} from 'vite';
 import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const run=process.argv[2];if(!/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(run??''))throw Error('Pass unique run ID.');
-const report=path.resolve(process.argv[3]??path.join(root,'test-report'));fs.mkdirSync(report,{recursive:true});
-const prefix=path.join(report,run+'-vue-browser');if(fs.existsSync(prefix+'.json'))throw Error('Report already exists.');
+const run=process.argv[2]??'latest'; // Legacy ID is metadata only; output names are fixed.
+const report=path.resolve(process.argv[3]??path.join(root,'../build/test-results/browser'));fs.mkdirSync(report,{recursive:true});
+const prefix=path.join(report,'vue-browser');
 const checks=[],requests=[],errors=[],geometry=[];let failure=null;
 const check=(ok,name)=>{if(!ok)throw Error(name);checks.push(name);};
 const server=await createServer({root,server:{host:'127.0.0.1',port:0,strictPort:true},logLevel:'error'});await server.listen();
@@ -67,4 +67,4 @@ try{
  await page.getByRole('button',{name:'検索',exact:true}).click();await page.getByRole('button',{name:'参照',exact:true}).first().click();await expect(page.locator('#REG-009')).toBeVisible();check(!await page.locator('#REG-009').isEditable(),'viewer field read only');await page.locator('#REG-009').focus();check(await page.locator('#REG-009').evaluate(e=>e===document.activeElement),'viewer can focus full-value text');check(await page.getByRole('button',{name:'更新',exact:true}).count()===0&&await page.getByRole('button',{name:'論理削除',exact:true}).count()===0,'viewer has no update/delete actions');await page.screenshot({path:prefix+'-viewer.png',fullPage:true});
  check(requests.filter(r=>r.method!=='GET').every(r=>r.csrf==='fixture-csrf'&&/^[0-9a-f]{64}$/.test(r.tab)),'API calls preserve CSRF and tab identity');check(errors.length===0,'no JS runtime errors');
 }catch(e){failure=String(e.stack||e);process.exitCode=1;await page.screenshot({path:prefix+'-failure.png',fullPage:true});}
-finally{const browserVersion=browser.version();await browser.close();await server.close();fs.writeFileSync(prefix+'.raw.log',checks.map(c=>'PASS '+c).join('\n')+'\n'+(failure||'PASS all workflow checks')+'\n',{flag:'wx'});fs.writeFileSync(prefix+'.json',JSON.stringify({status:failure?'FAILED':'PASSED',runId:run,checks:checks.length,assertions:checks,browserVersion,geometry,failure,scope:'real Vue/Edge with synthetic API; SQL/auth deployment not tested'},null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({status:failure?'FAILED':'PASSED',checks:checks.length,report:prefix+'.json',failure}));}
+finally{const browserVersion=browser.version();await browser.close();await server.close();fs.writeFileSync(prefix+'.raw.log',checks.map(c=>'PASS '+c).join('\n')+'\n'+(failure||'PASS all workflow checks')+'\n',{flag:'w'});fs.writeFileSync(prefix+'.json',JSON.stringify({status:failure?'FAILED':'PASSED',runId:run,checks:checks.length,assertions:checks,browserVersion,geometry,failure,scope:'real Vue/Edge with synthetic API; SQL/auth deployment not tested'},null,2)+'\n',{flag:'w'});console.log(JSON.stringify({status:failure?'FAILED':'PASSED',checks:checks.length,report:prefix+'.json',failure}));}

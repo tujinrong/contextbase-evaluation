@@ -6,17 +6,17 @@ param(
     [Parameter(Mandatory=$true)][string]$ReportDirectory
 )
 $ErrorActionPreference='Stop'
+. (Join-Path $PSScriptRoot '../../tools/GeneratedPaths.ps1')
 $profileRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
-$ownedBuild=Join-Path $profileRoot 'build'
-$reportRoot=[IO.Path]::GetFullPath($ReportDirectory)
-$frontendPath=[IO.Path]::GetFullPath($Frontend)
-$backendPath=[IO.Path]::GetFullPath($Backend)
+$ownedBuild=Join-Path $profileRoot '.tmp'
+$reportRoot=Resolve-AccessGeneratedPath $ReportDirectory '.tmp'
+$frontendPath=Resolve-AccessGeneratedPath $Frontend '.tmp'
+$backendPath=Resolve-AccessGeneratedPath $Backend '.tmp'
 foreach($path in @($frontendPath,$backendPath)) {
-    if(-not $path.StartsWith($ownedBuild+'\',[StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetExtension($path) -ne '.accdb') {throw 'Disposable files under Access/build required.'}
+    if(-not $path.StartsWith($ownedBuild+'\',[StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetExtension($path) -ne '.accdb') {throw 'Disposable files under Access/.tmp required.'}
 }
 New-Item -ItemType Directory -Path $reportRoot -Force|Out-Null
-$reportPath=Join-Path $reportRoot ($RunId+'.json')
-if(Test-Path -LiteralPath $reportPath) {throw 'Historical report exists; choose a new RunId.'}
+$reportPath=Join-Path $reportRoot 'format-initial-state.json'
 $checks=New-Object 'Collections.Generic.List[object]'
 $files=New-Object 'Collections.Generic.List[object]'
 $defaults=[ordered]@{}

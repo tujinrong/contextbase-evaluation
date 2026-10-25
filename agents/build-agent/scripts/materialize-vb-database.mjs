@@ -1,3 +1,4 @@
+// LEGACY one-time migration resource. Current generation uses build/ and .tmp/.
 // One-time materialization. The VB database then has its own source and generator, with no links back.
 import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../..');

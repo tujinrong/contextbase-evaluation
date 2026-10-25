@@ -6,7 +6,7 @@ $server = 'sql-contextbase-student-8a14b4'
 $database = 'contextbase_test_project1_mvc'
 $app = 'app-contextbase-student-8a14b4'
 $plan = "/subscriptions/$subscription/resourceGroups/mcterp/providers/Microsoft.Web/serverfarms/ASP-mcterp-89b6"
-$stateDirectory = Join-Path $PSScriptRoot '../build/azure-free-state'
+$stateDirectory = Join-Path $PSScriptRoot '../.tmp/deployment-state'
 function Invoke-AzureJson([string[]]$Arguments) {
     $result = & az @Arguments --subscription $subscription --only-show-errors --output json
     if ($LASTEXITCODE -ne 0) { throw "Azure operation failed: $($Arguments[0..2] -join ' '). No paid fallback is permitted." }

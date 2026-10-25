@@ -1,9 +1,9 @@
 """Current source/DDS contract checks. Never claims RPG compilation or 5250 execution."""
 from pathlib import Path
 import argparse,json,re,hashlib,unicodedata
+from output_paths import result_dir
 B=Path(__file__).resolve().parents[1]
-p=argparse.ArgumentParser();p.add_argument('--report-dir',type=Path,required=True);p.add_argument('--run-id',required=True);a=p.parse_args();R=a.report_dir.resolve();R.mkdir(parents=True,exist_ok=True);dest=R/(a.run_id+'-compact-static.json')
-if dest.exists():raise SystemExit('Existing attempt is preserved')
+p=argparse.ArgumentParser();p.add_argument('--report-dir',type=Path);p.add_argument('--run-id',default='current');a=p.parse_args();R=result_dir('compact',a.report_dir);dest=R/'compact-static.json'
 checks=[]
 def check(id,ok,detail=''):checks.append(dict(id=id,passed=bool(ok),detail=detail))
 def text(path):return (B/path).read_text('utf8')

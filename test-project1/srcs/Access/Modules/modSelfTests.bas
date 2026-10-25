@@ -352,7 +352,7 @@ Private Sub CheckFixture()
     Dim path As String
     path = CurrentDb.Properties("StudentBackendPath")
     If path = "SELF" Then path = CurrentProject.FullName
-    If InStr(1, path, CurrentProject.Path & "\", vbTextCompare) <> 1 Or InStr(1, path, "\Access\build\", vbTextCompare) = 0 Then Err.Raise vbObjectError + 191, , "Disposable Access build fixture required"
+    If InStr(1, path, CurrentProject.Path & "\", vbTextCompare) <> 1 Or InStr(1, path, "\Access\.tmp\", vbTextCompare) = 0 Then Err.Raise vbObjectError + 191, , "Disposable Access .tmp fixture required"
     If Not CurrentDb.Properties("StudentTestFixture") Then Err.Raise vbObjectError + 191, , "Generated test-only fixture required"
 End Sub
 Private Sub FixtureRole(ByVal role As String)

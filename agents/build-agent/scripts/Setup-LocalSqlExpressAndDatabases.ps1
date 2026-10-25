@@ -6,8 +6,8 @@ param(
 $ErrorActionPreference='Stop'
 $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
 $project=Join-Path $workspace 'test-project1'
-$work=Join-Path $project 'build\sqlserver-20261012'
-$reports=Join-Path $project ('test-report\'+$RunId)
+$work=Join-Path $project '.tmp\sqlserver-setup'
+$reports=Join-Path $project 'build\sql-setup'
 $administrator=[Security.Principal.WindowsIdentity]::GetCurrent().Name
 $plan=[ordered]@{
     status='PLAN_ONLY';project='test-project1';runId=$RunId;server='tcp:127.0.0.1,1433'
@@ -24,8 +24,7 @@ $plan=[ordered]@{
 if(-not $Execute){$plan | ConvertTo-Json -Depth 6;return}
 $principal=New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if(-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)){throw 'Use Start-LocalSqlExpressSetup.ps1 for Windows administrator approval.'}
-if(Test-Path -LiteralPath $reports){throw 'Choose a new RunId; reports must not be overwritten.'}
-New-Item -ItemType Directory -Path $reports | Out-Null
+New-Item -ItemType Directory -Path $reports -Force | Out-Null
 $plan.status='RUNNING';$plan.started=(Get-Date).ToString('o');$plan.completed=@();$plan.error=$null
 function Save-Run {$plan | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $reports 'setup.json') -Encoding UTF8}
 try {
@@ -40,7 +39,7 @@ try {
     $global:LASTEXITCODE=0
     & (Join-Path $PSScriptRoot 'Create-SharedSqlDatabase.ps1') -RunId $dbRun -Execute
     if($global:LASTEXITCODE -ne 0){throw 'Shared DB creation or verification failed.'}
-    $dbReport=Join-Path $project ('test-report\'+$dbRun+'\shared-database.json')
+    $dbReport=Join-Path $project 'build\shared-db\shared-database.json'
     $db=Get-Content -LiteralPath $dbReport -Raw | ConvertFrom-Json
     if($db.status -ne 'INFRASTRUCTURE_PASSED_MIGRATION_BLOCKED'){throw 'Shared DB verification did not pass.'}
     $plan.sharedDatabaseReport=$dbReport

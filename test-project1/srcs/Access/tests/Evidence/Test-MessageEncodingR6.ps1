@@ -6,14 +6,14 @@ param(
  [Parameter(Mandatory=$true)][ValidateSet('Before','After')][string]$Phase
 )
 $ErrorActionPreference='Stop'
+. (Join-Path $PSScriptRoot '../../tools/GeneratedPaths.ps1')
 $profileRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
-$ownedBuild=Join-Path $profileRoot 'build'
-$fixture=[IO.Path]::GetFullPath($Database)
-if(-not $fixture.StartsWith($ownedBuild+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Disposable Access/build copy required.'}
-$report=[IO.Path]::GetFullPath($ReportDirectory)
+$ownedBuild=Join-Path $profileRoot '.tmp'
+$fixture=Resolve-AccessGeneratedPath $Database '.tmp'
+if(-not $fixture.StartsWith($ownedBuild+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'Disposable Access/.tmp copy required.'}
+$report=Resolve-AccessGeneratedPath $ReportDirectory '.tmp'
 New-Item -ItemType Directory -Path $report -Force|Out-Null
-$outputPath=Join-Path $report ($RunId+'.json')
-if(Test-Path -LiteralPath $outputPath){throw 'Historical report exists; choose a new RunId.'}
+$outputPath=Join-Path $report 'message-encoding.json'
 Add-Type -TypeDefinition 'using System.Runtime.InteropServices;public static class AccessVbaCodePage{[DllImport("kernel32.dll")]public static extern uint GetACP();}'
 $ansiCodePage=[int][AccessVbaCodePage]::GetACP()
 $encoding=[Text.Encoding]::GetEncoding($ansiCodePage,[Text.EncoderFallback]::ExceptionFallback,[Text.DecoderFallback]::ExceptionFallback)
@@ -59,7 +59,7 @@ try {
  foreach($name in @('modMessages','modCandidates','modConfirmationForms')) {
   $component=$access.VBE.ActiveVBProject.VBComponents.Item($name)
   $code=$component.CodeModule.Lines(1,$component.CodeModule.CountOfLines)
-  $codePath=Join-Path $report ($RunId+'-'+$name+'.vba.txt')
+  $codePath=Join-Path $report ($name+'.vba.txt')
   [IO.File]::WriteAllText($codePath,$code,(New-Object Text.UTF8Encoding($true)))
   $modules+=[ordered]@{name=$name;runtimeSource=$codePath;sha256=(Get-FileHash -LiteralPath $codePath -Algorithm SHA256).Hash}
   [Runtime.InteropServices.Marshal]::FinalReleaseComObject($component)|Out-Null;$component=$null

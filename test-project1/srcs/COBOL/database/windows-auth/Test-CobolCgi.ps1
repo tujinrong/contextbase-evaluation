@@ -8,12 +8,14 @@ $ErrorActionPreference='Stop'
 $root=(Get-Item -LiteralPath (Join-Path $PSScriptRoot '../..')).FullName
 if (-not $Execute) { Write-Output 'PLAN_ONLY: compiled COBOL CGI INITIAL GET; writes encrypted technical search state, never creates a class/student/audit sample.';return }
 if (-not [Environment]::Is64BitProcess) { throw '64-bit Windows PowerShell is required.' }
-if ([string]::IsNullOrWhiteSpace($ReportDirectory)) { $ReportDirectory=Join-Path $root 'test-report' }
+if ([string]::IsNullOrWhiteSpace($ReportDirectory)) { $ReportDirectory=Join-Path $root 'build/test-results/sql-smoke' }
+$ReportDirectory=[IO.Path]::GetFullPath($ReportDirectory)
+$allowedReportRoots=@((Join-Path $root 'build/test-results'),(Join-Path $root '.tmp'))
+if(-not @($allowedReportRoots|Where-Object{$ReportDirectory.StartsWith([IO.Path]::GetFullPath($_)+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)}).Count){throw 'Results must remain in this method build/test-results or .tmp.'}
 [void][IO.Directory]::CreateDirectory($ReportDirectory)
-$prefix=Join-Path $ReportDirectory $RunId
-foreach($suffix in @('.json','.raw.log')) { if (Test-Path -LiteralPath ($prefix+$suffix)) { throw 'Existing evidence must not be overwritten.' } }
-$binary=Join-Path $root 'build/host/student.cgi.exe'
-$buildEvidence=Get-Content -LiteralPath (Join-Path $root 'build/host/build-evidence.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+$prefix=Join-Path $ReportDirectory 'sql-smoke'
+$binary=Join-Path $root 'build/app/windows/student.cgi.exe'
+$buildEvidence=Get-Content -LiteralPath (Join-Path $root '.tmp/host/build-evidence.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 if (-not $buildEvidence.succeeded) { throw 'No successful compiled source evidence.' }
 foreach($entry in $buildEvidence.compiledInputs.PSObject.Properties) {
     if ((Get-FileHash -LiteralPath (Join-Path $root $entry.Name) -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value) { throw "Compiled input mismatch: $($entry.Name)" }
@@ -25,8 +27,8 @@ $start.FileName=$binary; $start.WorkingDirectory=$root; $start.UseShellExecute=$
 $start.RedirectStandardOutput=$true; $start.RedirectStandardError=$true
 $start.StandardOutputEncoding=New-Object Text.UTF8Encoding $false
 $start.StandardErrorEncoding=New-Object Text.UTF8Encoding $false
-$start.EnvironmentVariables['PATH']=(Join-Path $root 'build/toolchain/msys2/ucrt64/bin')+';'+$env:PATH
-$start.EnvironmentVariables['COB_CONFIG_DIR']='build/toolchain/msys2/ucrt64/share/gnucobol/config'
+$start.EnvironmentVariables['PATH']=(Join-Path $root '.tmp/toolchain/msys2/ucrt64/bin')+';'+$env:PATH
+$start.EnvironmentVariables['COB_CONFIG_DIR']='.tmp/toolchain/msys2/ucrt64/share/gnucobol/config'
 $start.EnvironmentVariables['STUDENT_ODBC_DSN']=$DsnName
 $start.EnvironmentVariables['REMOTE_USER']='cobol-local-smoke'
 $start.EnvironmentVariables['ST_LOGIN_SESSION_ID']=[Guid]::NewGuid().ToString('N')

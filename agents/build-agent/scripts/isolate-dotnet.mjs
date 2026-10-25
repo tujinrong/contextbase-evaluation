@@ -1,3 +1,4 @@
+// LEGACY one-time migration resource. Current generation uses build/ and .tmp/.
 // Materialize project-local .NET dependencies. The resulting projects do not
 // need this orchestration script or any sibling source directory to build.
 import fs from 'node:fs';

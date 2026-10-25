@@ -1,0 +1,15 @@
+<Project>
+  <!-- Each method remains independently buildable; these are method-local paths. -->
+  <PropertyGroup>
+    <MethodRoot>$(MSBuildThisFileDirectory)</MethodRoot>
+    <MethodProjectRelative>$([MSBuild]::MakeRelative('$(MethodRoot)', '$(MSBuildProjectDirectory)'))</MethodProjectRelative>
+    <BaseIntermediateOutputPath>$(MethodRoot).tmp/dotnet/obj/$(MethodProjectRelative)/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+    <BaseOutputPath>$(MethodRoot).tmp/dotnet/bin/$(MethodProjectRelative)/$(MSBuildProjectName)/</BaseOutputPath>
+    <RestorePackagesPath>$(MethodRoot).tmp/nuget/packages/</RestorePackagesPath>
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(MethodRoot).tmp/**;$(MethodRoot)build/**;**/bin/**;**/obj/**;**/.vs/**;**/node_modules/**</DefaultItemExcludes>
+    <DefaultExcludesInProjectFolder>$(DefaultExcludesInProjectFolder);**/.tmp/**;**/build/**;**/bin/**;**/obj/**;**/.vs/**;**/node_modules/**</DefaultExcludesInProjectFolder>
+    <!-- Preserve the existing locked Azure deployment runtime without changing dependency versions. -->
+    <RuntimeIdentifiers Condition="'$(MSBuildProjectName)' == 'StudentManagement.Web'">win-x86</RuntimeIdentifiers>
+  </PropertyGroup>
+</Project>

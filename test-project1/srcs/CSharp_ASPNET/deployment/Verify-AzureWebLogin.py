@@ -6,7 +6,7 @@ import sys
 from playwright.sync_api import sync_playwright
 
 BASE = 'https://app-contextbase-student-8a14b4.azurewebsites.net'
-output = Path(sys.argv[1]).resolve()
+output = Path(sys.argv[1]).resolve() if len(sys.argv)>1 else Path(__file__).resolve().parents[1]/'build/test-results/azure-login'
 output.mkdir(parents=True, exist_ok=True)
 password = os.environ['CB_WEB_LOGIN_PASSWORD']
 checks = []

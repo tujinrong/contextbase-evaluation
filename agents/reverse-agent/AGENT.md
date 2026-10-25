@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-REVERSE","version":"8.0","path":"agents/reverse-agent/AGENT.md","sheets":[{"heading":"役割と対象","kind":"GRID","sheet":"01_役割と対象"},{"heading":"内部Agentと共通制御","kind":"LIST","sheet":"02_内部Agent","key":["役割"]},{"heading":"共通request","kind":"LIST","sheet":"03_request","key":["項目"]},{"heading":"候補と受入","kind":"GRID","sheet":"04_候補と受入"},{"heading":"互換性と完了","kind":"GRID","sheet":"05_互換性と完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-REVERSE","version":"8.1","path":"agents/reverse-agent/AGENT.md","sheets":[{"heading":"役割と対象","kind":"GRID","sheet":"01_役割と対象"},{"heading":"内部Agentと共通制御","kind":"GRID","sheet":"02_内部Agent"},{"heading":"共通request","kind":"GRID","sheet":"03_request"},{"heading":"候補と受入","kind":"GRID","sheet":"04_候補と受入"},{"heading":"互換性と完了","kind":"GRID","sheet":"05_互換性と完了"}]} -->
 # reverse-agent の役割
 
-版8.0／2026-10-23。ContextBase を構築・検証する統一入口と、内部3役割の契約。今回の変更は文書定義であり、新しい自動振分け・採用・復元機構は未実装である。
+版8.1／2026-10-24。ContextBase を構築・検証する統一入口と、内部3役割の契約。今回の変更は文書定義であり、新しい自動振分け・採用・復元機構は未実装である。
 
 ## 役割と対象
 
@@ -38,7 +38,7 @@
 | scope | 対象、対象外、方式・設定、既調査と未調査の範囲 |
 | goal | 元の要求、具体的質問、完了に必要な事項。子調査でも元目標を保持する |
 | allowedPaths / excludedPaths | 役割に渡す読取り可能パスと除外パス |
-| outputRoot | 候補・指摘を保存する承認済み作業ディレクトリ。snapshot と正本から分離する |
+| outputRoot | 候補・指摘は対象方式内.tmp/の作業領域。snapshot・入力・ContextBase正本から分離し、採用後の最終検査記録だけbuild/へ固定名更新する。過去生成世代はGitで管理 |
 | verificationRequirements | 必須検査、独立原文確認、人手照合基準の参照ID・検査条件、受入範囲。試験の期待回答は評価側に保持する |
 
 初回の discovery だけは sourceRoot から開始できる。共通基盤で対象ファイル、hash、encoding、除外・失敗を固定して sourceSnapshot を発行した後に業務候補を解釈する。入力の取得と初期理解は同じ第1ラウンド内で行う。

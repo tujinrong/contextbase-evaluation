@@ -1,3 +1,4 @@
+// LEGACY one-time migration resource. Current generation uses build/ and .tmp/.
 // One-time conversion of this WPF service to its own EXEC-only database boundary.
 import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../..');const base=path.join(root,'test-project1/srcs/CSharp_WPF');

@@ -10,8 +10,9 @@
 ./database/native/Build-Native.ps1
 dotnet run --project database/native/tests/NativeBoundary.Tests.csproj -c Release
 dotnet build database/native/tests/Framework/NativeFramework.Tests.csproj -c Release
-./database/native/tests/Framework/bin/Release/net472/NativeFramework.Tests.exe
-./database/native/tests/Test-SqlSyntax.ps1 -ReportPath "$PWD/test-report/native-syntax.json"
+$taskFramework=dotnet msbuild database/native/tests/Framework/NativeFramework.Tests.csproj -getProperty:TargetPath -p:Configuration=Release -nologo
+& ([IO.Path]::ChangeExtension($taskFramework,'exe'))
+./database/native/tests/Test-SqlSyntax.ps1
 ```
 
 最後の構文検査には Microsoft SQL ScriptDom が必要です。既定はインストール済み Visual Studio の DLL、別配置はスクリプトの `-ScriptDomPath` で指定します。構文検査は SQL Server への配備・権限・手続実行を確認しません。
@@ -25,3 +26,5 @@ DB管理者は空の当方式専用 DB へ `database/001_schema.sql`、`002_seed
 クライアント API と戻り列は [契約](INTERFACE.md)。日本語エラーは当方式のメッセージ仕様から `Core/NativeMessages.cs` に生成します。サーバーが返す field/max_length/request_id を使って項目名・上限・照合 ID を解決します。
 
 SQLCLR DLL のビルド、原入力/正規化境界102項目、実 .NET Framework DLL27項目、SQL３ファイルの構文検査と候補４列制限検査は通過しました。SQL Server 実機の CLR ロード、手続実行、DB権限、確認永続化、監査・競合・異常時トランザクションの結合試験は未実施です。これらを構文検査や pure 試験の合格に含めません。
+
+配置更新: Build-Native.ps1の最終生成SQLは `build/database/native/`、SQLCLR DLL/bin/objは `.tmp/dotnet/`。原本のdatabase/native SQLとメッセージソースは通常buildでは変更しない。配備には今回生成されたbuild/database/nativeの000/010/020を使う。構文結果はbuild/test-results/sql-syntax.jsonへ固定更新する。

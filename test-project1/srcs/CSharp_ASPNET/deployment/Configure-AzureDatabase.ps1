@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$stateDirectory = Join-Path $PSScriptRoot '../build/azure-free-state'
+$stateDirectory = Join-Path $PSScriptRoot '../.tmp/deployment-state'
 $state = Get-Content -LiteralPath (Join-Path $stateDirectory 'resources.json') -Raw | ConvertFrom-Json
 function Invoke-Azure([string[]]$Arguments) {
     $result = & az @Arguments --subscription $state.subscription --only-show-errors --output json

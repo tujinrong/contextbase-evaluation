@@ -11,14 +11,14 @@ report.mkdir(parents=True, exist_ok=True)
 fixture = Path(__file__).with_name('input-fixtures.json')
 records = json.loads(fixture.read_text(encoding='utf-8'))['records']
 env = os.environ.copy()
-env['PATH'] = str(BASE / 'build/toolchain/msys2/ucrt64/bin') + os.pathsep + env.get('PATH', '')
-env['COB_CONFIG_DIR'] = 'build/toolchain/msys2/ucrt64/share/gnucobol/config'
+env['PATH'] = str(BASE / '.tmp/toolchain/msys2/ucrt64/bin') + os.pathsep + env.get('PATH', '')
+env['COB_CONFIG_DIR'] = '.tmp/toolchain/msys2/ucrt64/share/gnucobol/config'
 for key in ['STUDENT_ODBC_DSN', 'REMOTE_USER', 'ST_LOGIN_SESSION_ID', 'ST_TRUSTED_ROLE', 'STUDENT_STATE_KEY_HEX']:
     env.pop(key, None)
 rows = []
 log = []
 def execute(name, program, arguments, body, expected, environment=None):
-    command = [str(BASE / 'build/host' / program), *arguments]
+    command = [str(BASE / '.tmp/host' / program), *arguments]
     active = env.copy()
     active.update(environment or {})
     process = subprocess.run(command, input=body, cwd=BASE, env=active, capture_output=True, timeout=30)
@@ -55,12 +55,12 @@ result = {'runId':'20261012-evidence-01','profile':'COBOL',
           'fixture':str(fixture.relative_to(BASE)), 'fixtureSha256':hashlib.sha256(fixture.read_bytes()).hexdigest(),
           'businessRecordsPersisted':False, 'sqlExecuted':False,
           'syntheticClassIdMeaning':'1 is an unpersisted input hint; no class existence is asserted',
-          'binaryHashes':{name:hashlib.sha256((BASE/'build/host'/name).read_bytes()).hexdigest()
+          'binaryHashes':{name:hashlib.sha256((BASE/'.tmp/host'/name).read_bytes()).hexdigest()
                           for name in ['boundary-probe.exe','validation-probe.exe']},
           'passed':sum(row['passed'] for row in rows),'total':len(rows),'results':rows}
-with (report/'input-fixture-results.json').open('x',encoding='utf-8') as target:
+with (report/'input-fixture-results.json').open('w',encoding='utf-8') as target:
     target.write(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
-with (report/'input-fixture-results.raw.log').open('x',encoding='utf-8') as target:
+with (report/'input-fixture-results.raw.log').open('w',encoding='utf-8') as target:
     target.write('\n'.join(log)+'\n')
 print(str(result['passed'])+'/'+str(result['total'])+' fictional input checks passed')
 raise SystemExit(0 if result['passed']==result['total'] else 1)

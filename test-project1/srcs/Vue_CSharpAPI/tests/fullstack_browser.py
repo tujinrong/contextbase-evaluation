@@ -7,11 +7,11 @@ from playwright.sync_api import sync_playwright, expect
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--url", default="https://localhost:7444")
-parser.add_argument("--output", required=True)
+parser.add_argument("--output", default=str(Path(__file__).resolve().parents[1] / "build/test-results/fullstack"))
 args = parser.parse_args()
 assert urlparse(args.url).hostname in {"localhost", "127.0.0.1"}
 output = Path(args.output).resolve()
-output.mkdir(parents=True, exist_ok=False)
+output.mkdir(parents=True, exist_ok=True)
 checks, errors, policies = [], [], []
 
 def check(value, name):

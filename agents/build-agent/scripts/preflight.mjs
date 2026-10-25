@@ -1,9 +1,10 @@
-// AG-BUILD: dependency-free, read-only input inspection; writes project/report only.
+// AG-BUILD: input inspection; one current generation record, scratch in .tmp.
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import {layout, ensureDirectory, writeLatest, writeJson} from './output-layout.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const args = process.argv.slice(2);
@@ -20,18 +21,16 @@ if (!/^test-project[1-9]\d*$/.test(project ?? '') || !/^[a-zA-Z0-9][a-zA-Z0-9_-]
   throw new Error('Explicit project and safe unique run-id are required.');
 }
 const projectRoot = path.join(root, project);
-const reportRoot = path.join(projectRoot, 'report');
+const outputLayout = layout(root, project, profile);
+const reportRoot = outputLayout.generation;
 function assertRegular(target, directory = false) {
   const info = fs.lstatSync(target);
-  if (info.isSymbolicLink() || (directory ? !info.isDirectory() : !info.isFile())) {
+  if (info.isSymbolicLink() || fs.realpathSync(target).toLowerCase() !== path.resolve(target).toLowerCase() || (directory ? !info.isDirectory() : !info.isFile())) {
     throw new Error(`Not a regular ${directory ? 'directory' : 'file'}: ${target}`);
   }
 }
 assertRegular(projectRoot, true);
 if (fs.existsSync(reportRoot)) assertRegular(reportRoot, true);
-for (const name of [`${runId}-inputs.json`, `${runId}-structure.json`, `${runId}-structure.md`]) {
-  if (fs.existsSync(path.join(reportRoot, name))) throw new Error(`Run-id already used: ${runId}`);
-}
 const relative = target => path.relative(root, target).split(path.sep).join('/');
 const files = [];
 function walk(directory) {
@@ -191,9 +190,24 @@ const output = [
   '未実施：意味上の整合性検査、外部URL確認、画面描画・Excel変換、アプリ生成・コンパイル・業務試験、逆生成・採点。', '',
   '構造検査通過は生成/ビルド/試験合格を意味しない。構造問題は別Agentが修正し、新しい実行IDで再検査してから再開する。', '',
 ].join('\n');
-fs.mkdirSync(reportRoot, { recursive: true });
-fs.writeFileSync(path.join(reportRoot, `${runId}-inputs.json`), JSON.stringify(context, null, 2) + '\n', { flag: 'wx' });
-fs.writeFileSync(path.join(reportRoot, `${runId}-structure.json`), JSON.stringify(result, null, 2) + '\n', { flag: 'wx' });
-fs.writeFileSync(path.join(reportRoot, `${runId}-structure.md`), output, { flag: 'wx' });
-console.log(JSON.stringify({ status: result.status, ...(profile ? { profileId: profile } : {}), inputs: records.length, findings: findings.length, report: relative(path.join(reportRoot, `${runId}-structure.md`)) }));
+// A new preflight invalidates the preceding final manifest/package result.
+ensureDirectory(reportRoot);
+for (const name of ['outputs.json', 'source-packages.json']) {
+  const old = path.join(reportRoot, name);
+  if (fs.existsSync(old)) { assertRegular(old); fs.unlinkSync(old); }
+}
+for (const method of profile ? [profile] : profiles) {
+  const own = layout(root, project, method);
+  ensureDirectory(own.build);
+  const sourceZip = path.join(own.build, 'source.zip');
+  if (fs.existsSync(sourceZip)) {
+    assertRegular(sourceZip);
+    ensureDirectory(own.scratch);
+    fs.renameSync(sourceZip, path.join(own.scratch, 'stale-source.zip'));
+  }
+}
+writeJson(path.join(reportRoot, 'inputs.json'), context, outputLayout.scratch);
+writeJson(path.join(reportRoot, 'structure.json'), result, outputLayout.scratch);
+writeLatest(path.join(reportRoot, 'structure.md'), output.replace('同実行IDのinputs.json', 'inputs.json'), outputLayout.scratch);
+console.log(JSON.stringify({ status: result.status, ...(profile ? { profileId: profile } : {}), inputs: records.length, findings: findings.length, report: relative(path.join(reportRoot, 'structure.md')) }));
 process.exitCode = findings.length ? 2 : 0;

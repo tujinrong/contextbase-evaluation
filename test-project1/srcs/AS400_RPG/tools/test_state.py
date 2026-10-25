@@ -1,17 +1,18 @@
 """Executes the production C gate/key/block code; RPG integration checks are static."""
 from pathlib import Path
-import argparse,subprocess,json,re,hashlib,tempfile,shutil,sys
+import argparse,subprocess,json,re,hashlib,tempfile,shutil,sys,os
+from output_paths import result_dir
 B=Path(__file__).resolve().parents[1]
-p=argparse.ArgumentParser();p.add_argument('--report-dir',type=Path,required=True);p.add_argument('--run-id',required=True);a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--report-dir',type=Path);p.add_argument('--run-id',default='current');a=p.parse_args()
 if not re.fullmatch(r'[A-Za-z0-9_-]+',a.run_id):raise SystemExit('safe unique run ID required')
-R=a.report_dir.resolve();R.mkdir(parents=True,exist_ok=True);dest=R/(a.run_id+'-state.json')
-if dest.exists():raise SystemExit('Previous attempt is preserved')
-zig=next((B/'build/toolchain/zig').rglob('zig.exe'));exe=B/'build'/('STUSTATE_TEST-'+a.run_id+'.exe')
+R=result_dir('state',a.report_dir);dest=R/'state.json'
+os.environ['ZIG_GLOBAL_CACHE_DIR']=str(B/'.tmp/cache/zig-global');os.environ['ZIG_LOCAL_CACHE_DIR']=str(B/'.tmp/cache/zig-local')
+zig=next((B/'.tmp/toolchain/zig').rglob('zig.exe'));exe=B/'.tmp/host/STUSTATE_TEST.exe';exe.parent.mkdir(parents=True,exist_ok=True)
 commands=[[str(zig),'cc','-std=c11','-Wall','-Wextra','-Werror','-target','x86_64-windows-gnu',str(B/'c/STUSTATE.c'),str(B/'c/STUSTATE_TEST.c'),'-o',str(exe)],[str(exe)]]
 runs=[]
 for i,command in enumerate(commands):
  r=subprocess.run(command,cwd=B,capture_output=True,text=True,encoding='utf8',errors='replace');runs.append(dict(command=command,exitCode=r.returncode,stdout=r.stdout,stderr=r.stderr))
- (R/(a.run_id+'-state-'+str(i)+'.log')).write_text('COMMAND '+subprocess.list2cmdline(command)+'\nEXIT '+str(r.returncode)+'\n'+r.stdout+'\n'+r.stderr,'utf8')
+ (R/('state-'+str(i)+'.log')).write_text('COMMAND '+subprocess.list2cmdline(command)+'\nEXIT '+str(r.returncode)+'\n'+r.stdout+'\n'+r.stderr,'utf8')
  if r.returncode:break
 svc=(B/'src/STUSVC.sqlrpgle').read_text('utf8');search=(B/'src/STUSRCH.sqlrpgle').read_text('utf8');types=(B/'copy/STUTYPES.rpgleinc').read_text('utf8');ui=(B/'copy/STUDSP.rpgleinc').read_text('utf8')
 compact=re.sub(r'\s+','',svc);compact_search=re.sub(r'\s+','',search)
@@ -38,10 +39,10 @@ check('candidate-display-four-fields-only','studentNameKana' not in show and '.c
 check('reset-display-is-unsearched-without-synthetic-date', "ifnotcontext.hasApplied;RESULT_CNT='未検索';SEARCH_AT='';" in compact_search)
 check('candidate-result-uses-restricted-type','candidates likeds( DuplicateCandidate_t )' in types)
 # Execute the real fixed-contract emitter in a disposable method-local root.
-with tempfile.TemporaryDirectory(prefix='rpg-emitter-',dir=B/'build') as temp:
+with tempfile.TemporaryDirectory(prefix='rpg-emitter-',dir=B/'.tmp') as temp:
  temp=Path(temp);(temp/'tools').mkdir();shutil.copyfile(B/'tools/generate_sources.py',temp/'tools/generate_sources.py')
  generated=subprocess.run([sys.executable,'-X','utf8',str(temp/'tools/generate_sources.py')],capture_output=True,text=True,encoding='utf8')
- (R/(a.run_id+'-emitter.log')).write_text('EXIT '+str(generated.returncode)+'\n'+generated.stdout+'\n'+generated.stderr,'utf8')
+ (R/('emitter.log')).write_text('EXIT '+str(generated.returncode)+'\n'+generated.stdout+'\n'+generated.stderr,'utf8')
  check('actual-fixed-contract-emitter-runs',generated.returncode==0)
  emitted=(temp/'copy/STUTYPES.rpgleinc').read_text('utf8') if generated.returncode==0 else ''
  for name in ['SearchRaw_t','SearchCriteria_t','SearchContext_t','DuplicateCandidate_t','Result_t']:

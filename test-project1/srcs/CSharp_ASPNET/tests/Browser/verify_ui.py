@@ -13,7 +13,7 @@ from playwright.sync_api import sync_playwright, expect
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="https://localhost:7443")
-    parser.add_argument("--output", required=True)
+    parser.add_argument("--output", default=str(Path(__file__).resolve().parents[2] / "build/test-results/browser"))
     args = parser.parse_args()
     if urlparse(args.base_url).hostname not in {"localhost", "127.0.0.1"}:
         raise ValueError("Only the local test host is allowed")

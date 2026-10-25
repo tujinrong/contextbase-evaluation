@@ -1,15 +1,12 @@
 param([Parameter(Mandatory=$true)][string]$Fixture,[Parameter(Mandatory=$true)][string]$ReportDirectory)
 $ErrorActionPreference='Stop'
-$taskFixture=[IO.Path]::GetFullPath($Fixture)
-$taskAllowed=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../build/')).TrimEnd('\')+'\'
-if (-not $taskFixture.StartsWith($taskAllowed,[StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($taskFixture) -notlike '20261012-build-04-access-single-evidence-01*.accdb') { throw 'Only this run disposable UI fixture under Access/build is allowed.' }
-$taskReport=[IO.Path]::GetFullPath($ReportDirectory)
-$taskReportRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../../../test-report/20261012-evidence-01/')).TrimEnd('\')+'\'
-if (-not $taskReport.StartsWith($taskReportRoot,[StringComparison]::OrdinalIgnoreCase)) { throw 'Only this run report subdirectory is allowed.' }
+. (Join-Path $PSScriptRoot '../../tools/GeneratedPaths.ps1')
+$taskFixture=Resolve-AccessGeneratedPath $Fixture '.tmp'
+$taskReport=Resolve-AccessGeneratedPath $ReportDirectory '.tmp'
 New-Item -ItemType Directory -Path $taskReport -Force | Out-Null
 $taskStop=Join-Path $taskReport 'stop-ui.flag'
-if (Test-Path -LiteralPath $taskStop) { throw 'Stop flag already exists.' }
-$taskOriginal=Join-Path $PSScriptRoot '../../StudentManagement.accdb'
+Remove-AccessIntermediate $taskStop
+$taskOriginal=Join-Path $PSScriptRoot '../../build/StudentManagement.accdb'
 $taskOriginalHash=(Get-FileHash -LiteralPath $taskOriginal -Algorithm SHA256).Hash
 $taskAccess=New-Object -ComObject Access.Application
 try {

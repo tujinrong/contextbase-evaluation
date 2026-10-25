@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC-README","version":"8.0","path":"agents/spec-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物と確認","kind":"GRID","sheet":"02_成果物と確認"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC-README","version":"8.1","path":"agents/spec-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物と確認","kind":"GRID","sheet":"02_成果物と確認"}]} -->
 # spec-agent
 
-定義版8.0／2026-10-23。指定projectの仕様書をCodexが作成・改善するための運用入口。
+定義版8.1／2026-10-24。指定projectの仕様書をCodexが作成・改善するための運用入口。
 
 ## 使い方
 
@@ -15,8 +15,8 @@
 
 ## 成果物と確認
 
-仕様の正本はMD。画面を変更したら、そのMD埋込みHTMLと同じ内容で単独HTML・PNGを更新し、実際にPNGを閲覧する。文書版、入力/出力SHA-256、ブラウザー版、画面サイズ・倍率、確認状態、計測と目視の結果を残す。新しいcloneで記録が必要なら未使用のrunIdで再作成する。
+仕様の正本はMD。画面を変更したら、そのMD埋込みHTMLと同じ内容で単独HTML・PNGを更新し、実際にPNGを閲覧する。文書版、入力/出力SHA-256、ブラウザー版、画面サイズ・倍率、確認状態、計測と目視の結果を残す。再生成では同じ最終パスを更新し、runIdは記録の属性として保持する。
 
-実行記録の既定先は選択projectの `report/<runId>/`。記録本体のGit管理可否は[配置規則](../../docs/リポジトリ構成.md)とルート.gitignoreに従い、Git除外でもローカル記録を保存する。仕様出力と参照用画面資源は指定specRootに保存する。既存レポートを上書きしない。
+仕様の正本・参照用画面資源は指定specRootへ更新する。最終検査記録は選択方式の `build/spec-generation/` の固定先へ更新しGitで管理する。作成途中の候補、描画・変換・失敗試行は方式内 `.tmp/` を使い、過去生成結果を累積しない。[配置規則](../../docs/リポジトリ構成.md)に従い、方式を持たない共通工程だけ担当Agentまたはproject内のbuild/・.tmp/を使う。
 
 本文レビュー、構造検査、描画・目視、実装、ビルド、DB/実機試験、正式採点を分けて報告する。構造や描画のPASSは正式合格を意味せず、未採点ならformalScoreはnull。入力・既存QAを維持し、重大な矛盾は根拠と再開条件を残して該当部分を保留する。

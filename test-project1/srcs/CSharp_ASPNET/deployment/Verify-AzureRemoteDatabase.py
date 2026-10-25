@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 import urllib.request
 
-state = json.loads((Path(__file__).resolve().parent.parent / 'build/azure-free-state/resources.json').read_text(encoding='utf-8-sig'))
+state = json.loads((Path(__file__).resolve().parent.parent / '.tmp/deployment-state/resources.json').read_text(encoding='utf-8-sig'))
 token = json.loads(subprocess.check_output(['az.cmd', 'account', 'get-access-token', '--subscription', state['subscription'], '--resource', 'https://management.azure.com/', '-o', 'json'], text=True))['accessToken']
 script = r"""
 $ErrorActionPreference='Stop'

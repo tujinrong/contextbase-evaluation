@@ -33,7 +33,7 @@ Windows サーバーログインはスクリプトで作成しません。`Bind-
 
 `student-maint.exe` はトランザクションごとに `IS_ROLEMEMBER('student_admin')=1` を要求します。sysadmin 接続は dbo となり、DB ロール所属を返さないため正常系の保守試験主体に使えません。DB 所有者以外の非sysadmin Windows 主体を使います。承認済み入力ファイルによる保守試験は、初期 DB と区別した fixture データとして記録してください。監査主体は CLI の `ORIGINAL_LOGIN()`（64スカラー以下）、CGI のサーバー認証主体です。
 
-`Test-Odbc.ps1` は同じ DSN、暗号化、Windows Driver Manager で DB 名、Windows 認証、初期コード、DB ロールを読み取ります。`Test-CobolCgi.ps1` はビルド済み本番 `build/host/student.cgi.exe` の全コンパイル入力・バイナリ SHA を照合し、新しい一時セッション・メモリー内乱数鍵で GET INITIAL を実行して、HTTP 200 と検索フォームを検証します。業務サンプルは作りませんが暗号化技術状態を DB に保存します。鍵は報告へ出しません。RunId は毎回固有、結果は既定 `COBOL/test-report`、既存結果を上書きしません。
+`Test-Odbc.ps1` は同じ DSN、暗号化、Windows Driver Manager で DB 名、Windows 認証、初期コード、DB ロールを読み取ります。`Test-CobolCgi.ps1` はビルド済み本番 `build/app/windows/student.cgi.exe` の全コンパイル入力・バイナリ SHA を照合し、新しい一時セッション・メモリー内乱数鍵で GET INITIAL を実行して、HTTP 200 と検索フォームを検証します。業務サンプルは作りませんが暗号化技術状態を DB に保存します。鍵は報告へ出しません。RunId は結果内のメタデータです。結果は既定 `build/test-results/sql-smoke/` の固定名を最新結果で置換します。
 
 実 exe は `tools/host_build.py` が `-lodbc32` でリンクし、Windows Driver Manager を使用します。ICU/OpenSSL/GnuCOBOL の DLL は方式内 toolchain のプロセス限定 PATH からロードします。Linux CGI 配備、実 Web サーバー／ブラウザー、学生 CRUD、確認、競合、監査失敗、確定後応答喪失はこの smoke だけで合格にしません。
 

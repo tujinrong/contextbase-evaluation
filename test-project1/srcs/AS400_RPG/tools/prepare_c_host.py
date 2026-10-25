@@ -2,13 +2,15 @@
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 import json, urllib.request, hashlib, zipfile
-BASE=Path(__file__).resolve().parents[1]/'build/toolchain'
+BASE=Path(__file__).resolve().parents[1]/'.tmp/toolchain'
 BASE.mkdir(parents=True,exist_ok=True)
 def fetch(url,path):
     if not path.exists():
         with urllib.request.urlopen(url,timeout=60) as src,path.open('wb') as dst:
             while block:=src.read(1024*1024):dst.write(block)
     return hashlib.sha256(path.read_bytes()).hexdigest()
+if (BASE/'acquisition.json').is_file() and (BASE/'zig').is_dir() and (BASE/'icu').is_dir():
+    print((BASE/'acquisition.json').read_text('utf8'));raise SystemExit(0)
 index=json.load(urllib.request.urlopen('https://ziglang.org/download/index.json',timeout=60))
 zig=index['0.14.1']['x86_64-windows']
 assets=[('zig',zig['tarball'],zig['shasum']),('icu','https://github.com/unicode-org/icu/releases/download/release-77-1/icu4c-77_1-Win64-MSVC2022.zip',None)]

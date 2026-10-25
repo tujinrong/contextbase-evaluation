@@ -8,11 +8,11 @@
 
 ```powershell
 dotnet build Tests/GuiEvidence/GuiEvidence.vbproj
-dotnet Tests/GuiEvidence/bin/Debug/net10.0-windows/Vb.GuiEvidence.dll --self-test
-dotnet Tests/GuiEvidence/bin/Debug/net10.0-windows/Vb.GuiEvidence.dll --ui-regression
-Tests/GuiEvidence/bin/Debug/net10.0-windows/Vb.GuiEvidence.exe --screen search
-Tests/GuiEvidence/bin/Debug/net10.0-windows/Vb.GuiEvidence.exe --screen new
-Tests/GuiEvidence/bin/Debug/net10.0-windows/Vb.GuiEvidence.exe --screen edit
+dotnet run --project Tests/GuiEvidence/GuiEvidence.vbproj -- --self-test
+dotnet run --project Tests/GuiEvidence/GuiEvidence.vbproj -- --ui-regression
+dotnet run --project Tests/GuiEvidence/GuiEvidence.vbproj -- --screen search
+dotnet run --project Tests/GuiEvidence/GuiEvidence.vbproj -- --screen new
+dotnet run --project Tests/GuiEvidence/GuiEvidence.vbproj -- --screen edit
 ```
 
 任意で `--role viewer` / `--role staff` / `--role admin` を追加できる。これらは表示制御用fixtureで、Windows主体・DB roleの認可試験ではない。引数なしは使用方法を返して終了2。
@@ -23,4 +23,4 @@ Tests/GuiEvidence/bin/Debug/net10.0-windows/Vb.GuiEvidence.exe --screen edit
 
 既存TestsプロジェクトにはGuiEvidenceのVBファイルをコンパイル対象から除外する1箇所の変更を加えた。productionプロジェクト・仕様・業務DDLは変更していない。他方式を参照しない。
 
-今回の新規実行証拠は `test-project1/test-report/20261012-evidence-01/VB.NET_WinForms/`。GUI操作とスクリーンショットはrootの実施記録を別に参照する。
+現在の自己検査はbuild/test-results/fixture.logへ保存する。今回の配置変更では新しいGUI画像を撮影していない。過去の実画面検査はGit履歴を参照する。

@@ -1,28 +1,27 @@
 """Run compiled production boundary/date programs, never replace SQL with a fake DB."""
 from pathlib import Path
 import os,sys,subprocess,json,datetime,hashlib,urllib.parse
-from evidence import compiled_inputs,binary_hashes
+from evidence import compiled_inputs,binary_hashes,binary_path
+from output_paths import result_dir
 ROOT=Path(__file__).resolve().parents[1];os.chdir(ROOT)
-report=Path(os.environ.get('COBOL_TEST_REPORT_DIR',ROOT/'test-report')).resolve()
-report.mkdir(parents=True,exist_ok=True)
+report=result_dir('host-tests',os.environ.get('COBOL_TEST_REPORT_DIR'))
 run_id=os.environ.get('COBOL_RUN_ID','local-cobol')
-prefix=report/f'{run_id}-{sys.argv[1]}-host-tests'
-if prefix.with_suffix('.json').exists():raise RuntimeError('Evidence already exists')
-compiled=json.loads((ROOT/'build/host/build-evidence.json').read_text(encoding='utf-8'))
+prefix=report/'host-tests'
+compiled=json.loads((ROOT/'.tmp/host/build-evidence.json').read_text(encoding='utf-8'))
 if not compiled.get('succeeded') or compiled.get('compiledInputs')!=compiled_inputs() or compiled.get('binaries')!=binary_hashes():
  prefix.with_suffix('.raw.log').write_text('ABORT: binaries do not prove a successful build of these exact source inputs.\n',encoding='utf-8')
  prefix.with_suffix('.json').write_text(json.dumps({'runId':run_id,'status':'ABORT_SOURCE_OR_BUILD_MISMATCH','passed':0,'total':0},indent=2)+'\n',encoding='utf-8')
  raise SystemExit('Build/source/binary mismatch; tests not executed.')
-env=os.environ.copy();env['PATH']=str(ROOT/'build/toolchain/msys2/ucrt64/bin')+os.pathsep+env.get('PATH','')
-env['COB_CONFIG_DIR']='build/toolchain/msys2/ucrt64/share/gnucobol/config'
+env=os.environ.copy();env['PATH']=str(ROOT/'.tmp/toolchain/msys2/ucrt64/bin')+os.pathsep+env.get('PATH','')
+env['COB_CONFIG_DIR']='.tmp/toolchain/msys2/ucrt64/share/gnucobol/config'
 rows=[];log=[]
 def case(name,args,expected=None,stdin=b'',extra=None,contains=None):
  e=env.copy();e.update(extra or {})
- p=subprocess.run([str(ROOT/'build/host'/args[0]),*args[1:]],input=stdin,env=e,capture_output=True)
+ p=subprocess.run([str(binary_path(args[0])),*args[1:]],input=stdin,env=e,capture_output=True)
  out=p.stdout.decode('utf-8','replace').replace('\r\n','\n').rstrip('\n')
  passed=p.returncode==0 and (expected is None or out==expected) and (contains is None or all(x in out for x in contains))
  rows.append({'id':name,'passed':passed,'exitCode':p.returncode,'expected':expected,'output':out,'stderr':p.stderr.decode('utf-8','replace')})
- log.append(name+' '+('PASS' if passed else 'FAIL')+'\n'+out+'\n'+p.stderr.decode('utf-8','replace'))
+ log.append('COMMAND '+subprocess.list2cmdline([str(binary_path(args[0])),*args[1:]])+'\nEXIT '+str(p.returncode)+'\n'+name+' '+('PASS' if passed else 'FAIL')+'\n'+out+'\n'+p.stderr.decode('utf-8','replace'))
  print(name,'PASS' if passed else 'FAIL',flush=True)
 case('ABI-01',['abi-probe.exe'],contains=['PASS COPY C pointer int32 int64 NULL roundtrip'])
 dates=[('MEIJI','33','01','01','1900-01-01'),('MEIJI','32','12','31','INVALID'),

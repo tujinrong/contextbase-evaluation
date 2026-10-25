@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
+import {layout, writeJson} from './output-layout.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../..');
 const profiles=['VB.NET_WinForms','CSharp_WPF','CSharp_ASPNET','Vue_CSharpAPI','COBOL','AS400_RPG','Access'];
 const args=process.argv.slice(2);let project,runId,profile;
@@ -15,18 +16,18 @@ for(let i=0;i<args.length;i+=2) {
   else throw new Error('Usage: manifest.mjs --project test-projectN --run-id <preflight-id> [--profile <profile-id>]');
 }
 if(!/^test-project[1-9]\d*$/.test(project??'')||!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId??'')||(profile!==undefined&&!profiles.includes(profile))) throw new Error('Explicit safe project/run-id and supported profile required.');
-const report=path.join(root,project,'report');
-const output=path.join(report,`${runId}-outputs.json`);
-if(fs.existsSync(output)) throw new Error('Output manifest already exists; use a new run-id.');
-const input=JSON.parse(fs.readFileSync(path.join(report,`${runId}-inputs.json`),'utf8'));
-const structure=JSON.parse(fs.readFileSync(path.join(report,`${runId}-structure.json`),'utf8'));
-if(input.projectId!==project||input.runId!==runId||input.profileId!==profile||structure.profileId!==profile||structure.status!=='structure-check-passed') throw new Error('Matching successful preflight and profile scope required.');
+const outputLayout=layout(root,project,profile);
+const report=outputLayout.generation;
+const output=path.join(report,'outputs.json');
+const input=JSON.parse(fs.readFileSync(path.join(report,'inputs.json'),'utf8'));
+const structure=JSON.parse(fs.readFileSync(path.join(report,'structure.json'),'utf8'));
+if(input.projectId!==project||input.runId!==runId||input.profileId!==profile||structure.runId!==runId||structure.profileId!==profile||structure.status!=='structure-check-passed') throw new Error('Matching successful preflight and profile scope required.');
 const hash=data=>crypto.createHash('sha256').update(data).digest('hex');
 for(const record of input.files) {
   if(record.file.split('/').includes('spec-eval')||(profile&&record.file.startsWith(`${project}/srcs/`)&&!record.file.startsWith(`${project}/srcs/${profile}/spec/`))) throw new Error(`Input outside preflight scope: ${record.file}`);
   if(hash(fs.readFileSync(path.join(root,record.file)))!==record.sha256) throw new Error(`Input changed after preflight: ${record.file}`);
 }
-const excluded=new Set(['bin','obj','node_modules','dist','build','__pycache__','.vs','.git','spec-eval']);
+const excluded=new Set(['.tmp','bin','obj','node_modules','dist','build','__pycache__','.vs','.git','spec-eval','test-report','test-evidence']);
 const files=[];
 function walk(directory) {
   const info=fs.lstatSync(directory);if(!info.isDirectory()||info.isSymbolicLink()) throw new Error('Regular output directory required.');
@@ -55,10 +56,10 @@ for(const file of [...documents].sort()) {
 }
 const artifacts=[];
 if(!profile||profile==='Access'){
- const access=path.join(root,project,'srcs/Access/StudentManagement.accdb');if(fs.existsSync(access)){const data=fs.readFileSync(access);artifacts.push({file:relativeArtifact(access),bytes:data.length,sha256:hash(data),kind:'standalone-access-database'});}
+ const access=path.join(root,project,'srcs/Access/build/StudentManagement.accdb');if(fs.existsSync(access)){const data=fs.readFileSync(access);artifacts.push({file:relativeArtifact(access),bytes:data.length,sha256:hash(data),kind:'standalone-access-database'});}
 }
 function relativeArtifact(target){return path.relative(root,target).split(path.sep).join('/');}
-const packagesPath=path.join(report,`${runId}-source-packages.json`);
+const packagesPath=path.join(report,'source-packages.json');
 if(fs.existsSync(packagesPath)){
  const packages=JSON.parse(fs.readFileSync(packagesPath,'utf8'));
  if(packages.runId!==runId||!packages.sourceOnly||!Array.isArray(packages.packages)||(!profile&&packages.packages.length!==7))throw new Error('Matching source-only packages required.');
@@ -71,9 +72,25 @@ if(fs.existsSync(packagesPath)){
  }
 }
 const delivery=[];
-for(const file of [`${project}/test-report/README.md`,`${project}/agent-input/README.md`,`${project}/report/${runId}-generation.md`,`${project}/report/${runId}-routing-notes.md`,`${project}/report/${runId}-source-packages.json`]){
+for(const file of [`${project}/test-report/README.md`,`${project}/agent-input/README.md`,...['inputs.json','structure.json','structure.md','generation.md','routing-notes.md','source-packages.json'].map(name=>relativeArtifact(path.join(report,name)))]){
  const target=path.join(root,file);if(fs.existsSync(target)){const data=fs.readFileSync(target);delivery.push({file,bytes:data.length,sha256:hash(data)});}
 }
-const result={projectId:project,...(profile?{profileId:profile}:{}),runId,inputCommit:input.inputCommit,recordedAt:new Date().toISOString(),outputVersion:runId,inputManifest:`${runId}-inputs.json`,structureReport:`${runId}-structure.json`,sourceOnly:true,excluded:['bin/obj/node_modules/dist/build/__pycache__/.vs','spec-eval','compiled binaries including Python bytecode','local secrets/configuration',...(profile?['other profiles','build-agent files outside scripts']:[])],artifacts,delivery,documentChanges,files};
-fs.writeFileSync(output,JSON.stringify(result,null,2)+'\n',{flag:'wx'});
+// Final app/test files are delivered separately from the source-only inventory.
+function finalFiles(directory) {
+ if(!fs.existsSync(directory))return;
+ const info=fs.lstatSync(directory);if(!info.isDirectory()||info.isSymbolicLink())throw new Error('Regular final directory required.');
+ for(const entry of fs.readdirSync(directory,{withFileTypes:true})){
+  // A source archive is current only after its package record/run/source hashes passed.
+  if(['.tmp','generation','source.zip'].includes(entry.name))continue;
+  const target=path.join(directory,entry.name);
+  if(entry.isSymbolicLink())throw new Error(`Linked final artifact refused: ${target}`);
+  if(entry.isDirectory()){finalFiles(target);continue;}
+  if(!entry.isFile()||entry.name==='.env'||entry.name==='appsettings.Local.json'||/\.laccdb$/i.test(entry.name))continue;
+  const file=relativeArtifact(target);if(artifacts.some(a=>a.file===file))continue;
+  const data=fs.readFileSync(target);artifacts.push({file,bytes:data.length,sha256:hash(data),kind:'current-build-result'});
+ }
+}
+for(const method of profile?[profile]:profiles)finalFiles(path.join(root,project,'srcs',method,'build'));
+const result={projectId:project,...(profile?{profileId:profile}:{}),runId,inputCommit:input.inputCommit,recordedAt:new Date().toISOString(),outputVersion:runId,inputManifest:'inputs.json',structureReport:'structure.json',sourceOnly:true,historyPolicy:'git-only; fixed latest build paths',excluded:['.tmp/bin/obj/node_modules/dist/build/__pycache__/.vs in source inventory','spec-eval','local secrets/configuration',...(profile?['other profiles','build-agent files outside scripts']:[])],artifacts,delivery,documentChanges,files};
+writeJson(output,result,outputLayout.scratch);
 console.log(JSON.stringify({projectId:project,...(profile?{profileId:profile}:{}),runId,files:files.length,documentChanges:documentChanges.length,inputHashesVerified:true,output:path.relative(root,output).split(path.sep).join('/')}));

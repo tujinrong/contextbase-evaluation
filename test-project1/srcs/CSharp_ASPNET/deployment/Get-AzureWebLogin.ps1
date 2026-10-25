@@ -1,6 +1,6 @@
 param([switch]$ShowPassword,[switch]$CopyPassword)
 $root = Split-Path $PSScriptRoot -Parent
-$stateDirectory = Join-Path $root 'build/azure-free-state'
+$stateDirectory = Join-Path $root '.tmp/deployment-state'
 $state = Get-Content -LiteralPath (Join-Path $stateDirectory 'resources.json') -Raw | ConvertFrom-Json
 $credential = Import-Clixml -LiteralPath (Join-Path $stateDirectory 'web-login.credential.xml')
 if ($CopyPassword) { Set-Clipboard -Value $credential.GetNetworkCredential().Password }

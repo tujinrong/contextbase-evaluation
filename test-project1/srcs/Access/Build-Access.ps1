@@ -1,23 +1,40 @@
 ﻿param(
-    [string]$Frontend = (Join-Path $PSScriptRoot 'StudentManagement.accdb'),
-    [string]$Backend = (Join-Path $PSScriptRoot 'build/StudentBackend.accdb'),
-    [switch]$CreateBackend,
-    [switch]$Compile,
+    [string]$Frontend = '',
+    [string]$Backend = '',
+    [switch]$CreateBackend = $true,
+    [switch]$Compile = $true,
     [switch]$NoStartup,
     [switch]$IncludeTests,
-    [switch]$SingleFile,
+    [switch]$SingleFile = $true,
     [string]$InitialUser = ([Security.Principal.WindowsIdentity]::GetCurrent().Name.Split('\')[-1]),
     [ValidateSet('Reader','Staff','Admin')][string]$InitialRole = 'Admin'
 )
 $ErrorActionPreference = 'Stop'
-$taskOutputRoot = [IO.Path]::GetFullPath($PSScriptRoot)
-foreach ($taskPath in @($Frontend, $Backend)) {
-    $taskFullPath = [IO.Path]::GetFullPath($taskPath)
-    if (-not $taskFullPath.StartsWith($taskOutputRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetExtension($taskFullPath) -ne '.accdb') { throw 'Build outputs must stay under Access and be ACCDB files.' }
-    if ((Test-Path -LiteralPath $taskFullPath) -and ($taskPath -eq $Frontend -or $CreateBackend)) { throw "Output already exists; move it explicitly before rebuilding: $taskFullPath" }
+# Generation history is managed by Git. Only the completed single-file result is published.
+. (Join-Path $PSScriptRoot 'tools/GeneratedPaths.ps1')
+if (-not $Frontend) { $Frontend=Join-Path $script:AccessMethodRoot 'build/StudentManagement.accdb' }
+if (-not $Backend) { $Backend=Join-Path $script:AccessMethodRoot '.tmp/generation/backend.accdb' }
+$taskRequestedFrontend = [IO.Path]::GetFullPath($Frontend)
+$taskFinalPath = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot 'build/StudentManagement.accdb'))
+if ($taskRequestedFrontend -eq $taskFinalPath) {
+    $taskRequestedFrontend = Resolve-AccessGeneratedPath $taskRequestedFrontend 'build'
+    if ($IncludeTests) { throw 'Test modules belong in a disposable Access/.tmp fixture.' }
+} else {
+    $taskRequestedFrontend = Resolve-AccessGeneratedPath $taskRequestedFrontend '.tmp'
 }
-New-Item -ItemType Directory -Path (Join-Path $PSScriptRoot 'build') -Force | Out-Null
-if ($SingleFile -and -not $CreateBackend) { throw 'SingleFile requires a new initial backend staging file.' }
+$Backend = Resolve-AccessGeneratedPath $Backend '.tmp'
+$Frontend = Resolve-AccessGeneratedPath (Join-Path $PSScriptRoot '.tmp/generation/frontend.accdb') '.tmp'
+if ($taskRequestedFrontend -eq $Frontend -or $Frontend -eq $Backend -or $taskRequestedFrontend -eq $Backend) { throw 'Output and staging paths must be distinct.' }
+if (-not $SingleFile) { throw 'The final output must remain one standalone ACCDB.' }
+foreach ($taskPath in @($Frontend, $Backend)) {
+    if ([IO.Path]::GetExtension($taskPath) -ne '.accdb') { throw 'ACCDB output required.' }
+}
+if ([IO.Path]::GetExtension($taskRequestedFrontend) -ne '.accdb') { throw 'ACCDB output required.' }
+foreach ($taskDirectory in @([IO.Path]::GetDirectoryName($Frontend),[IO.Path]::GetDirectoryName($Backend),[IO.Path]::GetDirectoryName($taskRequestedFrontend))) { New-Item -ItemType Directory -Path $taskDirectory -Force | Out-Null }
+Remove-AccessIntermediate $Frontend
+if ($CreateBackend) { Remove-AccessIntermediate $Backend }
+if ($SingleFile -and -not $CreateBackend) { throw 'SingleFile requires a freshly generated staging backend.' }
+$taskGenerated = $false
 $taskAccess = New-Object -ComObject Access.Application
 $taskAccess.Visible = $false
 function Set-DaoProperty($object, [string]$name, [int]$type, $value) {
@@ -268,7 +285,7 @@ try {
     if (-not $NoStartup) { Set-DaoProperty $taskDb 'StartupForm' 10 'frmStudentSearch' }
     $taskDb.Close()
     if ($Compile) { Compile-Vba }
-    Write-Output "Frontend generated: $Frontend"
+    $taskGenerated = $true
 } catch {
     try {
         $taskPane = $taskAccess.VBE.ActiveCodePane
@@ -281,4 +298,26 @@ try {
 } finally {
     $taskAccess.Quit(2)
     [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskAccess) | Out-Null
+}
+
+# Access is closed before replacing the previous completed artifact.
+if ($taskGenerated) {
+    Copy-Item -LiteralPath $Frontend -Destination $taskRequestedFrontend -Force
+    $taskHash = (Get-FileHash -LiteralPath $taskRequestedFrontend -Algorithm SHA256).Hash
+    if ($taskHash -ne (Get-FileHash -LiteralPath $Frontend -Algorithm SHA256).Hash) { throw 'Completed artifact copy hash mismatch.' }
+    if ($taskRequestedFrontend -eq $taskFinalPath) {
+        $taskReport = Resolve-AccessReportPath (Join-Path $PSScriptRoot 'build/test-results')
+        New-Item -ItemType Directory -Path $taskReport -Force | Out-Null
+        # A new artifact has no inherited test acceptance. Keep only records for this artifact.
+        foreach ($taskPreviousName in @('application.json','application.log','relationship.json','relationship.log','race.json','race.log','deployment.json','deployment.log','syntax.json','build.log','build-fixture.log','build-publication.json','path-validation.json','path-validation.log','source-inventory.json','layout.json')) {
+            $taskPrevious = Resolve-AccessReportPath (Join-Path $taskReport $taskPreviousName)
+            if (Test-Path -LiteralPath $taskPrevious) { Remove-Item -LiteralPath $taskPrevious -Force }
+        }
+        @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'spec') -Recurse -File | Sort-Object FullName | ForEach-Object {
+            [ordered]@{file=$_.FullName.Substring($PSScriptRoot.Length+1).Replace('\','/');sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
+        }) | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $taskReport 'inputs.json') -Encoding UTF8
+        [ordered]@{status='Generated';generatedAt=[DateTime]::UtcNow.ToString('o');database='build/StudentManagement.accdb';sha256=$taskHash;bytes=(Get-Item -LiteralPath $taskRequestedFrontend).Length;singleFile=$true;testModulesIncluded=[bool]$IncludeTests;compiled=[bool]$Compile;stagingArea='.tmp/generation';specificationChanged=$false} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $taskReport 'build.json') -Encoding UTF8
+        [ordered]@{status='VerificationRequired';completedAt=[DateTime]::UtcNow.ToString('o');artifact=[ordered]@{file='build/StudentManagement.accdb';sha256=$taskHash;bytes=(Get-Item -LiteralPath $taskRequestedFrontend).Length};specificationChanged=$false;formalScore=$null;verification='Run tests/Invoke-Verification.ps1 for the current artifact.'} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $taskReport 'summary.json') -Encoding UTF8
+    }
+    Write-Output "Frontend generated: $taskRequestedFrontend"
 }

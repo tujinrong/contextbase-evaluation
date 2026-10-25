@@ -3,10 +3,12 @@ param([string]$ReportDirectory,
       [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId=('cobol-sql-preparation-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')+'-'+[Guid]::NewGuid().ToString('N')))
 $ErrorActionPreference='Stop'
 $root=(Get-Item -LiteralPath (Join-Path $PSScriptRoot '../..')).FullName
-if ([string]::IsNullOrWhiteSpace($ReportDirectory)) {$ReportDirectory=Join-Path $root 'test-report'}
+if ([string]::IsNullOrWhiteSpace($ReportDirectory)) {$ReportDirectory=Join-Path $root 'build/test-results/sql-preparation'}
+$ReportDirectory=[IO.Path]::GetFullPath($ReportDirectory)
+$allowedReportRoots=@((Join-Path $root 'build/test-results'),(Join-Path $root '.tmp'))
+if(-not @($allowedReportRoots|Where-Object{$ReportDirectory.StartsWith([IO.Path]::GetFullPath($_)+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)}).Count){throw 'Results must remain in this method build/test-results or .tmp.'}
 [void][IO.Directory]::CreateDirectory($ReportDirectory)
-$prefix=Join-Path $ReportDirectory $RunId
-foreach($extension in @('.json','.md','.raw.log')) {if(Test-Path -LiteralPath ($prefix+$extension)){throw 'Existing evidence must not be overwritten.'}}
+$prefix=Join-Path $ReportDirectory 'sql-preparation'
 $checks=@();$logs=@();$hashes=@();$specs=@()
 foreach($path in Get-ChildItem -LiteralPath $PSScriptRoot -Filter '*.ps1') {
     $tokens=$null;$errors=$null
@@ -37,10 +39,10 @@ $oldSchema=Join-Path $root 'database/001_schema.sql'
 $checks += [pscustomobject]@{id='DDL_SEVEN_TABLES';passed=([regex]::Matches([IO.File]::ReadAllText($oldSchema),'(?im)^CREATE TABLE dbo\.').Count -eq 7)}
 $checks += [pscustomobject]@{id='HOST_WINDOWS_ODBC32';passed=([IO.File]::ReadAllText((Join-Path $root 'tools/host_build.py')) -match "'-lodbc32'")}
 $checks += [pscustomobject]@{id='BRIDGE_STRICT_TLS';passed=([IO.File]::ReadAllText((Join-Path $root 'bridge/student_bridge.c')) -match 'Encrypt=Yes;TrustServerCertificate=No;')}
-$build=Get-Content -LiteralPath (Join-Path $root 'build/host/build-evidence.json') -Raw -Encoding UTF8|ConvertFrom-Json
+$build=Get-Content -LiteralPath (Join-Path $root '.tmp/host/build-evidence.json') -Raw -Encoding UTF8|ConvertFrom-Json
 $compiledMatch=[bool]$build.succeeded
 foreach($entry in $build.compiledInputs.PSObject.Properties){if((Get-FileHash -LiteralPath (Join-Path $root $entry.Name) -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value){$compiledMatch=$false}}
-foreach($entry in $build.binaries.PSObject.Properties){if((Get-FileHash -LiteralPath (Join-Path $root ('build/host/'+$entry.Name)) -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value){$compiledMatch=$false}}
+foreach($entry in $build.binaries.PSObject.Properties){if((Get-FileHash -LiteralPath (Join-Path $root ('.tmp/host/'+$entry.Name)) -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value){$compiledMatch=$false}}
 $checks += [pscustomobject]@{id='CURRENT_COMPILED_INPUT_AND_BINARY_HASHES';passed=$compiledMatch}
 foreach($file in @(Get-ChildItem -LiteralPath $PSScriptRoot -File)+@(Get-Item -LiteralPath $oldSchema,(Join-Path $root 'database/002_seed.sql'))){$hashes += [pscustomobject]@{path=$file.FullName.Substring($root.Length+1).Replace('\','/');sha256=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash}}
 foreach($file in Get-ChildItem -LiteralPath (Join-Path $root 'spec') -Filter '*.md' -Recurse){

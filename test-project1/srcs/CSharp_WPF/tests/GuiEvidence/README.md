@@ -8,10 +8,10 @@
 
 ```powershell
 dotnet build tests/GuiEvidence/GuiEvidence.csproj
-dotnet tests/GuiEvidence/bin/Debug/net10.0-windows/Wpf.GuiEvidence.dll --self-test
-tests/GuiEvidence/bin/Debug/net10.0-windows/Wpf.GuiEvidence.exe --screen search
-tests/GuiEvidence/bin/Debug/net10.0-windows/Wpf.GuiEvidence.exe --screen new
-tests/GuiEvidence/bin/Debug/net10.0-windows/Wpf.GuiEvidence.exe --screen edit
+dotnet run --project tests/GuiEvidence/GuiEvidence.csproj -- --self-test
+dotnet run --project tests/GuiEvidence/GuiEvidence.csproj -- --screen search
+dotnet run --project tests/GuiEvidence/GuiEvidence.csproj -- --screen new
+dotnet run --project tests/GuiEvidence/GuiEvidence.csproj -- --screen edit
 ```
 
 任意で `--role viewer` / `--role staff` / `--role admin` を追加できる。権限表示のfixture値でありDB認可合格ではない。引数を指定しない起動は使用方法を返して終了2。
@@ -24,4 +24,4 @@ tests/GuiEvidence/bin/Debug/net10.0-windows/Wpf.GuiEvidence.exe --screen edit
 
 実検索画面で見つかった「すべて」の空表示も修正した。学年・都道府県の検索専用キーはNULL、クラスのSelectedItemはNULL条件に対応する「すべて」候補へ一致させる。候補再構成中の一時的な未選択で有効クラスを消さず、上位条件と合わない場合だけ解除する。初期値はownspec SRC-004/005/006/009どおりで、SQL検索契約は変更していない。修正後はselftest15・Smoke7・実起動３モードと検索５状態を新規実行した。
 
-今回の新規実行証拠は `test-project1/test-report/20261012-evidence-01/CSharp_WPF/`。GUI操作とスクリーンショットはrootの実施記録を別に参照する。
+現在の自己検査はbuild/test-results/fixture.logへ保存する。今回の配置変更では新しいGUI画像を撮影していない。過去の実画面検査はGit履歴を参照する。

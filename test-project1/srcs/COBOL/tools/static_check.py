@@ -2,10 +2,10 @@
 from pathlib import Path
 import re,json,hashlib,datetime,os,sys
 ROOT=Path(__file__).resolve().parents[1]
-report=Path(os.environ.get('COBOL_TEST_REPORT_DIR',ROOT/'test-report')).resolve();report.mkdir(parents=True,exist_ok=True)
+from output_paths import result_dir
+report=result_dir('static',os.environ.get('COBOL_TEST_REPORT_DIR'))
 run_id=os.environ.get('COBOL_RUN_ID','local-cobol')
-prefix=report/f'{run_id}-{sys.argv[1]}-static'
-if prefix.with_suffix('.json').exists():raise SystemExit('Existing report preserved')
+prefix=report/'static'
 results=[]
 def check(name,good,detail):results.append({'id':name,'passed':bool(good),'detail':detail})
 manifest=json.loads((ROOT/'build/input-manifest.json').read_text(encoding='utf-8'))

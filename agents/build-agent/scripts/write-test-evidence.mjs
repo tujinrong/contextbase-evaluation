@@ -7,9 +7,10 @@ import {fileURLToPath} from 'node:url';
 
 const workspace = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const args = process.argv.slice(2);
-let project, runId;
+let project, runId, selectedProfile;
 for (let i = 0; i < args.length; i += 2) {
   if (args[i] === '--project' && !project) project = args[i + 1];
+  else if (args[i] === '--profile' && !selectedProfile) selectedProfile = args[i + 1];
   else if (args[i] === '--run-id' && !runId) runId = args[i + 1];
   else throw new Error('Usage: write-test-evidence.mjs --project test-project1 --run-id <run-id>');
 }
@@ -29,8 +30,10 @@ const profiles = [
   {id: 'Vue_CSharpAPI', folder: 'Vue', title: 'Vue + C# API', scope: '実Vue画面・APIを独立した試験fixtureで実行。SQL接続はなく、SQL Server上の正常な保存・削除は未実施。'},
   {id: 'COBOL', folder: 'COBOL', title: 'COBOL', scope: '実production CGIの401認証エラー・400不正要求エラーだけを撮影。認証済み正常CRUD画面はNOT_RUN。SQL接続・業務データ投入は未実施。'},
   {id: 'AS400_RPG', folder: 'AS400_RPG', title: 'AS400 RPG', scope: 'IBM i実機がないため5250画面撮影はNOT_RUN。C補助処理のホスト試験は別の試験報告に記録。5250画面画像は生成しない。'},
-  {id: 'Access', folder: 'Access', title: 'Microsoft Access', scope: '原本と区別したローカルfixtureで実フォーム・DAOを試験。形式指定や初期表示の修正前・途中段階の画像も保持し、メモで区別。最終修正後は実ACE/accdb形式。SQL Server接続・共有DB移行は未実施。'}
+  {id: 'Access', folder: 'Access', title: 'Microsoft Access', scope: '原本と区別したローカルfixtureで実フォーム・DAOを試験。最終確認に採用した画像だけを固定名で更新。最終修正後は実ACE/accdb形式。SQL Server接続・共有DB移行は未実施。'}
 ];
+if(selectedProfile&&!profiles.some(p=>p.id===selectedProfile))throw new Error('Unsupported profile');
+if(selectedProfile)profiles.splice(0,profiles.length,...profiles.filter(p=>p.id===selectedProfile));
 const byFolder = new Map(profiles.map(profile => [profile.folder, profile]));
 
 function inside(parent, target) {
@@ -64,14 +67,13 @@ function regularPath(base, relative, directory = false) {
   return target;
 }
 
-const runRelative = `${project}/test-evidence/${runId}`;
+const ownerRelative = `${project}${selectedProfile ? `/srcs/${selectedProfile}` : ''}`;
+const runRelative = `${ownerRelative}/.tmp/captures`;
 const runRoot = regularPath(workspace, runRelative, true);
+const outputRelative = `${ownerRelative}/build/test-results/ui`;
+const outputRoot = path.join(workspace, outputRelative);
 const outputNames = ['test-evidence.html', 'test-evidence.md', 'capture-integrity.json'];
-for (const name of outputNames) {
-  if (fs.existsSync(path.join(runRoot, name))) throw new Error(`Existing evidence cannot be overwritten: ${name}`);
-}
-const reportReadme = '../../test-report/README.md';
-regularPath(workspace, `${project}/test-report/README.md`);
+const reportReadme = '../summary.json';
 
 // SOF dimensions are checked without installing a decoder or changing pixels.
 // This verifies JPEG framing/header dimensions, not a complete image decode.
@@ -225,5 +227,13 @@ for (const capture of captures) {
   if (hash(fs.readFileSync(regularPath(runRoot, capture.file))) !== capture.sha256) throw new Error(`Image changed during generation: ${capture.file}`);
 }
 const contents = [html, markdown.join('\n'), JSON.stringify(integrity, null, 2) + '\n'];
-for (const [index, name] of outputNames.entries()) fs.writeFileSync(path.join(runRoot, name), contents[index], {encoding: 'utf8', flag: 'wx'});
-console.log(JSON.stringify({projectId: project, runId, status: integrity.status, counts, outputs: outputNames.map(name => `${runRelative}/${name}`)}));
+// Replace only the fixed, verified final gallery after every input was checked.
+const ownerRoot=regularPath(workspace,ownerRelative,true);
+const resolvedOutput=path.resolve(outputRoot);
+if(!inside(ownerRoot,resolvedOutput)||!resolvedOutput.endsWith(path.join('build','test-results','ui')))throw new Error('Invalid final gallery path');
+for(const parent of [path.join(ownerRoot,'build'),path.join(ownerRoot,'build','test-results'),outputRoot])if(fs.existsSync(parent)&&fs.lstatSync(parent).isSymbolicLink())throw new Error('Linked output refused');
+if(fs.existsSync(outputRoot))fs.rmSync(outputRoot,{recursive:true,force:true});
+fs.mkdirSync(outputRoot,{recursive:true});
+for(const capture of captures){const target=path.join(outputRoot,capture.file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(regularPath(runRoot,capture.file),target);}
+for (const [index, name] of outputNames.entries()) fs.writeFileSync(path.join(outputRoot, name), contents[index], {encoding: 'utf8'});
+console.log(JSON.stringify({projectId: project, runId, status: integrity.status, counts, outputs: outputNames.map(name => `${outputRelative}/${name}`)}));

@@ -1,0 +1,590 @@
+﻿{
+    "runId":  "deployment",
+    "completedAt":  "2026-10-24T06:45:04.2296363Z",
+    "status":  "Passed",
+    "specConfigurationVersion":  "8.1",
+    "specDatabaseIndexVersion":  "8.2",
+    "specBusinessVersion":  "8.0",
+    "database":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\.tmp\\tests\\deployment.accdb",
+    "databaseBeforeSha256":  "FE2D6ADDF7D7BAAFC6FBCB890AF9DB46F8445D27EB76BB1926E0EC3522918B3E",
+    "databaseSha256":  "3C5978E1EBBE3546D46D23C72D159B91EE0C489142B1E80D5D95862684F83772",
+    "sourceDatabase":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\build\\StudentManagement.accdb",
+    "sourceBeforeSha256":  "FE2D6ADDF7D7BAAFC6FBCB890AF9DB46F8445D27EB76BB1926E0EC3522918B3E",
+    "sourceAfterSha256":  "FE2D6ADDF7D7BAAFC6FBCB890AF9DB46F8445D27EB76BB1926E0EC3522918B3E",
+    "exactSourceCopy":  true,
+    "officeVersion":  "16.0",
+    "fixtureOnly":  true,
+    "health":  "PASS|m_code_category=5|m_code=70|m_class=0|m_student=0|t_operation_log=0|t_write_guard=1|noExternalLinks=True|searchFormInitialized=True|role=Admin",
+    "counts":  {
+                   "m_class":  0,
+                   "m_code_category":  5,
+                   "m_student":  0,
+                   "m_code":  70,
+                   "t_app_role":  1,
+                   "t_write_guard":  1,
+                   "t_operation_log":  0
+               },
+    "checks":  [
+                   {
+                       "name":  "actual startup/form/DAO service health",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "all physical tables local; no external links",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "initial five categories / seventy codes",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "no sample class/student/audit in final binary",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "one gate and one embedded evaluation subject",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "deployment health rolls gate back",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "enforced noncascade relation fk_code_category",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "enforced noncascade relation fk_class_grade",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "enforced noncascade relation fk_student_class",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "enforced noncascade relation fk_student_gender",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "enforced noncascade relation fk_student_prefecture",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "enforced noncascade relation fk_student_enrollment",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "enforced noncascade relation fk_student_relationship",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "optional relationship_category has true NULL/no default",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "optional relationship_code has true NULL/no default",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "all five generated executable forms",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "test-only module excluded from final binary",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "single file is configured as startup executable",
+                       "passed":  true
+                   },
+                   {
+                       "name":  "all four enrollment codes are protected",
+                       "passed":  true
+                   }
+               ],
+    "physicalTables":  [
+                           {
+                               "connect":  "",
+                               "name":  "m_class",
+                               "validationRule":  "[school_year]\u003e=1900 And [school_year]\u003c=9998 And ([capacity] Is Null Or ([capacity]\u003e=1 And [capacity]\u003c=9999)) And [display_order]\u003e=0 And [grade_category]=\"GRADE\" And [valid_from]\u003c=[valid_to] And [valid_from]\u003e=CStr([school_year]) \u0026 \"-04-01\" And [valid_to]\u003c=CStr([school_year]+1) \u0026 \"-03-31\""
+                           },
+                           {
+                               "connect":  "",
+                               "name":  "m_code",
+                               "validationRule":  "[display_order]\u003e=0 And ([valid_to] Is Null Or [valid_from]\u003c=[valid_to]) And [code_value] Not Like \"*[!0-9]*\""
+                           },
+                           {
+                               "connect":  "",
+                               "name":  "m_code_category",
+                               "validationRule":  "[code_length]\u003e=1 And [code_length]\u003c=10"
+                           },
+                           {
+                               "connect":  "",
+                               "name":  "m_student",
+                               "validationRule":  "[gender_category]=\"GENDER\" And [prefecture_category]=\"PREFECTURE\" And [enrollment_category]=\"ENROLLMENT_STATUS\" And [birth_date]\u003e=\"1900-01-01\" And [birth_date]\u003c=[admission_date] And (([enrollment_status_code] In (\"01\",\"02\") And [class_id] Is Not Null And [enrollment_end_date] Is Null) Or ([enrollment_status_code] In (\"03\",\"04\") And [enrollment_end_date] Is Not Null And [admission_date]\u003c=[enrollment_end_date])) And ([phone_number] Is Not Null Or [email_address] Is Not Null Or [emergency_phone_number] Is Not Null) And (([emergency_contact_name] Is Null And [relationship_category] Is Null And [relationship_code] Is Null And [emergency_phone_number] Is Null) Or ([emergency_contact_name] Is Not Null And [relationship_category] Is Not Null And [relationship_category]=\"RELATIONSHIP\" And [relationship_code] Is Not Null And [emergency_phone_number] Is Not Null)) And (([is_deleted]=False And [deleted_at] Is Null And [deleted_by] Is Null And [delete_reason] Is Null) Or ([is_deleted]=True And [deleted_at] Is Not Null And [deleted_by] Is Not Null And [delete_reason] Is Not Null))"
+                           },
+                           {
+                               "connect":  "",
+                               "name":  "t_app_role",
+                               "validationRule":  "[role_name] In (\"Reader\",\"Staff\",\"Admin\")"
+                           },
+                           {
+                               "connect":  "",
+                               "name":  "t_operation_log",
+                               "validationRule":  "[after_version]\u003e0 And ([before_version] Is Null Or [before_version]\u003e0) And [operation_type] In (\"CREATE\",\"UPDATE\",\"DELETE\",\"DISABLE\",\"ENABLE\")"
+                           },
+                           {
+                               "connect":  "",
+                               "name":  "t_write_guard",
+                               "validationRule":  "[guard_id]=1"
+                           }
+                       ],
+    "relations":  [
+                      {
+                          "parent":  "m_code_category",
+                          "attributes":  0,
+                          "name":  "fk_code_category",
+                          "fields":  [
+                                         {
+                                             "child":  "category_id",
+                                             "parent":  "category_id"
+                                         }
+                                     ],
+                          "child":  "m_code"
+                      },
+                      {
+                          "parent":  "m_code",
+                          "attributes":  0,
+                          "name":  "fk_class_grade",
+                          "fields":  [
+                                         {
+                                             "child":  "grade_category",
+                                             "parent":  "category_id"
+                                         },
+                                         {
+                                             "child":  "grade_code",
+                                             "parent":  "code_value"
+                                         }
+                                     ],
+                          "child":  "m_class"
+                      },
+                      {
+                          "parent":  "m_class",
+                          "attributes":  0,
+                          "name":  "fk_student_class",
+                          "fields":  [
+                                         {
+                                             "child":  "class_id",
+                                             "parent":  "class_id"
+                                         }
+                                     ],
+                          "child":  "m_student"
+                      },
+                      {
+                          "parent":  "m_code",
+                          "attributes":  0,
+                          "name":  "fk_student_gender",
+                          "fields":  [
+                                         {
+                                             "child":  "gender_category",
+                                             "parent":  "category_id"
+                                         },
+                                         {
+                                             "child":  "gender_code",
+                                             "parent":  "code_value"
+                                         }
+                                     ],
+                          "child":  "m_student"
+                      },
+                      {
+                          "parent":  "m_code",
+                          "attributes":  0,
+                          "name":  "fk_student_prefecture",
+                          "fields":  [
+                                         {
+                                             "child":  "prefecture_category",
+                                             "parent":  "category_id"
+                                         },
+                                         {
+                                             "child":  "prefecture_code",
+                                             "parent":  "code_value"
+                                         }
+                                     ],
+                          "child":  "m_student"
+                      },
+                      {
+                          "parent":  "m_code",
+                          "attributes":  0,
+                          "name":  "fk_student_enrollment",
+                          "fields":  [
+                                         {
+                                             "child":  "enrollment_category",
+                                             "parent":  "category_id"
+                                         },
+                                         {
+                                             "child":  "enrollment_status_code",
+                                             "parent":  "code_value"
+                                         }
+                                     ],
+                          "child":  "m_student"
+                      },
+                      {
+                          "parent":  "m_code",
+                          "attributes":  0,
+                          "name":  "fk_student_relationship",
+                          "fields":  [
+                                         {
+                                             "child":  "relationship_category",
+                                             "parent":  "category_id"
+                                         },
+                                         {
+                                             "child":  "relationship_code",
+                                             "parent":  "code_value"
+                                         }
+                                     ],
+                          "child":  "m_student"
+                      }
+                  ],
+    "forms":  [
+                  "frmStudentSearch",
+                  "frmStudentEdit",
+                  "frmDuplicateConfirm",
+                  "frmDeleteConfirm",
+                  "frmDiscardConfirm"
+              ],
+    "modules":  [
+                    {
+                        "lines":  85,
+                        "name":  "modApprovedSeed",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  58,
+                        "name":  "modCandidates",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  31,
+                        "name":  "modClock",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  73,
+                        "name":  "modConfirmationForms",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  27,
+                        "name":  "modDeployment",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  29,
+                        "name":  "modFailure",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  59,
+                        "name":  "modInitialMasters",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  67,
+                        "name":  "modJapaneseDate",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  178,
+                        "name":  "modMasterMaintenance",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  118,
+                        "name":  "modMessages",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  82,
+                        "name":  "modSecurity",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  480,
+                        "name":  "modStudentForms",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  106,
+                        "name":  "modStudentRules",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  144,
+                        "name":  "modStudentSearch",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  127,
+                        "name":  "modUnicode",
+                        "kind":  1
+                    },
+                    {
+                        "lines":  22,
+                        "name":  "clsConfirmation",
+                        "kind":  2
+                    },
+                    {
+                        "lines":  48,
+                        "name":  "clsSearchContext",
+                        "kind":  2
+                    },
+                    {
+                        "lines":  22,
+                        "name":  "clsSearchCriteria",
+                        "kind":  2
+                    },
+                    {
+                        "lines":  12,
+                        "name":  "clsStudentDraft",
+                        "kind":  2
+                    },
+                    {
+                        "lines":  147,
+                        "name":  "clsStudentRepository",
+                        "kind":  2
+                    },
+                    {
+                        "lines":  169,
+                        "name":  "clsStudentService",
+                        "kind":  2
+                    },
+                    {
+                        "lines":  51,
+                        "name":  "clsUnitOfWork",
+                        "kind":  2
+                    },
+                    {
+                        "lines":  8,
+                        "name":  "Form_frmStudentSearch",
+                        "kind":  100
+                    },
+                    {
+                        "lines":  8,
+                        "name":  "Form_frmStudentEdit",
+                        "kind":  100
+                    },
+                    {
+                        "lines":  5,
+                        "name":  "Form_frmDuplicateConfirm",
+                        "kind":  100
+                    },
+                    {
+                        "lines":  5,
+                        "name":  "Form_frmDeleteConfirm",
+                        "kind":  100
+                    }
+                ],
+    "fatal":  null,
+    "inputs":  [
+                   {
+                       "sha256":  "C561E2765619ECD35F77373B83554E0611F22857B0D65D644E4311B60BC2AE52",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\DB定義\\Access\\01_DB定義書.md"
+                   },
+                   {
+                       "sha256":  "7C72E1B51AAD8D2E06DEF192D1B41AD76484141723DB10EBC84273AFEBAFBB2C",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\DB定義\\Access\\テーブル\\01_m_student.md"
+                   },
+                   {
+                       "sha256":  "DFFFB4FCA9A1C011469D2DBF171C1F4C155EBA0B6F9AF8B7BA1241A897B863E6",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\DB定義\\Access\\テーブル\\02_m_class.md"
+                   },
+                   {
+                       "sha256":  "8A5FE32674CD48EE3CACE4B057697FC911FA2231129C153A1C35FB587A5E6B6B",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\DB定義\\Access\\テーブル\\03_m_code_category.md"
+                   },
+                   {
+                       "sha256":  "1722391B31FD1AA965B9F5F66C996EEC325D9433AFEA0F5E56E5B5510B365768",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\DB定義\\Access\\テーブル\\04_m_code.md"
+                   },
+                   {
+                       "sha256":  "5E74BCB084D785151531A90E33AA39328899A24F516B50F64A506239E4D50726",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\DB定義\\Access\\テーブル\\05_t_operation_log.md"
+                   },
+                   {
+                       "sha256":  "9480D5BDA18F22DA1B2B9600358E02D5ECE4BB6A1540919978D0FCDB21A5F4AE",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\DB定義\\Access\\テーブル\\06_t_write_guard.md"
+                   },
+                   {
+                       "sha256":  "F9E73BA35F1E489E15A135DC0864D548E7FA7BAD00954525C9B031D5897BFBA5",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\README.md"
+                   },
+                   {
+                       "sha256":  "7F30C7D4BC591931370B7EA2991ABACD10B8B0EA5380CEE2F86BD9A78532170A",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\プロジェクト情報.md"
+                   },
+                   {
+                       "sha256":  "FA454D84F0E0F105D06D227C662089627CD05843DAF2BEB018B31B6C52C577AD",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\画面最適化記録.md"
+                   },
+                   {
+                       "sha256":  "AA81B967872E844EFDF2B739C67F742727C4D7B3C5AB48176265F18BEC0BC755",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\基本設計書\\01_学生検索画面.md"
+                   },
+                   {
+                       "sha256":  "0120AA3B1FFA952F9647CC0AE421E9AFE0914B8C40A8A788AABAAE9D06A91B74",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\基本設計書\\02_学生登録画面.md"
+                   },
+                   {
+                       "sha256":  "7D72FBAB375D2698BA772A5AC9428C3DE7D0ED55263B0C53C514CC4474B3D206",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\基本設計書\\03_テーブル仕様書.md"
+                   },
+                   {
+                       "sha256":  "736F77420901F4A60D3EC9AA84279F7E709640A85AD2066C011C8740B8BCDD24",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\基本設計書\\04_コード設計書.md"
+                   },
+                   {
+                       "sha256":  "4DE7AF592BF9BAE0714AF2E09CEF72F0272ECEDFD559F3BEB4FDFBA28F529B32",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\基本設計書\\テーブル\\01_m_student.md"
+                   },
+                   {
+                       "sha256":  "AACDB73B16BF5DD138711904CAB140A615B098B8E4282F2C8A330AD8D5EC2F35",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\基本設計書\\テーブル\\02_m_class.md"
+                   },
+                   {
+                       "sha256":  "D841B76C77D686215403FFDF80141EE68BC3734EAE104000CF023A37F2207A3E",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\基本設計書\\テーブル\\03_m_code_category.md"
+                   },
+                   {
+                       "sha256":  "6FA22A4923C03C3D5FEA2DFA8B23B49F15C7CEC4A640E6570BE0E63C060F8335",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\基本設計書\\テーブル\\04_m_code.md"
+                   },
+                   {
+                       "sha256":  "BCB440BDD49B9B7C72DF14BAA1388E829CA6D729A9C76E71DF73669312CE9CB0",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\基本設計書\\テーブル\\05_t_operation_log.md"
+                   },
+                   {
+                       "sha256":  "B9F25FA562B9316FCB53B47D0BBE417F343793ABF47EE1FDA3AF9D0EE45D7563",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\規約\\Access.md"
+                   },
+                   {
+                       "sha256":  "E2D40C2333DFF16BDB130C2A0B7B8F2A6691239FC7AEBD7D64AF5D6B0735A8E1",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\規約\\開発規約.md"
+                   },
+                   {
+                       "sha256":  "639E36F99DEA8838114CFC4CF3B94098F367CA56204387C1946D82D0C222713E",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\規約\\全体\\MD構造・Excel変換規約.md"
+                   },
+                   {
+                       "sha256":  "3C6C9F5B677AEDC5C5DB6007CBD1E4B18F4248085D84D5CE8F1D896676533640",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\規約\\全体\\テーブル仕様書記述規約.md"
+                   },
+                   {
+                       "sha256":  "DB26A5DB4D6C3D2A0C2117EFAE6BD416926D10F3DC05FE0A2F3305FBF819D67A",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\規約\\全体\\リポジトリ構成.md"
+                   },
+                   {
+                       "sha256":  "602F7F03645AAA1E86CE9FD8EB6BB30EB9981CB52F773479DD49E94B27A63B3E",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\規約\\全体\\開発規約.md"
+                   },
+                   {
+                       "sha256":  "055B888B08B5B94D5A023B41539C2D6AB344C2207262C0C8070F713CB4574A00",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\規約\\全体\\仕様書作成ルール.md"
+                   },
+                   {
+                       "sha256":  "EFA83DE4AA4C04352F3704E6294BFB1A7EDF6A1DE34EDB355D63196EDE2AC130",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\規約\\全体\\評価規約.md"
+                   },
+                   {
+                       "sha256":  "75C5E9EA91BBE119520FCE0184E0639F5D24D755FEF00B5C054453F1FB9CFCE3",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\共通\\00_設計書一覧.md"
+                   },
+                   {
+                       "sha256":  "7E90FFF7D9A699058AE58C85A67898EE431C87E14AE4A5FBAA1B2C534D484D66",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\共通\\01_システム概要.md"
+                   },
+                   {
+                       "sha256":  "4550938250958E790A8B7730A8614639A5C92A57D73AC8FC670437263563EDB1",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\共通\\02_CRUD図.md"
+                   },
+                   {
+                       "sha256":  "226C1B8FA8BD2623E50F9F3D1A0F9A5F564F16AF68767E88FAD51BDFAF112628",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\共通\\03_共通モジュール設計.md"
+                   },
+                   {
+                       "sha256":  "6AA7DC8CB30868304D16FE01180C23E3476A9D7624A641D87A57260B192E88CC",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\共通\\04_共通UI部品設計.md"
+                   },
+                   {
+                       "sha256":  "93D1AD2A4E610B9062B39D0FE19A756129D3020406C2B6D7489FD56BAECD999B",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\共通\\05_チェック・メッセージ設計.md"
+                   },
+                   {
+                       "sha256":  "28812576C1EE7BE33486C764C60CA404DA6C42115DACD97DB180ACC3F436B631",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\共通\\06_要件対応・設計判断.md"
+                   },
+                   {
+                       "sha256":  "9D299F288C684C191D289A9662A6E720241D96BFC39A2C9188982D09065AC678",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\共通\\07_日付・和暦仕様.md"
+                   },
+                   {
+                       "sha256":  "1EBA1AE66C146EFE0E32331326C38BC2E6C6F4D5F98E016C3AA4435BB3DEA935",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\共通\\08_データアクセス仕様.md"
+                   },
+                   {
+                       "sha256":  "9CB80E4CAC8D63ACF65044CF3D0B5C279D5A0AB8394C59161DE76DC45332AE19",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\共通\\09_項目制約定義.md"
+                   },
+                   {
+                       "sha256":  "7A9A8FD97D3BCD1C10CB4FA7B98D127B142157EEDB5BC2FF3EFEBC88D8454DB8",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\共通\\10_業務コード定義.md"
+                   },
+                   {
+                       "sha256":  "8CB66728EB576BCCA30970AD2DDDC0264F27B98B6EE43BE7AF72AD2F3A41AD70",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\共通\\11_項目長設計基準.md"
+                   },
+                   {
+                       "sha256":  "1A2087724DE2EBAE53950F1B40199C8B8D9D8958BEA6713F4AC8C88F6CBCF60B",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\共通\\方式別\\Access\\01_共通実装仕様.md"
+                   },
+                   {
+                       "sha256":  "AF8027D7EE540B0C2003910A8348BD149DF3735CF8EB45E147C4529659F9C895",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\詳細仕様書\\Access\\01_学生検索画面.md"
+                   },
+                   {
+                       "sha256":  "BD27D9843DFD5A4C0EA48A85DAB4A736D03648753919E7386C15B6F678A1C2CF",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\詳細仕様書\\Access\\02_学生登録画面.md"
+                   },
+                   {
+                       "sha256":  "D40E002CA19E64FEF5C02BA821232D386B35AEED3FB17E783C0AE3A6373B4EFA",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\詳細仕様書\\Access\\assets\\学生検索.html"
+                   },
+                   {
+                       "sha256":  "C0E0701892197B9F59235FAD62526E41746F78C505ED8757962145462CCB28C8",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\詳細仕様書\\Access\\assets\\学生検索.png"
+                   },
+                   {
+                       "sha256":  "2C5B325F0CABAF8F88171B9E4A293523AB29988296E92BAC07D95712F9932DB2",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\詳細仕様書\\Access\\assets\\学生検索.render.json"
+                   },
+                   {
+                       "sha256":  "ABE11AA8F71977D35BA1398DC45326F14B78419ADCFB01F4D15AF09576893414",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\詳細仕様書\\Access\\assets\\学生登録.html"
+                   },
+                   {
+                       "sha256":  "9F1DBD4C18D230DAFD056C56C31509D847D394905B2005CDC3778123FA116111",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\詳細仕様書\\Access\\assets\\学生登録.png"
+                   },
+                   {
+                       "sha256":  "916AC1F8D6603894A8FD81395E02A1B4EB5CA02A7E4011311331C82562FCE6A7",
+                       "path":  "D:\\開発\\contextbase-evaluation\\test-project1\\srcs\\Access\\spec\\詳細仕様書\\Access\\assets\\学生登録.render.json"
+                   }
+               ],
+    "notTested":  [
+                      "Office 32-bit",
+                      "LAN outage",
+                      "manual pixel/layout review",
+                      "10000/10001-record search performance",
+                      "commit-response loss"
+                  ],
+    "fileFormat":  12
+}

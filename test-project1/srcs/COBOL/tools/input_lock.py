@@ -15,7 +15,7 @@ def records():
  return result
 current=records()
 if len(sys.argv)>1 and sys.argv[1]=='lock':
- if manifest.exists():raise SystemExit('Existing input lock is preserved; explicitly version the manifest to accept new inputs.')
+ manifest.parent.mkdir(parents=True,exist_ok=True)
  manifest.write_text(json.dumps({'project':'COBOL','version':'8.0','createdAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'inputs':current},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 else:
  expected=json.loads(manifest.read_text(encoding='utf-8'))['inputs']

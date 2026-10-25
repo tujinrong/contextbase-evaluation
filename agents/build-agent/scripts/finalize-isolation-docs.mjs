@@ -1,3 +1,4 @@
+// LEGACY one-time migration resource. Current generation uses build/ and .tmp/.
 // Control indexes contain routing only. All business specifications live in each package.
 import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../..');

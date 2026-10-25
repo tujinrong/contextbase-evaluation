@@ -5,15 +5,17 @@ param(
  [Parameter(Mandatory=$true)][string]$ReportDirectory
 )
 $ErrorActionPreference='Stop'
+. (Join-Path $PSScriptRoot '../../tools/GeneratedPaths.ps1')
 $profileRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
-$source=[IO.Path]::GetFullPath($SourceDatabase)
-$build=Join-Path $profileRoot 'build/20261012-evidence-01-r6'
+$source=Resolve-AccessGeneratedPath $SourceDatabase '.tmp'
+$build=Join-Path $profileRoot '.tmp/evidence'
 if(-not $source.StartsWith($build+'\',[StringComparison]::OrdinalIgnoreCase)){throw 'R6 disposable source required.'}
-$fixture=Join-Path $build ($RunId+'.accdb')
-$report=[IO.Path]::GetFullPath($ReportDirectory)
-$output=Join-Path $report ($RunId+'.json')
-if((Test-Path -LiteralPath $fixture) -or (Test-Path -LiteralPath $output)){throw 'Historical output exists; choose a fresh RunId.'}
-Copy-Item -LiteralPath $source -Destination $fixture
+$fixture=Join-Path $build 'ui-encoding.accdb'
+$report=Resolve-AccessGeneratedPath $ReportDirectory '.tmp'
+New-Item -ItemType Directory -Path $report -Force | Out-Null
+$output=Join-Path $report 'ui-encoding.json'
+Remove-AccessIntermediate $fixture
+Copy-Item -LiteralPath $source -Destination $fixture -Force
 $sourceHash=(Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash
 $checks=@();$access=$null;$db=$null;$fatal=$null
 function Check-Value([string]$name,[bool]$condition,$actual,$expected){

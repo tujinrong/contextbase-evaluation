@@ -1,25 +1,21 @@
 # build-agent
 
-対象は利用者が選んだtest-project1。契約はAGENT.md、起動指示はPROMPT.md。方式ごとのsrcs/方式/specから生成し、コード・DB資源・生成器・試験を当該方式内で完結させる。利用者の2026-10-12追加指示により、実行時SQL Server DBは1個を共有する。方式間の仕様・コードは独立を維持する。
+定義版7.6／2026-10-24。[契約](AGENT.md)・[起動指示](PROMPT.md)に従い、選択projectの各方式specから独立したシステムを更新する。業務コード・DB・試験の横断共用はしない。
 
-工程制御だけをこのAgentに置く。preflight.mjsが現行仕様の構造と入力版/hashを固定し、問題ならreportへ保存して中断する。manifest.mjsは入力hashの変化がないことを確認して出力hashを保存する。履歴資料を現在の合格として使用しない。
+最終ソースはsrcs/方式ID/の正本を更新する。最終配布物は方式内build/app・build/publish等、Accessはbuild/StudentManagement.accdb1個。最終検査記録はbuild/test-results/、入力・出力manifestはbuild/generation/、解析用ZIPはbuild/source.zipへ固定名で更新し、Gitで履歴を管理する。中間生成・失敗試行・処理系・cache・隔離展開は各方式.tmp/へ置く。過去成果をrun-id別・backup別に累積しない。共通集約だけproject/build/、共通作業だけproject/.tmp/を使用する。
 
 ```powershell
-node agents/build-agent/scripts/preflight.mjs --project test-project1 --run-id UNIQUE-ID
-node agents/build-agent/scripts/verify-independent.mjs UNIQUE-TEST-ID CSharp_ASPNET Vue_CSharpAPI
-node agents/build-agent/scripts/check-isolation.mjs UNIQUE-ISOLATION-ID
-python -X utf8 agents/build-agent/scripts/package-source.py UNIQUE-ID
-python -X utf8 agents/build-agent/scripts/verify-packages.py UNIQUE-ID
-node agents/build-agent/scripts/manifest.mjs --project test-project1 --run-id UNIQUE-ID
+node agents/build-agent/scripts/preflight.mjs --project test-project1 --profile CSharp_ASPNET --run-id current
+python -X utf8 test-project1/srcs/CSharp_ASPNET/tools/build.py
+python -X utf8 agents/build-agent/scripts/package-source.py current --profile CSharp_ASPNET
+python -X utf8 agents/build-agent/scripts/verify-packages.py current --profile CSharp_ASPNET --hashes-only
+node agents/build-agent/scripts/manifest.mjs --project test-project1 --profile CSharp_ASPNET --run-id current
 ```
 
-方式を指定した実行では、preflightとmanifestの両方に同じ `--profile CSharp_ASPNET` を付ける。事前検査は選択方式のspec（JSONの描画記録・画像を含む）と固定の全体規則・Agent・project入口だけを凍結し、共有入口が列挙する他方式の仕様・ソースは検査しない。manifestのソース走査は当該方式内とbuild-agent/scriptsだけに限定する。spec-evalは全実行で走査・出力対象から除外する。方式指定を省略した従来の全方式実行も利用できる。
+run-idは記録の属性であり、同名再実行も固定出力先を更新する。preflightは旧outputs.jsonと旧ZIPを失効させる。manifestは今回のproject/profile/run-idと凍結入力hashを照合し、古いpackageを現在の成果として収録しない。入力が変更されたらpreflightからやり直す。構造PASS・hash一致は実装合格や正式受入ではない。
 
-原仕様を含めない逆生成入力はpackage-source.pyで方式別ZIPを生成する。独立化用のisolate-*.mjsとsplit-dotnet-tests.mjsは旧入力からの一度限りの移送で、完了後の現行生成器ではない。
-verify-packages.pyは各ZIPの全メンバーhashを照合し、当方式build/source-isolation-実行IDへ別々に展開して独立ビルドする。ZIPのproduction入口は除外仕様や試験を要求しない形へ変換し、変換前後hashを方式別に記録する。manifest.mjsは包装後に元ソースが変化していないことも確認する。既存ZIP・実行ID・展開先を上書きしない。
+--hashes-onlyはZIPの全メンバーhash・除外境界・方式内の別展開だけを検証する。省略時は利用可能な独立.NET/native/Vueビルドも実行するが、SQLやIBM i等の受入とは別に記録する。ZIPには原仕様・spec-eval・試験期待値・中間物を含めず、production buildに必須の配置helperだけを許可する。
 
-全体docs、他Agent、他project、spec-evalは変更しない。DB実機/対象処理系の欠如・配備未確認は試験報告へ記録する。
+工程制御の回帰検査はnode agents/build-agent/scripts/preflight-tests.mjsとpython -X utf8 agents/build-agent/scripts/output-layout-tests.py。isolate-*、split-dotnet-tests、materialize-*、旧文書生成補助は一度限りの移送資源であり、現行アプリへ再実行しない。
 
-SQL Expressの新規導入を明示依頼された場合はStart-LocalSqlExpressSetup.ps1がWindowsのUAC承認を要求し、Setup-LocalSqlExpressAndDatabases.ps1が1個の空の共有DBを作成する。-PlanOnlyでは昇格・接続・変更をしない。既存SQLインスタンス/DB/実行記録を上書きしないので、導入済み環境でインストーラーを再実行しない。Create-SharedSqlDatabase.ps1の既定は計画、-Executeは存在しない共有DBの作成、-VerifyOnlyは読取り検証。接続はODBC18、tcp:127.0.0.1,1433、Windows認証、Encrypt=Yes、TrustServerCertificate=No、HostnameInCertificate=localhostを使う。
-
-2026-10-12に旧LocalDB3版を削除し、Express2025 CU9/ODBC18を導入、contextbase_test_project1を空DBとして作成した。共有権限・同名SQLCLR契約が衝突するため、アプリの共有DB移行はreportへ記録して停止中。Accessの1accdb成果は保持し、SQLフロントエンド化とIBM i接続は仕様修正後に実装する。実測と未実施はtest-project1/test-report/20261012-shared-sql-validation-01/README.mdを参照。Repair-LocalSqlExpressConnection.ps1はIP SAN証明書の限定修復用だが、今回の修復UACは取消され未実行。ODBC18の期待証明書名指定で厳格TLS接続を実測した。
+共有SQL Server DB移行は認証・権限・排他・正規化等の共有契約を確認してから扱う。インストール・DB作成・配備は本配置修正の実行範囲に含めない。SQL補助の中間物はproject/.tmp/sqlserver-setup、最終記録はproject/buildの固定先へ出力する。既存DBを上書きしない安全条件は継続する。環境不足・未実施・失敗を最終記録へ明記し、以前のPASSを流用しない。

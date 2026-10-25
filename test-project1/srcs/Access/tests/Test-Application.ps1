@@ -1,8 +1,14 @@
-param([Parameter(Mandatory=$true)][string]$Frontend,[Parameter(Mandatory=$true)][string]$Backend,[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId=('access-service-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmssfff')+'-'+[Guid]::NewGuid().ToString('N').Substring(0,8)),[string]$SpecVersion='8.1/8.2',[string]$InputManifest='Access/spec local hash manifest',[string]$ReportDirectory=(Join-Path $PSScriptRoot '../test-report'))
+param([string]$Frontend='',[string]$Backend='',[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId='application',[string]$SpecVersion='8.1/8.2',[string]$InputManifest='Access/spec local hash manifest',[string]$ReportDirectory='')
 $ErrorActionPreference='Stop'
-$taskReport=[IO.Path]::GetFullPath($ReportDirectory)
+. (Join-Path $PSScriptRoot '../tools/GeneratedPaths.ps1')
+if (-not $ReportDirectory) { $ReportDirectory=Join-Path $script:AccessMethodRoot 'build/test-results' }
+if (-not $Frontend) { $Frontend=Join-Path $script:AccessMethodRoot '.tmp/tests/application.accdb' }
+if (-not $Backend) { $Backend=$Frontend }
+$taskReport=Resolve-AccessReportPath $ReportDirectory
 New-Item -ItemType Directory -Path $taskReport -Force | Out-Null
-if (Test-Path -LiteralPath (Join-Path $taskReport "$RunId.json")) { throw 'Report already exists; choose a new RunId.' }
+$Frontend=Resolve-AccessGeneratedPath $Frontend '.tmp'
+$Backend=Resolve-AccessGeneratedPath $Backend '.tmp'
+Remove-AccessIntermediate (Join-Path ([IO.Path]::GetDirectoryName($Frontend)) 'fixture-progress.log')
 $taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../spec') -Recurse -File | Sort-Object FullName | ForEach-Object { @{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} })
 $taskUser=[Security.Principal.WindowsIdentity]::GetCurrent().Name.Split('\')[-1]
 if (-not [string]::Equals([IO.Path]::GetFullPath($Frontend),[IO.Path]::GetFullPath($Backend),[StringComparison]::OrdinalIgnoreCase)) { [IO.File]::WriteAllText((Join-Path ([IO.Path]::GetDirectoryName($Frontend)) 'roles.conf'),"$taskUser=Admin`r`n",[Text.Encoding]::Unicode) }
@@ -56,9 +62,9 @@ finally {
  [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskAccess) | Out-Null
  $taskAccess=$null
  [GC]::Collect(); [GC]::WaitForPendingFinalizers()
- $taskOutput=[ordered]@{runId=$RunId;status=$taskState;specVersion=$SpecVersion;inputManifest=$InputManifest;inputs=$taskInputs;frontend=[IO.Path]::GetFullPath($Frontend);backend=[IO.Path]::GetFullPath($Backend);officeVersion=$taskOfficeVersion;fatal=$taskFatal;countsBefore=$taskCountsBefore;tests=$taskResults;countsAfter=$taskCountsAfter;allFourNullReadback=$taskNulls;fixtureOnly=$true}
+ $taskOutput=[ordered]@{runId=$RunId;completedAt=[DateTime]::UtcNow.ToString('o');status=$taskState;specVersion=$SpecVersion;inputManifest=$InputManifest;inputs=$taskInputs;frontend=[IO.Path]::GetFullPath($Frontend);backend=[IO.Path]::GetFullPath($Backend);officeVersion=$taskOfficeVersion;fatal=$taskFatal;countsBefore=$taskCountsBefore;tests=$taskResults;countsAfter=$taskCountsAfter;allFourNullReadback=$taskNulls;fixtureOnly=$true}
  $taskOutput.frontendSha256=(Get-FileHash -LiteralPath $Frontend -Algorithm SHA256).Hash
  $taskOutput.backendSha256=(Get-FileHash -LiteralPath $Backend -Algorithm SHA256).Hash
- $taskOutput | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $taskReport "$RunId.json") -Encoding UTF8
+ $taskOutput | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $taskReport 'application.json') -Encoding UTF8
 }
 if ($taskState -ne 'Passed') { exit 1 }

@@ -1,6 +1,6 @@
 # Access 仕様と実装の対応
 
-実行ID `20261023-access-build-01`。各入力版・SHA-256は凍結入力 `20261023-access-build-01-inputs.json`、出力は `20261023-access-build-01-outputs.json` を参照する。仕様変更なし。
+2026-10-24の配置変更。業務仕様は変更せず、入力SHA-256は `build/test-results/inputs.json`、最終成果と最新検査は `build/test-results/summary.json` を参照する。生成履歴はGitで管理し、中間DB・fixture・VBE作業は `.tmp/`、最終ACCDBは `build/StudentManagement.accdb` へ固定名で更新する。
 
 | 仕様ID・範囲 | 実装 | 今回の検査 |
 | --- | --- | --- |
@@ -12,8 +12,10 @@
 | 共通04～05/07/16/17 | modUnicode、modJapaneseDate、modStudentRules | Unicodeスカラー・NFKC・和暦境界・厳密ISOの既存試験を今回再実行 |
 | 共通11/13/14、DB制約 | clsConfirmation、modConfirmationForms、clsUnitOfWork、clsStudentRepository、database | 全候補確認、10分、業務/監査同一Tx、続柄4項目NULL、複合FK21、2プロセス最終1席 |
 | 共通10、保守・初期値 | modMasterMaintenance、modInitialMasters、modApprovedSeed | 固定コード/保護/人数/監査/初期同値と差分検出の拡張試験を今回再実行 |
-| Access単体成果、配備初期状態 | StudentManagement.accdb、Build-Access.ps1、modDeployment、tests/Test-Deployment.ps1 | 同一バイトコピー19検査。5フォーム、初期5分類70値、学生/クラス/監査0、試験モジュールなし、外部リンク0 |
+| Access単体成果、配備初期状態 | build/StudentManagement.accdb、Build-Access.ps1、modDeployment、tests/Test-Deployment.ps1 | 同一バイトコピー19検査。5フォーム、初期5分類70値、学生/クラス/監査0、試験モジュールなし、外部リンク0 |
 
 REG-025の更新日時/者は既存の合成 `lblUpdated`、REG-026は `frmDeleteConfirm.txtReason`、REG-032～034は `frmDuplicateConfirm.lstCandidates/cmdConfirm/cmdCancel` へ対応する。論理削除理由は確認フォーム内だけに置き、一般入力を保存しない。
 
 生成、ネイティブコンパイル、DAO/フォーム自動検査の通過は実施範囲だけの結果であり、実利用・受入・逆生成・正式採点の完了を意味しない。
+
+運用配置の実装は `tools/GeneratedPaths.ps1`（方式内のresolved absolute path・reparse point検査）、`Build-Access.ps1`（.tmp生成から最終buildへ置換・旧検証の無効化）、`tests/Invoke-Verification.ps1`（固定名の最新検査）、`tests/Test-GeneratedPaths.ps1`（境界・試験混入の拒否と最終成果無変更8件）、各Testスクリプト（.tmp専用fixture）へ対応する。旧生成物は最終成果の再生成・照合後にルート/buildから `.tmp/legacy-work/` へ同一ボリュームで移動した。削除の代わりに可逆な移動を採用し、原仕様/QA/試験正本を保持した。最終配置・ソース一覧は `build/test-results/layout.json` と `source-inventory.json` に記録する。

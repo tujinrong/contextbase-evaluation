@@ -1,16 +1,18 @@
-﻿param([string]$Database=(Join-Path $PSScriptRoot '../StudentManagement.accdb'),[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId=('access-deployment-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmssfff')+'-'+[Guid]::NewGuid().ToString('N').Substring(0,8)),[string]$ReportDirectory=(Join-Path $PSScriptRoot '../test-report'),[string]$SourceDatabase)
+﻿param([string]$Database='',[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId='deployment',[string]$ReportDirectory='',[string]$SourceDatabase)
 $ErrorActionPreference='Stop'
-$taskReport=[IO.Path]::GetFullPath($ReportDirectory)
+. (Join-Path $PSScriptRoot '../tools/GeneratedPaths.ps1')
+if (-not $ReportDirectory) { $ReportDirectory=Join-Path $script:AccessMethodRoot 'build/test-results' }
+if (-not $Database) { $Database=Join-Path $script:AccessMethodRoot 'build/StudentManagement.accdb' }
+$taskReport=Resolve-AccessReportPath $ReportDirectory
 New-Item -ItemType Directory -Path $taskReport -Force | Out-Null
-if (Test-Path -LiteralPath (Join-Path $taskReport "$RunId.json")) { throw 'Report already exists; choose a new RunId.' }
 $taskSource=if ($SourceDatabase) { [IO.Path]::GetFullPath($SourceDatabase) } else { [IO.Path]::GetFullPath($Database) }
-if ($SourceDatabase) { $taskFile=[IO.Path]::GetFullPath($Database) }
-else {
- $taskFile=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot "../build/$RunId.accdb"))
- New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($taskFile)) -Force | Out-Null
- if (Test-Path -LiteralPath $taskFile) { throw 'A fresh deployment copy is required; choose a new RunId.' }
- Copy-Item -LiteralPath $taskSource -Destination $taskFile
-}
+if ($taskSource -eq [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../build/StudentManagement.accdb'))) { $taskSource=Resolve-AccessGeneratedPath $taskSource 'build' }
+else { $taskSource=Resolve-AccessGeneratedPath $taskSource '.tmp' }
+$taskFile=Resolve-AccessGeneratedPath (Join-Path $PSScriptRoot '../.tmp/tests/deployment.accdb') '.tmp'
+if ($taskSource -eq $taskFile) { throw 'Deployment inspection requires a separate immutable source.' }
+New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($taskFile)) -Force | Out-Null
+Remove-AccessIntermediate $taskFile
+Copy-Item -LiteralPath $taskSource -Destination $taskFile
 $taskBeforeHash=(Get-FileHash -LiteralPath $taskFile -Algorithm SHA256).Hash
 $taskSourceHash=(Get-FileHash -LiteralPath $taskSource -Algorithm SHA256).Hash
 $taskAccess=New-Object -ComObject Access.Application
@@ -62,8 +64,8 @@ finally {
  $taskAccess.Quit(2); [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskAccess) | Out-Null
  [GC]::Collect(); [GC]::WaitForPendingFinalizers()
  $taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../spec') -Recurse -File | Sort-Object FullName | ForEach-Object { @{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} })
- $taskOutput=[ordered]@{runId=$RunId;status=$taskState;specConfigurationVersion='8.1';specDatabaseIndexVersion='8.2';specBusinessVersion='8.0';database=$taskFile;databaseBeforeSha256=$taskBeforeHash;databaseSha256=(Get-FileHash -LiteralPath $taskFile -Algorithm SHA256).Hash;sourceDatabase=$taskSource;sourceBeforeSha256=$taskSourceHash;sourceAfterSha256=(Get-FileHash -LiteralPath $taskSource -Algorithm SHA256).Hash;exactSourceCopy=($taskBeforeHash -eq $taskSourceHash);officeVersion=$taskVersion;fixtureOnly=($taskFile -ne $taskSource);health=$taskHealth;counts=$taskCounts;checks=$taskChecks;physicalTables=$taskTables;relations=$taskRelations;forms=$taskForms;modules=$taskModules;fatal=$taskFatal;inputs=$taskInputs;notTested=@('Office 32-bit','LAN outage','manual pixel/layout review','10000/10001-record search performance','commit-response loss')}
+ $taskOutput=[ordered]@{runId=$RunId;completedAt=[DateTime]::UtcNow.ToString('o');status=$taskState;specConfigurationVersion='8.1';specDatabaseIndexVersion='8.2';specBusinessVersion='8.0';database=$taskFile;databaseBeforeSha256=$taskBeforeHash;databaseSha256=(Get-FileHash -LiteralPath $taskFile -Algorithm SHA256).Hash;sourceDatabase=$taskSource;sourceBeforeSha256=$taskSourceHash;sourceAfterSha256=(Get-FileHash -LiteralPath $taskSource -Algorithm SHA256).Hash;exactSourceCopy=($taskBeforeHash -eq $taskSourceHash);officeVersion=$taskVersion;fixtureOnly=($taskFile -ne $taskSource);health=$taskHealth;counts=$taskCounts;checks=$taskChecks;physicalTables=$taskTables;relations=$taskRelations;forms=$taskForms;modules=$taskModules;fatal=$taskFatal;inputs=$taskInputs;notTested=@('Office 32-bit','LAN outage','manual pixel/layout review','10000/10001-record search performance','commit-response loss')}
  $taskOutput.fileFormat=$taskFileFormat
- $taskOutput | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $taskReport "$RunId.json") -Encoding UTF8
+ $taskOutput | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $taskReport 'deployment.json') -Encoding UTF8
 }
 if ($taskState -ne 'Passed') { exit 1 }

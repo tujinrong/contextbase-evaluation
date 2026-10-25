@@ -12,9 +12,8 @@ $allowed = [IO.Path]::GetFullPath((Join-Path $workspace 'test-project1')) + '\'
 $WorkDirectory = [IO.Path]::GetFullPath($WorkDirectory)
 $ReportDirectory = [IO.Path]::GetFullPath($ReportDirectory)
 foreach ($path in @($WorkDirectory,$ReportDirectory)) { if (-not $path.StartsWith($allowed,[StringComparison]::OrdinalIgnoreCase)) { throw "Path outside test-project1: $path" } }
-if (Test-Path -LiteralPath (Join-Path $ReportDirectory 'installation.json')) { throw 'Existing run report must not be overwritten.' }
 New-Item -ItemType Directory -Path $WorkDirectory,$ReportDirectory -Force | Out-Null
-Start-Transcript -LiteralPath (Join-Path $ReportDirectory 'installation.raw.log') -NoClobber | Out-Null
+Start-Transcript -LiteralPath (Join-Path $ReportDirectory 'installation.raw.log') -Force | Out-Null
 $state = [ordered]@{ started=(Get-Date).ToString('o'); status='RUNNING'; administrator=$WindowsAdministrator; instance='SQLEXPRESS'; targetVersion='17.0.5005.3'; removed=@(); steps=@(); certificate=$null; error=$null }
 function Save-State { $state | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $ReportDirectory 'installation.json') -Encoding UTF8 }
 function Assert-MicrosoftSignature([string]$path) {

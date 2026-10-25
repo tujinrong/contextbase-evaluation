@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC-PROMPT","version":"8.0","path":"agents/spec-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求の指定項目","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"今回のPilot指定例","kind":"GRID","sheet":"03_Pilot指定例"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC-PROMPT","version":"8.1","path":"agents/spec-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求の指定項目","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"今回のPilot指定例","kind":"GRID","sheet":"03_Pilot指定例"}]} -->
 # spec-agent 実行指示
 
-定義版8.0／2026-10-23。実行要求と併せてCodexへ渡す。
+定義版8.1／2026-10-24。実行要求と併せてCodexへ渡す。
 
 ## 起動指示
 
@@ -11,7 +11,7 @@ AIが要求と入力仕様を読み、設計判断と仕様本文を直接執筆
 
 対象MDを正本として、画面の埋込みHTML・単独HTML・PNGを同じ内容へ同期する。固定した画面サイズで描画し、PNGの目視、切れ・重なり・スクロールを確認して対象版と結果を保存する。機械検査はAIの本文執筆や意味レビューを代替しない。
 
-未使用のrunIdのreportへ入出力の版・SHA-256、変更根拠、影響範囲、検査結果、QA、未実施を残す。過去のPASSを流用せず、仕様・構造・描画・実装・実機・正式採点を分ける。正式採点をしていなければformalScore=nullを維持する。
+方式内build/spec-generation/の固定レポートへ今回runId属性と入出力の版・SHA-256、変更根拠、影響範囲、検査結果、QA、未実施を残す。過去のPASSを流用せず、仕様・構造・描画・実装・実機・正式採点を分ける。正式採点をしていなければformalScore=nullを維持する。
 
 ## 実行要求の指定項目
 
@@ -22,12 +22,12 @@ AIが要求と入力仕様を読み、設計判断と仕様本文を直接執筆
 | methodId | 対象方式。全方式と明示された場合だけ複数を対象にする |
 | specRoot | 仕様正本のパス。利用者が指定したパスをそのまま採用 |
 | allowedPaths / excludedPaths | 読取り許可、書込み許可、除外。範囲を広げる必要があれば独立して進められる部分を進め、残る影響を記録 |
-| runId / reportRoot | 未使用の実行IDと新規記録先 |
+| runId / reportRoot | 今回の実行識別と固定の最終記録先 |
 | targetViewport / states | 確認サイズ・倍率・代表状態。未指定のサイズは契約の既定値、状態は対象の変更から選ぶ |
 
 ## 今回のPilot指定例
 
-以下は2026-10-23の利用者要求を再現する指定例であり、他projectへ学生管理の条件を持ち込むテンプレートではない。runIdは実行ごとに未使用の値へ変更する。
+以下は2026-10-23の利用者要求を再現する指定例であり、他projectへ学生管理の条件を持ち込むテンプレートではない。runIdは今回の識別属性であり、出力先の世代分けに使わない。
 
 ```text
 projectId: test-project1
@@ -35,10 +35,10 @@ stage: 既存改善。小規模の学生管理を前提に検索条件を必要�
 methodId: CSharp_ASPNET
 specRoot: test-project1/srcs/CSharp_ASPNET/spec
 readAllowed: ルートAGENTS.md、docs/、agentsの役割定義、上記specRoot内の仕様・既存画面資源・QA
-writeAllowed: 上記specRoot、test-project1/report/<新規runId>/
-excluded: 全spec-eval、別project、他方式、アプリ実装・DB・ビルド資源
-runId: <未使用の実行ID>
-reportRoot: test-project1/report/<新規runId>/
+writeAllowed: 上記specRoot、test-project1/srcs/CSharp_ASPNET/build/spec-generation/
+excluded: 全spec-eval、別project、他方式、アプリ実装・DB実行資源、buildの配布物と他検査結果（上記spec-generationだけ書込み許可）
+runId: <今回の識別>
+reportRoot: test-project1/srcs/CSharp_ASPNET/build/spec-generation/
 targetViewport: 1366×650 CSS px、100%（768px高ディスプレイのブラウザー本文領域を想定）
 additionalViewport: 1280×650 CSS px。狭幅・200%では縦スクロールを許容
 states: 変更画面の通常・空結果・入力エラー・長い代表値等。実際に確認した状態を記録する

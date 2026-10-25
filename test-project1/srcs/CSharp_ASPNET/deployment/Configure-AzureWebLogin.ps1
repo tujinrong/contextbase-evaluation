@@ -1,7 +1,7 @@
 param([switch]$ResetPassword)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
-$stateDirectory = Join-Path $root 'build/azure-free-state'
+$stateDirectory = Join-Path $root '.tmp/deployment-state'
 $state = Get-Content -LiteralPath (Join-Path $stateDirectory 'resources.json') -Raw | ConvertFrom-Json
 $credentialFile = Join-Path $stateDirectory 'web-login.credential.xml'
 $pendingCredentialFile = Join-Path $stateDirectory 'web-login.pending.credential.xml'

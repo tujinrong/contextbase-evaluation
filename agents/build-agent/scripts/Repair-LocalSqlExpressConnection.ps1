@@ -4,10 +4,9 @@ $ErrorActionPreference='Stop'
 $principal=New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if(-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)){throw 'Use an elevated Windows PowerShell session.'}
 $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
-$report=Join-Path $workspace ('test-project1\test-report\'+$RunId)
-if(Test-Path -LiteralPath $report){throw 'Choose a new RunId; historical reports are retained.'}
-New-Item -ItemType Directory -Path $report | Out-Null
-Start-Transcript -LiteralPath (Join-Path $report 'repair.raw.log') -NoClobber | Out-Null
+$report=Join-Path $workspace 'test-project1\build\sql-repair'
+New-Item -ItemType Directory -Path $report -Force | Out-Null
+Start-Transcript -LiteralPath (Join-Path $report 'repair.raw.log') -Force | Out-Null
 $state=[ordered]@{status='RUNNING';started=(Get-Date).ToString('o');server='tcp:127.0.0.1,1433';databaseCreated=$false;oldCertificateRetained=$true;error=$null}
 function Save-State {$state | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $report 'repair.json') -Encoding UTF8}
 try {

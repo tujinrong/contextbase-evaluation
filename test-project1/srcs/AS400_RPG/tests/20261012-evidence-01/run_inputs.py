@@ -10,12 +10,11 @@ report = args.report_dir.resolve()
 report.mkdir(parents=True,exist_ok=True)
 fixture = Path(__file__).with_name('input-fixtures.json')
 records = json.loads(fixture.read_text(encoding='utf-8'))['records']
-build = BASE/'build/20261012-evidence-01'
+build = BASE/'.tmp/fixture-probes'
 build.mkdir(parents=True,exist_ok=True)
 exe = build/'input-probe.exe'
-if exe.exists(): raise SystemExit('Existing probe is preserved')
-zig = next((BASE/'build/toolchain/zig').rglob('zig.exe'))
-icu = BASE/'build/toolchain/icu'
+zig = next((BASE/'.tmp/toolchain/zig').rglob('zig.exe'))
+icu = BASE/'.tmp/toolchain/icu'
 env = os.environ.copy()
 env['PATH'] = str(icu/'bin64')+os.pathsep+env.get('PATH','')
 env['ZIG_GLOBAL_CACHE_DIR'] = str(build/'zig-global-cache')
@@ -52,9 +51,9 @@ result={'runId':'20261012-evidence-01','profile':'AS400_RPG',
         'testAdapterSha256':hashlib.sha256(Path(__file__).with_name('input-probe.c').read_bytes()).hexdigest(),
         'probeExeSha256':hashlib.sha256(exe.read_bytes()).hexdigest() if exe.exists() else None,
         'results':rows,'notRun':['RPG business validation','IBM i compilation','Db2','5250 UI']}
-with (report/'input-fixture-results.json').open('x',encoding='utf-8') as target:
+with (report/'input-fixture-results.json').open('w',encoding='utf-8') as target:
     target.write(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
-with (report/'input-fixture-results.raw.log').open('x',encoding='utf-8') as target:
+with (report/'input-fixture-results.raw.log').open('w',encoding='utf-8') as target:
     target.write('\n'.join(log)+'\n')
 print(str(result['passed'])+'/'+str(result['total'])+' fictional helper input checks passed')
 raise SystemExit(0 if compile_result.returncode==0 and len(rows)==9 and result['passed']==9 else 1)
