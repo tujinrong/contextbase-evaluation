@@ -1,20 +1,20 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"ACCESS-DOC-5AA4A3B1E208","version":"8.1","path":"test-project1/srcs/Access/spec/規約/Access.md","sheets":[{"heading":"VBA型・NULL・Unicode","kind":"GRID","sheet":"01_VBA型・NULL・Unicode"},{"heading":"セキュリティ・配置・稼働条件","kind":"GRID","sheet":"02_セキュリティ・配置・稼働条件"},{"heading":"公式参照資料（2026-10-10確認（前版からの参照。今回全URLの再確認は未実施））","kind":"GRID","sheet":"03_公式参照資料（2026-10-10確認（前版からの参照。"},{"heading":"共通規約の具体化","kind":"GRID","sheet":"04_共通規約の具体化"}],"isolationProfile":"Access"} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"ACCESS-DOC-5AA4A3B1E208","version":"8.3","path":"test-project1/srcs/Access/spec/規約/Access.md","sheets":[{"heading":"VBA型・NULL・Unicode","kind":"GRID","sheet":"01_VBA型・NULL・Unicode"},{"heading":"セキュリティ・配置・稼働条件","kind":"GRID","sheet":"02_セキュリティ・配置・稼働条件"},{"heading":"公式参照資料（2026-10-10確認（前版からの参照。今回全URLの再確認は未実施））","kind":"GRID","sheet":"03_公式参照資料（2026-10-10確認（前版からの参照。"},{"heading":"共通規約の具体化","kind":"GRID","sheet":"04_共通規約の具体化"}],"isolationProfile":"Access"} -->
 # Access 開発規約
 
 | 項目 | 内容 |
 | --- | --- |
-| 版数・改訂日 | 8.1／2026-10-12 |
+| 版数・改訂日 | 8.3／2026-10-25 |
 | 対象方式 | Access |
 | 適用 | 設計上の実装契約。製品コードの実装・コンパイルは未実施 |
 
-開発入力：[学生検索詳細](../詳細仕様書/Access/01_学生検索画面.md)／[学生登録詳細](../詳細仕様書/Access/02_学生登録画面.md)／[共通実装](../共通/方式別/Access/01_共通実装仕様.md)／[DB定義](../DB定義/Access/01_DB定義書.md)／[方式別開発規約](Access.md)／[共通開発規約](開発規約.md)。
+開発入力：[学生検索詳細](../詳細仕様書/01_学生検索画面.md)／[学生登録詳細](../詳細仕様書/02_学生登録画面.md)／[共通実装](../共通/方式別/01_共通実装仕様.md)／[DB定義](../DB定義/Access/01_DB定義書.md)／[方式別開発規約](Access.md)／[共通開発規約](開発規約.md)。
 
 ## VBA型・NULL・Unicode
 
 | 意味 | VBA／ACE表現 | 制約 |
 | --- | --- | --- |
 | 学生・クラス・履歴ID | AutoNumber(Counter)／VBA Long | 正の32bit、上限2,147,483,647。採番・版の上限到達はエラー、欠番可 |
-| 外部キー・版・人数・ページ | Long | VBA Integerは16bitなので使用しない。Office64bitでもLongは拡張しない |
+| 外部キー・版・人数・表示位置 | Long | VBA Integerは16bitなので使用しない。Office64bitでもLongは拡張しない |
 | 任意の数値・文字・日付 | VariantでNullまたは型付き値 | IsNullで判定。Nz(値,0)でNullの意味を失わせない |
 | 生年月日・入学日・終了日 | TEXT(10)／ISO年月日String | 生年月日等は業務範囲1900年～業務日、コード日付は9999年まで。固定ISO文字列で日付と時点を分離する |
 | 作成更新・実行・有効期限の時点 | Date/Time／VBA Date | UTCとして保存、表示で日本時間。信頼できる時計から取得 |
@@ -54,7 +54,7 @@ modUnicodeはWindows NormalizeStringのNFKCを呼び、前後空白、カナ対�
 
 ## 共通規約の具体化
 
-本方式では[共通開発規約](開発規約.md)を適用し、業務ルールや項目長は[詳細仕様](../詳細仕様書/Access/02_学生登録画面.md)と[DB定義](../DB定義/Access/01_DB定義書.md)に一致させる。長さの計測単位はUnicodeスカラー値。処理系のバイト／コード単位の領域は余裕を確保し、業務最大長を拡大しない。
+本方式では[共通開発規約](開発規約.md)を適用し、業務ルールや項目長は[詳細仕様](../詳細仕様書/02_学生登録画面.md)と[DB定義](../DB定義/Access/01_DB定義書.md)に一致させる。長さの計測単位はUnicodeスカラー値。処理系のバイト／コード単位の領域は余裕を確保し、業務最大長を拡大しない。
 
 機能固有のイベントは機能別詳細、複数機能で使う接続・トランザクション・正規化・和暦・認可・確認・UI部品は方式別共通へ置く。コピーした定義の修正は同じ仕様IDを持つ文書へ同時に反映する。デザイナー生成物、業務ロジック、テスト資源を分ける。
 

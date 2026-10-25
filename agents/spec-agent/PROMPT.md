@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC-PROMPT","version":"8.1","path":"agents/spec-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求の指定項目","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"今回のPilot指定例","kind":"GRID","sheet":"03_Pilot指定例"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC-PROMPT","version":"8.2","path":"agents/spec-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求の指定項目","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"今回のPilot指定例","kind":"GRID","sheet":"03_Pilot指定例"}]} -->
 # spec-agent 実行指示
 
-定義版8.1／2026-10-24。実行要求と併せてCodexへ渡す。
+定義版8.2／2026-10-25。実行要求と併せてCodexへ渡す。
 
 ## 起動指示
 
@@ -9,7 +9,7 @@
 
 AIが要求と入力仕様を読み、設計判断と仕様本文を直接執筆する。既存ID・QA・入力を保ち、変更した検索条件を画面・項目・イベント・入出力へ反映する。少数の必要な条件と省スペースの配置を、対象業務の操作に即して説明する。汎用Agentへ業務固有の正解を埋めない。
 
-対象MDを正本として、画面の埋込みHTML・単独HTML・PNGを同じ内容へ同期する。固定した画面サイズで描画し、PNGの目視、切れ・重なり・スクロールを確認して対象版と結果を保存する。機械検査はAIの本文執筆や意味レビューを代替しない。
+対象MD内の埋込みHTMLだけを画面表現の正本とし、基本/詳細で同じ配置を使う。画面PNGや単独HTMLは仕様へ併置しない。採用UIの標準部品、表示桁数に応じた幅、ラベル/入力/行/操作の整列、寸法と単位を記述し、Access/WinFormsをWeb風のカードへ変えない。ページング不要の指定は取得・状態・復帰の関連契約まで反映する。固定サイズで同じ断片を.tmp/に抽出して描画・目視し、切れ・重なり・スクロールと対象版を記録する。機械検査はAIの本文執筆や意味レビューを代替しない。
 
 方式内build/spec-generation/の固定レポートへ今回runId属性と入出力の版・SHA-256、変更根拠、影響範囲、検査結果、QA、未実施を残す。過去のPASSを流用せず、仕様・構造・描画・実装・実機・正式採点を分ける。正式採点をしていなければformalScore=nullを維持する。
 

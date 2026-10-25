@@ -1,13 +1,13 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"VUE_CSHARPAPI-DOC-746D4829DEDF","version":"8.0","path":"test-project1/srcs/Vue_CSharpAPI/spec/規約/Vue_CSharpAPI.md","sheets":[{"heading":"例外・配備・検証","kind":"GRID","sheet":"01_例外・配備・検証"},{"heading":"共通規約の具体化","kind":"GRID","sheet":"02_共通規約の具体化"}],"isolationProfile":"Vue_CSharpAPI"} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"VUE_CSHARPAPI-DOC-746D4829DEDF","version":"8.1","path":"test-project1/srcs/Vue_CSharpAPI/spec/規約/Vue_CSharpAPI.md","sheets":[{"heading":"例外・配備・検証","kind":"GRID","sheet":"01_例外・配備・検証"},{"heading":"共通規約の具体化","kind":"GRID","sheet":"02_共通規約の具体化"}],"isolationProfile":"Vue_CSharpAPI"} -->
 # Vue／C# API 開発規約
 
 | 項目 | 内容 |
 | --- | --- |
-| 版数・改訂日 | 8.0／2026-10-12 |
+| 版数・改訂日 | 8.1／2026-10-25 |
 | 対象方式 | Vue／C# API |
 | 適用 | 設計上の実装契約。製品コードの実装・コンパイルは未実施 |
 
-開発入力：[学生検索詳細](../詳細仕様書/Vue_CSharpAPI/01_学生検索画面.md)／[学生登録詳細](../詳細仕様書/Vue_CSharpAPI/02_学生登録画面.md)／[共通実装](../共通/方式別/Vue_CSharpAPI/01_共通実装仕様.md)／[DB定義](../DB定義/SQLServer/01_DB定義書.md)／[方式別開発規約](Vue_CSharpAPI.md)／[共通開発規約](開発規約.md)。
+開発入力：[学生検索詳細](../詳細仕様書/01_学生検索画面.md)／[学生登録詳細](../詳細仕様書/02_学生登録画面.md)／[共通実装](../共通/方式別/01_共通実装仕様.md)／[DB定義](../DB定義/SQLServer/01_DB定義書.md)／[方式別開発規約](Vue_CSharpAPI.md)／[共通開発規約](開発規約.md)。
 
 ## 例外・配備・検証
 
@@ -19,7 +19,7 @@ Vue部品試験、API契約試験、認証・CSRF結合、独立した2本の実
 
 ## 共通規約の具体化
 
-本方式では[共通開発規約](開発規約.md)を適用し、業務ルールや項目長は[詳細仕様](../詳細仕様書/Vue_CSharpAPI/02_学生登録画面.md)と[DB定義](../DB定義/SQLServer/01_DB定義書.md)に一致させる。長さの計測単位はUnicodeスカラー値。処理系のバイト／コード単位の領域は余裕を確保し、業務最大長を拡大しない。
+本方式では[共通開発規約](開発規約.md)を適用し、業務ルールや項目長は[詳細仕様](../詳細仕様書/02_学生登録画面.md)と[DB定義](../DB定義/SQLServer/01_DB定義書.md)に一致させる。長さの計測単位はUnicodeスカラー値。処理系のバイト／コード単位の領域は余裕を確保し、業務最大長を拡大しない。
 
 機能固有のイベントは機能別詳細、複数機能で使う接続・トランザクション・正規化・和暦・認可・確認・UI部品は方式別共通へ置く。コピーした定義の修正は同じ仕様IDを持つ文書へ同時に反映する。デザイナー生成物、業務ロジック、テスト資源を分ける。
 

@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC-README","version":"8.1","path":"agents/spec-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物と確認","kind":"GRID","sheet":"02_成果物と確認"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC-README","version":"8.2","path":"agents/spec-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物と確認","kind":"GRID","sheet":"02_成果物と確認"}]} -->
 # spec-agent
 
-定義版8.1／2026-10-24。指定projectの仕様書をCodexが作成・改善するための運用入口。
+定義版8.2／2026-10-25。指定projectの仕様書をCodexが作成・改善するための運用入口。
 
 ## 使い方
 
@@ -15,8 +15,8 @@
 
 ## 成果物と確認
 
-仕様の正本はMD。画面を変更したら、そのMD埋込みHTMLと同じ内容で単独HTML・PNGを更新し、実際にPNGを閲覧する。文書版、入力/出力SHA-256、ブラウザー版、画面サイズ・倍率、確認状態、計測と目視の結果を残す。再生成では同じ最終パスを更新し、runIdは記録の属性として保持する。
+仕様の画面表現はMD内の埋込みHTMLだけとし、基本/詳細に別レイアウトを描かない。画面PNGや単独HTMLを併置せず、方式内.tmp/へ同じ断片を抽出して描画・目視する。Access/WinFormsは従来フォームと標準部品、入力桁数に応じた幅と整列を記述する。文書版、入力/出力SHA-256、HTML断片ハッシュ、ブラウザー版、画面サイズ・倍率、確認状態、計測と目視結果を残す。再生成では同じ最終パスを更新し、runIdは記録の属性として保持する。
 
-仕様の正本・参照用画面資源は指定specRootへ更新する。最終検査記録は選択方式の `build/spec-generation/` の固定先へ更新しGitで管理する。作成途中の候補、描画・変換・失敗試行は方式内 `.tmp/` を使い、過去生成結果を累積しない。[配置規則](../../docs/リポジトリ構成.md)に従い、方式を持たない共通工程だけ担当Agentまたはproject内のbuild/・.tmp/を使う。
+仕様の正本は指定specRootへ更新する。最終検査記録は選択方式の `build/spec-generation/` の固定先へ更新しGitで管理する。作成途中の候補、一時HTML/画像、描画・変換・失敗試行は方式内 `.tmp/` を使い、過去生成結果を累積しない。[配置規則](../../docs/リポジトリ構成.md)に従い、方式を持たない共通工程だけ担当Agentまたはproject内のbuild/・.tmp/を使う。原入力・QA・正式fixtureは画面補助成果物と区別して保全する。
 
 本文レビュー、構造検査、描画・目視、実装、ビルド、DB/実機試験、正式採点を分けて報告する。構造や描画のPASSは正式合格を意味せず、未採点ならformalScoreはnull。入力・既存QAを維持し、重大な矛盾は根拠と再開条件を残して該当部分を保留する。

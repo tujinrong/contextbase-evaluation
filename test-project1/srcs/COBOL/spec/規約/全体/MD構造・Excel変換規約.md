@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"COBOL-DOC-MD-EXCEL","version":"8.0","path":"test-project1/srcs/COBOL/spec/規約/全体/MD構造・Excel変換規約.md","sheets":[{"heading":"章とシートの対応","kind":"GRID","sheet":"01_章とシートの対応"},{"heading":"LIST構文","kind":"GRID","sheet":"02_LIST構文"},{"heading":"LISTのExcel配置","kind":"GRID","sheet":"03_LISTのExcel配置"},{"heading":"GRIDのExcel配置","kind":"GRID","sheet":"04_GRIDのExcel配置"},{"heading":"メタ情報と復元","kind":"GRID","sheet":"05_メタ情報と復元"},{"heading":"検査と参照資料","kind":"GRID","sheet":"06_検査と参照資料"},{"heading":"描画可能な画面HTML・評価チェックリスト","kind":"GRID","sheet":"07_描画可能な画面HTML・評価チェックリスト"},{"heading":"テーブル文書の同一シート特例","kind":"GRID","sheet":"08_テーブル文書の同一シート特例"}],"isolationProfile":"COBOL"} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"COBOL-DOC-MD-EXCEL","version":"8.1","path":"test-project1/srcs/COBOL/spec/規約/全体/MD構造・Excel変換規約.md","sheets":[{"heading":"章とシートの対応","kind":"GRID","sheet":"01_章とシートの対応"},{"heading":"LIST構文","kind":"GRID","sheet":"02_LIST構文"},{"heading":"LISTのExcel配置","kind":"GRID","sheet":"03_LISTのExcel配置"},{"heading":"GRIDのExcel配置","kind":"GRID","sheet":"04_GRIDのExcel配置"},{"heading":"メタ情報と復元","kind":"GRID","sheet":"05_メタ情報と復元"},{"heading":"検査と参照資料","kind":"GRID","sheet":"06_検査と参照資料"},{"heading":"描画可能な画面HTML・評価チェックリスト","kind":"GRID","sheet":"07_描画可能な画面HTML・評価チェックリスト"},{"heading":"テーブル文書の同一シート特例","kind":"GRID","sheet":"08_テーブル文書の同一シート特例"}],"isolationProfile":"COBOL"} -->
 # MD構造・Excel変換規約
 
-版8.0／2026-10-12。仕様書の書式改訂。業務アプリ・実DBの実行試験は未実施。
+版8.1／2026-10-25。埋込みHTMLの単一正本と、採用UI・桁数に応じた配置へ同期。
 
 ## 章とシートの対応
 
@@ -55,11 +55,13 @@ EX-01：Microsoft「Excel specifications and limits」https://support.microsoft.
 
 ## 描画可能な画面HTML・評価チェックリスト
 
-詳細仕様の画面レイアウトは概要の下に完全な静的HTMLとCSSを埋め込み、ブラウザーでレンダリングして確認する。入力欄、選択欄、操作、一覧、必須表示、メッセージ、モード・確認ダイアログを実画面に近い配置にする。画面項目IDと物理コントロール／バインド先をHTMLのdata属性でも対応付ける。実装UIの種類は変更しない。RPGは5250レコード・ページ構成、Accessはフォーム部品の制約を反映する。
+画面レイアウトは基本・詳細の概要の下に完全な静的HTMLとCSSを埋め込み、同じ画面・状態では同じ配置断片を使用する。入力欄、選択欄、操作、一覧、必須表示、メッセージ、モード・確認ダイアログを採用UIの部品に即して配置する。画面項目IDと詳細の物理コントロール／バインド先をHTMLのdata属性でも対応付ける。物理名は基本設計の利用者向けラベルへ表示しない。実装UIの種類は変更しない。RPGは5250レコード・ページ構成、Access/WinFormsは従来のフォームと標準部品の制約を反映し、Web風のカード画面へ置き換えない。
 
-仕様書の正本はMD。補助成果物として同じ断片から生成した単独HTMLとレンダリングPNGをassetsへ置く。MD内のHTML、単独HTML、PNGを同時更新し、作成元ハッシュ・画面サイズ・ブラウザー版を画面確認記録へ残す。MDビューアーの安全化でCSS・フォーム要素が除去される場合はPNGと単独HTMLで確認する。GitHubに載せたHTMLが自動で実アプリとして動くとは説明しない。
+仕様書の画面表現はMD内の埋込みHTMLだけを正本とし、画面PNG・単独HTMLへのリンクや二重のレイアウトを併置しない。描画検査では正本の同じ断片を方式内.tmp/のHTMLへ抽出し、必要な検査画像も.tmp/で扱う。固定build/記録にはMD版・MDとHTML断片のハッシュ・抽出方法・画面サイズ・倍率・ブラウザー版・計測と目視結果を残す。中間画像のパスを恒久的な検査根拠リンクとして残さない。MDビューアーの安全化でCSS・フォーム要素が除去される場合は、ブラウザー描画の検査とビューアー表示制限を区別する。GitHubに載せたHTMLが自動で実アプリとして動くとは説明しない。
 
-LIST章には引き続き表１つ以外を置かない。描画用HTML・CSS・PNG・説明はGRIDである概要章だけへ置く。Excel変換時は画面を方眼領域へ画像として配置してよいが、元HTML・CSS・項目IDをメタ情報へ保持し、画像だけからDBや制約を逆推定しない。描画例を表の単なるセル結合へ劣化させない。
+入力幅は表示桁数と文字種・フォントの計測、枠・余白・矢印の必要幅で定める。位置と幅を揃える対象をグループ単位で明示し、短いコード欄を長文欄と同じ幅へ伸ばさない。座標と寸法はGRIDの配置表へ記載できる。原入力上限・保存上限は既存の項目一覧へ保持し、欄内移動や複数行等による全文到達を説明する。
+
+LIST章には引き続き表１つ以外を置かない。描画用HTML・CSS・配置説明はGRIDである概要章だけへ置く。Excel変換を別途依頼された場合は、元の埋込みHTML・CSS・項目IDから変換し、必要な出力画像をその配布物内に限って配置できる。MDへ画面PNGを戻さず、画像だけからDBや制約を逆推定しない。描画例を表の単なるセル結合へ劣化させない。
 
 各プロジェクトのspec-evalに具体的な期待値と配点を持つ評価表を置く。一般規則は[評価規約](評価規約.md)。一覧1行1レコードとし、評価期待値をAgentの一般書式へ混在させない。
 

@@ -1,14 +1,14 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"ACCESS-COM-STU-002","version":"8.0","path":"test-project1/srcs/Access/spec/共通/02_CRUD図.md","sheets":[{"heading":"確定境界","kind":"GRID","sheet":"01_確定境界"},{"heading":"一時情報","kind":"GRID","sheet":"02_一時情報"},{"heading":"技術補助情報の区別","kind":"GRID","sheet":"03_技術補助情報の区別"}],"isolationProfile":"Access"} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"ACCESS-COM-STU-002","version":"8.1","path":"test-project1/srcs/Access/spec/共通/02_CRUD図.md","sheets":[{"heading":"確定境界","kind":"GRID","sheet":"01_確定境界"},{"heading":"一時情報","kind":"GRID","sheet":"02_一時情報"},{"heading":"技術補助情報の区別","kind":"GRID","sheet":"03_技術補助情報の区別"}],"isolationProfile":"Access"} -->
 # CRUD図（言語非依存）
 
-版：8.0／2026-10-12。文書ID：COM-STU-002。
+版：8.1／2026-10-25。文書ID：COM-STU-002。
 
 C＝登録、R＝参照、U＝変更、D＝物理削除。通常処理のDはなし。論理削除は削除状態の変更なのでU。ロックを取得しても業務値を変えなければUとはしない。方式固有の一時状態・制御表は本表の業務5表に含めない。
 
 | 処理 | 学生基本情報 | クラスマスタ | コード種別マスタ | コード管理マスタ | 操作履歴 |
 | --- | --- | --- | --- | --- | --- |
 | 検索初期表示 | ― | R | R | R | ― |
-| 検索・ページ・並び順 | R | R | R | R | ― |
+| 検索・並び順・全件再表示 | R | R | R | R | ― |
 | 条件候補変更 | ― | R | R | R | ― |
 | 登録新規表示 | ― | R | R | R | ― |
 | 編集・参照・再読込 | R | R | R | R | ― |
@@ -66,7 +66,7 @@ flowchart TD
 | 一時情報 | 論理目的 | 寿命 |
 | --- | --- | --- |
 | 利用者・権限 | 共通認証情報 | 基盤の失効規則 |
-| 検索条件・並び順・ページ | 元の画面へ復帰 | 30分、画面インスタンス別 |
+| 検索条件・並び順・選択学生ID・スクロール位置 | 元の画面へ復帰 | 30分、画面インスタンス別 |
 | 編集入力・読込時版 | 取消・排他・入力保持 | 画面終了まで |
 | 重複確認情報 | 確認した対象・入力・候補の照合 | 10分 |
 | 保存成功通知 | 確定した結果を元画面に案内 | 一回表示 |
