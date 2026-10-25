@@ -17,32 +17,39 @@ Private Type NativeScrollInfo
 End Type
 Private Declare PtrSafe Function GetScrollInfo Lib "user32" (ByVal hWnd As LongPtr, ByVal bar As Long, ByRef info As NativeScrollInfo) As Long
 Private Declare PtrSafe Function SendMessageW Lib "user32" (ByVal hWnd As LongPtr, ByVal message As Long, ByVal wParam As LongPtr, ByVal lParam As LongPtr) As LongPtr
-Private listWindows As Object
-
-' Access exposes no ListBox.TopIndex. Capture its own focused child once, then use
-' the native vertical scrollbar without changing selection or fetching any rows.
-Private Function ListWindow(ByVal frm As Access.Form) As LongPtr
-    Dim h As LongPtr, previous As Access.Control
-    If listWindows Is Nothing Then Set listWindows = Map()
-    If listWindows.Exists(frm.Tag) Then
-        h = listWindows(frm.Tag)
-        If IsWindow(h) <> 0 And IsChild(frm.hWnd, h) <> 0 Then ListWindow = h: Exit Function
-        listWindows.Remove frm.Tag
-    End If
+' Access can recreate or share native child windows. Resolve the focused list for
+' each operation and keep that focus until native messages have completed.
+Private Function FocusListWindow(ByVal frm As Access.Form, ByRef previous As Access.Control) As LongPtr
+    Dim h As LongPtr
     On Error Resume Next: Set previous = frm.ActiveControl: On Error GoTo 0
     frm!lstStudents.SetFocus: h = GetFocus()
-    If h = 0 Or IsChild(frm.hWnd, h) = 0 Then Err.Raise vbObjectError + 151, , "E-COM-004"
-    listWindows.Add frm.Tag, h
-    If Not previous Is Nothing Then previous.SetFocus
-    ListWindow = h
+    If h = 0 Then Err.Raise vbObjectError + 151, , "E-COM-004"
+    If IsWindow(h) = 0 Or IsChild(frm.hWnd, h) = 0 Then Err.Raise vbObjectError + 151, , "E-COM-004"
+    If frm.ActiveControl.Name <> "lstStudents" Then Err.Raise vbObjectError + 151, , "E-COM-004"
+    FocusListWindow = h
 End Function
+Private Sub RestoreListFocus(ByVal previous As Access.Control)
+    On Error Resume Next
+    If Not previous Is Nothing Then previous.SetFocus
+End Sub
 Public Function SearchScrollPosition(ByVal frm As Access.Form) As Long
-    SearchScrollPosition = GetScrollPos(ListWindow(frm), 1)
+    Dim previous As Access.Control, h As LongPtr, number As Long, description As String
+    On Error GoTo Failed
+    h = FocusListWindow(frm, previous)
+    SearchScrollPosition = GetScrollPos(h, 1)
+    RestoreListFocus previous
+    Exit Function
+Failed:
+    number = Err.Number: description = Err.Description
+    RestoreListFocus previous
+    Err.Raise number, , description
 End Function
 Public Sub RestoreSearchScroll(ByVal frm As Access.Form, ByVal position As Long)
-    Dim h As LongPtr, count As Long, maxPosition As Long, info As NativeScrollInfo
+    Dim h As LongPtr, count As Long, maxPosition As Long, info As NativeScrollInfo, previous As Access.Control
+    Dim number As Long, description As String
+    On Error GoTo Failed
     count = frm!lstStudents.ListCount
-    h = ListWindow(frm)
+    h = FocusListWindow(frm, previous)
     info.size = LenB(info): info.mask = 3
     maxPosition = count - 1
     If GetScrollInfo(h, 1, info) <> 0 Then
@@ -53,8 +60,13 @@ Public Sub RestoreSearchScroll(ByVal frm As Access.Form, ByVal position As Long)
     If position > maxPosition Then position = maxPosition
     SendMessageW h, &H115, CLngPtr(position) * 65536 + 4, 0
     SendMessageW h, &H115, 8, 0
+    RestoreListFocus previous
+    Exit Sub
+Failed:
+    number = Err.Number: description = Err.Description
+    RestoreListFocus previous
+    Err.Raise number, , description
 End Sub
 Public Sub ReleaseSearchScroll(ByVal frm As Access.Form)
-    If listWindows Is Nothing Then Exit Sub
-    If listWindows.Exists(frm.Tag) Then listWindows.Remove frm.Tag
+    ' No native window handle is retained between operations.
 End Sub

@@ -1,11 +1,13 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"REPO-AGENTS","version":"7.2","path":"AGENTS.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"配置","kind":"GRID","sheet":"02_配置"},{"heading":"完了","kind":"GRID","sheet":"03_完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"REPO-AGENTS","version":"7.3","path":"AGENTS.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"配置","kind":"GRID","sheet":"02_配置"},{"heading":"完了","kind":"GRID","sheet":"03_完了"}]} -->
 # 作業Agent向けルーティング
 
-版7.2／2026-10-25。生成物の履歴はGitで管理し、最終結果と作業用出力を分離する。
+版7.3／2026-10-25。確定済み前提を次回の仕様生成へ継承し、最終結果と作業用出力を分離してGitで履歴を管理する。
 
 ## 対象
 
 まずdocsの全体規則とagentsの役割定義を読む。実行要求でprojectIdと工程を確定し、選択projectだけを対象とする。方式ごとにspecRoot=対象project/spec/方式ID、sourceRoot=対象project/srcs/方式IDを分けて固定する。逆生成の評価実行では対象project/spec/全体とspec-evalへの読取りを許可しない。
+
+仕様生成では、選択specRootに記録された利用者の確定前提、採用プロファイル、QAの決定を先に読み、根拠文書の版・ハッシュ・適用範囲を実行条件へ固定する。確定済みの回答は次回も継承し、変更指示や新たな矛盾がなければ再質問したり未決へ戻したりしない。方式固有の前提を他方式へ自動展開しない。実装・検査の実施状態は前提規則と分け、対象版の実行記録で確認する。
 
 ## 配置
 

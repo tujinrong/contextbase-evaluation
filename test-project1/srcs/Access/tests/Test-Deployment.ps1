@@ -31,7 +31,16 @@ try {
  }
  Check-Deployment (@($taskTables | Where-Object {$_.connect -ne ''}).Count -eq 0) 'all physical tables local; no external links'
  Check-Deployment ($taskCounts.m_code_category -eq 5 -and $taskCounts.m_code -eq 70) 'initial five categories / seventy codes'
- Check-Deployment ($taskCounts.m_class -eq 0 -and $taskCounts.m_student -eq 0 -and $taskCounts.t_operation_log -eq 0) 'no sample class/student/audit in final binary'
+ $taskSample=Get-Content -LiteralPath (Join-Path $PSScriptRoot '../database/sample-data.json') -Encoding UTF8 -Raw | ConvertFrom-Json
+ Check-Deployment ($taskCounts.m_class -eq $taskSample.classes.Count -and $taskCounts.m_student -eq $taskSample.students.count -and $taskCounts.t_operation_log -eq $taskSample.expectedInitialAuditCount) 'approved fictitious sample class/student/audit counts'
+ Check-Deployment ($taskDb.Properties.Item('StudentSampleDataVersion').Value -eq $taskSample.sampleVersion) 'sample version pinned in final binary'
+ Check-Deployment (-not [bool]$taskDb.Properties.Item('StudentSampleBootstrapAllowed').Value) 'final binary disables sample bootstrap insertion'
+ $taskRs=$taskDb.OpenRecordset("SELECT Count(*) AS n FROM m_student WHERE postal_code Is Not Null AND (Len(postal_code)<>7 OR postal_code Like '*[!0-9]*')"); $taskBadPostal=$taskRs.Fields.Item('n').Value; $taskRs.Close()
+ Check-Deployment ($taskBadPostal -eq 0) 'every stored sample postal code is seven ASCII digits'
+ $taskSampleStatuses=@{}
+ $taskRs=$taskDb.OpenRecordset('SELECT enrollment_status_code,Count(*) AS n FROM m_student GROUP BY enrollment_status_code')
+ while(-not $taskRs.EOF){$taskSampleStatuses[[string]$taskRs.Fields.Item('enrollment_status_code').Value]=[int]$taskRs.Fields.Item('n').Value; $taskRs.MoveNext()}; $taskRs.Close()
+ foreach($taskStatus in $taskSample.students.statusCounts.PSObject.Properties){Check-Deployment ($taskSampleStatuses[$taskStatus.Name] -eq $taskStatus.Value) "sample enrollment status $($taskStatus.Name) count"}
  Check-Deployment ($taskCounts.t_write_guard -eq 1 -and $taskCounts.t_app_role -eq 1) 'one gate and one embedded evaluation subject'
  $taskRs=$taskDb.OpenRecordset('SELECT lock_bit FROM t_write_guard WHERE guard_id=1'); $taskLock=$taskRs.Fields.Item('lock_bit').Value; $taskRs.Close()
  Check-Deployment ($taskLock -eq $false) 'deployment health rolls gate back'
@@ -48,11 +57,12 @@ try {
  foreach ($taskComponent in $taskAccess.VBE.ActiveVBProject.VBComponents) { $taskModules+=@{name=$taskComponent.Name;kind=$taskComponent.Type;lines=$taskComponent.CodeModule.CountOfLines} }
  foreach ($taskObject in $taskAccess.CurrentProject.AllForms) { $taskForms+=$taskObject.Name }
  Check-Deployment ($taskForms.Count -eq 5) 'all five generated executable forms'
- Check-Deployment (@($taskModules | Where-Object {$_.name -eq 'modSelfTests'}).Count -eq 0) 'test-only module excluded from final binary'
+ Check-Deployment (@($taskModules | Where-Object {$_.name -like '*Tests'}).Count -eq 0) 'test-only modules excluded from final binary'
  Check-Deployment ($taskDb.Properties.Item('StartupForm').Value -eq 'frmStudentSearch' -and $taskDb.Properties.Item('StudentBackendPath').Value -eq 'SELF') 'single file is configured as startup executable'
  $taskSeed=Get-Content -LiteralPath (Join-Path $PSScriptRoot '../database/seed.json') -Encoding UTF8 -Raw | ConvertFrom-Json
  $taskProtected=0; $taskRs=$taskDb.OpenRecordset('SELECT Count(*) AS n FROM m_code WHERE category_id="ENROLLMENT_STATUS" AND is_protected=True'); $taskProtected=$taskRs.Fields.Item('n').Value; $taskRs.Close()
  Check-Deployment ($taskProtected -eq 4) 'all four enrollment codes are protected'
+ Check-Deployment ((Get-FileHash -LiteralPath $taskSource -Algorithm SHA256).Hash -eq $taskSourceHash) 'inspection preserves the canonical source binary'
  $taskState=if (@($taskChecks | Where-Object {-not $_.passed}).Count -eq 0) {'Passed'} else {'Failed'}
 } catch { $taskState='Failed'; $taskFatal=$_.Exception.Message; Write-Output $taskFatal }
 finally {

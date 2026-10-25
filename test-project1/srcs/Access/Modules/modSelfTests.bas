@@ -3,6 +3,13 @@ Option Explicit
 Option Compare Binary
 Private checks As Long
 Private checkLog As String
+Private Sub TraceFormStep(ByVal stage As String)
+    Dim fileNumber As Integer
+    fileNumber = FreeFile
+    Open CurrentProject.Path & "\fixture-progress.log" For Append As #fileNumber
+    Print #fileNumber, "STAGE" & vbTab & stage
+    Close #fileNumber
+End Sub
 Private Sub Check(ByVal value As Boolean, ByVal label As String)
     checks = checks + 1
     checkLog = checkLog & CStr(checks) & vbTab & IIf(value, "PASS", "FAIL") & vbTab & label & vbCrLf
@@ -238,6 +245,18 @@ Public Function RunFormTests() As String
     checks = 0: checkLog = "": Authorize "Master": CheckFixture
     DoCmd.OpenForm "frmStudentSearch"
     Set frm = Forms("frmStudentSearch")
+    Dim callbackIds As Object, callbackId As Long
+    Set callbackIds = Map()
+    For i = 1 To 1000
+        If i Mod 2 = 0 Then
+            callbackId = CLng(StudentListCallback(frm!lstStudents, 0, 0, 0, acLBOpen))
+        Else
+            callbackId = CLng(CandidateListCallback(frm!lstStudents, 0, 0, 0, acLBOpen))
+        End If
+        If callbackId = 0 Or callbackIds.Exists(CStr(callbackId)) Then Err.Raise vbObjectError + 501, , "List callback IDs must be nonzero and unique"
+        callbackIds.Add CStr(callbackId), True
+    Next
+    Check callbackIds.Count = 1000, "rapid list opens have nonzero unique IDs across both callbacks"
     Check frm.RecordSource = "", "search form unbound"
     Check frm!cboSortKey = "studentNo" And frm!cboSortDirection = "asc", "initial search sort defaults"
     Check Not HasFormControl(frm, "cboPageSize") And Not HasFormControl(frm, "cmdFirst") And Not HasFormControl(frm, "cmdPrev") And Not HasFormControl(frm, "cmdNext") And Not HasFormControl(frm, "cmdLast"), "retired range controls are absent"
@@ -266,14 +285,17 @@ Public Function RunFormTests() As String
     Check frm!lstStudents.ColumnCount = 8, "hidden ID and seven visible native columns"
     Check frm.Width <= 19200 And frm.Section(acDetail).Height <= 9750, "search fits 1280x650 at 96 dpi"
     Check frm!cmdOpenSelected.OnClick = "=OpenStudent(False)", "explicit selected row action"
-    Check frm!txtName.Height = 360 And frm!txtName.FontSize = 9, "native input height and font match current design"
+    Check frm!txtName.Height = 390 And frm!txtName.FontSize = 11, "native input height and font match approved readability correction"
     Check frm!txtStudentNo.Width = 2040 And frm!txtName.Width = 1800 And frm!cboClass.Width = 6600, "search widths follow field lengths"
     Check frm!lstStudents.Height = 4020 And frm.Width = 18240, "native full-list dimensions"
     Check CLng(Split(frm!lstStudents.ColumnWidths, ";")(2)) = 5100, "name and kana column has 340px equivalent width"
     Check frm.DefaultView = 0, "search is native Single Form"
     Dim bulkId As Long, expectedPosition As Long
+    TraceFormStep "before native list bulk insert"
     AddListFixtureRows 1, 40
+    TraceFormStep "after native list bulk insert"
     SearchClick "SEARCH"
+    TraceFormStep "after native list search refresh"
     Check StudentListCallback(frm!lstStudents, 1, 0, 0, acLBGetRowCount) = 42, "native list includes every match beyond old page size"
     bulkId = DLookup("student_id", "m_student", "student_no='BULK-000001'")
     frm!lstStudents = bulkId: SelectedStudentDetails
@@ -299,7 +321,7 @@ Public Function RunFormTests() As String
     Check frm.Width <= 19200 And frm.Section(acDetail).Height <= 9750, "editor fits 1280x650 at 96 dpi"
     Check frm!txtRemarks.EnterKeyBehavior And frm!txtRemarks.Height > 510, "multiline memo remains editable"
     Check frm!txtRemarks.Height = 690 And frm!txtOperationReason.Height = 690, "memo and reason use current multiline dimensions"
-    Check frm!txtStudentName.Width = 1800 And frm!txtStudentNameKana.Width = 6600 And frm!txtStudentNo.Width = 2040, "editor widths follow individual field lengths"
+    Check frm!txtStudentName.Width = 2400 And frm!txtStudentNameKana.Width = 6600 And frm!txtStudentNo.Width = 2640, "editor widths preserve individual field lengths at readable font size"
     Check frm!txtStudentId.Left = frm!txtStudentName.Left And frm!txtPostalCode.Left = frm!txtAddressLine1.Left, "left-column input starts align"
     Check frm!txtAdmissionDate.Left = frm!cboClass.Left And frm!txtEmergencyContactName.Left = frm!txtRemarks.Left, "right-column input starts align"
     Check frm!cboBirthEra.Width = 1200 And frm!txtBirthYear.Width = 780 And frm!txtBirthMonth.Width = 630 And frm!txtBirthDay.Width = 630, "four era controls retain individual native widths"
@@ -310,6 +332,7 @@ Public Function RunFormTests() As String
     Check frm!cboBirthEra = "HEISEI" And CLng(frm!txtBirthYear) = 15 And CLng(frm!txtBirthMonth) = 4 And CLng(frm!txtBirthDay) = 2, "saved birth -> four era controls"
     Set old = service.LoadStudent(id): savedName = old("student_name")
     Check Not EditHasChanges(frm), "unchanged editor has no discard confirmation state"
+    Check CanCloseEdit(frm) And Not EditHasChanges(frm), "close eligibility retains live editor state until Form_Close commits closure"
     frm!txtOperationReason = "入力中の理由": Check EditHasChanges(frm), "unsaved reason participates in raw snapshot comparison"
     frm!txtOperationReason = Null: Check Not EditHasChanges(frm), "reverting unsaved reason clears change state"
     Dim originalYear As Variant, originalSchoolYear As Variant
@@ -349,7 +372,9 @@ Public Function RunFormTests() As String
     DoCmd.OpenForm "frmDuplicateConfirm": Set frm = Forms("frmDuplicateConfirm")
     Check CandidateListCallback(frm!lstCandidates, 1, 0, 0, acLBGetRowCount) = 20 And InStr(frm!lblPrompt.Caption, "21件") > 0, "actual candidate dialog shows 20 of full 21"
     Check CandidateListCallback(frm!lstCandidates, 1, 0, 2, acLBGetValue) = FormatBirthDate("2003-04-02"), "candidate birth date era display"
-    ConfirmationCancel: Check Not ConfirmationAccepted, "candidate cancel rejects continuation"
+    Call ConfirmationCancel
+    Check Not ConfirmationAccepted, "candidate cancel rejects continuation"
+    Check Not CurrentProject.AllForms("frmDuplicateConfirm").IsLoaded, "candidate cancel closes the actual dialog"
     ConfirmationMode = "DELETE": ConfirmationReason = Null: ConfirmationStudentNo = "TEST-UI"
     DoCmd.OpenForm "frmDeleteConfirm": Set frm = Forms("frmDeleteConfirm")
     Check InStr(frm!lblPrompt.Caption, "TEST-UI") > 0, "delete dialog binds original target"
@@ -412,7 +437,8 @@ Public Function RunAllRowsTests() As String
     Dim raw As Object, d As clsSearchCriteria, result As Object, rows As Collection, row As Object
     On Error GoTo Failed
     checks = 0: checkLog = "": Authorize "Master": CheckFixture
-    ClearListFixtureRows: AddListFixtureRows 1, 10000
+    Call ClearListFixtureRows
+    AddListFixtureRows 1, 10000
     Set raw = CriteriaFixture(): raw("studentNo") = "BULK-": Set d = NormalizeCriteria(raw, BusinessDay(UtcNow()))
     Set result = SearchStudents(d, "studentNo", "asc"): Set rows = result("rows")
     Check result("kind") = "Found" And result("total") = 10000 And rows.Count = 10000, "ten thousand matches are returned together"

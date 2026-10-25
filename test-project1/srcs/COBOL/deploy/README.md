@@ -1,17 +1,11 @@
-# 最新Text仕様について
+# Windowsサンプル配布
 
-2026-10-25の端末描画・入力・信頼認証adapterはQA-TEXT-COBOLで未決です。以下は保持している旧CGIの配備資料で、新Textシステムの配備手順ではありません。今回Linux/DB配備は未実施です。
+ビルド手順は方式READMEのWindows `build.py` を使用します。最終 `build/app/windows/` の2exeを配布し、`runtime.json` のSHAを照合します。runtime DLLは含みません（runtimeLibrariesIncluded=false）。互換するWindows x64 GnuCOBOL 3.2/ICU78/OpenSSL3とその依存DLLを別途用意し、`Run-Sample.ps1 -RuntimeDirectory <runtimeディレクトリ>` から起動してください。スクリプトは当該プロセスだけPATHを追加し、既定は方式内SDK binです。Microsoft ODBC Driver18は別途必要です。
 
-# Linux CGI配備
+SQL Server 2022／Microsoft ODBC Driver18を用い、開発用DBへの保護されたWindows ODBC DSN名を `STUDENT_ODBC_DSN` としてプロセスへ渡します。TLS証明書検証とDB最小権限を維持し、接続文字列はGit/画面ログへ出力しません。DB作成/初期化/権限付与は自動実行しません。方式のdatabase配下の生成SQLをDB担当が確認して適用します。正式fixturesを配備初期DBへ混ぜません。
 
-1. Linux x86_64にGnuCOBOL3.2/C11、ICU/OpenSSL/unixODBC開発ファイル、Microsoft ODBC Driver18を準備し取得版・ハッシュを確定します。このホストではLinux実機未実施です。
-2. COBOLで `make all` / `make check` を実行し依存・ABIログを保存します。ソース変更時は旧record layoutの保持状態と共有しません。
-3. 選択した空のSQLServer2022 DBへ `database/001_schema.sql` → `002_seed.sql` を適用。`odbc.ini.example` を基に保護したDSNを作成します。暗号化・証明書検証はCから明示します。資格情報をCGI入力で受けません。
-4. CGI/CLIを静的公開領域から分離。非特権専用主体を使い、`.tmp/runtime/` の書込みをその主体に限定します。描画一時ファイルに学生値を含むため700相当、umask077。正常終了時削除、強制終了残骸は配備者の期限付き清掃で削除します。
-5. `deploy/student.cgi` を限定CGI入口、`assets/` を `/student-assets/` へ対応。直接バイナリーや保守CLIを公開しません。要求65536byte、CGI終了タイムアウト、HTTPSをWebサーバーにも設定します。
-6. 共通認証済みWebサーバーが認証セッションからREMOTE_USER/ST_LOGIN_SESSION_ID/ST_TRUSTED_ROLEを設定。同名利用者ヘッダーは削除、CookieはSecure/HttpOnly。Viewer/Staff/Administratorはサーバー認可値。状態鍵32byteは秘密管理からSTUDENT_STATE_KEY_HEXに注入します。CSRFはowner/sessionと鍵のHMACで検証します。Cookie認証自体は共通認証サーバーの配備前提です。
-7. CGI用サービスDB主体を最小権限に設定し有効権限を確認。CLIは別の管理者DB主体を使い、Tx内でもstudent_adminを検査。DDLはログイン/権限を自動付与しません。
-8. 承認クラスをCLIで投入後、検索・新規・更新・確認・取消・削除、権限、期限/旧版/他者/別タブを実DB・ブラウザーで検査。監査失敗、同時定員、重複候補21件以上、COMMIT後切断、再起動復帰を含めます。
-9. runtime-state-cleanup.sqlを配備者の定期保守で実行し期限切れ保持情報を消します。業務学生・監査ログは削除しません。
+アプリは認証なしのサンプルです。固定sample-user/Administratorであり、本番認証・利用者別認可に適合するという意味ではありません。DB接続権限と管理者CLIのDB role確認は維持します。
 
-以上の配備・DB・ブラウザー試験は未実施です。Windows実行成功を配備合格へ流用しません。
+実Console27行×132桁を確保してください。終了・切断・別起動でsessionとメモリ暗号鍵が失効し、以前の画面/確認は再利用できません。DB t_runtime_stateの期限切れ削除は保持した [runtime-state-cleanup.sql](runtime-state-cleanup.sql) を運用側で適用します。Linux/CGI配備は今回のtargetに含めません。
+
+実DB、実glyph/IME/物理キー、本番受入は未実施です。

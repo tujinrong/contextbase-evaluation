@@ -1,9 +1,9 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"COBOL-DOC-AE86D9630E09","version":"8.3","path":"test-project1/spec/COBOL/規約/COBOL.md","sheets":[{"heading":"データ表現・ABI","kind":"GRID","sheet":"01_データ表現・ABI"},{"heading":"ビルド・配備・試験","kind":"GRID","sheet":"02_ビルド・配備・試験"},{"heading":"共通規約の具体化","kind":"GRID","sheet":"03_共通規約の具体化"}],"isolationProfile":"COBOL"} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"COBOL-DOC-AE86D9630E09","version":"8.4","path":"test-project1/spec/COBOL/規約/COBOL.md","sheets":[{"heading":"データ表現・ABI","kind":"GRID","sheet":"01_データ表現・ABI"},{"heading":"ビルド・配備・試験","kind":"GRID","sheet":"02_ビルド・配備・試験"},{"heading":"共通規約の具体化","kind":"GRID","sheet":"03_共通規約の具体化"},{"heading":"Windows認証なしサンプル","kind":"GRID","sheet":"04_Windows認証なしサンプル"}],"isolationProfile":"COBOL"} -->
 # COBOL 開発規約
 
 | 項目 | 内容 |
 | --- | --- |
-| 版数・改訂日 | 8.3／2026-10-25 |
+| 版数・改訂日 | 8.4／2026-10-25 |
 | 対象方式 | COBOL |
 | 適用 | 設計上の実装契約。製品コードの実装・コンパイルは未実施 |
 
@@ -39,9 +39,9 @@ C ABIは`int32_t STDBOP(void *connection, const ST_DB_REQUEST *request, ST_DB_RE
 
 ## ビルド・配備・試験
 
-cobcはfree形式、COPYパス固定。CブリッジをPICでビルドしODBC・Unicode・暗号の依存版を固定してリンクする。実際のリンカー引数は配備Linuxのpkg-config結果とCIに固定。`cobc -x -free`による主プログラムと呼出プログラムのリンク構成をCIで確認する。例をそのまま完成コマンドとしない。
+cobcはfree形式、COPYパス固定。CブリッジをGnuCOBOLと同じWindows x64のABIでビルドし、Windows ODBC Driver Manager・Driver18・Unicode・暗号の依存版を固定してリンクする。Linux向けPIC・unixODBC・pkg-configを必須にせず、Windowsのビルド設定と依存DLLの配布条件を実装記録へ固定する。`cobc -x -free`による主プログラムと呼出プログラムのリンク構成をCIで確認する。例をそのまま完成コマンドとしない。
 
-端末入口はText系の行/桁/属性と操作を実装する。GnuCOBOL/LinuxとODBC/C境界の設計基準を維持し、端末製品/ランタイム/IME/認証アダプターはQA-TEXT-COBOLで選定する。学生画面を旧CGI HTMLとして配備することを本改訂の達成としない。実行主体は非特権・接続先限定・タイムアウト管理とする。DB初期化・承認クラス投入後、コピー句とC構造のABI、UTF-8境界、プロセス終了を跨ぐ状態、2接続競合、監査失敗、確定後応答喪失を試験する。実装コード・実機試験の完成を本書は意味しない。
+端末入口はText系の行/桁/属性と操作を実装する。Windows x64／GnuCOBOL 3.2とODBC/C境界の設計基準を維持し、Windows標準Console／Win32 W APIを技術選定し、実IME/glyph/キーの適合はQA-TEXT-COBOLで検証する。QA-AUTHは本サンプルでは対象外。学生画面を旧CGI HTMLとして配備することを本改訂の達成としない。実行主体は非特権・接続先限定・タイムアウト管理とする。DB初期化・承認クラス投入後、コピー句とC構造のABI、UTF-8境界、プロセス終了を跨ぐ状態、2接続競合、監査失敗、確定後応答喪失を試験する。実装コード・実機試験の完成を本書は意味しない。
 
 ## 共通規約の具体化
 
@@ -56,3 +56,14 @@ cobcはfree形式、COPYパス固定。CブリッジをPICでビルドしODBC・
 通常画面は27行×132桁、左上(1,1)、半角1/全角2の設計値。P保護/U入力/R見出し/Eエラー属性、項目ID、実バイト長、表示開始位置を端末アダプターへ渡す。実機がこの格子を確保できない場合は適合エラーを示し、入力や主要操作を黙って削らない。全文のUnicodeを単純なセル数へ切捨てず、結合文字/補助文字はコードポイント編集の完全往復を検証する。
 
 F4候補/F8全文/F1説明/Tab移動/F12取消と機能別操作キーを共通割当とする。端末エミュレーターがキーを奪う場合の代替キーはQA-TEXT-COBOLで決め、画面へ表示する。Enterだけで登録/削除/別人続行を確定させない。確認は既定N、明示Y+F5でサーバー保持の確認目的だけを続行する。HTML資料のpre/spanと製品の端末制御を区別し、PNGや別HTMLを正本へ置かない。旧CGI実装の改修・新端末実装・ビルド・実DB・端末試験は今回未実施。
+
+## Windows認証なしサンプル
+
+| 項目 | 本方式での適用 |
+| --- | --- |
+| 利用者指定 | 「Windowsで実行できる環境を想定する」「サンプルのため、認証はしない」 |
+| 実行前提 | Windows x64／GnuCOBOL 3.2／同bit C／Windows標準ConsoleとWin32 W API／Windows ODBC Driver18。Linux・unixODBC・pkg-configの必須前提を置換する |
+| 認証の例外 | このサンプルではログイン・Windows token・利用者/role mappingを行わず、実行側が固定actor `sample-user`、固定操作role `Administrator` を設定する。全サンプル機能確認用であり、本番認証・認可への適合を主張しない。一般の認証/権限表と用語は、本サンプルではこの例外を適用して読む |
+| 信頼境界 | actor/role/sessionを端末rawまたはREMOTE_USER/ST_TRUSTED_ROLEから受付けない。DB接続の権限・TLS・保存時の業務検査・期待版・理由・同時保存・監査は維持する |
+| 状態 | 接続ごとのCSPRNG32byte・64桁hex session、画面instance・要求ID・期待Revision・期限を照合。検索30分・確認10分。実キー活動だけがidle期限を更新し、timerでは延長しない。idle30分で失効し、終了/切断/再起動/別プロセスへ引き継がない |
+| 正本と未実施 | [Windows実行環境](../共通/方式別/02_Windows実行環境.md)を適用。QA-AUTHは本サンプルで対象外、QA-TEXT-COBOLはOS/技術選定済み・実glyph/IME/キー適合未検証。実DB・本番受入・正式採点は未実施 |

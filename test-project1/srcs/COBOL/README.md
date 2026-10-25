@@ -1,52 +1,29 @@
-# COBOL 学生管理
+# COBOL Windows Text サンプル
 
-2026-10-25 / `20261025-regenerate`。入力は `../../spec/COBOL/` の43ファイル（README8.5、方式別共通8.4）と全体規則16ファイルです。通常preflight59ファイルを凍結し、今回の入力版・差分・中断条件は [生成記録](build/generation/generation.md) に保存しています。
+Windows x64／GnuCOBOL 3.2／Win32 Unicode Console／SQL Server・ODBC Driver18。ユーザー指定により認証は行わず、実行側が `sample-user`／`Administrator` を設定します。端末raw・REMOTE_USER・role環境変数は主体にしません。本番認証・認可への適合は対象外です。
 
-**新Text画面の生成は QA-TEXT-COBOL により中断しています。** 最新仕様は27×132の固定端末へ変更されましたが、端末製品、描画ライブラリ、入力/認証アダプターと実証環境が未決です。仕様が要求する選定・実証を推測で補えないため、既存のCGIとHTML画面は旧実装として保持します。これを新Textシステムの完成とは扱いません。`tools/regenerate.py` は通常の全再生成を停止し、`--reusable-only` でSQLカタログとDDLだけを更新できます。
+## 起動・ビルド
 
-今回、再利用SQL38命令の型・バインドカタログと、方式専用SQLServer DDL/seedを再生成しました。DBには接続・適用していません。旧CGI/保守CLIを既存 GnuCOBOL3.2 と Zig0.14.1 で再コンパイルし、業務境界86件、既存HTTP/確認/HTML回帰95件、静的12件を新規実行しました。[今回の検査](build/test-results/README.md) は旧実装と再利用境界だけの結果です。Text描画・キー・IME・Unicode往復・信頼認証の適合、Linux配備、実SQL、正式採点は未実施です。formalScore=null。
+PowerShellでこのディレクトリを開き、`python -X utf8 build.py --sdk <GnuCOBOL-UCRT-SDK> --cc <zig.exe>` を実行します。既存の方式内処理系があれば引数は省略できます。原仕様を含まないsource-only展開でもビルドできます。詳細な引数は `python build.py --help`。Python 3、Windows x64 GnuCOBOL 3.2/Cヘッダー・import libraries、ICU78、OpenSSL3、同bit C処理系が必要です。自動ダウンロード/インストールは行いません。依存版と取得済みパッケージhashは [dependencies.lock.json](dependencies.lock.json)。Linux実行は今回の対応対象に含めません。
 
-ソース、SQLServer資源、生成器、試験はこの方式内で完結します。仕様ID対応は [IMPLEMENTATION.md](IMPLEMENTATION.md)、中断に必要な情報は [中断記録](build/generation/interruption.json) を参照してください。
+最終配布は `build/app/windows/student-text.exe`、`student-maint.exe` とhash付き `runtime.json`。runtime DLLは自動bundleしません（runtimeLibrariesIncluded=false）。Windows x64 GnuCOBOL/ICU/OpenSSL等の互換runtimeを別途用意し、`Run-Sample.ps1 -RuntimeDirectory <runtime DLLディレクトリ>` で当該プロセスのPATHへ設定します。既定値は既存の方式内SDK binです。ODBC Driver18は別途導入済みである必要があります。起動は開発用の保護されたODBC User/System DSNを用意し、プロセスの `STUDENT_ODBC_DSN` にDSN名を設定して `Run-Sample.ps1` または配布ディレクトリの `student-text.exe`。DSN名は英数字/アンダースコア/ハイフンだけを許可します。接続資格情報はログ・Gitへ保存しません。最小27行×132桁の実Consoleが必要です。リダイレクトした標準入力やサイズ不足では起動しません。
 
-## 生成・Linuxビルド
+共有DBの接続権限・TLS・業務検査・楽観版・監査は維持します。[deploy/README.md](deploy/README.md) と [database/README.md](database/README.md) を参照。DB作成・DDL適用はこの生成/ビルドでは実行しません。
 
-COBOLディレクトリを作業ディレクトリにします。生成器はDBへ接続しません。
+## 操作
 
-```sh
-python3 tools/input_lock.py
-python3 tools/regenerate.py --reusable-only
-make all
-make check
-```
+検索は学籍番号・氏名・クラスID・在籍区分の4条件、一覧8論理項目、取得頁20/50/100と4件表示窓を分離します。F5検索、F6クリア、F2新規、行番号+Enter編集、F3終了。PgUp/PgDnは表示窓、F7/F10は取得頁、Ctrl+Home/Endは取得先頭/最後。在籍欄だけSpaceでX/空欄を切替えます。
 
-Linux x86_64/little-endian、GnuCOBOL3.2、C11、ICU、OpenSSL、unixODBC開発ファイル、Microsoft ODBC Driver18が必要です。Makefileは `pkg-config` の `icu-uc openssl odbc` を使用します。Linux依存物の解決・取得・リンクは未実施です。[依存記録](dependencies.lock.json)のLinux欄は未解決です。配備環境で取得版・ハッシュを固定し、`build/test-results/linux/dependencies.txt` を保存してください。
+登録は全34項目の意味を維持し27×132へ配置します。F5登録/更新、F6取消、F9再読込、F3検索、F11論理削除。F4候補は6件×2行で全候補を辿れます。F8全文はF2通常/コードポイント表示、F5原rawへ反映、F12完全取消。Enterは検査だけでDB保存しません。LFはコードポイントU+000Aから明示入力します。重複/削除/変更破棄はN既定、明示Y+新しいF5だけ続行、F12取消。確認中の背景操作を拒否します。
 
-## Windowsホスト検査
+起動ごとのsessionと暗号鍵はメモリ内だけに発行し、終了/別プロセスでは復帰しません。実キーだけidle期限を更新し、30分idleで失効します。検索/Editor/確認の正本はDB `t_runtime_state`、検索30分・確認10分・所有者/画面/期待revision付きCASです。
 
-処理系・DLLはすべて `.tmp/toolchain/` 内です。永続PATH変更は不要です。版・取得先・SHA256は `dependencies.lock.json` と `.tmp/toolchain/msys2/packages.lock.json` に記録しています。試験の既定出力は方式内 `build/test-results/` の固定名です。同じコマンドを再実行すると最新結果で置換します。実行IDはJSON内のメタデータだけに残します。
+## 再生成・検査
 
-```powershell
-python tools/input_lock.py lock
-python tools/host_build.py
-python tools/host_tests.py
-python tools/static_check.py
-python tools/test_compact.py
-python tools/write_report.py
-```
+実装入力は対応する `../../spec/COBOL` のみです。入力変更を意味確認してから `python -X utf8 tools/input_lock.py lock`、`python -X utf8 tools/regenerate.py`。後者はロックを照合し、Windows入口・COPY・業務・固定SQL38コマンド・DDLを再生成します。個別emitの途中結果を完成ソースとして扱わないでください。
 
-手書きCは `-Wall -Wextra -Werror` で検査します。GnuCOBOL生成Cの旧形式プロトタイプ警告だけを `-Wno-deprecated-non-prototype` で抑制しています。DB実行をmockで代替して合格を付けていません。
+今回の正式記録は [build/test-results/summary.json](build/test-results/summary.json)、[生成記録](build/generation/generation.md)。共通ABI/Unicode/日付等、production COBOL Text制御のterminal fixture、production Win32エンジンのsynthetic INPUT_RECORDを別に検査します。`tools/host_build.py` → `tools/host_tests.py` → `tools/static_check.py` → `tools/test_text.py` → `tools/write_report.py`。同じ `COBOL_RUN_ID` と入力/ソース/バイナリー/runner hashが一致した結果だけ最終集約へ載せます。
 
-保守CLIは承認したURLエンコード入力ファイルを `student-maint class file.form` または `student-maint code file.form` として受け取ります。DBの `student_admin` をTx内で再検査します。実在クラス・学生・ログインを自動生成しません。
+旧HTML/CGI専用 `tools/test_compact.py` と正式tests/fixtureは移行前の検査材料として保持し、Windows Textの合格へ数えません。旧配備資源は方式内 `.tmp/legacy-work/old-cgi-source` へ移動しました。過去の検査結果・途中コンパイル・toolchain/cacheは `.tmp/`、最終app/今回検査/generationは固定 `build/`、履歴はGitで管理します。
 
-```text
-schoolYear=2026&gradeCode=00&classCode=C-A&className=Approved&validFrom=2026-04-01&validTo=2027-03-31&displayOrder=1&isActive=1
-categoryId=GRADE&codeValue=01&codeName=Approved&displayOrder=1&isActive=1&validFrom=1900-01-01&expectedVersion=1&reason=Approved
-```
-
-上記は承認値への置換を要するCLI例です。接続資格情報・暗号鍵は保護したサーバー秘密管理から渡します。共通認証済みWebサーバーが信頼する利用者・セッション・権限をCGIへ設定することが前提です。
-
-## 出力配置
-
-`build/app/windows/` は最終CGI・保守CLI、`build/test-results/` は最新の検査結果・生ログ、`build/input-manifest.json` は現行入力ロックです。これらをGit管理し、日付別・試行別の成果履歴を並べません。親工程の固定メタデータは `build/generation/`、ソース配布は `build/source.zip` です。
-
-`.tmp/toolchain/` に処理系、`.tmp/host/` に生成C・obj・検査exe、`.tmp/cache/` にコンパイラーキャッシュ、`.tmp/runtime/` に描画一時ファイルを置きます。Windows最終exeはruntime.jsonに示す方式内ランタイム依存を使います。Linux最終appは `build/app/linux/`、中間物・probeは `.tmp/linux/` です。`--report-dir`／COBOL_TEST_REPORT_DIRは方式内のbuild/test-resultsまたは.tmp配下だけを指定できます。試行・隔離検査は.tmpを指定してください。正式な tests/ とfixtureは削除しません。
+実Consoleのglyph/IME/物理キー、実SQL/暗号化状態表統合・競合保存、本番受入・正式採点は未実施です。formalScore=null。

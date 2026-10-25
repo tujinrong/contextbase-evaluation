@@ -1,58 +1,105 @@
-"""Windows host evidence only: GnuCOBOL 3.2 translator + Zig C linker."""
+"""Compile the Windows no-auth sample and its independent native boundary probes."""
 import sys
 sys.dont_write_bytecode = True
 from pathlib import Path
-import os,sys,subprocess,json,datetime,hashlib,shutil
-from output_paths import result_dir,reset_work
-from evidence import compiled_inputs,binary_hashes
-ROOT=Path(__file__).resolve().parents[1]
-sequence=sys.argv[1] if len(sys.argv)>1 else 'current'
-zig=(Path(sys.argv[2]).resolve() if len(sys.argv)>2 else ROOT/'.tmp/toolchain/zig-x86_64-windows-0.14.1/zig.exe')
+import datetime
+import hashlib
+import json
+import os
+import subprocess
+from output_paths import result_dir, reset_work, guard, ensure_directory, write_latest, write_json
+from evidence import compiled_inputs, binary_hashes
+
+ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
-out=reset_work(ROOT/'.tmp/host')
-app=ROOT/'build/app/windows';app.mkdir(parents=True,exist_ok=True)
-report=result_dir('host-build',os.environ.get('COBOL_TEST_REPORT_DIR'))
-run_id=os.environ.get('COBOL_RUN_ID','local-cobol')
-prefix=report/'host-build'
-sdk=ROOT/'.tmp/toolchain/msys2/ucrt64'
-env=os.environ.copy();env['ZIG_GLOBAL_CACHE_DIR']=str(ROOT/'.tmp/cache/zig-global');env['ZIG_LOCAL_CACHE_DIR']=str(ROOT/'.tmp/cache/zig-local')
-env['COB_CONFIG_DIR']='.tmp/toolchain/msys2/ucrt64/share/gnucobol/config'
-cobc=sdk/'bin/cobc.exe'
-results=[];log=[];succeeded=False
-buildEvidence=out/'build-evidence.json'
-buildEvidence.write_text('{"succeeded":false,"status":"BUILD_RUNNING"}\n',encoding='utf-8')
-def run(args):
- p=subprocess.run(list(map(str,args)),env=env,capture_output=True)
- text=(p.stdout+p.stderr).decode('utf-8','replace').replace('\r\n','\n')
- log.append('COMMAND '+subprocess.list2cmdline(list(map(str,args)))+'\nEXIT '+str(p.returncode)+'\n'+text)
- results.append({'command':list(map(str,args)),'exitCode':p.returncode})
- print(f'[{p.returncode}] {Path(str(args[0])).name} {len(text)} diagnostic bytes',flush=True);
- if p.returncode:raise RuntimeError('Command failed')
+out = reset_work(ROOT / '.tmp/host')
+work = ROOT / '.tmp/windows-build'
+sdk = ROOT / '.tmp/toolchain/msys2/ucrt64'
+zig = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else ROOT / '.tmp/toolchain/zig-x86_64-windows-0.14.1/zig.exe'
+run_id = os.environ.get('COBOL_RUN_ID', 'local-cobol')
+report = result_dir('host-build', os.environ.get('COBOL_TEST_REPORT_DIR'))
+prefix = report / 'host-build'
+env = os.environ.copy()
+env.update(COB_CONFIG_DIR=os.path.relpath(sdk / 'share/gnucobol/config', ROOT),
+           ZIG_GLOBAL_CACHE_DIR=str(ensure_directory(ROOT / '.tmp/cache/zig-global')),
+           ZIG_LOCAL_CACHE_DIR=str(ensure_directory(ROOT / '.tmp/cache/zig-local')))
+env['PATH'] = str(sdk / 'bin') + os.pathsep + env.get('PATH', '')
+temporary = ensure_directory(ROOT / '.tmp/compiler-temp')
+for name in ('TMPDIR', 'TEMP', 'TMP'):
+    env[name] = os.path.relpath(temporary, ROOT)
+results, logs = [], []
+succeeded = False
+evidence_file = out / 'build-evidence.json'
+write_json(evidence_file, {'succeeded': False, 'status': 'BUILD_RUNNING'})
+write_json(ROOT / 'build/test-results/summary.json', {
+    'runId': run_id, 'status': 'BUILD_RUNNING', 'buildSucceeded': False,
+    'applicationVerification': 'NOT_RUN', 'formalScore': None,
+})
+host_inputs = compiled_inputs()
+
+def run(command):
+    command = list(map(str, command))
+    result = subprocess.run(command, env=env, capture_output=True)
+    output = (result.stdout + result.stderr).decode('utf-8', 'replace')
+    results.append({'command': command, 'exitCode': result.returncode})
+    logs.append(subprocess.list2cmdline(command) + '\nEXIT ' + str(result.returncode) + '\n' + output)
+    print(f'[{result.returncode}] {Path(command[0]).name}', flush=True)
+    if result.returncode:
+        raise RuntimeError('Windows build failed; see build/test-results/host-build/host-build.raw.log')
+
 try:
- run([sys.executable,'tools/input_lock.py'])
- run([cobc,'-V'])
- sources=list((ROOT/'cobol').glob('*.cob'))+list((ROOT/'tests').glob('*.cob'))
- for p in sources:
-  run([cobc,'-free','-fsyntax-only','-Wall','-I','copy',p.relative_to(ROOT)])
-  main=p.stem in ['STMAIN','STMAINT','date-probe','abi-probe','validation-probe','render-probe','prompt-probe']
-  run([cobc,'-C','-free','-fstatic-call','-I','copy',*(['-x'] if main else []),'-o',f'.tmp/host/{p.stem}.c',p.relative_to(ROOT)])
- flags=[zig,'cc','-std=c11','-Wno-deprecated-non-prototype','-target','x86_64-windows-gnu','-I','bridge','-I',sdk/'include']
- run(flags+['-Wall','-Wextra','-Werror','-c','bridge/student_bridge.c','-o','.tmp/host/student_bridge.o'])
- libs=[sdk/'lib/libcob.dll.a',sdk/'lib/libicuuc.dll.a',sdk/'lib/libicudt.dll.a',sdk/'lib/libcrypto.dll.a','-lodbc32']
- common=[f'.tmp/host/{p.stem}.c' for p in (ROOT/'cobol').glob('*.cob') if p.stem not in ['STMAIN','STMAINT']]
- for main,name in [('STMAIN','student.cgi.exe'),('STMAINT','student-maint.exe')]:
-  run(flags+[f'.tmp/host/{main}.c',*common,'.tmp/host/student_bridge.o',*libs,'-o',out/name])
- run(flags+['.tmp/host/date-probe.c','.tmp/host/STDATE.c','.tmp/host/student_bridge.o',*libs,'-o',out/'date-probe.exe'])
- run(flags+['.tmp/host/abi-probe.c','tests/abi-helper.c',sdk/'lib/libcob.dll.a','-o',out/'abi-probe.exe'])
- run(flags+['tests/boundary-probe.c','.tmp/host/student_bridge.o',*libs,'-o',out/'boundary-probe.exe'])
- run(flags+['.tmp/host/validation-probe.c',*common,'.tmp/host/student_bridge.o',*libs,'-o',out/'validation-probe.exe'])
- run(flags+['.tmp/host/render-probe.c','.tmp/host/render-lookup-fixture.c',*[s for s in common if not s.endswith('/STMLOOK.c')],'.tmp/host/student_bridge.o',*libs,'-o',out/'render-probe.exe'])
- run(flags+['-Wall','-Wextra','-Werror','-DSTSTATEIO=STSTATEIO_PRODUCTION','-c','bridge/student_bridge.c','-o','.tmp/host/prompt_bridge.o'])
- run(flags+['.tmp/host/prompt-probe.c','tests/prompt-state-fixture.c',*common,'.tmp/host/prompt_bridge.o',*libs,'-o',out/'prompt-probe.exe'])
- for name in ['student.cgi.exe','student-maint.exe']:shutil.copy2(out/name,app/name)
- (app/'runtime.json').write_text(json.dumps({'profile':'Windows host, not Linux deployment','implementationMode':'legacy CGI retained','targetTextStatus':'BLOCKED QA-TEXT-COBOL','runtimeDirectory':'.tmp/toolchain/msys2/ucrt64/bin','binaries':{name:hashlib.sha256((app/name).read_bytes()).hexdigest() for name in ['student.cgi.exe','student-maint.exe']}},indent=2)+'\n',encoding='utf-8')
- succeeded=True
- buildEvidence.write_text(json.dumps({'succeeded':True,'buildRecord':prefix.name+'.json','compiledInputs':compiled_inputs(),'binaries':binary_hashes()},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    run([sys.executable, 'tools/input_lock.py'])
+    run([sys.executable, 'build.py', '--sdk', sdk, '--cc', zig])
+    cobc = sdk / 'bin/cobc.exe'
+    for source in sorted((ROOT / 'tests').glob('*.cob')):
+        run([cobc, '-free', '-fsyntax-only', '-Wall', '-I', 'copy', source.relative_to(ROOT)])
+        run([cobc, '-C', '-free', '-fstatic-call', '-I', 'copy', '-x',
+             '-o', (out / (source.stem + '.c')).relative_to(ROOT), source.relative_to(ROOT)])
+    flags = [zig, 'cc', '-std=c11', '-Wno-deprecated-non-prototype', '-target', 'x86_64-windows-gnu',
+             '-DST_WINDOWS_SAMPLE=1', '-I', 'bridge', '-I', sdk / 'include']
+    libs = [sdk / 'lib/libcob.dll.a', sdk / 'lib/libicuuc.dll.a', sdk / 'lib/libicudt.dll.a',
+            sdk / 'lib/libcrypto.dll.a', '-lodbc32', '-luser32']
+    common = [work / (p.stem + '.c') for p in sorted((ROOT / 'cobol').glob('*.cob'))
+              if p.stem not in ('STMAIN', 'STMAINT')]
+    bridge = work / 'student_bridge.o'
+    terminal = work / 'windows_terminal.o'
+    run(flags + [out / 'date-probe.c', work / 'STDATE.c', bridge, *libs, '-o', out / 'date-probe.exe'])
+    run(flags + [out / 'abi-probe.c', 'tests/abi-helper.c', sdk / 'lib/libcob.dll.a', '-o', out / 'abi-probe.exe'])
+    run(flags + ['tests/boundary-probe.c', bridge, *libs, '-o', out / 'boundary-probe.exe'])
+    run(flags + [out / 'validation-probe.c', *common, bridge, terminal, *libs, '-o', out / 'validation-probe.exe'])
+    run(flags + [out / 'text-probe.c', *common, bridge, 'tests/text-terminal-fixture.c',
+                 *libs, '-o', out / 'text-probe.exe'])
+    run(flags + ['-Wall', '-Wextra', '-Werror', 'tests/sample-session-probe.c',
+                 *libs, '-o', out / 'sample-session-probe.exe'])
+    if (ROOT / 'tests/windows-terminal-test.c').is_file():
+        run(flags + ['-Wall', '-Wextra', '-Werror', 'tests/windows-terminal-test.c',
+                     '-luser32', '-o', out / 'windows-terminal-test.exe'])
+    # A CGI executable is an obsolete delivery for this explicitly selected target.
+    obsolete = ROOT / 'build/app/windows/student.cgi.exe'
+    if obsolete.is_file():
+        destination = ROOT / '.tmp/legacy-work/old-cgi/student.cgi.exe'
+        ensure_directory(destination.parent)
+        os.replace(guard(obsolete), guard(destination))
+    if host_inputs != compiled_inputs():
+        raise RuntimeError('Compilation inputs changed during probe build')
+    succeeded = True
+    write_json(evidence_file, {
+        'succeeded': True, 'buildRecord': prefix.name + '.json',
+        'compiledInputs': compiled_inputs(), 'binaries': binary_hashes(),
+    })
 finally:
- prefix.with_suffix('.raw.log').write_text('\n'.join(log),encoding='utf-8')
- prefix.with_suffix('.json').write_text(json.dumps({'runId':run_id,'succeeded':succeeded,'compiledInputs':compiled_inputs(),'binaryHashes':binary_hashes(),'inputManifest':'build/input-manifest.json','inputManifestSha256':hashlib.sha256((ROOT/'build/input-manifest.json').read_bytes()).hexdigest(),'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'profile':'Windows x64 host, not Linux deployment','results':results},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    if not succeeded:
+        write_json(ROOT / 'build/test-results/summary.json', {
+            'runId': run_id, 'status': 'BUILD_FAILED', 'buildSucceeded': False,
+            'applicationVerification': 'NOT_RUN', 'formalScore': None,
+        })
+    write_latest(prefix.with_suffix('.raw.log'), '\n'.join(logs))
+    write_json(prefix.with_suffix('.json'), {
+        'runId': run_id, 'succeeded': succeeded, 'compiledInputs': compiled_inputs(),
+        'binaryHashes': binary_hashes(), 'recordedAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        'inputManifest': 'build/input-manifest.json',
+        'inputManifestSha256': hashlib.sha256((ROOT / 'build/input-manifest.json').read_bytes()).hexdigest(),
+        'profile': 'Windows x64 native Console, authentication-free sample',
+        'legacyHttpProbes': 'Preserved source; CGI/HTML is not the selected target and is not counted as Text acceptance.',
+        'results': results, 'formalScore': None,
+    })

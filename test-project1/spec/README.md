@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-SPEC-INDEX","version":"8.2","path":"test-project1/spec/README.md","sheets":[{"heading":"正本","kind":"GRID","sheet":"01_正本"},{"heading":"方式一覧","kind":"LIST","sheet":"02_方式一覧","key":["方式ID"]},{"heading":"旧版","kind":"GRID","sheet":"03_旧版"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-SPEC-INDEX","version":"8.3","path":"test-project1/spec/README.md","sheets":[{"heading":"正本","kind":"GRID","sheet":"01_正本"},{"heading":"方式一覧","kind":"LIST","sheet":"02_方式一覧","key":["方式ID"]},{"heading":"旧版","kind":"GRID","sheet":"03_旧版"}]} -->
 # 独立仕様書への入口
 
-版8.2／2026-10-25。現行の独立配置。各実行結果は試験報告の範囲で判定する。
+版8.3／2026-10-25。現行の独立配置。各実行結果は試験報告の範囲で判定する。
 
 ## 正本
 
@@ -17,7 +17,7 @@
 | CSharp_WPF | C# / WPF | WEB系 | SQL Server 2022 | [専用仕様](CSharp_WPF/README.md) |
 | CSharp_ASPNET | C# / ASP.NET Core MVC | WEB系 | SQL Server 2022 | [専用仕様](CSharp_ASPNET/README.md) |
 | Vue_CSharpAPI | Vue / TypeScript + C# API | WEB系 | SQL Server 2022 | [専用仕様](Vue_CSharpAPI/README.md) |
-| COBOL | GnuCOBOL / C / Text端末アダプター（製品未選定） | Text系 | SQL Server 2022 | [専用仕様](COBOL/README.md) |
+| COBOL | GnuCOBOL / C / Windows標準Console（Text） | Text系 | SQL Server 2022 | [専用仕様](COBOL/README.md) |
 | AS400_RPG | ILE RPG / DDS / CL / 5250 | Text系 | Db2 for i | [専用仕様](AS400_RPG/README.md) |
 | Access | VBA / DAO / Access forms | WinForms系 | ACE | [専用仕様](Access/README.md) |
 

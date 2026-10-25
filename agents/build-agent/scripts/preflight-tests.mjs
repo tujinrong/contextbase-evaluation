@@ -3,7 +3,7 @@ import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} fro
 const here=path.dirname(fileURLToPath(import.meta.url));
 const base=path.resolve(here,'../.tmp/preflight-tests');fs.mkdirSync(base,{recursive:true});
 const fixture=fs.mkdtempSync(path.join(base,'work-'));const root=path.join(fixture,'repo');let passed=0;
-const files=['AGENTS.md','agents/README.md','agents/spec-agent/AGENT.md','agents/build-agent/AGENT.md','agents/build-agent/PROMPT.md','agents/build-agent/README.md','agents/reverse-agent/AGENT.md','docs/リポジトリ構成.md','docs/開発規約.md','docs/仕様書作成ルール.md','docs/評価規約.md','docs/MD構造・Excel変換規約.md','docs/テーブル仕様書記述規約.md','test-project1/README.md','test-project1/プロジェクト情報.md','test-project1/docs/開発規約.md'];
+const files=['AGENTS.md','agents/README.md','agents/spec-agent/AGENT.md','agents/build-agent/AGENT.md','agents/build-agent/PROMPT.md','agents/build-agent/README.md','agents/reverse-agent/AGENT.md','docs/リポジトリ構成.md','docs/開発規約.md','docs/仕様書作成ルール.md','docs/評価規約.md','docs/MD構造・Excel変換規約.md','docs/テーブル仕様書記述規約.md','docs/テストデータ整備規約.md','agents/build-agent/docs/Access生成チェック.md','test-project1/README.md','test-project1/プロジェクト情報.md','test-project1/docs/開発規約.md'];
 function write(file,text){const target=path.join(root,file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,text);}
 function doc(file,id){return `<!-- spec-meta: ${JSON.stringify({schema:'spec-md/1.0',documentId:id,version:'1.0',path:file,sheets:[{heading:'定義',kind:'LIST',sheet:'01_定義',key:['ID']}]})} -->\n# fixture\n\n## 定義\n\n| ID | 内容 |\n| --- | --- |\n| A | fixture |\n`;}
 function exec(script,id,expected,profile,inspectOnly=false){const r=spawnSync(process.execPath,[path.join(root,'agents/build-agent/scripts',script),'--project','test-project1','--run-id',id,...(profile?['--profile',profile]:[]),...(inspectOnly?['--inspect-only','true']:[])],{encoding:'utf8'});if(r.status!==expected)throw new Error(`${script}: expected ${expected}, got ${r.status}: ${r.stderr}${r.stdout}`);passed++;return r;}
@@ -23,6 +23,15 @@ try{
  exec('preflight.mjs','current',0);
  assert(!read('inputs.json').files.some(f=>f.file.includes('spec-eval')||f.file.includes('spec-analysis')||f.file.includes('/srcs/')),'Evaluation/analysis/source/legacy input leaked');
  assert(read('inputs.json').files.filter(f=>/^test-project1\/spec\/[^/]+\/README.md$/.test(f.file)).length===7,'Aggregate did not inspect all independent packages');
+ const dataRule='docs/テストデータ整備規約.md',accessRule='agents/build-agent/docs/Access生成チェック.md';
+ assert(read('inputs.json').files.some(f=>f.file===dataRule)&&read('inputs.json').files.some(f=>f.file===accessRule),'Aggregate omitted common data or Access quality rules');
+ const accessOriginal=fs.readFileSync(path.join(root,accessRule));
+ write(accessRule,'Invalid Access-only quality document');
+ const otherInspection=JSON.parse(exec('preflight.mjs','other-rule-isolation',0,'CSharp_ASPNET',true).stdout);
+ assert(otherInspection.inputs.files.some(f=>f.file===dataRule)&&!otherInspection.inputs.files.some(f=>f.file===accessRule),'Non-Access scope did not freeze common data alone');
+ const accessInspection=JSON.parse(exec('preflight.mjs','access-rule-invalid',2,'Access',true).stdout);
+ assert(accessInspection.structure.findings.some(f=>f.file===accessRule&&f.code==='META_JSON'),'Access did not validate its required quality rule');
+ write(accessRule,accessOriginal);
  write('test-project1/build/generation/outputs.json','obsolete success');
  exec('preflight.mjs','current',0);
  assert(!fs.existsSync(path.join(generation(),'outputs.json')),'Old output manifest remained current');
@@ -34,6 +43,7 @@ try{
  write(isolated,doc(isolated,'ISOLATED'));write('test-project1/spec/COBOL/poison.md','Must not inspect another profile');
  exec('preflight.mjs','scoped',0,profile);
  assert(!read('inputs.json',profile).files.some(f=>f.file.includes('/COBOL/')),'Peer input leaked');
+ assert(read('inputs.json',profile).files.some(f=>f.file===dataRule)&&!read('inputs.json',profile).files.some(f=>f.file===accessRule),'Scoped input rule selection changed');
  write(`test-project1/srcs/${profile}/.tmp/secret.json`,'never an output');write(`test-project1/srcs/${profile}/sample.cs`,'// fixture');write(`test-project1/srcs/${profile}/build/app/final.txt`,'final fixture result');
  write(`test-project1/srcs/${profile}/build/source.zip`,'old unvalidated archive');
  exec('manifest.mjs','scoped',0,profile);
@@ -41,6 +51,13 @@ try{
  assert(!result.files.some(f=>/\/(?:\.tmp|spec)\//.test(f.file)),'Scratch/legacy specification leaked into manifest');
  assert(result.artifacts.some(f=>f.file.endsWith('/build/app/final.txt')),'Final artifact missing');
  assert(!result.artifacts.some(f=>f.file.endsWith('/source.zip')),'Unvalidated source archive became current');
+ const dataOriginal=fs.readFileSync(path.join(root,dataRule));
+ write(dataRule,dataOriginal.toString('utf8').replace('| A | fixture |','| A | changed data contract |'));exec('manifest.mjs','scoped',1,profile);write(dataRule,dataOriginal);
+ exec('preflight.mjs','access-rules',0,'Access');
+ assert(read('inputs.json','Access').files.some(f=>f.file===accessRule)&&read('inputs.json','Access').files.some(f=>f.file===dataRule),'Access input omitted required quality or data contract');
+ exec('manifest.mjs','access-rules',0,'Access');
+ write(accessRule,accessOriginal.toString('utf8').replace('| A | fixture |','| A | changed Access quality contract |'));
+ exec('manifest.mjs','access-rules',1,'Access');exec('manifest.mjs','scoped',0,profile);write(accessRule,accessOriginal);
  exec('manifest.mjs','scoped',0,profile);
  assert(fs.readdirSync(generation(profile)).filter(f=>f.endsWith('outputs.json')).length===1,'Manifest history accumulated');
  const frozen=fs.readFileSync(path.join(generation(profile),'inputs.json')),structure=fs.readFileSync(path.join(generation(profile),'structure.json'));
@@ -63,7 +80,7 @@ try{
  for(const script of ['isolate-specs.mjs','finalize-isolation-docs.mjs','document-dotnet-projects.mjs']){before=JSON.stringify(snapshot());const retired=spawnSync(process.execPath,[path.join(root,'agents/build-agent/scripts',script)],{encoding:'utf8'});assert(retired.status===1&&retired.stderr.includes('Retired migration'),'Historical writer was not refused');assert(JSON.stringify(snapshot())===before,'Historical writer changed files');}
  function isolation(expected){const r=spawnSync(process.execPath,[path.join(root,'agents/build-agent/scripts/check-isolation.mjs'),'fixture-isolation'],{encoding:'utf8'});assert(r.status===expected,`Isolation expected ${expected}: ${r.stderr}${r.stdout}`);}
  isolation(0);const ownReadme=`test-project1/spec/${profile}/README.md`,ownOriginal=fs.readFileSync(path.join(root,ownReadme));write(ownReadme,`[source](../../srcs/${profile}/README.md)\n`);isolation(1);const isolatedResult=JSON.parse(fs.readFileSync(path.join(root,'test-project1/build/test-results/isolation.json'),'utf8'));assert(isolatedResult.findings.some(f=>f.code==='SPECIFICATION_REFERENCE_OUTSIDE'),'Specification dependency on generated source was not rejected');write(ownReadme,ownOriginal);
- console.log(`PASS ${passed} assertions: canonical specification roots, independent closure, read-only inspection, frozen-set checks, retired writers, latest replacement and source-only inventory; fixture only.`);
+ console.log(`PASS ${passed} assertions: canonical specification roots, independent closure, common data and scoped Access quality rule freezing, read-only inspection, frozen-set checks, retired writers, latest replacement and source-only inventory; fixture only.`);
 }finally{
  const resolved=path.resolve(fixture);if(!resolved.startsWith(base+path.sep))throw new Error('Cleanup target outside fixture area');fs.rmSync(resolved,{recursive:true,force:true});
 }

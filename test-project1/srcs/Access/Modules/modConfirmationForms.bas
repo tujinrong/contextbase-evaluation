@@ -34,11 +34,11 @@ Public Function ConfirmationCancel() As Boolean
     ConfirmationAccepted = False
     DoCmd.Close acForm, Screen.ActiveForm.Name
 End Function
-Public Function CandidateListCallback(ctl As Control, id As Variant, row As Variant, col As Variant, code As Variant) As Variant
+Public Function CandidateListCallback(ctl As Access.Control, id As Variant, row As Variant, col As Variant, code As Variant) As Variant
     Dim item As Object
     Select Case code
     Case acLBInitialize: CandidateListCallback = True
-    Case acLBOpen: CandidateListCallback = Timer + 1
+    Case acLBOpen: CandidateListCallback = NextListCallbackId()
     Case acLBGetRowCount
         If ConfirmationRows Is Nothing Then CandidateListCallback = 0: Exit Function
         CandidateListCallback = ConfirmationRows.Count

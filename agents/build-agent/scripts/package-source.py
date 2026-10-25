@@ -56,9 +56,10 @@ for profile in selected:
             data=source.read_bytes();original_hash=hashlib.sha256(data).hexdigest();transformation=None
             if relative.as_posix()=='README.md':
                 command={'VB.NET_WinForms':'dotnet publish StudentManagement.WinForms.vbproj -c Release -o build/app -p:RestoreLockedMode=true','CSharp_WPF':'dotnet publish StudentManagement.Wpf.csproj -c Release -o build/app -p:RestoreLockedMode=true','CSharp_ASPNET':'dotnet publish StudentManagement.Web.csproj -c Release -o build/publish -p:RestoreLockedMode=true','Vue_CSharpAPI':'python -X utf8 frontend/build.py publish','COBOL':'Linux: make all (GnuCOBOL, C11, ICU, OpenSSL, unixODBC, pkg-config)','AS400_RPG':'IBM i: follow docs/deployment.md and compile cl/BUILD.clle','Access':'Windows Access: ./Build-Access.ps1 -SingleFile -CreateBackend -Compile'}[profile]
+                if profile=='COBOL':command='Windows x64: python -X utf8 build.py --sdk <GnuCOBOL-UCRT-directory> --cc <zig.exe>; then ./Run-Sample.ps1 -RuntimeDirectory <runtime-bin>. Native Console sample, authentication disabled, fixed sample-user/Administrator.'
                 data=('# '+profile+' source material\n\nThis archive is independent. Original specifications, evaluation criteria, test expectations and input evidence are excluded.\n\nGeneration status: '+generation_status+'. Packaging and hash verification do not establish feature completion or runtime acceptance. Consult the accompanying generation record for incomplete scope.\n\nBuild: '+command+'\n\nRequired external SDKs, runtimes and configured database are supplied by the execution environment. Generated program and database sources are included; original-spec regeneration is outside this source-only input. Database/deployment instructions are local to this archive.\n').encode()
                 transformation='source-input readme replaces generation readme'
-            elif relative.as_posix()=='Makefile' and profile=='COBOL':
+            elif relative.as_posix()=='Makefile' and profile=='COBOL' and not (folder/'build.py').is_file():
                 text=data.decode('utf-8')
                 text=text.replace('.PHONY: all inputs generated dependencies probes check clean','.PHONY: all dependencies clean').replace('all: inputs dependencies','all: dependencies')
                 text=re.sub(r'^inputs:.*?(?=^dependencies:)', '', text, flags=re.M|re.S)
@@ -101,7 +102,7 @@ for profile in selected:
                     lines.append(line)
                 data=('\n'.join(lines)+'\n').encode()
                 transformation='test projects removed from source-only solution'
-            if profile=='COBOL' and (relative.as_posix()=='Makefile' or source.suffix in {'.cgi','.sh'}):
+            if profile=='COBOL' and not (folder/'build.py').is_file() and (relative.as_posix()=='Makefile' or source.suffix in {'.cgi','.sh'}):
                 data=data.replace(b'\r\n',b'\n');transformation=(transformation+'; ' if transformation else '')+'portable Linux line endings'
             name=relative.as_posix();mode=0o100755 if name=='deploy/student.cgi' or source.suffix=='.sh' else 0o100644
             member=zipfile.ZipInfo(name,date_time=(2026,10,12,0,0,0));member.create_system=3;member.external_attr=mode<<16;member.compress_type=zipfile.ZIP_DEFLATED

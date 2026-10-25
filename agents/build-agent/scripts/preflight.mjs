@@ -28,7 +28,7 @@ const reportRoot = outputLayout.generation;
 assertRegular(projectRoot, true);
 if (!inspectOnly && fs.existsSync(reportRoot)) assertRegular(reportRoot, true);
 const relative = target => path.relative(root, target).split(path.sep).join('/');
-const fixed = fixedInputFiles(project);
+const fixed = fixedInputFiles(project, profile);
 const files = collectInputFiles(root, project, profile);
 const selectedSpecPrefix = profile ? `${project}/spec/${profile}/` : null;
 const findings = [], records = [], ids = new Map();

@@ -86,12 +86,83 @@ int32_t STHTTP(ST_VALUE *f){
  if(f[61].null_flag==0)f[4]=f[61];return 0;
 }
 int32_t STCLIREAD(const char *path,int32_t length,ST_VALUE *f){if(length<1||length>4095)return -1;char name[4096];memcpy(name,path,(size_t)length);name[length]=0;FILE *file=fopen(name,"rb");if(!file)return -1;char body[65538];size_t n=fread(body,1,sizeof body-1,file);int bad=ferror(file)||n>65536||!feof(file);fclose(file);if(bad||memchr(body,0,n))return -1;while(n>0&&(body[n-1]=='\r'||body[n-1]=='\n'))n--;body[n]=0;for(int i=0;i<64;i++)value(f+i,NULL,-1);return parse(body,f,0);}
-static int key(unsigned char out[32]){const char *v=getenv("STUDENT_STATE_KEY_HEX");if(!v||strlen(v)!=64)return -1;for(int i=0;i<32;i++){int a=hexdigit(v[2*i]),b=hexdigit(v[2*i+1]);if(a<0||b<0)return -1;out[i]=(unsigned char)(a*16+b);}return 0;}
+
+#ifdef ST_WINDOWS_SAMPLE
+#ifndef _WIN32
+#error Windows sample requires the Windows x64 target
+#endif
+/* No login is performed. These values isolate sample windows and encrypted
+   runtime state; they do not authenticate a person or grant database rights. */
+static unsigned char sample_key[32];
+static char sample_session[64], sample_binding[64];
+static uint64_t sample_last_activity;
+static int sample_live;
+int32_t STRANDOM(char *out);
+int32_t STSAMPLECLOSE(void){
+  OPENSSL_cleanse(sample_key,sizeof sample_key);
+  OPENSSL_cleanse(sample_session,sizeof sample_session);
+  OPENSSL_cleanse(sample_binding,sizeof sample_binding);
+  sample_last_activity=0; sample_live=0; return 0;
+}
+int32_t STSAMPLECHECK(void){
+  if(!sample_live)return -1;
+  if((uint64_t)GetTickCount64()-sample_last_activity>=UINT64_C(1800000)){
+    STSAMPLECLOSE();return -1;
+  }
+  return 0;
+}
+int32_t STSAMPLEOPEN(void){
+  STSAMPLECLOSE();
+  if(RAND_bytes(sample_key,sizeof sample_key)!=1 || STRANDOM(sample_session)!=0 || STRANDOM(sample_binding)!=0){
+    STSAMPLECLOSE();return -1;
+  }
+  sample_last_activity=(uint64_t)GetTickCount64();sample_live=1;return 0;
+}
+int32_t STSAMPLETOUCH(void){
+  if(STSAMPLECHECK()!=0)return -1;
+  sample_last_activity=(uint64_t)GetTickCount64();return 0;
+}
+#endif
+static int key(unsigned char out[32]){
+#ifdef ST_WINDOWS_SAMPLE
+  if(STSAMPLECHECK()!=0)return -1;
+  memcpy(out,sample_key,32);return 0;
+#else
+const char *v=getenv("STUDENT_STATE_KEY_HEX");if(!v||strlen(v)!=64)return -1;for(int i=0;i<32;i++){int a=hexdigit(v[2*i]),b=hexdigit(v[2*i+1]);if(a<0||b<0)return -1;out[i]=(unsigned char)(a*16+b);}return 0;
+#endif
+}
+
 int32_t STRANDOM(char *out){unsigned char b[32];if(RAND_bytes(b,32)!=1)return -1;const char *hex="0123456789abcdef";for(int i=0;i<32;i++){out[2*i]=hex[b[i]>>4];out[2*i+1]=hex[b[i]&15];}return 0;}
-int32_t STIDENTITY(ST_VALUE *owner,ST_VALUE *session,int32_t *role,char *csrf){const char *u=getenv("REMOTE_USER"),*s=getenv("ST_LOGIN_SESSION_ID"),*r=getenv("ST_TRUSTED_ROLE");if(!u||!s||!r||!*u||scalar(u,(int)strlen(u))>64||scalar(u,(int)strlen(u))<1||strlen(s)<1||strlen(s)>64)return -1;for(const char *p=s;*p;p++)if(!(isalnum((unsigned char)*p)||*p=='-'))return -1;*role=!strcmp(r,"Viewer")?0:!strcmp(r,"Staff")?1:!strcmp(r,"Administrator")?2:-1;if(*role<0)return -1;value(owner,u,(int)strlen(u));value(session,s,(int)strlen(s));unsigned char k[32],digest[32];unsigned int length=0;char data[512];int n=snprintf(data,sizeof data,"csrf\n%s\n%s",u,s);if(key(k)||!HMAC(EVP_sha256(),k,32,(unsigned char*)data,(size_t)n,digest,&length)||length!=32)return -1;const char *hex="0123456789abcdef";for(int i=0;i<32;i++){csrf[i*2]=hex[digest[i]>>4];csrf[i*2+1]=hex[digest[i]&15];}OPENSSL_cleanse(k,32);return 0;}
+int32_t STIDENTITY(ST_VALUE *owner,ST_VALUE *session,int32_t *role,char *csrf){
+#ifdef ST_WINDOWS_SAMPLE
+  if(STSAMPLECHECK()!=0)return -1;
+  value(owner,"sample-user",11);value(session,sample_session,64);
+  *role=2;memcpy(csrf,sample_binding,64);return 0;
+#else
+const char *u=getenv("REMOTE_USER"),*s=getenv("ST_LOGIN_SESSION_ID"),*r=getenv("ST_TRUSTED_ROLE");if(!u||!s||!r||!*u||scalar(u,(int)strlen(u))>64||scalar(u,(int)strlen(u))<1||strlen(s)<1||strlen(s)>64)return -1;for(const char *p=s;*p;p++)if(!(isalnum((unsigned char)*p)||*p=='-'))return -1;*role=!strcmp(r,"Viewer")?0:!strcmp(r,"Staff")?1:!strcmp(r,"Administrator")?2:-1;if(*role<0)return -1;value(owner,u,(int)strlen(u));value(session,s,(int)strlen(s));unsigned char k[32],digest[32];unsigned int length=0;char data[512];int n=snprintf(data,sizeof data,"csrf\n%s\n%s",u,s);if(key(k)||!HMAC(EVP_sha256(),k,32,(unsigned char*)data,(size_t)n,digest,&length)||length!=32)return -1;const char *hex="0123456789abcdef";for(int i=0;i<32;i++){csrf[i*2]=hex[digest[i]>>4];csrf[i*2+1]=hex[digest[i]&15];}OPENSSL_cleanse(k,32);return 0;
+#endif
+}
+
 int32_t STHEX(const ST_VALUE *v){if(v->null_flag!=0||v->length!=64)return -1;for(int i=0;i<64;i++)if(hexdigit(v->data[i])<0)return -1;return 0;}
 int32_t STCSRF(const ST_VALUE *v,const char *expected){return v->length==64&&CRYPTO_memcmp(v->data,expected,64)==0?0:-1;}
 int32_t STPOST(void){const char *m=getenv("REQUEST_METHOD");return m&&!strcmp(m,"POST")?1:0;}
+
+/* Fixed typed terminal fields. Raw values remain unnormalised until COBOL's
+   field-specific validation; this boundary never interprets control sequences. */
+int32_t STTEXTCHECK(const ST_VALUE *fields){
+  if(!fields)return -1;
+  int64_t total=0;
+  for(int i=0;i<64;i++){
+    const ST_VALUE *v=fields+i;
+    if(v->null_flag!=-1 && v->null_flag!=0)return -1;
+    if(v->length<0 || v->length>1024 || (v->null_flag==-1 && v->length!=0))return -1;
+    if(v->null_flag==0){
+      if(memchr(v->data,0,(size_t)v->length) || scalar(v->data,v->length)<0)return -1;
+      total+=v->length;if(total>65536)return -1;
+    }
+  }
+  return 0;
+}
 int32_t STINTEGER(const ST_VALUE *v,int64_t *out){if(v->null_flag==-1||v->length<1||v->length>19)return -1;uint64_t n=0;for(int i=0;i<v->length;i++){unsigned c=(unsigned char)v->data[i];if(c<'0'||c>'9'||n>((uint64_t)INT64_MAX-(c-'0'))/10)return -1;n=n*10+c-'0';}*out=(int64_t)n;return 0;}
 /* Generic NFKC/scalar operations. Policy selection remains in STNORM/STVALID. */
 int32_t STUNICODE(int32_t mode,const ST_VALUE *src,ST_VALUE *dst,int32_t rawmax,int32_t savedmax){if(src->null_flag==-1){value(dst,NULL,-1);return 0;}if(scalar(src->data,src->length)<0||scalar(src->data,src->length)>rawmax)return -1;UChar in[4096],norm[4096],result[4096];int l,n=0,j=0;if(utf16(src->data,src->length,in,4096,&l))return -1;UErrorCode e=U_ZERO_ERROR;if(mode==2||mode==3||mode==4||mode==5||mode==6||mode==7){const UNormalizer2 *nfkc=unorm2_getNFKCInstance(&e);n=unorm2_normalize(nfkc,in,l,norm,4096,&e);if(U_FAILURE(e))return -1;}else{memcpy(norm,in,(size_t)l*sizeof(UChar));n=l;}

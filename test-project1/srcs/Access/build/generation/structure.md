@@ -1,8 +1,8 @@
-# build-agent 構造検査 20261025-regenerate
+# build-agent 構造検査 20261025-access-quality
 
-対象：test-project1 / Access。Agent版7.7。入力版・SHA-256はinputs.jsonを参照。
+対象：test-project1 / Access。Agent版7.8。入力版・SHA-256はinputs.jsonを参照。
 
-判定：structure-check-passed。現行入力58ファイルを検査。問題0件。
+判定：structure-check-passed。現行入力60ファイルを検査。問題0件。
 
 
 検査範囲：メタ情報、章/シート対応、LIST矩形・キー、TABLE列/項目ID/PK、イベント6節、入力範囲内のローカル参照先の存在。

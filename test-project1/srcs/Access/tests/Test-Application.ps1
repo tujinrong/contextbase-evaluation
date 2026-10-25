@@ -56,13 +56,13 @@ try {
  $taskState=if (@($taskResults | Where-Object { -not $_.passed }).Count -eq 0) { 'Passed' } else { 'Failed' }
 } catch { $taskState='Failed'; $taskFatal=$_.Exception.Message; Write-Output $taskFatal }
 finally {
- $taskOfficeVersion=$taskAccess.Version
+ try{$taskOfficeVersion=$taskAccess.Version}catch{}
  if ($null -ne $taskRs) { try { $taskRs.Close() } catch {}; if ([Runtime.InteropServices.Marshal]::IsComObject($taskRs)) { [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskRs) | Out-Null }; $taskRs=$null }
  if ($null -ne $taskRelation) { if ([Runtime.InteropServices.Marshal]::IsComObject($taskRelation)) { [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskRelation) | Out-Null }; $taskRelation=$null }
- if ($null -ne $taskDb) { $taskDb.Close(); [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskDb) | Out-Null; $taskDb=$null }
+ if ($null -ne $taskDb) { try{$taskDb.Close()}catch{}; [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskDb) | Out-Null; $taskDb=$null }
  [GC]::Collect(); [GC]::WaitForPendingFinalizers()
- $taskAccess.CloseCurrentDatabase()
- $taskAccess.Quit(2)
+ try{$taskAccess.CloseCurrentDatabase()}catch{}
+ try{$taskAccess.Quit(2)}catch{}
  [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskAccess) | Out-Null
  $taskAccess=$null
  [GC]::Collect(); [GC]::WaitForPendingFinalizers()

@@ -1,13 +1,15 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC-PROMPT","version":"8.4","path":"agents/spec-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求の指定項目","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"今回のPilot指定例","kind":"GRID","sheet":"03_Pilot指定例"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC-PROMPT","version":"8.5","path":"agents/spec-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求の指定項目","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"今回のPilot指定例","kind":"GRID","sheet":"03_Pilot指定例"}]} -->
 # spec-agent 実行指示
 
-定義版8.4／2026-10-25。三種類の画面分類を実行要求と併せてCodexへ渡す。
+定義版8.5／2026-10-25。自身仕様で確定した前提と三種類の画面分類を実行要求へ固定し、次回も継承する。
 
 ## 起動指示
 
 `agents/spec-agent/AGENT.md`を読み、AG-SPECとして仕様書を作成・改善する。ルートAGENTS.md、全体docs、agentsの役割定義を確認し、次の実行コンテキストを記録してから選択projectの入力を読む。利用者の明示パスを優先し、指定外project・方式・spec-eval・アプリ実装を変更しない。
 
 AIが要求と入力仕様を読み、設計判断と仕様本文を直接執筆する。既存ID・QA・入力を保ち、変更した検索条件を画面・項目・イベント・入出力へ反映する。少数の必要な条件と省スペースの配置を、対象業務の操作に即して説明する。汎用Agentへ業務固有の正解を埋めない。
+
+本文の執筆前に、選択specRootのプロジェクト情報・方式別共通仕様・採用プロファイル・QA決定を読み、確定済み利用者前提と根拠の版・SHA-256・適用範囲をpremiseProfileへ固定する。変更指示や新たな矛盾がなければ既回答を継承し、旧案・未選定へ戻したり同じ質問を繰り返したりしない。実行環境、認証なしサンプルの適用範囲、固定主体/操作権限、DB/入力/版/監査の契約を関連文書へ一貫して反映する。前提と前回のビルド・検査状態は分け、他方式へ無断適用しない。
 
 対象MD内の埋込みHTMLだけを画面表現の正本とし、基本/詳細で同じ配置を使う。全体ルールのWEB系（WPFを含む）・WinForms系・Text系を選び、方式別共通UIに従う。test-project1はCSharp_ASPNET/CSharp_WPF/Vue_CSharpAPIがWEB系、VB.NET_WinForms/AccessがWinForms系、COBOL/AS400_RPGがText系である。将来の新規画面にも適用し、実装技術は変更しない。未分類の新方式は三種類への所属と固有制約を実装前に定める。
 
@@ -23,6 +25,7 @@ sourceRoot/build/spec-generation/の固定レポートへ今回runId属性と入
 | stage | 新規作成、既存改善、レビューの別と今回の要求 |
 | methodId | 対象方式。全方式と明示された場合だけ複数を対象にする |
 | screenFamily / terminalProfile | 全体ルールの三分類と方式固有制約。Text系は端末行桁・行列原点・文字コード・キーも指定する |
+| premiseProfile / decisionSources | 自身仕様で確定した利用者前提と採用プロファイル、根拠文書ID・版・SHA-256・適用範囲。既存の確定値を読み込み、今回の変更指定だけを反映する |
 | specRoot | 仕様正本project/spec/方式ID/。利用者の明示パスを優先し、旧sourceRoot/specへ自動復帰しない |
 | sourceRoot | ソース正本project/srcs/方式ID/。仕様とは別に固定し、build/記録と.tmp/作業先の基点にする |
 | allowedPaths / excludedPaths | 読取り許可、書込み許可、除外。範囲を広げる必要があれば独立して進められる部分を進め、残る影響を記録 |

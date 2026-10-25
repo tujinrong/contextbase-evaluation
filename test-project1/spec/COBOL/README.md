@@ -1,13 +1,13 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"COBOL-SPEC-INDEX","version":"8.5","path":"test-project1/spec/COBOL/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"COBOL-SPEC-INDEX","version":"8.7","path":"test-project1/spec/COBOL/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"},{"heading":"Windows認証なしサンプル","kind":"GRID","sheet":"04_Windows認証なしサンプル"}]} -->
 # COBOL 仕様書
 
-版8.5／2026-10-25。
+版8.7／2026-10-25。
 
 ## 対象
 
 本プロジェクトだけの実装・DB・画面仕様。
 
-2026-10-25改訂: 本方式はText系。検索・学生登録/編集の基本/詳細を27行×132桁の固定行桁パネルへ統一し、F4候補/F8全文/項目エラー/各確認を別パネルで設計する。画面の正本はMD埋込みの等幅pre/spanだけで、単独HTML/PNGを置かない。検索4条件・8論理一覧項目・取得20/50/100・許可ソート・10,000件上限、編集REG全34項目・raw/保存長・DB/認可/監査は維持。端末製品/入力認証アダプターはQA-TEXT-COBOLで未選定、旧CGIプログラムを含む実装は今回未変更。今回の版/ハッシュ/検査/未実施は方式内build/spec-generation/へ記録する。
+2026-10-25改訂: 本方式はText系。検索・学生登録/編集の基本/詳細を27行×132桁の固定行桁パネルへ統一し、F4候補/F8全文/項目エラー/各確認を別パネルで設計する。画面の正本はMD埋込みの等幅pre/spanだけで、単独HTML/PNGを置かない。検索4条件・8論理一覧項目・取得20/50/100・許可ソート・10,000件上限、編集REG全34項目・raw/保存長・DB/認可/監査は維持。Windows標準Console／Win32 W APIの選定と認証なしサンプルを確定前提とする。次回の仕様生成では[Windows実行環境](共通/方式別/02_Windows実行環境.md)の前提を継承する。アプリ認証は利用者指定により本サンプルの対象外。この設計契約と実装・ビルド・実glyph/手動IME/キー・実DBの検証状態を分け、各状態は対象版・ハッシュ付きの実行記録で判断する。仕様生成の今回の版/ハッシュ/検査/未実施は方式内build/spec-generation/へ記録する。
 
 ## 入口
 
@@ -18,6 +18,7 @@
 | 検索 | [詳細](詳細仕様書/01_学生検索画面.md) |
 | 登録 | [詳細](詳細仕様書/02_学生登録画面.md) |
 | 方式 | [方式内実装仕様](共通/方式別/01_共通実装仕様.md) |
+| 実行環境 | [Windows認証なしサンプル](共通/方式別/02_Windows実行環境.md) |
 | DB | [物理定義](DB定義/SQLServer/01_DB定義書.md) |
 | 規約 | [実装規約](規約/COBOL.md) |
 
@@ -30,3 +31,14 @@
 ### 2026-10-23 画面仕様の最適化
 
 本方式の検索と学生編集をText系として独立改訂。詳細は[画面最適化記録](画面最適化記録.md)を参照。他方式の画面やコードを実装入力へ混在させない。
+
+## Windows認証なしサンプル
+
+| 項目 | 本方式での適用 |
+| --- | --- |
+| 利用者指定 | 「Windowsで実行できる環境を想定する」「サンプルのため、認証はしない」 |
+| 実行前提 | Windows x64／GnuCOBOL 3.2／同bit C／Windows標準ConsoleとWin32 W API／Windows ODBC Driver18。Linux・unixODBC・pkg-configの必須前提を置換する |
+| 認証の例外 | このサンプルではログイン・Windows token・利用者/role mappingを行わず、実行側が固定actor `sample-user`、固定操作role `Administrator` を設定する。全サンプル機能確認用であり、本番認証・認可への適合を主張しない。一般の認証/権限表と用語は、本サンプルではこの例外を適用して読む |
+| 信頼境界 | actor/role/sessionを端末rawまたはREMOTE_USER/ST_TRUSTED_ROLEから受付けない。DB接続の権限・TLS・保存時の業務検査・期待版・理由・同時保存・監査は維持する |
+| 状態 | 接続ごとのCSPRNG32byte・64桁hex session、画面instance・要求ID・期待Revision・期限を照合。検索30分・確認10分。実キー活動だけがidle期限を更新し、timerでは延長しない。idle30分で失効し、終了/切断/再起動/別プロセスへ引き継がない |
+| 正本と検証状態 | [Windows実行環境](共通/方式別/02_Windows実行環境.md)の確定前提を次回仕様生成へ継承する。適用はtest-project1/COBOLだけとし、他方式の認証前提を変更しない。QA-AUTHは本サンプルで対象外、QA-TEXT-COBOLはOS/技術選定済み。実glyph/手動IME/キー・実DB・本番受入・正式採点は対象版・ハッシュ付きの各実行記録で実施状態を確認し、未実施を合格へ読み替えない |

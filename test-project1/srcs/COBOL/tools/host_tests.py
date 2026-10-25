@@ -4,15 +4,18 @@ sys.dont_write_bytecode = True
 from pathlib import Path
 import os,sys,subprocess,json,datetime,hashlib,urllib.parse
 from evidence import compiled_inputs,binary_hashes,binary_path
-from output_paths import result_dir
+from output_paths import result_dir, write_latest, write_json
 ROOT=Path(__file__).resolve().parents[1];os.chdir(ROOT)
 report=result_dir('host-tests',os.environ.get('COBOL_TEST_REPORT_DIR'))
 run_id=os.environ.get('COBOL_RUN_ID','local-cobol')
 prefix=report/'host-tests'
 compiled=json.loads((ROOT/'.tmp/host/build-evidence.json').read_text(encoding='utf-8'))
-if not compiled.get('succeeded') or compiled.get('compiledInputs')!=compiled_inputs() or compiled.get('binaries')!=binary_hashes():
- prefix.with_suffix('.raw.log').write_text('ABORT: binaries do not prove a successful build of these exact source inputs.\n',encoding='utf-8')
- prefix.with_suffix('.json').write_text(json.dumps({'runId':run_id,'status':'ABORT_SOURCE_OR_BUILD_MISMATCH','passed':0,'total':0},indent=2)+'\n',encoding='utf-8')
+tested_inputs=compiled_inputs();tested_binaries=binary_hashes()
+tested_runner_sha=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+tested_manifest_sha=hashlib.sha256((ROOT/'build/input-manifest.json').read_bytes()).hexdigest()
+if not compiled.get('succeeded') or compiled.get('compiledInputs')!=tested_inputs or compiled.get('binaries')!=tested_binaries:
+ write_latest(prefix.with_suffix('.raw.log'),'ABORT: binaries do not prove a successful build of these exact source inputs.\n')
+ write_json(prefix.with_suffix('.json'),{'runId':run_id,'status':'ABORT_SOURCE_OR_BUILD_MISMATCH','passed':0,'total':0})
  raise SystemExit('Build/source/binary mismatch; tests not executed.')
 env=os.environ.copy();env['PATH']=str(ROOT/'.tmp/toolchain/msys2/ucrt64/bin')+os.pathsep+env.get('PATH','')
 env['COB_CONFIG_DIR']='.tmp/toolchain/msys2/ucrt64/share/gnucobol/config'
@@ -25,7 +28,13 @@ def case(name,args,expected=None,stdin=b'',extra=None,contains=None):
  rows.append({'id':name,'passed':passed,'exitCode':p.returncode,'expected':expected,'output':out,'stderr':p.stderr.decode('utf-8','replace')})
  log.append('COMMAND '+subprocess.list2cmdline([str(binary_path(args[0])),*args[1:]])+'\nEXIT '+str(p.returncode)+'\n'+name+' '+('PASS' if passed else 'FAIL')+'\n'+out+'\n'+p.stderr.decode('utf-8','replace'))
  print(name,'PASS' if passed else 'FAIL',flush=True)
+def legacy_cgi_cases():
+ # Preserve the formal old-target checks without treating them as Text evidence.
+ case('CGI-unauthenticated',['student.cgi.exe'],extra={'REQUEST_METHOD':'GET','QUERY_STRING':'action=INITIAL','REMOTE_USER':''},contains=['Status: 401','Cache-Control: no-store','E-COM-001'])
+ case('CGI-malformed',['student.cgi.exe'],extra={'REQUEST_METHOD':'GET','QUERY_STRING':'role=Administrator'},contains=['Status: 400','E-SRC-002'])
+
 case('ABI-01',['abi-probe.exe'],contains=['PASS COPY C pointer int32 int64 NULL roundtrip'])
+case('SAMPLE-SESSION-RAW',['sample-session-probe.exe'],contains=['PASS sample boundary'])
 dates=[('MEIJI','33','01','01','1900-01-01'),('MEIJI','32','12','31','INVALID'),
  ('TAISHO','GAN','07','29','INVALID'),('TAISHO','GAN','07','30','1912-07-30'),
  ('TAISHO','15','12','24','1926-12-24'),('TAISHO','15','12','25','INVALID'),
@@ -59,16 +68,22 @@ forms=[('valid',b'action=SEARCH',0,None),('duplicate',b'action=SEARCH&action=SEA
 for name,body,rc,length in forms:
  case('HTTP-'+name,['boundary-probe.exe','http'],str(rc),body,{'REQUEST_METHOD':'POST','CONTENT_TYPE':'application/x-www-form-urlencoded','CONTENT_LENGTH':str(len(body) if length is None else length),'QUERY_STRING':''})
 case('HTTP-query-body-duplicate',['boundary-probe.exe','http'],'-1',b'action=SEARCH',{'REQUEST_METHOD':'POST','CONTENT_TYPE':'application/x-www-form-urlencoded','CONTENT_LENGTH':'13','QUERY_STRING':'action=SEARCH'})
-case('CGI-unauthenticated',['student.cgi.exe'],extra={'REQUEST_METHOD':'GET','QUERY_STRING':'action=INITIAL','REMOTE_USER':''},contains=['Status: 401','Cache-Control: no-store','E-COM-001'])
-case('CGI-malformed',['student.cgi.exe'],extra={'REQUEST_METHOD':'GET','QUERY_STRING':'role=Administrator'},contains=['Status: 400','E-SRC-002'])
 base={'studentNo':'S2026-1','studentName':'見本太郎','studentNameKana':'ミホンタロウ','birthEra':'HEISEI','birthYear':'20','birthMonth':'05','birthDay':'15','genderCode':'0','postalCode':'100-0000','prefectureCode':'13','addressLine1':'見本市1','phoneNumber':'03-1234-5678','admissionDate':'2026-04-01','enrollmentStatusCode':'01','classId':'1','schoolYear':'2026','gradeCode':'00'}
 vectors=[('valid',{},'200|00|2026'),('fullwidth-hints',{'gradeCode':'００','schoolYear':'２０２６'},'200|00|2026'),('missing-name',{'studentName':''},'422'),('kana-hiragana',{'studentNameKana':'みほんたろう'},'200|00|2026'),('missing-birth',{'birthEra':''},'422'),('birth-after-admission',{'birthEra':'REIWA','birthYear':'8','birthMonth':'05','birthDay':'01'},'422'),('invalid-grade-length',{'gradeCode':'0'},'422'),('invalid-grade-letters',{'gradeCode':'AB'},'422'),('year-low',{'schoolYear':'1899'},'422'),('year-high',{'schoolYear':'9999'},'422'),('year-letters',{'schoolYear':'2x26'},'422'),('end-active',{'enrollmentEndDate':'2026-10-01'},'422'),('no-active-class',{'classId':''},'422'),('graduated-end',{'enrollmentStatusCode':'03','enrollmentEndDate':'2026-10-01','classId':''},'200|00|2026'),('graduated-no-end',{'enrollmentStatusCode':'03'},'422'),('no-contacts',{'phoneNumber':''},'422'),('partial-emergency',{'emergencyContactName':'見本保護者'},'422'),('complete-emergency',{'emergencyContactName':'見本保護者','relationshipCode':'01','emergencyPhoneNumber':'090-1234-5678'},'200|00|2026'),('bad-phone',{'phoneNumber':'1'},'422'),('bad-mail',{'emailAddress':'a b@c.example'},'422'),('bad-class',{'classId':'x'},'422'),('bad-number',{'studentNo':'-ABC'},'422'),('supplementary-name',{'studentName':'😀'*8},'200|00|2026')]
 for name,changes,expected in vectors:
  fields=base.copy();fields.update(changes);fields['action']='CREATE';body=urllib.parse.urlencode(fields).encode('ascii')
  case('VALIDATION-'+name,['validation-probe.exe'],expected,body,{'REQUEST_METHOD':'POST','CONTENT_TYPE':'application/x-www-form-urlencoded','CONTENT_LENGTH':str(len(body)),'QUERY_STRING':''})
 sources=[p for folder in ['cobol','copy','bridge','sql','assets','database'] for p in sorted((ROOT/folder).rglob('*')) if p.is_file()]
-result={'runId':run_id,'inputManifest':'build/input-manifest.json','inputManifestSha256':hashlib.sha256((ROOT/'build/input-manifest.json').read_bytes()).hexdigest(),'sourceHashes':{p.relative_to(ROOT).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'profile':'Windows x64, compiled production COBOL/C boundaries; Linux and live SQL Server not tested','passed':sum(x['passed'] for x in rows),'total':len(rows),'results':rows}
-prefix.with_suffix('.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-prefix.with_suffix('.raw.log').write_text('\n'.join(log),encoding='utf-8')
+result={'runId':run_id,'inputManifest':'build/input-manifest.json','inputManifestSha256':hashlib.sha256((ROOT/'build/input-manifest.json').read_bytes()).hexdigest(),'sourceHashes':{p.relative_to(ROOT).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'profile':'Windows x64 native no-auth sample; production COBOL/C data and session boundaries; live SQL Server not tested','notExecuted':['old CGI startup/authentication/HTML acceptance: superseded by the user-selected Windows Text no-auth target','live SQL Server integration','manual terminal/IME acceptance','formal scoring'],'passed':sum(x['passed'] for x in rows),'total':len(rows),'results':rows}
+result['compiledInputs']=tested_inputs
+result['binaryHashes']=tested_binaries
+result['runnerSha256']=tested_runner_sha
+result['inputManifestSha256']=tested_manifest_sha
+result['inputsUnchangedDuringTests']=tested_inputs==compiled_inputs() and tested_binaries==binary_hashes() and tested_manifest_sha==hashlib.sha256((ROOT/'build/input-manifest.json').read_bytes()).hexdigest() and tested_runner_sha==hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+result['status']='PASSED' if result['passed']==result['total'] and result['inputsUnchangedDuringTests'] else 'FAILED_OR_INPUT_CHANGED'
+result['legacyHttpUtilityChecks']=sum(item['id'].startswith('HTTP-') for item in rows)
+result['scope']='Common production data/ABI/session boundaries, plus explicitly identified legacy HTTP decoder utilities; not Text terminal acceptance'
+write_json(prefix.with_suffix('.json'),result)
+write_latest(prefix.with_suffix('.raw.log'),'\n'.join(log))
 print(f"{result['passed']}/{result['total']} passed")
-raise SystemExit(0 if result['passed']==result['total'] else 1)
+raise SystemExit(0 if result['status']=='PASSED' else 1)

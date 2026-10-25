@@ -6,7 +6,7 @@ import json
 ROOT=Path(__file__).resolve().parents[1]
 def put(name,text):
  p=ROOT/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(text,encoding='utf-8',newline='\n')
-fields=[('action',16),('studentId',19),('expectedVersion',19),('studentNo',15),('studentName',8),('studentNameKana',36),('birthEra',6),('birthYear',4),('birthMonth',2),('birthDay',2),('genderCode',1),('postalCode',10),('prefectureCode',2),('addressLine1',45),('addressLine2',45),('phoneNumber',20),('emailAddress',60),('admissionDate',10),('enrollmentStatusCode',2),('enrollmentEndDate',10),('classId',19),('emergencyContactName',8),('relationshipCode',2),('emergencyPhoneNumber',20),('remarks',120),('schoolYear',4),('gradeCode',2),('reason',60),('contextId',64),('contextRevision',19),('editorId',64),('confirmationToken',64),('tabId',64),('csrfToken',64),('confirmed',1),('deleteReason',60),('page',5),('pageSize',3),('sortKey',13),('sortDirection',4),('unassignedOnly',1),('status01',1),('status02',1),('status03',1),('status04',1),('admissionFrom',10),('admissionTo',10),('categoryId',24),('codeValue',10),('codeName',12),('validFrom',10),('validTo',10),('isActive',1),('displayOrder',10),('classCode',9),('className',18),('capacity',4),('initialDefaults',1),('flashId',64),('openStudentId',19),('pageTarget',5),('name',8),('statusCode',2),('navigation',4)]
+fields=[('action',16),('studentId',19),('expectedVersion',19),('studentNo',15),('studentName',8),('studentNameKana',36),('birthEra',10),('birthYear',4),('birthMonth',2),('birthDay',2),('genderCode',1),('postalCode',10),('prefectureCode',2),('addressLine1',45),('addressLine2',45),('phoneNumber',20),('emailAddress',60),('admissionDate',10),('enrollmentStatusCode',2),('enrollmentEndDate',10),('classId',19),('emergencyContactName',8),('relationshipCode',2),('emergencyPhoneNumber',20),('remarks',120),('schoolYear',4),('gradeCode',2),('reason',60),('contextId',64),('contextRevision',19),('editorId',64),('confirmationToken',64),('tabId',64),('csrfToken',64),('confirmed',1),('deleteReason',60),('page',5),('pageSize',3),('sortKey',13),('sortDirection',4),('unassignedOnly',1),('status01',1),('status02',1),('status03',1),('status04',1),('admissionFrom',10),('admissionTo',10),('categoryId',24),('codeValue',10),('codeName',12),('validFrom',10),('validTo',10),('isActive',1),('displayOrder',10),('classCode',9),('className',18),('capacity',4),('initialDefaults',1),('flashId',64),('openStudentId',19),('pageTarget',5),('name',8),('statusCode',2),('navigation',4)]
 put('bridge/fields.h','/* generated; do not edit */\nstatic const char *field_names[]={'+','.join(json.dumps(x[0]) for x in fields)+'};\nstatic const int field_limits[]={'+','.join(str(x[1]) for x in fields)+'};\n#define FIELD_COUNT '+str(len(fields))+'\n')
 put('copy/ST-FIELDS.cpy','\n'.join(f'78 F-{name.upper()} VALUE {i}.' for i,(name,_) in enumerate(fields,1))+'\n')
 put('bridge/student_abi.h',r'''#ifndef STUDENT_ABI_H
@@ -17,12 +17,17 @@ typedef struct {int32_t type_id;int16_t null_flag;char pad1[2];int32_t byte_leng
 typedef struct {char command_id[12];int32_t parameter_count;ST_PARAM parameters[40];} ST_DB_REQUEST;
 typedef struct {char sqlstate[5];char pad1[3];int32_t native_error_code;char pad2[4];int64_t affected_rows;void *cursor_handle;int32_t error_class;char pad3[4];} ST_DB_RESULT;
 typedef struct {int32_t length;int16_t null_flag;char pad[2];char data[1024];} ST_VALUE;
-_Static_assert(sizeof(void*)==8,"64bit Linux ABI required");
+_Static_assert(sizeof(void*)==8,"64bit Windows x64 ABI required");
 _Static_assert(sizeof(ST_PARAM)==24 && offsetof(ST_PARAM,data_pointer)==16,"parameter ABI");
 _Static_assert(sizeof(ST_DB_REQUEST)==976,"request ABI");
 _Static_assert(sizeof(ST_DB_RESULT)==40 && offsetof(ST_DB_RESULT,cursor_handle)==24,"result ABI");
 _Static_assert(sizeof(ST_VALUE)==1032,"value ABI");
 int32_t STDBOP(void*,const ST_DB_REQUEST*,ST_DB_RESULT*);
+int32_t STSAMPLEOPEN(void);
+int32_t STSAMPLECLOSE(void);
+int32_t STSAMPLECHECK(void);
+int32_t STSAMPLETOUCH(void);
+int32_t STTEXTCHECK(const ST_VALUE*);
 #endif
 ''')
 put('copy/ST-DB-REQUEST.cpy',r'''01 ST-DB-REQUEST.
@@ -50,7 +55,7 @@ put('copy/ST-REQUEST.cpy','01 ST-RAW.\n  05 R-VALUE OCCURS 64 TIMES.\n    10 R-L
 put('copy/ST-STUDENT.cpy','01 ST-NORMAL.\n  05 N-VALUE OCCURS 28 TIMES.\n    10 N-LENGTH PIC S9(9) COMP-5.\n    10 N-NULL PIC S9(4) COMP-5.\n    10 FILLER PIC X(2).\n    10 N-DATA PIC X(1024).\n')
 put('copy/ST-SEARCH.cpy','01 ST-SEARCH-STATE.\n  05 SEARCH-SCHEMA PIC X(16).\n  05 SEARCH-EXECUTED PIC S9(9) COMP-5.\n  05 SEARCH-TAB PIC X(64).\n  05 SEARCH-RAW PIC X(66048).\n')
 put('copy/ST-RESULT.cpy','01 ST-ROWS.\n  05 ST-ROW OCCURS 100 TIMES.\n    10 ROW-VALUE OCCURS 13 TIMES.\n      15 ROW-LENGTH PIC S9(9) COMP-5.\n      15 ROW-NULL PIC S9(4) COMP-5.\n      15 FILLER PIC X(2).\n      15 ROW-DATA PIC X(1024).\n')
-put('copy/ST-DATE-INPUT.cpy','01 ST-DATE-INPUT.\n  05 DATE-ERA PIC X(24).\n  05 DATE-YEAR PIC X(16).\n  05 DATE-MONTH PIC X(8).\n  05 DATE-DAY PIC X(8).\n  05 DATE-ISO PIC X(10).\n')
+put('copy/ST-DATE-INPUT.cpy','01 ST-DATE-INPUT.\n  05 DATE-ERA PIC X(40).\n  05 DATE-YEAR PIC X(16).\n  05 DATE-MONTH PIC X(8).\n  05 DATE-DAY PIC X(8).\n  05 DATE-ISO PIC X(10).\n')
 sql={}
 def add(command,text):sql[command]=text
 add('CLOCK',"SELECT CONVERT(char(10),SWITCHOFFSET(SYSDATETIMEOFFSET(),'+09:00'),23),CONVERT(varchar(27),CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(),'+00:00') AS datetime2(7)),126)+'Z',CONVERT(varchar(36),NEWID()),snapshot_isolation_state FROM sys.databases WHERE database_id=DB_ID()")
@@ -83,5 +88,5 @@ add('LOG-INSERT',"INSERT INTO dbo.t_operation_log(target_table,target_key,operat
 # Only fixed statements enter the bridge; user values are always parameter data.
 for command,text in sql.items():put('sql/'+command+'.sql',text+';\n')
 put('bridge/sql_catalog.h','/* generated from sql/*.sql */\nstatic const struct {const char *id;const char *sql;} catalog[]={\n'+',\n'.join('{'+json.dumps(k)+','+json.dumps(v,ensure_ascii=False)+'}' for k,v in sql.items())+'\n};\n')
-put('tools/abi-schema.json',json.dumps({'profile':'linux-x86_64-little-endian','pointer':8,'ST_PARAM':24,'ST_DB_REQUEST':976,'ST_DB_RESULT':40,'ST_VALUE':1032,'fields':fields},ensure_ascii=False,indent=2)+'\n')
+put('tools/abi-schema.json',json.dumps({'profile':'windows-x86_64-little-endian','pointer':8,'ST_PARAM':24,'ST_DB_REQUEST':976,'ST_DB_RESULT':40,'ST_VALUE':1032,'fields':fields},ensure_ascii=False,indent=2)+'\n')
 print(f'Generated ABI/COPY, {len(fields)} fields, {len(sql)} fixed SQL statements.')

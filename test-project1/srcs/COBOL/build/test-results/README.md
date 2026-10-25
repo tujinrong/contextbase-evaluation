@@ -1,9 +1,7 @@
-# COBOL 現行検査結果
+# COBOL Windows Text サンプル 検査結果
 
-新Text生成は **BLOCKED（QA-TEXT-COBOL）**。今回再実行した旧CGI/再利用業務境界のWindows build成功、host 86/86、追加回帰 95/95、静的検査 12/12。入力・バイナリーhashは現在のソースと照合済みです。
+今回の入力・現在のコンパイル対象・実行バイナリー・各runnerのSHAを照合済みです。Windows x64ビルド成功、共通境界 85/85、Text制御 182/182、静的検査 18/18。
 
-[build](host-build/host-build.json)、[host](host-tests/host-tests.json)、[追加回帰](compact/compact.json)、[静的検査](static/static.json)にコマンド・終了値と生ログを保存します。同名ファイルを最新結果で置換し、過去版はGit履歴で管理します。
+[ビルド](host-build/host-build.json)、[共通境界](host-tests/host-tests.json)、[Text](text/text.json)、[静的検査](static/static.json)に今回のコマンド・終了値・生ログを記録します。旧HTTP decoder 11件は互換境界で、端末適合の件数へ読み替えません。旧HTML/CGI専用検査は正式ソースを保持し、今回targetの合格へ数えません。
 
-以下の結果は端末画面の適合・認証adapter接続を示しません。未確定の端末製品、描画/入力API、信頼認証連携と実証環境の決定後に新Text生成を再開します。
-
-Windowsホスト用の旧CGI／保守CLIは[app](../app/windows/runtime.json)へ配置します。Linux CGI、実SQL、暗号化状態表統合、実時間期限、実ブラウザー、正式採点は未実施。候補読込みと確認状態I/Oにはfixtureを用い、訂正後CONFIRMは保存dispatchまでを検査します。formalScore=null。
+画面・入力制御はproduction COBOLとsynthetic terminal fixture、Win32エンジンはsynthetic INPUT_RECORDを使用します。実Consoleのglyph/IME/物理キー、実SQL/暗号化状態表/同時保存、本番受入は未実施です。認証はユーザー指定により行わず、sample-user/Administrator固定。formalScore=null。

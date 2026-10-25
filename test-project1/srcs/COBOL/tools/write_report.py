@@ -1,26 +1,41 @@
-"""Replace the fixed current summary using freshly matching build/test records."""
+"""Publish only a current matching Windows sample build/test summary."""
 import sys
 sys.dont_write_bytecode = True
-import datetime, hashlib, json
-from evidence import ROOT, compiled_inputs, binary_hashes
+from pathlib import Path
+import datetime,hashlib,json,os
+from evidence import ROOT,compiled_inputs,binary_hashes
+from checked_sources import checked_source_hashes
+from output_paths import write_json,write_latest
 report=ROOT/'build/test-results'
-read=lambda p:json.loads((report/p).read_text('utf8'))
-build=read('host-build/host-build.json');host=read('host-tests/host-tests.json');static=read('static/static.json');compact=read('compact/compact.json')
-proof=json.loads((ROOT/'.tmp/host/build-evidence.json').read_text('utf8'))
-assert build['succeeded'] and proof['succeeded']
-assert build['compiledInputs']==proof['compiledInputs']==compact['compiledInputs']==compiled_inputs()
-assert build['binaryHashes']==proof['binaries']==compact['binaryHashes']==binary_hashes()
-assert all(item['passed']==item['total'] for item in [host,static,compact])
-data=dict(projectId='test-project1',profileId='COBOL',runId=host['runId'],recordedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),inputManifest='build/input-manifest.json',inputManifestSha256=hashlib.sha256((ROOT/'build/input-manifest.json').read_bytes()).hexdigest(),buildSucceeded=True,generationStatus='PARTIAL_BLOCKED',targetTextStatus='BLOCKED QA-TEXT-COBOL',legacyHostOnly=True,compiledSourceHashesMatch=True,formalScore=None,host=dict(passed=host['passed'],total=host['total']),compact=dict(passed=compact['passed'],total=compact['total'],processCommands=len(compact['commands'])),static=dict(passed=static['passed'],total=static['total']),app='build/app/windows',limits=['New 27x132 Text UI generation is blocked by unresolved QA-TEXT-COBOL terminal/render/input/auth adapter','All executable checks cover the retained legacy CGI and reusable business boundaries; they do not establish Text compliance','Windows host build; not Linux CGI deployment','Rendering candidates and prompt state I/O use isolated fixtures','Real SQL, encrypted state table, real-clock expiry, browser acceptance and formal scoring not run'])
-(report/'summary.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n','utf8')
-(report/'README.md').write_text(f"""# COBOL 現行検査結果
+run_id=os.environ.get('COBOL_RUN_ID','local-cobol')
+inputs=compiled_inputs();binaries=binary_hashes()
+manifest_sha=hashlib.sha256((ROOT/'build/input-manifest.json').read_bytes()).hexdigest()
+read=lambda p:json.loads((report/p).read_text('utf-8'))
+data={'projectId':'test-project1','profileId':'COBOL','runId':run_id,'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'status':'VERIFICATION_FAILED','buildSucceeded':False,'applicationVerification':'NOT_ESTABLISHED','formalScore':None}
+try:
+ build=read('host-build/host-build.json')
+ proof=json.loads((ROOT/'.tmp/host/build-evidence.json').read_text('utf-8'))
+ if not build.get('succeeded') or not proof.get('succeeded'):raise ValueError('Current build did not succeed')
+ if build.get('runId')!=run_id or build.get('inputManifestSha256')!=manifest_sha:raise ValueError('Build run/input provenance is stale')
+ if build.get('compiledInputs')!=inputs or proof.get('compiledInputs')!=inputs or build.get('binaryHashes')!=binaries or proof.get('binaries')!=binaries:raise ValueError('Build/source/binary fingerprint mismatch')
+ suites={}
+ for name,path,runner in [('host','host-tests/host-tests.json','host_tests.py'),('static','static/static.json','static_check.py'),('text','text/text.json','test_text.py')]:
+  suite=read(path);expected_runner=hashlib.sha256((ROOT/'tools'/runner).read_bytes()).hexdigest()
+  if suite.get('runId')!=run_id or suite.get('inputManifestSha256')!=manifest_sha or suite.get('compiledInputs')!=inputs or suite.get('binaryHashes')!=binaries or suite.get('runnerSha256')!=expected_runner:raise ValueError(name+' suite provenance differs from current run/input/source/binary/runner')
+  if suite.get('status')!='PASSED' or not suite.get('inputsUnchangedDuringTests') or not suite.get('total') or suite.get('passed')!=suite.get('total') or not all(row.get('passed') for row in suite.get('results',[])):raise ValueError(name+' suite did not pass or changed during tests')
+  if name=='static' and suite.get('checkedSourceHashes')!=checked_source_hashes():raise ValueError('Static checked source/document hashes changed')
+  suites[name]={'passed':suite['passed'],'total':suite['total'],'record':path,'runnerSha256':expected_runner}
+ data.update(status='VERIFIED_WITH_LIMITS',buildSucceeded=True,generationStatus='REGENERATED',targetTextStatus='IMPLEMENTED_WINDOWS_SAMPLE',applicationVerification='SYNTHETIC_CONTROLS_AND_DATA_BOUNDARIES_PASSED',nativeExecution='COMPILED_AND_SYNTHETIC_UNIT_TESTED',compiledSourceHashesMatch=True,inputManifest='build/input-manifest.json',inputManifestSha256=manifest_sha,compiledInputs=inputs,binaryHashes=binaries,suites=suites,legacyHttpUtilityChecks=read('host-tests/host-tests.json').get('legacyHttpUtilityChecks',0),legacyHtmlAcceptance='NOT_SELECTED_NOT_COUNTED',app='build/app/windows',limits=['Physical Console glyph/IME/key acceptance has not run','Real SQL transactions, encrypted runtime-state table, expiry and concurrent saves have not run','Authentication intentionally absent: fixed sample-user/Administrator is for this sample only','Formal scoring has not run'])
+except Exception as error:
+ data['failure']=type(error).__name__+': '+str(error)
+ write_json(report/'summary.json',data);print(json.dumps(data,ensure_ascii=False));raise SystemExit(1)
+write_json(report/'summary.json',data)
+write_latest(report/'README.md',f'''# COBOL Windows Text サンプル 検査結果
 
-新Text生成は **BLOCKED（QA-TEXT-COBOL）**。今回再実行した旧CGI/再利用業務境界のWindows build成功、host {host['passed']}/{host['total']}、追加回帰 {compact['passed']}/{compact['total']}、静的検査 {static['passed']}/{static['total']}。入力・バイナリーhashは現在のソースと照合済みです。
+今回の入力・現在のコンパイル対象・実行バイナリー・各runnerのSHAを照合済みです。Windows x64ビルド成功、共通境界 {suites['host']['passed']}/{suites['host']['total']}、Text制御 {suites['text']['passed']}/{suites['text']['total']}、静的検査 {suites['static']['passed']}/{suites['static']['total']}。
 
-[build](host-build/host-build.json)、[host](host-tests/host-tests.json)、[追加回帰](compact/compact.json)、[静的検査](static/static.json)にコマンド・終了値と生ログを保存します。同名ファイルを最新結果で置換し、過去版はGit履歴で管理します。
+[ビルド](host-build/host-build.json)、[共通境界](host-tests/host-tests.json)、[Text](text/text.json)、[静的検査](static/static.json)に今回のコマンド・終了値・生ログを記録します。旧HTTP decoder {data['legacyHttpUtilityChecks']}件は互換境界で、端末適合の件数へ読み替えません。旧HTML/CGI専用検査は正式ソースを保持し、今回targetの合格へ数えません。
 
-以下の結果は端末画面の適合・認証adapter接続を示しません。未確定の端末製品、描画/入力API、信頼認証連携と実証環境の決定後に新Text生成を再開します。
-
-Windowsホスト用の旧CGI／保守CLIは[app](../app/windows/runtime.json)へ配置します。Linux CGI、実SQL、暗号化状態表統合、実時間期限、実ブラウザー、正式採点は未実施。候補読込みと確認状態I/Oにはfixtureを用い、訂正後CONFIRMは保存dispatchまでを検査します。formalScore=null。
-""",'utf8')
-print(json.dumps(data,ensure_ascii=False))
+画面・入力制御はproduction COBOLとsynthetic terminal fixture、Win32エンジンはsynthetic INPUT_RECORDを使用します。実Consoleのglyph/IME/物理キー、実SQL/暗号化状態表/同時保存、本番受入は未実施です。認証はユーザー指定により行わず、sample-user/Administrator固定。formalScore=null。
+''')
+print(json.dumps({k:v for k,v in data.items() if k not in ['compiledInputs','binaryHashes']},ensure_ascii=False))

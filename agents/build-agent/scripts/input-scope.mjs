@@ -3,12 +3,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {profiles} from './output-layout.mjs';
 
-export function fixedInputFiles(project) {
+export function fixedInputFiles(project, profile) {
   return [
     'AGENTS.md', 'agents/README.md', 'agents/spec-agent/AGENT.md',
     'agents/build-agent/AGENT.md', 'agents/build-agent/PROMPT.md', 'agents/build-agent/README.md', 'agents/reverse-agent/AGENT.md',
     'docs/リポジトリ構成.md', 'docs/開発規約.md', 'docs/仕様書作成ルール.md',
     'docs/評価規約.md', 'docs/MD構造・Excel変換規約.md', 'docs/テーブル仕様書記述規約.md',
+    'docs/テストデータ整備規約.md',
+    ...(!profile || profile === 'Access' ? ['agents/build-agent/docs/Access生成チェック.md'] : []),
     `${project}/README.md`, `${project}/プロジェクト情報.md`, `${project}/docs/開発規約.md`,
   ];
 }
@@ -36,7 +38,7 @@ export function collectInputFiles(root, project, profile) {
     }
   }
   assertRegular(path.join(root, project), true);
-  for (const name of fixedInputFiles(project)) {const target = path.join(root, name); assertRegular(target); files.push(target);}
+  for (const name of fixedInputFiles(project, profile)) {const target = path.join(root, name); assertRegular(target); files.push(target);}
   if (profile) walk(specificationRoot(root, project, profile));
   else {
     // The project index is routing only. Do not collect arbitrary sibling trees.

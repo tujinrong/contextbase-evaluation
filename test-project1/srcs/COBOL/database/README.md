@@ -1,15 +1,11 @@
-# SQL Server 2022
+# SQL ServerとWindows ODBC
 
-入力は方式専用仕様の `../../../spec/COBOL/DB定義/SQLServer` と `../../../spec/COBOL/共通/10_業務コード定義.md`（版8.0）です。`../tools/generate_database.mjs` はローカルSQLを生成し、DBへ接続しません。
+対応するCOBOL専用DB仕様とコード定義から `tools/generate_database.mjs` が方式内SQLを生成します。DBへは接続しません。`001_schema.sql`、`002_seed.sql` は新規空DB用で、既存DBの移行/置換スクリプトではありません。業務5表89列＋技術2表、5分類70コード、クラス/学生/ログインは生成しません。既存共有DBへの実行は配備者の確認が必要です。
 
-```powershell
-node tools/generate_database.mjs
-```
+Windows x64 Microsoft ODBC Driver18の保護されたDSNを用意し、実行するプロセスへ `STUDENT_ODBC_DSN` を渡します。英数字/アンダースコア/ハイフンのDSN名だけを受理します。ブリッジは `DSN=...;Encrypt=Yes;TrustServerCertificate=No;` を使い、サイレント接続します。資格情報/証明書の準備は配備側で行い、ログ/Gitへ書きません。
 
-選択した空の評価用DBへ `001_schema.sql`、`002_seed.sql` の順に適用します。001は新規作成用で、既存DBの移行スクリプトではありません。SQL Server 2022、SC対応照合順序、SNAPSHOT許可を使用します。業務5表89列に確認情報と検索状態の技術2表を加えています。コードは5分類70値、実クラス・学生・ログインは作りません。
+UIはユーザー指定の認証なしサンプルで、固定sample-user/Administrator。これはDB権限の緩和を意味しません。DB接続主体は業務に必要な最小権限、保守CLIはTx内でstudent_admin所属を要求します。両方の保存監査actorはsample-userです。DB ORIGINAL_LOGIN()はアプリ利用者の入力へ置換しません。
 
-上記コマンドはCOBOLディレクトリを作業ディレクトリにします。暗号化接続と証明書検証が必要です。`deploy/odbc.ini.example`を基に保護されたDSNを用意し、`STUDENT_ODBC_DSN`で指定します。秘密情報をソースへ記載しません。
+保存と保守はTransaction所有の `test-project1:student-write` 排他ロックを取得します。検索SNAPSHOT、保存READ COMMITTED、楽観版、監査と同時COMMIT、失敗時ROLLBACKを維持します。状態payloadは接続sessionと起動メモリ鍵に束縛され、終了後の再利用はできません。期限削除SQLはdeploy/runtime-state-cleanup.sql。
 
-ロール `student_viewer`、`student_staff`、`student_admin` には、ユーザーや権限を自動で割り当てません。配備者が認証と有効権限を設定します。CGIはサーバー認証した信頼サービス主体を使い、CLIは管理者DB主体をTx内で再検査します。最小権限と直接DB資格情報を公開しない配備が必要です。
-
-全業務書込みと保守は `test-project1:student-write` のトランザクション所有排他ロックを取得します。実DBでのDDL適用、競合、監査失敗時の取消、接続断試験は未実施です。
+[windows-auth](windows-auth/README.md) のDB配備補助は配備者向けです。DBのWindows統合認証と、今回対象外のアプリ認証を区別します。DB作成/DDL適用/学生CRUD/暗号化状態表/競合・監査失敗・接続断は今回実行していません。

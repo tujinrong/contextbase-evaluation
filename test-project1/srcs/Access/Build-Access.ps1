@@ -59,14 +59,16 @@ function Insert-SeedRow([string]$table, $pairs) {
     $taskDb.Execute("INSERT INTO $table ($($taskColumns -join ',')) VALUES ($($taskValues -join ','))",128)
 }
 function Add-Control($form, [string]$name, [int]$kind, [int]$left, [int]$top, [string]$label, [int]$width = 2500) {
-    $taskControl = $taskAccess.CreateControl($form.Name, $kind, 0, '', '', $left, $top, $width, 360)
+    $taskControl = $taskAccess.CreateControl($form.Name, $kind, 0, '', '', $left, $top, $width, 390)
     $taskControl.Name = $name
-    if($kind -ne 106){$taskControl.FontName = "Yu Gothic UI"; $taskControl.FontSize = 9}
+    if($kind -ne 106){$taskControl.FontName = 'Yu Gothic UI'; $taskControl.FontSize = 11; $taskControl.ThemeFontIndex=-1}
+    if($kind -in @(109,110,111,104,106)){$taskControl.Enabled=$true;$taskControl.TabStop=$true}
+    if($kind -in @(109,111)){$taskControl.Locked=$false;$taskControl.TextAlign=1}
     if ($kind -in @(100,104)) { $taskControl.Caption = $label }
     elseif ($label) {
-        $taskLabel = $taskAccess.CreateControl($form.Name, 100, 0, $name, '', $left, $top - 300, $width, 270)
+        $taskLabel = $taskAccess.CreateControl($form.Name, 100, 0, $name, '', $left, $top - 360, $width, 330)
         $taskLabel.Caption = $label
-        $taskLabel.FontName="Yu Gothic UI"; $taskLabel.FontSize=9
+        $taskLabel.FontName='Yu Gothic UI'; $taskLabel.FontSize=11;$taskLabel.ThemeFontIndex=-1
     }
     return $taskControl
 }
@@ -78,20 +80,30 @@ function Add-Combo($form, [string]$name, [int]$left, [int]$top, [string]$label, 
 }
 function Add-Button($form, [string]$name, [int]$left, [int]$top, [string]$label, [string]$action) {
     $taskButton = Add-Control $form $name 104 $left $top $label 1500
-    $taskButton.Height = 390
+    $taskButton.Height = 420
     $taskButton.OnClick = "=$action"
     return $taskButton
 }
 function Add-RowLabel($form,[string]$name,[int]$left,[int]$top,[string]$caption,[int]$width=1800) {
-    $taskLabel=Add-Control $form ('lbl'+$name) 100 $left ($top+30) $caption $width
-    $taskLabel.Height=300
+    $taskLabel=Add-Control $form ('lbl'+$name) 100 $left ($top+15) $caption $width
+    $taskLabel.Height=360
     return $taskLabel
 }
 function Add-Group($form,[string]$name,[int]$left,[int]$top,[int]$width,[int]$height,[string]$caption) {
-    $taskGroup=$taskAccess.CreateControl($form.Name,107,0,'','',$left,$top,$width,$height)
-    $taskGroup.Name=$name;$taskGroup.BorderStyle=1;$taskGroup.BackStyle=0
-    $taskLabel=Add-Control $form ('lbl'+$name) 100 ($left+120) ($top-30) $caption 3300
-    $taskLabel.Height=270;$taskLabel.BackStyle=1;$taskLabel.BackColor=15790320
+    # A decoration is an Access Rectangle, never an OptionGroup with an implicit value.
+    $taskGroup=$taskAccess.CreateControl($form.Name,101,0,'','',$left,$top,$width,$height)
+    $taskGroup.Name=$name;$taskGroup.BorderStyle=1;$taskGroup.BackStyle=0;$taskGroup.SpecialEffect=0
+    $taskCaptionWidth=[Math]::Min($width-480,([int]($caption.Length*220)+240))
+    $taskLabel=Add-Control $form ('lbl'+$name) 100 ($left+120) ($top-120) $caption $taskCaptionWidth
+    $taskLabel.Height=330;$taskLabel.BackStyle=1;$taskLabel.BackColor=$form.Section(0).BackColor;$taskLabel.FontWeight=700
+}
+function Set-TabOrder($form,[string[]]$names) {
+    for($taskIndex=$names.Count-1;$taskIndex -ge 0;$taskIndex--){$form.Controls.Item($names[$taskIndex]).TabIndex=0}
+}
+function Complete-FormTypography($form) {
+    foreach($taskControl in $form.Controls) {
+        if($taskControl.ControlType -eq 100 -and $taskControl.Height -lt 330){$taskControl.Height=330}
+    }
 }
 function Save-Form($form, [string]$name) {
     $taskOldName = $form.Name
@@ -109,7 +121,10 @@ function Compile-Vba {
 }
 function Create-NamedForm([string]$name) {
     $taskAccess.DoCmd.OpenForm($name,1)
-    return ,$taskAccess.Forms.Item($name)
+    $taskNamedForm=$taskAccess.Forms.Item($name)
+    $taskNamedForm.AllowEdits=$true;$taskNamedForm.AllowAdditions=$true;$taskNamedForm.AllowDeletions=$false
+    $taskNamedForm.RecordSelectors=$false;$taskNamedForm.NavigationButtons=$false;$taskNamedForm.DividingLines=$false
+    return ,$taskNamedForm
 }
 try {
     if ($CreateBackend) {
@@ -161,6 +176,11 @@ try {
         $taskDb.Close(); $taskAccess.CloseCurrentDatabase()
     }
     $taskAccess.NewCurrentDatabase([IO.Path]::GetFullPath($Frontend), 12)
+    # Office's installed core type library defines the documented IRibbonControl
+    # callback interface. Access 16 uses type-library version 2.8.
+    $taskOfficeGuid='{2DF8D04C-5BFA-101B-BDE5-00AA0044DE52}'
+    $taskOfficeReference=@($taskAccess.References|Where-Object {$_.Guid -eq $taskOfficeGuid})
+    if($taskOfficeReference.Count -eq 0){$taskOfficeReference=$taskAccess.References.AddFromGuid($taskOfficeGuid,2,8)}
     $taskBlankForm=$taskAccess.CreateForm()
     Save-Form $taskBlankForm 'frmStudentSearch'
     $taskBlankForm=$null
@@ -218,6 +238,14 @@ try {
         $taskAccess.DoCmd.Save(5,$taskSource.BaseName)
     }
     if ($Compile) { Compile-Vba }
+    $taskSampleResult='NotRequested: isolated test fixture'
+    if(-not $IncludeTests) {
+        Set-DaoProperty $taskDb 'StudentSampleBootstrapAllowed' 1 $true
+        $taskSampleResult=[string]$taskAccess.Run('EnsureSampleData')
+        if(-not $taskSampleResult.StartsWith('PASS|')){throw "Initial sample data preparation failed: $taskSampleResult"}
+        Set-DaoProperty $taskDb 'StudentSampleBootstrapAllowed' 1 $false
+        Write-Output $taskSampleResult
+    }
     $taskCodeSql=@{}
     foreach ($taskCategory in @('GENDER','PREFECTURE','ENROLLMENT_STATUS','RELATIONSHIP','GRADE')) { $taskCodeSql[$taskCategory]="SELECT code_value,code_name FROM m_code WHERE category_id='$taskCategory' ORDER BY display_order,code_value" }
     $taskClassSql='SELECT class_id, CStr(school_year) & " " & class_code & " " & class_name & IIf(is_active,""," [停止]") FROM m_class ORDER BY school_year,display_order,class_code,class_id'
@@ -247,39 +275,58 @@ try {
     for($taskIndex=0;$taskIndex -lt $taskHeaders.Count;$taskIndex++){$taskCtl=Add-Control $taskForm ('lblColumn'+$taskIndex) 100 $taskLeft 2520 $taskHeaders[$taskIndex] $taskColumnWidths[$taskIndex];$taskCtl.Height=270;$taskLeft+=$taskColumnWidths[$taskIndex]}
     $taskList=Add-Control $taskForm 'lstStudents' 110 180 2910 '' 17880;$taskList.Height=4020;$taskList.ColumnCount=8
     $taskList.ColumnWidths='0;2040;5100;2280;2460;3660;1080;1200'
-    $taskList.BoundColumn=1;$taskList.RowSourceType='StudentListCallback';$taskList.OnDblClick='=OpenStudent(False)';$taskList.AfterUpdate='=SelectedStudentDetails()'
+    $taskList.BoundColumn=1;$taskList.RowSourceType='StudentListCallback';$taskList.RowSource='';$taskList.OnDblClick='=OpenStudent(False)';$taskList.AfterUpdate='=SelectedStudentDetails()'
     $taskCtl=Add-Control $taskForm 'lblSelectedDetails' 100 180 6990 '選択行全文（長い値は Shift+F2 で拡大）' 17880;$taskCtl.Height=270
     $taskDetails=Add-Text $taskForm 'txtSelectedDetails' 180 7260 '';$taskDetails.Width=17880;$taskDetails.Height=510;$taskDetails.Locked=$true;$taskDetails.TabStop=$true;$taskDetails.ScrollBars=2;$taskDetails.TextFormat=0
+    $taskDetails.Top=7350
     foreach($taskHidden in @('IsBusy','txtContextId','txtContextRevision')){$taskCtl=Add-Text $taskForm $taskHidden 100 100 '';$taskCtl.Visible=$false}
     $taskCtl=Add-Button $taskForm 'cmdOpenSelected' 180 7890 '選択行の編集／参照' 'OpenStudent(False)';$taskCtl.Width=3300
     $taskCtl=Add-Control $taskForm 'lblSearchedAt' 100 180 8340 '' 17880;$taskCtl.Height=240
     $taskForm.HasModule=$true;$taskFormModule=$taskForm.Module
     if($taskFormModule.CountOfLines -gt 0){$taskFormModule.DeleteLines(1,$taskFormModule.CountOfLines)}
     $taskForm.OnUnload='[Event Procedure]'
-    $taskFormModule.AddFromString("Option Explicit`r`nOption Compare Binary`r`nPrivate Sub Form_Load()`r`n    InitSearch Me`r`nEnd Sub`r`nPrivate Sub Form_Unload(Cancel As Integer)`r`n    CloseSearch Me`r`nEnd Sub")
-    $taskForm.Section(0).Height=8640
+    $taskFormModule.AddFromString("Option Explicit`r`nOption Compare Binary`r`nPrivate Sub Form_Load()`r`n    InitSearch Me`r`nEnd Sub`r`nPrivate Sub Form_Unload(Cancel As Integer)`r`n    If Nz(Me!IsBusy, False) Then`r`n        Cancel = True`r`n    Else`r`n        CloseSearch Me`r`n    End If`r`nEnd Sub")
+    Complete-FormTypography $taskForm
+    Set-TabOrder $taskForm @('txtStudentNo','txtName','cboClass','chkEnrolled','chkLeave','chkGraduated','chkWithdrawn','cmdSearch','cmdClear','cboSortKey','cboSortDirection','lstStudents','txtSelectedDetails','cmdOpenSelected','cmdNew','cmdMenu')
+    $taskForm.Section(0).Height=8760
     Save-Form $taskForm 'frmStudentSearch'
     $taskForm=Create-NamedForm 'frmStudentEdit';$taskForm.RecordSource='';$taskForm.DefaultView=0;$taskForm.Width=18240;$taskForm.Section(0).Height=8640;$taskForm.Section(0).BackColor=15790320;$taskForm.Caption='学生登録・編集';$taskForm.OnLoad='[Event Procedure]';$taskForm.OnUnload='[Event Procedure]';$taskForm.ScrollBars=3;$taskForm.AutoCenter=$true
     $taskCtl=Add-Control $taskForm 'lblTitle' 100 180 60 '学生登録・編集 ／ 必須項目は * ／ 長文は Shift+F2' 17880;$taskCtl.Height=300
     $taskCtl=Add-Control $taskForm 'lblMessage' 100 180 390 '' 17880;$taskCtl.Height=270
-    Add-Group $taskForm 'grpBasic' 180 690 8775 2940 '基本情報'
-    Add-Group $taskForm 'grpContact' 180 3750 8775 2940 '住所・本人連絡先'
-    Add-Group $taskForm 'grpEnrollment' 9225 690 8775 3240 '在籍・所属'
-    Add-Group $taskForm 'grpEmergency' 9225 4050 8775 1680 '緊急連絡先'
-    Add-Group $taskForm 'grpRemarks' 9225 5850 8775 1890 '備考・確認変更理由'
+    Add-Group $taskForm 'grpBasic' 180 780 8775 2850 '基本情報'
+    Add-Group $taskForm 'grpContact' 180 3840 8775 2850 '住所・本人連絡先'
+    Add-Group $taskForm 'grpEnrollment' 9225 780 8775 3150 '在籍・所属'
+    Add-Group $taskForm 'grpEmergency' 9225 4140 8775 1590 '緊急連絡先'
+    Add-Group $taskForm 'grpRemarks' 9225 5940 8775 1800 '備考・確認変更理由'
     $taskTextRows=@(
-        @('txtStudentId','学生管理番号',270,2190,1020,1440),@('txtStudentNo','学籍番号 *',270,2190,1440,2040),@('txtStudentName','氏名 *',270,2190,1860,1800),@('txtStudentNameKana','氏名カナ *',270,2190,2280,6600),
+        @('txtStudentId','管理番号（自動）',270,2190,1020,1440),@('txtStudentNo','学籍番号 *',270,2190,1440,2640),@('txtStudentName','氏名 *',270,2190,1860,2400),@('txtStudentNameKana','氏名カナ *',270,2190,2280,6600),
         @('txtPostalCode','郵便番号 *',270,2190,4080,1800),@('txtAddressLine1','住所1 *',270,2190,4920,6600),@('txtAddressLine2','住所2',270,2190,5340,6600),@('txtPhoneNumber','本人電話',270,2190,5760,2640),@('txtEmailAddress','本人メール',270,2190,6180,6600),
-        @('txtAdmissionDate','入学日 *',9315,11235,1020,1680),@('txtEnrollmentEndDate','卒業・退学日',9315,11235,1860,1680),@('txtEmergencyContactName','緊急氏名',9315,11235,4380,1800),@('txtEmergencyPhoneNumber','緊急電話',9315,11235,5220,2640),
+        @('txtAdmissionDate','入学日 *',9315,11235,1020,1920),@('txtEnrollmentEndDate','卒業・退学日',9315,11235,1860,1920),@('txtEmergencyContactName','緊急氏名',9315,11235,4380,2400),@('txtEmergencyPhoneNumber','緊急電話',9315,11235,5220,2640),
         @('txtRemarks','備考（120文字）',9315,11235,6180,6600),@('txtOperationReason','確認・変更理由',9315,11235,6960,6600))
     foreach($taskItem in $taskTextRows){$null=Add-RowLabel $taskForm $taskItem[0] $taskItem[2] $taskItem[4] $taskItem[1];$taskCtl=Add-Text $taskForm $taskItem[0] $taskItem[3] $taskItem[4] '';$taskCtl.Width=$taskItem[5];$taskCtl.AfterUpdate='=DirtyEdit()';if($taskItem[0] -in @('txtRemarks','txtOperationReason')){$taskCtl.Height=690;$taskCtl.EnterKeyBehavior=$true;$taskCtl.ScrollBars=2}}
-    $taskForm.Controls.Item('txtStudentId').Locked=$true
+    $taskForm.Controls.Item('txtStudentId').Locked=$true;$taskForm.Controls.Item('txtStudentId').TabStop=$false
+    $taskForm.Controls.Item('txtStudentId').ControlTipText='保存時に自動採番されます。学籍番号は下の欄へ入力します。'
+    $taskForm.Controls.Item('txtStudentNo').ControlTipText='新規登録時だけ入力できます。英大文字・数字・ハイフン、15文字以内。'
+    $taskForm.Controls.Item('txtPostalCode').InputMask='000\-0000;1;_'
+    $taskForm.Controls.Item('txtPostalCode').ControlTipText='数字7桁。区切りは自動表示され、先頭の0も保存されます。'
+    $taskForm.Controls.Item('txtPostalCode').OnKeyDown='[Event Procedure]'
+    $taskForm.Controls.Item('txtPostalCode').OnKeyPress='[Event Procedure]'
+    $taskForm.Controls.Item('txtPostalCode').BeforeUpdate='[Event Procedure]'
+    $taskForm.Controls.Item('txtPostalCode').OnGotFocus='[Event Procedure]'
+    $taskForm.Controls.Item('txtPostalCode').OnLostFocus='[Event Procedure]'
+    foreach($taskControlName in @('txtStudentNo','txtPostalCode','txtAdmissionDate','txtEnrollmentEndDate','txtBirthYear','txtBirthMonth','txtBirthDay')) {
+        if($taskControlName -notlike 'txtBirth*'){$taskForm.Controls.Item($taskControlName).IMEMode=2}
+    }
     $null=Add-RowLabel $taskForm 'BirthDate' 270 2700 '生年月日 *'
     $taskCtl=Add-Combo $taskForm 'cboBirthEra' 2190 2700 '' 'MEIJI;明治;TAISHO;大正;SHOWA;昭和;HEISEI;平成;REIWA;令和';$taskCtl.RowSourceType='Value List';$taskCtl.Width=1200
     foreach($taskItem in @(@('txtBirthYear',3450,780),@('txtBirthMonth',4470,630),@('txtBirthDay',5340,630))){$taskCtl=Add-Text $taskForm $taskItem[0] $taskItem[1] 2700 '';$taskCtl.Width=$taskItem[2];$taskCtl.AfterUpdate='=DirtyEdit()'}
     foreach($taskItem in @(@('Year',4260,'年'),@('Month',5130,'月'),@('Day',6000,'日'))){$null=Add-RowLabel $taskForm $taskItem[0] $taskItem[1] 2700 $taskItem[2] 180}
     foreach($taskItem in @(@('cboGender','性別 *',270,2190,3120,1560,$taskCodeSql.GENDER),@('cboPrefecture','都道府県 *',270,2190,4500,1680,$taskCodeSql.PREFECTURE),@('cboEnrollmentStatus','在籍区分 *',9315,11235,1440,2640,$taskCodeSql.ENROLLMENT_STATUS),@('cboSchoolYear','年度',9315,11235,2280,1200,$taskYearSql),@('cboGrade','学年',9315,11235,2700,2640,$taskCodeSql.GRADE),@('cboClass','クラス *',9315,11235,3120,6600,$taskClassSql),@('cboRelationship','緊急続柄',9315,11235,4800,2640,$taskCodeSql.RELATIONSHIP))){$null=Add-RowLabel $taskForm $taskItem[0] $taskItem[2] $taskItem[4] $taskItem[1];$taskCtl=Add-Combo $taskForm $taskItem[0] $taskItem[3] $taskItem[4] '' $taskItem[6];$taskCtl.Width=$taskItem[5];$taskCtl.ListWidth=9000}
     $taskForm.Controls.Item('cboClass').ColumnWidths='0cm;10cm'
+    foreach($taskControlName in @('txtAdmissionDate','txtEnrollmentEndDate')) {
+        $taskForm.Controls.Item($taskControlName).ControlTipText='西暦年4桁・月2桁・日2桁。日付の実在性は保存時に検査します。'
+    }
+    foreach($taskControlName in @('txtBirthYear','txtBirthMonth','txtBirthDay')){$taskForm.Controls.Item($taskControlName).IMEMode=2}
     foreach($taskControlName in @('cboBirthEra','cboGender','cboPrefecture','cboRelationship')){$taskForm.Controls.Item($taskControlName).AfterUpdate='=DirtyEdit()'}
     $taskForm.Controls.Item('cboEnrollmentStatus').AfterUpdate='=StatusChanged()'
     foreach($taskBinding in @(@('cboSchoolYear','YEAR'),@('cboGrade','GRADE'),@('cboClass','CLASS'))){$taskForm.Controls.Item($taskBinding[0]).AfterUpdate='=ClassChanged("'+$taskBinding[1]+'")'}
@@ -289,13 +336,18 @@ try {
     $null=Add-Button $taskForm 'cmdSave' 180 8190 '保存' 'SaveEdit()';$null=Add-Button $taskForm 'cmdReset' 1860 8190 '編集取消' 'ResetEdit(False)';$null=Add-Button $taskForm 'cmdReload' 3540 8190 '最新再読込' 'ResetEdit(True)';$null=Add-Button $taskForm 'cmdBack' 5220 8190 '検索へ戻る' 'BackEdit()';$null=Add-Button $taskForm 'cmdDelete' 16380 8190 '論理削除' 'DeleteEdit()'
     $taskForm.HasModule=$true;$taskFormModule=$taskForm.Module
     if($taskFormModule.CountOfLines -gt 0){$taskFormModule.DeleteLines(1,$taskFormModule.CountOfLines)}
-    $taskFormModule.AddFromString("Option Explicit`r`nOption Compare Binary`r`nPrivate Sub Form_Load()`r`n    InitEdit Me`r`nEnd Sub`r`nPrivate Sub Form_Unload(Cancel As Integer)`r`n    Cancel = Not CanCloseEdit(Me)`r`nEnd Sub")
-    $taskForm.Section(0).Height=8640
+    $taskForm.OnActivate='[Event Procedure]';$taskForm.OnDeactivate='[Event Procedure]';$taskForm.OnClose='[Event Procedure]'
+    $taskFormModule.AddFromString("Option Explicit`r`nOption Compare Binary`r`nPrivate Sub Form_Load()`r`n    If InitEdit(Me) Then InstallStudentRibbon Me`r`nEnd Sub`r`nPrivate Sub Form_Unload(Cancel As Integer)`r`n    Cancel = Not CanCloseEdit(Me)`r`n    If Cancel = 0 Then Cancel = Not DetachPostalPasteGuard()`r`nEnd Sub`r`nPrivate Sub Form_Activate()`r`n    If PostalInputActive() Then AttachPostalPasteGuard`r`nEnd Sub`r`nPrivate Sub Form_Deactivate()`r`n    DetachPostalPasteGuard`r`nEnd Sub`r`nPrivate Sub Form_Close()`r`n    DetachPostalPasteGuard`r`n    ReleaseEditState Me`r`nEnd Sub`r`nPrivate Sub txtPostalCode_GotFocus()`r`n    AttachPostalPasteGuard`r`nEnd Sub`r`nPrivate Sub txtPostalCode_LostFocus()`r`n    DetachPostalPasteGuard`r`nEnd Sub`r`nPrivate Sub txtPostalCode_KeyDown(KeyCode As Integer, Shift As Integer)`r`n    PostalKeyDown KeyCode, Shift`r`nEnd Sub`r`nPrivate Sub txtPostalCode_KeyPress(KeyAscii As Integer)`r`n    PostalKeyPress KeyAscii`r`nEnd Sub`r`nPrivate Sub txtPostalCode_BeforeUpdate(Cancel As Integer)`r`n    PostalBeforeUpdate Cancel`r`nEnd Sub")
+    foreach($taskControl in $taskForm.Controls){if($taskControl.Name -notin @('lblTitle','lblMessage')){$taskControl.Top=$taskControl.Top+150}}
+    Complete-FormTypography $taskForm
+    Set-TabOrder $taskForm @('txtStudentNo','txtStudentName','txtStudentNameKana','cboBirthEra','txtBirthYear','txtBirthMonth','txtBirthDay','cboGender','txtPostalCode','cboPrefecture','txtAddressLine1','txtAddressLine2','txtPhoneNumber','txtEmailAddress','txtAdmissionDate','cboEnrollmentStatus','txtEnrollmentEndDate','cboSchoolYear','cboGrade','cboClass','txtEmergencyContactName','cboRelationship','txtEmergencyPhoneNumber','txtRemarks','txtOperationReason','cmdSave','cmdReset','cmdReload','cmdBack','cmdDelete')
+    $taskForm.Section(0).Height=8790
     Save-Form $taskForm 'frmStudentEdit'
     $taskForm=Create-NamedForm 'frmDiscardConfirm';$taskForm.RecordSource='';$taskForm.Width=9000;$taskForm.Section(0).Height=2400;$taskForm.Caption='未保存変更の確認';$taskForm.Modal=$true;$taskForm.PopUp=$true
     $taskCtl=Add-Control $taskForm 'lblPrompt' 100 300 300 '保存していない入力を破棄しますか。' 8400;$taskCtl.Height=900
     $null=Add-Button $taskForm 'cmdConfirm' 300 1600 '変更を破棄' 'DiscardOk()'
     $taskCtl=Add-Button $taskForm 'cmdCancel' 2300 1600 '取消' 'DiscardCancel()';$taskCtl.Default=$true;$taskCtl.Cancel=$true
+    Complete-FormTypography $taskForm
     Save-Form $taskForm 'frmDiscardConfirm'
     foreach ($taskDialogName in @('frmDuplicateConfirm','frmDeleteConfirm')) {
         $taskForm=Create-NamedForm $taskDialogName; $taskForm.RecordSource=''; $taskForm.Width=11000; $taskForm.Section(0).Height=6700; $taskForm.Caption='操作の確認'; $taskForm.Modal=$true; $taskForm.PopUp=$true; $taskForm.OnLoad='[Event Procedure]'
@@ -303,11 +355,12 @@ try {
         if ($taskFormModule.CountOfLines -gt 0) { $taskFormModule.DeleteLines(1,$taskFormModule.CountOfLines) }
         $taskFormModule.AddFromString("Option Explicit`r`nOption Compare Binary`r`nPrivate Sub Form_Load()`r`n    InitConfirmation Me`r`nEnd Sub")
         $taskPrompt=Add-Control $taskForm 'lblPrompt' 100 300 300 '' 10000; $taskPrompt.Height=900
-        if ($taskDialogName -eq 'frmDuplicateConfirm') { $taskList=Add-Control $taskForm 'lstCandidates' 110 300 1400 '' 10000; $taskList.Height=3000; $taskList.RowSourceType='CandidateListCallback'; $taskList.ColumnCount=4; $taskList.ColumnWidths='2cm;2.5cm;3cm;4.5cm' }
+        if ($taskDialogName -eq 'frmDuplicateConfirm') { $taskList=Add-Control $taskForm 'lstCandidates' 110 300 1400 '' 10000; $taskList.Height=3000; $taskList.RowSourceType='CandidateListCallback';$taskList.RowSource=''; $taskList.ColumnCount=4; $taskList.ColumnWidths='2cm;2.5cm;3cm;4.5cm' }
         $taskReason=Add-Text $taskForm 'txtReason' 300 4900 '理由（60文字以内）'; $taskReason.Width=10000; $taskReason.Height=650
         $taskErrorLabel=Add-Control $taskForm 'lblError' 100 300 5650 '' 10000; $taskErrorLabel.Height=400
-        $taskAccept=Add-Button $taskForm 'cmdConfirm' 300 6150 '確認して続行' 'ConfirmationOk()'
-        $taskCancel=Add-Button $taskForm 'cmdCancel' 2400 6150 'キャンセル' 'ConfirmationCancel()'; $taskCancel.Default=$true; $taskCancel.Cancel=$true
+        $taskAccept=Add-Button $taskForm 'cmdConfirm' 300 6150 '確認して続行' 'ConfirmationOk()';$taskAccept.Width=2100
+        $taskCancel=Add-Button $taskForm 'cmdCancel' 2760 6150 'キャンセル' 'ConfirmationCancel()'; $taskCancel.Default=$true; $taskCancel.Cancel=$true
+        Complete-FormTypography $taskForm
         Save-Form $taskForm $taskDialogName
     }
     if (-not $NoStartup) { Set-DaoProperty $taskDb 'StartupForm' 10 'frmStudentSearch' }
@@ -324,8 +377,17 @@ try {
     } catch { Write-Output 'VBA diagnostic selection unavailable.' }
     throw
 } finally {
-    $taskAccess.Quit(2)
-    [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskAccess) | Out-Null
+    foreach($taskFormName in @('frmStudentSearch','frmStudentEdit','frmDuplicateConfirm','frmDeleteConfirm','frmDiscardConfirm')) {
+        try{$taskAccess.DoCmd.Close(2,$taskFormName,2)}catch{}
+    }
+    try{$taskDb.Close()}catch{}
+    foreach($taskReference in @('taskPane','taskFormModule','taskComponent','taskForm','taskCtl','taskControl','taskBlankForm','taskList','taskDetails','taskProperty','taskCompiler','taskField','taskValidationTable','taskRoleTable','taskRelation','taskRelationField','taskExisting','taskLink','taskPrompt','taskReason','taskErrorLabel','taskAccept','taskCancel','taskOfficeReference','taskDb')) {
+        Set-Variable -Scope Script -Name $taskReference -Value $null
+    }
+    [GC]::Collect();[GC]::WaitForPendingFinalizers()
+    try{$taskAccess.CloseCurrentDatabase()}catch{}
+    try{$taskAccess.Quit(2)}finally{[Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskAccess)|Out-Null;$taskAccess=$null}
+    [GC]::Collect();[GC]::WaitForPendingFinalizers()
 }
 
 # Access is closed before replacing the previous completed artifact.
@@ -337,14 +399,14 @@ if ($taskGenerated) {
         $taskReport = Resolve-AccessReportPath (Join-Path $PSScriptRoot 'build/test-results')
         New-Item -ItemType Directory -Path $taskReport -Force | Out-Null
         # A new artifact has no inherited test acceptance. Keep only records for this artifact.
-        foreach ($taskPreviousName in @('application.json','application.log','relationship.json','relationship.log','race.json','race.log','deployment.json','deployment.log','syntax.json','build.log','build-fixture.log','build-publication.json','path-validation.json','path-validation.log','source-inventory.json','layout.json')) {
+        foreach ($taskPreviousName in @(Get-ChildItem -LiteralPath $taskReport -File | Select-Object -ExpandProperty Name)) {
             $taskPrevious = Resolve-AccessReportPath (Join-Path $taskReport $taskPreviousName)
             if (Test-Path -LiteralPath $taskPrevious) { Remove-Item -LiteralPath $taskPrevious -Force }
         }
         @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../../spec/Access') -Recurse -File | Sort-Object FullName | ForEach-Object {
             [ordered]@{file=('../../spec/Access/'+$_.FullName.Substring(([IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../spec/Access'))).Length+1).Replace('\','/'));sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
         }) | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $taskReport 'inputs.json') -Encoding UTF8
-        [ordered]@{status='Generated';runId=$RunId;generatedAt=[DateTime]::UtcNow.ToString('o');database='build/StudentManagement.accdb';sha256=$taskHash;bytes=(Get-Item -LiteralPath $taskRequestedFrontend).Length;singleFile=$true;testModulesIncluded=[bool]$IncludeTests;compiled=[bool]$Compile;stagingArea='.tmp/generation';specificationChangedDuringBuild=$false} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $taskReport 'build.json') -Encoding UTF8
+        [ordered]@{status='Generated';runId=$RunId;generatedAt=[DateTime]::UtcNow.ToString('o');database='build/StudentManagement.accdb';sha256=$taskHash;bytes=(Get-Item -LiteralPath $taskRequestedFrontend).Length;singleFile=$true;testModulesIncluded=[bool]$IncludeTests;compiled=[bool]$Compile;sampleData=$taskSampleResult;stagingArea='.tmp/generation';specificationChangedDuringBuild=$false} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $taskReport 'build.json') -Encoding UTF8
         [ordered]@{status='VerificationRequired';runId=$RunId;completedAt=[DateTime]::UtcNow.ToString('o');artifact=[ordered]@{file='build/StudentManagement.accdb';sha256=$taskHash;bytes=(Get-Item -LiteralPath $taskRequestedFrontend).Length};specificationChangedDuringBuild=$false;formalScore=$null;verification='Run tests/Invoke-Verification.ps1 for the current artifact.'} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $taskReport 'summary.json') -Encoding UTF8
     }
     Write-Output "Frontend generated: $taskRequestedFrontend"

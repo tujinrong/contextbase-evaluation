@@ -42,7 +42,6 @@ procedure division.
       IF RC = 0
         IF SEARCH-SCHEMA = "search-compact-1" AND SEARCH-TAB NOT = TAB-ID
           MOVE -1 TO RC END-IF
-        CALL "STPOST" RETURNING I END-CALL
         IF R-DATA(F-ACTION) = "SEARCH" OR "PAGE" OR "CLEAR" OR "RESUME"
           OR "OPTIONS" OR "EDITOPTIONS" OR "CANCEL" OR "SAVE" OR "CONFIRM"
           OR "DELETE" OR "RESET" OR "RELOAD" OR

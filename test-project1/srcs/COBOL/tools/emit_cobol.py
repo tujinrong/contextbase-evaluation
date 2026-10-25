@@ -116,6 +116,9 @@ put('copy/ST-APP.cpy', '''01 APP EXTERNAL.
     10 SEARCH-SIZE PIC S9(9) COMP-5.
     10 SEARCH-ROW-COUNT PIC S9(9) COMP-5.
     10 SEARCH-ROWS PIC X(1341600).
+    10 SEARCH-WINDOW PIC S9(9) COMP-5.
+    10 FILLER PIC X(4).
+    10 SEARCH-SELECTED PIC S9(18) COMP-5.
     10 SEARCH-PROMPT-EDITOR PIC X(64).
     10 SEARCH-PROMPT-KIND PIC X(16).
   05 EDITOR-STATE.
@@ -714,3 +717,9 @@ HINT-ERROR.
     MOVE "E-STU-010: 年度または学年の形式が無効です。" TO ERROR-TEXT
     PERFORM ADD-ERROR.
 ''')
+
+# Native entry templates are authoritative even when another emitter imports this module.
+from text_core import TEXT_COPY, MAIN, AUTH
+put("copy/ST-TEXT.cpy", TEXT_COPY)
+program("STMAIN", MAIN, 'copy "ST-TEXT.cpy".')
+program("STAUTH", AUTH)

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "sampleVersion": "ACCESS-DEMO-V1",
+  "marker": "[SAMPLE:ACCESS-DEMO-V1]",
+  "purpose": "Fictitious, editable demonstration data for a newly generated sample ACCDB, requested by the user. This is separate from formal test fixture initialization.",
+  "entryPoint": "modSampleData.EnsureSampleData",
+  "invocation": "Build-Access.ps1 calls the entry point when IncludeTests is false; never called by normal Form_Load. Insertions require StudentSampleBootstrapAllowed=True and either the generated .tmp/generation/frontend.accdb staging location or an explicit StudentTestFixture=True database. The published database always has StudentSampleBootstrapAllowed=False.",
+  "baseline": "BusinessDay(UtcNow()), JST; April-based school year. The first seed basis day is pinned in database properties for idempotent reapplication.",
+  "classes": [
+    {"code":"DEMO-A", "schoolYearOffset":0, "active":true, "capacity":20, "expectedOccupancy":7, "purpose":"normal enrollment and editing"},
+    {"code":"DEMO-B", "schoolYearOffset":0, "active":true, "capacity":2, "expectedOccupancy":2, "purpose":"full class rejection"},
+    {"code":"DEMO-C", "schoolYearOffset":0, "active":true, "capacity":5, "expectedOccupancy":0, "purpose":"new enrollment and class changes"},
+    {"code":"DEMO-H", "schoolYearOffset":-1, "active":false, "capacity":20, "expectedOccupancy":0, "purpose":"ended enrollment and historical reference"}
+  ],
+  "students": {"count":12, "numberPattern":"DEMO-YYYY-001 through DEMO-YYYY-012", "statusCounts":{"01":7,"02":2,"03":2,"04":1}, "defaultSearchCount":9},
+  "expectedInitialAuditCount": 16,
+  "dataSafety": ["Names and addresses explicitly describe fictitious samples.","Email uses the reserved .invalid domain; telephone examples contain only zeros.","Existing reserved keys without the sample marker are rejected before any insert.","Existing sample rows, user-created rows, row versions, and audits are never overwritten or deleted by reapplication.","All class/student writes use production maintenance/student services, validation, FK checks, occupancy checks, optimistic versions, and transactional audits.","Bootstrap creates are restricted to disposable build staging or explicitly enabled test fixtures. A failed build is never published; the existing final ACCDB remains unchanged. The individual business-service transactions are not one outer transaction.","A published database with missing sample keys fails before any insertion. Existing edited or logically deleted sample rows are retained and skipped."],
+  "coverage": ["new and edit", "literal student-number prefix and name search", "all four enrollment states", "leading-zero seven-digit postal storage", "fullwidth postal normalization", "ten- and eleven-digit domestic telephone normalization", "complete emergency-contact group and true NULL optional fields", "Showa final day / Heisei first day / Reiwa first day / leap day", "supplementary Unicode name", "current, full, empty and historical classes"]
+}
