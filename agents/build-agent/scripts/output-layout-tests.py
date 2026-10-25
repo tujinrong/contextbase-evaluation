@@ -16,12 +16,16 @@ class LayoutTests(unittest.TestCase):
    shutil.copyfile(HERE/name,tools/name)
   for profile in PROFILES:
    base=self.root/'test-project1/srcs'/profile;base.mkdir(parents=True)
+   canonical=self.root/'test-project1/spec'/profile;canonical.mkdir(parents=True)
+   (canonical/'original-spec.md').write_text('canonical original specification must never enter source packages','utf-8')
    (base/'README.md').write_text('source fixture','utf-8');(base/'app.cs').write_text('// version one','utf-8')
-   for excluded in ['.tmp','spec','spec-eval','tests']:
+   for excluded in ['.tmp','spec','spec-eval','spec-analysis','tests']:
     (base/excluded).mkdir();(base/excluded/'poison.txt').write_text('not an archive input','utf-8')
   self.base=self.root/'test-project1/srcs/Access'
+  (self.base/'profile.json').write_text(json.dumps({'name':'Access','specRoot':'../../spec/Access','inputRoot':'../../spec/Access'}),'utf-8')
   (self.base/'tools').mkdir();(self.base/'tools/GeneratedPaths.ps1').write_text('# required production helper','utf-8');(self.base/'tools/test-oracle.py').write_text('# excluded','utf-8')
-  (self.base/'Build-Access.ps1').write_text(". (Join-Path $PSScriptRoot 'tools/GeneratedPaths.ps1')",'utf-8')
+  # Use the real builder as fixture input, but never execute Access/VBA/DB or its build pipeline.
+  shutil.copyfile(ROOT/'test-project1/srcs/Access/Build-Access.ps1',self.base/'Build-Access.ps1')
  def tearDown(self):self.temp.cleanup()
  def run_tool(self,name,*args,expected=0):
   result=subprocess.run([sys.executable,'-X','utf8',str(self.root/'agents/build-agent/scripts'/name),*args],capture_output=True,text=True,encoding='utf-8')
@@ -33,7 +37,9 @@ class LayoutTests(unittest.TestCase):
  def test_repeat_updates_fixed_archive_and_retains_required_helper(self):
   self.package();source=self.base/'build/source.zip';before=hashlib.sha256(source.read_bytes()).hexdigest()
   with zipfile.ZipFile(source) as archive:
-   names=archive.namelist();self.assertIn('tools/GeneratedPaths.ps1',names);self.assertNotIn('tools/test-oracle.py',names);self.assertFalse(any(part in {'.tmp','spec','spec-eval','tests'} for name in names for part in Path(name).parts))
+   names=archive.namelist();self.assertIn('tools/GeneratedPaths.ps1',names);self.assertNotIn('tools/test-oracle.py',names);self.assertFalse(any(part in {'.tmp','spec','spec-eval','spec-analysis','tests'} for name in names for part in Path(name).parts))
+   self.assertNotIn('original-spec.md',names)
+   metadata=json.loads(archive.read('profile.json'));self.assertNotIn('specRoot',metadata);self.assertNotIn('inputRoot',metadata)
   (self.base/'app.cs').write_text('// version two','utf-8');self.package();self.assertNotEqual(before,hashlib.sha256(source.read_bytes()).hexdigest())
   self.assertEqual(sorted(p.name for p in (self.base/'build').iterdir()),['generation','source.zip'])
   self.verify();self.assertEqual(self.result()['status'],'PASSED');self.assertTrue((self.base/'.tmp/source-isolation/app.cs').is_file())
@@ -48,6 +54,32 @@ class LayoutTests(unittest.TestCase):
   for value in variants:
    with self.subTest(value=value):
     self.manifest().write_text(json.dumps(value),'utf-8');self.verify(expected=1);self.assertEqual(self.result()['status'],'FAILED')
+ def test_access_source_only_evidence_without_original_specifications(self):
+  builder=self.base/'Build-Access.ps1';original=builder.read_bytes();self.package()
+  isolated=self.root/'isolated-access';isolated.mkdir()
+  with zipfile.ZipFile(self.base/'build/source.zip') as archive:
+   packaged=archive.read('Build-Access.ps1').decode('utf-8');archive.extractall(isolated)
+  self.assertEqual(builder.read_bytes(),original,'Packaging changed the authoritative builder')
+  text=original.decode('utf-8');start=text.index("        @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../../spec/Access')")
+  end=text.index("        [ordered]@{status='Generated'",start)
+  self.assertEqual(packaged[:start],text[:start],'Build steps before input evidence changed')
+  suffix=packaged.index("        [ordered]@{status='Generated'")
+  self.assertEqual(packaged[suffix:],text[end:],'Artifact and verification publication changed')
+  evidence=packaged[start:suffix].strip();self.assertNotIn('Get-ChildItem',evidence);self.assertNotIn('../../spec',packaged)
+  self.assertFalse((isolated/'../../spec/Access').resolve().exists(),'Fixture unexpectedly has original specifications')
+  script=isolated/'evidence-only.ps1'
+  script.write_text("$ErrorActionPreference='Stop'\n$taskReport=Join-Path $PSScriptRoot 'build/test-results'\nNew-Item -ItemType Directory -Path $taskReport -Force | Out-Null\n"+evidence+'\n','utf-8')
+  shell=shutil.which('pwsh') or shutil.which('powershell.exe');self.assertIsNotNone(shell,'PowerShell is required for evidence-only fixture')
+  result=subprocess.run([shell,'-NoProfile','-NonInteractive','-File',str(script)],capture_output=True,text=True,encoding='utf-8')
+  self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+  record=json.loads((isolated/'build/test-results/inputs.json').read_text('utf-8-sig'))
+  self.assertTrue(record['sourceOnly']);self.assertEqual(record['specificationInputs'],'excluded');self.assertIsNone(record['formalScore'])
+  entry=next(item for item in json.loads(self.manifest().read_text('utf-8'))['packages'][0]['entries'] if item['file']=='Build-Access.ps1')
+  self.assertEqual(entry['sourceSha256'],hashlib.sha256(original).hexdigest());self.assertIn('publication unchanged',entry['transformation'])
+ def test_access_source_only_builder_change_requires_review(self):
+  builder=self.base/'Build-Access.ps1';builder.write_text(builder.read_text('utf-8').replace("'../../spec/Access'","'unexpected-spec-root'"),'utf-8')
+  self.run_tool('package-source.py','current','--profile','Access',expected=1)
+  self.assertFalse((self.base/'build/source.zip').exists(),'An unreviewed builder was published')
  def test_unsafe_archive_member_rejected(self):
   self.package();metadata=json.loads(self.manifest().read_text('utf-8'));source=self.base/'build/source.zip';payload=b'no write outside scratch'
   with zipfile.ZipFile(source,'w') as archive:archive.writestr('../escape.txt',payload)
@@ -71,7 +103,7 @@ class LayoutTests(unittest.TestCase):
 const fs=require('node:fs'),path=require('node:path'),{pathToFileURL}=require('node:url');
 (async()=>{const base=process.argv[1],tools=process.argv[2];const {writeLatest}=await import(pathToFileURL(path.join(tools,'output-layout.mjs')));const {sourceFiles}=await import(pathToFileURL(path.join(tools,'source-files.mjs')));
 const protectedFile=path.join(base,'spec/poison.txt'),scratch=path.join(base,'.tmp/node-stage');fs.mkdirSync(scratch,{recursive:true});fs.linkSync(protectedFile,path.join(scratch,'summary.json.pending'));writeLatest(path.join(base,'build/summary.json'),'current',scratch);if(fs.readFileSync(protectedFile,'utf8')!=='not an archive input')throw Error('Input truncated');
-const visible=sourceFiles(base,{excludeSpec:true});if(visible.some(p=>path.relative(base,p).split(path.sep).some(part=>['spec-eval','.tmp','spec'].includes(part))))throw Error('Excluded input enumerated');
+const visible=sourceFiles(base,{excludeSpec:true});if(visible.some(p=>path.relative(base,p).split(path.sep).some(part=>['spec-eval','spec-analysis','.tmp','spec'].includes(part))))throw Error('Excluded input enumerated');
 const redirected=path.join(base,'redirected');fs.symlinkSync(path.join(base,'spec'),redirected,'junction');let rejected=false;try{writeLatest(path.join(base,'build/new.json'),'current',redirected);}catch(e){rejected=true;}if(!rejected||fs.existsSync(path.join(base,'spec/new.json.pending')))throw Error('Redirected scratch accepted');console.log('PASS node guard and source exclusion');})().catch(e=>{console.error(e);process.exit(1)});
 """
   result=subprocess.run(['node','-e',script,str(self.base),str(HERE)],capture_output=True,text=True)

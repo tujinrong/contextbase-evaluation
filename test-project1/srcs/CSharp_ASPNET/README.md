@@ -1,5 +1,7 @@
 # C# / ASP.NET Core MVC 学生管理
 
+2026-10-25 配置更新：仕様入力は `test-project1/spec/CSharp_ASPNET/`、ソースと生成出力は `test-project1/srcs/CSharp_ASPNET/` に分離します。入力ロックは生成時の版・ハッシュを保持し、新しい仕様で再生成する際に検査して更新します。この配置更新ではアプリ・DBの再生成と実行試験を行っていません。
+
 2026-10-24 配置更新。最終アプリは `build/publish/`、現在の検査は `build/test-results/`、生成記録は `build/generation/`、ソース配布は `build/source.zip` へ固定更新します。これらはGit管理し、日付・run-idごとの履歴ディレクトリーは増やしません。コンパイラのbin/obj、NuGet、npm、キャッシュ、試行ログは方式内 `.tmp/`（Git除外）です。`Directory.Build.props` は通常のdotnetコマンドにも適用します。
 
 ```powershell
@@ -18,7 +20,7 @@ dotnet publish StudentManagement.Web.csproj -c Release -o .tmp/source-package-pu
 
 Azure 免费测试部署（2026-10-23）：[部署、数据库账号与验证范围](deployment/README.md)。
 
-実装更新版8.2／2026-10-23（独立生成版8.0を更新）。原仕様は[当方式専用spec](spec/README.md)。当フォルダーのCore、database、maintenance、testsだけを使用する。フォルダーを単独で移してビルドできる。他プロジェクトへのProjectReferenceやCompile Linkはない。
+実装更新版8.2／2026-10-23（独立生成版8.0を更新）。原仕様は[当方式専用spec](../../spec/CSharp_ASPNET/README.md)。当フォルダーのCore、database、maintenance、testsだけを使用する。確定済みソースのビルド資源は当フォルダー内にあり、仕様からの再生成は上位の専用仕様も入力にする。他プロジェクトへのProjectReferenceやCompile Linkはない。
 
 20261023-aspnet-build-01では、検索を学籍番号・氏名・クラス・在籍区分の4条件、一覧を7列へ更新した。氏名とカナは同セルへ表示し、住所・電話・更新日時は検索取得応答から除外する。検索の原入力と正規化済み条件を分離し、検索状態schemaVersion=8.1を照合する。廃止した検索項目は空値でも422、旧検索候補更新URLは404、互換性のない検索状態は409として新規検索を案内する。
 

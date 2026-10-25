@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {layout, writeJson} from './output-layout.mjs';
+import {assertRegular, collectInputFiles} from './input-scope.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../..');
 const profiles=['VB.NET_WinForms','CSharp_WPF','CSharp_ASPNET','Vue_CSharpAPI','COBOL','AS400_RPG','Access'];
 const args=process.argv.slice(2);let project,runId,profile;
@@ -22,12 +23,15 @@ const output=path.join(report,'outputs.json');
 const input=JSON.parse(fs.readFileSync(path.join(report,'inputs.json'),'utf8'));
 const structure=JSON.parse(fs.readFileSync(path.join(report,'structure.json'),'utf8'));
 if(input.projectId!==project||input.runId!==runId||input.profileId!==profile||structure.runId!==runId||structure.profileId!==profile||structure.status!=='structure-check-passed') throw new Error('Matching successful preflight and profile scope required.');
+if(input.inspectionOnly!==false||structure.inspectionOnly!==false||input.specificationLayout!=='project/spec/profile')throw new Error('Current publishing preflight required; inspection-only and legacy layouts are not generation authorization.');
 const hash=data=>crypto.createHash('sha256').update(data).digest('hex');
+const currentInputs=collectInputFiles(root,project,profile).map(file=>path.relative(root,file).split(path.sep).join('/')).sort();
+if(!Array.isArray(input.files)||JSON.stringify(input.files.map(record=>record.file).sort())!==JSON.stringify(currentInputs))throw new Error('Input file set changed or is outside the selected specification scope.');
 for(const record of input.files) {
-  if(record.file.split('/').includes('spec-eval')||(profile&&record.file.startsWith(`${project}/srcs/`)&&!record.file.startsWith(`${project}/srcs/${profile}/spec/`))) throw new Error(`Input outside preflight scope: ${record.file}`);
-  if(hash(fs.readFileSync(path.join(root,record.file)))!==record.sha256) throw new Error(`Input changed after preflight: ${record.file}`);
+  const target=path.join(root,record.file);assertRegular(target);
+  if(hash(fs.readFileSync(target))!==record.sha256) throw new Error(`Input changed after preflight: ${record.file}`);
 }
-const excluded=new Set(['.tmp','bin','obj','node_modules','dist','build','__pycache__','.vs','.git','spec-eval','test-report','test-evidence']);
+const excluded=new Set(['.tmp','bin','obj','node_modules','dist','build','__pycache__','.vs','.git','spec','spec-eval','spec-analysis','test-report','test-evidence']);
 const files=[];
 function walk(directory) {
   const info=fs.lstatSync(directory);if(!info.isDirectory()||info.isSymbolicLink()) throw new Error('Regular output directory required.');

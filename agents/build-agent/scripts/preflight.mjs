@@ -5,17 +5,19 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import {layout, ensureDirectory, writeLatest, writeJson} from './output-layout.mjs';
+import {assertRegular, collectInputFiles, fixedInputFiles, independentSpecPrefix} from './input-scope.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const args = process.argv.slice(2);
 const profiles = ['VB.NET_WinForms', 'CSharp_WPF', 'CSharp_ASPNET', 'Vue_CSharpAPI', 'COBOL', 'AS400_RPG', 'Access'];
-let project, runId, profile;
+let project, runId, profile, inspectOnly = false, inspectionOption = false;
 if (args.length % 2) throw new Error('Every option requires a value.');
 for (let i = 0; i < args.length; i += 2) {
   if (args[i] === '--project' && !project) project = args[i + 1];
   else if (args[i] === '--run-id' && !runId) runId = args[i + 1];
   else if (args[i] === '--profile' && !profile) profile = args[i + 1];
-  else throw new Error('Usage: preflight.mjs --project test-projectN --run-id <unique-id> [--profile <profile-id>]');
+  else if (args[i] === '--inspect-only' && !inspectionOption && ['true', 'false'].includes(args[i + 1])) {inspectOnly = args[i + 1] === 'true'; inspectionOption = true;}
+  else throw new Error('Usage: preflight.mjs --project test-projectN --run-id <unique-id> [--profile <profile-id>] [--inspect-only true]');
 }
 if (!/^test-project[1-9]\d*$/.test(project ?? '') || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId ?? '') || (profile !== undefined && !profiles.includes(profile))) {
   throw new Error('Explicit project and safe unique run-id are required.');
@@ -23,46 +25,12 @@ if (!/^test-project[1-9]\d*$/.test(project ?? '') || !/^[a-zA-Z0-9][a-zA-Z0-9_-]
 const projectRoot = path.join(root, project);
 const outputLayout = layout(root, project, profile);
 const reportRoot = outputLayout.generation;
-function assertRegular(target, directory = false) {
-  const info = fs.lstatSync(target);
-  if (info.isSymbolicLink() || fs.realpathSync(target).toLowerCase() !== path.resolve(target).toLowerCase() || (directory ? !info.isDirectory() : !info.isFile())) {
-    throw new Error(`Not a regular ${directory ? 'directory' : 'file'}: ${target}`);
-  }
-}
 assertRegular(projectRoot, true);
-if (fs.existsSync(reportRoot)) assertRegular(reportRoot, true);
+if (!inspectOnly && fs.existsSync(reportRoot)) assertRegular(reportRoot, true);
 const relative = target => path.relative(root, target).split(path.sep).join('/');
-const files = [];
-function walk(directory) {
-  assertRegular(directory, true);
-  for (const entry of fs.readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name, 'en'))) {
-    const target = path.join(directory, entry.name);
-    if (entry.name === 'spec-eval') continue;
-    if (entry.isSymbolicLink()) throw new Error(`Symlink input is not allowed: ${target}`);
-    if (entry.isDirectory()) walk(target);
-    else if (/\.(md|html|json|png|jpe?g|gif|webp|svg)$/i.test(entry.name)) { assertRegular(target); files.push(target); }
-  }
-}
-const fixed = [
-  'AGENTS.md', 'agents/README.md', 'agents/spec-agent/AGENT.md',
-  'agents/build-agent/AGENT.md', 'agents/build-agent/PROMPT.md', 'agents/build-agent/README.md', 'agents/reverse-agent/AGENT.md',
-  'docs/リポジトリ構成.md', 'docs/開発規約.md', 'docs/仕様書作成ルール.md',
-  'docs/評価規約.md', 'docs/MD構造・Excel変換規約.md', 'docs/テーブル仕様書記述規約.md',
-  `${project}/README.md`, `${project}/プロジェクト情報.md`, `${project}/docs/開発規約.md`,
-];
-for (const name of fixed) { const target = path.join(root, name); assertRegular(target); files.push(target); }
-const selectedSpecPrefix = profile ? `${project}/srcs/${profile}/spec/` : null;
-if (profile) {
-  // An independent profile is the complete business input; do not inspect peers.
-  walk(path.join(projectRoot, 'srcs', profile, 'spec'));
-} else {
-  walk(path.join(projectRoot, 'docs/開発規約'));
-  walk(path.join(projectRoot, 'spec'));
-  for (const isolatedProfile of profiles) {
-    const localSpec = path.join(projectRoot, 'srcs', isolatedProfile, 'spec');
-    if (fs.existsSync(localSpec)) walk(localSpec);
-  }
-}
+const fixed = fixedInputFiles(project);
+const files = collectInputFiles(root, project, profile);
+const selectedSpecPrefix = profile ? `${project}/spec/${profile}/` : null;
 const findings = [], records = [], ids = new Map();
 const add = (file, line, code, detail) => findings.push({ file, line, code, detail });
 function visibleLines(text) {
@@ -149,7 +117,8 @@ for (const target of files.sort()) {
       }
     }
   }
-  if ((file.startsWith(`${project}/spec/詳細仕様書/`) || new RegExp(`^${project}/srcs/[^/]+/spec/詳細仕様書/`).test(file)) && /\/0[12]_/.test(file)) {
+  const isolatedPrefix = independentSpecPrefix(file, project);
+  if (isolatedPrefix && file.startsWith(`${isolatedPrefix}詳細仕様書/`) && /\/0[12]_/.test(file)) {
     const required = ['処理概要', '処理手順', '処理フロー', 'SQL・テーブル関連（ER図）', 'DB操作の詳細', '結果・例外時の扱い'];
     for (let i = 0; i < lines.length; i++) {
       if (!/^### EV-/.test(lines[i].text)) continue;
@@ -166,7 +135,6 @@ for (const target of files.sort()) {
       if (/^[a-z][a-z\d+.-]*:/i.test(href) || href.startsWith('#')) continue;
       const destination = path.resolve(path.dirname(target), decodeURIComponent(href.split('#')[0]));
       const local = relative(destination);
-      const isolatedPrefix=file.match(new RegExp(`^(${project}/srcs/[^/]+/spec/)`))?.[1];
       if (isolatedPrefix && !local.startsWith(isolatedPrefix)) { add(file,row.line,'LINK_ISOLATION',`Reference leaves independent specification package: ${href}`); continue; }
       if (local.split('/').includes('spec-eval')) continue; // Do not inspect evaluation inputs.
       // Shared entrypoints can list every profile; their unselected targets are not inputs.
@@ -179,18 +147,23 @@ for (const target of files.sort()) {
 }
 let commit = null;
 try { commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { /* Non-Git inputs still have file hashes. */ }
-const context = { agent: 'AG-BUILD', agentVersion: records.find(record=>record.documentId==='AG-BUILD')?.version, projectId: project, ...(profile ? { profileId: profile } : {}), stage: 'build-preflight', runId, recordedAt: new Date().toISOString(), inputCommit: commit, workingTreeHashes: true, excluded: ['spec-eval', 'other projects', 'past reports', ...(profile ? ['other profiles', 'shared business specifications'] : [])], files: records };
-const result = { projectId: project, ...(profile ? { profileId: profile } : {}), runId, status: findings.length ? 'interrupted-structure' : 'structure-check-passed', findings, checked: ['metadata', 'chapter/sheet mapping', 'LIST shape/keys', 'TABLE columns/fieldIds/PK', 'event sections', 'local reference existence within input scope'], notChecked: ['semantic consistency', 'external URLs', 'rendering/Excel conversion', 'application generation/build/tests', 'reverse generation/scoring', ...(profile ? ['shared entrypoint references outside the selected input scope'] : [])] };
+const context = { agent: 'AG-BUILD', agentVersion: records.find(record=>record.documentId==='AG-BUILD')?.version, projectId: project, ...(profile ? { profileId: profile } : {}), stage: 'build-preflight', inspectionOnly: inspectOnly, specificationLayout: 'project/spec/profile', runId, recordedAt: new Date().toISOString(), inputCommit: commit, workingTreeHashes: true, excluded: ['spec-eval', 'spec-analysis', 'other projects', 'past reports', 'source trees', ...(profile ? ['other profiles', 'shared business specifications'] : [])], files: records };
+const result = { projectId: project, ...(profile ? { profileId: profile } : {}), runId, inspectionOnly: inspectOnly, status: findings.length ? 'interrupted-structure' : 'structure-check-passed', findings, checked: ['metadata', 'chapter/sheet mapping', 'LIST shape/keys', 'TABLE columns/fieldIds/PK', 'event sections', 'local reference existence within input scope'], notChecked: ['semantic consistency', 'external URLs', 'rendering/Excel conversion', 'application generation/build/tests', 'reverse generation/scoring', ...(profile ? ['shared entrypoint references outside the selected input scope'] : [])] };
 const output = [
   `# build-agent 構造検査 ${runId}`, '', `対象：${project}${profile ? ` / ${profile}` : ''}。Agent版${context.agentVersion}。入力版・SHA-256は同実行IDのinputs.jsonを参照。`, '',
   `判定：${result.status}。現行入力${records.length}ファイルを検査。問題${findings.length}件。`, '',
   ...findings.flatMap((finding, index) => [`- STR-${String(index + 1).padStart(3, '0')}：${finding.file}:${finding.line} / ${finding.code} / ${finding.detail}`]), '',
   '検査範囲：メタ情報、章/シート対応、LIST矩形・キー、TABLE列/項目ID/PK、イベント6節、入力範囲内のローカル参照先の存在。', '',
-  ...(profile ? ['方式指定時は方式内specと固定の全体規則・Agent・project入口だけを入力とし、共有入口から範囲外への参照先は検査しない。', ''] : []),
+  ...(profile ? ['方式指定時はproject/spec/方式IDと固定の全体規則・Agent・project入口だけを入力とし、共有入口から範囲外への参照先は検査しない。', ''] : []),
   '未実施：意味上の整合性検査、外部URL確認、画面描画・Excel変換、アプリ生成・コンパイル・業務試験、逆生成・採点。', '',
   '構造検査通過は生成/ビルド/試験合格を意味しない。構造問題は別Agentが修正し、新しい実行IDで再検査してから再開する。', '',
 ].join('\n');
 // A new preflight invalidates the preceding final manifest/package result.
+if (inspectOnly) {
+  // Inspection never creates directories, invalidates manifests or moves packages.
+  console.log(JSON.stringify({status: result.status, inspectionOnly: true, inputs: context, structure: result}));
+  process.exit(findings.length ? 2 : 0);
+}
 ensureDirectory(reportRoot);
 for (const name of ['outputs.json', 'source-packages.json']) {
   const old = path.join(reportRoot, name);

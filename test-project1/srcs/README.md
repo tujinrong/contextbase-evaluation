@@ -1,6 +1,6 @@
 # 独立プログラム
 
-2026-10-12。各方式のフォルダーを単独で扱う。コード、仕様(spec)、DB(database)、生成器、試験は当該フォルダー内で完結し、他方式を参照しない。
+2026-10-25。各方式のフォルダーを単独で扱う。コード、DB(database)、生成器、試験はsrcs/方式ID/（sourceRoot）内で完結する。原仕様は[仕様索引](../spec/README.md)から選ぶspec/方式ID/（specRoot）へ分離し、仕様間参照も選択specRoot内で閉じる。順生成はこのspecRootからsourceRootへ生成し、旧sourceRoot/specや他方式を代替入力にしない。
 
 | 方式ID | 言語 | DB | 独立入口 |
 | --- | --- | --- | --- |
@@ -12,4 +12,4 @@
 | AS400_RPG | ILE RPG / DDS / CL | Db2 for i | [ソース・手順](AS400_RPG/README.md) |
 | Access | VBA / DAO / Access forms | ACE | [ソース・手順](Access/README.md) |
 
-Accessの配布成果はAccess/StudentManagement.accdb 1個。実行結果と未実施は[test-report](../test-report/README.md)を参照。仕様書解析には[ソース専用パッケージ](../agent-input/README.md)を使い、原仕様を入力に含めない。
+Accessの配布成果はAccess/build/StudentManagement.accdb 1個。実行結果と未実施は[test-report](../test-report/README.md)を参照。仕様書解析には[ソース専用パッケージ](../agent-input/README.md)を使い、原仕様を入力に含めない。

@@ -6,7 +6,7 @@ $taskReport=Resolve-AccessReportPath $ReportDirectory
 $taskFixture=Resolve-AccessGeneratedPath (Join-Path $PSScriptRoot '../.tmp/tests/relationship.accdb') '.tmp'
 New-Item -ItemType Directory -Path $taskReport -Force | Out-Null
 New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($taskFixture)) -Force | Out-Null
-$taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../spec') -Recurse -File | Sort-Object FullName | ForEach-Object { @{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} })
+$taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../../../spec/Access') -Recurse -File | Sort-Object FullName | ForEach-Object { @{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} })
 Remove-AccessIntermediate $taskFixture
 $taskEngine=New-Object -ComObject DAO.DBEngine.120
 $taskDb=$taskEngine.CreateDatabase([IO.Path]::GetFullPath($taskFixture),';LANGID=0x0409;CP=1252;COUNTRY=0',128)

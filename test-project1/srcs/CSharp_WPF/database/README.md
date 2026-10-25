@@ -1,6 +1,6 @@
 # 当方式専用 SQL Server 2022
 
-入力は../spec/DB定義/SQLServer。生成器とDDLは当方式内だけを使用する。
+入力は../../../spec/CSharp_WPF/DB定義/SQLServer。生成器とDDLは当方式内だけを使用する。
 
 ```powershell
 node database/generate.mjs

@@ -1,13 +1,11 @@
-# test-project1 仕様フォルダ整理
+# test-project1 仕様正本の上位配置への移行
 
-2026-10-25。対象はAccess、AS400_RPG、COBOL、CSharp_ASPNET、CSharp_WPF、VB.NET_WinForms、Vue_CSharpAPIの7方式。工程はspec-folder-layout。仕様書のみを修正する指示に従い、業務プログラム・accdb・DB・ビルド処理は変更していない。
+2026-10-25。7方式298文書の正本をtest-project1/srcs/<方式>/specからtest-project1/spec/<方式>へ移動した。旧specフォルダ7個は不存在。spec-meta.path、文書版・可視版、README/索引と規約コピー42文書を同期した。specRootと生成先sourceRoot=srcs/<方式>を分離し、build/.tmpと配布物は従来のsourceRoot側を維持する。
 
-各方式のspec/詳細仕様書/<方式ID>/にあった検索・学生登録の2文書をspec/詳細仕様書/直下へ、spec/共通/方式別/<方式ID>/の共通実装仕様をspec/共通/方式別/直下へ移動した。移動は21ファイル、旧空フォルダ削除は14箇所。関連リンク・コード表記の参照・spec-meta.pathを更新し、変更文書は改訂版を上げた。入力時点の既存ローカル差分は維持した。
+AGENTS、全体docs6種、spec-agent/build-agent/reverse-agentの定義・入口を同期した。順生成は新specRootだけを読む。逆生成の許可コード入力へproject/spec全体を混ぜない。三画面分類、検索/編集項目、イベントとDB項目/制約は維持した。業務256文書の配置・メタ・可視版・説明追加だけを逆変換して全件初期SHA一致、HTML28断片不変、規約42コピーの本文とsheets一致を独立確認した。画面再描画は未実施であり、以前の描画PASSを今回改訂版へ流用していない。
 
-docs/リポジトリ構成.mdを7.3から7.4へ改訂し、独立方式内では方式名の階層を繰り返さない規則を明記した。7方式の規約コピーも同期した。DB定義/Access/等はDBプロファイルを表すため維持した。入力と出力の全ファイル・版・SHA-256・移動対応はmanifest.jsonに記録した。
+中央生成toolingは入力scope/manifest凍結集合/他方式と評価入力の除外を改訂し、旧仕様書writer3本を実行前に拒否する。preflightへ--inspect-only trueを追加し、実project7方式は同モードで指摘0。既存出力/ZIPを失効させる通常preflightは実projectで実行していない。中央fixture52項目とパッケージ8試験、方式toolingの構文33件・純粋lookup35件・schema provenance追加10件を確認した。Access source-only ZIP内では原仕様hash収集だけを原仕様なしの証跡へ置換するfixtureも含む。業務実装・配布物・実DBを生成/実行した検査ではない。
 
-299文書（方式内298文書＋全体配置規則1文書）を独立レビューし、構造・版・相対リンク・方式内閉包・旧階層参照の検査は指摘0件。旧14ディレクトリは不存在、基本/詳細の14画面組はHTMLと項目IDが一致する。埋込みHTML28断片とDB定義54文書は入力SHA-256と一致した。詳細はvalidation.jsonと各方式のbuild/spec-generation/に記録した。
+方法別の生成器・入力lock/config/現在ロケータ・運用手順を同期した。古いschema/input lock/入力manifestのpath・版・hashは生成時出典として保持し、新仕様からの生成済み証拠に偽装していない。COBOLは次回生成前に新rootで明示lockが必要。AS400 schema検査は旧出典と新canonical/版一致を分けて扱う。COBOL端末製品やDB共有等の既存留保を配置変更で承認したと扱わない。
 
-今回の画面再描画・追加目視・状態試験は未実施。各方式のrender.jsonでは既存の描画検査を当時の出典のまま保持し、folderRelocationに現行ファイルとの対応とHTML同一性を明記した。過去の描画PASSを今回改訂版の検査結果として使用していない。アプリ実装、ビルド、Access/WinForms実機試験、DB実行、Excel/PDF変換、正式採点は未実施。formalScore=null。
-
-既存のagents/build-agent/scripts/isolate-specs.mjsには旧階層を作成する処理がある。プログラムを修正しない指示に従って保持した。再生成時はdocs/リポジトリ構成.mdの独立方式配置を適用する必要がある。旧入力manifest・spec-mapping等の履歴上の出典は入力を指す記録として保持し、現行ファイル参照へ一括置換していない。
+入出力の版・ファイル・SHA、移動表、Agent/ツール変更と最終記録はmanifest.jsonへ、検査/独立レビュー/未実施はvalidation.jsonと各方式srcs/<方式>/build/spec-generationへ保存した。実アプリ再生成・コンパイル・DB実行・端末実機・Excel/PDF・正式採点・受入は未実施。formalScore=null。

@@ -1,4 +1,5 @@
-// LEGACY one-time migration resource. Current generation uses build/ and .tmp/.
+// RETIRED one-time migration resource. Do not recreate srcs/<profile>/spec.
+throw new Error('Retired migration: specifications are maintained at <project>/spec/<profile>. Do not rematerialize or overwrite the independent inputs. Use the current build-agent preflight contract.');
 // One-time materialization of seven independent specification packages.
 // Every link in each result resolves within that package. No spec-eval input.
 import fs from 'node:fs';

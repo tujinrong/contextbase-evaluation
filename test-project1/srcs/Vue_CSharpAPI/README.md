@@ -1,5 +1,7 @@
 # Vue / TypeScript + C# Web API 学生管理
 
+2026-10-25 配置更新：仕様入力は `test-project1/spec/Vue_CSharpAPI/`、ソースと生成出力は `test-project1/srcs/Vue_CSharpAPI/` に分離します。入力ロックは生成時の版・ハッシュを保持し、新しい仕様で再生成する際に検査して更新します。この配置更新ではアプリ・DBの再生成と実行試験を行っていません。
+
 2026-10-24 配置更新。最終アプリは `build/publish/`、現在の検査は `build/test-results/`、生成記録は `build/generation/`、ソース配布は `build/source.zip` へ固定更新します。これらはGit管理し、日付・run-idごとの履歴ディレクトリーは増やしません。コンパイラのbin/obj、NuGet、npm、キャッシュ、試行ログは方式内 `.tmp/`（Git除外）です。`Directory.Build.props` は通常のdotnetコマンドにも適用します。
 
 ```powershell
@@ -19,7 +21,7 @@ python -X utf8 frontend/build.py publish
 
 Vueのfrontend依存は `.tmp/frontend/node_modules` に配置し、frontend/node_modules は同じ方式内へのjunctionです。Vite生成物は `.tmp/frontend/dist`、配布先wwwrootは `build/publish/wwwroot` です。source.zipのpublishは検査を実行しないため `VERIFICATION_REQUIRED` を記録します。
 
-実装更新版8.1／2026-10-23（独立生成版8.0を更新）。原仕様は[当方式専用spec](spec/README.md)。当フォルダーのCore、database、maintenance、testsだけを使用する。フォルダーを単独で移してビルドできる。他プロジェクトへのProjectReferenceやCompile Linkはない。
+実装更新版8.1／2026-10-23（独立生成版8.0を更新）。原仕様は[当方式専用spec](../../spec/Vue_CSharpAPI/README.md)。当フォルダーのCore、database、maintenance、testsだけを使用する。確定済みソースのビルド資源は当フォルダー内にあり、仕様からの再生成は上位の専用仕様も入力にする。他プロジェクトへのProjectReferenceやCompile Linkはない。
 
 今回の実行IDは20261023-vue-csharpapi-build-01。検索を学籍番号・氏名・クラス・在籍区分の4条件、一覧を7列へ更新し、住所・電話・更新日時は検索DTO/SQL投影から除外した。原入力と型付き正規化値を分離する。廃止・未知の検索キーは空値でも422/E-SRC-002。保持状態の形式版はsearch-compact-1で、所有者・期限・Revisionを確認した後、旧形式は警告W-SRC-002と未検索へ初期化する。旧Revisionや他者の状態を初期化の根拠にはしない。
 

@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BUILD","version":"7.6","path":"agents/build-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"実行手順","kind":"GRID","sheet":"03_実行手順"},{"heading":"問題の分類と中断","kind":"GRID","sheet":"04_問題の分類と中断"},{"heading":"完了条件","kind":"GRID","sheet":"05_完了条件"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BUILD","version":"7.7","path":"agents/build-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"実行手順","kind":"GRID","sheet":"03_実行手順"},{"heading":"問題の分類と中断","kind":"GRID","sheet":"04_問題の分類と中断"},{"heading":"完了条件","kind":"GRID","sheet":"05_完了条件"}]} -->
 # 仕様からシステム生成Agent 契約
 
-版7.6／2026-10-24。最終結果だけを固定build/へ更新し、履歴はGit、中間結果は方式内.tmp/で管理する。
+版7.7／2026-10-25。最終結果だけを固定build/へ更新し、履歴はGit、中間結果は方式内.tmp/で管理する。
 
 ## 概要
 
@@ -11,21 +11,22 @@ AG-BUILD。Codexが本契約を読み、選択projectの仕様から各方式の
 
 | 区分 | 内容 |
 | --- | --- |
-| 入力 | docsの全体規則、agentsの役割定義、対象projectの詳細/共通/DB定義/開発規約・プロファイル。基本設計は理解・矛盾確認用 |
+| 入力 | docsの全体規則、agentsの役割定義、選択方式のspecRoot内の詳細/共通/DB定義/開発規約・プロファイル。要件と基本設計は同じspecRoot内で理解・矛盾確認用 |
+| 実行ルート | specRoot=対象project/spec/方式ID/、sourceRoot=対象project/srcs/方式ID/を別々に固定する。旧sourceRoot/specへのfallbackや他方式の入力共用は行わない |
 | 出力 | 対象project/srcs/方式ID/のソース正本・DDL・画面・手順を更新し、build/へ最終配布物、build/generation/へ入力・出力manifestと構造/中断報告、build/test-results/へ今回の最終検査結果を固定名で更新。中間結果は方式内.tmp/ |
 | 書込み範囲 | agents/build-agent/と実行要求で指定したprojectのみ。project外の問題は報告だけ。ユーザーが範囲を狭めた場合はその指定を優先 |
-| 除外入力 | spec-eval、別project、過去レポートの合格判定。評価期待値から実装を作らない |
+| 除外入力 | spec-eval、別project、選択外方式のspecRoot/ソース、過去レポートの合格判定。評価期待値から実装を作らない |
 | 禁止事項 | 上限/必須/権限/DB/方式の無断変更、未決事項の承認扱い、構造問題の推測補完、未生成の方式を実装済みとすること |
 
 ## 実行手順
 
-1. 全体docsとagentsの役割定義を読み、projectId、工程、方式一覧、出力先、許可/除外パス、実行IDを確定する。存在しないprojectを自動作成しない。
-2. `node agents/build-agent/scripts/preflight.mjs --project <projectId> --run-id <実行ID> --profile <方式ID>` をリポジトリから実行する。build/generation/の固定inputs.json・structure.json・structure.mdを今回の値へ更新し、前回のoutputs.jsonを失効させる。実行IDは属性であり履歴フォルダーを作らない。終了コード2は構造問題による中断、1は検査自体の失敗、0は機械的構造検査の通過だけを意味する。
+1. 全体docsとagentsの役割定義を読み、projectId、工程、方式一覧、specRootとsourceRoot、出力先、許可/除外パス、実行IDを確定する。存在しないprojectを自動作成しない。
+2. `node agents/build-agent/scripts/preflight.mjs --project <projectId> --run-id <実行ID> --profile <方式ID>` をリポジトリから実行する。build/generation/の固定inputs.json・structure.json・structure.mdを今回の値へ更新し、前回のoutputs.jsonを失効させる。実行IDは属性であり履歴フォルダーを作らない。終了コード2は構造問題による中断、1は検査自体の失敗、0は機械的構造検査の通過だけを意味する。配置確認だけの工程では同じコマンドへ`--inspect-only true`を加える。検査専用ではinputs/structureを標準出力のJSONへ返し、build/・.tmp/を書き換えず、旧outputs.jsonやsource.zipも失効させない。この結果から実装生成のmanifestを確定せず、生成工程は通常のpreflightで入力を凍結する。
 3. 自動検査とは別に、各方式の詳細・共通・DB・規約の入出力、型、状態、認証、正規化、保存/取消境界の整合性を確認する。初回に読んだ仕様のハッシュを固定し、他Agentが入力を変更した場合は旧版と混在させず再検査する。
 4. 局所バグは下記基準に従って仕様と必要な関連資料を修正し、変更前後の版/ハッシュ・理由をbuild/generation/へ記録して再検査する。構造問題は修正せず、同固定先へ根拠を記録して生成を中断する。
 5. 構造問題がなくなった入力セットから、各方式の規約どおりのプロジェクト・実ソース・DDL・設定例・画面資源をsrcs/方式ID/へ生成する。別方式のUIで代替せず、既存成果物を無断で削除しない。入力仕様IDと実装ファイル/シンボルの対応を保存する。
 
-各方式は独立したテスト材料とする。仕様は `srcs/方式ID/spec/` の方式内正本、コード・DB資源・生成器・ビルド・試験は同じ方式フォルダー内で閉じる。他方式の仕様・ライブラリー・ソースを引用しない。共通ファイル、外部ProjectReference、リンクによる共用は使用しない。方式に適した言語・構成で作成する。逆生成へ渡すコードから原仕様specを除外する。2026-10-12の利用者指示により、実行時SQL Server DBは1個を共有する構成へ変更する。コードや仕様の共通化は許可しない。Accessは最終成果1個のaccdbを維持し、共有SQLバックエンドの利用を検討する。AS400も可能なら同じDBを利用する。DB・権限・認証・排他・正規化の共有契約が未確定/競合している場合はreportへ記録し、推測でアプリを移行せず仕様修正を待つ。現独立仕様と旧単独accdbは修正待ちの旧構成として保持する。ユーザーの明示指示による構成変更は局所バグや未承認の構造補完と混同しない。
+各方式は独立したテスト材料とする。仕様は `project/spec/方式ID/` のspecRoot内で独立して完結し、コード・DB資源・生成器・ビルド・試験は `project/srcs/方式ID/` のsourceRoot内で完結する。方式内閉包はこの対応する2つの領域を意味し、仕様をソース内へ戻す条件ではない。specRootの不足は構造問題として記録し、旧sourceRoot/specや横断共有仕様から補わない。他方式の仕様・ライブラリー・ソースを引用しない。共通ファイル、外部ProjectReference、リンクによる共用は使用しない。方式に適した言語・構成で作成する。逆生成へ渡すsource-onlyパッケージから原仕様を除外し、逆生成のallowedPathsへproject/spec/全体・spec-eval・他方式を含めない。2026-10-12の利用者指示により、実行時SQL Server DBは1個を共有する構成へ変更する。コードや仕様の共通化は許可しない。Accessは最終成果1個のaccdbを維持し、共有SQLバックエンドの利用を検討する。AS400も可能なら同じDBを利用する。DB・権限・認証・排他・正規化の共有契約が未確定/競合している場合はreportへ記録し、推測でアプリを移行せず仕様修正を待つ。現独立仕様と旧単独accdbは修正待ちの旧構成として保持する。ユーザーの明示指示による構成変更は局所バグや未承認の構造補完と混同しない。
 6. 利用可能な処理系でコンパイル/単体検査を行う。コンパイル途中、fixture実行コピー、試行・失敗ログ、処理系・キャッシュは方式内.tmp/に置く。最終配布物だけbuild/、今回の最終検査結果・実行コマンド・処理系・終了値・検査範囲・未実施はbuild/test-results/の固定ファイルへ更新する。日付・実行ID・attempt別成果やbackupを累積しない。DB実行・実機試験は利用者の指示と環境に従い、専用fixtureと配備初期DBを分ける。秘密情報や本番データを成果物へ含めない。
 7. 生成・ビルド・単体・結合・実機・逆生成・採点を別状態で報告する。最後に同じproject・profile・実行IDでmanifest.mjsを実行し、入力ハッシュを再照合してbuild/generation/outputs.jsonを更新する。入力変更・失敗を以前のPASSで補わない。全方式指定の共通集約だけproject/build/、共通中間物だけproject/.tmp/を使う。履歴はGitで管理する。manifestは実装や正式受入の合格を意味しない。
 
@@ -39,4 +40,4 @@ AG-BUILD。Codexが本契約を読み、選択projectの仕様から各方式の
 
 ## 完了条件
 
-指定された資料から追跡可能な成果物を作り、未確認・未決・矛盾を報告する。形式合格を実装/ビルド/試験/採点の合格とみなさない。所属プロジェクト外を書き換えず、版と根拠を記録する。全体規則は../../docs、プロジェクト固有の長さ・DB・受入条件は選択projectの入力セットに従う。
+指定された資料から追跡可能な成果物を作り、未確認・未決・矛盾を報告する。形式合格を実装/ビルド/試験/採点の合格とみなさない。所属プロジェクト外を書き換えず、版と根拠を記録する。全体規則は../../docs、プロジェクト固有の長さ・DB・受入条件は選択方式のspecRootの入力セットに従う。仕様の移動だけを理由に業務UI・DB・権限・既存アプリを再設計しない。

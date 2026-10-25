@@ -1,27 +1,13 @@
-# Vue_CSharpAPI 仕様配置整理の検査記録
+# Vue_CSharpAPI 仕様入力配置の移行
 
-2026-10-25。projectId=test-project1、工程=spec-folder-layout。仕様書と検査記録のみを更新した。
+2026-10-25。projectId=test-project1、工程=spec-root-migration。入力コミットは4fbf60ed0f3a9e3e72ebf18240515281dc70a329。未コミット差分を含む実ファイルの版・SHA-256を入力として固定した。
 
-入力コミット: `a4c30c0142a7154212ceaabd3a05eb774a07dce7`。入力は未コミット差分を含む実ファイルの版・SHA-256で固定した。
+仕様正本をtest-project1/srcs/Vue_CSharpAPI/specからtest-project1/spec/Vue_CSharpAPI/へ移動した。43文書のspec-meta.path/版/可視改訂日と必要な参照を更新し、旧フォルダを削除した。生成ソース・build/・.tmp/はtest-project1/srcs/Vue_CSharpAPI/側を維持する。仕様参照は選択specRoot内で閉じる。
 
-詳細仕様書/Vue_CSharpAPI/の2文書を詳細仕様書/へ、共通/方式別/Vue_CSharpAPI/の1文書を共通/方式別/へ移動し、旧空フォルダを削除した。README・設計書一覧・規約等の関連参照とspec-meta.pathを同期した。DB定義のDBプロファイル別階層は維持した。
+全体規則6種のコピー、Agent定義、生成ツール/configの入力解決を同期した。画面分類・検索/編集項目・イベント・DB項目/制約を保全し、配置/メタ/追加説明だけを逆変換した入力SHA検査と独立レビューで確認した。画面HTMLは入力と一致し、再描画は未実施。render.jsonの過去出典と今回のcanonical対応を区別した。
 
-今回更新した文書の版:
+build-agent preflight --project test-project1 --profile Vue_CSharpAPI --run-id spec-root-migration --inspect-only trueは入力59ファイル、指摘0で通過。読み込んだ仕様は本方式の新specRootだけであり、旧root/他方式/評価資料へのfallbackはない。通常preflight、アプリ生成、DB生成、ビルド、実機試験は今回実施していない。
 
-| 文書 | 入力版 | 出力版 |
-| --- | --- | --- |
-| README.md | 8.2 | 8.3 |
-| 共通/00_設計書一覧.md | 8.2 | 8.3 |
-| 共通/方式別/01_共通実装仕様.md | 8.1 | 8.2 |
-| 規約/Vue_CSharpAPI.md | 8.0 | 8.1 |
-| 規約/全体/リポジトリ構成.md | 8.1 | 8.2 |
-| 詳細仕様書/01_学生検索画面.md | 8.2 | 8.3 |
-| 詳細仕様書/02_学生登録画面.md | 8.2 | 8.3 |
+入力/出力の全ファイル・版・SHAはmanifest.json、今回検査はvalidation.jsonへ保存した。業務実装・生成済みDB・accdb・既存配布ZIPと通常生成の記録は保持した。変更したプログラムはAgent/生成補助/パス検査のtoolingに限る。次の生成前には従来のinput lock/preflightを新入力で明示実行する。formalScore=null。
 
-43文書を独立レビューし、今回の構造・リンク・版・参照検査は指摘0件。画面4断片とDB定義は入力SHA-256と一致し、基本/詳細2画面のHTMLと項目IDは一致した。入出力の全ファイル・版・SHAはmanifest.json、検査対象版はvalidation.jsonに保存した。
-
-画面HTML自体は変更していないため、今回の再描画・追加の目視・状態試験は未実施。render.jsonには以前の描画を当時の入力出典のまま保持し、folderRelocationに現行MDとの対応とHTML同一性を記載した。以前のPASSを今回版の描画合格へ転記していない。
-
-既存のisolate-specs.mjsには旧階層を作る処理がある。仕様書のみを修正する指示によりプログラムは変更していない。再生成時はdocs/リポジトリ構成.mdの独立方式の配置規則を適用する。
-
-業務プログラム・accdb・DB・入力・QAは変更していない。実装、ビルド、実機試験、DB実行、Excel/PDF変換、正式採点は未実施。formalScore=null。
+未実施: 実アプリの再生成・コンパイル・業務試験、DB実行・Access/5250実機・端末/認証アダプターの実行試験、画面再描画・Excel/PDF変換、正式採点・受入。

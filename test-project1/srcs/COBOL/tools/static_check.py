@@ -2,6 +2,7 @@
 from pathlib import Path
 import re,json,hashlib,datetime,os,sys
 ROOT=Path(__file__).resolve().parents[1]
+SPEC=ROOT.parent.parent/'spec'/ROOT.name
 from output_paths import result_dir
 report=result_dir('static',os.environ.get('COBOL_TEST_REPORT_DIR'))
 run_id=os.environ.get('COBOL_RUN_ID','local-cobol')
@@ -9,7 +10,7 @@ prefix=report/'static'
 results=[]
 def check(name,good,detail):results.append({'id':name,'passed':bool(good),'detail':detail})
 manifest=json.loads((ROOT/'build/input-manifest.json').read_text(encoding='utf-8'))
-check('local-spec-lock',all(hashlib.sha256((ROOT/x['path']).read_bytes()).hexdigest()==x['sha256'] for x in manifest['inputs']),{'count':len(manifest['inputs']),'versions':sorted(set(x['version'] for x in manifest['inputs'] if x['version']))})
+check('local-spec-lock',bool(manifest['inputs']) and all((ROOT/x['path']).resolve().is_relative_to(SPEC.resolve()) and (ROOT/x['path']).is_file() and hashlib.sha256((ROOT/x['path']).read_bytes()).hexdigest()==x['sha256'] for x in manifest['inputs']),{'count':len(manifest['inputs']),'versions':sorted(set(x['version'] for x in manifest['inputs'] if x['version']))})
 programs={p.stem:p.read_text(encoding='utf-8') for p in (ROOT/'cobol').glob('*.cob')}
 ctext=(ROOT/'bridge/student_bridge.c').read_text(encoding='utf-8')
 cfuncs=set(re.findall(r'\b(?:int32_t|void)\s*\*?\s*(ST[A-Z0-9]+)\s*\(',ctext))

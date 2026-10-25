@@ -4,10 +4,11 @@ This generator never reads spec-eval. It only emits artifacts; it opens no DB.
 """
 from __future__ import annotations
 import json
+import os
 import re
 from pathlib import Path
 PROJECT = Path(__file__).resolve().parents[1]
-SPEC = PROJECT / 'spec'
+SPEC = PROJECT.parent.parent / 'spec' / PROJECT.name
 OUT = PROJECT
 
 def table(profile, path):
@@ -19,7 +20,7 @@ def table(profile, path):
             continue
         c = [s.strip() for s in line.strip('|').split('|')]
         rows.append(dict(number=int(c[0]), logical=c[1], name=c[2], pk=c[3] == '〇', required=c[4] == '〇', type=c[5], length=c[6], default=c[7], description=c[8]))
-    return dict(name=meta['table']['physicalName'], version=meta['version'], source=str(path.relative_to(PROJECT)).replace('\\', '/'), columns=rows)
+    return dict(name=meta['table']['physicalName'], version=meta['version'], source=Path(os.path.relpath(path, PROJECT)).as_posix(), columns=rows)
 
 def q(value):
     return "'" + str(value).replace("'", "''") + "'"

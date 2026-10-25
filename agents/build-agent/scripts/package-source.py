@@ -5,7 +5,7 @@ from output_layout import ensure_directory, regular_destination, staging_file, w
 
 ROOT=Path(__file__).resolve().parents[3]
 PROFILES=['VB.NET_WinForms','CSharp_WPF','CSharp_ASPNET','Vue_CSharpAPI','COBOL','AS400_RPG','Access']
-SKIP={'.tmp','.runtime','spec','spec-eval','build','bin','obj','node_modules','dist','.vs','.git','__pycache__','test-report','tests','Tests','tools'}
+SKIP={'.tmp','.runtime','spec','spec-eval','spec-analysis','build','bin','obj','node_modules','dist','.vs','.git','__pycache__','test-report','tests','Tests','tools'}
 OMIT={'.env','appsettings.Local.json','input-manifest.json','spec-inputs.json','spec-mapping.json','test-status.json','SPEC-MAPPING.md','spec-contracts.json','IMPLEMENTATION.md','write_report.py','evidence.py','host_build.py','input_lock.py','generate.mjs','generate_database.mjs'}
 BINARY={'.accdb','.accde','.laccdb','.exe','.dll','.pdb','.pyc','.pyo','.o','.so'}
 REQUIRED_BUILD_HELPERS={'tools/GeneratedPaths.ps1'}
@@ -63,6 +63,15 @@ for profile in selected:
                 text=data.decode('utf-8')
                 text=re.sub(r"^& python -X utf8 .*'generate_messages\.py'\).*\r?\nif \(\$LASTEXITCODE -ne 0\).*Native message generation failed.*\r?\n",'',text,flags=re.M)
                 data=text.encode();transformation='use included production message catalog without original-spec regeneration'
+            elif relative.as_posix()=='Build-Access.ps1' and profile=='Access':
+                text=data.decode('utf-8')
+                # Retain the builder and publication steps. A source-only rebuild has no original specifications to hash.
+                pattern=(r"(?m)^(?P<indent>[ \t]*)@\(Get-ChildItem -LiteralPath \(Join-Path \$PSScriptRoot '\.\./\.\./spec/Access'\)[^\r\n]*\r?\n"
+                         r"[^\r\n]*\r?\n[ \t]*\}\) \| ConvertTo-Json -Depth 5 \| Set-Content -LiteralPath \(Join-Path \$taskReport 'inputs.json'\) -Encoding UTF8\r?$")
+                replacement="[ordered]@{sourceOnly=$true;inputKind='generated-source';specificationInputs='excluded';reason='Original specifications are not included in this source-only package.';formalScore=$null} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $taskReport 'inputs.json') -Encoding UTF8"
+                text,count=re.subn(pattern,lambda match:match['indent']+replacement,text)
+                if count!=1:raise RuntimeError('Expected one canonical Access specification-evidence block; review source-only builder transformation.')
+                data=text.encode();transformation='original specification hashes are explicitly unavailable in source-only build evidence; builder and artifact publication unchanged'
             elif relative.as_posix()=='database/native/README.md':
                 data=('# Local native database deployment\n\nBuild the local SQLCLR assembly and SQL resources with ./database/native/Build-Native.ps1. Generated SQL is updated in build/database/native; intermediate files stay in .tmp. Apply database/001_schema.sql, database/002_seed.sql, then build/database/native/000_sqlclr.sql, build/database/native/010_student_api.sql and build/database/native/020_master_api.sql in order to a separately approved empty SQL Server 2022 database. The DBA explicitly enables CLR and approves the exact assembly hash. Keep CLR strict security enabled. Configure the application database identity and its local roles. Application writes use the local stored procedures. See INTERFACE.md for the local call contract.\n').encode()
                 transformation='production deployment instructions exclude specification links and test results'

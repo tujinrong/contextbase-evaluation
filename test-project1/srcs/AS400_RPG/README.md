@@ -1,6 +1,8 @@
 # 学生管理 AS400_RPG
 
-方式内の `spec/` 専用仕様セットを入力とする独立プロジェクトです。SQLRPGLE、DDS、ILE C、CL、Db2定義、初期データ、生成器はこのディレクトリー内で完結します。別方式のライブラリー、共通プロジェクト、共有生成器を参照しません。
+2026-10-25 配置更新：仕様入力は `test-project1/spec/AS400_RPG/`、ソースと生成出力は `test-project1/srcs/AS400_RPG/` に分離します。入力ロックは生成時の版・ハッシュを保持し、新しい仕様で再生成する際に検査して更新します。この配置更新ではアプリ・DBの再生成と実行試験を行っていません。
+
+`../../spec/AS400_RPG/` の専用仕様セットを入力とする独立プロジェクトです。SQLRPGLE、DDS、ILE C、CL、Db2定義、初期データ、生成器はこのディレクトリー内で完結します。別方式のライブラリー、共通プロジェクト、共有生成器を参照しません。
 
 現行検査ではWindows上の既存C補助35件と、製品と同じ検索状態ゲート・キー検査・ブロック補正Cの42件をコンパイルして実行しました。SQLRPGLE/DDS/CL/バインド/Db2/5250は IBM i 環境がないため未コンパイル・未実行です。静的な参照確認はその代わりの合格判定にはなりません。今回の結果は [方式内の試験状態](build/test-results/summary.json) を参照してください。
 
@@ -16,7 +18,7 @@
 
 ## IBM i での配備
 
-IBM i 7.5、RPG/SQL/ILE Cコンパイラー、ICU option39、27×132とCCSID1399を扱える5250端末が必要です。まず `spec/規約/開発規約.md` と [配備手順](docs/deployment.md) の条件を確認してください。ICUの採用版とUnicodeデータは実機で記録し、C試験を再実行して固定します。
+IBM i 7.5、RPG/SQL/ILE Cコンパイラー、ICU option39、27×132とCCSID1399を扱える5250端末が必要です。まず `../../spec/AS400_RPG/規約/開発規約.md` と [配備手順](docs/deployment.md) の条件を確認してください。ICUの採用版とUnicodeデータは実機で記録し、C試験を再実行して固定します。
 
 このディレクトリーを UTF8 のまま `/stuapp/source` へ転送し、ファイルCCSIDを1208として管理します。開発管理者が `database/schema.sql` を空の STUDAPP へ適用し、`cl/JOURNAL.clle` の6表をジャーナル開始してから `database/seed.sql` を適用します。DB実行はこのWindows試験では行っていません。SQLスクリプトの再適用による初期値の上書きを禁止し、既存値との差分を確認してください。
 
@@ -53,7 +55,7 @@ python tools/generate_dds.py
 python tools/format_rpg.py
 ```
 
-DB生成器は `spec/DB定義/Db2_for_i` と `spec/共通/10_業務コード定義.md` だけを読みます。DDSの現行生成器は `generate_dds.py` と `screen_layout.py` です。`generate_sources.py` の型と表示容量も現行へ更新しましたが、その他の開発時部分生成器を連続実行して業務・画面全体を再生成する手順ではありません。旧 `finish_ui.py` は現行画面を旧3パネルへ上書きしないよう起動を停止しました。配備時は確定済みソースを使用してください。[仕様対応](metadata/spec-mapping.json) と [入力ハッシュ](build/input-manifest.json) を保存しています。
+DB生成器は `../../spec/AS400_RPG/DB定義/Db2_for_i` と `../../spec/AS400_RPG/共通/10_業務コード定義.md` だけを読みます。DDSの現行生成器は `generate_dds.py` と `screen_layout.py` です。`generate_sources.py` の型と表示容量も現行へ更新しましたが、その他の開発時部分生成器を連続実行して業務・画面全体を再生成する手順ではありません。旧 `finish_ui.py` は現行画面を旧3パネルへ上書きしないよう起動を停止しました。配備時は確定済みソースを使用してください。[仕様対応](metadata/spec-mapping.json) と [入力ハッシュ](build/input-manifest.json) を保存しています。
 
 02ではCriteriaFormatVersion=2と正64bit Revisionを適用した。検索状態の正本はSTUSVCのジョブ内レジストリーで、所有者・ジョブ・画面ID・期待Revisionを照合してから形式版と30分期限を検査する。古いRevision／他者は正本・一覧を上書きしない。形式欠落／旧形式／期限切れはraw・実行済み条件・結果・ページ・20件・学籍番号昇順を全初期化してW-SRC-002を通知する。期限済みslotが他画面へ再利用された後の古い復帰は、現在の利用者・ジョブの確認後に新しい空contextを発行し、旧データを復元しない。レジストリー64件のlive上書きはせず、満杯は明示エラー。F5は同じslotのRevisionを更新し、F12はslotを解放する。未知／廃止入力キーはE-SRC-001で拒否する。
 

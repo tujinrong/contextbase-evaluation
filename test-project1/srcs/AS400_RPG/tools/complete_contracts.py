@@ -5,6 +5,7 @@ from pathlib import Path
 import re, runpy, json
 BASE=Path(__file__).resolve().parents[1]
 PROJECT=BASE
+SPEC=PROJECT.parent.parent/'spec'/PROJECT.name
 runpy.run_path(str(BASE/'tools/generate_sources.py'))
 def alter(path, old, new):
     p=BASE/path;s=p.read_text(encoding='utf8')
@@ -27,7 +28,7 @@ s=before+anchor+after
 s=s.replace("if work.admissionDate>cls.validTo or work.enrollmentEndDate<cls.validFrom;", "if (studentId=0 or old.work.classIdInd<>work.classIdInd or old.work.classId<>work.classId or old.work.admissionDate<>work.admissionDate or old.work.enrollmentEndDateInd<>work.enrollmentEndDateInd or old.work.enrollmentEndDate<>work.enrollmentEndDate or old.work.enrollmentStatusCode<>work.enrollmentStatusCode) and (work.admissionDate>cls.validTo or work.enrollmentEndDate<cls.validFrom);")
 p.write_text(s,encoding='utf8')
 catalog={}
-for line in (PROJECT/'spec/共通/05_チェック・メッセージ設計.md').read_text(encoding='utf8').splitlines():
+for line in (SPEC/'共通/05_チェック・メッセージ設計.md').read_text(encoding='utf8').splitlines():
     m=re.match(r'\| ([IEW]-[A-Z]+-\d{3}) \| (.*?) \|$',line)
     if m:catalog[m[1]]=m[2]
 assert len(catalog)==58

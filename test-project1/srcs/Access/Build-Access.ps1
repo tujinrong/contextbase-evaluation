@@ -313,8 +313,8 @@ if ($taskGenerated) {
             $taskPrevious = Resolve-AccessReportPath (Join-Path $taskReport $taskPreviousName)
             if (Test-Path -LiteralPath $taskPrevious) { Remove-Item -LiteralPath $taskPrevious -Force }
         }
-        @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'spec') -Recurse -File | Sort-Object FullName | ForEach-Object {
-            [ordered]@{file=$_.FullName.Substring($PSScriptRoot.Length+1).Replace('\','/');sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
+        @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../../spec/Access') -Recurse -File | Sort-Object FullName | ForEach-Object {
+            [ordered]@{file=('../../spec/Access/'+$_.FullName.Substring(([IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../spec/Access'))).Length+1).Replace('\','/'));sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
         }) | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $taskReport 'inputs.json') -Encoding UTF8
         [ordered]@{status='Generated';generatedAt=[DateTime]::UtcNow.ToString('o');database='build/StudentManagement.accdb';sha256=$taskHash;bytes=(Get-Item -LiteralPath $taskRequestedFrontend).Length;singleFile=$true;testModulesIncluded=[bool]$IncludeTests;compiled=[bool]$Compile;stagingArea='.tmp/generation';specificationChanged=$false} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $taskReport 'build.json') -Encoding UTF8
         [ordered]@{status='VerificationRequired';completedAt=[DateTime]::UtcNow.ToString('o');artifact=[ordered]@{file='build/StudentManagement.accdb';sha256=$taskHash;bytes=(Get-Item -LiteralPath $taskRequestedFrontend).Length};specificationChanged=$false;formalScore=$null;verification='Run tests/Invoke-Verification.ps1 for the current artifact.'} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $taskReport 'summary.json') -Encoding UTF8

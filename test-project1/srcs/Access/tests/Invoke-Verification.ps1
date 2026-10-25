@@ -9,8 +9,8 @@ $taskRace=Resolve-AccessGeneratedPath (Join-Path $taskRoot '.tmp/tests/race.accd
 $taskFinal=Resolve-AccessGeneratedPath (Join-Path $taskRoot 'build/StudentManagement.accdb') 'build'
 Remove-AccessIntermediate $taskScratch
 New-Item -ItemType Directory -Path $taskScratch,$taskReport -Force | Out-Null
-$taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $taskRoot 'spec') -Recurse -File | Sort-Object FullName | ForEach-Object {
-    [ordered]@{file=$_.FullName.Substring($taskRoot.Length+1).Replace('\','/');sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
+$taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $taskRoot '../../spec/Access') -Recurse -File | Sort-Object FullName | ForEach-Object {
+    [ordered]@{file=('../../spec/Access/'+$_.FullName.Substring(([IO.Path]::GetFullPath((Join-Path $taskRoot '../../spec/Access'))).Length+1).Replace('\','/'));sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
 })
 $taskInputs | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $taskReport 'inputs.json') -Encoding UTF8
 $taskStarted=[DateTime]::UtcNow.ToString('o')
@@ -56,7 +56,7 @@ try {
     $taskSyntax=@(Get-ChildItem -LiteralPath $taskRoot -Recurse -Filter '*.ps1' | Where-Object {$_.FullName -notmatch '\\(?:build|\.tmp)\\'} | ForEach-Object {
         $taskTokens=$null;$taskErrors=$null
         [System.Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$taskTokens,[ref]$taskErrors)|Out-Null
-        [ordered]@{file=$_.FullName.Substring($taskRoot.Length+1).Replace('\','/');passed=$taskErrors.Count -eq 0;errors=@($taskErrors|ForEach-Object {$_.Message})}
+        [ordered]@{file=('../../spec/Access/'+$_.FullName.Substring(([IO.Path]::GetFullPath((Join-Path $taskRoot '../../spec/Access'))).Length+1).Replace('\','/'));passed=$taskErrors.Count -eq 0;errors=@($taskErrors|ForEach-Object {$_.Message})}
     })
     $taskSyntax | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $taskReport 'syntax.json') -Encoding UTF8
     if(@($taskSyntax|Where-Object {-not $_.passed}).Count){throw 'PowerShell syntax check failed.'}

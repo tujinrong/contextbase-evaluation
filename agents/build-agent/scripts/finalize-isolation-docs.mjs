@@ -1,4 +1,5 @@
-// LEGACY one-time migration resource. Current generation uses build/ and .tmp/.
+// RETIRED one-time migration resource; current indexes must not be overwritten.
+throw new Error('Retired migration: maintain current project/spec/<profile> indexes through the current specification contract. This historical writer cannot be rerun.');
 // Control indexes contain routing only. All business specifications live in each package.
 import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../..');

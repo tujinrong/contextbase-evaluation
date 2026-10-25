@@ -1,11 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-README","version":"8.1","path":"test-project1/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"方式一覧","kind":"LIST","sheet":"02_方式一覧","key":["方式ID"]},{"heading":"入力と報告","kind":"GRID","sheet":"03_入力と報告"},{"heading":"隔離境界","kind":"GRID","sheet":"04_隔離境界"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-README","version":"8.2","path":"test-project1/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"方式一覧","kind":"LIST","sheet":"02_方式一覧","key":["方式ID"]},{"heading":"入力と報告","kind":"GRID","sheet":"03_入力と報告"},{"heading":"隔離境界","kind":"GRID","sheet":"04_隔離境界"}]} -->
 # test-project1 学生管理
 
-版8.1／2026-10-24。現行の独立配置。各実行結果は試験報告の範囲で判定する。
+版8.2／2026-10-25。現行の独立配置。各実行結果は試験報告の範囲で判定する。
 
 ## 対象
 
-仕様書解析Agent検証用の7つの独立プロジェクト。検索と登録・編集・参照・論理削除、およびクラス・コード保守を題材とする。各方式の原仕様、ソース、DB資源、生成器、ビルド、試験を当該方式内に置く。
+仕様書解析Agent検証用の7つの独立プロジェクト。検索と登録・編集・参照・論理削除、およびクラス・コード保守を題材とする。各方式の原仕様はspec/方式ID/（specRoot）、ソース・DB資源・生成器・ビルド・試験はsrcs/方式ID/（sourceRoot）へ分離して置く。
 
 ## 方式一覧
 
@@ -25,4 +25,4 @@
 
 ## 隔離境界
 
-各方式は他方式のコード、仕様、DB定義、生成器を引用しない。原仕様は各方式内のspecだけを正本とする。旧版を作業ツリーへ別名保存せず、必要な過去版はGit履歴から参照する。逆生成の入力は当該方式build/source.zipだけとし、元のspec、spec-eval、履歴、入力manifestは渡さない。業務仕様と工程制御のルールを区別し、配置修正だけでDBや権限の契約を変更しない。
+各方式は他方式のコード、仕様、DB定義、生成器を引用しない。原仕様は選択方式のspec/方式ID/だけを正本とし、業務仕様と仕様間参照をこのspecRoot内で閉じる。順生成はspecRootを読み、対応するsourceRootへ生成する。旧sourceRoot/specをfallbackに使わない。旧版を作業ツリーへ別名保存せず、必要な過去版はGit履歴から参照する。逆生成の入力は当該方式build/source.zipだけとし、project/spec/全体、spec-eval、履歴、入力manifestは渡さない。業務仕様と工程制御のルールを区別し、配置修正だけでDBや権限の契約を変更しない。

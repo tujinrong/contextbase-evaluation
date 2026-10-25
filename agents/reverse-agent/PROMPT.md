@@ -1,10 +1,12 @@
 # reverse-agent 実行指示
 
-版1.1／2026-10-24。ContextBase の取得・調査・独立検証を依頼するための文書契約。新しい自動 dispatch・採用・復元の専用 CLI は未実装であり、以下はコマンド例ではない。
+版1.2／2026-10-25。ContextBase の取得・調査・独立検証を依頼するための文書契約。新しい自動 dispatch・採用・復元の専用 CLI は未実装であり、以下はコマンド例ではない。
 
 ## 依頼の指定
 
 [共通契約](AGENT.md)の request を使い、runId、projectId、scope、goal、allowedPaths／excludedPaths、outputRoot、verificationRequirements を指定する。取得済みなら sourceSnapshot と contextBaseVersion を渡す。初回 discovery は sourceRoot と ContextBase 未作成を明示できる。role は単独指定、または統一入口による選択とする。
+
+移動後の原仕様はproject/spec/方式ID/にあるため、方式を問わずproject/spec/全体とproject/spec-eval/をexcludedPathsへ列挙する。sourceRoot=project/srcs/方式ID/やsource-onlyパッケージだけを許可し、projectルートの再帰取得で兄弟の仕様へ範囲を広げない。
 
 例：対象機能の一覧だけを確認する、特定テーブルの利用機能を調べる、登録処理の保存値と失敗状態を追う。要求ごとに必要事項を決め、固定の情報量3段階を指定したものと解釈しない。
 

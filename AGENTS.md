@@ -1,17 +1,17 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"REPO-AGENTS","version":"7.1","path":"AGENTS.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"配置","kind":"GRID","sheet":"02_配置"},{"heading":"完了","kind":"GRID","sheet":"03_完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"REPO-AGENTS","version":"7.2","path":"AGENTS.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"配置","kind":"GRID","sheet":"02_配置"},{"heading":"完了","kind":"GRID","sheet":"03_完了"}]} -->
 # 作業Agent向けルーティング
 
-版7.1／2026-10-24。生成物の履歴はGitで管理し、最終結果と作業用出力を分離する。
+版7.2／2026-10-25。生成物の履歴はGitで管理し、最終結果と作業用出力を分離する。
 
 ## 対象
 
-まずdocsの全体規則とagentsの役割定義を読む。実行要求でprojectIdと工程を確定し、選択projectだけを対象とする。逆生成の評価実行では原仕様・spec-evalへの読取りを許可しない。
+まずdocsの全体規則とagentsの役割定義を読む。実行要求でprojectIdと工程を確定し、選択projectだけを対象とする。方式ごとにspecRoot=対象project/spec/方式ID、sourceRoot=対象project/srcs/方式IDを分けて固定する。逆生成の評価実行では対象project/spec/全体とspec-evalへの読取りを許可しない。
 
 ## 配置
 
-全体の変更はdocs/agents、題材の仕様索引はtest-project*/spec、独立方式の原仕様正本はsrcs/方式ID/spec、評価はspec-evalへ隔離する。未来のtest-project2を自動作成しない。実装やDB実行を指示されていない段階では設計更新だけを行う。重複は許容、矛盾は修正。
+全体の変更はdocs/agents、題材の仕様索引はtest-project*/spec/README.md、独立方式の原仕様正本は対象project/spec/方式ID/、ソース正本は対象project/srcs/方式ID/、評価は対象project/spec-eval/へ隔離する。順生成は選択方式のspecRootを入力とし、sourceRootへ生成する。旧srcs/方式ID/specへの自動復帰や共用仕様の強制は行わない。未来のtest-project2を自動作成しない。実装やDB実行を指示されていない段階では設計更新だけを行う。重複は許容、矛盾は修正。
 
-全方式共通で、最終ソースは所定の正本を更新し、最終配布物・今回の最終検査記録・入出力manifestは各方式のbuild/の固定パスへ更新する。生成日・実行ID・attempt別の過去成果、backup、archiveを累積しない。履歴はGitを使用する。中間生成・失敗試行・コンパイル途中・隔離展開・キャッシュは各方式の.tmp/で処理し、.tmp/はGit管理しない。方式に属さない共通工程だけは担当Agentまたはprojectの.tmp/とbuild/を使う。入力・QA・正式な試験コード・fixtureは中間生成物として削除しない。
+全方式共通で、最終ソースはsourceRootの正本を更新し、最終配布物・今回の最終検査記録・入出力manifestはsourceRoot/build/の固定パスへ更新する。生成日・実行ID・attempt別の過去成果、backup、archiveを累積しない。履歴はGitを使用する。中間生成・失敗試行・コンパイル途中・隔離展開・キャッシュはsourceRoot/.tmp/で処理し、.tmp/はGit管理しない。方式に属さない共通工程だけは担当Agentまたはprojectの.tmp/とbuild/を使う。入力・QA・正式な試験コード・fixtureは中間生成物として削除しない。
 
 ## 完了
 

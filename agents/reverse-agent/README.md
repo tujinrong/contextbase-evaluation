@@ -1,8 +1,10 @@
 # reverse-agent — ソースから ContextBase を構築・検証する
 
-版8.1／2026-10-24。統一入口の内部を、取得・調査・独立検証の3役割に分ける。仕様書生成は下流の責務とする。
+版8.2／2026-10-25。統一入口の内部を、取得・調査・独立検証の3役割に分ける。仕様書生成は下流の責務とする。
 
 ## 入口と状態
+
+移動後の原仕様はproject/spec/方式ID/にあるため、方式を問わずproject/spec/全体とproject/spec-eval/をexcludedPathsへ列挙する。sourceRoot=project/srcs/方式ID/やsource-onlyパッケージだけを許可し、projectルートの再帰取得で兄弟の仕様へ範囲を広げない。
 
 [AGENT.md](AGENT.md)が共通の役割・入力・出力・採用契約、[PROMPT.md](PROMPT.md)が依頼方法、[AGENTS.md](AGENTS.md)が作業上の規則である。今回追加したのは文書上の役割定義であり、3役割を自動起動する新しい CLI、共通制御、schema、store の実装は今後行う。手動で依頼する場合も、候補提出と正本への採用・範囲受入れを分ける。
 

@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"7.3","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"7.4","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
 # Agent定義一覧
 
-版7.3／2026-10-24。AG-REVERSE を ContextBase 構築・調査・独立検証の統一入口として同期。アプリ実装・実機試験・採点の状態は各実行の報告で区別する。
+版7.4／2026-10-25。AG-REVERSE を ContextBase 構築・調査・独立検証の統一入口として同期。アプリ実装・実機試験・採点の状態は各実行の報告で区別する。
 
 ## 概要
 
@@ -19,4 +19,4 @@ AG-REVERSE の内部役割は discovery-agent（取得・初期理解）、inves
 
 ## 実行コンテキスト
 
-projectId、仕様セット版、方式ID、入力コミット/ハッシュ、許可パス、除外パス、出力先、Agent定義版、実行IDを固定する。全Agentは最終正本を更新し、最終成果・検査結果は担当方式のbuild/の固定先へ更新する。中間結果は同じ方式の.tmp/、方式を持たない共通作業は担当Agentまたはprojectの.tmp/を使う。過去生成結果の別名保存はせずGit履歴を使う。spec-evalは採点者の参照先で、逆生成Agentの入力から物理的に除外する。共有docsに業務正解を隠して隔離を迂回しない。
+projectId、仕様セット版、方式ID、specRoot=project/spec/方式ID、sourceRoot=project/srcs/方式ID、入力コミット/ハッシュ、許可パス、除外パス、出力先、Agent定義版、実行IDを固定する。AG-SPECはspecRootを更新し、AG-BUILDは同じspecRootからsourceRootへ生成する。業務入力は選択方式のspecRoot内で閉じ、旧sourceRoot/specや他方式を代替入力にしない。全Agentは最終正本を更新し、最終成果・検査結果はsourceRoot/build/の固定先へ更新する。中間結果はsourceRoot/.tmp/、方式を持たない共通作業は担当Agentまたはprojectの.tmp/を使う。過去生成結果の別名保存はせずGit履歴を使う。spec-evalは採点者の参照先で、逆生成Agentの入力から移動後のproject/spec/全体とともに物理的に除外する。共有docsに業務正解を隠して隔離を迂回しない。

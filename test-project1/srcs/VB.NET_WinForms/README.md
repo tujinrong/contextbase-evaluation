@@ -1,5 +1,7 @@
 # VB.NET / WinForms 学生管理
 
+2026-10-25 配置更新：仕様入力は `test-project1/spec/VB.NET_WinForms/`、ソースと生成出力は `test-project1/srcs/VB.NET_WinForms/` に分離します。入力ロックは生成時の版・ハッシュを保持し、新しい仕様で再生成する際に検査して更新します。この配置更新ではアプリ・DBの再生成と実行試験を行っていません。
+
 2026-10-24 配置更新。最終アプリは `build/app/`、現在の検査は `build/test-results/`、生成記録は `build/generation/`、ソース配布は `build/source.zip` へ固定更新します。これらはGit管理し、日付・run-idごとの履歴ディレクトリーは増やしません。コンパイラのbin/obj、NuGet、npm、キャッシュ、試行ログは方式内 `.tmp/`（Git除外）です。`Directory.Build.props` は通常のdotnetコマンドにも適用します。
 
 ```powershell
@@ -16,7 +18,7 @@ python -X utf8 tools/build.py --no-audit
 dotnet publish StudentManagement.WinForms.vbproj -c Release -o .tmp/source-package-publish
 ```
 
-2026-10-23更新。この方式内の `spec/`（検索・登録詳細／方式別共通8.1、他文書は凍結した各現行版）を入力とする独立プロジェクトです。画面・Designer・Presenter、Application、Domain、Infrastructureの業務層はVB.NETで実装し、他方式のコード・DLL・共通プロジェクトを参照しません。DB定義・seed・生成器・保守CLI・VB試験も方式内にあります。
+2026-10-23更新。`../../spec/VB.NET_WinForms/` を仕様正本とする独立プロジェクトです。画面・Designer・Presenter、Application、Domain、Infrastructureの業務層はVB.NETで実装し、他方式のコード・DLL・共通プロジェクトを参照しません。DB定義・seed・生成器・保守CLI・VB試験も方式内にあります。
 
 Windows、.NET 10 SDK（検査時10.0.401）、Microsoft.Data.SqlClient 6.1.3、SQL Server 2022を使用します。Option Strict/Explicit/InferはOnです。`database/README.md` の手順で個別主体とDB入口を配備し、接続は秘密管理から環境変数 `STUDENT_DB_CONNECTION` に設定してください。
 

@@ -46,7 +46,7 @@ try:
             for member in members:
                 name=PurePosixPath(member.filename)
                 if name.is_absolute() or '..' in name.parts or ':' in member.filename or '\\' in member.filename or str(name)!=member.filename or member.is_dir() or stat.S_IFMT(member.external_attr>>16)==stat.S_IFLNK:raise RuntimeError('Unsafe archive path/type')
-                if any(part in {'.tmp','spec','spec-eval','tests','Tests','test-report','build','bin','obj','node_modules'} for part in name.parts):raise RuntimeError('Excluded input in source-only archive')
+                if any(part in {'.tmp','spec','spec-eval','spec-analysis','tests','Tests','test-report','build','bin','obj','node_modules'} for part in name.parts):raise RuntimeError('Excluded input in source-only archive')
                 data=archive.read(member)
                 if hashlib.sha256(data).hexdigest()!=expected[member.filename]['sha256']:raise RuntimeError('Member hash mismatch')
                 target=destination.joinpath(*name.parts);ensure_directory(target.parent)

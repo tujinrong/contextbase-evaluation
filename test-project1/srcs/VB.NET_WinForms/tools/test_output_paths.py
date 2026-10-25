@@ -9,6 +9,7 @@ import sys
 
 sys.dont_write_bytecode = True
 B = Path(os.path.abspath(__file__)).parents[1]
+SPEC = B.parent.parent / 'spec' / B.name
 sys.path.insert(0, str(B))
 from build_paths import OutputPaths
 
@@ -86,8 +87,10 @@ def reject_helper(root, frontend=False):
     check(result.returncode != 0 and ('Redirected' in result.stderr or 'redirect' in result.stderr), root.name + ': actual helper rejected before compiler/npm')
     check(before == inputs(root), root.name + ': fictional specification and QA unchanged')
 
-actual_spec_before = {str(p.relative_to(B)): hashlib.sha256(p.read_bytes()).hexdigest()
-                      for p in (B / 'spec').rglob('*') if p.is_file()}
+if not SPEC.is_dir():
+    raise SystemExit(f'Canonical specification root missing: {SPEC}')
+actual_spec_before = {str(p.relative_to(SPEC)): hashlib.sha256(p.read_bytes()).hexdigest()
+                      for p in SPEC.rglob('*') if p.is_file()}
 try:
     normal = fixture('normal')
     guard = OutputPaths(normal)
@@ -140,8 +143,8 @@ try:
 finally:
     for link in reversed(links):
         remove_link(link)
-    actual_spec_after = {str(p.relative_to(B)): hashlib.sha256(p.read_bytes()).hexdigest()
-                         for p in (B / 'spec').rglob('*') if p.is_file()}
+    actual_spec_after = {str(p.relative_to(SPEC)): hashlib.sha256(p.read_bytes()).hexdigest()
+                         for p in SPEC.rglob('*') if p.is_file()}
     check(actual_spec_before == actual_spec_after, 'actual method specification unchanged')
 
 paths.write(report / 'path-guard.log', '\n'.join(raw) + '\n')

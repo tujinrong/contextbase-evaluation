@@ -31,7 +31,7 @@ foreach($file in (Get-ChildItem -LiteralPath (Join-Path $profileRoot 'Modules'),
   }
  }
 }
-$spec=Join-Path $profileRoot 'spec/共通/05_チェック・メッセージ設計.md'
+$spec=Join-Path $profileRoot '../../spec/Access/共通/05_チェック・メッセージ設計.md'
 $parameters=[ordered]@{field='検証項目';max='8';fromField='開始日';toField='終了日';correlationId='TEST-REQ';count='3';minDate='1900-01-01';maxDate='2026-10-12';minYear='1900';maxYear='9998';studentNo='TEST-ACE-099'}
 $suffix=(@($parameters.GetEnumerator()|ForEach-Object {$_.Key+'='+$_.Value}) -join '|')
 $expected=@()

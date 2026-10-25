@@ -6,7 +6,7 @@ $taskFixture=Resolve-AccessGeneratedPath $Fixture '.tmp'
 $taskOwned=Resolve-AccessGeneratedPath (Join-Path $PSScriptRoot '../.tmp/tests') '.tmp'
 $taskReport=Resolve-AccessReportPath $ReportDirectory
 New-Item -ItemType Directory -Path $taskReport -Force | Out-Null
-$taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../spec') -Recurse -File | Sort-Object FullName | ForEach-Object { @{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} })
+$taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../../../spec/Access') -Recurse -File | Sort-Object FullName | ForEach-Object { @{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} })
 $taskBarrier=Resolve-AccessGeneratedPath (Join-Path $taskOwned 'race-barrier') '.tmp'
 Remove-AccessIntermediate $taskBarrier
 New-Item -ItemType Directory -Path $taskBarrier | Out-Null

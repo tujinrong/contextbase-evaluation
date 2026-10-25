@@ -1,6 +1,7 @@
 from pathlib import Path
 import argparse,subprocess,json,hashlib,datetime,os,re,xml.etree.ElementTree as ET
 B=Path(__file__).resolve().parents[1]
+SPEC=B.parent.parent/'spec'/B.name
 p=argparse.ArgumentParser();p.add_argument('--report-dir',type=Path,default=B/'build/test-results/verification');p.add_argument('--run-id',default='latest');a=p.parse_args();R=a.report_dir.resolve();R.mkdir(parents=True,exist_ok=True)
 if not R.is_relative_to(B):raise SystemExit('Reports must stay within this method')
 (R/'vb-results.json').write_text(json.dumps(dict(status='VERIFICATION_REQUIRED',reason='Verification is running; previous pass is no longer current'))+'\n','utf8')
@@ -28,6 +29,8 @@ environment=os.environ.copy();environment.pop('STUDENT_DB_CONNECTION',None)
 run('maintenance-no-connection',['dotnet',str(target('Maintenance/StudentMaintenance.vbproj')),'class','approved-input.json'],environment,2)
 files=[x for x in B.rglob('*') if x.is_file() and not set(x.relative_to(B).parts)&{'build','.tmp','bin','obj','.vs','node_modules','dist','__pycache__','test-report','spec-eval'}]
 source=[x for x in files if 'spec' not in x.relative_to(B).parts]
+if not SPEC.is_dir():raise SystemExit(f'Canonical specification root missing: {SPEC}')
+spec_files=[x for x in sorted(SPEC.rglob('*')) if x.is_file()]
 checks=[]
 def check(id,value):checks.append(dict(id=id,passed=bool(value)))
 check('all-program-source-vb',not any(x.suffix=='.cs' for x in source if 'database' not in x.relative_to(B).parts))
@@ -45,13 +48,13 @@ framework_dll=target('database/native/tests/Framework/NativeFramework.Tests.cspr
 native_hash=hashlib.sha512(native_dll.read_bytes()).hexdigest().upper()
 check('framework-tests-exact-deployment-dll',native_hash==hashlib.sha512(framework_dll.read_bytes()).hexdigest().upper() and native_hash in (B/'build/database/native/000_sqlclr.sql').read_text('utf8'))
 check('actual-framework-runtime',framework_summary['actualFrameworkRuntime'] and framework_summary['passed']>0)
-versions=sorted({json.loads(m[1])['version'] for x in files if x.suffix=='.md' and 'spec' in x.relative_to(B).parts for m in [re.search(r'<!-- spec-meta: (.*?) -->',x.read_text('utf8'))] if m})
-inputs=[dict(file=str(x.relative_to(B)).replace('\\','/'),sha256=hashlib.sha256(x.read_bytes()).hexdigest(),bytes=x.stat().st_size) for x in files if 'spec' in x.relative_to(B).parts]
+versions=sorted({json.loads(m[1])['version'] for x in spec_files if x.suffix=='.md' for m in [re.search(r'<!-- spec-meta: (.*?) -->',x.read_text('utf8'))] if m})
+inputs=[dict(file=Path(os.path.relpath(x,B)).as_posix(),sha256=hashlib.sha256(x.read_bytes()).hexdigest(),bytes=x.stat().st_size) for x in spec_files]
 (R/'spec-inputs.json').write_text(json.dumps(dict(versions=versions,files=inputs),ensure_ascii=False,indent=2)+'\n','utf8')
-for x in files:
- if x.suffix=='.md' and 'spec' in x.relative_to(B).parts:
+for x in spec_files:
+ if x.suffix=='.md':
   m=re.search(r'<!-- spec-meta: (.*?) -->',x.read_text('utf8'))
-  if m:check('spec-version:'+str(x.relative_to(B)),bool(re.fullmatch(r'8\.\d+',json.loads(m[1])['version'])))
+  if m:check('spec-version:'+Path(os.path.relpath(x,B)).as_posix(),bool(re.fullmatch(r'8\.\d+',json.loads(m[1])['version'])))
 result=dict(profile='VB.NET_WinForms',recordedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),currentInput='build/test-results/verification/spec-inputs.json',inputVersions=versions,runs=runs,boundary=cases,framework=framework_summary,sqlClrSha512=native_hash,staticChecks=checks,sourceHashes={str(x.relative_to(B)).replace('\\','/'):hashlib.sha256(x.read_bytes()).hexdigest() for x in source if x.suffix in ['.vb','.vbproj','.cs','.csproj','.ps1','.slnx','.sql','.mjs','.py']},notRun=['SQL Server DDL/seed/native entry/SQLCLR deployment and CRUD/audit/concurrent failure tests (DB absent)','interactive forms, IME, DPI/accessibility, real individual-role sessions','production certificate/assembly/EXEC-only deployment review'],scope='Executed tests cover VB pure boundaries, XML encoding, SQL parameter construction, unshown form construction and the exact deployment SQLCLR DLL under actual .NET Framework. SQL Server hosting and interactive UI remain unverified.')
 result['passed']=all(x['passed'] for x in runs+checks) and cases.get('failed')==0
 (R/(P+'-results.json')).write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n','utf8')

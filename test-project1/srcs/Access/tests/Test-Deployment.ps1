@@ -63,7 +63,7 @@ finally {
  $taskAccess.CloseCurrentDatabase()
  $taskAccess.Quit(2); [Runtime.InteropServices.Marshal]::FinalReleaseComObject($taskAccess) | Out-Null
  [GC]::Collect(); [GC]::WaitForPendingFinalizers()
- $taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../spec') -Recurse -File | Sort-Object FullName | ForEach-Object { @{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} })
+ $taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../../../spec/Access') -Recurse -File | Sort-Object FullName | ForEach-Object { @{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} })
  $taskOutput=[ordered]@{runId=$RunId;completedAt=[DateTime]::UtcNow.ToString('o');status=$taskState;specConfigurationVersion='8.1';specDatabaseIndexVersion='8.2';specBusinessVersion='8.0';database=$taskFile;databaseBeforeSha256=$taskBeforeHash;databaseSha256=(Get-FileHash -LiteralPath $taskFile -Algorithm SHA256).Hash;sourceDatabase=$taskSource;sourceBeforeSha256=$taskSourceHash;sourceAfterSha256=(Get-FileHash -LiteralPath $taskSource -Algorithm SHA256).Hash;exactSourceCopy=($taskBeforeHash -eq $taskSourceHash);officeVersion=$taskVersion;fixtureOnly=($taskFile -ne $taskSource);health=$taskHealth;counts=$taskCounts;checks=$taskChecks;physicalTables=$taskTables;relations=$taskRelations;forms=$taskForms;modules=$taskModules;fatal=$taskFatal;inputs=$taskInputs;notTested=@('Office 32-bit','LAN outage','manual pixel/layout review','10000/10001-record search performance','commit-response loss')}
  $taskOutput.fileFormat=$taskFileFormat
  $taskOutput | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $taskReport 'deployment.json') -Encoding UTF8

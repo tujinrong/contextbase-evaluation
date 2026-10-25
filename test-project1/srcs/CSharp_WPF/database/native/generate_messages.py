@@ -2,7 +2,8 @@
 from pathlib import Path
 import json,re
 b=Path(__file__).resolve().parents[2]
-s=(b/'spec/共通/05_チェック・メッセージ設計.md').read_text(encoding='utf-8')
+spec=b.parent.parent/'spec'/b.name
+s=(spec/'共通/05_チェック・メッセージ設計.md').read_text(encoding='utf-8')
 rows=[]
 for line in s.splitlines():
  m=re.match(r'\| ([EIW]-[A-Z]+-\d{3}) \| (.+) \|$',line)

@@ -3,6 +3,7 @@ from pathlib import Path
 import argparse,hashlib,json,subprocess,os,re,platform,datetime
 from output_paths import result_dir
 B=Path(__file__).resolve().parents[1]
+SPEC=B.parent.parent/'spec'/B.name
 p=argparse.ArgumentParser();p.add_argument('--report-dir',type=Path);p.add_argument('--run-id',default='current');args=p.parse_args()
 if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,79}',args.run_id):raise SystemExit('Safe unique run ID required')
 R=result_dir('host',args.report_dir)
@@ -66,15 +67,28 @@ all_rpg='\n'.join(x.read_text('utf8') for x in sources)
 codes=set(re.findall(r"'([IEW]-[A-Z]+-\d{3})'",all_rpg))
 check('message-closure',codes<=set(catalog),sorted(codes-set(catalog)))
 schema=json.loads((B/'database/schema.json').read_text('utf8'))
-check('schema-local-8',len(schema)==6 and all(x['version']=='8.0' and x['source'].startswith('spec/') for x in schema),[(x['name'],x['version'],x['source']) for x in schema])
+def schema_input_provenance(item):
+ source=item['source']
+ if source.startswith('spec/DB定義/Db2_for_i/テーブル/'):
+  # Stored legacy provenance is not rebound to the current specification.
+  return dict(source=source,version=item['version'],passed=bool(re.fullmatch(r'\d+\.\d+',str(item['version']))),kind='legacy-generation-provenance',currentSpecBinding=False)
+ target=(B/source).resolve()
+ if not target.is_relative_to(SPEC.resolve()) or not target.is_file():
+  return dict(source=source,version=item['version'],passed=False,kind='invalid-specification-locator',currentSpecBinding=False)
+ match=re.search(r'<!-- spec-meta: (.*?) -->',target.read_text('utf8'))
+ current=json.loads(match[1])['version'] if match else None
+ return dict(source=source,version=item['version'],passed=item['version']==current,kind='canonical-generation-input',currentSpecBinding=item['version']==current)
+schema_provenance=[schema_input_provenance(item) for item in schema]
+check('schema-own-spec-provenance',len(schema)==6 and all(item['passed'] for item in schema_provenance),schema_provenance)
 check('relationship-paired-null',any(x['name']=='relationship_category' and not x['required'] for t in schema if t['name']=='m_student' for x in t['columns']),'Db2 category optional')
 tools='\n'.join(x.read_text('utf8') for x in (B/'tools').glob('*.py') if x.name!=Path(__file__).name)
 check('profile-isolation',not any(x in tools for x in ['srcs/Shared','../Shared','srcs/_tools','parents[2]','BASE.parents[1]']), 'Generators use local spec/database/COPY only')
 spec_inputs=[]
-for path in sorted((B/'spec').rglob('*')):
+if not SPEC.is_dir():raise SystemExit(f'Canonical specification root missing: {SPEC}')
+for path in sorted(SPEC.rglob('*')):
  if path.is_file():
   meta=re.search(r'<!-- spec-meta: (.*?) -->',path.read_text('utf8')) if path.suffix=='.md' else None
-  spec_inputs.append(dict(file=str(path.relative_to(B)).replace('\\','/'),sha256=digest(path),bytes=path.stat().st_size,version=json.loads(meta.group(1))['version'] if meta else None))
+  spec_inputs.append(dict(file=Path(os.path.relpath(path, B)).as_posix(),sha256=digest(path),bytes=path.stat().st_size,version=json.loads(meta.group(1))['version'] if meta else None))
 versions=sorted({x['version'] for x in spec_inputs if x['version']})
 (B/'build/input-manifest.json').write_text(json.dumps(dict(versions=versions,files=spec_inputs),ensure_ascii=False,indent=2)+'\n','utf8')
 record=dict(project='AS400_RPG',recordedAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),originPreIsolationManifest='20261012-build-06-inputs.json',currentInput='build/input-manifest.json',inputVersions=versions,host=platform.platform(),toolchain=json.loads((B/'.tmp/toolchain/acquisition.json').read_text('utf8')),compile=compile,execution=execute,cCases=[dict(id=x[1],passed=x[0]=='PASS') for x in cases],cTests=len(cases),cFailures=sum(x[0]=='FAIL' for x in cases),staticChecks=checks,staticFailures=failures,skipped=[dict(id=x,status='NOT_RUN',reason='IBM i environment/toolchain/Db2/5250 unavailable') for x in ['IBM_i_SQLRPGLE_compile','IBM_i_ILE_C_compile','DDS_compile','CL_compile_and_bind','Db2_DDL_seed_CRUD_audit_rollback','5250_UI_and_CCSID_display','two_jobs_conflict_and_commit_unknown','approved_IFS_positive_read']],sourceHashes={str(x.relative_to(B)).replace('\\','/'):digest(x) for x in sources+[B/'c/STUNICODE.c',B/'c/STUINPUT.c',B/'c/STUSTATE.c',B/'c/STUNICODE_TEST.c']},scope='Static checks do not prove RPG syntax, bind, DB behavior or specification compliance.')

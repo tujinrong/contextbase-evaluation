@@ -4,7 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const output=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../database');
 const project=path.resolve(output,'..');
-const spec=path.join(project,'spec/DB定義/SQLServer/テーブル');
+const specRoot=path.resolve(project,'../../spec',path.basename(project));
+const spec=path.join(specRoot,'DB定義/SQLServer/テーブル');
 const tables=fs.readdirSync(spec).filter(name=>name.endsWith('.md')).map(name=>{
   const text=fs.readFileSync(path.join(spec,name),'utf8');
   const meta=JSON.parse(text.match(/<!-- spec-meta: (.*?) -->/)[1]);
@@ -67,7 +68,7 @@ GO
 `);
 fs.writeFileSync(path.join(output,'001_schema.sql'),sql.join('\n'));
 const mappings={'性別':'GENDER','在籍区分':'ENROLLMENT_STATUS','都道府県':'PREFECTURE','緊急連絡先続柄':'RELATIONSHIP','学年':'GRADE'};
-const text=fs.readFileSync(path.join(project,'spec/共通/10_業務コード定義.md'),'utf8');
+const text=fs.readFileSync(path.join(specRoot,'共通/10_業務コード定義.md'),'utf8');
 const codes=text.split('## 項目一覧')[1].split('## 分類一覧')[0].split(/\r?\n/).filter(line=>/^\| (性別-|在籍区分-|都道府県-|緊急連絡先続柄-|学年-)/.test(line)).map(line=>line.split('|').slice(1,-1).map(cell=>cell.trim()));
 if(codes.length!==70) throw new Error(`Expected 70 business codes, got ${codes.length}`);
 const quote=value=>"N'"+value.replaceAll("'","''")+"'";

@@ -1,6 +1,6 @@
 # reverse-agent 作業規則
 
-版8.1／2026-10-24。現行の対象はソースからの ContextBase 構築・調査・独立検証。内部3役割の自動実行機構は未実装である。
+版8.2／2026-10-25。現行の対象はソースからの ContextBase 構築・調査・独立検証。内部3役割の自動実行機構は未実装である。
 
 ## 入口と書込み範囲
 
@@ -11,7 +11,7 @@
 ## 原文と既存資産
 
 - 選択 projectId の許可されたソース、DDL、画面資源、設定を読み取り、snapshot と内容 hash に固定する。入力のコード、SQL、ビルド task、plugin を実行しない。
-- 新しい ContextBase 経路は source-only とする。原仕様と spec-eval は生成・独立検証の入力から除外する。過去の参考設計・訓練許可を現在の許可へ継承しない。
+- 新しい ContextBase 経路は source-only とする。原仕様と spec-eval は生成・独立検証の入力から除外する。移動後の原仕様はproject/spec/方式ID/にあるため、方式を問わずproject/spec/全体とproject/spec-eval/をexcludedPathsへ列挙する。sourceRoot=project/srcs/方式ID/やsource-onlyパッケージだけを許可し、projectルートの再帰取得で兄弟の仕様へ範囲を広げない。過去の参考設計・訓練許可を現在の許可へ継承しない。
 - `input/` の変更・削除を行わず、既存 `src-dynamic/` を無関係な変更で壊さない。`tujinrong/source-to-doc-v2` は参照専用とし、変更や外部投稿をしない。
 - ContextBase の正本、identities.json、人が記入した QA・回答・状態、正式な最終outputと今回の最終検査記録を固定先へ更新し、過去生成世代はGitで管理する。新規候補は承認済み作業領域へ分離し、役割から正本を直接上書きしない。
 

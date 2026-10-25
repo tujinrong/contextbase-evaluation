@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-REVERSE","version":"8.1","path":"agents/reverse-agent/AGENT.md","sheets":[{"heading":"役割と対象","kind":"GRID","sheet":"01_役割と対象"},{"heading":"内部Agentと共通制御","kind":"GRID","sheet":"02_内部Agent"},{"heading":"共通request","kind":"GRID","sheet":"03_request"},{"heading":"候補と受入","kind":"GRID","sheet":"04_候補と受入"},{"heading":"互換性と完了","kind":"GRID","sheet":"05_互換性と完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-REVERSE","version":"8.2","path":"agents/reverse-agent/AGENT.md","sheets":[{"heading":"役割と対象","kind":"GRID","sheet":"01_役割と対象"},{"heading":"内部Agentと共通制御","kind":"GRID","sheet":"02_内部Agent"},{"heading":"共通request","kind":"GRID","sheet":"03_request"},{"heading":"候補と受入","kind":"GRID","sheet":"04_候補と受入"},{"heading":"互換性と完了","kind":"GRID","sheet":"05_互換性と完了"}]} -->
 # reverse-agent の役割
 
-版8.1／2026-10-24。ContextBase を構築・検証する統一入口と、内部3役割の契約。今回の変更は文書定義であり、新しい自動振分け・採用・復元機構は未実装である。
+版8.2／2026-10-25。ContextBase を構築・検証する統一入口と、内部3役割の契約。今回の変更は文書定義であり、新しい自動振分け・採用・復元機構は未実装である。
 
 ## 役割と対象
 
@@ -43,7 +43,7 @@
 
 初回の discovery だけは sourceRoot から開始できる。共通基盤で対象ファイル、hash、encoding、除外・失敗を固定して sourceSnapshot を発行した後に業務候補を解釈する。入力の取得と初期理解は同じ第1ラウンド内で行う。
 
-入力は source-only とし、原仕様と spec-eval を解析・独立検証へ渡さない。過去の訓練許可を今回の入力許可として継承しない。原プログラム、SQL、ビルド task、入力に含まれる plugin を実行しない。
+入力は source-only とし、原仕様と spec-eval を解析・独立検証へ渡さない。移動後の原仕様はproject/spec/方式ID/にあるため、方式を問わずproject/spec/全体とproject/spec-eval/をexcludedPathsへ列挙する。sourceRoot=project/srcs/方式ID/やsource-onlyパッケージだけを許可し、projectルートの再帰取得で兄弟の仕様へ範囲を広げない。過去の訓練許可を今回の入力許可として継承しない。原プログラム、SQL、ビルド task、入力に含まれる plugin を実行しない。
 
 ## 候補と受入
 

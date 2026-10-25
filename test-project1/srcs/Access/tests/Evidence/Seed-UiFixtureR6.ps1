@@ -15,7 +15,7 @@ $outputRoot=Resolve-AccessGeneratedPath $outputRoot '.tmp'
 Remove-AccessIntermediate $outputRoot
 $reportRoot=Resolve-AccessReportPath $reportRoot
 New-Item -ItemType Directory -Path $outputRoot,$reportRoot -Force | Out-Null
-$inputFiles=@(Get-ChildItem -LiteralPath (Join-Path $profileRoot 'spec'),(Join-Path $profileRoot 'Modules'),(Join-Path $profileRoot 'Classes'),(Join-Path $profileRoot 'database') -Recurse -File | Where-Object {$_.FullName -notmatch '[\/](bin|obj|build)[\/]'} | Sort-Object FullName | ForEach-Object {
+$inputFiles=@(Get-ChildItem -LiteralPath (Join-Path $profileRoot '../../spec/Access'),(Join-Path $profileRoot 'Modules'),(Join-Path $profileRoot 'Classes'),(Join-Path $profileRoot 'database') -Recurse -File | Where-Object {$_.FullName -notmatch '[\/](bin|obj|build)[\/]'} | Sort-Object FullName | ForEach-Object {
     $meta=if($_.Extension -eq '.md'){Get-Content -LiteralPath $_.FullName -TotalCount 1}else{''}
     $version=if($meta -match '"version"\s*:\s*"([^"]+)"'){$Matches[1]}else{$null}
     [ordered]@{path=$_.FullName;version=$version;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}

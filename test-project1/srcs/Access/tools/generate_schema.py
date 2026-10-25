@@ -5,18 +5,19 @@ No DB is opened here. No other project, profile, or evaluation input is read.
 """
 from __future__ import annotations
 import hashlib
+import os
 import json
 import re
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parents[1]
-SPEC = BASE / "spec"
+SPEC = BASE.parent.parent / "spec" / BASE.name
 DEST = BASE / "database"
 
 
 def read(path: Path) -> str:
     if not path.resolve().is_relative_to(SPEC.resolve()):
-        raise ValueError("Inputs must remain inside Access/spec")
+        raise ValueError("Inputs must remain inside test-project1/spec/Access")
     return path.read_text(encoding="utf-8")
 
 
@@ -30,7 +31,7 @@ def table(path: Path) -> dict:
             columns.append(dict(number=int(c[0]), logical=c[1], name=c[2], pk=c[3] == "〇",
                                 required=c[4] == "〇", type=c[5], length=c[6], default=c[7], description=c[8]))
     return dict(name=meta["table"]["physicalName"], version=meta["version"],
-                source=path.relative_to(BASE).as_posix(), sourceSha256=hashlib.sha256(text.encode()).hexdigest(), columns=columns)
+                source=Path(os.path.relpath(path, BASE)).as_posix(), sourceSha256=hashlib.sha256(text.encode()).hexdigest(), columns=columns)
 
 
 def q(value: str) -> str:

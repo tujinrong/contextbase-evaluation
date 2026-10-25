@@ -1,6 +1,6 @@
 # SQL Server 2022
 
-入力は方式内 `../spec/DB定義/SQLServer` と `../spec/共通/10_業務コード定義.md`（版8.0）です。`../tools/generate_database.mjs` はローカルSQLを生成し、DBへ接続しません。
+入力は方式専用仕様の `../../../spec/COBOL/DB定義/SQLServer` と `../../../spec/COBOL/共通/10_業務コード定義.md`（版8.0）です。`../tools/generate_database.mjs` はローカルSQLを生成し、DBへ接続しません。
 
 ```powershell
 node tools/generate_database.mjs

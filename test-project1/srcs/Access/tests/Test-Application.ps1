@@ -1,4 +1,4 @@
-param([string]$Frontend='',[string]$Backend='',[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId='application',[string]$SpecVersion='8.1/8.2',[string]$InputManifest='Access/spec local hash manifest',[string]$ReportDirectory='')
+param([string]$Frontend='',[string]$Backend='',[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$RunId='application',[string]$SpecVersion='8.1/8.2',[string]$InputManifest='test-project1/spec/Access local hash manifest',[string]$ReportDirectory='')
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot '../tools/GeneratedPaths.ps1')
 if (-not $ReportDirectory) { $ReportDirectory=Join-Path $script:AccessMethodRoot 'build/test-results' }
@@ -9,7 +9,7 @@ New-Item -ItemType Directory -Path $taskReport -Force | Out-Null
 $Frontend=Resolve-AccessGeneratedPath $Frontend '.tmp'
 $Backend=Resolve-AccessGeneratedPath $Backend '.tmp'
 Remove-AccessIntermediate (Join-Path ([IO.Path]::GetDirectoryName($Frontend)) 'fixture-progress.log')
-$taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../spec') -Recurse -File | Sort-Object FullName | ForEach-Object { @{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} })
+$taskInputs=@(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../../../spec/Access') -Recurse -File | Sort-Object FullName | ForEach-Object { @{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} })
 $taskUser=[Security.Principal.WindowsIdentity]::GetCurrent().Name.Split('\')[-1]
 if (-not [string]::Equals([IO.Path]::GetFullPath($Frontend),[IO.Path]::GetFullPath($Backend),[StringComparison]::OrdinalIgnoreCase)) { [IO.File]::WriteAllText((Join-Path ([IO.Path]::GetDirectoryName($Frontend)) 'roles.conf'),"$taskUser=Admin`r`n",[Text.Encoding]::Unicode) }
 $taskAccess=New-Object -ComObject Access.Application

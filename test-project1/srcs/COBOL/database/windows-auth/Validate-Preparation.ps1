@@ -45,10 +45,10 @@ foreach($entry in $build.compiledInputs.PSObject.Properties){if((Get-FileHash -L
 foreach($entry in $build.binaries.PSObject.Properties){if((Get-FileHash -LiteralPath (Join-Path $root ('.tmp/host/'+$entry.Name)) -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value){$compiledMatch=$false}}
 $checks += [pscustomobject]@{id='CURRENT_COMPILED_INPUT_AND_BINARY_HASHES';passed=$compiledMatch}
 foreach($file in @(Get-ChildItem -LiteralPath $PSScriptRoot -File)+@(Get-Item -LiteralPath $oldSchema,(Join-Path $root 'database/002_seed.sql'))){$hashes += [pscustomobject]@{path=$file.FullName.Substring($root.Length+1).Replace('\','/');sha256=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash}}
-foreach($file in Get-ChildItem -LiteralPath (Join-Path $root 'spec') -Filter '*.md' -Recurse){
+foreach($file in Get-ChildItem -LiteralPath (Join-Path $root '../../spec/COBOL') -Filter '*.md' -Recurse){
     $source=[IO.File]::ReadAllText($file.FullName,[Text.Encoding]::UTF8)
     $version=if($source -match '"version"\s*:\s*"([^"]+)"'){$Matches[1]}else{'not_declared'}
-    $specs += [pscustomobject]@{path=$file.FullName.Substring($root.Length+1).Replace('\','/');version=$version;sha256=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash}
+    $specs += [pscustomobject]@{path=('../../spec/COBOL/'+$file.FullName.Substring(([IO.Path]::GetFullPath((Join-Path $root '../../spec/COBOL'))).Length+1).Replace('\','/'));version=$version;sha256=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash}
 }
 $drivers=@(Get-OdbcDriver -Platform '64-bit' | ForEach-Object {$_.Name})
 $failed=@($checks|Where-Object{-not $_.passed})

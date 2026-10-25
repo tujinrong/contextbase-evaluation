@@ -1,5 +1,7 @@
 # Access 学生管理
 
+2026-10-25 配置更新：仕様入力は `test-project1/spec/Access/`、ソースと生成出力は `test-project1/srcs/Access/` に分離します。入力ロックは生成時の版・ハッシュを保持し、新しい仕様で再生成する際に検査して更新します。この配置更新ではアプリ・DBの再生成と実行試験を行っていません。
+
 2026-10-24の運用配置に従い、最終成果は [build/StudentManagement.accdb](build/StudentManagement.accdb) 1個です。最新のSHA-256と検証結果は [build/test-results/summary.json](build/test-results/summary.json) を参照してください。5フォーム、VBA、業務5表、ゲート、評価用役割表、初期5分類70コードを内包し、学生・クラス・監査は0件です。外部リンクはありません。初期の役割主体は生成時の Windows 利用者です。
 
 検索は学籍番号前方一致・氏名照合値部分一致・クラスID・在籍集合の4条件です。在籍は初期01/02、全解除は全区分。`clsSearchCriteria` に旧条件プロパティを残さず、raw辞書の未知・廃止キーは空でも拒否します。一覧は非表示学生ID＋7列のネイティブListBox。氏名とカナを合成し、長い値は全文欄へ表示します。住所・電話・更新日時は一覧DTOから除外し、更新日時ソートは内部で保持します。
@@ -8,7 +10,7 @@
 
 検索・編集フォームの本文は18400×9600 twips（96dpi換算で約1227×640px）、入力は510 twips（34px相当）、文字は9pt（12px相当）です。編集は34論理項目と19業務入力を保持し、上段基本情報と下段3列に配置しました。備考・理由は複数行、長文は Shift+F2 の拡大入力で確認できます。重複・論理削除・未保存破棄を別のモーダルフォームで表示し、取消を既定にします。
 
-仕様正本は [spec](spec/README.md) 内だけです。今回の主要改訂は検索/登録8.1・共通データアクセス8.2です。方式内仕様のSHA-256は [build/test-results/inputs.json](build/test-results/inputs.json) に記録します。仕様本文・画像・render記録は変更していません。DB構成は承認済みの単体ACEを維持し、共有SQLへの移行は実行していません。
+仕様正本は [test-project1/spec/Access](../../spec/Access/README.md) 内だけです。今回の主要改訂は検索/登録8.1・共通データアクセス8.2です。方式内仕様のSHA-256は [build/test-results/inputs.json](build/test-results/inputs.json) に記録します。仕様本文・画像・render記録は変更していません。DB構成は承認済みの単体ACEを維持し、共有SQLへの移行は実行していません。
 
 Windows と Microsoft Access が必要です。今回の環境は64bit Access `16.0.20527.20088`。ファイルを開くと `frmStudentSearch` が起動します。未検索・20件・在学/休学が初期状態です。評価構成のため、ファイルを直接変更できる利用者に対する強い権限境界は保証しません。
 

@@ -3,7 +3,7 @@ import path from 'node:path';
 
 // Test expectations and generated/scratch trees are never implementation inputs.
 export function sourceFiles(directory, {excludeSpec=false}={}) {
-  const skip=new Set(['.tmp','spec-eval','build','bin','obj','node_modules','dist','.vs','.git','__pycache__','test-report','test-evidence',...(excludeSpec?['spec']:[])]);
+  const skip=new Set(['.tmp','spec-eval','spec-analysis','build','bin','obj','node_modules','dist','.vs','.git','__pycache__','test-report','test-evidence',...(excludeSpec?['spec']:[])]);
   const files=[];
   function walk(current) {
     const info=fs.lstatSync(current);

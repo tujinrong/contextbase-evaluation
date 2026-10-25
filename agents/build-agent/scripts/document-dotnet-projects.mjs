@@ -1,4 +1,5 @@
-// LEGACY one-time migration resource. Current generation uses build/ and .tmp/.
+// RETIRED one-time migration resource; current source/specification links are maintained in place.
+throw new Error('Retired migration: source documentation now references <project>/spec/<profile>. This historical writer cannot be rerun.');
 import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../..');
 const profiles=[['CSharp_WPF','C# / WPF','StudentManagement.Wpf.csproj','tests/Smoke/NativeSmoke.csproj'],['CSharp_ASPNET','C# / ASP.NET Core MVC','StudentManagement.Web.csproj','tests/WebContracts.csproj'],['Vue_CSharpAPI','Vue / TypeScript + C# Web API','backend/StudentManagement.Api.csproj','tests/ApiContracts.csproj']];
