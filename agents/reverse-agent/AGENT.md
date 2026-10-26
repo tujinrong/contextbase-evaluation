@@ -1,64 +1,72 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-REVERSE","version":"8.2","path":"agents/reverse-agent/AGENT.md","sheets":[{"heading":"役割と対象","kind":"GRID","sheet":"01_役割と対象"},{"heading":"内部Agentと共通制御","kind":"GRID","sheet":"02_内部Agent"},{"heading":"共通request","kind":"GRID","sheet":"03_request"},{"heading":"候補と受入","kind":"GRID","sheet":"04_候補と受入"},{"heading":"互換性と完了","kind":"GRID","sheet":"05_互換性と完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-REVERSE","version":"8.5","path":"agents/reverse-agent/AGENT.md","sheets":[{"heading":"役割と対象","kind":"GRID","sheet":"01_役割と対象"},{"heading":"内部Agentと共通制御","kind":"GRID","sheet":"02_内部Agent"},{"heading":"共通request","kind":"GRID","sheet":"03_request"},{"heading":"候補と受入","kind":"GRID","sheet":"04_候補と受入"},{"heading":"互換性と完了","kind":"GRID","sheet":"05_互換性と完了"}]} -->
 # reverse-agent の役割
 
-版8.2／2026-10-25。ContextBase を構築・検証する統一入口と、内部3役割の契約。今回の変更は文書定義であり、新しい自動振分け・採用・復元機構は未実装である。
+版8.5／2026-10-26。内部3子Agentを取得・目録化、関係構築、動作深化へ分ける設計契約。独立検証は共通の実行能力とし、第4の抽出層にはしない。v2は三層の抽出、共通の独立検証、ホスト採用、ready queueと明示修訂を実装する。実モデルの業務品質とP0／P8の人手受入れは未完了。
 
 ## 役割と対象
 
-選択した projectId のソース、DDL、ビュー、CSS、設定を読み取り、根拠付きのシステム概要・機能・テーブル／データ・共通処理を ContextBase に整理する。調査目標に応じて関係と動作を追加調査し、独立検証を行う。成果は解析情報、根拠、未解決、検証・受入記録までとする。
+選択したprojectIdの許可ソースから、システム概要、業務機能、テーブル／データ、共通処理と、それらの関係・動作をContextBaseへ整理する。成果は根拠付き候補、未解決、検証・受入記録まで。仕様書の構成・執筆・描画・変換・公開は下流の責務である。
 
-仕様書の構成計画、本文執筆、文書レビュー、描画、Office 変換、公開は下流の文書生成側の責務とする。その担当 Agent、配置、移管時期は本契約では確定しない。解析結果を説明するメモや一覧の保存は、仕様書生成の開始を意味しない。
-
-[運用規則](AGENTS.md)と[実行指示](PROMPT.md)を共通条件とし、指定役割の契約だけを追加で読む。[抽出・検証設計](docs/ContextBase分轮提取与验证流程.md)は判断原則、[実装計画](docs/ContextBase実装計画.md)は未実施の開発工程を定める。[全体 Agent 一覧](../README.md)も本契約の ContextBase 構築・調査・独立検証という責務に合わせる。
+[運用規則](AGENTS.md)、[実行指示](PROMPT.md)、指定された層の契約を読む。[設計 v0.8](docs/ContextBase分轮提取与验证流程.md)は原則、[実装計画 v0.6](docs/ContextBase実装計画.md)は移行と残工程、[初期実装ガイド](docs/ContextBase初期実装.md)は現v2 CLIを示す。
 
 ## 内部Agentと共通制御
 
-| 役割 | 責務 | 契約 |
+| 子Agent | 主責務 | 契約 |
 | --- | --- | --- |
-| discovery-agent | 第1ラウンドの取得・構造索引・4種類の業務候補と被覆状況を作る | [取得](roles/discovery/AGENT.md) |
-| investigation-agent | 第2ラウンドの関係調査と、第3ラウンド以降の動作深化を同じ調査内で往復する | [調査](roles/investigation/AGENT.md) |
-| review-agent | 各ラウンドと最終確認で原文を独立に調べ、誤り・漏れ・不足を指摘する | [独立検証](roles/review/AGENT.md) |
+| discovery | 取得・目録化。概要、機能、入口、データ、共通候補と被覆を整理する | [取得・目録化](roles/discovery/AGENT.md) |
+| relationship | 関係構築。対象間の接続、方向、条件、候補と未解決を整理する | [関係構築](roles/relationship/AGENT.md) |
+| behavior | 動作深化。条件、値、状態、順序、例外、副作用、呼出差を調べる | [動作深化](roles/behavior/AGENT.md) |
 
-理解の段階と Agent の数は別である。review-agent を「第3段階の詳細抽出」へ置換せず、関係調査と動作深化を機械的に別 Agent へ分断しない。内部役割は個別に依頼できる契約であり、別リポジトリや3個の常駐プロセスを要求しない。
+三つは主責務であり読取り禁止線ではない。relationshipも関係を判断するために条件や引数を読み、behaviorも不明な関係を追加調査へ戻せる。後続の層もアダプターと原文を利用できる。
 
-共通制御は、元目標と必要事項、依頼の振分け、入力固定、版・競合・依存照合、候補の採用、範囲受入れ、取消・再開を管理する。snapshot、SourceAccess、ID、store、言語・framework・SQL adapter は共有の機械基盤とする。後続の調査・独立検証も adapter と許可原文を直接利用できる。単なる中継や待機のたびに AI を呼ぶ構成にはしない。
-
-新しい自動制御の専用 CLI はまだ存在しない。文書契約を使って手動進行する場合は主担当者が共通制御の確認を担い、実際に確認できない項目を未実施として残す。
+snapshot、SourceAccess、安定ID、store、アダプター、機械検査、独立原文検証を共通基盤に集約する。独立検証は抽出作業とは異なるtask・文脈で実行し、その候補の作者による自己判定で代替しない。対象目録以外の原文・登録点・未調査領域からも漏れを探す。ホストが版、競合、依存、検証を確認し、採用と範囲受入れを管理する。基盤や検証者を各層へ複製せず、単なる中継・待機のたびにモデルを呼ばない。
 
 ## 共通request
 
-以下は論理上の受渡し項目であり、実装済み JSON schema を表さない。物理 schema は実装計画 P1 で確定する。
+物理requestはschema=contextbase-analysis/2、projectId、goal、allowedPaths、excludedPathsを必須とする。各goal.requirementsはid／question／stage／scope／requiresを持つ。実行ID、snapshot、基準版、task、候補・検証情報はホストが生成・束縛する。下表の論理項目すべてをrequestへ重複追加しない。
 
 | 項目 | 内容 |
 | --- | --- |
-| runId / projectId | 今回の実行と対象案件の識別。役割ごとの作業IDも関連付ける |
-| role | discovery、investigation、review のいずれか。省略時は共通制御が目標から選ぶ |
-| sourceSnapshot | 封印 manifest、ソース版・内容 hash、原文位置を参照する |
-| contextBaseVersion | 読取り基準となる内容版。初回のみ未作成を明示する |
-| scope | 対象、対象外、方式・設定、既調査と未調査の範囲 |
-| goal | 元の要求、具体的質問、完了に必要な事項。子調査でも元目標を保持する |
-| allowedPaths / excludedPaths | 役割に渡す読取り可能パスと除外パス |
-| outputRoot | 候補・指摘は対象方式内.tmp/の作業領域。snapshot・入力・ContextBase正本から分離し、採用後の最終検査記録だけbuild/へ固定名更新する。過去生成世代はGitで管理 |
-| verificationRequirements | 必須検査、独立原文確認、人手照合基準の参照ID・検査条件、受入範囲。試験の期待回答は評価側に保持する |
+| 実行・案件識別 | runId、projectId、作業IDと元目標の関係 |
+| 実行種別と抽出層 | 抽出か独立検証かを区別する。抽出stageはdiscovery／relationship／behavior。task.operationはextract／verifyで、独立検証は対象候補・層・義務をホストが指定する |
+| 封印入力と基準版 | sourceSnapshot、manifest、原文hash・位置、ContextBase基準版。初回未作成を明示する |
+| 目標と範囲 | 元のgoal、id／question／stage／scope／requiresを持つ必要義務、対象・対象外、検証済み前提 |
+| 読取り権限 | 許可原文と除外範囲。実行権限と入力根内パスを区別する |
+| 出力先 | 候補・指摘は対象方式の.tmp/、最終検査記録はbuild/の固定先。入力・snapshot・正本と分離する |
+| 検証条件 | 必須検査、独立原文確認、人手基準の参照、未確認範囲、受入義務。期待回答は評価側で隔離する |
 
-初回の discovery だけは sourceRoot から開始できる。共通基盤で対象ファイル、hash、encoding、除外・失敗を固定して sourceSnapshot を発行した後に業務候補を解釈する。入力の取得と初期理解は同じ第1ラウンド内で行う。
+relationshipは同じscopeのdiscovery義務、behaviorは同じscopeのrelationship義務をrequiresで指定し、独立検証・採用済みを前提とする。前提不足は上流へ質問と根拠を返す。全リポジトリの同期完了を待たず、目標に必要な前提だけを確認する。目録や関係で要求を満たせばそこで止め、有効な成果がある場合は適用性を確認して必要な層から始める。
 
-入力は source-only とし、原仕様と spec-eval を解析・独立検証へ渡さない。移動後の原仕様はproject/spec/方式ID/にあるため、方式を問わずproject/spec/全体とproject/spec-eval/をexcludedPathsへ列挙する。sourceRoot=project/srcs/方式ID/やsource-onlyパッケージだけを許可し、projectルートの再帰取得で兄弟の仕様へ範囲を広げない。過去の訓練許可を今回の入力許可として継承しない。原プログラム、SQL、ビルド task、入力に含まれる plugin を実行しない。
+入力はsource-only。実行権限・入力選択ではproject/spec/全体とproject/spec-eval/を禁止し、選択ソース根の外へ物理的に隔離する。sourceRoot=project/srcs/方式ID/または隔離したsource-only入力を選び、project根へ拡張しない。現CLIのallowedPaths／excludedPathsは --source 内の相対パスだけを指定し、兄弟のspecや ../ を使わない。入力プログラム、SQL、DB、ビルドtask、pluginを実行せず、過去の訓練許可も自動継承しない。
+
+現CLIは --source と --work の同一・親子配置を拒否する。方式sourceRoot/.tmp/内の準備済みsource-only展開先と兄弟の作業先で分離できる。最終正本はホスト採用後に更新し、過去生成世代はGit履歴で管理する。人手QA、identities、正式fixtureを中間物として削除しない。
 
 ## 候補と受入
 
-取得・調査役割は候補差分、根拠、被覆、未知、追加調査要求を作業領域へ提出する。検証役割は候補内容版と原文に結び付いた指摘、検査範囲、未検査、判定理由を提出する。3役割から正本や受入状態を直接上書きしない。
+各子Agentは根拠付き候補差分、被覆、未知、依存、上流への追加調査要求を作業領域へ提出する。recordは唯一のownerRequirementを持ち、作者のdependsOnキーをホストがdependenciesのkey／versionへ固定する。原文観測、推定、候補集合、未知・矛盾を分け、構文callを解決済み関係と扱わない。固定ツールは位置・構造・整合を、AIは業務解釈を担当する。
 
-共通制御は、基準版、安定ID、原文 hash・位置、依存、競合、検査、独立検証と指摘処置を確認してから採用する。作業・入力・正本の解決後パスを照合し、領域外や symlink 経由の書込みを拒否する。採用した候補の保存と、元目標の範囲受入れは別の状態とする。指摘を受けて内容が変わった場合は、変更後の内容・根拠版を再検証する。作者自身による合格や、旧版レビューによる新版受入れを認めない。
+共通検証は候補版と原文に結び付いた指摘、確認範囲、未検査、判定理由を返す。作者は指摘を処置し、変更後の候補・根拠版を再検証する。ホスト以外は正本・受入状態を変更しない。manual／injected結果の保存を採用可能な独立実行の証明にしない。
 
-初期目録だけが必要なら discovery と review を使い、必要事項を満たせばそこで返す。有効な既存索引があれば investigation と review から進める。初期目録の独立検証前に深掘りを始めず、確認済み領域は全件完了を待たずに進める。新対象は discovery、関係・動作の不足は investigation へ戻す。毎回全対象を3役割へ直列投入しない。
+上流で新対象・誤関係を発見した場合は目録または関係構築へ戻す。変更による依存成果・検証の失効を確認し、影響不明なら再確認を広げる。全対象を毎回3層へ投入しない。部分成果には達成範囲と未達義務を付け、元目標を勝手に縮めて完了しない。
 
-部分成果には、達成範囲、未達事項、根拠版、検証範囲を付け、元目標は未完了として返せる。情報不足を正常な空結果や不存在へ変換しない。固定の索引／概覧／詳細を全件生成する方式にはしない。
+未知はid／question／relatedRequirements／blocksRequirements／scopeReasonを持ち、関連先と阻害先を分離する。verifyはunknownChecksで全unknownのidとhashを正確に束縛し、影響を判定する。非阻害・解決済みには根拠を求め、作者の自己評価で放行しない。検証viewは候補と保持する未失効の既採用記録を含み、viewSha256の一致を採用時にも確認する。
+
+未知のライフサイクルはrecordのowner失効と分離する。上流候補の置換や明示reviseでも既存unknownのid・内容・hashを保持し、作者が省略しても消さない。影響を受けた旧検証decisionは失効させ、後続verifyが各未知を独立に再判定する。
+
+followupが採用予定viewで有効な上流義務を指す場合、当候補のcoverageがsupportedでverifyがpassでもadoptを阻止する。runも補査要求を保存して停止し、明示reviseと再調査を待つ。現在候補のrequirementsだけを調べて上流への補査を見逃さない。まだ採用していない将来義務への質問はhandoffQuestionsとして後続層のcontextへ渡し、現在の前層採用を一律には妨げない。
 
 ## 互換性と完了
 
-新経路は D11 に従い有効性・依存を確認した再利用を設計するが、P6 の実装・契約試験を通るまでは自動再利用を実装済みとして使わない。既存 CLI の fresh-analysis、checkpoint、批評の受入条件は、[旧経路を明示選択した場合の契約](docs/legacy/README.md)に保持する。文書の改訂だけで旧プログラムの挙動や保存済みデータを変更しない。
+現CLIはstep --stage、verify、run、reviseを提供する。v1 request／sessionと旧 --role は明示エラーとし、自動変換しない。旧investigationの意味を推測せず、v2 requestで新しいセッションを作る。
 
-新経路には既定の固定総時間・総 token 予算を設けない。元目標が未達で実質的進展と実行可能な次の調査がある間は継続する。取消、実故障、入力失効、無進展では候補・正本・待ち事項・停止理由と再開条件を保存する。個別操作の timeout や資源保護、外部から明示された期限は総予算と区別する。
+runは元要求の依存グラフからready義務を選び、局所の検証済み範囲を上層へ優先して進める。阻害・グラフ外補査は保存して停止し、scopeや義務を勝手に拡大しない。同basisの重複runは既存pendingを返し、新モデル呼出しを増やさない。
 
-完了報告は、入力・ContextBase・契約の版と hash、使用ファイル、採用範囲、独立検証、未達・未実施を明記する。役割定義、構造検査、静的な業務理解、アプリ実行試験、性能、正式採点を別の状態として扱う。
+reviseは採用済み義務とrequirement／版固定record依存の推移的な下流を撤回し、completeを再開できる。過時記録は現正本から外し、履歴・安定IDを保持する。step --feedbackは旧候補を材料に原文を再調査し、再検証・採用する。
+
+D01～D12は維持する。有効性を確認した成果の再利用を目指すが、P6の依存照合・失効・互換試験前に自動再利用済みと扱わない。既定の総時間・総token予算は設けず、実質的進展に基づく継続を目指す。定義済み目標グラフのready queueと同basis無進捗停止は実装済み。任意の補査配車・自動修復、長期継続制御、新入力範囲やcross-sessionのP6増分再利用は未完了。現cancelは旧返却を失効させるが、モデル子プロセスの即時killは保証しない。
+
+現CLIは封印workspace読取りを既定とし、明示inlineでは改行保持sourceTextと表示用numberedTextを全量提供する。1MiB超は切り捨てず失敗。型束縛、データフロー、framework／SQL専用解析は未実装である。storeはホスト管理前提で、hashは内容整合・版束縛の検査であり認証ではない。
+
+旧仕様書経路を明示選択した場合だけ [旧契約](docs/legacy/README.md)を参照する。2026-10-26に指定された2プロジェクトの試行用複製・設定・結果は清掃済みで、元工程と汎用実装・合成テストは保持する。旧作業領域はresume不可。再試行はscope・request・workspaceを新たに決める。
+
+報告は入力・出力・契約の版、ファイル、実施した検査、受入範囲、未達・未実施を明記する。文書改訂をコード実装・解析・実アプリ試験・性能確認・正式受入れへ読み替えない。

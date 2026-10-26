@@ -10,6 +10,9 @@ from .discovery import probe
 
 def main(argv=None) -> int:
     actual = list(sys.argv[1:] if argv is None else argv)
+    if actual and actual[0] == 'extract':
+        from .analysis.__main__ import main as analysis_main
+        return analysis_main(actual[1:])
     if actual and actual[0] == 'ai':
         from .ai.__main__ import main as ai_main
         return ai_main(actual[1:])

@@ -1,13 +1,15 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"7.4","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"7.7","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
 # Agent定義一覧
 
-版7.4／2026-10-25。AG-REVERSE を ContextBase 構築・調査・独立検証の統一入口として同期。アプリ実装・実機試験・採点の状態は各実行の報告で区別する。
+版7.7／2026-10-26。AG-REVERSE を ContextBase 構築・調査・独立検証の統一入口として同期。アプリ実装・実機試験・採点の状態は各実行の報告で区別する。
 
 ## 概要
 
 3種類のAgentの役割を定義する。Codexが契約と実行指示を読んで作業する。定義文書の存在だけで各工程を実行済みとしない。題材はprojectIdで選択し、全体規則と題材の正解を分離する。実行時に許可ファイルを列挙し、GitHub全体を無制限に参照させない。
 
-AG-REVERSE の内部役割は discovery-agent（取得・初期理解）、investigation-agent（関係調査・動作深化）、review-agent（各段階の独立原文確認）とする。共通制御が候補の採用と範囲受入れを管理する。仕様書の構成・執筆・変換・公開は下流の責務とし、担当と旧コードの移管は未決定である。新しい3役割の自動実行機構は未実装であり、現存する旧仕様書生成 CLI と区別する。
+AG-REVERSEの設計上の3子Agentは [discovery](reverse-agent/roles/discovery/AGENT.md)（取得・目録化）、[relationship](reverse-agent/roles/relationship/AGENT.md)（関係構築）、[behavior](reverse-agent/roles/behavior/AGENT.md)（動作深化）。独立検証は共通能力として抽出と別task・文脈で実行し、ホストが採用・範囲受入れを管理する。第4の段階子Agentにはしない。仕様書の構成・執筆・変換・公開は下流の責務である。
+
+現コードはv2のstage（discovery／relationship／behavior）と、独立検証operationを分ける。step／verify／run／revise、封印入力、ホスト採用を実装した。runは定義済み目標グラフ内で局所の検証済み前提から進め、阻害時は保存停止する。旧v1と --role は自動移行しない。任意の自動補査修復、cross-session P6再利用、長期運用、実モデル業務品質・人手受入れは未完了。操作は [実装ガイド](reverse-agent/docs/ContextBase初期実装.md)を参照する。
 
 ## Agent一覧
 
@@ -19,4 +21,4 @@ AG-REVERSE の内部役割は discovery-agent（取得・初期理解）、inves
 
 ## 実行コンテキスト
 
-projectId、仕様セット版、方式ID、specRoot=project/spec/方式ID、sourceRoot=project/srcs/方式ID、入力コミット/ハッシュ、許可パス、除外パス、出力先、Agent定義版、実行IDを固定する。AG-SPECはspecRootを更新し、AG-BUILDは同じspecRootからsourceRootへ生成する。業務入力は選択方式のspecRoot内で閉じ、旧sourceRoot/specや他方式を代替入力にしない。全Agentは最終正本を更新し、最終成果・検査結果はsourceRoot/build/の固定先へ更新する。中間結果はsourceRoot/.tmp/、方式を持たない共通作業は担当Agentまたはprojectの.tmp/を使う。過去生成結果の別名保存はせずGit履歴を使う。spec-evalは採点者の参照先で、逆生成Agentの入力から移動後のproject/spec/全体とともに物理的に除外する。共有docsに業務正解を隠して隔離を迂回しない。
+projectId、仕様セット版、方式ID、specRoot=project/spec/方式ID、sourceRoot=project/srcs/方式ID、入力コミット/ハッシュ、許可パス、除外パス、出力先、Agent定義版、実行IDを固定する。AG-SPECはspecRootを更新し、AG-BUILDは同じspecRootからsourceRootへ生成する。AG-SPEC／AG-BUILDの業務入力は選択方式のspecRoot内で閉じ、旧sourceRoot/specや他方式を代替入力にしない。AG-REVERSEは原仕様を読まず、選択source-only入力を使う。全Agentは最終正本を更新し、最終成果・検査結果はsourceRoot/build/の固定先へ更新する。中間結果はsourceRoot/.tmp/、方式を持たない共通作業は担当Agentまたはprojectの.tmp/を使う。過去生成結果の別名保存はせずGit履歴を使う。spec-evalは採点者の参照先で、逆生成Agentの実行権限・入力選択では移動後のproject/spec/全体とともに禁止し、選択ソース根の外へ物理的に隔離する。逆生成CLIのallowedPaths／excludedPathsはそのソース根内の相対パスに限定し、兄弟の仕様へ範囲を広げない。共有docsに業務正解を隠して隔離を迂回しない。
