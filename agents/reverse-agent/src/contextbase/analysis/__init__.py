@@ -1,1 +1,1 @@
-"""Goal-oriented ContextBase extraction, independent of document generation."""
+"""Compatibility package; implementation lives in contextbase_runtime."""

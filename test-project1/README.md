@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-README","version":"8.3","path":"test-project1/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"方式一覧","kind":"LIST","sheet":"02_方式一覧","key":["方式ID"]},{"heading":"入力と報告","kind":"GRID","sheet":"03_入力と報告"},{"heading":"隔離境界","kind":"GRID","sheet":"04_隔離境界"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-README","version":"8.4","path":"test-project1/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"方式一覧","kind":"LIST","sheet":"02_方式一覧","key":["方式ID"]},{"heading":"入力と報告","kind":"GRID","sheet":"03_入力と報告"},{"heading":"隔離境界","kind":"GRID","sheet":"04_隔離境界"}]} -->
 # test-project1 学生管理
 
-版8.3／2026-10-25。現行の独立配置。各実行結果は試験報告の範囲で判定する。
+版8.4／2026-10-26。現行の独立配置。各実行結果は試験報告の範囲で判定する。
 
 ## 対象
 
@@ -23,6 +23,12 @@
 
 [プロジェクト情報](プロジェクト情報.md)／[仕様索引](spec/README.md)／[試験結果](test-report/README.md)。入力版・入力SHA-256・構造検査・出力SHA-256は各方式build/generation/の固定JSONを参照する。最終配布物・最終試験結果は各方式build/へ更新し、試行・cache・隔離展開は各方式.tmp/だけに置く。履歴はGitで管理する。過去の中断報告や試験合格を現行版へ流用しない。
 
+### ContextBase解析の設定と結果
+
+[contextbase.toml](contextbase.toml)のprofileで入力・request・work・outputを切り替える。相対パスは設定ファイルの位置が基準。既定profileはcsharp_aspnet、sourceはsrcs/CSharp_ASPNET、workは.tmp/contextbase/csharp_aspnet、最終出力は [spec-reverse](spec-reverse/README.md) の各Agent/contextbase.json。解析成果は通常の配布物build/とは分ける。csharp_wpf profileはsrcs/CSharp_WPF、spec-reverse/CSharp_WPF、.tmp/contextbase/csharp_wpfへ切り替える例で、今回解析を開始する指示ではない。
+
+設定ファイルの存在は解析・検証の完了を意味しない。paths --configは解決先の確認だけを行い、snapshot作成・LLM呼出しはしない。実行・採用の範囲は各回の結果で確認する。既存workは封印した入力に束縛し、元ソース変更へ自動追従しない。
+
 ## 隔離境界
 
-各方式は他方式のコード、仕様、DB定義、生成器を引用しない。原仕様は選択方式のspec/方式ID/だけを正本とし、業務仕様と仕様間参照をこのspecRoot内で閉じる。順生成はspecRootを読み、対応するsourceRootへ生成する。旧sourceRoot/specをfallbackに使わない。旧版を作業ツリーへ別名保存せず、必要な過去版はGit履歴から参照する。逆生成の入力は当該方式build/source.zipだけとし、project/spec/全体、spec-eval、履歴、入力manifestは渡さない。業務仕様と工程制御のルールを区別し、配置修正だけでDBや権限の契約を変更しない。
+各方式は他方式のコード、仕様、DB定義、生成器を引用しない。原仕様は選択方式のspec/方式ID/だけを正本とし、業務仕様と仕様間参照をこのspecRoot内で閉じる。順生成はspecRootを読み、対応するsourceRootへ生成する。旧sourceRoot/specをfallbackに使わない。旧版を作業ツリーへ別名保存せず、必要な過去版はGit履歴から参照する。逆解析の入力は選択方式のsource-onlyパッケージ、または利用者が明示許可したsourceRootの読取り専用ソースとする。今回の既定はcontextbase.tomlのsrcs/CSharp_ASPNETで、原仕様project/spec/全体、spec-eval、他方式、履歴の期待値は渡さない。業務仕様と工程制御のルールを区別し、配置修正だけでDBや権限の契約を変更しない。

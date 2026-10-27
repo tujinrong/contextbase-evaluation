@@ -1,12 +1,12 @@
 # ContextBase 段階的抽出・検証の実装計画
 
-版：計画 v0.6／2026-10-26。
+版：計画 v0.11／2026-10-26。
 
-状態：取得・目録化→関係構築→動作深化をv2実行契約へ分離し、独立verify、host採用、ready queue、明示reviseを実装した。個別の試行資産は清掃済みで、P0～P8の全体完了や正式受入れを示さない。現CLIは [初期実装ガイド](ContextBase初期実装.md)を参照する。
+状態：3Agentを平級の独立package・CLIへ分離し、共通runtimeとportable受渡しで接続する。新配置の独立導入・受渡しの構造・合成検証は通過した。旧互換v2の合格を流用せず、P0～P8全体の正式受入れも示さない。操作は [実装ガイド](ContextBase初期実装.md)を参照する。
 
 ## 1. 目的と対象
 
-[ContextBase 段階的抽出・検証設計 v0.8](ContextBase分轮提取与验证流程.md)のD01～D12と、利用者が確定した3子Agentの段階的分担を実装作業へ分解する。対象は、読取り専用ソースからシステム概要・機能・テーブル／データ・共通処理を抽出し、関係構築、動作深化へ進めるContextBaseである。
+[ContextBase 段階的抽出・検証設計 v0.13](ContextBase段階的抽出・検証フロー.md)のD01～D12と、利用者が確定した3独立Agentの段階的分担を実装作業へ分解する。対象は、読取り専用ソースからシステム概要・機能・テーブル／データ・共通処理を抽出し、関係構築、動作深化へ進めるContextBaseである。
 
 仕様書の計画・本文・描画・Office 変換、原プログラムや DB の実行、全案件への一括再解析は対象外。現在の `ContextBase`、人手 QA、既存案件ソース、旧出力は本計画の作成では変更しない。
 
@@ -22,7 +22,7 @@
 | D04 | 全詳細を先取りせず、必要に応じて深化する | P1、P4、P5 |
 | D05 | 調査目標を中心とし、よく使う依頼だけテンプレート化する | P1、P5 |
 | D06 | 異なる二言語の小範囲で共通手順を検証する | P0、P3～P8 |
-| D07 | 業務タスクを機能の主体とし、技術入口は別に関連付ける | P1、P4、P5 |
+| D07 | 業務タスクを機能の主体とし、技術入口は別に関連付ける | P1、P4、P5。[分類境界](../../shared/contextbase-runtime/docs/機能分類境界.md)を参照 |
 | D08 | 確認済み部分を返せるが、原目標の未完了を明示する | P1、P2、P4～P8 |
 | D09 | 人手照合した小規模基準、機械検査、独立 AI レビューを併用する | P0、P3～P8 |
 | D10 | 最小共通契約を先に検証し、基底実装は二 adapter の実例から抽出する | P1、P3、P8 |
@@ -31,74 +31,52 @@
 
 異なる2言語の小規模試行で共通フローを確認する方針は維持する。個別の業務試行資産は清掃済みで、次の対象・request・人手基準は改めて選定する。意味解析backend、包括的な互換・失効モデル、実質的進捗の観測と自律制御は残作業。「索引／概要／詳細」の固定三段階は採用していない。
 
-追加決定：3子Agentはdiscovery／relationship／behaviorの順に成果を引き渡す。独立検証は各層共通の実行能力とし、作者と異なるtask・文脈、候補版の束縛、ホストによる採用を維持する。D01～D12の決定内容は変えず、旧investigationに同居した関係・動作の責務を分ける。
+追加決定：3独立Agentはdiscovery／relationship／behaviorの順に成果を引き渡す。独立検証は各層共通の実行能力とし、作者と異なるtask・文脈、候補版の束縛、ホストによる採用を維持する。D01～D12の決定内容は変えず、旧investigationに同居した関係・動作の責務を分ける。
 
-## 3. 現行実装との対応
+## 3. 独立プロジェクトと実装配置
 
-パスは agents/reverse-agent からの相対位置。
-
-| 領域 | 初期実装 | 残る境界 |
+| 実行単位 | 配置 | 責務 |
 | --- | --- | --- |
-| 契約 | analysis/contracts.py の request・候補・review・領域前提 | 論理状態の全実装、旧データの移行・互換 |
-| 入力・根拠 | analysis/sources.py の封印・manifest・hash・原位置検査 | 静的範囲外の材料は取得済みとしない |
-| 版・保存 | analysis/storage.py と controller.py の候補・review・revision | ホスト管理前提。hashは認証ではなく新入力・cross-session P6再利用は未完了 |
-| 構文adapter | analysis/adapters.py の C#／Java と隔離worker | 全callは未解決。型束縛・データフロー・framework／SQL専用解析なし |
-| AI実行 | analysis/controller.py が既存 ai/provider.py を使って1役割ずつ実行 | 定義済みグラフのrunは実装済み。任意の自動補査修復は未完了。既定workspace、明示inlineは1MiB上限 |
-| CLI | analysis/__main__.py と統一extract入口 | step／review／adopt／cancel／resumeはホストが明示 |
-| 旧経路 | ai の文書単位処理、foundation／detail／specification、docsite | 旧契約を維持し、新経路へ自動移行しない |
-| 検証 | 新3スイートの契約・構文・ホスト制御試験 | 人手照合基準の受入れ、実モデル全経路と性能比較は未完了 |
+| discovery-agent | agents/discovery-agent | contextbase-discovery／contextbase_discovery。取得・目録化だけを実行 |
+| relationship-agent | agents/relationship-agent | contextbase-relationship／contextbase_relationship。関係構築だけを実行 |
+| behavior-agent | agents/behavior-agent | contextbase-behavior／contextbase_behavior。動作深化だけを実行 |
+| 共通runtime | agents/shared/contextbase-runtime/src/contextbase_runtime | snapshot、SourceAccess、ID、store、adapter、前提検証、独立検証、host採用、受渡し |
+| 任意互換入口 | agents/reverse-agent | analysis-pipelineで独立3Agentを連続実行する任意入口。旧extract経路は別途互換保持 |
 
-### 3.1 3子Agentと共通制御の実装責務
+3Agentのinstall・import・起動はreverse-agentに依存しない。各自source／request／workを持ち、独立した層の抽出後に別task・文脈で原文検証・host採用する。共有コードはreverse配下へ残した実装をimportする形にしない。
 
-reverse-agentは総合入口・共通制御として残す。新設計では次の3子Agentが理解の層を担当する。共通条件は [共通契約](../AGENT.md) を参照する。
+### 3.1 Portable受渡しと前提
 
-| 担当 | 入力と主責務 | 引渡し条件 | 主な工程 |
-| --- | --- | --- | --- |
-| [discovery-agent](../roles/discovery/AGENT.md) | 許可原文を固定し、構造索引、概要・機能・入口・データ・共通候補を作る | 該当領域の目録義務を独立検証・採用する | P3、P4 |
-| [relationship-agent](../roles/relationship/AGENT.md) | 検証済み目録と原文から接続、方向、条件、主要経路を構築する | 今回の動作質問が必要とする関係義務を独立検証・採用する | P5a |
-| [behavior-agent](../roles/behavior/AGENT.md) | 検証済み関係と原文から条件、値、状態、異常、副作用、呼出差を深化する | 要求された動作義務を独立検証し、元目標を判定できる | P5b |
-| 共通検証 | 各層と最終範囲を作者とは別task・文脈で原文照合する | 内容・根拠版に束縛した指摘と検証結果をホストへ返す | P1、P2、P4、P5a、P5b、P8 |
-| 共通制御・基盤 | snapshot、SourceAccess、ID、store、adapter、目標、版・競合・依存、採用・受入、取消・再開を扱う | 検証の有効性と前提を確認して次の層・補査先を決める | P1、P2、P6、P7 |
+同一のv2 requestは元goal・全前提グラフを保持する。各Agentは自層義務だけを選び、後続層は前層を自動実行しない。前提不足はneeds-prerequisitesで返す。
 
-relationshipは関係を判断するための条件や引数も読める。behaviorは関係の誤りをrelationship、新対象をdiscoveryへ戻す。前層変更が影響する下流事実・検証を失効させ、修訂版で再検証する。分割するのは交付責務であり、原文・adapterの利用を前層だけに閉じない。
+exportは全有効記録・全unknown・未閉鎖followup（raw履歴は監査用）をportableに保存する。自層に受入れ済み成果がある場合だけ出力でき、scope部分成果も区別して出せる。出力は新規パスを使い、既存ファイル、入力、store内への書込みは拒否する。
 
-目標が目録や関係で満たされればその層で返す。有効な前層成果から始める場合も適用性と依存を確認する。前提は同じ領域・対象・内容版に限定し、全倉同期や毎回全件3層の直列実行を要求しない。同sessionの版固定成果は前提に使えるが、新入力・cross-session P6再利用は未完了とする。
+受信側は前層workなしでhandoffを読み、自身の封印ソースでrequest・manifest・内容を照合する。外部passは監査情報として保持し、別task・文脈の独立原文再検証後に前提を有効化する。異なるrequest・ソース範囲への汎用P6再利用へ広げない。
 
-### 3.2 v2の実装と互換性
+可搬ソース束縛では絶対sourceRootを除き、それ以外のmanifest、相対パス、内容指紋、許可・除外材料を照合する。ソースの絶対配置が違っても、同一request・相対scope・材料の一致が必要である。
 
-requestはschema=contextbase-analysis/2を必須とし、各義務にid／question／stage／scope／requiresを持つ。同scope内でrelationship→discovery、behavior→relationshipの採用済み前提を検証する。抽出executeと独立verifyは別task・文脈で、hostのadoptが候補と保持成果のview hashを再検査して採用する。
+明示followupは安定ID followup:<digest> のunknownとして質問・対象義務・内容hashに束縛する。後続の独立検証はunknownChecksで各項目を判定し、原文根拠付きresolvedだけが閉鎖を意味する。acceptedやnon-blockingだけでは閉鎖しない。raw followupは監査履歴に残し、portableな活動中一覧には未閉鎖項目だけを含める。受信側の独立検証でresolvedを確認してから前提を有効化できる。引き継いだfollowupの対象義務が今回の採用予定集合へ入る場合、原文根拠付きresolvedを必須とする。この条件はローカルadoptと外部前提の有効化へ同じgateで適用し、最終behaviorも未閉鎖の本層質問を残したままcompleteにしない。未解決の有効上流と、現在候補が要求する有効上流への補査は採用を阻害する。
 
-| 項目 | 現実装 | 残る境界 |
+### 3.2 実装契約と旧経路
+
+v2のstage／scope／requires、recordのownerRequirementと版固定dependencies、未知の関連先・阻害先・範囲理由を維持する。上流置換・reviseでも未知id・内容・hashを保持し、影響decisionを失効して再検証する。有効上流へのfollowupはpassでも採用を阻害し、将来義務への質問は引渡しに残す。
+
+reverse-agentは希望時だけ使うanalysis-pipelineを提供し、各Agentの公開run／exportでscope別の独立workを連続実行する。先に一つのscopeの3層を進め、次のscopeへ移る。元request全体は切り詰めない。旧extractのrunは別の旧v2互換経路であり、それが通っても独立3プロジェクトの導入・受渡し合格としない。
+
+### 3.3 工程別の状態
+
+| 工程 | 現状 | 残る確認 |
 | --- | --- | --- |
-| stage・operation | 3抽出層とextract／verifyを分離 | 実モデル業務品質は未受入れ |
-| 自動進行 | runのready queue、局所高層優先、阻害保存、同basis重複呼出し抑止 | 未定義の補査・scope拡大・無制限修復は行わない |
-| 修訂 | reviseで義務と版固定record依存の推移下流を撤回、feedbackで再調査 | 新ソース範囲・別sessionの再利用とは別 |
-| record | ownerRequirement、host固定のdependencies key／version、過時記録を現正本から除外 | 履歴と安定IDは保持 |
-| 未知 | relatedRequirementsとblocksRequirementsを分離、unknownChecksでid／hash／影響確認 | 作者の非阻害自己評価では採用しない |
-| 旧版 | v1 request／session、旧 --role を明示拒否 | 自動変換せず新v2要求を作る |
-
-未知のライフサイクルはrecordのowner失効と分離する。上流候補の置換や明示reviseでも既存unknownのid・内容・hashを保持し、作者が省略しても消さない。影響を受けた旧検証decisionは失効させ、後続verifyが各未知を独立に再判定する。
-
-followupが採用予定viewで有効な上流義務を指す場合、当候補のcoverageがsupportedでverifyがpassでもadoptを阻止する。runも補査要求を保存して停止し、明示reviseと再調査を待つ。現在候補のrequirementsだけを調べて上流への補査を見逃さない。まだ採用していない将来義務への質問はhandoffQuestionsとして後続層のcontextへ渡し、現在の前層採用を一律には妨げない。
-
-### 3.3 工程別の部分実装状態
-
-P0～P8全体の完了を意味しない。P5は関係構築P5aと動作深化P5bを含む。
-
-| 工程 | 現状 | 残る主な確認 |
-| --- | --- | --- |
-| P0 | 旧業務試行資産は清掃済み | 新たな2言語対象・scope・request、人手基準、比較条件 |
-| P1 | v2 schema、stage／scope／requires、未知・所有義務を実装 | 実案件適用と包括的互換運用 |
-| P2 | 封印、版・根拠、独立verify、原子的host採用を実装 | 新対象の実モデル受入れ |
-| P3 | C#／Java構文adapterと隔離workerを保持 | 型束縛、意味解析、framework／SQL専用能力 |
-| P4 | discoveryと共通verify、領域別前提を実装 | 人手基準と実対象での品質受入れ |
-| P5a | relationshipを分離し同scope目録前提を実装 | 関係解釈の実モデル品質、追加補査運用 |
-| P5b | behaviorを分離し同scope関係前提を実装 | 業務動作の実モデル品質と人手照合 |
-| P6 | 同sessionのrecord版束縛・依存撤回を実装 | 新入力範囲・cross-sessionの増分事実再利用 |
-| P7 | ready queue、同basis停止、cancel／resume、reviseを実装 | 自動補査修復、即時kill、長期運用 |
-| P8 | 合成ソース・synthetic providerでv2回帰を確認 | 実モデル、人手正解表、総合品質・性能比較 |
-
-manual／injectedは採用不可。storeはホスト管理前提で、hashは認証ではない。固定総予算を設けず、単操作timeoutと外部制限を区別する。阻害されたrunは未完了の非0終了とし、既存pendingと補査要求を残す。
+| P0 | 旧業務試行を清掃済み | 新しい2言語対象・人手基準・比較条件 |
+| P1 | 共通v2契約と平級3プロジェクトの入力契約を具体化 | 合成契約試験は通過。実業務の適用確認 |
+| P2 | 共通runtimeへ入力・検証・採用を移し、各workのホストで実行 | 独立導入・受渡し・拒否経路の合成確認は通過。長期実運用 |
+| P3 | C#／Java構文adapterを共通runtime化 | 意味束縛、framework／SQL、実業務精度 |
+| P4 | 独立discoveryの入口と出力契約 | 実モデル・人手品質受入れ |
+| P5a | 独立relationshipと受信前提再検証 | 実業務の関係精度 |
+| P5b | 独立behaviorと受信関係再検証 | 実業務の動作精度 |
+| P6 | 同一request・manifest／内容でのportable移送に限定 | 一般的なcross-session増分再利用 |
+| P7 | 本層run、阻害停止、共通cancel／resume／revise | 長期運用、自動補査修復、即時kill |
+| P8 | 新配置の合成試験・構造確認は通過 | 実モデル・人手・性能の総合受入れ |
 
 ## 4. 工程と依存関係
 
@@ -137,6 +115,14 @@ flowchart TD
 
 ### P1：最小共通契約を定める
 
+**主／子／共通の新discovery契約**
+
+新discoveryモードはホスト固定のcatalogPolicy=contextbase-catalog/1を用いる。record.kindのfunction／operation／common／unclassifiedを主機能／子操作／共通／保留に対応させ、typed classificationの必須項目と参照条件を[機能分類境界](../../shared/contextbase-runtime/docs/機能分類境界.md)の§8へ集約する。その他の分類はclassification=nullとし、旧成果へnullを自動追加してhashを変えない。
+
+裸Sessionの旧v2タスク互換は維持するが、新分類規則を通過した証明とはしない。新独立Agentは合法なcatalogPolicyのあるhandoffだけを受信し、旧handoffはD再抽出が必要である。意味参照は同scope・存在・適切なkindを検査し、入口共有を許す。参照先変更は跨owner失効へ反映する一方、意味参照を無条件に版依存DAGへ追加して循環を作らない。
+
+独立検証は主・子・共通・保留の全対象recordのkey・内容版に一致するclassificationChecksと、元要求の全scopeに対するscopeChecksを返す。scopeChecksはentry／data等の非意味分類を含む全viewを確認し、レコード0件のscopeやsupport／material／dependencyへ誤って除外した業務候補も調べ、過分割・過統合の双方を確認する。全検査passに加え、件数または今回必要な被覆へ影響する保留がないことをホスト採用条件とする。保留は実在unknownへ結び付け、作者の自評だけで通過させない。
+
 **作業**
 
 - 調査目標の対象、質問、期待する情報、範囲、必要な検証を記録する。自然言語依頼から明確な部分を具体化し、実質的な曖昧さを未知として保持する。定型依頼はこの契約を作る補助とする。
@@ -158,7 +144,7 @@ flowchart TD
 
 - snapshot と source-view の整合性、構造索引から原文への位置対応、根拠の発行／参照を接続する。入力プログラム、ビルド task、案件別 plugin を実行しない。
 - 共通 ID、内容版、調査目標と項目、未解決、候補事実、独立レビューを保存し、候補と受入済み版を区別する。
-- 役割の個別依頼と目標からの振分けを接続する。作業領域へ提出した候補を、版・競合・依存・根拠の照合後に共通制御だけが採用する。採用と範囲受入れを別の操作・記録として扱う。
+- 役割の個別依頼と目標からの振分けを接続する。作業領域へ提出した候補を、版・競合・依存・根拠の照合後に各workのホストだけが採用する。採用と範囲受入れを別の操作・記録として扱う。
 - 新3層の前提判定をホストへ集約し、候補だけ存在する状態と検証・採用済み状態を区別する。上流の修訂が依存する下流成果と検証を失効させ、前提不足の層を再開しない。
 - v2 schema・CLI・保存版を接続する。旧request／sessionや --role は明示拒否とし、新v2要求を作る。旧investigationの推測分割はしない。
 - AI の最初の試行前から取消、技術障害、checkpoint 保存、再開時の入力／目標／規則照合を扱う。失敗前の有効な成果を保持する。
@@ -180,6 +166,10 @@ flowchart TD
 **完了条件**：同じ共通 interface の試験が両 adapter を通り、P0 の位置・定義・誤連結防止・未知の基準を満たす。意味解析の `resolved` が唯一の実行時 target を証明するとは扱わない。
 
 ### P4：第1ラウンドの取得・業務候補・領域別レビューを接続する
+
+**粒度の追加受入基準（今回未実行）**
+
+取得sourceと集計scopeを分け、主機能だけの件数と未確認を別掲する。主の独立目的・成果、子の文脈上の主帰属、共通の使用関係・共有責務を説明する。過分割と過統合を両方点検し、入口形態・actor role・CRUD名だけで決めず、理由と反例を残す。正本の例示を最終答えや予定件数へ固定しない。
 
 **作業**
 
@@ -282,6 +272,10 @@ flowchart TD
 | T22 | 旧v1候補・session・旧 --role の利用 | 自動変換を拒否し、明示したv2要求で新規作成する |
 | T23 | 上流置換・reviseでrecord所有者を失効し、作者が旧unknownを省略 | 未知のid・内容・hashを保持し、影響する旧decisionを失効して独立再判定する |
 | T24 | supported候補から有効な上流義務／未採用の将来義務へfollowup | 前者はpassでも採用を阻止して明示reviseを待ち、後者はhandoffQuestionsで後続へ渡す |
+| T25 | reverse-agent未導入の環境で各package／CLIを起動 | runtimeと当該Agentだけでinstall・import・単独実行できる |
+| T26 | 後続Agentへ前提handoffなしで要求 | 前層を自動起動せずneeds-prerequisitesを返す |
+| T27 | 前層workを参照できない環境へportable移送 | 同一request・ソースを受信側で再検証し、外部passだけでは有効化しない |
+| T28 | 異なるrequest／manifest、改変handoff、出力上書き | 不一致を拒否し、受入れ済み自層成果だけを新規安全出力へexportする |
 
 T17～T22の前提拒否、scope不一致、下流失効、独立文脈、局所進行、旧契約拒否は合成回帰の対象とする。三層runのCLI統合では6つの独立contextと3回の採用を確認した。これを実案件の業務品質や全工程完了へ外挿しない。
 
@@ -293,18 +287,52 @@ T17～T22の前提拒否、scope不一致、下流失効、独立文脈、局所
 
 正式な設計・契約と回帰fixtureは本Agent内の文書・ソース／testsに置く。中間候補・試行は対象方式の.tmp/、採用後の最終検査記録はbuild/の固定先へ更新する。方式を持たない共通作業だけAgentまたはprojectの.tmp/・build/を使う。人手QAや正式なContextBase正本は中間キャッシュとして削除しない。
 
-初期配置は `src/contextbase/analysis/` の contracts、sources、storage、adapters、controller と CLI。schema は `contextbase-analysis/1`、構文backendは tree-sitter 0.25.2 固定。Graph DB、型の意味束縛、フレームワーク／SQLの専用能力、深い継承は導入していない。
+共通配置はagents/shared/contextbase-runtime/src/contextbase_runtimeのcontracts、sources、storage、adapters、controller、agent、handoff、cli等。schemaはcontextbase-analysis/2、各独立packageは自層実装と公開CLIを持つ。構文backendはtree-sitter 0.25.2固定。Graph DB、型の意味束縛、フレームワーク／SQLの専用能力、深い継承は導入していない。
 
-## 7. 今回の更新範囲と未実施
+## 7. 前改訂までの実装確認記録
 
-入力：設計v0.7、計画v0.5、D01～D12、3子Agentの分担、実装許可とv2のコード・合成回帰結果。
+入力：設計v0.8、計画v0.6、D01～D12、3Agentをreverse-agentの制御下から独立させる利用者の確認、新配置の実装方針。
 
-出力：設計v0.8、本計画v0.6、共通・役割契約、[実装ガイド v2.0](ContextBase初期実装.md)。v2 schema、3層実行、共通verify、host採用、run、revise、未知の影響判定を実装状態へ同期した。新5スイート116件実行・失敗なし・2件skip、旧AI関連392件実行・失敗なし・7件skip（renderingはChromium／lxml環境制約で対象外）。
+出力：設計v0.9、本計画v0.7、独立3プロジェクトの契約・運用文書、[実装ガイド v3.0](ContextBase初期実装.md)、reverseの任意互換案内。
 
-2026-10-26に指定された2プロジェクトの試行複製・設定・結果は清掃済み。元工程、汎用実装、合成テストは保持し、旧workspaceはresumeしない。次の業務試行は新scope／request／workspaceを定める。
+新配置の構造試験・合成provider経路は通過した。旧互換経路の過去の合格は監査情報だけで、新独立導入の合格へ転用しない。実モデル業務品質、人手P0／P8、一般的なP6再利用、長期運用、自動補査修復、即時kill、性能比較は未完了。
 
-未完了：実モデルの業務品質、人手P0／P8受入れ、新入力範囲・cross-session P6再利用、自動補査修復、長期P7運用、即時子プロセスkill、性能比較。原アプリ・SQL・DB・ビルドや仕様書生成は実行していない。
+2026-10-26に指定された2プロジェクトの試行複製・設定・結果は清掃済み。元工程・汎用実装・合成テストを保持し、旧workを再開・復元しない。次の業務試行は新scope／request／workを定める。原プログラム・SQL・DB・build、仕様書生成は実行していない。
 
-### 未知の関連先と阻害先の分離
+前改訂の確定検証は全535件（成功526・skip9・失敗0）。独立公開経路とclean環境26件、互換analysis／pipeline117件、旧AI非rendering392件を区別した。renderingは環境制約で未通過・対象外。詳細は [実装ガイドの検証範囲](ContextBase初期実装.md)を参照し、実モデル業務精度・人手受入れへ外挿しない。
 
-v2ではunknownのid／question／relatedRequirements／blocksRequirements／scopeReasonを分けた。verifyのunknownChecksが対象idとhashを固定し、非阻害・解決済みにも原文根拠を要求する。候補の作者が未知を削除・自動null変換して放行する方式にはしない。実案件での範囲理由の妥当性と人手基準は引き続き検証する。
+## 8. 前改訂の分類実装と確認作業
+
+入力は計画v0.8・設計v0.10と分類境界の確認、出力は本計画v0.9・設計v0.11・実装ガイドv3.3・Agent契約である。D01～D12は変更しない。
+
+分類正本の基準を新discovery抽出prompt、typed schema、独立検証、ホスト採用gateへ接続する。旧互換経路を新規則の合格と混同しない。新規回帰では分類型、参照のscopeとkind、未確認とunknownの結合、全scope検証、過分割・過統合、非業務分類への誤除外、採用拒否を確認する。本改訂の構造・合成回帰192件は成功190・skip2・失敗0で確認した。内訳と検証範囲は実装ガイドへ集約する。
+
+利用者が承認した実行はdiscovery単独である。既定ASP.NETのsource・request・固定出力を維持し、新work .tmp/contextbase/csharp_aspnet-classified-v2で原文から再調査する。旧結果は新結果が実際に採用されるまで保持し、採用後だけ固定contextbase.jsonを原子的に更新する。比較用原稿は旧workまたは.tmpへ置き、正式archiveを増設しない。relationship／behaviorの実行や作業領域作成、原プログラム・SQL・DB・build実行は行わない。
+
+初回Dの独立検証は伝送上限・原文読取り環境障害により成立しなかった。重複viewの伝送投影を修正し、新workで再実行した。修正後の全回帰を確認した。新workの候補70レコードは独立検証を実施したが、未解決事項により未採用である。詳細は実装ガイドを参照する。以前の構造回帰合格を代用しない。既存の人手指摘は新成果を確認して処置を記録する。人手P0／P8、汎用P6、長期運用、性能評価は引き続き未完了である。
+
+## 9. 前改訂の構文事実利用と文脈整理
+
+入力は計画v0.9・設計v0.11と、構文索引・call・入口をモデルが実際に利用する利用者の指示。出力は本計画v0.10・設計v0.12・実装ガイドv3.4と[ソース事実索引契約](../../shared/contextbase-runtime/docs/ソース事実索引.md)である。
+
+1. snapshot・抽出器実装／grammar版に束縛した全fact索引を作り、inventory・hash／範囲・caller包含・entry宣言をモデル前に機械検査する。非対応・partialも台帳へ残す。
+2. query／validate-indexをモデルなしで公開し、既存index形状を保持する。検索の限界とtruncatedを明示する。
+3. 全索引の簡潔な表と単一sourceTextを作者・検証者へ渡し、重複numberedText／structureを除く。全recordのfactUsageをホストで検査し、factUsageCheck=passを追加採用gateへ接続する。
+4. 新規回帰で不正ID・原文範囲外・空利用の回避・不足台帳・索引版不一致・検証unknown／fail採用拒否、文脈重複除去を確認する。その後、許可されたDだけを新workで実行し、候補・独立検証・採用と人手結果を分離する。
+
+修正後の構造・合成回帰は確認済みだが、新実Dは69候補の独立検証を完了し、fact利用はpass・catalogは要追加調査で未採用で、前改訂192件と70候補未採用を合格証拠へ流用しない。型束縛や配備時到達性、汎用P6、長期性能、人手P0／P8は未完了を維持する。
+
+## 10. 本版の証拠一括検査とcompact
+
+設計v0.13・本計画v0.11・実装ガイドv3.5と[短縮伝送契約](../../shared/contextbase-runtime/docs/短縮伝送と証拠一括検査.md)を対応させる。前改訂の220件・69候補未採用は履歴とし、本改訂の合格へ流用しない。
+
+1. sourcesの証拠検査をoperation首尾の完全snapshot確認とバッチ内ファイル単位read／hashへ整理する。contracts／catalog／followupの重複検査を集約し、フィールド・path・hash・型・行範囲と改変検知は維持する。operation間のキャッシュは導入しない。
+2. contextbase-wire/1を--compactで明示利用する。task束縛alias、厳密raw schema、精確canonical展開、両hashとmaterialization／provenance、採用時再展開を接続する。外部portable形状は変更しない。
+3. 異task・過時alias、binding／内容改変、証拠範囲不正、作者・独立検証の公開D経路を回帰で確認する。全原文保持と目録深度の簡潔な説明を両立させる。
+4. fresh work .tmp/contextbase/csharp_aspnet-compact-repairでDのrepairのみ実行する。実行時間、fact利用検査、catalog採用、人手受入れを別々に記録する。
+
+repair追加後の回帰は確認済みで、実repairは全体機械・独立検証を完了したがcatalog未解決で未採用。Cの原文のオンデマンド調査ループは未実装である。局所replayの応答サイズ・検査時間は制御基準としてのみ扱い、全体高速化を先取りしない。
+
+**追加：拒否草稿の明示repair**
+
+fresh D workへ同じsnapshot／request／indexの失敗rawを未信頼seedとして取り込み、指定recordをモデルが全置換する。key／kind／owner、coverage、未知、他recordを保護し、追加削除・scope変更はunresolvedへ戻す。元usage保持はfactUsage=nullで表し、ホストは業務推測で補正しない。raw patch／seed／combinedを固定し、全体機械検査・独立verifyと採用時再生照合を追加する。旧受入れの継承や自動無限回復は行わない。最終回帰は確認済みで、実repairは全体機械・独立検証を完了したがcatalog未解決で未採用で、新規抽出と差分回復の時間を分ける。

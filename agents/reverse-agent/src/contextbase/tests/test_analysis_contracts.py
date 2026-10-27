@@ -18,6 +18,10 @@ class Sources:
         if evidence != EVIDENCE:
             raise ValueError('Evidence does not match sealed source')
 
+    def verify_evidence_many(self, refs):
+        for ref in refs:
+            self.verify_evidence(ref)
+
 
 def obligation(identifier, stage, requires=(), scope='orders'):
     return {'id': identifier, 'question': 'Check ' + identifier, 'stage': stage,
@@ -184,7 +188,7 @@ class ContractTests(unittest.TestCase):
     def test_unknown_cannot_invent_goal_obligations(self):
         self.answer['unknowns'] = [self.unknown()]
         self.answer['unknowns'][0]['relatedRequirements'] = ['invented']
-        with self.assertRaisesRegex(ValueError, 'original goal'):
+        with self.assertRaisesRegex(ValueError, 'original goal|relatedRequirements'):
             self.check()
 
     def test_unknown_has_a_unique_identity_and_scope_reason(self):
@@ -264,7 +268,7 @@ class ContractTests(unittest.TestCase):
             answer['unknownChecks'][0]['blocksRequirements'] = ['catalog']
             self.check(answer, task)
             answer['unknownChecks'][0]['blocksRequirements'] = ['invented']
-            with self.assertRaisesRegex(ValueError, 'unknown goal'):
+            with self.assertRaisesRegex(ValueError, 'unknown goal|blocksRequirements'):
                 self.check(answer, task)
 
     def test_host_keeps_uniqueness_rules_omitted_from_transport(self):

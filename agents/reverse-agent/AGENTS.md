@@ -1,10 +1,10 @@
 # reverse-agent 作業規則
 
-版8.5／2026-10-26。新設計の3子Agentは取得・目録化、関係構築、動作深化。独立検証は共通実行能力とする。v2の層分離・独立検証・ready queue・明示修訂を実装した。任意の自動補査修復、長期運用、cross-session P6再利用は未完了である。
+版8.6／2026-10-26。reverse-agentは任意の互換連続実行入口。3つの解析Agentは平級の独立プロジェクトとして起動し、reverse-agentを親・必須runtimeにしない。新配置の構造・合成検証は通過した。実モデル品質・人手受入れと混同しない。
 
 ## 入口と書込み範囲
 
-- 共通の役割・入力・採用条件は [AGENT.md](AGENT.md)、実行要求は [PROMPT.md](PROMPT.md) を読む。指定した抽出層だけを `roles/` の契約で補う。独立検証は共通契約に従い、層ごとの自己検査へ置換しない。
+- 共通の役割・入力・採用条件は [AGENT.md](AGENT.md)、実行要求は [PROMPT.md](PROMPT.md) を読む。独立実行は各平級Agentの契約を使う。`roles/` は旧参照の互換ポインターだけとする。独立検証は共通契約に従い、層ごとの自己検査へ置換しない。
 - Agent 改善の書込みは `agents/reverse-agent/` 配下に限定する。入力・正式な ContextBase・QA・既存成果物の変更は、その実行要求で対象と範囲を確定する。
 - 実装や実解析の指示がない段階では文書更新までとする。実装の有無と実行・受入れの実績を分ける。操作手順は [初期実装ガイド](docs/ContextBase初期実装.md)を使い、旧文書CLIへ流さない。
 
@@ -26,10 +26,12 @@
 - store はホスト管理領域とし、hash を認証や署名と説明しない。人手正解表の受入れと実モデル候補の採用を別に記録する。
 
 - 各領域の検証済み目録・関係を前提に進める。前層で要求を満たせば止め、妥当な既存成果を確認して使う。全倉障壁や全対象3層直列を設けず、上流の変更は依存成果の失効を確認する。
-- relationshipによる条件・引数の読取りや、behaviorによる関係補査を禁止しない。共通snapshot／SourceAccess／ID／store／adapter／検証機構は複製しない。
+- relationshipによる条件・引数の読取りや、behaviorによる関係補査を禁止しない。snapshot／SourceAccess／ID／store／adapter／検証機構はagents/shared/contextbase-runtimeに共有し、独立プロジェクトへ複製しない。
 
-- runは定義済み目標グラフのready義務を進め、阻害やグラフ外補査は保存停止する。同basisの反復を新進捗へ数えず、scopeや義務を自動拡大しない。
+- 互換連続実行runは定義済み目標グラフを扱う。独立runは自層だけを進め、前提不足はneeds-prerequisitesとする。阻害やグラフ外補査は保存停止する。同basisの反復を新進捗へ数えず、scopeや義務を自動拡大しない。
 - 採用済み上流の再調査はreviseで依存下流も撤回し、step --feedback後の原文調査・独立検証・採用を行う。recordの所有義務とkey/version依存、未知の関連先と阻害先を区別する。
+
+- portable受渡しを受ける側は同一requestとソースmanifest／内容を照合し、原文で前提を別文脈再検証する。外部passは監査のみ。前層workやreverse-agentの存在を要求しない。
 
 ## 記録と旧経路
 
