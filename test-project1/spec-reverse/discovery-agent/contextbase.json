@@ -1,5 +1,5 @@
 {
-  "sha256": "b1eabfae58335742b6a808de1607df3ae7ae2c435740cdcb1cda068e426b1da8",
+  "sha256": "0334b43f85a4ca2383f8e636cff903fe34f21616582093745e9cab82ad43e659",
   "payload": {
     "schema": "contextbase-handoff/2",
     "producer": "discovery",
@@ -588,6 +588,14 @@
           "reason": "unsupported-text-material"
         },
         {
+          "path": ".tmp",
+          "reason": "excluded-path"
+        },
+        {
+          "path": ".vs",
+          "reason": "excluded-directory"
+        },
+        {
           "path": "Core/bin",
           "reason": "excluded-directory"
         },
@@ -645,18 +653,18 @@
       "catalog"
     ],
     "records": {
-      "c-auth": {
-        "basis": "observed-source",
+      "common.authentication": {
+        "basis": "inferred",
         "classification": {
-          "alternative": "ログイン画面の主機能だけに含めるとホストのCookie受入責務を表しにくい。",
+          "alternative": "各画面へ内包する分け方もあるが、ホストのCookie検査にも利用される中央責任として分離した。",
           "category": "common",
           "consumers": [
-            "e-login",
-            "e-logout",
-            "c-web-host"
+            "function.login",
+            "function.logout",
+            "common.web-security"
           ],
-          "rationale": "ホスト及びアカウント入口が利用する中央責務で、専用ログイン機能とは別の実装層。",
-          "responsibility": "認証検証とセッション維持・終了の共通実装",
+          "rationale": "独立したログイン・ログアウト機能の下で使われる認証実装を別に保持する。",
+          "responsibility": "認証判定とWeb認証セッションの中央管理。",
           "scope": "selected-system"
         },
         "dependencies": [],
@@ -669,193 +677,38 @@
             "startLine": 13
           },
           {
-            "endLine": 18,
-            "path": "Infrastructure/WebHostSetup.cs",
-            "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
-            "startLine": 15
-          },
-          {
             "endLine": 41,
             "path": "Web/Controllers/AccountController.cs",
             "sha256": "eb3317ec00f640a4ea7e6c7ff4538a7a0a716030f84cc3c31220df236ce8c394",
             "startLine": 18
+          },
+          {
+            "endLine": 18,
+            "path": "Infrastructure/WebHostSetup.cs",
+            "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
+            "startLine": 15
           }
         ],
-        "id": "COMMON-44bbb5fbe07b7437",
-        "key": "c-auth",
+        "id": "COMMON-d0315425c7b13a6b",
+        "key": "common.authentication",
         "kind": "common",
         "name": "ローカル認証・Cookieセッション",
         "ownerRequirement": "catalog",
-        "statement": "LocalLoginが設定主体の認証と共有失敗制限、Cookie受入判定を担い、ホストとAccountControllerがCookieセッションを扱う。",
-        "version": "3969a763a9df631daea68747b31e2f114b1d8384ada61a00aaa4139508fd930d"
+        "statement": "LocalLoginが設定された利用者の認証・失敗抑制・Cookie受入判定を所有し、AccountControllerとホスト設定がセッション開始・終了・検査に利用する。",
+        "version": "dd864f877dfdf7cc663e50f4859df93e7d39c254251e09b4cb9afda9f911b100"
       },
-      "c-db-shared": {
-        "basis": "observed-source",
+      "common.identity": {
+        "basis": "inferred",
         "classification": {
-          "alternative": "独立したDB補助クラスへ移せるが、現状の宣言位置だけで学生専用とは判断しない。",
+          "alternative": "個別アクションの検査として分散できるが、原文ではRequestIdentityに集約される。",
           "category": "common",
           "consumers": [
-            "c-student-service",
-            "c-master-service"
+            "common.web-coordinator",
+            "function.student-query",
+            "function.student-maintain"
           ],
-          "rationale": "別サービスのマスタ保守からも利用する明示的な共通責務。",
-          "responsibility": "SQL要求組立、パラメーター設定、書込排他とロールバックの共有",
-          "scope": "selected-system"
-        },
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 73,
-            "path": "Core/SqlServerStudentService.cs",
-            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
-            "startLine": 65
-          },
-          {
-            "endLine": 102,
-            "path": "Core/SqlServerStudentService.cs",
-            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
-            "startLine": 92
-          },
-          {
-            "endLine": 236,
-            "path": "Core/SqlServerStudentService.cs",
-            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
-            "startLine": 233
-          },
-          {
-            "endLine": 321,
-            "path": "Core/SqlServerStudentService.cs",
-            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
-            "startLine": 321
-          },
-          {
-            "endLine": 42,
-            "path": "Core/MasterMaintenanceService.cs",
-            "sha256": "d493baee3b912b91feba637ec645cac753348ceb5fab6968fa57b5af71f899f3",
-            "startLine": 38
-          },
-          {
-            "endLine": 77,
-            "path": "Core/MasterMaintenanceService.cs",
-            "sha256": "d493baee3b912b91feba637ec645cac753348ceb5fab6968fa57b5af71f899f3",
-            "startLine": 74
-          }
-        ],
-        "id": "COMMON-4990109eb50e3f01",
-        "key": "c-db-shared",
-        "kind": "common",
-        "name": "SQL補助・共通書込ゲート",
-        "ownerRequirement": "catalog",
-        "statement": "学生サービス内のinternalなCommand、Param、Gate、Rollbackを学生保存とマスタ保守で共用する。",
-        "version": "feeabe825fd253e77a32b10460b8383ea991ab8aac9f21d37de0c0dce2ad1eef"
-      },
-      "c-editor-state": {
-        "basis": "observed-source",
-        "classification": {
-          "alternative": "画面モデルだけに含めるとサーバー保持の所有者確認責務を表せない。",
-          "category": "common",
-          "consumers": [
-            "e-new",
-            "e-student",
-            "e-reset",
-            "e-delete"
-          ],
-          "rationale": "新規・既存・取消の複数文脈から共用される登録済み状態サービス。",
-          "responsibility": "編集の読込状態と所有者を中央管理する",
-          "scope": "selected-system"
-        },
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 12,
-            "path": "Infrastructure/EditorSnapshotStore.cs",
-            "sha256": "26fe339679b0190a9e4da0cbf62a82decc28777b59d0b59f26a2119f42fa86ba",
-            "startLine": 5
-          },
-          {
-            "endLine": 17,
-            "path": "Infrastructure/WebHostSetup.cs",
-            "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
-            "startLine": 17
-          },
-          {
-            "endLine": 41,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 31
-          }
-        ],
-        "id": "COMMON-486b008b89e07bf9",
-        "key": "c-editor-state",
-        "kind": "common",
-        "name": "編集スナップショット管理",
-        "ownerRequirement": "catalog",
-        "statement": "EditorSnapshotStoreが読込時入力、詳細、復帰版を所有者付きで保持し、保存・取消時の編集状態確認に使われる。",
-        "version": "a1f58f72c16a3c41afb1b958664730eb47e110795b9c60195a2a36f2fab49b17"
-      },
-      "c-flash": {
-        "basis": "observed-source",
-        "classification": {
-          "alternative": "Controller固有の補助処理としてまとめることも可能。",
-          "category": "common",
-          "consumers": [
-            "e-search",
-            "e-new",
-            "e-student",
-            "e-delete"
-          ],
-          "rationale": "保存側と検索側が共有する中央保持責務。",
-          "responsibility": "画面遷移をまたぐ一時通知の受渡し",
-          "scope": "selected-system"
-        },
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 10,
-            "path": "Infrastructure/FlashMessageStore.cs",
-            "sha256": "34ebbaf013e5d2fe9a1fd248ceb1bc2c738bad667bc8a9d571766c042a08b355",
-            "startLine": 4
-          },
-          {
-            "endLine": 17,
-            "path": "Infrastructure/WebHostSetup.cs",
-            "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
-            "startLine": 17
-          },
-          {
-            "endLine": 11,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 11
-          },
-          {
-            "endLine": 44,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 44
-          }
-        ],
-        "id": "COMMON-fb7fdb3c43b55398",
-        "key": "c-flash",
-        "kind": "common",
-        "name": "復帰先メッセージ保持",
-        "ownerRequirement": "catalog",
-        "statement": "FlashMessageStoreが利用者・セッション・検索文脈別の一時メッセージを保持し、保守結果を検索画面へ渡す。",
-        "version": "ced02174666a7f8094074cbf0d55414120bfe36c4874553c4872b521c04d2d88"
-      },
-      "c-identity": {
-        "basis": "observed-source",
-        "classification": {
-          "alternative": "各入口へ埋め込む分割も可能だが、実装は独立サービスとして登録される。",
-          "category": "common",
-          "consumers": [
-            "c-web-coordinator"
-          ],
-          "rationale": "検索・保存・削除にまたがる中央の要求認可責務。",
-          "responsibility": "Web要求からの利用者識別と権限確認",
+          "rationale": "複数の学生操作から利用される中央の認可責任。",
+          "responsibility": "Web要求における主体・セッション・役割の解釈と認可。",
           "scope": "selected-system"
         },
         "dependencies": [],
@@ -868,38 +721,82 @@
             "startLine": 4
           },
           {
-            "endLine": 17,
-            "path": "Infrastructure/WebHostSetup.cs",
-            "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
-            "startLine": 17
-          },
-          {
             "endLine": 24,
             "path": "Infrastructure/WebStudentCoordinator.cs",
             "sha256": "f57e213dc22534b74e357aa066e31e25e58bac5b4de1b3f5458502e06e049385",
             "startLine": 7
           }
         ],
-        "id": "COMMON-f5a6919b3b06925e",
-        "key": "c-identity",
+        "id": "COMMON-59b6d97bf7d6ea45",
+        "key": "common.identity",
         "kind": "common",
-        "name": "要求主体・役割別認可",
+        "name": "要求主体・役割・権限検査",
         "ownerRequirement": "catalog",
-        "statement": "RequestIdentityが要求の主体・セッション・役割を読み取り、照会、作成更新、管理者操作の権限確認を提供する。",
-        "version": "61c04db15ec728415a7928a3c8426e6ac5097bf670fb5372ef072a518f8f0c1d"
+        "statement": "RequestIdentityが認証情報からCurrentUserを作り、読取・保存・管理者操作の権限確認を提供する。",
+        "version": "5a38f1bdb9bb75cdcb13d154eb5c7e6710348f4a5c1f72f70aceed98c792218c"
       },
-      "c-japanese-date": {
-        "basis": "observed-source",
+      "common.input-conversion": {
+        "basis": "inferred",
         "classification": {
-          "alternative": "画面別の日付処理に分けることも可能だが、原文の共通元号定義と整合しにくい。",
+          "alternative": "DTO宣言だけのデータ資源とするには変換・検査責任があるため、データ契約とは別に共通処理を保持した。",
           "category": "common",
           "consumers": [
-            "c-normalization",
-            "c-master-service",
-            "c-student-service"
+            "common.web-coordinator",
+            "entry.student-editor"
           ],
-          "rationale": "入力正規化、マスタ期間、学生読込から実際の参照がある。",
-          "responsibility": "学生・マスタで使う日付の共通表現と検証",
+          "rationale": "検索、編集初期表示、保存、削除で実利用される変換責任。",
+          "responsibility": "Web転送形式とCoreの入力契約・識別子表現を接続する。",
+          "scope": "selected-system"
+        },
+        "dependencies": [],
+        "dependsOn": [],
+        "evidence": [
+          {
+            "endLine": 61,
+            "path": "Web/Inputs/StudentSaveInput.cs",
+            "sha256": "586305468bf66346dfbb0f8ce0d9aedc76cde99169d51b673d8f41f9b61d1f38",
+            "startLine": 34
+          },
+          {
+            "endLine": 12,
+            "path": "Web/Inputs/StudentSearchInput.cs",
+            "sha256": "a3fd854dafe0e42fe77a9a86c789b435ad16c1239025c734455e25fc1f831164",
+            "startLine": 11
+          },
+          {
+            "endLine": 14,
+            "path": "Infrastructure/WebStudentCoordinator.cs",
+            "sha256": "f57e213dc22534b74e357aa066e31e25e58bac5b4de1b3f5458502e06e049385",
+            "startLine": 7
+          },
+          {
+            "endLine": 24,
+            "path": "Infrastructure/WebStudentCoordinator.cs",
+            "sha256": "f57e213dc22534b74e357aa066e31e25e58bac5b4de1b3f5458502e06e049385",
+            "startLine": 22
+          }
+        ],
+        "id": "COMMON-05007c9fc45349dd",
+        "key": "common.input-conversion",
+        "kind": "common",
+        "name": "Web入力・識別番号・Core契約変換",
+        "ownerRequirement": "catalog",
+        "statement": "StudentSaveInput、StudentSearchInputの変換メソッドとIdParserがWeb入力をCore要求へ変換し、既存値からフォームを構成する。",
+        "version": "678f44b3218045c4c108c4b4bdc5b309a84e90375e8e6e4401b7e9af737c3c0f"
+      },
+      "common.japanese-date": {
+        "basis": "inferred",
+        "classification": {
+          "alternative": "画面部品として扱うとマスタ入力やCore変換での利用を捉えられない。",
+          "category": "common",
+          "consumers": [
+            "common.normalization",
+            "common.master-service",
+            "common.student-service",
+            "common.input-conversion"
+          ],
+          "rationale": "学生・マスタ・Web変換で共有される中央の日付責任。",
+          "responsibility": "入力・保存・表示で使う日付解釈と和暦表現。",
           "scope": "selected-system"
         },
         "dependencies": [],
@@ -912,86 +809,50 @@
             "startLine": 7
           },
           {
-            "endLine": 137,
-            "path": "Core/StudentNormalizer.cs",
-            "sha256": "6064479d6b76a6a5e64f71f956f181b2a12adb4bb765868a27e3da2f887835cd",
-            "startLine": 127
-          },
-          {
             "endLine": 36,
             "path": "Core/MasterMaintenanceService.cs",
             "sha256": "d493baee3b912b91feba637ec645cac753348ceb5fab6968fa57b5af71f899f3",
-            "startLine": 36
+            "startLine": 30
+          },
+          {
+            "endLine": 137,
+            "path": "Core/StudentNormalizer.cs",
+            "sha256": "6064479d6b76a6a5e64f71f956f181b2a12adb4bb765868a27e3da2f887835cd",
+            "startLine": 119
           },
           {
             "endLine": 187,
             "path": "Core/SqlServerStudentService.cs",
             "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
             "startLine": 175
-          }
-        ],
-        "id": "COMMON-e5eba6cf1b258ce7",
-        "key": "c-japanese-date",
-        "kind": "common",
-        "name": "和暦・西暦日付変換",
-        "ownerRequirement": "catalog",
-        "statement": "JapaneseDateServiceが元号境界を持つ入力検証、和暦表示、ISO日付読取と年度算出を提供する。",
-        "version": "0bfd928778faeb5d54676b16b478e4ab4086c4f07c4b892bcc37031adfd2424b"
-      },
-      "c-master-audit-operation": {
-        "basis": "observed-source",
-        "classification": {
-          "alternative": "マスタサービスの内部処理として一括記録することも可能。",
-          "category": "common",
-          "consumers": [
-            "c-master-service"
-          ],
-          "rationale": "クラスとコードの二つの保存文脈から参照される共有業務規則。",
-          "responsibility": "マスタ変更の監査上の操作種別を統一する",
-          "scope": "selected-system"
-        },
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 8,
-            "path": "Core/AuditOperation.cs",
-            "sha256": "ad154004378612be2f2f80036edf63a2fb2fbfc4cf71858348044649dc2bb5e8",
-            "startLine": 4
           },
           {
-            "endLine": 75,
-            "path": "Core/MasterMaintenanceService.cs",
-            "sha256": "d493baee3b912b91feba637ec645cac753348ceb5fab6968fa57b5af71f899f3",
-            "startLine": 75
-          },
-          {
-            "endLine": 119,
-            "path": "Core/MasterMaintenanceService.cs",
-            "sha256": "d493baee3b912b91feba637ec645cac753348ceb5fab6968fa57b5af71f899f3",
-            "startLine": 119
+            "endLine": 55,
+            "path": "Web/Inputs/StudentSaveInput.cs",
+            "sha256": "586305468bf66346dfbb0f8ce0d9aedc76cde99169d51b673d8f41f9b61d1f38",
+            "startLine": 44
           }
         ],
-        "id": "COMMON-18a1da87ea7d820f",
-        "key": "c-master-audit-operation",
+        "id": "COMMON-b89d8de2b7f2c5d8",
+        "key": "common.japanese-date",
         "kind": "common",
-        "name": "マスタ監査操作の分類",
+        "name": "和暦・西暦・年度処理",
         "ownerRequirement": "catalog",
-        "statement": "AuditOperation.ForMasterがクラス・コード保守の監査操作名を共通に決定する。",
-        "version": "c65ba1959929cbdb96644cd0bdf06de31364701c8c55fbd72d544616a7fe5c85"
+        "statement": "JapaneseDateServiceが明示的な元号境界による日付解釈、和暦表示、ISO日付と年度処理を提供する。",
+        "version": "dda0a9b5b8b561279558e0ea2b0f4208e6fec7e48ffb1997cf85df41960f90d6"
       },
-      "c-master-service": {
-        "basis": "observed-source",
+      "common.master-service": {
+        "basis": "inferred",
         "classification": {
-          "alternative": "クラス用とコード用に実装を分けても利用者機能の分割とは別問題。",
+          "alternative": "両主機能へ実装を重複記載できるが、中央責任として分離し機能数を増やさない。",
           "category": "common",
           "consumers": [
-            "f-class-maintenance",
-            "f-code-maintenance",
-            "e-maintenance-cli"
+            "function.class-maintain",
+            "function.code-maintain",
+            "entry.maintenance"
           ],
-          "rationale": "独立した二つのCLIタスクを同一サービスが支える。",
-          "responsibility": "クラス及びコード保守の共通実装",
+          "rationale": "独立したクラス保守・コード保守を支える共用サービス。",
+          "responsibility": "マスタ保守における管理者確認・整合性・永続化。",
           "scope": "selected-system"
         },
         "dependencies": [],
@@ -1010,25 +871,69 @@
             "startLine": 11
           }
         ],
-        "id": "COMMON-f0f9501d20c56062",
-        "key": "c-master-service",
+        "id": "COMMON-d07c5cf8dcb72c73",
+        "key": "common.master-service",
         "kind": "common",
-        "name": "マスタ保守のCoreサービス",
+        "name": "マスタ保守ルール・DB管理者確認",
         "ownerRequirement": "catalog",
-        "statement": "MasterMaintenanceServiceがDB接続主体の管理者確認とクラス・コードの保存、整合確認、監査記録を中央で扱う。",
-        "version": "24af24959cc5d94e8657642df3702a6c790eb2a37deefbc165cafa0dcfdca8d3"
+        "statement": "MasterMaintenanceServiceがDB接続主体の管理者確認とクラス・コードの保守ルール、保存を所有する。",
+        "version": "b54eb4109620425a0f5d78adde720d6ee7316fc7aefdb911d306ace434252fab"
       },
-      "c-normalization": {
-        "basis": "observed-source",
+      "common.navigation": {
+        "basis": "inferred",
         "classification": {
-          "alternative": "個別保存処理へ含められるが、検索・マスタでも利用される責務が失われる。",
+          "alternative": "状態集約や独立照会結果を表示するワークベンチなら主機能にできるが、この原文は移動先選択だけ。",
           "category": "common",
           "consumers": [
-            "c-student-service",
-            "c-master-service"
+            "entry.menu",
+            "entry.search"
           ],
-          "rationale": "複数のCore処理が参照する中央規則で、単なる文字列ユーティリティに限らない。",
-          "responsibility": "保存・検索・マスタ入力で共用する正規化及び業務入力規則",
+          "rationale": "リンクと役割別表示が責任であり、移動先の業務結果をメニュー自身へ帰属させない。",
+          "responsibility": "学生業務の移動先を提示する共通ナビゲーション。",
+          "scope": "selected-system"
+        },
+        "dependencies": [],
+        "dependsOn": [],
+        "evidence": [
+          {
+            "endLine": 10,
+            "path": "Web/Controllers/MenuController.cs",
+            "sha256": "ba3fe274371fafa9464cb23dac72425bfa30450c5a673b19e44c0bfe0330aa2e",
+            "startLine": 6
+          },
+          {
+            "endLine": 7,
+            "path": "Views/Menu/Index.cshtml",
+            "sha256": "0f56d5d6c4e3aa8ebf7b04724db174cdcfae52a976eec9b6f1c8fbce4958e078",
+            "startLine": 1
+          },
+          {
+            "endLine": 18,
+            "path": "Views/Students/Search.cshtml",
+            "sha256": "11b3aa90f38759dfcaf7df2f3bc0448537ce0ac1ba1828d259bd07709a0842a9",
+            "startLine": 14
+          }
+        ],
+        "id": "COMMON-a72f42829f3452d1",
+        "key": "common.navigation",
+        "kind": "common",
+        "name": "学生管理メニューのナビゲーション",
+        "ownerRequirement": "catalog",
+        "statement": "専用メニュー画面は学生検索と権限に応じた新規登録への移動を提供する。集約照会や作業完了結果は持たない。",
+        "version": "a43e2c3346c2169a810d7e4cdb5fb5ceab72c8921f7a18ebdd2b7c26f719e461"
+      },
+      "common.normalization": {
+        "basis": "inferred",
+        "classification": {
+          "alternative": "学生登録専用の内部処理とする分け方では、検索・マスタ側の利用を表せない。",
+          "category": "common",
+          "consumers": [
+            "common.student-service",
+            "common.master-service",
+            "common.input-conversion"
+          ],
+          "rationale": "学生保存に加え検索条件・マスタ入力からも使う共有業務ルール。",
+          "responsibility": "入力値の共通表現と検証エラーを統一する。",
           "scope": "selected-system"
         },
         "dependencies": [],
@@ -1041,54 +946,62 @@
             "startLine": 19
           },
           {
-            "endLine": 229,
-            "path": "Core/SqlServerStudentService.cs",
-            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
-            "startLine": 225
+            "endLine": 58,
+            "path": "Core/Contracts.cs",
+            "sha256": "af8ee917671d85388235ff0a143c1fad9f3509b2f0d0389e77e4bb37b14cfad6",
+            "startLine": 42
           },
           {
             "endLine": 36,
             "path": "Core/MasterMaintenanceService.cs",
             "sha256": "d493baee3b912b91feba637ec645cac753348ceb5fab6968fa57b5af71f899f3",
-            "startLine": 33
+            "startLine": 30
           },
           {
-            "endLine": 85,
-            "path": "Core/MasterMaintenanceService.cs",
-            "sha256": "d493baee3b912b91feba637ec645cac753348ceb5fab6968fa57b5af71f899f3",
-            "startLine": 82
+            "endLine": 231,
+            "path": "Core/SqlServerStudentService.cs",
+            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
+            "startLine": 219
           }
         ],
-        "id": "COMMON-80447ecdad329c88",
-        "key": "c-normalization",
+        "id": "COMMON-ac4e2446c323b378",
+        "key": "common.normalization",
         "kind": "common",
-        "name": "入力正規化・学生共通検証",
+        "name": "入力正規化・共通検証",
         "ownerRequirement": "catalog",
-        "statement": "StudentNormalizerが文字・識別子・氏名照合・カナ・連絡先・コードと学生入力の整合検証をまとめる。",
-        "version": "9702efe21acc48e3ac0155c139fe2c4db4a1aba6e5dbb45e7b8e537a50404af1"
+        "statement": "StudentNormalizerが文字列、識別子、氏名照合値、カナ、連絡先、コード、学生入力の正規化・検証を提供する。",
+        "version": "6b0940c1f9e9f1218c0ba0d402175c4dd05735492203b556f9ab7241e48aeb9f"
       },
-      "c-presentation": {
-        "basis": "observed-source",
+      "common.presentation": {
+        "basis": "inferred",
         "classification": {
-          "alternative": "JSON向け宣言全体を現行APIと解釈してはならず、入口のない宣言は補助資源として別記する。",
+          "alternative": "画面ごとの整形に含められるが、共通クラスの実利用があるため分離した。",
           "category": "common",
           "consumers": [
-            "c-web-coordinator",
-            "e-student",
-            "c-web-host"
+            "common.web-coordinator",
+            "entry.student-new",
+            "entry.student-editor",
+            "entry.student-delete",
+            "common.web-security"
           ],
-          "rationale": "調整処理、Controller、共通例外処理から静的な使用がある。",
-          "responsibility": "Web層の表示値・通知・応答表現の統一",
+          "rationale": "調停、MVC、共通例外応答で使う表示責任。",
+          "responsibility": "サービス結果とエラーのWeb向け表現を統一する。",
           "scope": "selected-system"
         },
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
           {
-            "endLine": 31,
+            "endLine": 7,
             "path": "Infrastructure/WebPresentation.cs",
             "sha256": "23800e7f88e643c952a8617f5382e43c5c0d4ffa543c0c1f24e333312ea213f3",
             "startLine": 3
+          },
+          {
+            "endLine": 23,
+            "path": "Infrastructure/WebPresentation.cs",
+            "sha256": "23800e7f88e643c952a8617f5382e43c5c0d4ffa543c0c1f24e333312ea213f3",
+            "startLine": 20
           },
           {
             "endLine": 27,
@@ -1097,7 +1010,7 @@
             "startLine": 26
           },
           {
-            "endLine": 45,
+            "endLine": 38,
             "path": "Web/Controllers/StudentsController.cs",
             "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
             "startLine": 38
@@ -1109,89 +1022,112 @@
             "startLine": 27
           }
         ],
-        "id": "COMMON-f015d0673752f073",
-        "key": "c-presentation",
+        "id": "COMMON-a09fb8ca183e4bd5",
+        "key": "common.presentation",
         "kind": "common",
-        "name": "日時・結果・エラーの表示変換",
+        "name": "Web結果・時刻・エラー整形",
         "ownerRequirement": "catalog",
-        "statement": "WebPresentationが日時、学生一覧、保存結果、エラー及び応答状態の共通表現を提供する。候補変換の公開利用状況は別途保持する。",
-        "version": "fff453ef3833ac66e0dbe59d11a4d9ad0a3f00bb1350e2c3a1698c9890ce2093"
+        "statement": "WebPresentationが業務日時、一覧値、項目エラー、HTTP状態等の表示用表現を提供する。未接続のJSON候補処理は別支援記録に保持する。",
+        "version": "0ad496ec0c05d665d0443ba50d855c3119dd75d55fc09a3269331a7bb336fe9f"
       },
-      "c-search-state": {
-        "basis": "observed-source",
+      "common.sql-audit": {
+        "basis": "inferred",
         "classification": {
-          "alternative": "識別子生成を別commonへ分けることも可能だが、ここでは原文の責務単位を維持する。",
+          "alternative": "SQLヘルパー・排他・監査を細分化できるが、目録では共通の書込基盤としてまとめた。",
           "category": "common",
           "consumers": [
-            "c-web-coordinator",
-            "e-search",
-            "c-auth",
-            "c-editor-state"
+            "common.student-service",
+            "common.master-service"
           ],
-          "rationale": "検索Controller・調整処理、認証、編集スナップショットに静的な利用箇所がある。",
-          "responsibility": "検索文脈の中央保持と状態識別子生成",
+          "rationale": "学生・マスタ双方の実利用が確認できる書込基盤責任。",
+          "responsibility": "Core書込処理のSQL実行補助、排他、監査情報を統一する。",
           "scope": "selected-system"
         },
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
           {
-            "endLine": 18,
-            "path": "Infrastructure/SearchContextStore.cs",
-            "sha256": "2418cabe8c3878cd7528e2280aa689642d55dd4685fef017e78046cf4ae5e04a",
-            "startLine": 7
+            "endLine": 8,
+            "path": "Core/AuditOperation.cs",
+            "sha256": "ad154004378612be2f2f80036edf63a2fb2fbfc4cf71858348044649dc2bb5e8",
+            "startLine": 4
           },
           {
-            "endLine": 17,
-            "path": "Infrastructure/WebHostSetup.cs",
-            "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
-            "startLine": 17
+            "endLine": 102,
+            "path": "Core/SqlServerStudentService.cs",
+            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
+            "startLine": 65
           },
           {
-            "endLine": 20,
-            "path": "Infrastructure/WebStudentCoordinator.cs",
-            "sha256": "f57e213dc22534b74e357aa066e31e25e58bac5b4de1b3f5458502e06e049385",
+            "endLine": 236,
+            "path": "Core/SqlServerStudentService.cs",
+            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
+            "startLine": 234
+          },
+          {
+            "endLine": 299,
+            "path": "Core/SqlServerStudentService.cs",
+            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
+            "startLine": 298
+          },
+          {
+            "endLine": 383,
+            "path": "Core/SqlServerStudentService.cs",
+            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
+            "startLine": 377
+          },
+          {
+            "endLine": 405,
+            "path": "Core/SqlServerStudentService.cs",
+            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
+            "startLine": 395
+          },
+          {
+            "endLine": 5,
+            "path": "Core/MasterMaintenanceService.cs",
+            "sha256": "d493baee3b912b91feba637ec645cac753348ceb5fab6968fa57b5af71f899f3",
             "startLine": 5
           },
           {
-            "endLine": 11,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 8
+            "endLine": 42,
+            "path": "Core/MasterMaintenanceService.cs",
+            "sha256": "d493baee3b912b91feba637ec645cac753348ceb5fab6968fa57b5af71f899f3",
+            "startLine": 38
           },
           {
-            "endLine": 77,
-            "path": "Infrastructure/LocalLogin.cs",
-            "sha256": "1ee0e2968ae2eb3e5ee078076e65be375f3e46cd4125939e3476b5ff9232e52b",
-            "startLine": 77
+            "endLine": 75,
+            "path": "Core/MasterMaintenanceService.cs",
+            "sha256": "d493baee3b912b91feba637ec645cac753348ceb5fab6968fa57b5af71f899f3",
+            "startLine": 74
           },
           {
-            "endLine": 9,
-            "path": "Infrastructure/EditorSnapshotStore.cs",
-            "sha256": "26fe339679b0190a9e4da0cbf62a82decc28777b59d0b59f26a2119f42fa86ba",
-            "startLine": 9
+            "endLine": 136,
+            "path": "Core/MasterMaintenanceService.cs",
+            "sha256": "d493baee3b912b91feba637ec645cac753348ceb5fab6968fa57b5af71f899f3",
+            "startLine": 119
           }
         ],
-        "id": "COMMON-1402f405c79093a3",
-        "key": "c-search-state",
+        "id": "COMMON-f89bacb97f5450d5",
+        "key": "common.sql-audit",
         "kind": "common",
-        "name": "検索状態と共通識別子の保持",
+        "name": "SQL書込基盤・排他・監査",
         "ownerRequirement": "catalog",
-        "statement": "SearchContextStoreが検索条件・結果を利用者、セッション、タブに結び付けてサーバーメモリーに保持し、他の状態処理にも使う識別子を生成する。",
-        "version": "e3bb94ab3cee604a0b77b2c25c04c06c18538b05f6bfdbdd6802d0b97f1c87f1"
+        "statement": "両CoreサービスがSQLコマンド・パラメーター・書込ゲート等を共用し、保存時の監査情報を記録する。AuditOperationはマスタ変更の監査種別を決める。",
+        "version": "b979e8d9a0988c9bbc3a485951fa11472fa7de29a53f7adcc7e40a43071e9178"
       },
-      "c-student-service": {
-        "basis": "observed-source",
+      "common.student-service": {
+        "basis": "inferred",
         "classification": {
-          "alternative": "照会・保存サービスを分割できるが、原文は一つの契約と実装にまとめている。",
+          "alternative": "各公開メソッドを機能として数えると技術粒度になるため、業務機能とは分離した。",
           "category": "common",
           "consumers": [
-            "c-web-coordinator",
-            "e-search",
-            "e-student"
+            "function.student-query",
+            "function.student-maintain",
+            "common.web-coordinator",
+            "entry.database-smoke"
           ],
-          "rationale": "登録されたCoreサービスとして複数の利用者タスクを支える。",
-          "responsibility": "学生情報の永続化と照会・保守に共通する業務規則",
+          "rationale": "利用者向け機能を消さず、その下で共有される業務責任を表す。",
+          "responsibility": "学生情報の照会・整合性・保存とSQLアクセスの中央実装。",
           "scope": "selected-system"
         },
         "dependencies": [],
@@ -1220,30 +1156,202 @@
             "path": "Infrastructure/WebStudentCoordinator.cs",
             "sha256": "f57e213dc22534b74e357aa066e31e25e58bac5b4de1b3f5458502e06e049385",
             "startLine": 7
+          },
+          {
+            "endLine": 7,
+            "path": "deployment/DatabaseSmoke/Program.cs",
+            "sha256": "74c6da0ca7493102bcae82bdefa5001162d02d684aea0e031ebf3902e666e537",
+            "startLine": 4
           }
         ],
-        "id": "COMMON-3084969d4225f395",
-        "key": "c-student-service",
+        "id": "COMMON-3fcb61c6b12956ad",
+        "key": "common.student-service",
         "kind": "common",
-        "name": "学生照会・保存のCoreサービス",
+        "name": "学生業務ルール・SQLサービス",
         "ownerRequirement": "catalog",
-        "statement": "IStudentServiceのSqlServerStudentService実装が学生検索、詳細、候補取得、保存、論理削除とそれに伴う中央業務検証・監査を担う。",
-        "version": "29c73068d7495a19571d360e56d300aa38df82ee927188a3527d42ced6c2d38e"
+        "statement": "SqlServerStudentServiceが学生検索、詳細取得、候補取得、保存、論理削除と業務整合性確認を所有する。Web登録はwebTokens=trueを指定する。",
+        "version": "af79ec116357028d353a876cc9b6e41e64e5456ef1dda9fa58da2bee193fbfd6"
       },
-      "c-ui": {
-        "basis": "observed-source",
+      "common.web-coordinator": {
+        "basis": "inferred",
         "classification": {
-          "alternative": "学生専用CSS・JavaScriptを別commonに細分化できるが、それ自体を利用者機能とは数えない。",
+          "alternative": "コントローラーごとの処理へ吸収することもできるが、原文では独立クラスへ集約されている。",
           "category": "common",
           "consumers": [
-            "f-login",
-            "f-logout",
-            "f-menu",
-            "f-student-inquiry",
-            "f-student-maintenance"
+            "entry.search",
+            "entry.student-new",
+            "entry.student-editor",
+            "entry.student-delete"
           ],
-          "rationale": "ViewStartによる共通適用、Layoutの資源読込、部分View利用が原文にある。",
-          "responsibility": "画面横断の表示枠とブラウザー操作支援",
+          "rationale": "画面の独立目的とは別に、検索・編集・保存・削除の実装を中央調停する。",
+          "responsibility": "学生Web操作を共通の主体・状態・サービス契約へ接続する。",
+          "scope": "selected-system"
+        },
+        "dependencies": [],
+        "dependsOn": [],
+        "evidence": [
+          {
+            "endLine": 28,
+            "path": "Infrastructure/WebStudentCoordinator.cs",
+            "sha256": "f57e213dc22534b74e357aa066e31e25e58bac5b4de1b3f5458502e06e049385",
+            "startLine": 3
+          },
+          {
+            "endLine": 18,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 13
+          },
+          {
+            "endLine": 43,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 29
+          }
+        ],
+        "id": "COMMON-7739e9983ee40d19",
+        "key": "common.web-coordinator",
+        "kind": "common",
+        "name": "学生Web操作の調停",
+        "ownerRequirement": "catalog",
+        "statement": "WebStudentCoordinatorが要求主体、検索状態、入力変換、Coreサービス、表示用結果を学生Web操作として調停する。",
+        "version": "45200bc6469cc72d1e76051c9a3d601c3fe0fd7d02fd3d00460565ac5cbe23f4"
+      },
+      "common.web-security": {
+        "basis": "inferred",
+        "classification": {
+          "alternative": "設定を支援資源とする分け方もあるが、ここでは要求処理時の保護・例外応答も実装するため共通処理とした。",
+          "category": "common",
+          "consumers": [
+            "entry.login",
+            "entry.logout",
+            "entry.menu",
+            "entry.search",
+            "entry.student-new",
+            "entry.student-editor",
+            "entry.student-delete",
+            "entry.retired-options"
+          ],
+          "rationale": "起動点から一括適用される中央責任である。",
+          "responsibility": "Web全体の登録、要求保護、共通失敗応答。",
+          "scope": "selected-system"
+        },
+        "dependencies": [],
+        "dependsOn": [],
+        "evidence": [
+          {
+            "endLine": 29,
+            "path": "Infrastructure/WebHostSetup.cs",
+            "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
+            "startLine": 13
+          },
+          {
+            "endLine": 10,
+            "path": "Infrastructure/AntiforgeryResultFilter.cs",
+            "sha256": "3f26dafa231f9a3bda5a1cce9e3ae2cfe76a831346c2f077c10b222f7378c2ac",
+            "startLine": 5
+          },
+          {
+            "endLine": 6,
+            "path": "Program.cs",
+            "sha256": "f55ce879e78e94b9144c1a9ed68fc6cfea01d45e91efc5dbbdf025d906fc1f85",
+            "startLine": 2
+          }
+        ],
+        "id": "COMMON-5e74be0106d52822",
+        "key": "common.web-security",
+        "kind": "common",
+        "name": "Webホスト・要求保護・例外応答",
+        "ownerRequirement": "catalog",
+        "statement": "WebHostSetupがDI、MVC、Cookie、CSRF、要求制限、ヘッダー、例外応答を中央設定し、AntiforgeryResultFilterを登録する。API向け応答分岐の存在だけから業務APIの稼働は推定しない。",
+        "version": "97d8413155d9aea8631e0348b56d138e0e3e625ef37e0430738934ca2ff67f7a"
+      },
+      "common.web-state": {
+        "basis": "inferred",
+        "classification": {
+          "alternative": "各ストアを別共通部品に分けることもできるが、ここではWeb作業状態という責任群でまとめた。",
+          "category": "common",
+          "consumers": [
+            "common.web-coordinator",
+            "entry.search",
+            "entry.student-new",
+            "entry.student-editor",
+            "entry.student-delete",
+            "common.authentication"
+          ],
+          "rationale": "検索・編集・保存後復帰に利用される中央ストア群であり、物理状態表と混同しない。",
+          "responsibility": "主体・セッション等に結び付く一時的Web作業状態の保持。",
+          "scope": "selected-system"
+        },
+        "dependencies": [],
+        "dependsOn": [],
+        "evidence": [
+          {
+            "endLine": 18,
+            "path": "Infrastructure/SearchContextStore.cs",
+            "sha256": "2418cabe8c3878cd7528e2280aa689642d55dd4685fef017e78046cf4ae5e04a",
+            "startLine": 7
+          },
+          {
+            "endLine": 12,
+            "path": "Infrastructure/EditorSnapshotStore.cs",
+            "sha256": "26fe339679b0190a9e4da0cbf62a82decc28777b59d0b59f26a2119f42fa86ba",
+            "startLine": 5
+          },
+          {
+            "endLine": 10,
+            "path": "Infrastructure/FlashMessageStore.cs",
+            "sha256": "34ebbaf013e5d2fe9a1fd248ceb1bc2c738bad667bc8a9d571766c042a08b355",
+            "startLine": 4
+          },
+          {
+            "endLine": 20,
+            "path": "Infrastructure/WebStudentCoordinator.cs",
+            "sha256": "f57e213dc22534b74e357aa066e31e25e58bac5b4de1b3f5458502e06e049385",
+            "startLine": 7
+          },
+          {
+            "endLine": 31,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 31
+          },
+          {
+            "endLine": 44,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 44
+          },
+          {
+            "endLine": 77,
+            "path": "Infrastructure/LocalLogin.cs",
+            "sha256": "1ee0e2968ae2eb3e5ee078076e65be375f3e46cd4125939e3476b5ff9232e52b",
+            "startLine": 77
+          }
+        ],
+        "id": "COMMON-4485a90fc273e866",
+        "key": "common.web-state",
+        "kind": "common",
+        "name": "Webの一時状態・編集スナップショット・通知",
+        "ownerRequirement": "catalog",
+        "statement": "SearchContextStore、EditorSnapshotStore、FlashMessageStoreが検索状態、読込時入力、完了通知をプロセス内で保持する。トークン生成は認証でも利用される。",
+        "version": "8246b7239944f033b060595801f8ed50d13a03a260ec3c18c4624ea4b1591e72"
+      },
+      "common.web-ui": {
+        "basis": "inferred",
+        "classification": {
+          "alternative": "CSS・JS・partialを個別部品に細分化できるが、主機能数とは分けて共通UI責任群として保持する。",
+          "category": "common",
+          "consumers": [
+            "entry.login",
+            "entry.menu",
+            "entry.search",
+            "entry.student-new",
+            "entry.student-editor",
+            "entry.student-delete"
+          ],
+          "rationale": "ViewStartとレイアウト資源参照、partial使用から実際の画面消費を確認できる。",
+          "responsibility": "複数Web画面の枠組み、表示、共通フォーム操作を支える。",
           "scope": "selected-system"
         },
         "dependencies": [],
@@ -1274,6 +1382,12 @@
             "startLine": 1
           },
           {
+            "endLine": 20,
+            "path": "Views/Students/Search.cshtml",
+            "sha256": "11b3aa90f38759dfcaf7df2f3bc0448537ce0ac1ba1828d259bd07709a0842a9",
+            "startLine": 19
+          },
+          {
             "endLine": 2,
             "path": "wwwroot/css/site.css",
             "sha256": "f144a45993982ed78d332137447b43885c906037e3a6061760f180a6da4af603",
@@ -1290,158 +1404,17 @@
             "path": "wwwroot/js/site.js",
             "sha256": "0a5a77d068907e383ae7000adcdf03fe613cf7be987eed5d872a6aa03bd931a1",
             "startLine": 1
-          },
-          {
-            "endLine": 19,
-            "path": "Views/Students/Search.cshtml",
-            "sha256": "11b3aa90f38759dfcaf7df2f3bc0448537ce0ac1ba1828d259bd07709a0842a9",
-            "startLine": 19
           }
         ],
-        "id": "COMMON-b0eb6b85dc082fc4",
-        "key": "c-ui",
+        "id": "COMMON-6cb65166b395fdd5",
+        "key": "common.web-ui",
         "kind": "common",
-        "name": "共通レイアウト・通知・画面操作支援",
+        "name": "共通レイアウト・表示資源・画面操作",
         "ownerRequirement": "catalog",
-        "statement": "共通レイアウト、通知部分、View設定、CSS、site.jsが各画面の外枠・通知・ダイアログ・入力状態表示を支える。メニュー本文は専用機能として分離する。",
-        "version": "9fd7f5c85e9b97dfae0ea40f57cee58bf195d15e83e3093b486aeb01af8bc6f5"
+        "statement": "共通レイアウト、メッセージpartial、CSS、site.jsが各画面の枠組みとフォーム送信・ダイアログ・変更破棄等の操作を提供する。共有断片を独立画面として数えない。",
+        "version": "c0699274065b485d8352687a2e42137eacce5406582ee71a007dbd26740da4a2"
       },
-      "c-web-coordinator": {
-        "basis": "observed-source",
-        "classification": {
-          "alternative": "Controller内に統合できるが、利用者タスクと調整実装は分けて記録する。",
-          "category": "common",
-          "consumers": [
-            "e-search",
-            "e-new",
-            "e-student",
-            "e-delete"
-          ],
-          "rationale": "複数のMVC入口が使う登録済みサービスで、メソッド単位の独立機能ではない。",
-          "responsibility": "MVC入口とCoreの間の学生処理調整",
-          "scope": "selected-system"
-        },
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 28,
-            "path": "Infrastructure/WebStudentCoordinator.cs",
-            "sha256": "f57e213dc22534b74e357aa066e31e25e58bac5b4de1b3f5458502e06e049385",
-            "startLine": 3
-          },
-          {
-            "endLine": 17,
-            "path": "Infrastructure/WebHostSetup.cs",
-            "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
-            "startLine": 17
-          },
-          {
-            "endLine": 43,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 13
-          }
-        ],
-        "id": "COMMON-dc62b6377e02c341",
-        "key": "c-web-coordinator",
-        "kind": "common",
-        "name": "学生Web処理の調整",
-        "ownerRequirement": "catalog",
-        "statement": "WebStudentCoordinatorがWeb要求の認可、入力変換、検索文脈及び学生サービス要求を調整する。",
-        "version": "d984618ece65e987b926852270db8bb04af3abcb7b3d6f8f1350696ccafd709a"
-      },
-      "c-web-host": {
-        "basis": "observed-source",
-        "classification": {
-          "alternative": "起動支援としてsupportにまとめる余地はあるが、要求時に適用される共通責務を含む。",
-          "category": "common",
-          "consumers": [
-            "e-web-start"
-          ],
-          "rationale": "Programから呼ばれる中央設定であり、個別の利用者主機能ではない。",
-          "responsibility": "Webアプリ全体の起動登録と要求横断処理",
-          "scope": "selected-system"
-        },
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 34,
-            "path": "Infrastructure/WebHostSetup.cs",
-            "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
-            "startLine": 11
-          },
-          {
-            "endLine": 10,
-            "path": "Infrastructure/AntiforgeryResultFilter.cs",
-            "sha256": "3f26dafa231f9a3bda5a1cce9e3ae2cfe76a831346c2f077c10b222f7378c2ac",
-            "startLine": 5
-          },
-          {
-            "endLine": 5,
-            "path": "Program.cs",
-            "sha256": "f55ce879e78e94b9144c1a9ed68fc6cfea01d45e91efc5dbbdf025d906fc1f85",
-            "startLine": 3
-          }
-        ],
-        "id": "COMMON-ab23bcef940d1fc4",
-        "key": "c-web-host",
-        "kind": "common",
-        "name": "Web登録・要求保護・共通例外処理",
-        "ownerRequirement": "catalog",
-        "statement": "WebHostSetupがDI、MVC、認証、CSRF、要求制限、ヘッダー、例外表示を中央設定する。AntiforgeryResultFilterもグローバル登録される。",
-        "version": "02cb828cdad2998685811c71303cc06b7eef0a298fe37ea324ea0cf1d8bc90a6"
-      },
-      "d-audit": {
-        "basis": "observed-source",
-        "classification": null,
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 154,
-            "path": "database/001_schema.sql",
-            "sha256": "32e87af4b5804c73ba9b0efa705a2050388b5105b3d64cceecd8c7e585fc1dc9",
-            "startLine": 137
-          }
-        ],
-        "id": "DATA-6dd334c1de11e661",
-        "key": "d-audit",
-        "kind": "data",
-        "name": "物理表 dbo.t_operation_log",
-        "ownerRequirement": "catalog",
-        "statement": "対象表・キー、操作種別、変更前後の版、変更列、実行主体・日時、相関ID、理由等を持つ監査履歴の物理定義。",
-        "version": "def02598ebdaee51e3a09aef245671ac53f9b9bd447576320e91f23677fac2f8"
-      },
-      "d-azure-schema": {
-        "basis": "observed-source",
-        "classification": null,
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 30,
-            "path": "deployment/Initialize-AzureDatabase.py",
-            "sha256": "630596b7c0d590fffaebeea5be55e4993b40bd2fe149bc4aae233eb5ecbd93e5",
-            "startLine": 11
-          },
-          {
-            "endLine": 131,
-            "path": "deployment/Initialize-AzureDatabase.py",
-            "sha256": "630596b7c0d590fffaebeea5be55e4993b40bd2fe149bc4aae233eb5ecbd93e5",
-            "startLine": 93
-          }
-        ],
-        "id": "DATA-fdf88a4c61dbddfe",
-        "key": "d-azure-schema",
-        "kind": "data",
-        "name": "Azure配備向けDDL・seed派生入力",
-        "ownerRequirement": "catalog",
-        "statement": "Initialize-AzureDatabase.pyは元DDLの5参照コード列をvarchar(10)に変換して元幅のCHECKを加え、seed表変数の照合順序を補う。別の表群ではなく、同じ7表の配備時定義変種として保持する。",
-        "version": "c7f9f142ccd357fefc36018fead5e05297aa4be35a2fc7fd56aafc045afd6c5c"
-      },
-      "d-class": {
+      "data.class": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1451,18 +1424,24 @@
             "endLine": 88,
             "path": "database/001_schema.sql",
             "sha256": "32e87af4b5804c73ba9b0efa705a2050388b5105b3d64cceecd8c7e585fc1dc9",
-            "startLine": 62
+            "startLine": 61
+          },
+          {
+            "endLine": 204,
+            "path": "database/001_schema.sql",
+            "sha256": "32e87af4b5804c73ba9b0efa705a2050388b5105b3d64cceecd8c7e585fc1dc9",
+            "startLine": 186
           }
         ],
-        "id": "DATA-3f3f53564617db53",
-        "key": "d-class",
+        "id": "DATA-ace7a698d1adb33e",
+        "key": "data.class",
         "kind": "data",
-        "name": "物理表 dbo.m_class",
+        "name": "dbo.m_class",
         "ownerRequirement": "catalog",
-        "statement": "年度、学年、クラスコード・名称、利用期間、定員、有効状態及び更新管理を持つCREATE TABLE定義。",
-        "version": "4ae4d85641309c915e0677cd167e2e1fe0746f146ec82f07c8dd0470e04bfb13"
+        "statement": "CREATE TABLEで定義されるクラス物理表。年度・学年・コード・名称・利用期間・定員・有効性と更新管理情報を持つ。",
+        "version": "bb16d0cbcc8a772b36a0925856e01106bfa889dafa642b4baabdea8dfd21ca64"
       },
-      "d-code": {
+      "data.code": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1472,24 +1451,24 @@
             "endLine": 135,
             "path": "database/001_schema.sql",
             "sha256": "32e87af4b5804c73ba9b0efa705a2050388b5105b3d64cceecd8c7e585fc1dc9",
-            "startLine": 112
+            "startLine": 111
           },
           {
-            "endLine": 91,
+            "endLine": 93,
             "path": "database/002_seed.sql",
             "sha256": "b40e408a8c98b66b045adc05dca5eb15cc53faea5d700afc30e7e741d234c431",
-            "startLine": 8
+            "startLine": 14
           }
         ],
-        "id": "DATA-10f80affb2d3f89e",
-        "key": "d-code",
+        "id": "DATA-67f51fb05888a625",
+        "key": "data.code",
         "kind": "data",
-        "name": "物理表 dbo.m_codeと初期業務コード",
+        "name": "dbo.m_code",
         "ownerRequirement": "catalog",
-        "statement": "分類とコード値の複合主キー、名称、表示順、有効期間、保護区分を持つ物理表。seedには性別・在籍区分・都道府県・続柄・学年の5分類70コードを記述する。",
-        "version": "66786cc95731d1c66ab8f087abb627fd0a824313969c2e2e1a8000eed933ac25"
+        "statement": "分類IDとコード値を複合主キーとする業務コード物理表。名称・表示順・期間・保護状態等を持ち、seed原文は70コードを列挙する。実DBへの投入済みを意味しない。",
+        "version": "66b41cf7c0a6e5005cca671ad5f4869a15665860995673a4eef305d90e861a7f"
       },
-      "d-code-category": {
+      "data.code-category": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1499,18 +1478,24 @@
             "endLine": 110,
             "path": "database/001_schema.sql",
             "sha256": "32e87af4b5804c73ba9b0efa705a2050388b5105b3d64cceecd8c7e585fc1dc9",
-            "startLine": 90
+            "startLine": 89
+          },
+          {
+            "endLine": 13,
+            "path": "database/002_seed.sql",
+            "sha256": "b40e408a8c98b66b045adc05dca5eb15cc53faea5d700afc30e7e741d234c431",
+            "startLine": 8
           }
         ],
-        "id": "DATA-737bd2f6a3900da0",
-        "key": "d-code-category",
+        "id": "DATA-5dc73e10013223aa",
+        "key": "data.code-category",
         "kind": "data",
-        "name": "物理表 dbo.m_code_category",
+        "name": "dbo.m_code_category",
         "ownerRequirement": "catalog",
-        "statement": "分類識別、名称、コード長、追加可否、有効状態及び更新管理を持つCREATE TABLE定義。",
-        "version": "481064a7ab5def167bb571e7ff54f668c52d2600af0869d24711d8bcd3d8df91"
+        "statement": "分類IDを主キーとするコード分類の物理表。コード長・追加可否等を定義する。seedは性別・在籍区分・都道府県・続柄・学年の5分類を記述する。",
+        "version": "ef864cdc6a74a206ba4ab1abe15bf4b42ecb4b269151477717198b08241b459d"
       },
-      "d-confirmation": {
+      "data.confirmation": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1520,13 +1505,7 @@
             "endLine": 169,
             "path": "database/001_schema.sql",
             "sha256": "32e87af4b5804c73ba9b0efa705a2050388b5105b3d64cceecd8c7e585fc1dc9",
-            "startLine": 156
-          },
-          {
-            "endLine": 275,
-            "path": "Core/SqlServerStudentService.cs",
-            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
-            "startLine": 269
+            "startLine": 155
           },
           {
             "endLine": 335,
@@ -1539,17 +1518,23 @@
             "path": "Infrastructure/WebHostSetup.cs",
             "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
             "startLine": 23
+          },
+          {
+            "endLine": 24,
+            "path": "database/003_web_permissions.sql",
+            "sha256": "78d487c3ed3cf6aa5af35687bf98f42c00ff0c71397d9986b2bc77ed49957f5e",
+            "startLine": 23
           }
         ],
-        "id": "DATA-464a851789c34899",
-        "key": "d-confirmation",
+        "id": "DATA-deaaa1ddf00766b3",
+        "key": "data.confirmation",
         "kind": "data",
-        "name": "物理表 dbo.t_confirmation",
+        "name": "dbo.t_confirmation",
         "ownerRequirement": "catalog",
-        "statement": "重複確認情報の物理定義と非Webトークン経路のSQL参照がある。現行Web登録はwebTokens:trueを指定するため、表宣言を現行Webの保持先と同一視しない。",
-        "version": "7eff5cbcda73ea33ee4a2ba26fb38b737ed0319e7277e13c89fde25747e69fe8"
+        "statement": "重複確認の主体・対象・版・照合値・期限等を持つ物理表。Coreには非Webトークン分岐からのSQL参照があるが、取得Web登録はメモリー型トークンを選ぶ。",
+        "version": "36ce5000386b0031a6869ca495262e604e3b0f84e2ca75e1c5f71745e981fbde"
       },
-      "d-core-contracts": {
+      "data.core-contracts": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1560,17 +1545,23 @@
             "path": "Core/Contracts.cs",
             "sha256": "af8ee917671d85388235ff0a143c1fad9f3509b2f0d0389e77e4bb37b14cfad6",
             "startLine": 4
+          },
+          {
+            "endLine": 16,
+            "path": "Core/StudentNormalizer.cs",
+            "sha256": "6064479d6b76a6a5e64f71f956f181b2a12adb4bb765868a27e3da2f887835cd",
+            "startLine": 7
           }
         ],
-        "id": "DATA-bb2153271f2e42dd",
-        "key": "d-core-contracts",
+        "id": "DATA-82ab1e80c677079f",
+        "key": "data.core-contracts",
         "kind": "data",
-        "name": "Coreの契約・DTO",
+        "name": "Coreサービス契約・DTO・正規化値",
         "ownerRequirement": "catalog",
-        "statement": "CurrentUser、StudentDraft、SearchCriteria、StudentListItem、StudentRow、StudentDetail、LookupSet、SaveRequest/Result、エラー・結果列挙とIStudentServiceを宣言する。サービス用DTO・投影型であり、物理表定義やORM Entity登録ではない。",
-        "version": "f0c20cae4e2483c1bbcf04b2139aa45e6510d2ca4207c8312780eaff0959485c"
+        "statement": "Role、Outcome、CurrentUser、FieldError、BirthDateInput、StudentDraft、SearchCriteria、一覧・詳細・候補・保存要求結果、IStudentServiceとNormalizedStudentを定義する。これらはサービス／転送上の型であり、物理表定義やORM Entityとは扱わない。",
+        "version": "219a1c6d529d3dc29ad989d0e6eeeeef3a6bf3fbde091666100c3f52a3f4e75c"
       },
-      "d-maintenance-contracts": {
+      "data.maintenance-contracts": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1581,17 +1572,50 @@
             "path": "Core/MasterMaintenanceService.cs",
             "sha256": "d493baee3b912b91feba637ec645cac753348ceb5fab6968fa57b5af71f899f3",
             "startLine": 9
+          },
+          {
+            "endLine": 13,
+            "path": "maintenance/Program.cs",
+            "sha256": "4ffd1ef81a4dd10072f998454fc292bd1ac227ec83d503302ac4a61d9cb3e2c5",
+            "startLine": 8
           }
         ],
-        "id": "DATA-f949734b7e465aaf",
-        "key": "d-maintenance-contracts",
+        "id": "DATA-a24863ea42bd4d2a",
+        "key": "data.maintenance-contracts",
         "kind": "data",
-        "name": "マスタ保守の変更DTO",
+        "name": "マスタ保守CLIの入出力契約",
         "ownerRequirement": "catalog",
-        "statement": "ClassChange、CodeChange、MaintenanceResultがCLIの変更要求と処理結果を表す。",
-        "version": "5abebdab6485884d2dcc3d1f05de3e66efa478f00391303206448bad9810c2e1"
+        "statement": "ClassChange、CodeChange、MaintenanceResultが保守CLIのJSON入力・結果契約を構成する。物理マスタ表とは別に保持する。",
+        "version": "65f9cdd0a57c43711e4ff54fff63a3269056585dea8b900439ae271a199cd6e1"
       },
-      "d-runtime": {
+      "data.operation-log": {
+        "basis": "observed-source",
+        "classification": null,
+        "dependencies": [],
+        "dependsOn": [],
+        "evidence": [
+          {
+            "endLine": 154,
+            "path": "database/001_schema.sql",
+            "sha256": "32e87af4b5804c73ba9b0efa705a2050388b5105b3d64cceecd8c7e585fc1dc9",
+            "startLine": 136
+          },
+          {
+            "endLine": 211,
+            "path": "database/001_schema.sql",
+            "sha256": "32e87af4b5804c73ba9b0efa705a2050388b5105b3d64cceecd8c7e585fc1dc9",
+            "startLine": 203
+          }
+        ],
+        "id": "DATA-07c1ad9593609c3c",
+        "key": "data.operation-log",
+        "kind": "data",
+        "name": "dbo.t_operation_log",
+        "ownerRequirement": "catalog",
+        "statement": "操作対象・監査種別・変更列・実行主体・日時・理由等を持つ操作履歴の物理表。利用者向け履歴照会入口の存在は確認していない。",
+        "version": "625a0a61a632c46d40b1f1b8d39697fe50592df51c00138bfda3b3ee6397c1af"
+      },
+      "data.runtime-state": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1601,7 +1625,7 @@
             "endLine": 184,
             "path": "database/001_schema.sql",
             "sha256": "32e87af4b5804c73ba9b0efa705a2050388b5105b3d64cceecd8c7e585fc1dc9",
-            "startLine": 171
+            "startLine": 170
           },
           {
             "endLine": 24,
@@ -1610,15 +1634,15 @@
             "startLine": 23
           }
         ],
-        "id": "DATA-b366067737eda551",
-        "key": "d-runtime",
+        "id": "DATA-5da744d01ee06b77",
+        "key": "data.runtime-state",
         "kind": "data",
-        "name": "物理表 dbo.t_runtime_state",
+        "name": "dbo.t_runtime_state",
         "ownerRequirement": "catalog",
-        "statement": "所有者、ログインセッション、状態種別、暗号化ペイロード、期限、版等を持つ物理定義。取得した現行Web実装にこの表へのDML利用は観測されず、権限SQLもメモリー保持を説明する。",
-        "version": "412650f8204990bfab9421c6f47665f8d9528eb65c6fc94d7b2dcc0c5258a773"
+        "statement": "所有者・セッション・状態種別・暗号化ペイロード・期限・版等を持つ物理表。取得アプリの検索・編集状態ストアはメモリー実装で、当表のアプリDML利用は観測していない。",
+        "version": "a38a727d53b0838ad1fa9aa2aea346f0878a8b7d8c765ad757189787ba200d2a"
       },
-      "d-student": {
+      "data.student": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1629,62 +1653,23 @@
             "path": "database/001_schema.sql",
             "sha256": "32e87af4b5804c73ba9b0efa705a2050388b5105b3d64cceecd8c7e585fc1dc9",
             "startLine": 7
+          },
+          {
+            "endLine": 204,
+            "path": "database/001_schema.sql",
+            "sha256": "32e87af4b5804c73ba9b0efa705a2050388b5105b3d64cceecd8c7e585fc1dc9",
+            "startLine": 186
           }
         ],
-        "id": "DATA-deef86a72d368260",
-        "key": "d-student",
+        "id": "DATA-9d5d3195fff34959",
+        "key": "data.student",
         "kind": "data",
-        "name": "物理表 dbo.m_student",
+        "name": "dbo.m_student",
         "ownerRequirement": "catalog",
-        "statement": "学生識別、基本情報、住所・連絡先、在籍・所属、緊急連絡先、論理削除及び更新管理を持つCREATE TABLE定義。",
-        "version": "3a7727491f5a9ae25f91f1ba5fd4261290d415582ed89e28dd942bac7eb945d6"
+        "statement": "CREATE TABLEで定義される学生物理表。学生識別、基本・連絡先・在籍・所属、論理削除、更新管理情報を持つ。DTO宣言とは別のデータ対象。",
+        "version": "7d8ab0dd714f1ad512db966cf29a4339260ff11dec6a13c29de55bf1d6194c3a"
       },
-      "d-transient-state": {
-        "basis": "observed-source",
-        "classification": null,
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 11,
-            "path": "Infrastructure/SearchContextStore.cs",
-            "sha256": "2418cabe8c3878cd7528e2280aa689642d55dd4685fef017e78046cf4ae5e04a",
-            "startLine": 10
-          },
-          {
-            "endLine": 8,
-            "path": "Infrastructure/EditorSnapshotStore.cs",
-            "sha256": "26fe339679b0190a9e4da0cbf62a82decc28777b59d0b59f26a2119f42fa86ba",
-            "startLine": 7
-          },
-          {
-            "endLine": 9,
-            "path": "Infrastructure/FlashMessageStore.cs",
-            "sha256": "34ebbaf013e5d2fe9a1fd248ceb1bc2c738bad667bc8a9d571766c042a08b355",
-            "startLine": 4
-          },
-          {
-            "endLine": 29,
-            "path": "Core/SqlServerStudentService.cs",
-            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
-            "startLine": 19
-          },
-          {
-            "endLine": 23,
-            "path": "Infrastructure/WebHostSetup.cs",
-            "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
-            "startLine": 23
-          }
-        ],
-        "id": "DATA-f4e324f578eaf525",
-        "key": "d-transient-state",
-        "kind": "data",
-        "name": "プロセス内の検索・編集・確認・通知状態",
-        "ownerRequirement": "catalog",
-        "statement": "検索Entry、編集Snapshot、重複Confirmation、FlashMessageを辞書で保持する宣言がある。物理表t_runtime_stateやt_confirmationとは別の保持対象。",
-        "version": "987b3b410c012238a047eb5b5b65fd7d28d4badf1ec48e64e5432e310f29e6cc"
-      },
-      "d-web-contracts": {
+      "data.web-contracts": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1697,7 +1682,7 @@
             "startLine": 3
           },
           {
-            "endLine": 56,
+            "endLine": 33,
             "path": "Web/Inputs/StudentSaveInput.cs",
             "sha256": "586305468bf66346dfbb0f8ce0d9aedc76cde99169d51b673d8f41f9b61d1f38",
             "startLine": 6
@@ -1727,15 +1712,15 @@
             "startLine": 4
           }
         ],
-        "id": "DATA-74694962c01f89ec",
-        "key": "d-web-contracts",
+        "id": "DATA-3c301828eb1ebb13",
+        "key": "data.web-contracts",
         "kind": "data",
-        "name": "Web入力・要求候補・画面モデル",
+        "name": "Web入力DTO・要求・画面モデル",
         "ownerRequirement": "catalog",
-        "statement": "学生検索・保存・削除入力、文脈・ページ要求、OptionsRequestとログイン・検索・編集ページモデルを宣言する。OptionsRequestの存在だけでは現行公開APIを証明しない。",
-        "version": "79b6e0696056f4ab7754ca1ccc5fb2ae74d4b400bf41e1b652f95337c0f1a4db"
+        "statement": "学生保存・削除・検索入力、検索状態／ページ／候補要求、ログイン・学生編集・検索画面モデルを定義する。OptionsRequestの宣言だけから公開APIを推定しない。",
+        "version": "6ef712e5a187ce81e5fd7bd3e4bcaf84880c23b347c4501631b4642c8a0955d4"
       },
-      "dep-runtime": {
+      "dependency.runtime-packages": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1764,68 +1749,29 @@
             "path": "packages.lock.json",
             "sha256": "85e7efe346efd3149389fafb6be6a2872d3a99a4aa069f0d9e762db9a9e6022b",
             "startLine": 1
-          }
-        ],
-        "id": "DEPENDENCY-13fcd24101c76a1f",
-        "key": "dep-runtime",
-        "kind": "dependency",
-        "name": ".NET・ASP.NET Core及びNuGet依存",
-        "ownerRequirement": "catalog",
-        "statement": "net10.0、ASP.NET Core Web SDK/共有フレームワーク、Microsoft.Data.SqlClient 6.1.3、System.Security.Cryptography.Pkcs 9.0.21とlock内の推移依存を宣言する。依存名だけで外部認証等の接続機能を認定しない。",
-        "version": "e5fa108ff99eeb19cd153d1df6fff2b373af130f842553244aa4173eed3eb660"
-      },
-      "dep-toolchain": {
-        "basis": "observed-source",
-        "classification": null,
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 88,
-            "path": "tools/build.py",
-            "sha256": "f6c229827cfaa877194f542571560ea84852f26b56b3ae93d0f9919f8a539123",
-            "startLine": 66
-          },
-          {
-            "endLine": 5,
-            "path": "database/generate.mjs",
-            "sha256": "e72bb17e1d9c772d802726048f3a75543b92008dacafc5546cb28ba3f9b49167",
-            "startLine": 1
-          },
-          {
-            "endLine": 80,
-            "path": "database/Deploy-Database.ps1",
-            "sha256": "61b5501f39d1a7013c79b0b5c8b703dcdb15753e8cfa5a92b2d2194654c2a2c7",
-            "startLine": 26
-          },
-          {
-            "endLine": 42,
-            "path": "deployment/Initialize-AzureDatabase.py",
-            "sha256": "630596b7c0d590fffaebeea5be55e4993b40bd2fe149bc4aae233eb5ecbd93e5",
-            "startLine": 2
           },
           {
             "endLine": 7,
-            "path": "deployment/Configure-AzureDatabase.ps1",
-            "sha256": "681f8c7dbab943ae8af5b3c554cf4c6ccb84e3bbac5dd711eb4962283e78f406",
-            "startLine": 4
+            "path": "Core/SqlServerStudentService.cs",
+            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
+            "startLine": 7
           },
           {
             "endLine": 7,
-            "path": "deployment/Verify-AzureWebLogin.py",
-            "sha256": "f5eafc6a628504172020e74c7ffe1470c570c2fad252235f3e8b451f31cfa09b",
-            "startLine": 1
+            "path": "Infrastructure/LocalLogin.cs",
+            "sha256": "1ee0e2968ae2eb3e5ee078076e65be375f3e46cd4125939e3476b5ff9232e52b",
+            "startLine": 5
           }
         ],
-        "id": "DEPENDENCY-ce41ced8e6227548",
-        "key": "dep-toolchain",
+        "id": "DEPENDENCY-efa67ec550e3ac32",
+        "key": "dependency.runtime-packages",
         "kind": "dependency",
-        "name": "生成・配備・検証の外部ツール依存",
+        "name": ".NET・ASP.NET Core・SQLクライアント等",
         "ownerRequirement": "catalog",
-        "statement": "補助資源にはdotnet、Python、Node.js、PowerShell、sqlcmd、Azure CLI、pyodbc/ODBC Driver及びPlaywrightの参照がある。ホストでの導入状況・稼働は確認していない。",
-        "version": "3fe06bd77bf82c0e5bd50c1bab7e7cd45fa11449db8f05d05eb76fc74ee04994"
+        "statement": "プロジェクトはnet10.0を対象とし、CoreはMicrosoft.Data.SqlClient 6.1.3とSystem.Security.Cryptography.Pkcs 9.0.21を参照する。ASP.NET Core Identity/Cookie機構を利用し、packages.lock.jsonは推移依存も記録する。パッケージ復元・導入状態は未確認。",
+        "version": "e6976ac0328e17f99f39e85888b15e181ae9a7e09d5233ecb5dba2aaeb9e1b80"
       },
-      "e-db-smoke": {
+      "entry.database-smoke": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1844,42 +1790,15 @@
             "startLine": 1
           }
         ],
-        "id": "ENTRY-e06d9eb9d4764688",
-        "key": "e-db-smoke",
+        "id": "ENTRY-fd80a6fc9f66497c",
+        "key": "entry.database-smoke",
         "kind": "entry",
-        "name": "DatabaseSmokeコンソール入口",
+        "name": "配備DB読取検査プログラム",
         "ownerRequirement": "catalog",
-        "statement": "独立した配備検証Exeに学生サービスの候補取得・検索を呼ぶトップレベル入口がある。",
-        "version": "5de20aab876865df12ea54cd3ee5b7032baefabd14c6f4505286a12ad89f3115"
+        "statement": "DatabaseSmokeは実サービスの候補取得と検索を呼び出す検査用コンソール入口。ソース内のPASS出力は検査結果として採用しない。",
+        "version": "0032b7e27b5f11eeff13ba4166c25183d74e7bef233bc76a73988341e138d18d"
       },
-      "e-delete": {
-        "basis": "observed-source",
-        "classification": null,
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 5,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 5
-          },
-          {
-            "endLine": 43,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 43
-          }
-        ],
-        "id": "ENTRY-0f3a182eb209a2b5",
-        "key": "e-delete",
-        "kind": "entry",
-        "name": "学生論理削除MVC入口",
-        "ownerRequirement": "catalog",
-        "statement": "POST /students/{id:long}/deleteを宣言する。",
-        "version": "233cf054b99b1a5998b9edc3c9e4566fd36469ccd9d8438315fa0c1844e2fb5a"
-      },
-      "e-evaluation-session": {
+      "entry.evaluation-session": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1890,17 +1809,23 @@
             "path": "Infrastructure/WebHostSetup.cs",
             "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
             "startLine": 30
+          },
+          {
+            "endLine": 1,
+            "path": "appsettings.json",
+            "sha256": "27d712ad8f7047525ee0c388577a6e8911fecb202870536fa696ce58c4c11869",
+            "startLine": 1
           }
         ],
-        "id": "ENTRY-318ca0e1cc94683a",
-        "key": "e-evaluation-session",
+        "id": "ENTRY-801781942a7dc5ea",
+        "key": "entry.evaluation-session",
         "kind": "entry",
-        "name": "評価用セッションAPI入口",
+        "name": "評価用セッション作成入口",
         "ownerRequirement": "catalog",
-        "statement": "POST /_evaluation/sessionを明示登録する評価支援入口。Development及びサーバー設定に制約され、利用者向けログイン画面とは別である。",
-        "version": "648c901184e4cce648f823648f153944a3e3ae492ff3a056bfa4a3bfa705f26e"
+        "statement": "POST /_evaluation/sessionの登録がある。Development環境とサーバー設定に依存する評価用入口であり、通常ログイン画面とは別に保持する。",
+        "version": "4cda8699edf4d6a13ee0260fb3a24c1e4f5d2fdf7cd573c62139882de971a2a1"
       },
-      "e-health": {
+      "entry.health": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1913,15 +1838,15 @@
             "startLine": 32
           }
         ],
-        "id": "ENTRY-ac29297370f00e36",
-        "key": "e-health",
+        "id": "ENTRY-52ca446bbea6e0f4",
+        "key": "entry.health",
         "kind": "entry",
-        "name": "生存確認入口",
+        "name": "存活応答入口",
         "ownerRequirement": "catalog",
-        "statement": "GET /healthを登録し、running及びdatabase=not-testedを応答する宣言がある。DB検証の成功証拠ではない。",
-        "version": "fd28329f5309473f437dd168bded473e9e2cdeac43d04e42c034bceaad73f533"
+        "statement": "GET /healthはrunningとdatabase=not-testedを返す登録。DB接続確認や利用者向け独立業務の証拠ではない。",
+        "version": "9dd3a461351d57855ccfc4a7829cd053f4c0ff8f7756aef2cb075b3eaf4177fe"
       },
-      "e-login": {
+      "entry.login": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1932,17 +1857,23 @@
             "path": "Web/Controllers/AccountController.cs",
             "sha256": "eb3317ec00f640a4ea7e6c7ff4538a7a0a716030f84cc3c31220df236ce8c394",
             "startLine": 10
+          },
+          {
+            "endLine": 13,
+            "path": "Views/Account/Login.cshtml",
+            "sha256": "7083b1858924c29a25c78126c0f440e91242a7b1afb16d590c9c47aee962cd7c",
+            "startLine": 1
           }
         ],
-        "id": "ENTRY-8f8cf94cdd6cefb1",
-        "key": "e-login",
+        "id": "ENTRY-66c5a6efefe481b6",
+        "key": "entry.login",
         "kind": "entry",
         "name": "ログイン画面・送信入口",
         "ownerRequirement": "catalog",
-        "statement": "AccountControllerに匿名許可のGET /login及びPOST /loginを宣言する。",
-        "version": "f1c4a071ee1de2fde9c85802104bdec94c10e1a6858bf23defacd991b96881a5"
+        "statement": "GET /login と POST /login。LocalLogin設定が有効な場合のMVC画面入口である。",
+        "version": "013b52a9f3314c045a6dc7c1a35d46d72f45c1e992b535949f109c48ccd4f9e4"
       },
-      "e-login-hash": {
+      "entry.login-hash-tool": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1961,15 +1892,15 @@
             "startLine": 1
           }
         ],
-        "id": "ENTRY-e8fd78d7771d26f5",
-        "key": "e-login-hash",
+        "id": "ENTRY-c6f2f9dceff05846",
+        "key": "entry.login-hash-tool",
         "kind": "entry",
-        "name": "LoginPasswordHashコンソール入口",
+        "name": "配備ログインハッシュ生成入口",
         "ownerRequirement": "catalog",
-        "statement": "独立した配備補助Exeにパスワードハッシュを指定出力先へ作るトップレベル入口がある。",
-        "version": "d00cc1851eeb92fabab07b4d543df841fda08686d04dc9c35fef075d889e7c31"
+        "statement": "LoginPasswordHashは配備時のハッシュ生成補助コンソールであり、業務利用者のログイン画面とは別の支援入口。",
+        "version": "4a1dce638be7b48e59033a24eff7ec027d77e9c653bc850a331642e6911a137a"
       },
-      "e-logout": {
+      "entry.logout": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -1980,17 +1911,23 @@
             "path": "Web/Controllers/AccountController.cs",
             "sha256": "eb3317ec00f640a4ea7e6c7ff4538a7a0a716030f84cc3c31220df236ce8c394",
             "startLine": 36
+          },
+          {
+            "endLine": 4,
+            "path": "Views/Shared/_Layout.cshtml",
+            "sha256": "1a0d18550b9aca7bf7ae74963a453d3021cd549943cbb4cb89eefa19c1ab72ee",
+            "startLine": 2
           }
         ],
-        "id": "ENTRY-9c769e24277ce710",
-        "key": "e-logout",
+        "id": "ENTRY-490e1e603efd7cff",
+        "key": "entry.logout",
         "kind": "entry",
         "name": "ログアウト送信入口",
         "ownerRequirement": "catalog",
-        "statement": "AccountControllerに認証要求のPOST /logoutを宣言する。",
-        "version": "4170a806f75a4a6518d47a5a4726bcf0f4771d1a57cc34f808aca337bfb6f67f"
+        "statement": "認証付きPOST /logout。共通ヘッダーのフォームから送信する。",
+        "version": "41a675b52ebd009b3cee623d2201ac15aa688b02d655760fc601ab49deeca82f"
       },
-      "e-maintenance-cli": {
+      "entry.maintenance": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -2009,15 +1946,15 @@
             "startLine": 1
           }
         ],
-        "id": "ENTRY-dc043b22af9afce4",
-        "key": "e-maintenance-cli",
+        "id": "ENTRY-aa841ff3444b5ee5",
+        "key": "entry.maintenance",
         "kind": "entry",
-        "name": "StudentMaintenance CLI入口",
+        "name": "StudentMaintenance CLI",
         "ownerRequirement": "catalog",
-        "statement": "独立Exeプロジェクトのトップレベルでclass又はcodeとJSONファイルを受け付ける。CLI選択の意味は原文から確認した。",
-        "version": "8b2fdb1f2087dd2e4cf43f02ffb3a26b08cc635faa0853a76f2fb1b617f20f56"
+        "statement": "class|codeと入力JSONファイルを引数に取る実行プロジェクト。接続設定を受け取り、選択したマスタ保守結果を出力する。",
+        "version": "73e9a9d722eee604b8bebf502eca3c7b6b3281c8185b0ac61e6ba051e0700a73"
       },
-      "e-menu": {
+      "entry.menu": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -2028,84 +1965,30 @@
             "path": "Web/Controllers/MenuController.cs",
             "sha256": "ba3fe274371fafa9464cb23dac72425bfa30450c5a673b19e44c0bfe0330aa2e",
             "startLine": 6
+          },
+          {
+            "endLine": 7,
+            "path": "Views/Menu/Index.cshtml",
+            "sha256": "0f56d5d6c4e3aa8ebf7b04724db174cdcfae52a976eec9b6f1c8fbce4958e078",
+            "startLine": 1
           }
         ],
-        "id": "ENTRY-e6d17ea2174934c2",
-        "key": "e-menu",
+        "id": "ENTRY-c904cd076b366295",
+        "key": "entry.menu",
         "kind": "entry",
-        "name": "メニュー画面入口",
+        "name": "学生管理メニュー入口",
         "ownerRequirement": "catalog",
-        "statement": "認証要求のMenuControllerにGET /menuを宣言する。",
-        "version": "de8f7eda6a1706968725da9107cbbab9c8062e959a44ed2e7a32981d62b001b3"
+        "statement": "認証付きGET /menuがメニューViewを表示する。",
+        "version": "1b555ad73debcd89a65692c905f60be40205d9337bb1740e640e510cc78b489a"
       },
-      "e-new": {
+      "entry.retired-options": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
           {
-            "endLine": 5,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 5
-          },
-          {
-            "endLine": 29,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 29
-          },
-          {
-            "endLine": 32,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 32
-          }
-        ],
-        "id": "ENTRY-d72e4150a83d85b0",
-        "key": "e-new",
-        "kind": "entry",
-        "name": "学生新規MVC入口",
-        "ownerRequirement": "catalog",
-        "statement": "GET /students/newとPOST /students/createを宣言する。",
-        "version": "b83fb8dde007e60805371a2098770575cd1821329a85b51c0032fb0cf97c8fad"
-      },
-      "e-reset": {
-        "basis": "observed-source",
-        "classification": null,
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 5,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 5
-          },
-          {
-            "endLine": 41,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 41
-          }
-        ],
-        "id": "ENTRY-cb5b1e1281efcab0",
-        "key": "e-reset",
-        "kind": "entry",
-        "name": "学生入力取消MVC入口",
-        "ownerRequirement": "catalog",
-        "statement": "POST /students/resetを宣言する。",
-        "version": "149eb1ab8fb1dad56db458bcec9f4ccf4dde26e8cb2b91805ebb6655241ad4b4"
-      },
-      "e-retired-options": {
-        "basis": "observed-source",
-        "classification": null,
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 5,
+            "endLine": 6,
             "path": "Web/Controllers/StudentsController.cs",
             "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
             "startLine": 5
@@ -2117,15 +2000,15 @@
             "startLine": 27
           }
         ],
-        "id": "ENTRY-2c3bfac7003453be",
-        "key": "e-retired-options",
+        "id": "ENTRY-e7c9bfab9c3816a4",
+        "key": "entry.retired-options",
         "kind": "entry",
-        "name": "廃止候補更新URLの残存宣言",
+        "name": "旧検索候補入口",
         "ownerRequirement": "catalog",
-        "statement": "POST /students/optionsは宣言が残るが、アクション本文はNotFoundを返す。現行候補取得機能として数えない。",
-        "version": "599b27ce9a168eced2d7dcdd0f3687db34aed5ddddd29974681f886eb2fd9427"
+        "statement": "POST /students/optionsの宣言は残るが、現行本体はNotFoundを返す。候補取得機能の稼働入口として数えない。",
+        "version": "9c60ec42204da4b147496ee314e369de3f2923ac228a7dc92d8518deb8461679"
       },
-      "e-search": {
+      "entry.search": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -2136,88 +2019,172 @@
             "path": "Web/Controllers/StudentsController.cs",
             "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
             "startLine": 5
+          },
+          {
+            "endLine": 77,
+            "path": "Views/Students/Search.cshtml",
+            "sha256": "11b3aa90f38759dfcaf7df2f3bc0448537ce0ac1ba1828d259bd07709a0842a9",
+            "startLine": 14
           }
         ],
-        "id": "ENTRY-569831b8ae99baac",
-        "key": "e-search",
+        "id": "ENTRY-0685f475cf01843c",
+        "key": "entry.search",
         "kind": "entry",
-        "name": "学生検索MVC入口群",
+        "name": "学生検索画面と結果操作入口",
         "ownerRequirement": "catalog",
-        "statement": "認証要求のstudentsルートにGET /students、POST /students/search、/students/page、/students/clearを宣言する。",
-        "version": "ef9d5da39496c136cf2b983a12eadf43abe15f9a6db0a1e9512f22b1dab8a41c"
+        "statement": "認証付きGET /students、POST /students/search、/students/page、/students/clear。検索・結果操作と保守対象選択で共有するMVC入口。",
+        "version": "c330eb712ad2d5977e021b3cd7e9215386c70520b39279892fe171a444f0d3ee"
       },
-      "e-student": {
+      "entry.student-delete": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
           {
-            "endLine": 5,
+            "endLine": 6,
             "path": "Web/Controllers/StudentsController.cs",
             "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
             "startLine": 5
           },
           {
-            "endLine": 33,
+            "endLine": 43,
             "path": "Web/Controllers/StudentsController.cs",
             "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 30
+            "startLine": 43
           },
           {
-            "endLine": 14,
-            "path": "Web/Models/StudentEditPageModel.cs",
-            "sha256": "f8a5fdbed669dc69850395502d0992411733e6c17a7b0f36878d9dd39c96c1d2",
-            "startLine": 14
+            "endLine": 4,
+            "path": "Web/Inputs/StudentDeleteInput.cs",
+            "sha256": "da4340768102890527c4faee4cce9dbb0396c7b159b58f3168d554094b64158d",
+            "startLine": 3
           }
         ],
-        "id": "ENTRY-b2d24681ff7c4259",
-        "key": "e-student",
+        "id": "ENTRY-bb761d73375a1900",
+        "key": "entry.student-delete",
         "kind": "entry",
-        "name": "既存学生の参照・更新MVC入口",
+        "name": "学生論理削除入口",
         "ownerRequirement": "catalog",
-        "statement": "GET /students/{id:long}とPOST /students/{id:long}/updateを宣言し、参照と編集で表示入口を共有する。",
-        "version": "77cebc7d96e02f0e8d864faea3fbfb8196636d6589c4ddb0a1ea54347ce8a3dc"
+        "statement": "認証付きPOST /students/{id:long}/delete。対象版・理由・確認情報・編集状態を受け付ける。",
+        "version": "a2651dc3ec190cc397fdf9adbf1f6035a80a9c5ed9c4bd1a5d39316b1cb0084e"
       },
-      "e-web-start": {
+      "entry.student-editor": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
           {
-            "endLine": 8,
-            "path": "Program.cs",
-            "sha256": "f55ce879e78e94b9144c1a9ed68fc6cfea01d45e91efc5dbbdf025d906fc1f85",
-            "startLine": 2
+            "endLine": 6,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 5
+          },
+          {
+            "endLine": 31,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 30
+          },
+          {
+            "endLine": 41,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 33
           }
         ],
-        "id": "ENTRY-02508968d096bfde",
-        "key": "e-web-start",
+        "id": "ENTRY-2775c8d43391475a",
+        "key": "entry.student-editor",
         "kind": "entry",
-        "name": "Web起動・ルート転送",
+        "name": "学生詳細・更新・入力復元入口",
         "ownerRequirement": "catalog",
-        "statement": "ProgramのトップレベルでWebHostSetup、Controllerを登録し、GET /を/studentsへ転送する。",
-        "version": "ed1deb25e9381b22a6c0aa460579a7bd8b363c778e459bd818a8af6da64048bf"
+        "statement": "認証付きGET /students/{id:long}、POST /students/{id:long}/update、POST /students/reset。詳細照会と編集の文脈で共有する。",
+        "version": "820e8784c9b908268e86c73821ed2c8f49530e047f817e22bbe42db46695e5f5"
       },
-      "f-class-maintenance": {
+      "entry.student-new": {
+        "basis": "observed-source",
+        "classification": null,
+        "dependencies": [],
+        "dependsOn": [],
+        "evidence": [
+          {
+            "endLine": 6,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 5
+          },
+          {
+            "endLine": 32,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 29
+          },
+          {
+            "endLine": 62,
+            "path": "Views/Students/Edit.cshtml",
+            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
+            "startLine": 54
+          }
+        ],
+        "id": "ENTRY-04f7cce92fae19d2",
+        "key": "entry.student-new",
+        "kind": "entry",
+        "name": "学生新規画面・登録入口",
+        "ownerRequirement": "catalog",
+        "statement": "認証付きGET /students/new と POST /students/create。新規入力と保存を受け付ける。",
+        "version": "a795ddd66575944e9abb3b57be4478a6c55d3107ee213de192639cfd33ae8251"
+      },
+      "entry.web": {
+        "basis": "observed-source",
+        "classification": null,
+        "dependencies": [],
+        "dependsOn": [],
+        "evidence": [
+          {
+            "endLine": 9,
+            "path": "Program.cs",
+            "sha256": "f55ce879e78e94b9144c1a9ed68fc6cfea01d45e91efc5dbbdf025d906fc1f85",
+            "startLine": 1
+          },
+          {
+            "endLine": 1,
+            "path": "Properties/launchSettings.json",
+            "sha256": "b1d70b29a49de96f75a21b60d76e81c59fa850d39c97ab25e24031c66d60b95d",
+            "startLine": 1
+          },
+          {
+            "endLine": 1,
+            "path": "appsettings.json",
+            "sha256": "27d712ad8f7047525ee0c388577a6e8911fecb202870536fa696ce58c4c11869",
+            "startLine": 1
+          }
+        ],
+        "id": "ENTRY-4301bebb19454b0d",
+        "key": "entry.web",
+        "kind": "entry",
+        "name": "Web起動とルート転送",
+        "ownerRequirement": "catalog",
+        "statement": "Program.csがWebホスト設定を呼び出し、MVCコントローラーを公開する。GET / は /students へ転送する。",
+        "version": "6101e423ce2b27b5dd36b0865fe4ef28fa7b5686668502844199a36ab1807404"
+      },
+      "function.class-maintain": {
         "basis": "inferred",
         "classification": {
           "actors": [
             "student_adminに属するDB接続主体"
           ],
-          "alternative": "コード保守と一つのマスタ保守機能にまとめることも可能だが、選択対象と変更要求型が異なる。",
-          "area": "マスタ保守",
-          "businessObject": "年度別クラス",
+          "alternative": "コード保守と単一のマスタ保守機能にまとめることもできるが、入力対象と整合性責任が異なるため分離した。",
+          "area": "マスタ管理",
+          "businessObject": "クラスマスタ",
           "category": "main",
           "entryRefs": [
-            "e-maintenance-cli"
+            "entry.maintenance"
           ],
-          "outcome": "クラス保存結果又は修正を要する通知を受け取る",
-          "purpose": "学生の所属先となるクラス情報を整備する",
-          "rationale": "独立実行可能なCLIに、学生編集と別の対象・入力・完了結果がある。",
+          "outcome": "クラス保存または変更なし等の結果をJSON・終了コードで得る。",
+          "purpose": "年度・学年・期間・定員等を持つクラスを整備する。",
+          "rationale": "画面はないが、運用者が独立して入力し、クラス保存という業務結果を得る完全なCLI作業。",
           "scope": "selected-system",
-          "trigger": "CLIでclassと変更JSONを指定する"
+          "trigger": "管理者がclassと入力JSONを指定して保守CLIを起動する。"
         },
         "dependencies": [],
         "dependsOn": [],
@@ -2241,32 +2208,32 @@
             "startLine": 1
           }
         ],
-        "id": "FUNCTION-2afdcc2b1793e98c",
-        "key": "f-class-maintenance",
+        "id": "FUNCTION-91d28046181a5fb5",
+        "key": "function.class-maintain",
         "kind": "function",
         "name": "クラスマスタ保守",
         "ownerRequirement": "catalog",
-        "statement": "DB管理者がCLIのclass引数と変更JSONによりクラスを作成・更新し、保存結果を受け取る。",
-        "version": "651f23da4da2d20fc4e2bbd66bdb046d88b7bf7f4fa1712d0e27be2e88779c47"
+        "statement": "DB管理者がCLIのclass選択とJSON入力によりクラスを登録・変更し、保守結果を受け取る。",
+        "version": "77d20e52fe1ae07eb871126677e5028262f3b02f78b58649463fd096a7948762"
       },
-      "f-code-maintenance": {
+      "function.code-maintain": {
         "basis": "inferred",
         "classification": {
           "actors": [
             "student_adminに属するDB接続主体"
           ],
-          "alternative": "クラス保守と統合したマスタ保守の操作として扱う分割も可能。",
-          "area": "マスタ保守",
+          "alternative": "クラス保守と共通CLI単位で統合する分け方もあるが、CLIの共用は業務対象の同一性を意味しない。",
+          "area": "マスタ管理",
           "businessObject": "分類別業務コード",
           "category": "main",
           "entryRefs": [
-            "e-maintenance-cli"
+            "entry.maintenance"
           ],
-          "outcome": "コード保存結果又は修正を要する通知を受け取る",
-          "purpose": "学生管理で使う選択値を整備する",
-          "rationale": "分類別コードを対象とする独立した管理者タスクで、クラス保守とは要求型と対象が異なる。",
+          "outcome": "コード保存または変更なし等の結果をJSON・終了コードで得る。",
+          "purpose": "コード名称・表示順・有効性・利用期間を整備する。",
+          "rationale": "分類別コードの維持という独立目的、専用入力契約、保存結果が確認できる。",
           "scope": "selected-system",
-          "trigger": "CLIでcodeと変更JSONを指定する"
+          "trigger": "管理者がcodeと入力JSONを指定して保守CLIを起動する。"
         },
         "dependencies": [],
         "dependsOn": [],
@@ -2290,32 +2257,32 @@
             "startLine": 79
           }
         ],
-        "id": "FUNCTION-1b8a3fb7f1cba96d",
-        "key": "f-code-maintenance",
+        "id": "FUNCTION-22591896d39dca6b",
+        "key": "function.code-maintain",
         "kind": "function",
-        "name": "業務コード保守",
+        "name": "業務コードマスタ保守",
         "ownerRequirement": "catalog",
-        "statement": "DB管理者がCLIのcode引数と変更JSONにより業務コードの名称・表示順・有効状態等を保守し、結果を受け取る。",
-        "version": "9c6f448ad294a7b749a687eeb1b84f98d9bb5a9024532827d86ff5a49f620386"
+        "statement": "DB管理者がCLIのcode選択とJSON入力により業務コードを登録・変更し、保守結果を受け取る。",
+        "version": "e29500f44d82ec97cb501aa453e07dee5345b2ae493d49fa3decd05f10cf668e"
       },
-      "f-login": {
+      "function.login": {
         "basis": "inferred",
         "classification": {
           "actors": [
-            "利用者"
+            "設定されたローカル利用者"
           ],
-          "alternative": "認証実装は共通化できるが、それだけでは専用画面の利用者タスクを表せない。",
-          "area": "システム認証",
-          "businessObject": "認証セッション",
+          "alternative": "認証処理は共通実装にも分類するが、それだけでは画面からの独立した利用目的を表せない。",
+          "area": "認証",
+          "businessObject": "Web認証セッション",
           "category": "main",
           "entryRefs": [
-            "e-login"
+            "entry.login"
           ],
-          "outcome": "認証済みセッションで学生検索へ進む、又は失敗通知を確認する",
-          "purpose": "利用者本人としてシステム利用を開始する",
-          "rationale": "資格情報入力、送信、成功・失敗の帰結を持つ専用画面で独立した利用目的がある。",
+          "outcome": "認証セッション開始と学生検索への遷移、または認証失敗通知。",
+          "purpose": "利用者が認証して学生管理を利用できる状態にする。",
+          "rationale": "専用入力画面、送信、認証成否、完了結果が揃う独立したシステム利用目的。",
           "scope": "selected-system",
-          "trigger": "ログイン画面で資格情報を送信する"
+          "trigger": "ログイン画面で資格情報を入力し送信する。"
         },
         "dependencies": [],
         "dependsOn": [],
@@ -2331,40 +2298,34 @@
             "path": "Web/Controllers/AccountController.cs",
             "sha256": "eb3317ec00f640a4ea7e6c7ff4538a7a0a716030f84cc3c31220df236ce8c394",
             "startLine": 10
-          },
-          {
-            "endLine": 1,
-            "path": "appsettings.json",
-            "sha256": "27d712ad8f7047525ee0c388577a6e8911fecb202870536fa696ce58c4c11869",
-            "startLine": 1
           }
         ],
-        "id": "FUNCTION-51c140f72a1525d6",
-        "key": "f-login",
+        "id": "FUNCTION-3a8a1be5f76f61aa",
+        "key": "function.login",
         "kind": "function",
         "name": "ログイン",
         "ownerRequirement": "catalog",
-        "statement": "利用者名・パスワードを専用画面から送信し、認証成功時に学生検索へ進み、失敗時に画面上の通知を受ける。LocalLogin設定によって有効化される。",
-        "version": "29602d72b8ebb719b20d1d621f1709c27d8e10ee16a3e7b3b40c877b2c2b966e"
+        "statement": "明示的に有効化されたローカル認証で、利用者名とパスワードを受け付け、認証成功時にWebセッションを開始し、失敗時に画面へ通知する。",
+        "version": "08e4979c9e07cd7dd6c7d2f153287973157dfb27d125fca875efba8c9bb22b7c"
       },
-      "f-logout": {
+      "function.logout": {
         "basis": "inferred",
         "classification": {
           "actors": [
             "認証済み利用者"
           ],
-          "alternative": "ログインと合わせて認証セッション管理という一主機能にまとめる分割も可能。",
-          "area": "システム認証",
-          "businessObject": "認証セッション",
+          "alternative": "小規模な認証ライフサイクル機能に統合する分け方もあるが、ログインの入力工程ではなく全認証済み画面からの退出目的として分離した。",
+          "area": "認証",
+          "businessObject": "Web認証セッション",
           "category": "main",
           "entryRefs": [
-            "e-logout"
+            "entry.logout"
           ],
-          "outcome": "サインアウト後にログイン画面へ戻る",
-          "purpose": "現在の利用セッションを終了する",
-          "rationale": "各業務画面から独立してセッション終了を完了でき、ログインの途中手順ではない。",
+          "outcome": "サインアウト後にログイン画面へ転送される。",
+          "purpose": "現在の利用セッションを明示的に終了する。",
+          "rationale": "業務画面から独立して起動でき、セッション終了という完了結果を持つ。",
           "scope": "selected-system",
-          "trigger": "認証済み画面のログアウトボタンを押す"
+          "trigger": "認証済み画面のログアウトボタンを押す。"
         },
         "dependencies": [],
         "dependsOn": [],
@@ -2382,70 +2343,68 @@
             "startLine": 36
           }
         ],
-        "id": "FUNCTION-50628fec93066521",
-        "key": "f-logout",
+        "id": "FUNCTION-02c59fd1943df269",
+        "key": "function.logout",
         "kind": "function",
         "name": "ログアウト",
         "ownerRequirement": "catalog",
-        "statement": "認証済み利用者が共通ヘッダーから終了を要求し、サインアウトしてログイン画面へ戻る。",
-        "version": "5a609413199a71f3522b779bc14633ba0c013b61cb74a632a7e689fd2637299e"
+        "statement": "認証済み利用者が共通ヘッダーの操作から現在のWeb認証を終了し、ログイン画面へ戻る。",
+        "version": "7ff6e15583764c8dc6b2bde186fda05154632b636e56d3bc39dd9a54d070cfc2"
       },
-      "f-menu": {
+      "function.student-maintain": {
         "basis": "inferred",
         "classification": {
           "actors": [
-            "認証済み利用者"
+            "Staff",
+            "Administrator"
           ],
-          "alternative": "選択責務を共通ナビゲーションだけと捉える場合はcommonにまとめられるが、専用の役割別選択画面を重視した。",
-          "area": "システム機能選択",
-          "businessObject": "学生管理の操作選択",
+          "alternative": "新規登録と更新を別主機能に分けることも可能だが、共通の入力・検証・保存作業のモードとして扱った。独立した承認・法的廃棄工程があれば削除の主機能化を再検討する。",
+          "area": "学生管理",
+          "businessObject": "学生台帳の学生情報",
           "category": "main",
           "entryRefs": [
-            "e-menu"
+            "entry.search",
+            "entry.student-new",
+            "entry.student-editor",
+            "entry.student-delete"
           ],
-          "outcome": "選択した検索又は新規登録の入口へ進む",
-          "purpose": "役割に応じて開始する学生管理作業を選ぶ",
-          "rationale": "共通レイアウトとは別のController・専用画面が役割別の機能選択を担い、検索画面からの復帰先にもなる。",
+          "outcome": "保存完了、変更なし、論理削除完了、または未完了理由の通知。",
+          "purpose": "学生の基本・連絡先・在籍・所属情報を登録し維持する。",
+          "rationale": "同じ学生情報・編集フォーム・保存結果を中心とする一連の保守作業としてまとめた。",
           "scope": "selected-system",
-          "trigger": "学生管理メニューを開き操作を選択する"
+          "trigger": "新規登録を選ぶ、または検索結果から既存学生を編集する。"
         },
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
           {
-            "endLine": 10,
-            "path": "Web/Controllers/MenuController.cs",
-            "sha256": "ba3fe274371fafa9464cb23dac72425bfa30450c5a673b19e44c0bfe0330aa2e",
-            "startLine": 6
+            "endLine": 176,
+            "path": "Views/Students/Edit.cshtml",
+            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
+            "startLine": 37
           },
           {
-            "endLine": 7,
-            "path": "Views/Menu/Index.cshtml",
-            "sha256": "0f56d5d6c4e3aa8ebf7b04724db174cdcfae52a976eec9b6f1c8fbce4958e078",
-            "startLine": 1
+            "endLine": 6,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 5
           },
           {
-            "endLine": 18,
-            "path": "Views/Students/Search.cshtml",
-            "sha256": "11b3aa90f38759dfcaf7df2f3bc0448537ce0ac1ba1828d259bd07709a0842a9",
-            "startLine": 15
-          },
-          {
-            "endLine": 5,
-            "path": "Views/Shared/_Layout.cshtml",
-            "sha256": "1a0d18550b9aca7bf7ae74963a453d3021cd549943cbb4cb89eefa19c1ab72ee",
-            "startLine": 1
+            "endLine": 44,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 29
           }
         ],
-        "id": "FUNCTION-12af019b26e0f2c3",
-        "key": "f-menu",
+        "id": "FUNCTION-fa89f6d82503c20f",
+        "key": "function.student-maintain",
         "kind": "function",
-        "name": "学生管理の操作選択",
+        "name": "学生情報登録・保守",
         "ownerRequirement": "catalog",
-        "statement": "認証済み利用者が専用メニューで学生検索又は役割上許される新規登録を選ぶ。",
-        "version": "fdaeac263201db2a706b8b04c50e3fab72354d1c591de885156b16469fe535ad"
+        "statement": "学生情報の新規登録、既存情報の更新、確認付き論理削除を、登録・編集画面の作業として提供する。",
+        "version": "42b7bcd00dab09901b30da678566e1b9a65810a5916557db02e4895bca63ea4d"
       },
-      "f-student-inquiry": {
+      "function.student-query": {
         "basis": "inferred",
         "classification": {
           "actors": [
@@ -2453,19 +2412,19 @@
             "Staff",
             "Administrator"
           ],
-          "alternative": "学生管理全体に統合することも可能だが、書込権限のない利用者にも独立した完了結果がある。",
+          "alternative": "更新対象の選択だけなら学生保守の操作にできるが、本画面は参照利用者にも結果を提供するため独立照会を残す。",
           "area": "学生管理",
           "businessObject": "学生情報",
           "category": "main",
           "entryRefs": [
-            "e-search",
-            "e-student"
+            "entry.search",
+            "entry.student-editor"
           ],
-          "outcome": "該当一覧、該当なし又は絞込要求を確認し、必要な学生を参照する",
-          "purpose": "条件に合う学生とその登録情報を確認する",
-          "rationale": "Viewerにも認められ、保存を前提とせず完了できる照会タスクがある。",
+          "outcome": "条件に対応する一覧、件数、該当なし等の照会結果を得る。",
+          "purpose": "対象学生と在籍・所属情報を調べる。",
+          "rationale": "参照権限の利用者も完了できる独立した照会目的と結果表示がある。",
           "scope": "selected-system",
-          "trigger": "検索条件を指定し検索する"
+          "trigger": "学生検索画面で条件を指定して検索する。"
         },
         "dependencies": [],
         "dependsOn": [],
@@ -2480,83 +2439,24 @@
             "endLine": 22,
             "path": "Web/Controllers/StudentsController.cs",
             "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 8
+            "startLine": 5
           },
           {
             "endLine": 15,
             "path": "Infrastructure/WebStudentCoordinator.cs",
             "sha256": "f57e213dc22534b74e357aa066e31e25e58bac5b4de1b3f5458502e06e049385",
             "startLine": 7
-          },
-          {
-            "endLine": 43,
-            "path": "Views/Students/Edit.cshtml",
-            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
-            "startLine": 34
           }
         ],
-        "id": "FUNCTION-99e6712465221e10",
-        "key": "f-student-inquiry",
+        "id": "FUNCTION-95e69c5434befaad",
+        "key": "function.student-query",
         "kind": "function",
-        "name": "学生情報の検索・照会",
+        "name": "学生検索・照会",
         "ownerRequirement": "catalog",
-        "statement": "利用者が学籍番号・氏名・クラス・在籍区分で学生を検索し、一覧及び選択学生の情報を確認する。",
-        "version": "e1587a6c24472a50bcebb9560c4eeccd9162f9be7969ddf42ef92ff2bdf04ed1"
+        "statement": "学生を学籍番号・氏名・クラス・在籍区分で検索し、結果一覧と必要な学生詳細を確認する。",
+        "version": "374e64bf29ae7cf11a26ea0150983e416f0ffe0852928919b549566161650826"
       },
-      "f-student-maintenance": {
-        "basis": "inferred",
-        "classification": {
-          "actors": [
-            "Staff",
-            "Administrator"
-          ],
-          "alternative": "新規登録と既存保守を別主機能にする分割は可能だが、独立した承認・廃棄業務を示す入口はない。",
-          "area": "学生管理",
-          "businessObject": "学生台帳情報",
-          "category": "main",
-          "entryRefs": [
-            "e-new",
-            "e-student",
-            "e-reset",
-            "e-delete"
-          ],
-          "outcome": "保存又は論理削除の結果を確認して検索へ戻る",
-          "purpose": "学生の登録内容を整備する",
-          "rationale": "新規・編集・削除は同じ学生情報保守の画面と対象文脈を共有し、確認ダイアログは補助手順である。",
-          "scope": "selected-system",
-          "trigger": "新規登録又は既存学生の編集を開始する"
-        },
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 176,
-            "path": "Views/Students/Edit.cshtml",
-            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
-            "startLine": 34
-          },
-          {
-            "endLine": 44,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 29
-          },
-          {
-            "endLine": 15,
-            "path": "Web/Models/StudentEditPageModel.cs",
-            "sha256": "f8a5fdbed669dc69850395502d0992411733e6c17a7b0f36878d9dd39c96c1d2",
-            "startLine": 3
-          }
-        ],
-        "id": "FUNCTION-4521f3923459be27",
-        "key": "f-student-maintenance",
-        "kind": "function",
-        "name": "学生情報の登録・保守",
-        "ownerRequirement": "catalog",
-        "statement": "担当者が学生の基本情報、住所・連絡先、在籍・所属、緊急連絡先を登録・更新し、管理者は同じ保守画面から論理削除する。",
-        "version": "6a2534bcec6a48eedb17a4c9dc7252b71fa33148acd912f7d4b4d66e0c41df14"
-      },
-      "m-documents": {
+      "material.documentation": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -2569,15 +2469,15 @@
             "startLine": 1
           },
           {
-            "endLine": 14,
-            "path": "database/README.md",
-            "sha256": "fd6df1c9a573b3b9531b79ceecf7234d37de824b5ed09895907d3108750031a0",
-            "startLine": 1
-          },
-          {
             "endLine": 51,
             "path": "database/EXPRESS17.md",
             "sha256": "49ea19675829673d512a82c72f1b51082685940e8cfd206a3eb8643608d3a69b",
+            "startLine": 1
+          },
+          {
+            "endLine": 14,
+            "path": "database/README.md",
+            "sha256": "fd6df1c9a573b3b9531b79ceecf7234d37de824b5ed09895907d3108750031a0",
             "startLine": 1
           },
           {
@@ -2593,85 +2493,201 @@
             "startLine": 1
           }
         ],
-        "id": "MATERIAL-c82c47d447a38aff",
-        "key": "m-documents",
+        "id": "MATERIAL-c3c21708595fbdbc",
+        "key": "material.documentation",
         "kind": "material",
-        "name": "取得済みREADME・導入説明文書",
+        "name": "取得済み説明・運用資料",
         "ownerRequirement": "catalog",
-        "statement": "アプリ、DB、Express導入、Azure配備、CLIの説明文書を含む。記載された仕様リンクは追跡せず、過去試験・配備・承認の記述は実行証拠や利用者承認として扱わない。",
-        "version": "2f1f73de28cf8407c032eb0945d6e6b9090c41a2e309a90349b89e51c886b431"
+        "statement": "README群はシステム利用、DB導入、Azure配備、保守CLIを説明する資料。外部仕様へのリンクは辿らず、記載された試験件数・配備成功・過去の利用者指示は未検証の説明として扱い、本解析の実行証拠・承認にはしない。",
+        "version": "7afcd53df254cbe1940314993ca996f0925fad423918febef1f085b69df82065"
       },
-      "o-inquiry-browse": {
+      "operation.duplicate-confirm": {
         "basis": "inferred",
         "classification": {
-          "alternative": "条件クリアを別操作に分けても主機能数は変わらない。",
+          "alternative": "独立した重複統合・審査機能なら主機能になり得るが、本実装は保存続行の確認に限る。",
           "category": "operation",
           "entryRefs": [
-            "e-search"
+            "entry.student-new",
+            "entry.student-editor"
           ],
-          "outcome": "調整後一覧又は未検索の条件画面になる",
-          "parent": "f-student-inquiry",
-          "purpose": "照会一覧を見やすくし条件を指定し直す",
-          "rationale": "照会を進めるための補助操作で独立した対象業務を持たない。",
+          "outcome": "確認を取り消す、または理由を付けて保存を続ける。",
+          "parent": "function.student-maintain",
+          "purpose": "同一人物候補を確認して保存意思を明確にする。",
+          "rationale": "独立した対象整理ではなく、進行中の保存に従属するダイアログ。",
           "scope": "selected-system",
-          "useContext": "学生検索結果を閲覧しているとき"
+          "useContext": "新規登録・更新の保存途中に必要となる確認。"
         },
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
           {
-            "endLine": 5,
+            "endLine": 159,
+            "path": "Views/Students/Edit.cshtml",
+            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
+            "startLine": 151
+          },
+          {
+            "endLine": 40,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 34
+          },
+          {
+            "endLine": 282,
+            "path": "Core/SqlServerStudentService.cs",
+            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
+            "startLine": 260
+          }
+        ],
+        "id": "OPERATION-78354a05df977f3d",
+        "key": "operation.duplicate-confirm",
+        "kind": "operation",
+        "name": "重複候補の確認・続行",
+        "ownerRequirement": "catalog",
+        "statement": "保存時に提示された同一人物候補を確認し、理由を入力して同じ保存入口へ続行する。",
+        "version": "25339518a28e79cd532a5d89303644d9f2b1906df98e512f5d3c33c99a6cf7e3"
+      },
+      "operation.edit-search": {
+        "basis": "inferred",
+        "classification": {
+          "alternative": "全検索利用を照会だけにまとめる分け方もあるが、編集準備という利用文脈を別操作として残した。",
+          "category": "operation",
+          "entryRefs": [
+            "entry.search"
+          ],
+          "outcome": "選択学生の編集画面へ進む。",
+          "parent": "function.student-maintain",
+          "purpose": "保守する既存学生を特定する。",
+          "rationale": "同じ技術入口でも、保守作業内では対象選択の工程になる。",
+          "scope": "selected-system",
+          "useContext": "学生更新・論理削除の準備としての検索結果選択。"
+        },
+        "dependencies": [],
+        "dependsOn": [],
+        "evidence": [
+          {
+            "endLine": 20,
+            "path": "Views/Students/Search.cshtml",
+            "sha256": "11b3aa90f38759dfcaf7df2f3bc0448537ce0ac1ba1828d259bd07709a0842a9",
+            "startLine": 14
+          },
+          {
+            "endLine": 66,
+            "path": "Views/Students/Search.cshtml",
+            "sha256": "11b3aa90f38759dfcaf7df2f3bc0448537ce0ac1ba1828d259bd07709a0842a9",
+            "startLine": 63
+          },
+          {
+            "endLine": 22,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 5
+          }
+        ],
+        "id": "OPERATION-fe8ffc62b1bb2dc5",
+        "key": "operation.edit-search",
+        "kind": "operation",
+        "name": "保守対象の検索・選択",
+        "ownerRequirement": "catalog",
+        "statement": "独立照会にも使う学生検索入口を、既存学生の編集対象選択に利用する。",
+        "version": "6747a38ba953eefa55ab2bd0f276daeab5cd1b141d077af22f87e8b57dd8a5ce"
+      },
+      "operation.editor-reset": {
+        "basis": "inferred",
+        "classification": {
+          "alternative": "各ボタンを別操作に分割できるが、ここでは入力作業の取消・復帰という共通目的でまとめた。",
+          "category": "operation",
+          "entryRefs": [
+            "entry.student-new",
+            "entry.student-editor"
+          ],
+          "outcome": "読込時値・最新値の表示、または変更を破棄した画面復帰。",
+          "parent": "function.student-maintain",
+          "purpose": "編集中の入力を整理し、安全に作業をやり直し・終了する。",
+          "rationale": "学生保守の作業制御であり、独立した業務対象を完了させない。",
+          "scope": "selected-system",
+          "useContext": "学生入力・編集途中の取消と再読込。"
+        },
+        "dependencies": [],
+        "dependsOn": [],
+        "evidence": [
+          {
+            "endLine": 6,
             "path": "Web/Controllers/StudentsController.cs",
             "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
             "startLine": 5
           },
           {
-            "endLine": 26,
+            "endLine": 41,
             "path": "Web/Controllers/StudentsController.cs",
             "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 23
+            "startLine": 41
           },
           {
-            "endLine": 71,
-            "path": "Views/Students/Search.cshtml",
-            "sha256": "11b3aa90f38759dfcaf7df2f3bc0448537ce0ac1ba1828d259bd07709a0842a9",
-            "startLine": 45
+            "endLine": 150,
+            "path": "Views/Students/Edit.cshtml",
+            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
+            "startLine": 143
+          },
+          {
+            "endLine": 175,
+            "path": "Views/Students/Edit.cshtml",
+            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
+            "startLine": 175
+          },
+          {
+            "endLine": 53,
+            "path": "wwwroot/js/site.js",
+            "sha256": "0a5a77d068907e383ae7000adcdf03fe613cf7be987eed5d872a6aa03bd931a1",
+            "startLine": 42
+          },
+          {
+            "endLine": 150,
+            "path": "wwwroot/js/site.js",
+            "sha256": "0a5a77d068907e383ae7000adcdf03fe613cf7be987eed5d872a6aa03bd931a1",
+            "startLine": 139
           }
         ],
-        "id": "OPERATION-5e462890c5faa4eb",
-        "key": "o-inquiry-browse",
+        "id": "OPERATION-cf27427be305dab3",
+        "key": "operation.editor-reset",
         "kind": "operation",
-        "name": "検索結果の表示調整・条件クリア",
+        "name": "入力復元・再読込・変更破棄",
         "ownerRequirement": "catalog",
-        "statement": "照会中にページ、件数、並び順を変更し、又は検索条件をクリアする。",
-        "version": "1ab98b583f77e80e6ed723a7b4d34a30d21d5487034e0e136db8a0963183b7ba"
+        "statement": "編集作業中に入力を読込時へ戻す、最新情報を読み直す、または変更破棄を確認して検索へ戻る。",
+        "version": "26aef3923e0a9a7a9118294d6dd88f152184f6632403a138f59cc54dd44ca11c"
       },
-      "o-inquiry-detail": {
+      "operation.query-detail": {
         "basis": "inferred",
         "classification": {
-          "alternative": "単独の詳細照会目的が別途確認されれば主機能に分離できる。",
+          "alternative": "独立した詳細照会目的として分離することもできるが、ここでは一覧からの選択と共用フォームの参照モードにまとめた。",
           "category": "operation",
           "entryRefs": [
-            "e-student"
+            "entry.student-editor"
           ],
-          "outcome": "選択学生の登録内容を確認する",
-          "parent": "f-student-inquiry",
-          "purpose": "一覧で選んだ学生の詳細を確認する",
-          "rationale": "一覧からの詳細確認であり、同じ技術入口を編集準備とも共有する。",
+          "outcome": "対象学生の詳細を読取表示する。",
+          "parent": "function.student-query",
+          "purpose": "選択した学生の詳細情報を確認する。",
+          "rationale": "一覧で特定した対象を深く見る照会の補助工程。",
           "scope": "selected-system",
-          "useContext": "照会結果から参照又は編集リンクを開くときの照会目的"
+          "useContext": "照会結果からの詳細確認。Viewerでは参照モードとなる。"
         },
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
           {
-            "endLine": 67,
+            "endLine": 66,
             "path": "Views/Students/Search.cshtml",
             "sha256": "11b3aa90f38759dfcaf7df2f3bc0448537ce0ac1ba1828d259bd07709a0842a9",
-            "startLine": 64
+            "startLine": 63
           },
           {
-            "endLine": 5,
+            "endLine": 44,
+            "path": "Views/Students/Edit.cshtml",
+            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
+            "startLine": 37
+          },
+          {
+            "endLine": 6,
             "path": "Web/Controllers/StudentsController.cs",
             "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
             "startLine": 5
@@ -2689,98 +2705,142 @@
             "startLine": 22
           },
           {
-            "endLine": 43,
-            "path": "Views/Students/Edit.cshtml",
-            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
-            "startLine": 34
+            "endLine": 15,
+            "path": "Web/Models/StudentEditPageModel.cs",
+            "sha256": "f8a5fdbed669dc69850395502d0992411733e6c17a7b0f36878d9dd39c96c1d2",
+            "startLine": 3
           }
         ],
-        "id": "OPERATION-960593ec19e9aead",
-        "key": "o-inquiry-detail",
+        "id": "OPERATION-05a23e427d16ab97",
+        "key": "operation.query-detail",
         "kind": "operation",
-        "name": "選択学生の詳細参照",
+        "name": "学生詳細参照",
         "ownerRequirement": "catalog",
-        "statement": "検索一覧で選択した学生を共用編集画面の参照文脈で確認する。",
-        "version": "f1917455d012f4a18c6395e992fc63989cdfe6d5ead903715380f3b70e3f0c29"
+        "statement": "検索一覧から選んだ学生について、編集画面と同じ入口・フォームを参照モードで利用する。",
+        "version": "31c8a73e0b7cce6122f738e3bd5ff8955adedeefca16f3919630000aa4634bfd"
       },
-      "o-maintenance-find": {
+      "operation.query-results": {
         "basis": "inferred",
         "classification": {
-          "alternative": "検索画面をすべて独立照会だけに帰属させると保守時の利用文脈が失われる。",
+          "alternative": "大量データの独立分析機能なら主機能にもなるが、この実装は検索一覧内の補助操作。",
           "category": "operation",
           "entryRefs": [
-            "e-search",
-            "e-student"
+            "entry.search"
           ],
-          "outcome": "対象学生の保守画面を開く",
-          "parent": "f-student-maintenance",
-          "purpose": "変更する学生を特定する",
-          "rationale": "独立照会と同じ検索入口を使うが、この文脈では保守の準備段階である。",
+          "outcome": "指定表示の一覧、または未検索状態。",
+          "parent": "function.student-query",
+          "purpose": "照会結果を見やすくし、条件を再指定できるようにする。",
+          "rationale": "既に開始した照会の表示・再指定工程である。",
           "scope": "selected-system",
-          "useContext": "既存学生を更新又は論理削除する前"
+          "useContext": "学生検索・照会中の結果閲覧と条件再設定。"
         },
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
           {
-            "endLine": 20,
-            "path": "Views/Students/Search.cshtml",
-            "sha256": "11b3aa90f38759dfcaf7df2f3bc0448537ce0ac1ba1828d259bd07709a0842a9",
-            "startLine": 14
-          },
-          {
-            "endLine": 67,
-            "path": "Views/Students/Search.cshtml",
-            "sha256": "11b3aa90f38759dfcaf7df2f3bc0448537ce0ac1ba1828d259bd07709a0842a9",
-            "startLine": 64
-          },
-          {
-            "endLine": 22,
+            "endLine": 6,
             "path": "Web/Controllers/StudentsController.cs",
             "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
             "startLine": 5
           },
           {
-            "endLine": 31,
+            "endLine": 26,
             "path": "Web/Controllers/StudentsController.cs",
             "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 30
+            "startLine": 23
+          },
+          {
+            "endLine": 71,
+            "path": "Views/Students/Search.cshtml",
+            "sha256": "11b3aa90f38759dfcaf7df2f3bc0448537ce0ac1ba1828d259bd07709a0842a9",
+            "startLine": 45
           }
         ],
-        "id": "OPERATION-06de96cd8788f0bb",
-        "key": "o-maintenance-find",
+        "id": "OPERATION-ae1e266eec14c5f8",
+        "key": "operation.query-results",
         "kind": "operation",
-        "name": "保守対象学生の検索・選択",
+        "name": "検索結果の表示操作・条件クリア",
         "ownerRequirement": "catalog",
-        "statement": "学生検索を既存情報の保守対象を選ぶ準備にも利用する。",
-        "version": "73b768648ae1fed61e5bb1f49f5a2b09ceb89b3a6860829a16d43aa4138099ca"
+        "statement": "検索結果のページ、表示件数、並び順を変更し、または検索条件・結果をクリアする。",
+        "version": "c33ffde7f6973cf0063a3ff5c9042b6340111bb6d44441ff41a012b918bb2e5b"
       },
-      "o-student-delete": {
+      "operation.student-create": {
         "basis": "inferred",
         "classification": {
-          "alternative": "別の承認・保管期限・廃棄責任を持つ工程なら主機能に分ける。",
+          "alternative": "新規登録専用の独立主機能に分けることも可能だが、現行ソースは既存編集と同じ画面・保存実装を中心にする。",
           "category": "operation",
           "entryRefs": [
-            "e-delete"
+            "entry.student-new"
           ],
-          "outcome": "論理削除結果を確認して検索へ戻る",
-          "parent": "f-student-maintenance",
-          "purpose": "選択学生を通常の管理対象から除く",
-          "rationale": "同一対象の保守画面から起動する確認付き操作で、独立した法的廃棄工程は観測されない。",
+          "outcome": "新規学生の保存結果を得る。",
+          "parent": "function.student-maintain",
+          "purpose": "学生台帳に新しい学生を加える。",
+          "rationale": "共通の学生入力・保存作業の新規モードとして分類した。",
           "scope": "selected-system",
-          "useContext": "既存学生の保守中に管理者が削除を選択したとき"
+          "useContext": "学生保守の新規モード。"
         },
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
           {
-            "endLine": 173,
-            "path": "Views/Students/Edit.cshtml",
-            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
-            "startLine": 150
+            "endLine": 6,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 5
           },
           {
-            "endLine": 5,
+            "endLine": 32,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 29
+          },
+          {
+            "endLine": 62,
+            "path": "Views/Students/Edit.cshtml",
+            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
+            "startLine": 37
+          },
+          {
+            "endLine": 150,
+            "path": "Views/Students/Edit.cshtml",
+            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
+            "startLine": 143
+          }
+        ],
+        "id": "OPERATION-4100b273ea61d3aa",
+        "key": "operation.student-create",
+        "kind": "operation",
+        "name": "学生新規入力・登録",
+        "ownerRequirement": "catalog",
+        "statement": "新規学生の入力フォームを開き、学生情報を入力して登録する。",
+        "version": "e4f251fcccdd7ca00ec4512bbdfcfcffe01d3b86979f77d0db7f2be30f9e4abc"
+      },
+      "operation.student-delete": {
+        "basis": "inferred",
+        "classification": {
+          "alternative": "法的廃棄・承認・保存期限管理の独立工程があれば主機能化できるが、その目的は取得ソースから確認できない。",
+          "category": "operation",
+          "entryRefs": [
+            "entry.student-delete"
+          ],
+          "outcome": "論理削除完了、または未完了理由の通知。",
+          "parent": "function.student-maintain",
+          "purpose": "保守対象の学生を通常検索対象から除く。",
+          "rationale": "編集対象の保守操作として配置され、確認ダイアログと理由入力を持つ。",
+          "scope": "selected-system",
+          "useContext": "既存学生編集画面からの管理者補助操作。"
+        },
+        "dependencies": [],
+        "dependsOn": [],
+        "evidence": [
+          {
+            "endLine": 176,
+            "path": "Views/Students/Edit.cshtml",
+            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
+            "startLine": 143
+          },
+          {
+            "endLine": 6,
             "path": "Web/Controllers/StudentsController.cs",
             "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
             "startLine": 5
@@ -2798,80 +2858,34 @@
             "startLine": 24
           }
         ],
-        "id": "OPERATION-95721013980c31ff",
-        "key": "o-student-delete",
+        "id": "OPERATION-469473adb2ab805e",
+        "key": "operation.student-delete",
         "kind": "operation",
-        "name": "学生情報の論理削除",
+        "name": "学生の理由付き論理削除",
         "ownerRequirement": "catalog",
-        "statement": "管理者が保守画面の対象と削除理由を確認し、論理削除を要求する。",
-        "version": "b91bff6de1d8eb2a100a8cdc2c29deb6b023e7aa748944403bf07955d37fa36f"
+        "statement": "管理者が編集画面で対象と理由を確認し、学生を論理削除する。",
+        "version": "475dba58ba1e26e9e5ec1dc284c1aaa5d6548272d5ef9907f4677170fef7be50"
       },
-      "o-student-duplicate": {
+      "operation.student-update": {
         "basis": "inferred",
         "classification": {
-          "alternative": "独立した審査担当・承認入口があれば別主機能にできる。",
+          "alternative": "登録と更新を別主機能に数える分け方もあるが、独立承認等の別作業は取得ソースに現れていない。",
           "category": "operation",
           "entryRefs": [
-            "e-new",
-            "e-student"
+            "entry.student-editor"
           ],
-          "outcome": "保存要求を続行又は取消する",
-          "parent": "f-student-maintenance",
-          "purpose": "候補を確認して保存継続を判断する",
-          "rationale": "保存結果に応じて開く補助ダイアログで、独立した重複審査入口はない。",
+          "outcome": "更新完了、変更なし、または更新未完了の通知。",
+          "parent": "function.student-maintain",
+          "purpose": "登録済み学生情報を維持する。",
+          "rationale": "新規登録と共用する学生保守作業の既存対象モード。",
           "scope": "selected-system",
-          "useContext": "学生保存が重複確認を要求したとき"
+          "useContext": "学生保守の既存編集モード。"
         },
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
           {
-            "endLine": 162,
-            "path": "Views/Students/Edit.cshtml",
-            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
-            "startLine": 153
-          },
-          {
-            "endLine": 282,
-            "path": "Core/SqlServerStudentService.cs",
-            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
-            "startLine": 278
-          },
-          {
-            "endLine": 116,
-            "path": "wwwroot/js/site.js",
-            "sha256": "0a5a77d068907e383ae7000adcdf03fe613cf7be987eed5d872a6aa03bd931a1",
-            "startLine": 106
-          }
-        ],
-        "id": "OPERATION-0975fa417893b0ad",
-        "key": "o-student-duplicate",
-        "kind": "operation",
-        "name": "重複候補の確認・続行",
-        "ownerRequirement": "catalog",
-        "statement": "保存中に提示された同一人物候補を確認し、理由を入力して続行又は取消する。",
-        "version": "2fee0a7ffe4fd7f065f1e725e2db2f06c80faa048a2ba2d6650549fff53e51c6"
-      },
-      "o-student-edit": {
-        "basis": "inferred",
-        "classification": {
-          "alternative": "訂正承認など独立した完了責任があれば主機能への分離が考えられる。",
-          "category": "operation",
-          "entryRefs": [
-            "e-student"
-          ],
-          "outcome": "更新結果を確認する",
-          "parent": "f-student-maintenance",
-          "purpose": "既存学生の登録内容を修正する",
-          "rationale": "新規と共有する保守画面の既存モードであり、詳細参照とは同じ入口の別文脈。",
-          "scope": "selected-system",
-          "useContext": "選択済み学生の情報を保守するとき"
-        },
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 5,
+            "endLine": 6,
             "path": "Web/Controllers/StudentsController.cs",
             "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
             "startLine": 5
@@ -2883,155 +2897,32 @@
             "startLine": 30
           },
           {
-            "endLine": 56,
+            "endLine": 62,
             "path": "Views/Students/Edit.cshtml",
             "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
-            "startLine": 34
+            "startLine": 37
           },
           {
-            "endLine": 152,
+            "endLine": 150,
             "path": "Views/Students/Edit.cshtml",
             "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
-            "startLine": 144
+            "startLine": 143
           }
         ],
-        "id": "OPERATION-8e540ae31cc8cc69",
-        "key": "o-student-edit",
+        "id": "OPERATION-2b805dc211d38474",
+        "key": "operation.student-update",
         "kind": "operation",
-        "name": "既存学生の編集・保存",
+        "name": "学生既存情報の編集・更新",
         "ownerRequirement": "catalog",
-        "statement": "既存学生を読み込み、保守画面で変更を入力して更新する。",
-        "version": "cdf11d7903117d74b67108b65f6dc03c2fd4cc529ec08198f372110ecc51b06e"
+        "statement": "既存学生を読み込み、変更を入力して更新する。",
+        "version": "0af167623c25e08f81b132ba8966a5e2e1bc15f2d8209fa94de474b4260987fd"
       },
-      "o-student-new": {
-        "basis": "inferred",
-        "classification": {
-          "alternative": "新規受付に固有の独立工程が確認できれば別主機能にできる。",
-          "category": "operation",
-          "entryRefs": [
-            "e-new"
-          ],
-          "outcome": "登録結果を確認する",
-          "parent": "f-student-maintenance",
-          "purpose": "新しい学生情報を登録する",
-          "rationale": "共用学生保守の新規モードとしてまとまっている。",
-          "scope": "selected-system",
-          "useContext": "新規登録を選択した保守作業"
-        },
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 5,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 5
-          },
-          {
-            "endLine": 39,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 29
-          },
-          {
-            "endLine": 23,
-            "path": "Infrastructure/WebStudentCoordinator.cs",
-            "sha256": "f57e213dc22534b74e357aa066e31e25e58bac5b4de1b3f5458502e06e049385",
-            "startLine": 23
-          },
-          {
-            "endLine": 56,
-            "path": "Views/Students/Edit.cshtml",
-            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
-            "startLine": 34
-          },
-          {
-            "endLine": 152,
-            "path": "Views/Students/Edit.cshtml",
-            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
-            "startLine": 144
-          }
-        ],
-        "id": "OPERATION-9447c1fc00d37108",
-        "key": "o-student-new",
-        "kind": "operation",
-        "name": "学生の新規入力・保存",
-        "ownerRequirement": "catalog",
-        "statement": "共用保守画面を新規モードで開き学生情報を入力して登録する。",
-        "version": "e05aff2d5200f4192efef4c4b60de54dfe47e8c238d2ff040b4e392fcc08f5c3"
-      },
-      "o-student-reset": {
-        "basis": "inferred",
-        "classification": {
-          "alternative": "取消・再読込・復帰を個別操作として分けても主機能数は変わらない。",
-          "category": "operation",
-          "entryRefs": [
-            "e-reset",
-            "e-new",
-            "e-student",
-            "e-search"
-          ],
-          "outcome": "読込時の値、最新情報又は検索画面に戻る",
-          "parent": "f-student-maintenance",
-          "purpose": "編集中の入力を取り消し作業を再開又は終了する",
-          "rationale": "保守作業内の補助操作で独立した業務対象を持たない。",
-          "scope": "selected-system",
-          "useContext": "学生情報を編集中又は参照中"
-        },
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 5,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 5
-          },
-          {
-            "endLine": 41,
-            "path": "Web/Controllers/StudentsController.cs",
-            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
-            "startLine": 41
-          },
-          {
-            "endLine": 152,
-            "path": "Views/Students/Edit.cshtml",
-            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
-            "startLine": 144
-          },
-          {
-            "endLine": 175,
-            "path": "Views/Students/Edit.cshtml",
-            "sha256": "83fef1494f78591fafe423ec577a12d129df46095bf7cd97959d5aca4dc2854f",
-            "startLine": 175
-          },
-          {
-            "endLine": 147,
-            "path": "wwwroot/js/site.js",
-            "sha256": "0a5a77d068907e383ae7000adcdf03fe613cf7be987eed5d872a6aa03bd931a1",
-            "startLine": 117
-          }
-        ],
-        "id": "OPERATION-b9b99887830e9e95",
-        "key": "o-student-reset",
-        "kind": "operation",
-        "name": "入力取消・再読込・検索復帰",
-        "ownerRequirement": "catalog",
-        "statement": "入力を読込時の値へ戻し、又は変更破棄を確認して最新情報の再読込や検索への復帰を行う。",
-        "version": "85e94c7d1069e25cdeb7a1aa1a223147b0a3ddbe0b9dadb5bb7759ebdb27ca38"
-      },
-      "s-azure-deployment": {
+      "support.azure-deployment": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
-          {
-            "endLine": 49,
-            "path": "deployment/Provision-FreeAzure.ps1",
-            "sha256": "2d92d242860ef0e4bf58f650ee6b09f7c2066fab5ae30fe16bc0c28c24a4381f",
-            "startLine": 1
-          },
           {
             "endLine": 42,
             "path": "deployment/Configure-AzureDatabase.ps1",
@@ -3045,18 +2936,6 @@
             "startLine": 1
           },
           {
-            "endLine": 145,
-            "path": "deployment/Initialize-AzureDatabase.py",
-            "sha256": "630596b7c0d590fffaebeea5be55e4993b40bd2fe149bc4aae233eb5ecbd93e5",
-            "startLine": 1
-          },
-          {
-            "endLine": 44,
-            "path": "deployment/Publish-FreeAzure.ps1",
-            "sha256": "3fe6e01a9e1939d04fe517bbdb0641ef9d4553457d139bb66f7e329efa587d47",
-            "startLine": 1
-          },
-          {
             "endLine": 6,
             "path": "deployment/Get-AzureDatabaseLogin.ps1",
             "sha256": "a0da5f82d1586152885babbe4fb936b598574a3f102b1cd1640ce85585bc3f54",
@@ -3067,26 +2946,107 @@
             "path": "deployment/Get-AzureWebLogin.ps1",
             "sha256": "c67fb80a8637793d687815c9f90e2e29258e7a1b5d552fb51e75cef87d7812f7",
             "startLine": 1
+          },
+          {
+            "endLine": 145,
+            "path": "deployment/Initialize-AzureDatabase.py",
+            "sha256": "630596b7c0d590fffaebeea5be55e4993b40bd2fe149bc4aae233eb5ecbd93e5",
+            "startLine": 1
+          },
+          {
+            "endLine": 4,
+            "path": "deployment/LoginPasswordHash/LoginPasswordHash.csproj",
+            "sha256": "21eaca2ae8287016e834a9522edd57d2d8ab4cfb7c1a4581e823ed378758be3b",
+            "startLine": 1
+          },
+          {
+            "endLine": 9,
+            "path": "deployment/LoginPasswordHash/Program.cs",
+            "sha256": "2e17ea8038733fba3c18cfc982d0a249472e862942f40bd8bfc071e6d16d8556",
+            "startLine": 4
+          },
+          {
+            "endLine": 49,
+            "path": "deployment/Provision-FreeAzure.ps1",
+            "sha256": "2d92d242860ef0e4bf58f650ee6b09f7c2066fab5ae30fe16bc0c28c24a4381f",
+            "startLine": 1
+          },
+          {
+            "endLine": 44,
+            "path": "deployment/Publish-FreeAzure.ps1",
+            "sha256": "3fe6e01a9e1939d04fe517bbdb0641ef9d4553457d139bb66f7e329efa587d47",
+            "startLine": 1
+          },
+          {
+            "endLine": 4,
+            "path": "StudentManagement.Web.csproj",
+            "sha256": "a82e58b4b27e6c808f2bdb24397cf679f429b2c7e8234dfef252eb5f3165badf",
+            "startLine": 4
           }
         ],
-        "id": "SUPPORT-3a8bb29932244152",
-        "key": "s-azure-deployment",
+        "id": "SUPPORT-b57fe43da2e3c329",
+        "key": "support.azure-deployment",
         "kind": "support",
-        "name": "Azure構築・設定・公開・資格情報補助",
+        "name": "Azure配備・DB適応・認証設定支援",
         "ownerRequirement": "catalog",
-        "statement": "Azure資源構築、DB初期化・設定、Webログイン設定、公開及びローカル資格情報取得のスクリプトを含む。これらは配備支援であり、学生管理の主機能には数えない。参照される資格情報ファイル・環境値は取得していない。",
-        "version": "133c4e853d9d93bb7dbeed4fdccb18fe2efcc9adb9284e880b9a8248ca1fb47d"
+        "statement": "Azure資源準備、公開、DB初期化・DDL適応、Web認証設定、資格情報取得補助を記述する。Initialize-AzureDatabase.pyは基礎DDLの一部コード列幅とseed照合順序を適応する。これらはWeb本体から除外された配備資源。資格情報実体や外部配備状態は取得していない。",
+        "version": "06a6c88db5a0f64673cb318171acabc2ed69bb0833b0271bc5e1d133603035bd"
       },
-      "s-build": {
+      "support.azure-verification": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
           {
-            "endLine": 7,
-            "path": "StudentManagement.Web.csproj",
-            "sha256": "a82e58b4b27e6c808f2bdb24397cf679f429b2c7e8234dfef252eb5f3165badf",
+            "endLine": 4,
+            "path": "deployment/DatabaseSmoke/DatabaseSmoke.csproj",
+            "sha256": "7e4a4b8f12c494d82275bb3518fdb4fb8fddd573575318dcd28fbd7704058600",
+            "startLine": 1
+          },
+          {
+            "endLine": 9,
+            "path": "deployment/DatabaseSmoke/Program.cs",
+            "sha256": "74c6da0ca7493102bcae82bdefa5001162d02d684aea0e031ebf3902e666e537",
+            "startLine": 3
+          },
+          {
+            "endLine": 35,
+            "path": "deployment/Verify-AzureRemoteDatabase.py",
+            "sha256": "7654bd1b540f1df22476ebaa46f6d945b0437a1696c2504aa1a81e4ac39383d6",
+            "startLine": 1
+          },
+          {
+            "endLine": 88,
+            "path": "deployment/Verify-AzureWebLogin.py",
+            "sha256": "f5eafc6a628504172020e74c7ffe1470c570c2fad252235f3e8b451f31cfa09b",
+            "startLine": 1
+          },
+          {
+            "endLine": 44,
+            "path": "Views/Students/Search.cshtml",
+            "sha256": "11b3aa90f38759dfcaf7df2f3bc0448537ce0ac1ba1828d259bd07709a0842a9",
+            "startLine": 25
+          }
+        ],
+        "id": "SUPPORT-5b71f5e0a4042846",
+        "key": "support.azure-verification",
+        "kind": "support",
+        "name": "配備DB・ログイン検証ソース",
+        "ownerRequirement": "catalog",
+        "statement": "DatabaseSmoke、Verify-AzureRemoteDatabase.py、Verify-AzureWebLogin.pyはDB読取と配備Web認証の検査資源。後者には現行検索画面に存在しないSRC-009への検査参照もあり、試験コードや説明資料の成功記載を現行動作の証明にしない。",
+        "version": "4758f104022d13e3e202d75cc9110394efe882ff46feaa2d36b99a5d3925cbaf"
+      },
+      "support.build": {
+        "basis": "observed-source",
+        "classification": null,
+        "dependencies": [],
+        "dependsOn": [],
+        "evidence": [
+          {
+            "endLine": 2,
+            "path": "Core/Properties/AssemblyInfo.cs",
+            "sha256": "c58fc3a1824f204209e5be6b13cae5150495e0a89afa370e49f68e8142946b55",
             "startLine": 1
           },
           {
@@ -3096,9 +3056,15 @@
             "startLine": 1
           },
           {
-            "endLine": 4,
-            "path": "maintenance/StudentMaintenance.csproj",
-            "sha256": "31bfeef4bd4bec25c23b24f91b752484a5b07de5d6b8dc7cd73aab7d8a4b9151",
+            "endLine": 15,
+            "path": "Directory.Build.props",
+            "sha256": "d81943ab416bf06d4af3b83700b8dff2cd26863506e242679b7c4908b57d23f9",
+            "startLine": 1
+          },
+          {
+            "endLine": 7,
+            "path": "StudentManagement.Web.csproj",
+            "sha256": "a82e58b4b27e6c808f2bdb24397cf679f429b2c7e8234dfef252eb5f3165badf",
             "startLine": 1
           },
           {
@@ -3108,15 +3074,9 @@
             "startLine": 1
           },
           {
-            "endLine": 15,
-            "path": "Directory.Build.props",
-            "sha256": "d81943ab416bf06d4af3b83700b8dff2cd26863506e242679b7c4908b57d23f9",
-            "startLine": 1
-          },
-          {
-            "endLine": 2,
-            "path": "Core/Properties/AssemblyInfo.cs",
-            "sha256": "c58fc3a1824f204209e5be6b13cae5150495e0a89afa370e49f68e8142946b55",
+            "endLine": 4,
+            "path": "maintenance/StudentMaintenance.csproj",
+            "sha256": "31bfeef4bd4bec25c23b24f91b752484a5b07de5d6b8dc7cd73aab7d8a4b9151",
             "startLine": 1
           },
           {
@@ -3144,15 +3104,15 @@
             "startLine": 1
           }
         ],
-        "id": "SUPPORT-527a749133fd82c3",
-        "key": "s-build",
+        "id": "SUPPORT-4eb23465d0e61571",
+        "key": "support.build",
         "kind": "support",
-        "name": "プロジェクト構成・ビルド・出力管理",
+        "name": "プロジェクト構成・ビルド出力・試験支援",
         "ownerRequirement": "catalog",
-        "statement": "Web、Core、maintenanceとテストのプロジェクト区分、WebのCompile/Content除外、Coreのテスト向け内部公開、出力先制御、ビルド・パス検証資源を確認した。tests/database/testsは明示テスト参照、bin/obj/build等は出力規則で説明できる。除外領域の内容や過去結果は取得していない。",
-        "version": "78e731835f55cf6536abbc02774b48b859d8f1584f5c4f5d54bfc9a521653d31"
+        "statement": "Web/Core/CLIのプロジェクト参照、出力配置、除外規則、ビルド・出力パス検査を定義する。WebはCoreを参照し、deployment・maintenance・tests等を自身のコンパイルから除外する。solutionとbuild_configは省略された試験プロジェクトを明示する。.tmp、build、bin、obj等は出力・既定項目除外として裏付けられ、取得原文に欠落先を要求する独自の本番生成Compile/Importは確認しない。省略物の内容・試験結果は未確認。",
+        "version": "e9bbba97c5c538f6824fb836bd0d5e1e0b8a5e9f9db9f1aa5fdc67ecfc0c4e33"
       },
-      "s-database-tools": {
+      "support.database-generator": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -3165,9 +3125,36 @@
             "startLine": 1
           },
           {
-            "endLine": 165,
-            "path": "database/Deploy-Database.ps1",
-            "sha256": "61b5501f39d1a7013c79b0b5c8b703dcdb15753e8cfa5a92b2d2194654c2a2c7",
+            "endLine": 7,
+            "path": "StudentManagement.Web.csproj",
+            "sha256": "a82e58b4b27e6c808f2bdb24397cf679f429b2c7e8234dfef252eb5f3165badf",
+            "startLine": 1
+          },
+          {
+            "endLine": 88,
+            "path": "tools/build.py",
+            "sha256": "f6c229827cfaa877194f542571560ea84852f26b56b3ae93d0f9919f8a539123",
+            "startLine": 66
+          }
+        ],
+        "id": "SUPPORT-4b345e7a8685459f",
+        "key": "support.database-generator",
+        "kind": "support",
+        "name": "DDL・seed生成器",
+        "ownerRequirement": "catalog",
+        "statement": "database/generate.mjsは別パスの仕様資料からDDLとseedを生成する著作済み支援スクリプト。現存DDLは直接取得され、プロジェクト・build.pyに生成器の実行登録は見られない。参照仕様は本解析で取得せず、生成・整合性の成功も推定しない。",
+        "version": "815e91a2669dc385dd284bc1bce71863b245b23a127d32d09ef84911369a82bd"
+      },
+      "support.database-installation": {
+        "basis": "observed-source",
+        "classification": null,
+        "dependencies": [],
+        "dependsOn": [],
+        "evidence": [
+          {
+            "endLine": 93,
+            "path": "database/002_seed.sql",
+            "sha256": "b40e408a8c98b66b045adc05dca5eb15cc53faea5d700afc30e7e741d234c431",
             "startLine": 1
           },
           {
@@ -3183,54 +3170,60 @@
             "startLine": 1
           },
           {
-            "endLine": 88,
-            "path": "tools/build.py",
-            "sha256": "f6c229827cfaa877194f542571560ea84852f26b56b3ae93d0f9919f8a539123",
-            "startLine": 70
+            "endLine": 165,
+            "path": "database/Deploy-Database.ps1",
+            "sha256": "61b5501f39d1a7013c79b0b5c8b703dcdb15753e8cfa5a92b2d2194654c2a2c7",
+            "startLine": 1
+          },
+          {
+            "endLine": 218,
+            "path": "database/001_schema.sql",
+            "sha256": "32e87af4b5804c73ba9b0efa705a2050388b5105b3d64cceecd8c7e585fc1dc9",
+            "startLine": 212
           }
         ],
-        "id": "SUPPORT-94abfa22e18090ff",
-        "key": "s-database-tools",
+        "id": "SUPPORT-0c685af40a8dfa8b",
+        "key": "support.database-installation",
         "kind": "support",
-        "name": "DB生成・導入・権限・照合資源",
+        "name": "DB初期値・権限・導入検証支援",
         "ownerRequirement": "catalog",
-        "statement": "SQL生成器、導入PowerShell、権限SQL、配備照合SQLを含む。生成器は取得外の仕様入力を読むが、取得済み通常ビルドからの生成実行参照はなく、現存DDLを目録根拠とした。生成一致・SQL実行成功は未確認。",
-        "version": "cf16e6d94dfca0d71177696881ba78e684a8f50e07a9653d86b7ad355ece5317"
+        "statement": "002_seed、003_web_permissions、004_verify_deploymentとDeploy-Database.ps1が初期コード、DB役割権限、導入・読取検証を記述する。これは配備支援であり、実DBの作成・権限・検証成功の証拠ではない。DDL末尾の別Native用EXEC入口への言及も現行登録とは区別する。",
+        "version": "9129aa91c31b9e6724939617e5834037803aaf1d0a8b558e05697b1219160c78"
       },
-      "s-login-hash": {
+      "support.strict-json": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
           {
-            "endLine": 9,
-            "path": "deployment/LoginPasswordHash/Program.cs",
-            "sha256": "2e17ea8038733fba3c18cfc982d0a249472e862942f40bd8bfc071e6d16d8556",
+            "endLine": 15,
+            "path": "Infrastructure/StrictJson.cs",
+            "sha256": "2ece5d35b140cdded0ad30804e5f3ee431e7fb16f2e066df56fc968abb22a825",
             "startLine": 4
           },
           {
-            "endLine": 4,
-            "path": "deployment/LoginPasswordHash/LoginPasswordHash.csproj",
-            "sha256": "21eaca2ae8287016e834a9522edd57d2d8ab4cfb7c1a4581e823ed378758be3b",
-            "startLine": 1
+            "endLine": 34,
+            "path": "Infrastructure/WebHostSetup.cs",
+            "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
+            "startLine": 13
           },
           {
-            "endLine": 23,
-            "path": "deployment/Configure-AzureWebLogin.ps1",
-            "sha256": "591014c052acb3fe31c765ce69df2fbcb0be0c2301ab091693cd7260aaca1740",
-            "startLine": 14
+            "endLine": 7,
+            "path": "StudentManagement.Web.csproj",
+            "sha256": "a82e58b4b27e6c808f2bdb24397cf679f429b2c7e8234dfef252eb5f3165badf",
+            "startLine": 1
           }
         ],
-        "id": "SUPPORT-392f1aa5f846cf6c",
-        "key": "s-login-hash",
+        "id": "SUPPORT-48dbec518cb6c37c",
+        "key": "support.strict-json",
         "kind": "support",
-        "name": "配備用ログインハッシュ生成",
+        "name": "静的利用を観測しないStrictJson宣言",
         "ownerRequirement": "catalog",
-        "statement": "LoginPasswordHashプロジェクトはWebログイン設定用ハッシュを準備する補助Exeで、Configure-AzureWebLoginから参照される。",
-        "version": "5ac0a8e7191ac7f2af546b16065adf4258922749e8d183d5c846e328462c6a56"
+        "statement": "StrictJsonはJSON本文の読取・構造確認を実装する。取得全ソース、呼出Fact、ホスト登録とコントローラーを逆照合した範囲ではReadへの外部静的利用を観測しない。動的利用の不存在や実行不能までは断定せず、共通消費者を作らず支援宣言として保持する。",
+        "version": "8e4e3b3de96654d5d39aafa8261438ad817f7873a79e145ca48f1865b26b138a"
       },
-      "s-options-declaration": {
+      "support.unexposed-json-candidates": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -3249,10 +3242,22 @@
             "startLine": 8
           },
           {
+            "endLine": 30,
+            "path": "Infrastructure/WebPresentation.cs",
+            "sha256": "23800e7f88e643c952a8617f5382e43c5c0d4ffa543c0c1f24e333312ea213f3",
+            "startLine": 30
+          },
+          {
             "endLine": 21,
             "path": "Web/Inputs/StudentSearchInput.cs",
             "sha256": "a3fd854dafe0e42fe77a9a86c789b435ad16c1239025c734455e25fc1f831164",
             "startLine": 20
+          },
+          {
+            "endLine": 6,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 5
           },
           {
             "endLine": 28,
@@ -3261,54 +3266,66 @@
             "startLine": 27
           },
           {
-            "endLine": 7,
+            "endLine": 8,
             "path": "Program.cs",
             "sha256": "f55ce879e78e94b9144c1a9ed68fc6cfea01d45e91efc5dbbdf025d906fc1f85",
-            "startLine": 5
+            "startLine": 2
+          },
+          {
+            "endLine": 34,
+            "path": "Infrastructure/WebHostSetup.cs",
+            "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
+            "startLine": 25
           }
         ],
-        "id": "SUPPORT-31604301e909da85",
-        "key": "s-options-declaration",
+        "id": "SUPPORT-b5da89b9e6965423",
+        "key": "support.unexposed-json-candidates",
         "kind": "support",
-        "name": "公開呼出元を観測しない候補取得宣言",
+        "name": "公開接続を観測しない候補・JSON整形宣言",
         "ownerRequirement": "catalog",
-        "statement": "WebStudentCoordinator.OptionsとWebPresentation.Lookupsに候補取得・整形の宣言がある。取得済み入口・呼出箇所にはOptionsの静的消費者を観測せず、残存する/students/optionsは404応答である。",
-        "version": "ee46a440e063c44e5f60afde93ea89b5afaf1c9afa05f996372a17c4efdda6de"
+        "statement": "WebStudentCoordinator.Options、OptionsRequest、WebPresentation.Lookups/Save等の宣言が残る。取得全ソース・呼出・登録ではOptionsを公開する現行入口やSave整形の静的消費者を観測せず、旧/students/optionsはNotFoundである。これらから稼働業務APIや新しい主機能を作らない。",
+        "version": "9648b60d083799146257e0e1c26b53b2f0ddd5a1d19336557b3d14aff30c2615"
       },
-      "s-strict-json": {
-        "basis": "observed-source",
+      "system.catalog": {
+        "basis": "inferred",
         "classification": null,
         "dependencies": [],
         "dependsOn": [],
         "evidence": [
           {
-            "endLine": 15,
-            "path": "Infrastructure/StrictJson.cs",
-            "sha256": "2ece5d35b140cdded0ad30804e5f3ee431e7fb16f2e066df56fc968abb22a825",
-            "startLine": 4
+            "endLine": 41,
+            "path": "Web/Controllers/AccountController.cs",
+            "sha256": "eb3317ec00f640a4ea7e6c7ff4538a7a0a716030f84cc3c31220df236ce8c394",
+            "startLine": 10
           },
           {
-            "endLine": 33,
-            "path": "Infrastructure/WebHostSetup.cs",
-            "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
-            "startLine": 13
-          },
-          {
-            "endLine": 47,
+            "endLine": 43,
             "path": "Web/Controllers/StudentsController.cs",
             "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
             "startLine": 5
+          },
+          {
+            "endLine": 17,
+            "path": "maintenance/Program.cs",
+            "sha256": "4ffd1ef81a4dd10072f998454fc292bd1ac227ec83d503302ac4a61d9cb3e2c5",
+            "startLine": 4
+          },
+          {
+            "endLine": 7,
+            "path": "Views/Menu/Index.cshtml",
+            "sha256": "0f56d5d6c4e3aa8ebf7b04724db174cdcfae52a976eec9b6f1c8fbce4958e078",
+            "startLine": 1
           }
         ],
-        "id": "SUPPORT-d7d0b488fc141a97",
-        "key": "s-strict-json",
-        "kind": "support",
-        "name": "静的消費者を観測しないStrictJson宣言",
+        "id": "SYSTEM-0c61963351cba1c2",
+        "key": "system.catalog",
+        "kind": "system",
+        "name": "機能分類と集計",
         "ownerRequirement": "catalog",
-        "statement": "StrictJsonには厳格JSON読取の実装があるが、取得済みソース全体と登録箇所にReadの静的呼出元を観測しない。既知の補助宣言として保持し、利用中commonや公開APIとは断定しない。",
-        "version": "6cdecc75574d4345668c2b88567c657006798fd3fc72960b999e18447868cefa"
+        "statement": "contextbase-catalog/1による主機能は6件：学生管理2件、マスタ管理2件、認証2件。別枠は操作8件、共通責任14件、技術入口14件、物理表7件、DTO等のデータ群3件、支援7件、依存資源群1件、説明資料群1件、概要・集計2件。分類保留候補は0件。メニューは共通ナビゲーション、配備・検査は支援とした。relationshipsとbehaviorは本割当では未検証のまま残る。",
+        "version": "8a66d5fa98bc0182519d38126532bee3ed17d2dd74be5d570cad3ca63378ed76"
       },
-      "s-verification-tools": {
+      "system.outline": {
         "basis": "observed-source",
         "classification": null,
         "dependencies": [],
@@ -3316,65 +3333,26 @@
         "evidence": [
           {
             "endLine": 9,
-            "path": "deployment/DatabaseSmoke/Program.cs",
-            "sha256": "74c6da0ca7493102bcae82bdefa5001162d02d684aea0e031ebf3902e666e537",
-            "startLine": 3
-          },
-          {
-            "endLine": 4,
-            "path": "deployment/DatabaseSmoke/DatabaseSmoke.csproj",
-            "sha256": "7e4a4b8f12c494d82275bb3518fdb4fb8fddd573575318dcd28fbd7704058600",
+            "path": "Program.cs",
+            "sha256": "f55ce879e78e94b9144c1a9ed68fc6cfea01d45e91efc5dbbdf025d906fc1f85",
             "startLine": 1
           },
           {
-            "endLine": 35,
-            "path": "deployment/Verify-AzureRemoteDatabase.py",
-            "sha256": "7654bd1b540f1df22476ebaa46f6d945b0437a1696c2504aa1a81e4ac39383d6",
-            "startLine": 1
-          },
-          {
-            "endLine": 88,
-            "path": "deployment/Verify-AzureWebLogin.py",
-            "sha256": "f5eafc6a628504172020e74c7ffe1470c570c2fad252235f3e8b451f31cfa09b",
-            "startLine": 45
-          },
-          {
-            "endLine": 44,
-            "path": "Views/Students/Search.cshtml",
-            "sha256": "11b3aa90f38759dfcaf7df2f3bc0448537ce0ac1ba1828d259bd07709a0842a9",
-            "startLine": 24
-          }
-        ],
-        "id": "SUPPORT-ad619033c622fcf3",
-        "key": "s-verification-tools",
-        "kind": "support",
-        "name": "DB・ブラウザー配備検証プログラム",
-        "ownerRequirement": "catalog",
-        "statement": "DatabaseSmoke、リモートDB検証、Azureログインのブラウザー検証を含む。実行はしていない。ログイン検証は現行検索Viewにない#SRC-009を参照しており、スクリプトや文書のPASS記述を現行動作の検証済み結果として採用しない。",
-        "version": "b5079a7c6fd15937e00af10ae29f612c389e03e2cf1c18d081af2082bc6d5a2e"
-      },
-      "sys-boundaries": {
-        "basis": "inferred",
-        "classification": null,
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 13,
-            "path": "Core/SqlServerStudentService.cs",
-            "sha256": "41e7172a2f92a7588c5ce1a7bd0943e99e9a18c3d2348b23a2e625b60ea95238",
-            "startLine": 11
-          },
-          {
-            "endLine": 23,
+            "endLine": 34,
             "path": "Infrastructure/WebHostSetup.cs",
             "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
-            "startLine": 23
+            "startLine": 13
           },
           {
             "endLine": 7,
             "path": "StudentManagement.Web.csproj",
             "sha256": "a82e58b4b27e6c808f2bdb24397cf679f429b2c7e8234dfef252eb5f3165badf",
+            "startLine": 1
+          },
+          {
+            "endLine": 8,
+            "path": "StudentManagement.slnx",
+            "sha256": "307808087883d84aa83183a2480e3536fe494d1b6b3c58be50899b4c03f38d91",
             "startLine": 1
           },
           {
@@ -3384,427 +3362,340 @@
             "startLine": 1
           },
           {
-            "endLine": 14,
-            "path": "Directory.Build.props",
-            "sha256": "d81943ab416bf06d4af3b83700b8dff2cd26863506e242679b7c4908b57d23f9",
-            "startLine": 3
-          },
-          {
-            "endLine": 8,
-            "path": "StudentManagement.slnx",
-            "sha256": "307808087883d84aa83183a2480e3536fe494d1b6b3c58be50899b4c03f38d91",
-            "startLine": 1
-          },
-          {
-            "endLine": 19,
-            "path": "tools/build_config.json",
-            "sha256": "71d33ef84a65fc89f2cb321b4d464289aeaada46534ebb634a11a20d5eda8008",
-            "startLine": 1
-          },
-          {
-            "endLine": 22,
-            "path": "database/generate.mjs",
-            "sha256": "e72bb17e1d9c772d802726048f3a75543b92008dacafc5546cb28ba3f9b49167",
-            "startLine": 6
-          }
-        ],
-        "id": "SYSTEM-b39681572bf12010",
-        "key": "sys-boundaries",
-        "kind": "system",
-        "name": "取得範囲・解析限界・保留義務",
-        "ownerRequirement": "catalog",
-        "statement": "C# Factは構文観測であり意味束縛・実行到達性を保証しない。他形式は原文を確認した。Webの除外規則、Core参照、CLI、テスト設定、出力除外を確認した範囲で目録の分類保留候補はない。Native入口はコメント上の言及で、現行WebはSqlServerStudentServiceを登録する。relationshipsとbehaviorは後続確認のまま保持する。",
-        "version": "df6b906e41f1d9e8858aa3869357b09feb6cdbbf0480194a07ad46bf6890e514"
-      },
-      "sys-outline": {
-        "basis": "inferred",
-        "classification": null,
-        "dependencies": [],
-        "dependsOn": [],
-        "evidence": [
-          {
-            "endLine": 8,
-            "path": "Program.cs",
-            "sha256": "f55ce879e78e94b9144c1a9ed68fc6cfea01d45e91efc5dbbdf025d906fc1f85",
-            "startLine": 2
-          },
-          {
-            "endLine": 24,
-            "path": "Infrastructure/WebHostSetup.cs",
-            "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
-            "startLine": 13
-          },
-          {
-            "endLine": 7,
-            "path": "StudentManagement.Web.csproj",
-            "sha256": "a82e58b4b27e6c808f2bdb24397cf679f429b2c7e8234dfef252eb5f3165badf",
-            "startLine": 1
-          },
-          {
-            "endLine": 8,
-            "path": "StudentManagement.slnx",
-            "sha256": "307808087883d84aa83183a2480e3536fe494d1b6b3c58be50899b4c03f38d91",
-            "startLine": 1
-          },
-          {
             "endLine": 17,
             "path": "maintenance/Program.cs",
             "sha256": "4ffd1ef81a4dd10072f998454fc292bd1ac227ec83d503302ac4a61d9cb3e2c5",
             "startLine": 4
+          },
+          {
+            "endLine": 4,
+            "path": "maintenance/StudentMaintenance.csproj",
+            "sha256": "31bfeef4bd4bec25c23b24f91b752484a5b07de5d6b8dc7cd73aab7d8a4b9151",
+            "startLine": 1
           }
         ],
-        "id": "SYSTEM-30f3323494db005d",
-        "key": "sys-outline",
+        "id": "SYSTEM-ea2e0e568d6f735a",
+        "key": "system.outline",
         "kind": "system",
-        "name": "学生管理システムのソース概要",
+        "name": "学生管理システムのソース構成",
         "ownerRequirement": "catalog",
-        "statement": ".NET 10のASP.NET Core MVC、Razor、SQL Server用Coreと独立マスタ保守CLIを含む。分類済み主機能は7件：システム認証2件、機能選択1件、学生管理2件、マスタ保守2件。操作・共通処理・技術入口・データ・補助資源は別記録とした。",
-        "version": "0bc5b23b1f69dfe4eb3f4412bc6ba6015a76d99566ca70841532084749de6ffb"
+        "statement": ".NET 10のASP.NET Core MVC/Razor Web、SQL Server向けCore、管理者マスタ保守CLIで構成される。WebはIStudentServiceにSqlServerStudentServiceを登録する。配備・生成・検査資源も取得範囲に含む。構文Factは意味束縛・実行を証明せず、非C#資源は原文読解による。本解析で入力の実行・ビルド・試験は行っていない。",
+        "version": "d913c5c87759a80681062ee12323c214cab2b475a0efb80d372e5d731b237a1d"
       }
     },
     "identities": {
-      "c-auth": {
-        "id": "COMMON-44bbb5fbe07b7437",
+      "common.authentication": {
+        "id": "COMMON-d0315425c7b13a6b",
         "kind": "common",
         "ownerRequirement": "catalog"
       },
-      "c-db-shared": {
-        "id": "COMMON-4990109eb50e3f01",
+      "common.identity": {
+        "id": "COMMON-59b6d97bf7d6ea45",
         "kind": "common",
         "ownerRequirement": "catalog"
       },
-      "c-editor-state": {
-        "id": "COMMON-486b008b89e07bf9",
+      "common.input-conversion": {
+        "id": "COMMON-05007c9fc45349dd",
         "kind": "common",
         "ownerRequirement": "catalog"
       },
-      "c-flash": {
-        "id": "COMMON-fb7fdb3c43b55398",
+      "common.japanese-date": {
+        "id": "COMMON-b89d8de2b7f2c5d8",
         "kind": "common",
         "ownerRequirement": "catalog"
       },
-      "c-identity": {
-        "id": "COMMON-f5a6919b3b06925e",
+      "common.master-service": {
+        "id": "COMMON-d07c5cf8dcb72c73",
         "kind": "common",
         "ownerRequirement": "catalog"
       },
-      "c-japanese-date": {
-        "id": "COMMON-e5eba6cf1b258ce7",
+      "common.navigation": {
+        "id": "COMMON-a72f42829f3452d1",
         "kind": "common",
         "ownerRequirement": "catalog"
       },
-      "c-master-audit-operation": {
-        "id": "COMMON-18a1da87ea7d820f",
+      "common.normalization": {
+        "id": "COMMON-ac4e2446c323b378",
         "kind": "common",
         "ownerRequirement": "catalog"
       },
-      "c-master-service": {
-        "id": "COMMON-f0f9501d20c56062",
+      "common.presentation": {
+        "id": "COMMON-a09fb8ca183e4bd5",
         "kind": "common",
         "ownerRequirement": "catalog"
       },
-      "c-normalization": {
-        "id": "COMMON-80447ecdad329c88",
+      "common.sql-audit": {
+        "id": "COMMON-f89bacb97f5450d5",
         "kind": "common",
         "ownerRequirement": "catalog"
       },
-      "c-presentation": {
-        "id": "COMMON-f015d0673752f073",
+      "common.student-service": {
+        "id": "COMMON-3fcb61c6b12956ad",
         "kind": "common",
         "ownerRequirement": "catalog"
       },
-      "c-search-state": {
-        "id": "COMMON-1402f405c79093a3",
+      "common.web-coordinator": {
+        "id": "COMMON-7739e9983ee40d19",
         "kind": "common",
         "ownerRequirement": "catalog"
       },
-      "c-student-service": {
-        "id": "COMMON-3084969d4225f395",
+      "common.web-security": {
+        "id": "COMMON-5e74be0106d52822",
         "kind": "common",
         "ownerRequirement": "catalog"
       },
-      "c-ui": {
-        "id": "COMMON-b0eb6b85dc082fc4",
+      "common.web-state": {
+        "id": "COMMON-4485a90fc273e866",
         "kind": "common",
         "ownerRequirement": "catalog"
       },
-      "c-web-coordinator": {
-        "id": "COMMON-dc62b6377e02c341",
+      "common.web-ui": {
+        "id": "COMMON-6cb65166b395fdd5",
         "kind": "common",
         "ownerRequirement": "catalog"
       },
-      "c-web-host": {
-        "id": "COMMON-ab23bcef940d1fc4",
-        "kind": "common",
-        "ownerRequirement": "catalog"
-      },
-      "d-audit": {
-        "id": "DATA-6dd334c1de11e661",
+      "data.class": {
+        "id": "DATA-ace7a698d1adb33e",
         "kind": "data",
         "ownerRequirement": "catalog"
       },
-      "d-azure-schema": {
-        "id": "DATA-fdf88a4c61dbddfe",
+      "data.code": {
+        "id": "DATA-67f51fb05888a625",
         "kind": "data",
         "ownerRequirement": "catalog"
       },
-      "d-class": {
-        "id": "DATA-3f3f53564617db53",
+      "data.code-category": {
+        "id": "DATA-5dc73e10013223aa",
         "kind": "data",
         "ownerRequirement": "catalog"
       },
-      "d-code": {
-        "id": "DATA-10f80affb2d3f89e",
+      "data.confirmation": {
+        "id": "DATA-deaaa1ddf00766b3",
         "kind": "data",
         "ownerRequirement": "catalog"
       },
-      "d-code-category": {
-        "id": "DATA-737bd2f6a3900da0",
+      "data.core-contracts": {
+        "id": "DATA-82ab1e80c677079f",
         "kind": "data",
         "ownerRequirement": "catalog"
       },
-      "d-confirmation": {
-        "id": "DATA-464a851789c34899",
+      "data.maintenance-contracts": {
+        "id": "DATA-a24863ea42bd4d2a",
         "kind": "data",
         "ownerRequirement": "catalog"
       },
-      "d-core-contracts": {
-        "id": "DATA-bb2153271f2e42dd",
+      "data.operation-log": {
+        "id": "DATA-07c1ad9593609c3c",
         "kind": "data",
         "ownerRequirement": "catalog"
       },
-      "d-maintenance-contracts": {
-        "id": "DATA-f949734b7e465aaf",
+      "data.runtime-state": {
+        "id": "DATA-5da744d01ee06b77",
         "kind": "data",
         "ownerRequirement": "catalog"
       },
-      "d-runtime": {
-        "id": "DATA-b366067737eda551",
+      "data.student": {
+        "id": "DATA-9d5d3195fff34959",
         "kind": "data",
         "ownerRequirement": "catalog"
       },
-      "d-student": {
-        "id": "DATA-deef86a72d368260",
+      "data.web-contracts": {
+        "id": "DATA-3c301828eb1ebb13",
         "kind": "data",
         "ownerRequirement": "catalog"
       },
-      "d-transient-state": {
-        "id": "DATA-f4e324f578eaf525",
-        "kind": "data",
-        "ownerRequirement": "catalog"
-      },
-      "d-web-contracts": {
-        "id": "DATA-74694962c01f89ec",
-        "kind": "data",
-        "ownerRequirement": "catalog"
-      },
-      "dep-runtime": {
-        "id": "DEPENDENCY-13fcd24101c76a1f",
+      "dependency.runtime-packages": {
+        "id": "DEPENDENCY-efa67ec550e3ac32",
         "kind": "dependency",
         "ownerRequirement": "catalog"
       },
-      "dep-toolchain": {
-        "id": "DEPENDENCY-ce41ced8e6227548",
-        "kind": "dependency",
-        "ownerRequirement": "catalog"
-      },
-      "e-db-smoke": {
-        "id": "ENTRY-e06d9eb9d4764688",
+      "entry.database-smoke": {
+        "id": "ENTRY-fd80a6fc9f66497c",
         "kind": "entry",
         "ownerRequirement": "catalog"
       },
-      "e-delete": {
-        "id": "ENTRY-0f3a182eb209a2b5",
+      "entry.evaluation-session": {
+        "id": "ENTRY-801781942a7dc5ea",
         "kind": "entry",
         "ownerRequirement": "catalog"
       },
-      "e-evaluation-session": {
-        "id": "ENTRY-318ca0e1cc94683a",
+      "entry.health": {
+        "id": "ENTRY-52ca446bbea6e0f4",
         "kind": "entry",
         "ownerRequirement": "catalog"
       },
-      "e-health": {
-        "id": "ENTRY-ac29297370f00e36",
+      "entry.login": {
+        "id": "ENTRY-66c5a6efefe481b6",
         "kind": "entry",
         "ownerRequirement": "catalog"
       },
-      "e-login": {
-        "id": "ENTRY-8f8cf94cdd6cefb1",
+      "entry.login-hash-tool": {
+        "id": "ENTRY-c6f2f9dceff05846",
         "kind": "entry",
         "ownerRequirement": "catalog"
       },
-      "e-login-hash": {
-        "id": "ENTRY-e8fd78d7771d26f5",
+      "entry.logout": {
+        "id": "ENTRY-490e1e603efd7cff",
         "kind": "entry",
         "ownerRequirement": "catalog"
       },
-      "e-logout": {
-        "id": "ENTRY-9c769e24277ce710",
+      "entry.maintenance": {
+        "id": "ENTRY-aa841ff3444b5ee5",
         "kind": "entry",
         "ownerRequirement": "catalog"
       },
-      "e-maintenance-cli": {
-        "id": "ENTRY-dc043b22af9afce4",
+      "entry.menu": {
+        "id": "ENTRY-c904cd076b366295",
         "kind": "entry",
         "ownerRequirement": "catalog"
       },
-      "e-menu": {
-        "id": "ENTRY-e6d17ea2174934c2",
+      "entry.retired-options": {
+        "id": "ENTRY-e7c9bfab9c3816a4",
         "kind": "entry",
         "ownerRequirement": "catalog"
       },
-      "e-new": {
-        "id": "ENTRY-d72e4150a83d85b0",
+      "entry.search": {
+        "id": "ENTRY-0685f475cf01843c",
         "kind": "entry",
         "ownerRequirement": "catalog"
       },
-      "e-reset": {
-        "id": "ENTRY-cb5b1e1281efcab0",
+      "entry.student-delete": {
+        "id": "ENTRY-bb761d73375a1900",
         "kind": "entry",
         "ownerRequirement": "catalog"
       },
-      "e-retired-options": {
-        "id": "ENTRY-2c3bfac7003453be",
+      "entry.student-editor": {
+        "id": "ENTRY-2775c8d43391475a",
         "kind": "entry",
         "ownerRequirement": "catalog"
       },
-      "e-search": {
-        "id": "ENTRY-569831b8ae99baac",
+      "entry.student-new": {
+        "id": "ENTRY-04f7cce92fae19d2",
         "kind": "entry",
         "ownerRequirement": "catalog"
       },
-      "e-student": {
-        "id": "ENTRY-b2d24681ff7c4259",
+      "entry.web": {
+        "id": "ENTRY-4301bebb19454b0d",
         "kind": "entry",
         "ownerRequirement": "catalog"
       },
-      "e-web-start": {
-        "id": "ENTRY-02508968d096bfde",
-        "kind": "entry",
-        "ownerRequirement": "catalog"
-      },
-      "f-class-maintenance": {
-        "id": "FUNCTION-2afdcc2b1793e98c",
+      "function.class-maintain": {
+        "id": "FUNCTION-91d28046181a5fb5",
         "kind": "function",
         "ownerRequirement": "catalog"
       },
-      "f-code-maintenance": {
-        "id": "FUNCTION-1b8a3fb7f1cba96d",
+      "function.code-maintain": {
+        "id": "FUNCTION-22591896d39dca6b",
         "kind": "function",
         "ownerRequirement": "catalog"
       },
-      "f-login": {
-        "id": "FUNCTION-51c140f72a1525d6",
+      "function.login": {
+        "id": "FUNCTION-3a8a1be5f76f61aa",
         "kind": "function",
         "ownerRequirement": "catalog"
       },
-      "f-logout": {
-        "id": "FUNCTION-50628fec93066521",
+      "function.logout": {
+        "id": "FUNCTION-02c59fd1943df269",
         "kind": "function",
         "ownerRequirement": "catalog"
       },
-      "f-menu": {
-        "id": "FUNCTION-12af019b26e0f2c3",
+      "function.student-maintain": {
+        "id": "FUNCTION-fa89f6d82503c20f",
         "kind": "function",
         "ownerRequirement": "catalog"
       },
-      "f-student-inquiry": {
-        "id": "FUNCTION-99e6712465221e10",
+      "function.student-query": {
+        "id": "FUNCTION-95e69c5434befaad",
         "kind": "function",
         "ownerRequirement": "catalog"
       },
-      "f-student-maintenance": {
-        "id": "FUNCTION-4521f3923459be27",
-        "kind": "function",
-        "ownerRequirement": "catalog"
-      },
-      "m-documents": {
-        "id": "MATERIAL-c82c47d447a38aff",
+      "material.documentation": {
+        "id": "MATERIAL-c3c21708595fbdbc",
         "kind": "material",
         "ownerRequirement": "catalog"
       },
-      "o-inquiry-browse": {
-        "id": "OPERATION-5e462890c5faa4eb",
+      "operation.duplicate-confirm": {
+        "id": "OPERATION-78354a05df977f3d",
         "kind": "operation",
         "ownerRequirement": "catalog"
       },
-      "o-inquiry-detail": {
-        "id": "OPERATION-960593ec19e9aead",
+      "operation.edit-search": {
+        "id": "OPERATION-fe8ffc62b1bb2dc5",
         "kind": "operation",
         "ownerRequirement": "catalog"
       },
-      "o-maintenance-find": {
-        "id": "OPERATION-06de96cd8788f0bb",
+      "operation.editor-reset": {
+        "id": "OPERATION-cf27427be305dab3",
         "kind": "operation",
         "ownerRequirement": "catalog"
       },
-      "o-student-delete": {
-        "id": "OPERATION-95721013980c31ff",
+      "operation.query-detail": {
+        "id": "OPERATION-05a23e427d16ab97",
         "kind": "operation",
         "ownerRequirement": "catalog"
       },
-      "o-student-duplicate": {
-        "id": "OPERATION-0975fa417893b0ad",
+      "operation.query-results": {
+        "id": "OPERATION-ae1e266eec14c5f8",
         "kind": "operation",
         "ownerRequirement": "catalog"
       },
-      "o-student-edit": {
-        "id": "OPERATION-8e540ae31cc8cc69",
+      "operation.student-create": {
+        "id": "OPERATION-4100b273ea61d3aa",
         "kind": "operation",
         "ownerRequirement": "catalog"
       },
-      "o-student-new": {
-        "id": "OPERATION-9447c1fc00d37108",
+      "operation.student-delete": {
+        "id": "OPERATION-469473adb2ab805e",
         "kind": "operation",
         "ownerRequirement": "catalog"
       },
-      "o-student-reset": {
-        "id": "OPERATION-b9b99887830e9e95",
+      "operation.student-update": {
+        "id": "OPERATION-2b805dc211d38474",
         "kind": "operation",
         "ownerRequirement": "catalog"
       },
-      "s-azure-deployment": {
-        "id": "SUPPORT-3a8bb29932244152",
+      "support.azure-deployment": {
+        "id": "SUPPORT-b57fe43da2e3c329",
         "kind": "support",
         "ownerRequirement": "catalog"
       },
-      "s-build": {
-        "id": "SUPPORT-527a749133fd82c3",
+      "support.azure-verification": {
+        "id": "SUPPORT-5b71f5e0a4042846",
         "kind": "support",
         "ownerRequirement": "catalog"
       },
-      "s-database-tools": {
-        "id": "SUPPORT-94abfa22e18090ff",
+      "support.build": {
+        "id": "SUPPORT-4eb23465d0e61571",
         "kind": "support",
         "ownerRequirement": "catalog"
       },
-      "s-login-hash": {
-        "id": "SUPPORT-392f1aa5f846cf6c",
+      "support.database-generator": {
+        "id": "SUPPORT-4b345e7a8685459f",
         "kind": "support",
         "ownerRequirement": "catalog"
       },
-      "s-options-declaration": {
-        "id": "SUPPORT-31604301e909da85",
+      "support.database-installation": {
+        "id": "SUPPORT-0c685af40a8dfa8b",
         "kind": "support",
         "ownerRequirement": "catalog"
       },
-      "s-strict-json": {
-        "id": "SUPPORT-d7d0b488fc141a97",
+      "support.strict-json": {
+        "id": "SUPPORT-48dbec518cb6c37c",
         "kind": "support",
         "ownerRequirement": "catalog"
       },
-      "s-verification-tools": {
-        "id": "SUPPORT-ad619033c622fcf3",
+      "support.unexposed-json-candidates": {
+        "id": "SUPPORT-b5da89b9e6965423",
         "kind": "support",
         "ownerRequirement": "catalog"
       },
-      "sys-boundaries": {
-        "id": "SYSTEM-b39681572bf12010",
+      "system.catalog": {
+        "id": "SYSTEM-0c61963351cba1c2",
         "kind": "system",
         "ownerRequirement": "catalog"
       },
-      "sys-outline": {
-        "id": "SYSTEM-30f3323494db005d",
+      "system.outline": {
+        "id": "SYSTEM-ea2e0e568d6f735a",
         "kind": "system",
         "ownerRequirement": "catalog"
       }
@@ -3813,13 +3704,13 @@
       {
         "evidence": [
           {
-            "endLine": 8,
+            "endLine": 9,
             "path": "Program.cs",
             "sha256": "f55ce879e78e94b9144c1a9ed68fc6cfea01d45e91efc5dbbdf025d906fc1f85",
-            "startLine": 2
+            "startLine": 1
           },
           {
-            "endLine": 33,
+            "endLine": 34,
             "path": "Infrastructure/WebHostSetup.cs",
             "sha256": "a670050199b88effb0d4eeb40f120e8eeef504e5931185b804ab1705739fdffd",
             "startLine": 13
@@ -3837,337 +3728,197 @@
             "startLine": 1
           },
           {
+            "endLine": 41,
+            "path": "Web/Controllers/AccountController.cs",
+            "sha256": "eb3317ec00f640a4ea7e6c7ff4538a7a0a716030f84cc3c31220df236ce8c394",
+            "startLine": 10
+          },
+          {
+            "endLine": 47,
+            "path": "Web/Controllers/StudentsController.cs",
+            "sha256": "c927cdab41e0b5d2ce38eb0f88b3680b98ea1bfd1a42634637679cd8b23037b1",
+            "startLine": 5
+          },
+          {
             "endLine": 17,
             "path": "maintenance/Program.cs",
             "sha256": "4ffd1ef81a4dd10072f998454fc292bd1ac227ec83d503302ac4a61d9cb3e2c5",
             "startLine": 4
           },
           {
-            "endLine": 184,
+            "endLine": 218,
             "path": "database/001_schema.sql",
             "sha256": "32e87af4b5804c73ba9b0efa705a2050388b5105b3d64cceecd8c7e585fc1dc9",
             "startLine": 7
+          },
+          {
+            "endLine": 14,
+            "path": "Directory.Build.props",
+            "sha256": "d81943ab416bf06d4af3b83700b8dff2cd26863506e242679b7c4908b57d23f9",
+            "startLine": 3
+          },
+          {
+            "endLine": 19,
+            "path": "tools/build_config.json",
+            "sha256": "71d33ef84a65fc89f2cb321b4d464289aeaada46534ebb634a11a20d5eda8008",
+            "startLine": 1
           }
         ],
         "recordKeys": [
-          "sys-outline",
-          "sys-boundaries",
-          "f-login",
-          "f-logout",
-          "f-menu",
-          "f-student-inquiry",
-          "f-student-maintenance",
-          "f-class-maintenance",
-          "f-code-maintenance",
-          "o-inquiry-browse",
-          "o-inquiry-detail",
-          "o-maintenance-find",
-          "o-student-new",
-          "o-student-edit",
-          "o-student-duplicate",
-          "o-student-delete",
-          "o-student-reset",
-          "e-web-start",
-          "e-login",
-          "e-logout",
-          "e-menu",
-          "e-search",
-          "e-new",
-          "e-student",
-          "e-reset",
-          "e-delete",
-          "e-retired-options",
-          "e-evaluation-session",
-          "e-health",
-          "e-maintenance-cli",
-          "e-db-smoke",
-          "e-login-hash",
-          "c-auth",
-          "c-identity",
-          "c-student-service",
-          "c-master-service",
-          "c-normalization",
-          "c-japanese-date",
-          "c-db-shared",
-          "c-master-audit-operation",
-          "c-search-state",
-          "c-editor-state",
-          "c-flash",
-          "c-web-coordinator",
-          "c-presentation",
-          "c-web-host",
-          "c-ui",
-          "d-student",
-          "d-class",
-          "d-code-category",
-          "d-code",
-          "d-audit",
-          "d-confirmation",
-          "d-runtime",
-          "d-azure-schema",
-          "d-core-contracts",
-          "d-maintenance-contracts",
-          "d-web-contracts",
-          "d-transient-state",
-          "s-strict-json",
-          "s-options-declaration",
-          "s-build",
-          "s-database-tools",
-          "s-azure-deployment",
-          "s-verification-tools",
-          "s-login-hash",
-          "m-documents",
-          "dep-runtime",
-          "dep-toolchain"
+          "system.outline",
+          "system.catalog",
+          "function.login",
+          "function.logout",
+          "function.student-query",
+          "function.student-maintain",
+          "function.class-maintain",
+          "function.code-maintain",
+          "operation.query-results",
+          "operation.query-detail",
+          "operation.edit-search",
+          "operation.student-create",
+          "operation.student-update",
+          "operation.duplicate-confirm",
+          "operation.student-delete",
+          "operation.editor-reset",
+          "entry.web",
+          "entry.login",
+          "entry.logout",
+          "entry.menu",
+          "entry.search",
+          "entry.student-new",
+          "entry.student-editor",
+          "entry.student-delete",
+          "entry.retired-options",
+          "entry.health",
+          "entry.evaluation-session",
+          "entry.maintenance",
+          "entry.database-smoke",
+          "entry.login-hash-tool",
+          "common.navigation",
+          "common.authentication",
+          "common.identity",
+          "common.web-security",
+          "common.web-coordinator",
+          "common.student-service",
+          "common.master-service",
+          "common.normalization",
+          "common.japanese-date",
+          "common.sql-audit",
+          "common.web-state",
+          "common.presentation",
+          "common.web-ui",
+          "common.input-conversion",
+          "data.student",
+          "data.class",
+          "data.code-category",
+          "data.code",
+          "data.operation-log",
+          "data.confirmation",
+          "data.runtime-state",
+          "data.core-contracts",
+          "data.web-contracts",
+          "data.maintenance-contracts",
+          "support.build",
+          "support.database-generator",
+          "support.database-installation",
+          "support.azure-deployment",
+          "support.azure-verification",
+          "support.strict-json",
+          "support.unexposed-json-candidates",
+          "dependency.runtime-packages",
+          "material.documentation"
         ],
         "requirement": "catalog",
         "status": "supported"
       }
     ],
     "unknowns": {
-      "cb8e661bb820444aab68ff4e0b14cb5f:U001-semantic-connections": {
-        "content": {
-          "blocksRequirements": [
-            "relationships"
-          ],
-          "id": "U001-semantic-connections",
-          "question": "構文上の呼出候補について、DI登録、引数型、インターフェース及び各入口の原文を照合した確定関係はどうなるか。",
-          "relatedRequirements": [
-            "relationships",
-            "behavior"
-          ],
-          "scopeReason": "今回の目録は宣言・登録・利用目的を確認した段階であり、AST呼出を意味束縛済みの関係へ昇格していない。元の関係・動作義務は保留。"
-        },
-        "id": "cb8e661bb820444aab68ff4e0b14cb5f:U001-semantic-connections",
-        "owners": [
-          "catalog"
-        ],
-        "sha256": "f82693755e4e2fd8cf6ab1c7a635df8fb1972c9f90d9fc217bef315737bbb010"
-      },
-      "cb8e661bb820444aab68ff4e0b14cb5f:U002-unobserved-consumers": {
+      "0f9f112700bf4d02b31ee146974ba652:U-CATALOG-CONFIG-001": {
         "content": {
           "blocksRequirements": [],
-          "id": "U002-unobserved-consumers",
-          "question": "StrictJson.Read及びWebStudentCoordinator.Optionsに動的利用や未観測の接続があるか。",
-          "relatedRequirements": [
-            "catalog",
-            "relationships"
-          ],
-          "scopeReason": "取得済み全ソースと入口・登録を逆確認して静的消費者を観測しないが、実行不能とは断定しない。宣言の同一性とsupport分類は確認でき、現行の主機能数はこれらに依存しない。"
-        },
-        "id": "cb8e661bb820444aab68ff4e0b14cb5f:U002-unobserved-consumers",
-        "owners": [
-          "catalog"
-        ],
-        "sha256": "fa6fdce6dbdd72bf4bbd641953d31b561a4846c433fd52e0e13ddfad182157c1"
-      },
-      "cb8e661bb820444aab68ff4e0b14cb5f:U003-database-variant": {
-        "content": {
-          "blocksRequirements": [
-            "behavior"
-          ],
-          "id": "U003-database-variant",
-          "question": "実配置は元DDLとAzure向け変換DDLのどちらを採用し、現在のDB構造はどちらに一致するか。",
-          "relatedRequirements": [
-            "relationships",
-            "behavior"
-          ],
-          "scopeReason": "双方のソース定義は識別できるが実DBは取得・実行対象外。表の目録は成立する一方、配置依存の動作を一方へ断定できない。"
-        },
-        "id": "cb8e661bb820444aab68ff4e0b14cb5f:U003-database-variant",
-        "owners": [
-          "catalog"
-        ],
-        "sha256": "bd83dc3a25940cb8f4e7152fae797dcb336cf265f17108c8918bc7801518d759"
-      },
-      "cb8e661bb820444aab68ff4e0b14cb5f:U004-native-comment": {
-        "content": {
-          "blocksRequirements": [],
-          "id": "U004-native-comment",
-          "question": "コメントにある別Native production EXEC-only入口及びstudent_apiの実装・適用範囲は何か。",
+          "id": "U-CATALOG-CONFIG-001",
+          "question": "実際の起動環境でLocalLoginとDB接続がどう設定され、各条件付き入口が到達可能になるかは未確認。",
           "relatedRequirements": [
             "catalog",
             "relationships",
             "behavior"
           ],
-          "scopeReason": "当該実装・profileは取得されていない。取得済みWeb登録、CLI、プロジェクト参照にはそれを要求する接続を観測せず、現行ソースの主機能を増減する根拠にはしない。別構成の存在・適用は未確認として残す。"
+          "scopeReason": "取得設定ではローカル認証は無効、DB接続は未設定であり、配備スクリプトは設定方法を示すだけ。条件付き機能のソース上の存在・分類は支持されるため目録を阻害しない。"
         },
-        "id": "cb8e661bb820444aab68ff4e0b14cb5f:U004-native-comment",
+        "id": "0f9f112700bf4d02b31ee146974ba652:U-CATALOG-CONFIG-001",
         "owners": [
           "catalog"
         ],
-        "sha256": "3064a5f6cd37517ba7346d476a1e6162b92113fef63eaa099dae54486bbf3067"
+        "sha256": "6e50ea57ed2276acb2294cad5fac7e2b91605e8c5484b811d9c25bf100b02ed2"
       },
-      "cb8e661bb820444aab68ff4e0b14cb5f:U005-runtime-configuration": {
+      "0f9f112700bf4d02b31ee146974ba652:U-DEPLOYED-SCHEMA-001": {
+        "content": {
+          "blocksRequirements": [
+            "behavior"
+          ],
+          "id": "U-DEPLOYED-SCHEMA-001",
+          "question": "実環境に適用された物理定義は基礎DDLか、Initialize-AzureDatabase.pyの列幅・照合順序適応後の定義か。また各検証ソースは現行画面・DBに対して成立するか。",
+          "relatedRequirements": [
+            "relationships",
+            "behavior"
+          ],
+          "scopeReason": "両定義経路と検証コードの差は原文で観測できるが、実環境・実行結果は取得していない。表の同一性と目録分類は変わらないが、実際の物理制約・配備動作について一方を確定するには不足する。"
+        },
+        "id": "0f9f112700bf4d02b31ee146974ba652:U-DEPLOYED-SCHEMA-001",
+        "owners": [
+          "catalog"
+        ],
+        "sha256": "ebc32a0b367752faedc8ac09f8fc2cc5be40a7a14584c40f1b61b89ce29fb69d"
+      },
+      "0f9f112700bf4d02b31ee146974ba652:U-STATE-PROFILE-001": {
         "content": {
           "blocksRequirements": [],
-          "id": "U005-runtime-configuration",
-          "question": "実運用でLocalLoginや評価用入口が有効か、どのDB接続・認証構成が選ばれるか。",
+          "id": "U-STATE-PROFILE-001",
+          "question": "t_runtime_stateを利用する実装、非Web確認表分岐の起動主体、コメントにある別Native用student_api入口の適用関係は何か。",
           "relatedRequirements": [
+            "relationships",
             "behavior"
           ],
-          "scopeReason": "取得設定はLocalLogin無効・接続未設定を示し、配備スクリプトは上書き経路を持つ。秘密値や実環境を取得せず、設定可能な機能の目録と実配置の有効状態を区別する。"
+          "scopeReason": "物理表と非Web分岐は取得原文にある一方、Web・配備検査はwebTokens=trueを明示し、取得プロジェクトと登録に別Native入口はない。コメントだけで入口を追加せず、対象表と宣言を保持したまま未確認とする。"
         },
-        "id": "cb8e661bb820444aab68ff4e0b14cb5f:U005-runtime-configuration",
+        "id": "0f9f112700bf4d02b31ee146974ba652:U-STATE-PROFILE-001",
         "owners": [
           "catalog"
         ],
-        "sha256": "57084a31b5211286632463a61ad3e901542947fb8275166f82f4e0c2b473e24a"
+        "sha256": "3a53e76eb99c107a66516cb5b4e7d36f76156dc6c624186c9399bd884b632292"
       },
-      "cb8e661bb820444aab68ff4e0b14cb5f:U006-verification-version": {
+      "0f9f112700bf4d02b31ee146974ba652:U-STATIC-CONSUMERS-001": {
         "content": {
           "blocksRequirements": [],
-          "id": "U006-verification-version",
-          "question": "現行検索Viewに存在しない#SRC-009を参照するAzureログイン検証は、どのソース版を対象にしたものか。",
+          "id": "U-STATIC-CONSUMERS-001",
+          "question": "StrictJson.Read、WebStudentCoordinator.Options、WebPresentation.Save等に、取得原文から見えない動的な利用があるか。",
           "relatedRequirements": [
+            "relationships",
             "behavior"
           ],
-          "scopeReason": "検証資源の対象版と記載結果は未検証。支援プログラムとしての分類には影響しないが、現行画面の成功証拠には採用できない。"
+          "scopeReason": "取得全ソース・呼出表・登録点の逆照合では外部静的利用を観測しない。既知宣言を支援資源として保持しており、現在の目録対象や主機能数はこの実行時不確実性に依存しない。"
         },
-        "id": "cb8e661bb820444aab68ff4e0b14cb5f:U006-verification-version",
+        "id": "0f9f112700bf4d02b31ee146974ba652:U-STATIC-CONSUMERS-001",
         "owners": [
           "catalog"
         ],
-        "sha256": "d752da48268e74572bcb5db8d41b8aca686c2642870354f96c437a3355b7cdcf"
-      },
-      "followup:08d3fbf196ede900ddac98d3c5b32caccfe5a49ad3da0f68293968f40b9a5308": {
-        "content": {
-          "blocksRequirements": [
-            "relationships"
-          ],
-          "id": "followup:08d3fbf196ede900ddac98d3c5b32caccfe5a49ad3da0f68293968f40b9a5308",
-          "question": "U001に沿って、MVC入口、WebStudentCoordinator、IStudentService登録、Core及びCLIの確定接続を原文で照合し、構文呼出候補と区別する。",
-          "relatedRequirements": [
-            "relationships"
-          ],
-          "scopeReason": "An explicit relationship investigation request remains open until a local independent reviewer resolves it from original source."
-        },
-        "id": "followup:08d3fbf196ede900ddac98d3c5b32caccfe5a49ad3da0f68293968f40b9a5308",
-        "owners": [
-          "catalog"
-        ],
-        "sha256": "49bff8746f68f075e593fd28fea39d08c67c9294ccab12f280e040b210446ef0"
-      },
-      "followup:326a51b0abc40653ead92c927974d6cc44657a22fd5c27e341b30e738c305ccf": {
-        "content": {
-          "blocksRequirements": [
-            "behavior"
-          ],
-          "id": "followup:326a51b0abc40653ead92c927974d6cc44657a22fd5c27e341b30e738c305ccf",
-          "question": "U003・U005について、元DDL、Azure変換、Webトークン選択及び設定による動作差をソース上で確認し、実配置の選択は未確認のまま保持する。",
-          "relatedRequirements": [
-            "behavior"
-          ],
-          "scopeReason": "An explicit behavior investigation request remains open until a local independent reviewer resolves it from original source."
-        },
-        "id": "followup:326a51b0abc40653ead92c927974d6cc44657a22fd5c27e341b30e738c305ccf",
-        "owners": [
-          "catalog"
-        ],
-        "sha256": "c542a9abe10da79e5560a91d8a659bccd38e2497377238cc07b239f5b96a9805"
-      },
-      "followup:98b841b7c959c42f6b24b8777408e381c14870508e8c592fb766e00012760a94": {
-        "content": {
-          "blocksRequirements": [
-            "behavior"
-          ],
-          "id": "followup:98b841b7c959c42f6b24b8777408e381c14870508e8c592fb766e00012760a94",
-          "question": "U006の検証スクリプトと現行画面の対象差を確認し、文書上の試験主張を実行証拠から分離したまま扱う。",
-          "relatedRequirements": [
-            "behavior"
-          ],
-          "scopeReason": "An explicit behavior investigation request remains open until a local independent reviewer resolves it from original source."
-        },
-        "id": "followup:98b841b7c959c42f6b24b8777408e381c14870508e8c592fb766e00012760a94",
-        "owners": [
-          "catalog"
-        ],
-        "sha256": "f0716cfb38b3b6e896e8e77ab81b12ecd6a8d4ecd50ce68b372a0324bad556b7"
-      },
-      "followup:a5b42346bb2523705dd38192e5455cae1b668570858c4347fda28cbf3fedd277": {
-        "content": {
-          "blocksRequirements": [
-            "relationships"
-          ],
-          "id": "followup:a5b42346bb2523705dd38192e5455cae1b668570858c4347fda28cbf3fedd277",
-          "question": "U002の宣言について観測済み静的消費者なしを維持し、廃止URL、宣言内部の呼出候補、動的利用の未確認を分けて関係目録へ引き継ぐ。",
-          "relatedRequirements": [
-            "relationships"
-          ],
-          "scopeReason": "An explicit relationship investigation request remains open until a local independent reviewer resolves it from original source."
-        },
-        "id": "followup:a5b42346bb2523705dd38192e5455cae1b668570858c4347fda28cbf3fedd277",
-        "owners": [
-          "catalog"
-        ],
-        "sha256": "4f86e6d49e1a6a6aa53c9e9b0bc76e13822e6efa15bc6044a2c510b97da66ee3"
+        "sha256": "dde9d5e6403fc168028d6de66d8148219309799177dc01055f12cf98c1858f95"
       }
     },
     "followups": [],
     "audit": [
       {
-        "candidateSha256": "9610e1b66fc86642754471027111beb58198b7a4c8ed2796f1f5e9a10314e50f",
+        "candidateSha256": "4652c29f6cd7543436efb731be41bdfd196f795737fdc6e6126ad2fcff1fabfa",
         "stage": "discovery",
         "requirements": [
           "catalog"
         ],
         "origin": "host-executed",
-        "followups": [
-          {
-            "paths": [
-              "Program.cs",
-              "Infrastructure/WebHostSetup.cs",
-              "Web/Controllers/StudentsController.cs",
-              "Infrastructure/WebStudentCoordinator.cs",
-              "Core/Contracts.cs",
-              "Core/SqlServerStudentService.cs",
-              "Core/MasterMaintenanceService.cs",
-              "maintenance/Program.cs"
-            ],
-            "question": "U001に沿って、MVC入口、WebStudentCoordinator、IStudentService登録、Core及びCLIの確定接続を原文で照合し、構文呼出候補と区別する。",
-            "requirement": "relationships",
-            "stage": "relationship"
-          },
-          {
-            "paths": [
-              "Infrastructure/StrictJson.cs",
-              "Infrastructure/WebStudentCoordinator.cs",
-              "Infrastructure/WebPresentation.cs",
-              "Web/Controllers/StudentsController.cs",
-              "Infrastructure/WebHostSetup.cs"
-            ],
-            "question": "U002の宣言について観測済み静的消費者なしを維持し、廃止URL、宣言内部の呼出候補、動的利用の未確認を分けて関係目録へ引き継ぐ。",
-            "requirement": "relationships",
-            "stage": "relationship"
-          },
-          {
-            "paths": [
-              "database/001_schema.sql",
-              "deployment/Initialize-AzureDatabase.py",
-              "Core/SqlServerStudentService.cs",
-              "Infrastructure/WebHostSetup.cs",
-              "Infrastructure/LocalLogin.cs",
-              "appsettings.json"
-            ],
-            "question": "U003・U005について、元DDL、Azure変換、Webトークン選択及び設定による動作差をソース上で確認し、実配置の選択は未確認のまま保持する。",
-            "requirement": "behavior",
-            "stage": "behavior"
-          },
-          {
-            "paths": [
-              "deployment/Verify-AzureWebLogin.py",
-              "Views/Students/Search.cshtml",
-              "README.md",
-              "deployment/README.md"
-            ],
-            "question": "U006の検証スクリプトと現行画面の対象差を確認し、文書上の試験主張を実行証拠から分離したまま扱う。",
-            "requirement": "behavior",
-            "stage": "behavior"
-          }
-        ],
+        "followups": [],
         "verificationSummaries": [
           {
-            "sha256": "7ed38294f0f5acac806bb05ba2dcdab89de8e227c48952db3965c192edbb982d",
+            "sha256": "8921eabc777b0d05bc5ff7cc1c0f8c8127492b74a867e1c4116e189bb60afc47",
             "origin": "host-executed",
             "checks": [
               {
