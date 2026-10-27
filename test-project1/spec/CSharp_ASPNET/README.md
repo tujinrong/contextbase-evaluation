@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"CSHARP_ASPNET-SPEC-INDEX","version":"8.5","path":"test-project1/spec/CSharp_ASPNET/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"CSHARP_ASPNET-SPEC-INDEX","version":"8.6","path":"test-project1/spec/CSharp_ASPNET/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"}]} -->
 # CSharp_ASPNET 仕様書
 
-版8.5／2026-10-25。検索画面に続き学生編集画面を改善。
+版8.6／2026-10-27。検索・学生編集画面と共有DBプロファイル。
 
 ## 対象
 
@@ -13,6 +13,8 @@
 
 2026-10-25の画面表現整理では、検索・学生編集の基本と詳細を同じ埋め込みHTMLに揃える。画面PNG・単独HTML・assetsの旧描画JSONを廃止し、抽出・描画は方式内.tmp/、最終検査と入出力manifestは方式内build/spec-generation/で管理する。検索4条件・7列、20/50/100件・既定20、並び順・ページ移動、登録項目・保存・権限の契約は維持する。
 
+2026-10-27：明示したSharedAccessでは、既存DBを使用する[共有DBプロファイル](DB定義/SQLServer/共有DBプロファイル.md)を優先する。Debugの既定起動も共有DB用とし、実行結果はsourceRootのbuild/test-resultsで管理する。上記の2026-10-25の範囲外記述は当時の画面仕様整理に対するものである。
+
 ## 入口
 
 | 区分 | 文書 |
@@ -23,6 +25,7 @@
 | 登録 | [詳細](詳細仕様書/02_学生登録画面.md) |
 | 方式 | [方式内実装仕様](共通/方式別/01_共通実装仕様.md) |
 | DB | [物理定義](DB定義/SQLServer/01_DB定義書.md) |
+| 共有DB | [接続・型・排他](DB定義/SQLServer/共有DBプロファイル.md) |
 | 規約 | [実装規約](規約/CSharp_ASPNET.md) |
 
 ## 隔離

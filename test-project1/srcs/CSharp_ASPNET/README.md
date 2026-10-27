@@ -1,6 +1,8 @@
 # C# / ASP.NET Core MVC 学生管理
 
-2026-10-27：`Access-CSharp_ASPNET`と同じローカルSQL Server DBで確認する`SharedTrainingSql`起動プロファイルを追加した。Visual Studioで`StudentManagement.Web`を起動プロジェクト、`SharedTrainingSql`をプロファイルに選ぶか、方式ルートから次を実行する。
+2026-10-27：Debug/Releaseとも既定の起動設定を共有DB用に変更した。保存済みの`https`プロファイルも同じ設定で起動し、独立DBの旧設定は`Native`として残す。
+
+`Access-CSharp_ASPNET`と同じローカルSQL Server DBで確認する`SharedTrainingSql`起動プロファイルを追加した。Visual Studioで`StudentManagement.Web`を起動プロジェクト、`SharedTrainingSql`をプロファイルに選ぶか、方式ルートから次を実行する。
 
 ```powershell
 dotnet run --project StudentManagement.Web.csproj --launch-profile SharedTrainingSql
@@ -9,6 +11,8 @@ dotnet run --project StudentManagement.Web.csproj --launch-profile SharedTrainin
 接続先は`.\SQLEXPRESS`／`AccessRebuilderTraining_01a17be7`、URLは`https://localhost:7241`。列・型の差は`StudentDatabase:Profile=SharedAccess`で対応する。共有DBに既存のNative用`database/001_schema.sql`や`002_seed.sql`を適用せず、学生・クラス・コードを初期化しない。
 
 このプロファイルは`SharedDatabaseTraining`環境、HTTPS、ローカル接続に限定した確認用の主体を明示する。`verification-admin`の権限を共有DBの`t_app_role`から要求ごとに取得し、`Reader/Staff/Admin`を当方式の`Viewer/Staff/Administrator`へ対応付ける。役割未設定・未知値は拒否し、フォームの役割やサーバープロセス利用者を使わない。暗号化Cookieのセッションを使い、当プロファイル外では確認用Cookieを拒否する。通常のLocalLoginと評価用セッションは従来の有効化条件を維持する。
+
+今回の共有DB検証はCore 135件、MVC契約129件、認証契約60件、実DB結合8件、両アプリ連携7件、Reader権限5件がPASS。Debugの既定起動から既存学生の検索・編集表示も確認した。[現在の共有DB検証結果](build/test-results/shared-database.md)を参照。
 
 2026-10-25 再生成（`20261025-regenerate`）：`test-project1/spec/CSharp_ASPNET/` の索引8.5、検索詳細8.4、登録詳細8.5を入力凍結しました。独立DB定義からDDL・初期コードを再生成し、現在のソースをビルド・試験しました。検索4条件・7列と登録34項目の既存Razor/C#実装は最新契約と一致するため維持しています。詳細は [今回の生成記録](build/generation/generation.md) を参照してください。
 
@@ -20,7 +24,7 @@ python -X utf8 tools/build.py
 python -X utf8 tools/build.py --no-audit
 ```
 
-今回の再実行で Core 114件、MVC HTTPS契約129件、ログイン契約47件、実Razor/JavaScriptのブラウザー操作53件がPASS。実DB・配備・手動GUI受入は未実施です。固定依存System.Security.Cryptography.Pkcs 9.0.21を維持し、NuGet監査有効で実行しました。ブラウザー検査は不変の合成サービスを使い、SQL Serverへ接続していません。詳細は[現在の結果](build/test-results/README.md)を参照してください。
+2026-10-25の再実行では Core 114件、MVC HTTPS契約129件、ログイン契約47件、実Razor/JavaScriptのブラウザー操作53件がPASS。当時の実DB・配備・手動GUI受入は未実施です。固定依存System.Security.Cryptography.Pkcs 9.0.21を維持し、NuGet監査有効で実行しました。ブラウザー検査は不変の合成サービスを使い、SQL Serverへ接続していません。詳細は[現在の結果](build/test-results/README.md)を参照してください。
 
 単独ビルド／`--skip-tests` は検査済みPASSにしません。helper開始時に前回結果を失効し、今回実行した検査だけを記録します。`source.zip` は試験・toolsを含まない配布ソースなので、solutionではなくproduction projectを直接指定します。
 
@@ -39,7 +43,7 @@ Azure 免费测试部署（2026-10-23）：[部署、数据库账号与验证范
 ```powershell
 dotnet build StudentManagement.slnx -c Release
 $env:ConnectionStrings__StudentDb = 'Server=YOUR-SERVER;Database=YOUR-DB;Integrated Security=True;Encrypt=True;TrustServerCertificate=False'
-dotnet run --project StudentManagement.Web.csproj --launch-profile https
+dotnet run --project StudentManagement.Web.csproj --launch-profile Native
 ```
 
 SQL資源の作成と配備は[当方式のdatabase](database/README.md)を参照。初期値は5分類70コード、学生・クラス0。承認済みクラスは管理者が設定する。接続文字列・本番主体・秘密は環境設定で渡す。TLSとサーバー証明書検証を有効に保つ。

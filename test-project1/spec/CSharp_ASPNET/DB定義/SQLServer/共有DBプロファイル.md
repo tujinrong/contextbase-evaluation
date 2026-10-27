@@ -33,6 +33,6 @@
 
 ## 配備と検証
 
-方式内`StudentManagement.slnx`を開き、`StudentManagement.Web`と`SharedTrainingSql`を選択する。共有DBへ`database/001_schema.sql`、`002_seed.sql`、空DB専用の旧結合試験を実行しない。
+Debug/Releaseとも既定は共有DB用で、保存済みの`https`も同じ接続設定を使用する。旧独立DBは`Native`を選び接続・認証を設定する。方式内`StudentManagement.slnx`を開き、`StudentManagement.Web`と`SharedTrainingSql`を選択する。共有DBへ`database/001_schema.sql`、`002_seed.sql`、空DB専用の旧結合試験を実行しない。
 
 共有DB試験は`tests/SharedDatabase`を使用する。新しい合成学籍番号で作成・更新・競合・削除を検証し、作成行は論理削除する。監査行は残す。既存TRN001/TRN002、DB構造、もう一方のアプリソースの変更有無を実行前後に確認する。実行結果は方式内`build/test-results/`、入力・出力manifestは`build/generation/`へ固定保存する。正式採点と外部認証・本番配備は別工程である。
