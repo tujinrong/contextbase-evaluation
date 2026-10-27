@@ -1,6 +1,6 @@
 # Access → ASP.NET Core 学生管理
 
-2026-10-27。Accessから業務ルールを抽出し、利用者指定の`CSharp_ASPNET`ソースを参考にWeb向けの検索・一覧・編集へ再構築した独立方式。Visual Studioで[StudentManagement.slnx](StudentManagement.slnx)を開き、`StudentManagement.Web`を起動プロジェクト、`TrainingSql`を起動プロファイルにする。作成済みの専用SQL Server DBへ接続する。CLIは.NET SDK 10.0.401以降の同パッチ系列を使用する。
+2026-10-27。Accessから業務ルールを抽出し、利用者指定の`CSharp_ASPNET`ソースを参考にWeb向けの検索・一覧・編集へ再構築した独立方式。AR028～030により、PC向けの左見出し／右入力の表形式へ改修し、余白・入力幅・説明を整理した。生年月日・入学日・卒業退学日はカレンダー入力と和暦表示を同じ行に配置する。対象はPCブラウザー1280×650／1366×650で、スマートフォン対応は対象外。Visual Studioで[StudentManagement.slnx](StudentManagement.slnx)を開き、`StudentManagement.Web`を起動プロジェクト、`TrainingSql`を起動プロファイルにする。作成済みの専用SQL Server DBへ接続する。CLIは.NET SDK 10.0.401以降の同パッチ系列を使用する。
 
 ```powershell
 dotnet build StudentManagement.slnx
@@ -38,6 +38,6 @@ dotnet run --project src/StudentManagement.Web --urls http://127.0.0.1:5091
 dotnet run --project tests/StudentManagement.Core.Tests -- database/seed/approved-masters.json
 ```
 
-今回のWeb化改訂の条件と最新結果は[Web化検証](build/test-results/web-modernization.md)、先行した2回の記録は[訓練結果](build/test-results/training.md)を参照。Access本体の構造と原文は`build/generation/access-extraction.json`と`access-export/`、オブジェクト対応は`build/generation/object-map.json`、Web参照の出所と現在の入出力hashは同じ`generation/`にある。
+今回のWeb配置・カレンダー改訂の条件と最新結果は[Web化検証](build/test-results/web-modernization.md)、先行した2回の記録は[訓練結果](build/test-results/training.md)を参照。Access本体の構造と原文は`build/generation/access-extraction.json`と`access-export/`、オブジェクト対応は`build/generation/object-map.json`、Web参照の出所と現在の入出力hashは同じ`generation/`にある。
 
 抽出・変換・ビルド・試験と、元Accessの業務画面による受入・別Accessファイルへの一般適用性は区別する。訓練反復は最大2回で、今回の台帳は`build/generation/training.json`へ固定保存する。

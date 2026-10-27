@@ -60,6 +60,7 @@ document.querySelectorAll("form[data-track-changes]").forEach(form => {
         if (endDate) {
             endDate.readOnly = ["01", "02"].includes(enrollment?.value);
             if (endDate.readOnly) endDate.value = "";
+            syncDateHints();
         }
         const payload = new FormData();
         const keys = ["__RequestVerificationToken", "Input.Id", "Input.ExpectedVersion", "Input.SnapshotToken", "Input.SchoolYear", "Input.GradeCode", "Input.EnrollmentStatusCode", "Input.ClassId", "Input.AdmissionDate", "Input.EnrollmentEndDate"];
@@ -79,7 +80,7 @@ document.querySelectorAll("form[data-track-changes]").forEach(form => {
                 classSelect.replaceChildren(new Option("未選択", ""), ...data.classes.map(item => new Option(item.text, item.value)));
                 classSelect.value = data.clearClass ? "" : selected;
             }
-            if (data.clearEndDate && endDate) { endDate.value = ""; endDate.readOnly = true; }
+            if (data.clearEndDate && endDate) { endDate.value = ""; endDate.readOnly = true; syncDateHints(); }
             const capacity = form.querySelector("[data-capacity]"); if (capacity) capacity.textContent = data.capacity;
             if (status) status.textContent = data.message || "候補を更新しました。";
             form.dataset.optionsState = "ready";
@@ -114,16 +115,29 @@ window.addEventListener("pageshow", () => {
     });
 });
 
-const birthDate = document.querySelector("[data-birth-date]");
-const birthHint = document.querySelector("[data-birth-hint]");
-function updateBirthHint() {
-    if (!birthDate || !birthHint) return;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate.value)) { birthHint.textContent = "西暦で入力すると和暦も表示します"; return; }
-    const date = new Date(birthDate.value + "T00:00:00Z");
-    if (Number.isNaN(date.getTime())) return;
-    birthHint.textContent = new Intl.DateTimeFormat("ja-JP-u-ca-japanese", { era: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }).format(date);
+// A date-only ISO value is never interpreted in the browser's local timezone.
+// One calendar input owns the value; Japanese era text is a synchronized hint.
+const japaneseDateFormat = new Intl.DateTimeFormat("ja-JP-u-ca-japanese", { era: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
+const dateHints = Array.from(document.querySelectorAll("[data-birth-date],input[data-japanese-date]"), input => {
+    const hint = input.matches("[data-birth-date]") ? document.querySelector("[data-birth-hint]")
+        : Array.from(document.querySelectorAll("[data-japanese-date-for]")).find(item => item.dataset.japaneseDateFor === input.id);
+    return { input, hint };
+}).filter(item => item.hint);
+function syncDateHints() {
+    dateHints.forEach(({ input, hint }) => {
+        if (!input.value) { hint.textContent = input.validity.badInput ? "日付を確認" : input.required ? "日付を選択" : "未設定"; return; }
+        const date = /^\d{4}-\d{2}-\d{2}$/.test(input.value) ? new Date(input.value + "T00:00:00Z") : null;
+        if (!date || Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== input.value) { hint.textContent = "日付を確認"; return; }
+        hint.textContent = japaneseDateFormat.format(date);
+    });
 }
-birthDate?.addEventListener("input", updateBirthHint); updateBirthHint();
+dateHints.forEach(({ input }) => {
+    input.addEventListener("input", syncDateHints);
+    input.addEventListener("change", syncDateHints);
+    input.form?.addEventListener("reset", () => queueMicrotask(syncDateHints));
+});
+window.addEventListener("pageshow", syncDateHints);
+syncDateHints();
 const errorSummary = document.querySelector("[data-error-summary].validation-summary-errors");
 if (errorSummary) { errorSummary.focus(); document.querySelectorAll(".input-validation-error").forEach(field => field.setAttribute("aria-invalid", "true")); }
 

@@ -5,16 +5,16 @@
     <input asp-for="Id" type="hidden" /><input asp-for="ExpectedVersion" type="hidden" />
     <div asp-validation-summary="All"></div>
     <div class="panel form-grid">
-        <div class="field"><label asp-for="Input.SchoolYear">年度 *</label><input asp-for="Input.SchoolYear" readonly="@Model.Id.HasValue" inputmode="numeric" /></div>
-        <div class="field"><label asp-for="Input.GradeCode">学年 *</label><select asp-for="Input.GradeCode" asp-items="Model.GradeCodes"><option value="">選択</option></select></div>
-        <div class="field"><label asp-for="Input.ClassCode">クラスコード *</label><input asp-for="Input.ClassCode" readonly="@Model.Id.HasValue" /></div>
-        <div class="field"><label asp-for="Input.ClassName">名称 *</label><input asp-for="Input.ClassName" /></div>
-        <div class="field"><label asp-for="Input.ValidFrom">利用開始日 *</label><input asp-for="Input.ValidFrom" placeholder="yyyy-MM-dd" /></div>
-        <div class="field"><label asp-for="Input.ValidTo">利用終了日 *</label><input asp-for="Input.ValidTo" placeholder="yyyy-MM-dd" /></div>
-        <div class="field"><label asp-for="Input.Capacity">定員</label><input asp-for="Input.Capacity" inputmode="numeric" /><small class="muted">空欄は上限なし</small></div>
-        <div class="field"><label asp-for="Input.DisplayOrder">表示順</label><input asp-for="Input.DisplayOrder" inputmode="numeric" /></div>
-        <div class="field"><label class="inline"><input asp-for="Input.IsActive" />有効</label></div>
-        <div class="field full"><label asp-for="Input.Remarks">備考</label><textarea asp-for="Input.Remarks" rows="3"></textarea></div>
+        <div class="field"><label asp-for="Input.SchoolYear">年度 *</label><div class="field-value"><input asp-for="Input.SchoolYear" readonly="@Model.Id.HasValue" inputmode="numeric" /></div></div>
+        <div class="field"><label asp-for="Input.GradeCode">学年 *</label><div class="field-value"><select asp-for="Input.GradeCode" asp-items="Model.GradeCodes"><option value="">選択</option></select></div></div>
+        <div class="field"><label asp-for="Input.ClassCode">クラスコード *</label><div class="field-value"><input asp-for="Input.ClassCode" readonly="@Model.Id.HasValue" /></div></div>
+        <div class="field"><label asp-for="Input.ClassName">名称 *</label><div class="field-value"><input asp-for="Input.ClassName" /></div></div>
+        <div class="field"><label asp-for="Input.ValidFrom">利用開始日 *</label><div class="field-value date-value"><input asp-for="Input.ValidFrom" type="date" data-japanese-date aria-describedby="ValidFrom-hint" /><small id="ValidFrom-hint" data-japanese-date-for="Input_ValidFrom" aria-live="polite">@(DateOnly.TryParse(Model.Input.ValidFrom, out _) ? JapaneseDate.FormatBirthDate(Model.Input.ValidFrom!) : "日付を選択")</small></div></div>
+        <div class="field"><label asp-for="Input.ValidTo">利用終了日 *</label><div class="field-value date-value"><input asp-for="Input.ValidTo" type="date" data-japanese-date aria-describedby="ValidTo-hint" /><small id="ValidTo-hint" data-japanese-date-for="Input_ValidTo" aria-live="polite">@(DateOnly.TryParse(Model.Input.ValidTo, out _) ? JapaneseDate.FormatBirthDate(Model.Input.ValidTo!) : "日付を選択")</small></div></div>
+        <div class="field"><label asp-for="Input.Capacity">定員</label><div class="field-value"><input asp-for="Input.Capacity" inputmode="numeric" /><small class="muted">空欄は上限なし</small></div></div>
+        <div class="field"><label asp-for="Input.DisplayOrder">表示順</label><div class="field-value"><input asp-for="Input.DisplayOrder" inputmode="numeric" /></div></div>
+        <div class="field"><span class="field-label" id="active-label">状態</span><div class="field-value"><label class="inline" aria-labelledby="active-label"><input asp-for="Input.IsActive" />有効</label></div></div>
+        <div class="field full"><label asp-for="Input.Remarks">備考</label><div class="field-value"><textarea asp-for="Input.Remarks" rows="2"></textarea></div></div>
     </div>
     <div class="actions"><button type="submit" class="primary">保存</button><a class="button" asp-action="Index" data-discard-confirm>戻る</a></div>
 </form>

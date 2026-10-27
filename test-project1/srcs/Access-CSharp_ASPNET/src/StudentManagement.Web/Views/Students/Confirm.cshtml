@@ -5,20 +5,20 @@
 }
 <section class="confirm-layout">
     <nav class="breadcrumb" aria-label="現在位置"><span>学生一覧</span><span aria-hidden="true">/</span><span>@ViewData["Title"]</span></nav>
-    <div class="pagehead"><div><p class="eyebrow">CONFIRMATION</p><h1>@ViewData["Title"]</h1></div><span class="badge @(deleting ? "warning" : "info")">確認が必要です</span></div>
+    <div class="pagehead"><div><h1>@ViewData["Title"]</h1></div><span class="badge @(deleting ? "warning" : "info")">確認が必要です</span></div>
     <div asp-validation-summary="All" role="alert" tabindex="-1" data-error-summary></div>
     <section class="panel">
         <p class="confirm-description @(deleting ? "danger-note" : "")">@(deleting ? "この学生を通常の検索対象から除外します。登録情報と操作履歴は保持されます。" : "同じ生年月日で氏名または氏名カナが一致する学生候補があります。別人であることを確認してから保存してください。")</p>
         <dl class="summary"><dt>学籍番号</dt><dd>@Model.Input.StudentNo</dd><dt>氏名</dt><dd>@Model.Input.StudentName</dd><dt>氏名カナ</dt><dd>@Model.Input.StudentNameKana</dd></dl>
         @if (!deleting)
         {
-            <h2 style="margin:22px 0 10px">登録済みの候補</h2><div class="table-wrap"><table><thead><tr><th>学籍番号</th><th>氏名／カナ</th><th>生年月日</th><th>クラス</th></tr></thead><tbody>
+            <h2 class="confirm-candidates-title">登録済みの候補</h2><div class="table-wrap"><table><thead><tr><th>学籍番号</th><th>氏名／カナ</th><th>生年月日</th><th>クラス</th></tr></thead><tbody>
             @foreach (var row in Model.Candidates) { <tr><td class="student-number">@row.StudentNo</td><td><strong>@row.Name</strong><span class="cell-sub">@row.Kana</span></td><td class="nowrap">@row.BirthDate</td><td>@row.ClassName</td></tr> }
             </tbody></table></div>
         }
         <form method="post" asp-action="@(deleting ? "ConfirmDelete" : "ConfirmSave")">
             <input name="token" value="@Model.Token" type="hidden" />
-            <div class="field" style="margin-top:22px"><label for="reason">確認・変更理由 <span class="req">必須</span></label><textarea id="reason" name="reason" rows="3" required>@Model.Reason</textarea><small>確認した内容や変更の理由を記録してください。</small></div>
+            <div class="field confirmation-reason"><label for="reason">確認・変更理由 <span class="req">必須</span></label><div class="field-value"><textarea id="reason" name="reason" rows="2" required>@Model.Reason</textarea><small>確認した内容や変更の理由を記録してください。</small></div></div>
             <div class="actions"><button type="submit" asp-action="CancelConfirmation" name="token" value="@Model.Token" formnovalidate>戻る</button><button type="submit" class="@(deleting ? "danger" : "primary")">@(deleting ? "確認して論理削除" : "確認して保存")</button></div>
         </form>
     </section>

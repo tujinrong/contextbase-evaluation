@@ -1,15 +1,42 @@
 {
-  "schema": "access-web-modernization/0.3",
+  "schema": "access-web-modernization/0.4",
   "date": "2026-10-27",
   "revision": {
-    "id": "web-modernization",
-    "authorization": "2026-10-27 user: CSharp_ASPNETのソースを参照して、Accessから忠実に変換するわけではなく、WEBらしいアプリを作成",
+    "id": "web-ui-rules",
+    "authorization": "2026-10-27 user: このルールで変換し直してください; apply AR028-030 to Access-CSharp_ASPNET with existing dedicated shared SQL Server DB",
     "addTrainingIterations": false
   },
   "policy": {
     "mode": "web-native",
     "preserveBusinessRules": true,
     "preserveAccessInteraction": false
+  },
+  "source": {
+    "file": "test-project1/srcs/Access/build/StudentManagement.accdb",
+    "sha256": "F5FF069C5D7AA45CFAE80584319FD11F0A0B8A6C52E141DA51D5263532D82CA4",
+    "authority": "access-binary",
+    "sidecarPolicy": "post-extraction-cross-check-only"
+  },
+  "rulesVersion": "0.4",
+  "rulesHash": "C967AE00F110EE1F5186C9060DFF7AA80DA5227792956AAC93B98884BA19E558",
+  "webPolicy": {
+    "path": "agents/access-rebuilder-agent/docs/Web再構築方針.md",
+    "version": "0.4",
+    "sha256": "903B3D6DD4E7D14CB643F8D49B779E8A4124E0F0E9E77527AB8CEB7C03CDD7F0"
+  },
+  "deviceScope": {
+    "target": "Desktop PC browser",
+    "viewports": [
+      {
+        "width": 1280,
+        "height": 650
+      },
+      {
+        "width": 1366,
+        "height": 650
+      }
+    ],
+    "smartphoneSupport": "excluded by explicit user instruction"
   },
   "referencePurpose": "web-app-source-reference",
   "referenceInputs": [
@@ -51,7 +78,7 @@
     },
     {
       "path": "test-project1/srcs/CSharp_ASPNET/Infrastructure/WebHostSetup.cs",
-      "sha256": "A670050199B88EFFB0D4EEB40F120E8EEEF504E5931185B804AB1705739FDFFD"
+      "sha256": "319D64CAB66A244193AB3D33C01E55B2638928469DB4F6548183E818F1D3EE10"
     },
     {
       "path": "test-project1/srcs/CSharp_ASPNET/Infrastructure/WebPresentation.cs",
@@ -67,7 +94,7 @@
     },
     {
       "path": "test-project1/srcs/CSharp_ASPNET/StudentManagement.slnx",
-      "sha256": "307808087883D84AA83183A2480E3536FE494D1B6B3C58BE50899B4C03F38D91"
+      "sha256": "50D922A58FEC9ADFC9D6573CF587689F972E4A4701EB7C374D601B51EF85FBFB"
     },
     {
       "path": "test-project1/srcs/CSharp_ASPNET/Views/Account/Login.cshtml",
@@ -79,7 +106,7 @@
     },
     {
       "path": "test-project1/srcs/CSharp_ASPNET/Views/Shared/_Layout.cshtml",
-      "sha256": "1A0D18550B9ACA7BF7AE74963A453D3021CD549943CBB4CB89EEFA19C1AB72EE"
+      "sha256": "50D7C26A2D07903ECF0BE1B131AF2CB6BD2A02FA731380C69FD0CDD401A1F337"
     },
     {
       "path": "test-project1/srcs/CSharp_ASPNET/Views/Shared/_MessagePanel.cshtml",
@@ -139,11 +166,11 @@
     },
     {
       "path": "test-project1/srcs/CSharp_ASPNET/database/README.md",
-      "sha256": "FD6DF1C9A573B3B9531B79CEECF7234D37DE824B5ED09895907D3108750031A0"
+      "sha256": "C350E1EF38B00D4141791D8477BD63CF89D648563BFFE47E6E18DCB464960A9C"
     },
     {
       "path": "test-project1/srcs/CSharp_ASPNET/wwwroot/css/site.css",
-      "sha256": "F144A45993982ED78D332137447B43885C906037E3A6061760F180A6DA4AF603"
+      "sha256": "94783E5446034957AF68E7E4569D3AC87AC30AE1A3E497DE3DED4F5F5188C1FD"
     },
     {
       "path": "test-project1/srcs/CSharp_ASPNET/wwwroot/css/students.css",
@@ -154,60 +181,24 @@
       "sha256": "F21308326355426DC7C110569A416AA2E942A089A9C97230396EB8B078FCF975"
     }
   ],
-  "protected": [
+  "decisions": [
     {
-      "path": "test-project1/srcs/Access-CSharp_ASPNET/build/generation/training.json",
-      "sha256": "18E74A56159025D36B138A489F5011EE1A828F608C96ED3D04DA68668DB03773"
+      "rule": "AR028",
+      "implementation": "Reduce header, whitespace, helper text and control widths; keep all 22 student input fields and save actions in the 650px desktop viewport"
     },
     {
-      "path": "test-project1/srcs/Access/build/StudentManagement.accdb",
-      "sha256": "F5FF069C5D7AA45CFAE80584319FD11F0A0B8A6C52E141DA51D5263532D82CA4"
+      "rule": "AR029",
+      "implementation": "Align label-left/value-right rows in search, student edit/reference, confirmation and class/code maintenance"
+    },
+    {
+      "rule": "AR030",
+      "implementation": "Single native calendar field per date with synchronized Japanese era hint, date-only UTC conversion and clear/reload/lookup state synchronization"
     }
   ],
+  "businessCoreChanged": false,
+  "databaseSchemaChanged": false,
   "trainingIterationsAdded": 0,
-  "trainingLedgerUnchanged": true,
-  "status": "PASS-with-limitations",
-  "results": {
-    "build": {
-      "configuration": "Release",
-      "warnings": 0,
-      "errors": 0,
-      "publish": "PASS"
-    },
-    "core": {
-      "passed": 45,
-      "failed": 0
-    },
-    "web": {
-      "passed": 31,
-      "failed": 0
-    },
-    "browser": {
-      "provider": "SqlServer",
-      "checks": 15,
-      "status": "PASS"
-    },
-    "sourcePackage": {
-      "status": "PASS",
-      "revision": "web-modernization",
-      "members": 48,
-      "forbiddenMembers": 0,
-      "sourceZipSha256": "B32DDD8A3DE5A56D845B0F27B4FC1B3BA47C7DD65261D74127107F60DD0BE739",
-      "isolatedBuildExit": 0,
-      "warnings": 0,
-      "errors": 0
-    },
-    "independentReview": {
-      "status": "PASS-with-limitations",
-      "openFindings": 0
-    }
-  },
-  "notRun": [
-    "manual acceptance",
-    "original Access runtime business differential comparison",
-    "production deployment",
-    "large-data performance",
-    "other Access files"
-  ],
+  "extraction": "Reused verified extraction of the unchanged Access SHA; no new Access execution or training iteration",
+  "verification": "../test-results/web-modernization.json",
   "formalScore": null
 }

@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"ACCESS-CSHARP-MIGRATION-INDEX","version":"0.3","path":"test-project1/spec/Access-CSharp_ASPNET/README.md","sheets":[{"heading":"対象と根拠","kind":"GRID","sheet":"01_対象"},{"heading":"配置と判断","kind":"GRID","sheet":"02_判断"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"ACCESS-CSHARP-MIGRATION-INDEX","version":"0.4","path":"test-project1/spec/Access-CSharp_ASPNET/README.md","sheets":[{"heading":"対象と根拠","kind":"GRID","sheet":"01_対象"},{"heading":"配置と判断","kind":"GRID","sheet":"02_判断"}]} -->
 # Access-CSharp_ASPNET 移行設計
 
-版0.3／2026-10-27。
+版0.4／2026-10-27。
 
 ## 対象と根拠
 
@@ -14,6 +14,8 @@ projectId=test-project1、sourceRoot=srcs/Access-CSharp_ASPNET/。利用者が�
 C#はsrc/StudentManagement.Coreとsrc/StudentManagement.Web、SQLとDB構成はdatabase/へ分離し、StudentManagement.slnxから開く。採用技術はASP.NET Core MVC／Razor、net10.0、SQL Server。DDLは2022互換構文を基準とし、実検証環境はExpress 17.0.5005.3である。
 
 Web化改訂では、CSharp_ASPNETの検索・登録ビュー、CSS、JavaScript、MVCの状態管理を参照する。検索は4条件を維持し、結果の並び替え・表示件数・ページ移動を設ける。編集は基本情報と関連する入力群、項目別エラー、保存操作を読みやすく配置し、画面幅に応じて組み直す。候補連動は認証・CSRF・編集所有束縛を維持したJSON更新とし、全画面POSTに依存しない。生年月日はWebのdate入力と和暦の補助表示を使い、Coreの業務型へ境界で変換する。
+
+利用者の「このルールで変換し直してください」により、AR028～030を今回のWeb再構築へ適用する。PCの基準表示領域は1366×650／1280×650 CSS pxとし、検索・編集・参照は左見出し／右項目の列を揃える。グループ、余白、入力幅、補助説明を整理し、主要入力・保存を近接させる。利用者の追加指定によりスマートフォン対応は対象外とする。PCでの表示拡大時は入力と見出しの対応を保持し、必要な縦スクロールを許容する。生年月日・入学日・卒業退学日は1つのカレンダー入力と同期した和暦表示とし、保存値はISO日付のまま維持する。日付の必須条件、範囲、閏日・元号境界、クリア・再表示を検証する。業務Core、SQL構造、既存データ、参照方式ソース、訓練2回台帳は変更しない。実装・検証の実施状態はsourceRoot/build/test-results/の今回記録で確認する。
 
 Accessの整数row_versionをintとして維持し、ISO日付文字列と物理容量、業務上の文字数制限を分ける。SQL Serverで外部キー列の文字容量一致が必要な箇所は親列へ合わせた物理容量とし、CHECKで元の子列容量を維持する。実行結果から業務長を緩和しない。
 

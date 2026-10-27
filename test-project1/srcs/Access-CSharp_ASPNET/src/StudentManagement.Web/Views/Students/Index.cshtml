@@ -11,7 +11,7 @@
 }
 <section class="student-search" aria-labelledby="search-title">
     <div class="pagehead">
-        <div><p class="eyebrow">STUDENTS</p><h1 id="search-title">学生検索</h1><p class="page-description">学生情報の検索・確認と、登録内容の更新を行います。</p></div>
+        <div><h1 id="search-title">学生検索</h1><p class="page-description">条件を指定して検索・編集します。</p></div>
         @if (Model.CanWrite) { <a class="button primary" asp-action="New" asp-route-contextId="@Model.Input.ContextId"><span aria-hidden="true">＋</span>新規登録</a> }
     </div>
     <form method="get" asp-action="Index" class="surface criteria" aria-label="学生の検索条件" data-search-form>
@@ -20,13 +20,13 @@
         <input type="hidden" name="PageSize" value="@Model.Input.PageSize" />
         <div asp-validation-summary="All" role="alert" tabindex="-1" data-error-summary></div>
         <div class="search-grid">
-            <div class="field"><label for="StudentNo">学籍番号</label><input id="StudentNo" name="StudentNo" value="@Model.Input.StudentNo" placeholder="例：TRN001" autocomplete="off" /><small>前方一致</small></div>
-            <div class="field"><label for="Name">氏名</label><input id="Name" name="Name" value="@Model.Input.Name" placeholder="氏名の一部を入力" /><small>部分一致</small></div>
-            <div class="field"><label for="ClassId">クラス</label><select id="ClassId" name="ClassId" asp-items="Model.Classes"><option value="">すべてのクラス</option></select><small>年度・名称で選択</small></div>
-            <fieldset class="status-field"><legend>在籍区分</legend><div class="checks">
+            <div class="field"><label for="StudentNo">学籍番号</label><div class="field-value"><input id="StudentNo" name="StudentNo" value="@Model.Input.StudentNo" placeholder="前方一致：TRN001" autocomplete="off" /></div></div>
+            <div class="field"><label for="Name">氏名</label><div class="field-value"><input id="Name" name="Name" value="@Model.Input.Name" placeholder="氏名・カナの部分一致" /></div></div>
+            <div class="field"><label for="ClassId">クラス</label><div class="field-value"><select id="ClassId" name="ClassId" asp-items="Model.Classes"><option value="">すべてのクラス</option></select></div></div>
+            <div class="field status-field"><span class="field-label" id="status-label">在籍区分</span><div class="field-value"><div class="checks" role="group" aria-labelledby="status-label">
                 @foreach (var state in states)
                 { <label><input name="Statuses" type="checkbox" value="@state.Item1" checked="@Model.Input.Statuses.Contains(state.Item1)" /><span>@state.Item2</span></label> }
-            </div><small>すべて解除すると全区分</small></fieldset>
+            </div><small>未選択は全区分</small></div></div>
             <div class="criteria-actions"><button class="primary" type="submit">検索</button><a class="button quiet" asp-action="Clear" asp-route-contextId="@Model.Input.ContextId">クリア</a></div>
         </div>
     </form>
