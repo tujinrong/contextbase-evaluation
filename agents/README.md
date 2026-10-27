@@ -1,11 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"8.2","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"8.3","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
 # Agent定義一覧
 
-版8.2／2026-10-26。ContextBase解析を平級の独立3Agentへ分離し、AG-REVERSEを任意互換入口とする。アプリ実装・実機試験・採点の状態は各実行の報告で区別する。
+版8.3／2026-10-27。基本設計専用のAG-BASIC-DESIGNを追加。ContextBase解析を平級の独立3Agentへ分離し、AG-REVERSEを任意互換入口とする。アプリ実装・実機試験・採点の状態は各実行の報告で区別する。
 
 ## 概要
 
-仕様生成、実装、3つの独立解析Agent、任意の逆解析互換入口を定義する。Codexが契約と実行指示を読んで作業する。定義文書の存在だけで各工程を実行済みとしない。題材はprojectIdで選択し、全体規則と題材の正解を分離する。実行時に許可ファイルを列挙し、GitHub全体を無制限に参照させない。
+7種類のAgentを定義する。仕様生成、基本設計、実装、3つの独立解析Agent、任意の逆解析互換入口を扱う。Codexが契約と実行指示を読んで作業する。定義文書の存在だけで各工程を実行済みとしない。題材はprojectIdで選択し、全体規則と題材の正解を分離する。実行時に許可ファイルを列挙し、GitHub全体を無制限に参照させない。
 
 取得・目録化はdiscovery-agent、関係構築はrelationship-agent、動作深化はbehavior-agentが独立して実行する。各自にpackage／CLI・source／request／workを持ち、reverse-agentに依存・importせず共通runtime（agents/shared/contextbase-runtime）を使用する。独立検証は各層の抽出と別task・文脈で実行し、それぞれのホストが採用する。
 
@@ -18,6 +18,7 @@
 | Agent-ID | 役割 | 契約文書 |
 | --- | --- | --- |
 | AG-SPEC | 指定project・方式の仕様書作成・既存改善。検索条件と画面配置の改善を含む | [契約](spec-agent/AGENT.md)・[実行指示](spec-agent/PROMPT.md)・[運用案内](spec-agent/README.md) |
+| AG-BASIC-DESIGN | 指定project・方式の基本設計を作成・改善。詳細・実装・DB実行を分離 | [契約](basic-design-agent/AGENT.md)・[実行指示](basic-design-agent/PROMPT.md)・[運用案内](basic-design-agent/README.md) |
 | AG-BUILD | 仕様からシステム生成 | [build-agent](build-agent/AGENT.md) |
 | AG-DISCOVERY | 独立した取得・目録化 | [契約](discovery-agent/AGENT.md)・[実行](discovery-agent/PROMPT.md)・[案内](discovery-agent/README.md) |
 | AG-RELATIONSHIP | 独立した関係構築 | [契約](relationship-agent/AGENT.md)・[実行](relationship-agent/PROMPT.md)・[案内](relationship-agent/README.md) |

@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"REPO-README","version":"7.1","path":"README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入口一覧","kind":"LIST","sheet":"02_入口一覧","key":["領域"]},{"heading":"状態","kind":"GRID","sheet":"03_状態"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"REPO-README","version":"7.2","path":"README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入口一覧","kind":"LIST","sheet":"02_入口一覧","key":["領域"]},{"heading":"状態","kind":"GRID","sheet":"03_状態"}]} -->
 # contextbase-evaluation
 
-版7.1／2026-10-25。設計・評価基準。アプリ実装・実機試験・逆生成採点は未実施。
+版7.2／2026-10-27。sample-project2の基本設計入口を追加。設計・評価基準。アプリ実装・実機試験・逆生成採点は未実施。
 
 ## 概要
 
@@ -16,6 +16,7 @@
 | 最初の題材 | [README](test-project1/README.md) |
 | 題材1の原仕様 | [方式別仕様索引](test-project1/spec/README.md)。正本はtest-project1/spec/方式ID/ |
 | 題材1の評価 | [00_採点規則](test-project1/spec-eval/00_採点規則.md) |
+| 社員経歴管理DEMO | [sample-project2](sample-project2/README.md)（Access・CSharp_ASPNETの基本設計） |
 | 次の題材 | test-project2（予定・未作成） |
 
 ## 状態
