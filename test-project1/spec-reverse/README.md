@@ -1,21 +1,30 @@
-# ContextBase 逆解析結果の配置
+# ContextBase 逆解析成果の索引
 
-版2.0／2026-10-27。**新分類規則で独立検証・catalog採用したdiscoveryの正式成果。** 人手レビューと後続2層は未完了である。
+版2.1／2026-10-27。各Agentの固定出力先を示す。件数・採用範囲・未解決事項は、各成果の同じ版に束縛した案内と検証で確認する。
 
-読む入口は[discoveryのreview.md](discovery-agent/review.md)。今回の7主機能はログイン、ログアウト、学生管理メニュー、学生照会、学生情報保守、クラス保守、業務コード保守。詳細・確認等は子操作とし、認証・レイアウト等の共通実装は別に保持する。
+**discoveryの確認入口は [review.md](discovery-agent/review.md)。** 原文根拠、主機能・子操作・共通能力の分類理由、反例と未確認事項をここで確認する。
 
-| Agent | 正式成果 | 状態 |
+| Agent | 人手確認の入口 | 機械可読の正式成果 |
 | --- | --- | --- |
-| [discovery-agent](discovery-agent/README.md) | [contextbase.json](discovery-agent/contextbase.json) | catalog採用済み・人手レビュー待ち |
-| [relationship-agent](relationship-agent/README.md) | 未生成 | 未実行 |
-| [behavior-agent](behavior-agent/README.md) | 未生成 | 未実行 |
+| discovery-agent | [review.md](discovery-agent/review.md)・[成果案内](discovery-agent/README.md) | [contextbase.json](discovery-agent/contextbase.json) |
+| relationship-agent | [成果案内](relationship-agent/README.md) | 生成した場合のrelationship-agent/contextbase.json |
+| behavior-agent | [成果案内](behavior-agent/README.md) | 生成した場合のbehavior-agent/contextbase.json |
 
-69記録は概要2・主機能7・子操作8・入口15・共通15・データ12・支援7・資料1・依存2。分類保留0。独立catalog／scope／factUsageと30分類はpass、findingsなし。[result/validation.json](discovery-agent/result/validation.json)と[facts/validation.json](discovery-agent/facts/validation.json)で確認できる。
+## 一括起動
 
-採用はcatalogのみ。管理10項目には後続relationship／behaviorを阻害する2件が残り、Dの完了を全目標の完了へ広げない。人手受入れ・原プログラム・SQL・DB実行は未実施である。
+Windowsでは [run-discovery.cmd](../run-discovery.cmd)をダブルクリックする。[contextbase.toml](../contextbase.toml)の既定profileに従い、discoveryだけを新規実行する。後続2層は自動起動しない。profile切替は起動引数の--profileを使う。
 
-入力はsrcs/CSharp_ASPNETの75ファイル・353907 bytes、1747構文facts。入力版と根拠は正式成果・索引の内容hashで追跡する。後のコード整理でモデル解析を再実行したものではなく、採用時の結果を保持する。
+専用環境を準備し、launcher所有のworkで原文取得・索引検査・抽出・独立検証・ホスト採用を行う。採用結果とレビューをstagingへ作成し、同一版であることを確認してから固定出力を更新する。阻害や故障時は旧正式成果を保持する。
 
-[contextbase.toml](../contextbase.toml)のworkは.tmp/contextbase/csharp_aspnet、出力はspec-reverse。reviewを人の入口、result/validation.jsonを最終目録検証、factsを索引と最終機械検査に使う。採用候補result/candidate.json、.tmp、テストログはGit対象外。後続Agentは正式contextbase.jsonだけを受け取り、同一request・source・正確な前提版を照合して独立再検証する。前層を自動起動せず、候補を正式前提へ代用しない。
+## 配置と判定
 
-設定・source・正式テスト・target.jsonの所有保護は保持する。最終の解析検証を添付することとテスト実行ログを保存することは区別し、ログや試行世代は累積しない。catalog採用を全量回帰・実機・人手受入れの合格としない。実装指紋が変わった場合、旧workを自動復元せず新workを使う。
+- contextbase.json：ホストが採用した正式な可搬成果。後続Agentは同一request・source・正確な前提版を自身の原文で独立再検証する。
+- review.md／README.md：人手レビューの入口と、その成果版の内訳・制限。
+- result/validation.json：採用に使った最終独立検証。単体試験の実行ログとは区別する。
+- facts/：構文事実索引、最終機械検査と利用証跡。構文の存在だけで業務上の正しさを承認しない。
+- target.json：profile・source・requestに対する出力slotの所有保護。可搬受渡しはcontextbase.jsonを用いる。
+- 候補、伝送記録、テストログ、環境と中間物：Git対象外の.tmpへ分離する。旧result/candidate.jsonは正式成果として渡さない。
+
+launcherの最新診断は設定work基点/discovery-agent-launch/current、公開準備中の資料は同stagingへ置く。launcher自身の所有確認を通る範囲だけを再利用・清掃し、手動CLIのwork、他Agent、入力・QA・正式テストには触れない。実装指紋が変わった手動workを自動移行せず、新規解析と既存成果の再配布を区別する。
+
+catalogの採用を元goal全体の完了へ広げない。人手受入れ、後続層、原プログラム・SQL・DBの実行結果は、それぞれの今回の記録で判定する。

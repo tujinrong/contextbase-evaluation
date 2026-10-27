@@ -1,11 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-README","version":"8.4","path":"test-project1/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"方式一覧","kind":"LIST","sheet":"02_方式一覧","key":["方式ID"]},{"heading":"入力と報告","kind":"GRID","sheet":"03_入力と報告"},{"heading":"隔離境界","kind":"GRID","sheet":"04_隔離境界"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-README","version":"8.6","path":"test-project1/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"方式一覧","kind":"LIST","sheet":"02_方式一覧","key":["方式ID"]},{"heading":"入力と報告","kind":"GRID","sheet":"03_入力と報告"},{"heading":"隔離境界","kind":"GRID","sheet":"04_隔離境界"}]} -->
 # test-project1 学生管理
 
-版8.4／2026-10-27。現行の独立配置。各実行結果は試験報告の範囲で判定する。
+版8.6／2026-10-27。Access移行方式とContextBase一括起動を含む現行の独立配置。各実行結果は試験報告の範囲で判定する。
 
 ## 対象
 
-仕様書解析Agent検証用の7つの独立プロジェクト。検索と登録・編集・参照・論理削除、およびクラス・コード保守を題材とする。各方式の原仕様はspec/方式ID/（specRoot）、ソース・DB資源・生成器・ビルド・試験はsrcs/方式ID/（sourceRoot）へ分離して置く。
+仕様書解析Agent検証用の8つの独立方式。検索と登録・編集・参照・論理削除、およびクラス・コード保守を題材とする。各方式の原仕様はspec/方式ID/（specRoot）、ソース・DB資源・生成器・ビルド・試験はsrcs/方式ID/（sourceRoot）へ分離して置く。
 
 ## 方式一覧
 
@@ -26,7 +26,13 @@
 
 ### ContextBase解析の設定と結果
 
-[contextbase.toml](contextbase.toml)のprofileで入力・request・work・outputを切り替える。相対パスは設定ファイルの位置が基準。既定profileはcsharp_aspnet、sourceはsrcs/CSharp_ASPNET、workは.tmp/contextbase/csharp_aspnet、最終出力は [spec-reverse](spec-reverse/README.md) の各Agent/contextbase.json。解析成果は通常の配布物build/とは分ける。csharp_wpf profileはsrcs/CSharp_WPF、spec-reverse/CSharp_WPF、.tmp/contextbase/csharp_wpfへ切り替える例で、今回解析を開始する指示ではない。
+[contextbase.toml](contextbase.toml)のprofileで入力・request・work・outputを切り替える。相対パスは設定ファイルの位置が基準。既定profileはcsharp_aspnet、sourceはsrcs/CSharp_ASPNET、workは選択profileのwork基点、最終出力は [spec-reverse](spec-reverse/README.md) の各Agent/contextbase.json。解析成果は通常の配布物build/とは分ける。csharp_wpf profileはsrcs/CSharp_WPF、spec-reverse/CSharp_WPF、.tmp/contextbase/csharp_wpfへ切り替える例で、今回解析を開始する指示ではない。
+
+Windowsでは [run-discovery.cmd](run-discovery.cmd) をダブルクリックすると、既定profileでdiscoveryだけを一括起動できる。初回はPython 3.11以降から専用環境と依存を準備し、以後は互換な環境を再利用する。reverse-agentは不要。重複起動はロックで拒否し、設定work/discovery-agent-launch配下のcurrent／stagingを管理する。手動CLIのworkとは分け、既存の手動workや所有不明の内容を削除しない。
+
+起動は新しい原文封印、抽出、独立検証、採用と同一版のreview出力までを行う。失敗時は前回の正式成果を保持し、後続relationship／behaviorや原アプリ・SQL・DBを実行しない。終わったら [discoveryのreview.md](spec-reverse/discovery-agent/review.md) を確認する。起動条件・保存先・終了コードは [discoveryの案内](../agents/reverses/discovery-agent/README.md)を参照する。
+
+別profileや自動実行は `run-discovery.cmd --no-pause --profile NAME` を使う。ダブルクリックでは結果を読めるよう画面を残し、先頭の--no-pauseまたはCONTEXTBASE_DISCOVERY_NO_PAUSE=1で待機を省略できる。異なる作業ディレクトリからもcmd自身の場所を基準に設定を解決する。
 
 設定ファイルの存在は解析・検証の完了を意味しない。paths --configは解決先の確認だけを行い、snapshot作成・LLM呼出しはしない。実行・採用の範囲は各回の結果で確認する。既存workは封印した入力に束縛し、元ソース変更へ自動追従しない。
 
