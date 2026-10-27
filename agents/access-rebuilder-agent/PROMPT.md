@@ -1,11 +1,13 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER-PROMPT","version":"0.3","path":"agents/access-rebuilder-agent/PROMPT.md","sheets":[{"heading":"共通の指定","kind":"GRID","sheet":"01_指定"},{"heading":"今回の計画工程","kind":"GRID","sheet":"02_計画"},{"heading":"確認後の実施工程","kind":"GRID","sheet":"03_実施"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER-PROMPT","version":"0.4","path":"agents/access-rebuilder-agent/PROMPT.md","sheets":[{"heading":"共通の指定","kind":"GRID","sheet":"01_指定"},{"heading":"今回の計画工程","kind":"GRID","sheet":"02_計画"},{"heading":"確認後の実施工程","kind":"GRID","sheet":"03_実施"}]} -->
 # access-rebuilder-agent 実行指示
 
-版0.3／2026-10-27。Codexへの依頼文と実行機構の運用契約。
+版0.4／2026-10-27。Codexへの依頼文と実行機構の運用契約。
 
 ## 共通の指定
 
 [契約](AGENT.md)と[運用規則](AGENTS.md)、[Web再構築方針](docs/Web再構築方針.md)を読み、projectId、phase、入力Accessファイル、出力方式、Web参照ソースと許可範囲を固定する。現行プロファイルはweb-nativeであり、Accessの操作形を同じにする要求はない。完了済みの訓練2回は再開せず、その後の利用者が明示した改訂として実装・検証する。
+
+Web画面は有効スペースを節約し、PCでは左見出し・右項目の列を揃えた表形式を標準とする。日付・和暦はコンパクトなカレンダー入力と同期した和暦表示を使う（AR028～030）。設計時に対象表示領域と狭幅時の配置を固定し、実装時には列揃え・カレンダー選択・和暦変換・保存値を検証する。ルール更新の依頼だけではアプリやDBの再生成を開始しない。
 
 ## 今回の計画工程
 

@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER","version":"0.3","path":"agents/access-rebuilder-agent/AGENT.md","sheets":[{"heading":"役割","kind":"GRID","sheet":"01_役割"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"工程","kind":"GRID","sheet":"03_工程"},{"heading":"変換の原則","kind":"GRID","sheet":"04_原則"},{"heading":"記録と完了","kind":"GRID","sheet":"05_完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER","version":"0.4","path":"agents/access-rebuilder-agent/AGENT.md","sheets":[{"heading":"役割","kind":"GRID","sheet":"01_役割"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"工程","kind":"GRID","sheet":"03_工程"},{"heading":"変換の原則","kind":"GRID","sheet":"04_原則"},{"heading":"記録と完了","kind":"GRID","sheet":"05_完了"}]} -->
 # Access再構築Agent 契約
 
-版0.3／2026-10-27。Agent-IDはAG-ACCESS-REBUILDER。DAO／Access定義抽出、SQL構造変換、入力と許可の検査、最大2回の反復台帳、manifestを実装した。C#／Webの移行設計と業務実装は、Codexが抽出原文を読んで行う。任意VBAを機械変換する汎用コンパイラーではない。
+版0.4／2026-10-27。Agent-IDはAG-ACCESS-REBUILDER。DAO／Access定義抽出、SQL構造変換、入力と許可の検査、最大2回の反復台帳、manifestを実装した。C#／Webの移行設計と業務実装は、Codexが抽出原文を読んで行う。任意VBAを機械変換する汎用コンパイラーではない。
 
 ## 役割
 
@@ -35,6 +35,8 @@
 ## 変換の原則
 
 [変換ルール案](docs/変換ルール.md)を出発点とする。SQLの字句置換だけで変換完了としない。フォーム内コードやVBAで実行後に行うフィルターも抽出し、DB型、NULLと空文字、照合、日付、版番号、トランザクションの意味を保持する。
+
+Web画面は有効スペースを節約し、PCでは左見出し・右項目の列を揃えた表形式を標準とする。日付・和暦はコンパクトなカレンダー入力と同期した和暦表示を使う（AR028～030）。詳細と検証条件は[Web再構築方針](docs/Web再構築方針.md)に従う。
 
 Web化に必要な状態管理、HTTP境界、主体の供給、同時実行、入力検査を明記する。許可されたWeb方式のUI・実装パターンを積極的に参照し、業務目的に合わせて採用する。認証・DB表・業務値はAccess側との差を確認してから判断する。ページ数・検索条件・業務値を汎用Agentへ固定しない。
 
