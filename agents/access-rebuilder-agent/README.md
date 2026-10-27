@@ -1,11 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER-README","version":"0.2","path":"agents/access-rebuilder-agent/README.md","sheets":[{"heading":"現在の状態","kind":"GRID","sheet":"01_状態"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["文書"]},{"heading":"訓練と配置","kind":"GRID","sheet":"03_訓練"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER-README","version":"0.3","path":"agents/access-rebuilder-agent/README.md","sheets":[{"heading":"現在の状態","kind":"GRID","sheet":"01_状態"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["文書"]},{"heading":"訓練と配置","kind":"GRID","sheet":"03_訓練"}]} -->
 # access-rebuilder-agent
 
-版0.2／2026-10-27。指定されたAccessファイルからASP.NET Core／C#／SQL Serverのシステムを再構築するAgent。
+版0.3／2026-10-27。指定されたAccessファイルからASP.NET Core／C#／SQL Serverのシステムを再構築するAgent。
 
 ## 現在の状態
 
-利用者の計画確認後、抽出器・SQL構造変換・入力検査・反復制御を実装し、test-project1のC#／Web／SQL Server成果物を生成した。[訓練結果](docs/訓練結果.md)で2回の結果と検証範囲を確認できる。C#業務実装はCodexが抽出根拠から作成し、汎用の機械的VBA→C#翻訳とは区別する。
+利用者の追加指示により、[Web再構築方針](docs/Web再構築方針.md)を採用した。CSharp_ASPNETソースを参照し、Accessの業務目的をWebとして使いやすいUI・操作へ再設計する。抽出器・SQL構造変換・入力検査・反復制御とtest-project1のC#／Web／SQL Server成果物を持つ。初回の[訓練結果](docs/訓練結果.md)2回は台帳を保持し、その後の明示されたWeb化改訂の結果を別に記録する。
 
 ## 入口
 

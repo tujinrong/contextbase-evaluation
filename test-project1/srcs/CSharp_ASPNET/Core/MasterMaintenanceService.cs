@@ -12,15 +12,21 @@ public sealed record MaintenanceResult(Outcome Outcome,long? RowVersion,string M
 
 // BAS-STU-03 class maintenance and COM-STU-010 protected-code maintenance.
 // CLI evaluates roles from the authenticated DB connection on every request.
-public sealed class MasterMaintenanceService(string connectionString)
+public sealed class MasterMaintenanceService(string connectionString, StudentDatabaseProfile databaseProfile = StudentDatabaseProfile.Native)
 {
+    private bool Shared => databaseProfile == StudentDatabaseProfile.SharedAccess;
+    private long MaximumVersion => Shared ? int.MaxValue : long.MaxValue;
     private async Task<(SqlConnection Connection,string Actor)> Open(CancellationToken ct)
     {
-        var builder=new SqlConnectionStringBuilder(connectionString){Encrypt=SqlConnectionEncryptOption.Mandatory,TrustServerCertificate=false};
-        var connection=new SqlConnection(builder.ConnectionString);
+        if(!Enum.IsDefined(databaseProfile))throw new ArgumentOutOfRangeException(nameof(databaseProfile));
+        var connection=new SqlConnection(SharedAccessSchema.ConnectionString(connectionString,databaseProfile));
+        SharedAccessSchema.Register(connection,Shared);
         try {
             await connection.OpenAsync(ct);
-            await using var command=Command(connection,null,"SELECT ORIGINAL_LOGIN(),IS_ROLEMEMBER(N'student_admin')");
+            var authorization=Shared
+                ? "SELECT ORIGINAL_LOGIN(),CASE WHEN IS_SRVROLEMEMBER(N'sysadmin')=1 OR IS_ROLEMEMBER(N'db_owner')=1 OR EXISTS(SELECT 1 FROM dbo.t_app_role WHERE user_id=ORIGINAL_LOGIN() AND role_name=N'Admin') THEN 1 ELSE 0 END"
+                : "SELECT ORIGINAL_LOGIN(),IS_ROLEMEMBER(N'student_admin')";
+            await using var command=Command(connection,null,authorization);
             await using var reader=await command.ExecuteReaderAsync(ct);
             if(!await reader.ReadAsync(ct)||reader.IsDBNull(1)||reader.GetInt32(1)!=1) throw new UnauthorizedAccessException("E-COM-002: 管理者権限が必要です。");
             var actor=StudentNormalizer.Text(reader.GetString(0),64,64,"Principal",true)!;
@@ -29,7 +35,7 @@ public sealed class MasterMaintenanceService(string connectionString)
     }
     public async Task<MaintenanceResult> SaveClassAsync(ClassChange raw,CancellationToken ct=default)
     {
-        if(raw.SchoolYear is <1900 or >9998 || raw.Capacity is <1 or >9999 || raw.DisplayOrder<0 || raw.ClassId is <=0 || raw.ExpectedVersion is <=0 || (raw.ClassId is null)!=(raw.ExpectedVersion is null)) throw new ArgumentException("E-MST-004: 年度・定員・版を確認してください。");
+        if((Shared && (raw.ClassId>int.MaxValue || raw.ExpectedVersion>int.MaxValue)) || raw.SchoolYear is <1900 or >9998 || raw.Capacity is <1 or >9999 || raw.DisplayOrder<0 || raw.ClassId is <=0 || raw.ExpectedVersion is <=0 || (raw.ClassId is null)!=(raw.ExpectedVersion is null)) throw new ArgumentException("E-MST-004: 年度・定員・版を確認してください。");
         var code=StudentNormalizer.Identifier(raw.ClassCode,9,"ClassCode"); var name=StudentNormalizer.Text(raw.ClassName,18,18,"ClassName",true)!;
         var grade=StudentNormalizer.Code(raw.GradeCode,2,"GradeCode")!;
         var remarks=StudentNormalizer.Text(raw.Remarks,120,120,"Remarks",multiline:true);
@@ -46,8 +52,8 @@ public sealed class MasterMaintenanceService(string connectionString)
                     Param(load,"@id",SqlDbType.BigInt,id);
                     await using var reader=await load.ExecuteReaderAsync(ct);
                     if(!await reader.ReadAsync(ct)) return new(Outcome.NotFound,null,"対象クラスが存在しません。");
-                    if(reader.GetInt64(reader.GetOrdinal("row_version"))!=raw.ExpectedVersion) return new(Outcome.Conflict,null,"他の操作でクラスが変更されています。");
-                    previous=Enumerable.Range(0,reader.FieldCount).ToDictionary(reader.GetName,index=>reader.IsDBNull(index)?null:reader.GetValue(index));
+                    if(Convert.ToInt64(reader["row_version"],CultureInfo.InvariantCulture)!=raw.ExpectedVersion) return new(Outcome.Conflict,null,"他の操作でクラスが変更されています。");
+                    previous=Enumerable.Range(0,reader.FieldCount).ToDictionary(reader.GetName,index=>SharedAccessSchema.ReadValue(reader,reader.GetName(index)));
                 }
                 if(Convert.ToInt32(previous["school_year"])!=raw.SchoolYear||(string)previous["class_code"]! !=code) throw new ArgumentException("E-MST-003: 年度・クラスコードは変更できません。");
                 await using var references=Command(connection,tx,"SELECT COUNT_BIG(*),COALESCE(SUM(CONVERT(bigint,CASE WHEN is_deleted=0 AND enrollment_status_code IN ('01','02') THEN 1 ELSE 0 END)),0) FROM dbo.m_student WHERE class_id=@id");
@@ -60,12 +66,12 @@ public sealed class MasterMaintenanceService(string connectionString)
                 Param(lookup,"@grade",SqlDbType.VarChar,grade,2); await using var reader=await lookup.ExecuteReaderAsync(ct);
                 if(!await reader.ReadAsync(ct)) throw new ArgumentException("E-STU-009: 学年が存在しません。");
                 if(previous is null||(string)previous["grade_code"]! !=grade)
-                    if(!reader.GetBoolean(0)||!reader.GetBoolean(1)||DateOnly.FromDateTime(reader.GetDateTime(2))>day||!reader.IsDBNull(3)&&DateOnly.FromDateTime(reader.GetDateTime(3))<day) throw new ArgumentException("E-STU-011: 学年は現在選択できません。");
+                    if(!reader.GetBoolean(0)||!reader.GetBoolean(1)||SharedAccessSchema.ReadDate(reader.GetValue(2))>day||!reader.IsDBNull(3)&&SharedAccessSchema.ReadDate(reader.GetValue(3))<day) throw new ArgumentException("E-STU-011: 学年は現在選択できません。");
             }
             var values=new Dictionary<string,object?>{{"school_year",raw.SchoolYear},{"grade_code",grade},{"class_code",code},{"class_name",name},{"valid_from",from},{"valid_to",to},{"capacity",raw.Capacity},{"display_order",raw.DisplayOrder},{"is_active",raw.IsActive},{"remarks",remarks}};
             var changed=values.Where(pair=>previous is null||!Same(pair.Value,previous[pair.Key])).Select(pair=>pair.Key).ToArray();
             if(changed.Length==0) { await tx.RollbackAsync(ct); return new(Outcome.NoChange,raw.ExpectedVersion,"変更内容がありません。"); }
-            if(raw.ExpectedVersion==long.MaxValue) throw new ArgumentException("更新管理番号が上限に到達しました。");
+            if(raw.ExpectedVersion==MaximumVersion) throw new ArgumentException("更新管理番号が上限に到達しました。");
             var sameName=false;
             await using(var check=Command(connection,tx,"SELECT COUNT_BIG(*) FROM dbo.m_class WHERE school_year=@year AND grade_code=@grade AND class_name=@name AND (@id IS NULL OR class_id<>@id)")) {
                 Param(check,"@year",SqlDbType.SmallInt,raw.SchoolYear); Param(check,"@grade",SqlDbType.VarChar,grade,2); Param(check,"@name",SqlDbType.NVarChar,name,36); Param(check,"@id",SqlDbType.BigInt,raw.ClassId); sameName=(long)(await check.ExecuteScalarAsync(ct))!>0;
@@ -78,7 +84,7 @@ public sealed class MasterMaintenanceService(string connectionString)
     }
     public async Task<MaintenanceResult> SaveCodeAsync(CodeChange raw,CancellationToken ct=default)
     {
-        if(raw.CategoryId is not ("GENDER" or "ENROLLMENT_STATUS" or "PREFECTURE" or "RELATIONSHIP" or "GRADE")||raw.ExpectedVersion is <=0||raw.DisplayOrder<0) throw new ArgumentException("E-MST-003: 分類・版・表示順を確認してください。");
+        if((Shared && raw.ExpectedVersion>int.MaxValue) || raw.CategoryId is not ("GENDER" or "ENROLLMENT_STATUS" or "PREFECTURE" or "RELATIONSHIP" or "GRADE")||raw.ExpectedVersion is <=0||raw.DisplayOrder<0) throw new ArgumentException("E-MST-003: 分類・版・表示順を確認してください。");
         var name=StudentNormalizer.Text(raw.CodeName,12,12,"CodeName",true)!;
         var remarks=StudentNormalizer.Text(raw.Remarks,120,120,"Remarks",multiline:true);
         var from=JapaneseDateService.ParseIso(raw.ValidFrom,DateOnly.MaxValue,false);
@@ -88,28 +94,28 @@ public sealed class MasterMaintenanceService(string connectionString)
         await using var tx=(SqlTransaction)await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted,ct); var now=DateTimeOffset.UtcNow;
         try {
             await Gate(connection,tx,ct);
-            short width; bool allow;
+            int width; bool allow;
             await using(var category=Command(connection,tx,"SELECT code_length,allow_add FROM dbo.m_code_category WHERE category_id=@category")) {
                 Param(category,"@category",SqlDbType.VarChar,raw.CategoryId,24); await using var reader=await category.ExecuteReaderAsync(ct);
-                if(!await reader.ReadAsync(ct)) throw new ArgumentException("E-MST-001: 分類初期値がありません。"); width=reader.GetInt16(0);allow=reader.GetBoolean(1);
+                if(!await reader.ReadAsync(ct)) throw new ArgumentException("E-MST-001: 分類初期値がありません。"); width=Convert.ToInt32(reader.GetValue(0),CultureInfo.InvariantCulture);allow=reader.GetBoolean(1);
             }
             var value=StudentNormalizer.Code(raw.CodeValue,width,"CodeValue")!;
             Dictionary<string,object?>? previous=null;
             await using(var load=Command(connection,tx,"SELECT * FROM dbo.m_code WHERE category_id=@category AND code_value=@value")) {
                 Param(load,"@category",SqlDbType.VarChar,raw.CategoryId,24); Param(load,"@value",SqlDbType.VarChar,value,10); await using var reader=await load.ExecuteReaderAsync(ct);
-                if(await reader.ReadAsync(ct)) previous=Enumerable.Range(0,reader.FieldCount).ToDictionary(reader.GetName,index=>reader.IsDBNull(index)?null:reader.GetValue(index));
+                if(await reader.ReadAsync(ct)) previous=Enumerable.Range(0,reader.FieldCount).ToDictionary(reader.GetName,index=>SharedAccessSchema.ReadValue(reader,reader.GetName(index)));
             }
             if(previous is null&&raw.ExpectedVersion is not null) return new(Outcome.NotFound,null,"対象コードが存在しません。");
-            if(previous is not null&&(long)previous["row_version"]! !=raw.ExpectedVersion) return new(Outcome.Conflict,null,"コードは既に存在するか、他の操作で変更されています。");
+            if(previous is not null&&Convert.ToInt64(previous["row_version"],CultureInfo.InvariantCulture) !=raw.ExpectedVersion) return new(Outcome.Conflict,null,"コードは既に存在するか、他の操作で変更されています。");
             if(previous is null&&!allow) throw new ArgumentException("E-MST-003: この分類への通常追加はできません。");
             if(previous is not null&&(bool)previous["is_protected"]!) {
-                var oldFrom=DateOnly.FromDateTime((DateTime)previous["valid_from"]!); var oldTo=previous["valid_to"] is DateTime end?DateOnly.FromDateTime(end):(DateOnly?)null;
+                var oldFrom=SharedAccessSchema.ReadDate(previous["valid_from"]!); var oldTo=previous["valid_to"] is { } end ? SharedAccessSchema.ReadDate(end):(DateOnly?)null;
                 if(!raw.IsActive||from>oldFrom||to is not null&&(oldTo is null||to<oldTo)) throw new ArgumentException("E-MST-003: 保護値の停止・期間短縮はできません。");
             }
             var values=new Dictionary<string,object?>{{"code_name",name},{"display_order",raw.DisplayOrder},{"is_active",raw.IsActive},{"valid_from",from},{"valid_to",to},{"remarks",remarks}};
             var changed=values.Where(pair=>previous is null||!Same(pair.Value,previous[pair.Key])).Select(pair=>pair.Key).ToArray();
             if(changed.Length==0) { await tx.RollbackAsync(ct); return new(Outcome.NoChange,raw.ExpectedVersion,"変更内容がありません。"); }
-            if(raw.ExpectedVersion==long.MaxValue) throw new ArgumentException("更新管理番号が上限に到達しました。");
+            if(raw.ExpectedVersion==MaximumVersion) throw new ArgumentException("更新管理番号が上限に到達しました。");
             var sql=previous is null?"INSERT dbo.m_code(category_id,code_value,code_name,display_order,is_active,valid_from,valid_to,is_protected,remarks,created_at,created_by,updated_at,updated_by,row_version) VALUES(@category,@value,@name,@order,@active,@from,@to,0,@remarks,@now,@actor,@now,@actor,1)":"UPDATE dbo.m_code SET code_name=@name,display_order=@order,is_active=@active,valid_from=@from,valid_to=@to,remarks=@remarks,updated_at=@now,updated_by=@actor,row_version=row_version+1 WHERE category_id=@category AND code_value=@value AND row_version=@version";
             await using(var save=Command(connection,tx,sql)) {
                 Param(save,"@category",SqlDbType.VarChar,raw.CategoryId,24); Param(save,"@value",SqlDbType.VarChar,value,10); Param(save,"@name",SqlDbType.NVarChar,name,24); Param(save,"@order",SqlDbType.Int,raw.DisplayOrder); Param(save,"@active",SqlDbType.Bit,raw.IsActive); Param(save,"@from",SqlDbType.Date,from); Param(save,"@to",SqlDbType.Date,to); Param(save,"@remarks",SqlDbType.NVarChar,remarks,240); Param(save,"@now",SqlDbType.DateTimeOffset,now); Param(save,"@actor",SqlDbType.NVarChar,actor,128); if(previous is not null) Param(save,"@version",SqlDbType.BigInt,raw.ExpectedVersion);
@@ -127,7 +133,7 @@ public sealed class MasterMaintenanceService(string connectionString)
         var sql=id is null?"DECLARE @saved TABLE(id bigint);INSERT dbo."+table+"("+string.Join(',',columns)+",grade_category,created_at,created_by,updated_at,updated_by,row_version) OUTPUT INSERTED."+key+" INTO @saved VALUES("+string.Join(',',columns.Select(column=>"@"+column))+",'GRADE',@now,@actor,@now,@actor,1);SELECT id FROM @saved;":"DECLARE @saved TABLE(id bigint);UPDATE dbo."+table+" SET "+string.Join(',',columns.Select(column=>column+"=@"+column))+",updated_at=@now,updated_by=@actor,row_version=row_version+1 OUTPUT INSERTED."+key+" INTO @saved WHERE "+key+"=@id AND row_version=@version; SELECT id FROM @saved;";
         await using var command=Command(connection,tx,sql); foreach(var column in columns) Param(command,"@"+column,types[column].Item1,values[column],types[column].Item2); Param(command,"@now",SqlDbType.DateTimeOffset,now); Param(command,"@actor",SqlDbType.NVarChar,actor,128);
         if(id is not null) { Param(command,"@id",SqlDbType.BigInt,id);Param(command,"@version",SqlDbType.BigInt,before); }
-        var saved=await command.ExecuteScalarAsync(ct); if(saved is null) throw new DBConcurrencyException(); return ((long)saved,(before??0)+1);
+        var saved=await command.ExecuteScalarAsync(ct); if(saved is null) throw new DBConcurrencyException(); return (Convert.ToInt64(saved,CultureInfo.InvariantCulture),(before??0)+1);
     }
     private static async Task Log(SqlConnection connection,SqlTransaction tx,string table,string key,string operation,long? before,long after,string[] changed,string actor,DateTimeOffset now,CancellationToken ct)
     {

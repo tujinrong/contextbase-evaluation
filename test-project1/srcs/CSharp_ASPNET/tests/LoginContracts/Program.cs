@@ -55,6 +55,45 @@ foreach (var bad in new[] { ("Username", ""), ("Username", new string('u', 65)),
 }
 var disabled = Config(false); disabled["LocalLogin:PasswordHash"] = "";
 Check(new LocalLogin(disabled, clock).ReadSettings() is null, "disabled does not require credentials");
+
+// Explicit shared-database sample boundary; no database is contacted by these guards.
+ConfigurationManager SharedConfig() {
+    var result = new ConfigurationManager();
+    result.AddInMemoryCollection(new Dictionary<string,string?> {
+        ["SharedDatabaseTraining:Enabled"]="true", ["SharedDatabaseTraining:Principal"]="verification-admin",
+        ["StudentDatabase:Profile"]="SharedAccess", ["LocalLogin:Enabled"]="false",
+        ["ConnectionStrings:StudentDb"]=@"Server=.\SQLEXPRESS;Database=AccessRebuilderTraining_01a17be7;Integrated Security=True;Encrypt=True;TrustServerCertificate=True"
+    });
+    return result;
+}
+var sharedConfiguration = SharedConfig();
+var sharedEnvironment = new TestHostEnvironment { EnvironmentName=SharedDatabaseTraining.EnvironmentName };
+var training = new SharedDatabaseTraining(sharedConfiguration,sharedEnvironment,clock);
+var trainingSettings = training.ReadSettings()!;
+Check(trainingSettings.Principal=="verification-admin", "shared training requires explicit principal");
+Check(SharedDatabaseTraining.DatabaseRole("Reader")==Role.Viewer && SharedDatabaseTraining.DatabaseRole("Staff")==Role.Staff && SharedDatabaseTraining.DatabaseRole("Admin")==Role.Administrator,"shared DB roles map explicitly");
+try { SharedDatabaseTraining.DatabaseRole("Administrator"); Check(false,"unknown database role denied"); }
+catch(WebFault e) { Check(e.Status==403,"unknown database role denied"); }
+foreach(var bad in new[]{("StudentDatabase:Profile","Native"),("ConnectionStrings:StudentDb",@"Server=remote.example\SQLEXPRESS;Database=other;Integrated Security=True"),("SharedDatabaseTraining:Principal",""),("LocalLogin:Enabled","true")}) {
+    var invalid=SharedConfig();invalid[bad.Item1]=bad.Item2;
+    try { new SharedDatabaseTraining(invalid,sharedEnvironment,clock).ReadSettings();Check(false,"invalid shared config denied"); }
+    catch(InvalidOperationException) { Check(true,"invalid shared config denied: "+bad.Item1); }
+}
+var production=new TestHostEnvironment { EnvironmentName="Production" };
+try { new SharedDatabaseTraining(SharedConfig(),production,clock).ReadSettings();Check(false,"shared training production denied"); }
+catch(InvalidOperationException) { Check(true,"shared training production denied"); }
+var trainingCookie=new ClaimsPrincipal(new ClaimsIdentity([new Claim("login_source","shared-database-training"),new Claim("training_scope",trainingSettings.Scope),new Claim(ClaimTypes.NameIdentifier,"verification-admin")],"Cookies"));
+Check(training.AcceptsCookie(trainingCookie),"matching training cookie scope accepted");
+var outside=SharedConfig();outside["SharedDatabaseTraining:Enabled"]="false";
+Check(!new SharedDatabaseTraining(outside,production,clock).AcceptsCookie(trainingCookie),"training cookie rejected outside enabled profile");
+sharedConfiguration["SharedDatabaseTraining:Principal"]="verification-reader";
+Check(!training.AcceptsCookie(trainingCookie),"training principal change rejects old cookie");
+sharedConfiguration["SharedDatabaseTraining:Principal"]="verification-admin";
+foreach(var request in new[]{(Https:false,Address:IPAddress.Loopback),(Https:true,Address:IPAddress.Parse("192.0.2.1"))}) {
+    var context=new DefaultHttpContext();context.Request.IsHttps=request.Https;context.Connection.RemoteIpAddress=request.Address;
+    try { await training.ApplyAsync(context);Check(false,"shared training network boundary denied"); }
+    catch(WebFault e) { Check(e.Status==403,"shared training HTTPS and loopback boundary"); }
+}
 var limited = new LocalLogin(Config(), clock);
 Parallel.For(0, 8, i => Check(limited.Authenticate("other-" + i, "wrong") is null, "parallel invalid credentials"));
 Check(limited.Authenticate("owner", password) is null, "concurrent attempts exhaust shared budget");
@@ -136,4 +175,12 @@ sealed class TestClock : TimeProvider
     private DateTimeOffset now = new(2026, 10, 23, 0, 0, 0, TimeSpan.Zero);
     public override DateTimeOffset GetUtcNow() => now;
     public void Advance(TimeSpan duration) => now += duration;
+}
+
+sealed class TestHostEnvironment : Microsoft.Extensions.Hosting.IHostEnvironment
+{
+    public string EnvironmentName { get; set; } = "Production";
+    public string ApplicationName { get; set; } = "ContractTests";
+    public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+    public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; } = new Microsoft.Extensions.FileProviders.NullFileProvider();
 }

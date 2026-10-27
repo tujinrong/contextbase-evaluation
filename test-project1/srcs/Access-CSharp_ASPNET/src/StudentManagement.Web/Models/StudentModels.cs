@@ -14,6 +14,7 @@ public sealed class StudentInput
     public string? StudentNo { get; set; }
     public string? StudentName { get; set; }
     public string? StudentNameKana { get; set; }
+    public string? BirthDate { get; set; }
     public string? BirthEra { get; set; }
     public string? BirthYear { get; set; }
     public string? BirthMonth { get; set; }
@@ -37,17 +38,26 @@ public sealed class StudentInput
     public string? Remarks { get; set; }
     public string? OperationReason { get; set; }
 
-    public StudentDraft ToDraft() => new()
+    public StudentDraft ToDraft()
     {
+        var birth = (Era: BirthEra, Year: BirthYear, Month: BirthMonth, Day: BirthDay);
+        if (BirthDate is not null)
+        {
+            try { birth = JapaneseDate.BirthParts(JapaneseDate.StrictIso(BirthDate, true)!); }
+            catch (BusinessException ex) { throw new BusinessException(ex.Code, ex.Message, nameof(BirthDate)); }
+        }
+        return new()
+        {
         StudentNo = StudentNo, StudentName = StudentName, StudentNameKana = StudentNameKana,
-        BirthEra = BirthEra, BirthYear = BirthYear, BirthMonth = BirthMonth, BirthDay = BirthDay,
+        BirthEra = birth.Era, BirthYear = birth.Year, BirthMonth = birth.Month, BirthDay = birth.Day,
         GenderCode = GenderCode, PostalCode = PostalCode, PrefectureCode = PrefectureCode,
         AddressLine1 = AddressLine1, AddressLine2 = AddressLine2, PhoneNumber = PhoneNumber,
         EmailAddress = EmailAddress, AdmissionDate = AdmissionDate, EnrollmentStatusCode = EnrollmentStatusCode,
         EnrollmentEndDate = EnrollmentEndDate, ClassId = ParseOptionalId(ClassId), SchoolYear = SchoolYear,
         GradeCode = GradeCode, EmergencyContactName = EmergencyContactName, RelationshipCode = RelationshipCode,
         EmergencyPhoneNumber = EmergencyPhoneNumber, Remarks = Remarks, OperationReason = OperationReason
-    };
+        };
+    }
 
     public static StudentInput FromStudent(Student student)
     {
@@ -56,6 +66,7 @@ public sealed class StudentInput
         {
             Id = student.StudentId, ExpectedVersion = student.RowVersion, StudentNo = draft.StudentNo,
             StudentName = draft.StudentName, StudentNameKana = draft.StudentNameKana, BirthEra = draft.BirthEra,
+            BirthDate = student.BirthDate,
             BirthYear = draft.BirthYear, BirthMonth = draft.BirthMonth, BirthDay = draft.BirthDay,
             GenderCode = draft.GenderCode, PostalCode = draft.PostalCode, PrefectureCode = draft.PrefectureCode,
             AddressLine1 = draft.AddressLine1, AddressLine2 = draft.AddressLine2, PhoneNumber = draft.PhoneNumber,
@@ -84,6 +95,8 @@ public sealed class SearchInput
     public string SortKey { get; set; } = "studentNo";
     public string SortDirection { get; set; } = "asc";
     public bool Searched { get; set; }
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 20;
 }
 
 public sealed record StudentListItem(int Id, string StudentNo, string Name, string Kana, string BirthDate,
@@ -99,6 +112,9 @@ public sealed class SearchViewModel
     public string? SearchedAt { get; set; }
     public string? Warning { get; set; }
     public bool RestoreScroll { get; set; }
+    public int TotalCount { get; set; }
+    public int PageCount { get; set; } = 1;
+    public bool LimitExceeded { get; set; }
 }
 
 public sealed class EditorViewModel

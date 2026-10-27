@@ -1,3 +1,7 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var actor = Context.Items["Actor"] as Actor;
+}
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -7,25 +11,30 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
+    <a href="#main-content" class="skip-link">本文へ移動</a>
     <header class="app-header">
-        <a class="brand" asp-controller="Students" asp-action="Index">学生管理</a>
-        <nav aria-label="主な操作">
-            <a asp-controller="Students" asp-action="Index">学生検索</a>
-            <a asp-controller="Masters" asp-action="Index">マスタ保守</a>
+        <a class="brand" asp-controller="Students" asp-action="Index"><span class="brand-mark" aria-hidden="true">S</span><span>学生管理<span class="brand-sub">Student Management</span></span></a>
+        <nav aria-label="メインナビゲーション">
+            <a class="@(controller == "Students" ? "active" : "")" aria-current="@(controller == "Students" ? "page" : null)" asp-controller="Students" asp-action="Index">学生一覧</a>
+            @if (actor?.Role == Role.Admin)
+            {
+                <a class="@(controller == "Masters" ? "active" : "")" aria-current="@(controller == "Masters" ? "page" : null)" asp-controller="Masters" asp-action="Index">マスタ管理</a>
+            }
         </nav>
-        <span class="identity">@Context.Items["ActorDisplay"]</span>
+        <span class="identity"><span class="identity-dot" aria-hidden="true"></span>@Context.Items["ActorDisplay"]</span>
     </header>
     @if (Context.Items["VerificationMode"] is true)
     {
-        <aside class="verification" role="status">検証専用モード：@Context.Items["VerificationStorage"]</aside>
+        <aside class="verification" role="status"><strong>検証環境</strong><span>@Context.Items["VerificationStorage"]</span></aside>
     }
-    <main>
+    <main id="main-content">
         @if (TempData["Message"] is string message)
         {
-            <p class="message" role="status">@message</p>
+            <div class="message" role="status"><span class="message-symbol" aria-hidden="true">✓</span><p>@message</p></div>
         }
         @RenderBody()
     </main>
+    <footer class="app-footer">学生管理システム<span>Student Management</span></footer>
     <script src="~/js/site.js" asp-append-version="true" defer></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

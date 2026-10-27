@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-README","version":"1.0","path":"sample-project2/README.md","sheets":[{"heading":"目的と今回の範囲","kind":"GRID","sheet":"01_目的と範囲"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["領域"]},{"heading":"実施状態","kind":"GRID","sheet":"03_実施状態"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-README","version":"1.1","path":"sample-project2/README.md","sheets":[{"heading":"目的と今回の範囲","kind":"GRID","sheet":"01_目的と範囲"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["領域"]},{"heading":"実施状態","kind":"GRID","sheet":"03_実施状態"}]} -->
 # 社員経歴管理システム — sample-project2
 
-版1.0／2026-10-27。Agent訓練・DEMO用の最小構成。基本設計初版（利用者レビュー前）。
+版1.1／2026-10-27。Agent訓練・DEMO用の最小構成。基本設計改訂版（項目一覧・DB設計更新、全体受入前）。
 
 ## 目的と今回の範囲
 

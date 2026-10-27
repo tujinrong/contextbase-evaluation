@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Runtime.CompilerServices;
 using Microsoft.Data.SqlClient;
 
 namespace StudentManagement.Core;
@@ -16,6 +17,8 @@ public sealed class SqlServerStudentService : IStudentService
     private readonly Func<CurrentUser> _currentUser;
     private readonly bool _webTokens;
     private readonly TimeProvider _clock;
+    private readonly bool _sharedAccess;
+    private long MaximumVersion => _sharedAccess ? int.MaxValue : long.MaxValue;
     private sealed class Confirmation(CurrentUser owner, long? id, long? version, byte[] payload, byte[] candidates, DateTimeOffset expires)
     {
         public CurrentUser Owner { get; } = owner;
@@ -36,10 +39,12 @@ public sealed class SqlServerStudentService : IStudentService
         ["enrollment_end_date"]=(SqlDbType.Date,0), ["class_id"]=(SqlDbType.BigInt,0), ["emergency_contact_name"]=(SqlDbType.NVarChar,16),
         ["relationship_category"]=(SqlDbType.VarChar,24), ["relationship_code"]=(SqlDbType.VarChar,2), ["emergency_phone_number"]=(SqlDbType.VarChar,16), ["remarks"]=(SqlDbType.NVarChar,240)
     };
-    public SqlServerStudentService(string connectionString, Func<CurrentUser> currentUser, bool webTokens = false, TimeProvider? clock = null)
+    public SqlServerStudentService(string connectionString, Func<CurrentUser> currentUser, bool webTokens = false, TimeProvider? clock = null, StudentDatabaseProfile databaseProfile = StudentDatabaseProfile.Native)
     {
-        var builder = new SqlConnectionStringBuilder(connectionString) { Encrypt = SqlConnectionEncryptOption.Mandatory, TrustServerCertificate = false };
-        _connectionString = builder.ConnectionString; _currentUser = currentUser; _webTokens = webTokens; _clock = clock ?? TimeProvider.System;
+        if (!Enum.IsDefined(databaseProfile)) throw new ArgumentOutOfRangeException(nameof(databaseProfile));
+        _sharedAccess = databaseProfile == StudentDatabaseProfile.SharedAccess;
+        if (_sharedAccess && !webTokens) throw new ArgumentException("SharedAccess requires Web-owned confirmation tokens; native DB token tables are not used.", nameof(webTokens));
+        _connectionString = SharedAccessSchema.ConnectionString(connectionString,databaseProfile); _currentUser = currentUser; _webTokens = webTokens; _clock = clock ?? TimeProvider.System;
     }
     private DateTimeOffset Now => _clock.GetUtcNow();
     private static DateOnly BusinessDay(DateTimeOffset now) => DateOnly.FromDateTime(now.ToOffset(TimeSpan.FromHours(9)).DateTime);
@@ -53,8 +58,10 @@ public sealed class SqlServerStudentService : IStudentService
     private async Task<SqlConnection> Open(CancellationToken ct)
     {
         var connection = new SqlConnection(_connectionString);
+        SharedAccessSchema.Register(connection,_sharedAccess);
         try {
             await connection.OpenAsync(ct);
+            if (_sharedAccess) return connection;
             await using var diagnostic = connection.CreateCommand();
             diagnostic.CommandText = "SELECT snapshot_isolation_state FROM sys.databases WHERE database_id=DB_ID()";
             if (Convert.ToInt32(await diagnostic.ExecuteScalarAsync(ct), CultureInfo.InvariantCulture) != 1)
@@ -66,19 +73,20 @@ public sealed class SqlServerStudentService : IStudentService
         => new(sql, connection, tx) { CommandTimeout = 30 };
     internal static void Param(SqlCommand command, string name, SqlDbType type, object? value, int size = 0)
     {
+        SharedAccessSchema.ConvertParameter(command.Connection,type,value,size,out type,out value,out size);
         if (value is DateOnly date) value = date.ToDateTime(TimeOnly.MinValue);
         var parameter = command.Parameters.Add(name, type);
         if (size != 0) parameter.Size = size;
         parameter.Value = value ?? DBNull.Value;
     }
     private static string? String(SqlDataReader reader, string column) => reader.IsDBNull(reader.GetOrdinal(column)) ? null : reader.GetString(reader.GetOrdinal(column));
-    private static long Long(SqlDataReader reader, string column) => reader.GetInt64(reader.GetOrdinal(column));
-    private static DateOnly Date(SqlDataReader reader, string column) => DateOnly.FromDateTime(reader.GetDateTime(reader.GetOrdinal(column)));
+    private static long Long(SqlDataReader reader, string column) => Convert.ToInt64(reader[column],CultureInfo.InvariantCulture);
+    private static DateOnly Date(SqlDataReader reader, string column) => SharedAccessSchema.ReadDate(reader[column]);
     private static StudentRow Row(SqlDataReader reader) => new(
         Long(reader,"student_id"), String(reader,"student_no")!, String(reader,"student_name")!, String(reader,"student_name_kana")!, Date(reader,"birth_date"),
         reader.IsDBNull(reader.GetOrdinal("school_year")) ? null : Convert.ToInt32(reader["school_year"]), String(reader,"grade_name"), String(reader,"class_code"), String(reader,"class_name"),
         String(reader,"status_name"), (String(reader,"prefecture_name") ?? "[不整合]") + String(reader,"address_line1"), String(reader,"phone_number"), Date(reader,"admission_date"),
-        reader.GetFieldValue<DateTimeOffset>(reader.GetOrdinal("updated_at")), Long(reader,"row_version"));
+        SharedAccessSchema.ReadTimestamp(reader["updated_at"]), Long(reader,"row_version"));
     private const string RowSelect = """
         SELECT s.student_id,s.student_no,s.student_name,s.student_name_kana,s.birth_date,
                c.school_year,c.class_code,c.class_name,g.code_name grade_name,e.code_name status_name,
@@ -91,6 +99,11 @@ public sealed class SqlServerStudentService : IStudentService
         """;
     internal static async Task Gate(SqlConnection connection, SqlTransaction tx, CancellationToken ct)
     {
+        if (SharedAccessSchema.IsShared(connection)) {
+            await using var guard=Command(connection,tx,"SET XACT_ABORT ON; UPDATE dbo.t_write_guard WITH (UPDLOCK,HOLDLOCK) SET lock_bit=~lock_bit WHERE guard_id=1;");
+            if(await guard.ExecuteNonQueryAsync(ct)!=1) throw new InvalidOperationException("Shared DB write guard is missing.");
+            return;
+        }
         await using var command = Command(connection,tx,"""
             SET XACT_ABORT ON;
             DECLARE @result int;
@@ -118,7 +131,7 @@ public sealed class SqlServerStudentService : IStudentService
         try {
             if (criteria.Page < 1 || criteria.PageSize is not (20 or 50 or 100) || criteria.SortDirection is not ("asc" or "desc")) throw new ArgumentException("E-COM-003: ページ指定が不正です。");
             var order = criteria.SortKey switch { "studentNo" => "s.student_no", "name" => "s.name_key", "admissionDate" => "s.admission_date", "updatedAt" => "s.updated_at", _ => throw new ArgumentException("E-COM-003: 並び順が不正です。") };
-            if (criteria.ClassId is <= 0) throw new ArgumentException("E-STU-010: クラスIDが不正です。");
+            if (criteria.ClassId is <= 0 || (_sharedAccess && criteria.ClassId>int.MaxValue)) throw new ArgumentException("E-STU-010: クラスIDが不正です。");
             var statuses = criteria.StatusCodes;
             if (statuses is null || statuses.Length > 4 || statuses.Distinct(StringComparer.Ordinal).Count() != statuses.Length || statuses.Any(value => value is not ("01" or "02" or "03" or "04"))) throw new ArgumentException("E-STU-009: 在籍区分が不正です。");
             var no = criteria.StudentNoPrefix;
@@ -126,7 +139,7 @@ public sealed class SqlServerStudentService : IStudentService
             if (no is not null && StudentNormalizer.Identifier(no,15,"StudentNo") != no || name is not null && (StudentNormalizer.ScalarCount(name)>160 || StudentNormalizer.NameKey(name)!=name))
                 throw new ArgumentException("E-SRC-002: 正規化済み検索条件が不正です。");
             await using var connection = await Open(ct);
-            await using var tx = (SqlTransaction)await connection.BeginTransactionAsync(IsolationLevel.Snapshot,ct);
+            await using var tx = (SqlTransaction)await connection.BeginTransactionAsync(_sharedAccess ? IsolationLevel.Serializable : IsolationLevel.Snapshot,ct);
             foreach (var status in statuses)
                 if (!await CodeExists(connection,tx,"ENROLLMENT_STATUS",status,ct)) throw new ArgumentException("E-STU-009: 指定した在籍区分が存在しません。");
             if (criteria.ClassId is { } classId) {
@@ -163,19 +176,19 @@ public sealed class SqlServerStudentService : IStudentService
     }
     public async Task<StudentDetail?> GetAsync(long id, CancellationToken ct = default)
     {
-        _ = User(); if (id <= 0) return null;
+        _ = User(); if (id <= 0 || (_sharedAccess && id>int.MaxValue)) return null;
         await using var connection = await Open(ct);
         await using var command = Command(connection,null,"SELECT * FROM dbo.m_student WHERE student_id=@id AND is_deleted=0");
         Param(command,"@id",SqlDbType.BigInt,id);
         await using var reader = await command.ExecuteReaderAsync(ct);
         if(!await reader.ReadAsync(ct)) return null;
-        var values = Columns.Keys.ToDictionary(key=>key,key=>reader.IsDBNull(reader.GetOrdinal(key))?null:reader[key]);
-        return Detail(id,Long(reader,"row_version"),values,reader.GetFieldValue<DateTimeOffset>(reader.GetOrdinal("updated_at")),String(reader,"updated_by")!);
+        var values = Columns.Keys.ToDictionary(key=>key,key=>SharedAccessSchema.ReadValue(reader,key));
+        return Detail(id,Long(reader,"row_version"),values,SharedAccessSchema.ReadTimestamp(reader["updated_at"]),String(reader,"updated_by")!);
     }
     private static StudentDetail Detail(long id,long version,Dictionary<string,object?> values,DateTimeOffset updated,string actor)
     {
         string? S(string key)=>values[key]?.ToString();
-        DateOnly D(string key)=>values[key] is DateOnly date?date:DateOnly.FromDateTime((DateTime)values[key]!);
+        DateOnly D(string key)=>SharedAccessSchema.ReadDate(values[key]!);
         var draft = new StudentDraft {
             StudentNo=S("student_no")!,StudentName=S("student_name")!,StudentNameKana=S("student_name_kana")!,BirthDateInput=JapaneseDateService.ToInput(D("birth_date")),
             GenderCode=S("gender_code")!,PostalCode=S("postal_code")!,PrefectureCode=S("prefecture_code")!,AddressLine1=S("address_line1")!,AddressLine2=S("address_line2"),
@@ -189,7 +202,7 @@ public sealed class SqlServerStudentService : IStudentService
     public async Task<LookupSet> LookupAsync(bool includeOccupancy,CancellationToken ct = default)
     {
         _ = User(); await using var connection = await Open(ct);
-        await using var tx=(SqlTransaction)await connection.BeginTransactionAsync(IsolationLevel.Snapshot,ct);
+        await using var tx=(SqlTransaction)await connection.BeginTransactionAsync(_sharedAccess ? IsolationLevel.Serializable : IsolationLevel.Snapshot,ct);
         var occupied=includeOccupancy ? "(SELECT COUNT(*) FROM dbo.m_student s WHERE s.class_id=c.class_id AND s.is_deleted=0 AND s.enrollment_status_code IN ('01','02'))" : "CONVERT(int,0)";
         await using var command=Command(connection,tx,$"""
             SELECT c.category_id,c.code_value,c.code_name,c.display_order,
@@ -223,8 +236,9 @@ public sealed class SqlServerStudentService : IStudentService
         NormalizedStudent student; string? reason;
         try {
             student=StudentNormalizer.Normalize(request.Draft,day);
+            if(_sharedAccess && student.ClassId>int.MaxValue) throw new ArgumentException("E-STU-010: 共有DBのクラスID範囲を超えています。");
             reason=StudentNormalizer.Text(request.Reason,60,60,"Reason",multiline:true);
-            if(request.StudentId is <=0 || request.ExpectedVersion is <=0 || (request.StudentId is null)!=(request.ExpectedVersion is null)) throw new ArgumentException("E-COM-003: 学生ID/版が不正です。");
+            if(request.StudentId is <=0 || request.ExpectedVersion is <=0 || (_sharedAccess && (request.StudentId>int.MaxValue || request.ExpectedVersion>int.MaxValue)) || (request.StudentId is null)!=(request.ExpectedVersion is null)) throw new ArgumentException("E-COM-003: 学生ID/版が不正です。");
             if(request.SchoolYear is <1900 or >9998) throw new ArgumentException("E-DATE-003: 年度が不正です。");
             request=request with { GradeCode=StudentNormalizer.Code(request.GradeCode,2,"GradeCode",false) };
         } catch(InputValidationException e) { return new(Outcome.ValidationFailed,null,null,e.Errors,RequestId:requestId); }
@@ -242,7 +256,7 @@ public sealed class SqlServerStudentService : IStudentService
                 if(!await reader.ReadAsync(ct)) return Result(Outcome.NotFound,"E-STU-103","対象学生が存在しません。",requestId);
                 previousVersion=Long(reader,"row_version");
                 if(previousVersion!=request.ExpectedVersion) return Result(Outcome.Conflict,"E-STU-105","他の利用者が変更しています。再読込してください。",requestId);
-                previous=Columns.Keys.ToDictionary(key=>key,key=>reader.IsDBNull(reader.GetOrdinal(key))?null:reader[key]);
+                previous=Columns.Keys.ToDictionary(key=>key,key=>SharedAccessSchema.ReadValue(reader,key));
                 if((string)previous["student_no"]! != student.Text("student_no")) return Result(Outcome.ValidationFailed,"E-STU-104","学籍番号は変更できません。",requestId);
                 if((string)previous["enrollment_status_code"]! is "03" or "04" && !Equals(previous["enrollment_status_code"],student.Values["enrollment_status_code"])) {
                     if(user.Role!=Role.Administrator) return Result(Outcome.Forbidden,"E-COM-002","終了区分の訂正は管理者権限が必要です。",requestId);
@@ -252,7 +266,7 @@ public sealed class SqlServerStudentService : IStudentService
             await CheckRules(connection,tx,student,previous,request,day,ct);
             var changed=student.Values.Where(pair=>previous is null || !EqualValue(pair.Value,previous[pair.Key])).Select(pair=>pair.Key).ToArray();
             if(changed.Length==0) { await tx.RollbackAsync(ct); return new(Outcome.NoChange,request.StudentId,previousVersion,[],RequestId:requestId); }
-            if(previousVersion==long.MaxValue) return Result(Outcome.Conflict,"E-STU-105","更新管理番号が上限に到達しました。",requestId);
+            if(previousVersion==MaximumVersion) return Result(Outcome.Conflict,"E-STU-105","更新管理番号が上限に到達しました。",requestId);
             await using(var number=Command(connection,tx,"SELECT COUNT_BIG(*) FROM dbo.m_student WHERE student_no=@no AND (@id IS NULL OR student_id<>@id)")) {
                 Param(number,"@no",SqlDbType.VarChar,student.Text("student_no"),15); Param(number,"@id",SqlDbType.BigInt,request.StudentId);
                 if((long)(await number.ExecuteScalarAsync(ct))!>0) return Result(Outcome.ValidationFailed,"E-STU-101","学籍番号は使用済みです。",requestId);
@@ -293,7 +307,7 @@ public sealed class SqlServerStudentService : IStudentService
                 if(!insert) { Param(save,"@id",SqlDbType.BigInt,request.StudentId); Param(save,"@version",SqlDbType.BigInt,request.ExpectedVersion); }
                 writeStarted=true; var saved=await save.ExecuteScalarAsync(ct);
                 if(saved is null || saved is DBNull) throw new DBConcurrencyException();
-                id=(long)saved;
+                id=Convert.ToInt64(saved,CultureInfo.InvariantCulture);
             }
             var auditChanged=insert ? writeColumns.Concat(new[]{"gender_category","prefecture_category","enrollment_category","is_deleted","created_at","created_by","updated_at","updated_by","row_version"}).ToArray() : changed.Concat(new[]{"updated_at","updated_by","row_version"}).ToArray();
             await Audit(connection,tx,id,insert?"CREATE":"UPDATE",previousVersion,version,auditChanged,user.Principal,now,reason,candidates.Count>0,Guid.Parse(requestId),ct);
@@ -343,7 +357,7 @@ public sealed class SqlServerStudentService : IStudentService
             await using var reader=await check.ExecuteReaderAsync(ct);
             if(!await reader.ReadAsync(ct)) errors.Add(new(StudentNormalizer.PropertyNames[column],"E-STU-009","コードが存在しません。"));
             else if(previous is null || !Equals(previous[column],value)) {
-                if(!reader.GetBoolean(0) || !reader.GetBoolean(1) || DateOnly.FromDateTime(reader.GetDateTime(2))>day || !reader.IsDBNull(3)&&DateOnly.FromDateTime(reader.GetDateTime(3))<day) errors.Add(new(StudentNormalizer.PropertyNames[column],"E-STU-011","コードは現在使用できません。"));
+                if(!reader.GetBoolean(0) || !reader.GetBoolean(1) || SharedAccessSchema.ReadDate(reader.GetValue(2))>day || !reader.IsDBNull(3)&&SharedAccessSchema.ReadDate(reader.GetValue(3))<day) errors.Add(new(StudentNormalizer.PropertyNames[column],"E-STU-011","コードは現在使用できません。"));
             }
         }
         var oldClass=(long?)previous?.GetValueOrDefault("class_id");
@@ -358,7 +372,7 @@ public sealed class SqlServerStudentService : IStudentService
             await using(var reader=await command.ExecuteReaderAsync(ct)) {
                 if(!await reader.ReadAsync(ct)) errors.Add(new("ClassId","E-STU-010","指定クラスが存在しません。"));
                 else {
-                    var start=DateOnly.FromDateTime(reader.GetDateTime(2)); var end=DateOnly.FromDateTime(reader.GetDateTime(3));
+                    var start=SharedAccessSchema.ReadDate(reader.GetValue(2)); var end=SharedAccessSchema.ReadDate(reader.GetValue(3));
                     capacity=reader.IsDBNull(5)?null:reader.GetInt32(5);
                     if(request.SchoolYear is not null&&Convert.ToInt32(reader[0])!=request.SchoolYear || request.GradeCode is not null&&reader.GetString(1)!=request.GradeCode) errors.Add(new("ClassId","E-STU-014","年度・学年・クラスが一致しません。"));
                     var changedPeriod=previous is null || oldClass!=classId || oldStatus!=status || !EqualValue(student.Values["admission_date"],previous["admission_date"]) || !EqualValue(student.Values["enrollment_end_date"],previous["enrollment_end_date"]);
@@ -387,7 +401,7 @@ public sealed class SqlServerStudentService : IStudentService
         if(user.Role!=Role.Administrator) return Result(Outcome.Forbidden,"E-COM-002","削除権限がありません。",requestId);
         try { reason=StudentNormalizer.Text(reason,60,60,"DeleteReason",true,true)!; }
         catch(InputValidationException e) { return new(Outcome.ValidationFailed,null,null,e.Errors,RequestId:requestId); }
-        if(id<=0||version<=0||version==long.MaxValue) return Result(Outcome.ValidationFailed,"E-COM-003","学生ID/版が不正です。",requestId);
+        if(id<=0||(_sharedAccess&&id>int.MaxValue)||version<=0||version>=MaximumVersion) return Result(Outcome.ValidationFailed,"E-COM-003","学生ID/版が不正です。",requestId);
         await using var connection=await Open(ct);
         await using var tx=(SqlTransaction)await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted,ct);
         var writeStarted=false; var commitAttempted=false;
@@ -396,7 +410,7 @@ public sealed class SqlServerStudentService : IStudentService
             await using(var load=Command(connection,tx,"SELECT row_version FROM dbo.m_student WHERE student_id=@id AND is_deleted=0")) {
                 Param(load,"@id",SqlDbType.BigInt,id); var saved=await load.ExecuteScalarAsync(ct);
                 if(saved is null) return Result(Outcome.NotFound,"E-STU-103","対象学生が存在しません。",requestId);
-                if((long)saved!=version) return Result(Outcome.Conflict,"E-STU-105","他の利用者が変更しています。",requestId);
+                if(Convert.ToInt64(saved,CultureInfo.InvariantCulture)!=version) return Result(Outcome.Conflict,"E-STU-105","他の利用者が変更しています。",requestId);
             }
             await using(var command=Command(connection,tx,"UPDATE dbo.m_student SET is_deleted=1,deleted_at=@now,deleted_by=@actor,delete_reason=@reason,updated_at=@now,updated_by=@actor,row_version=row_version+1 WHERE student_id=@id AND row_version=@version AND is_deleted=0")) {
                 Param(command,"@id",SqlDbType.BigInt,id); Param(command,"@version",SqlDbType.BigInt,version); Param(command,"@now",SqlDbType.DateTimeOffset,now); Param(command,"@actor",SqlDbType.NVarChar,user.Principal,128); Param(command,"@reason",SqlDbType.NVarChar,reason,120);
@@ -406,5 +420,70 @@ public sealed class SqlServerStudentService : IStudentService
             commitAttempted=true; await tx.CommitAsync(ct); return new(Outcome.Saved,id,version+1,[],RequestId:requestId);
         } catch(DBConcurrencyException) { await Rollback(tx); return Result(Outcome.Conflict,"E-STU-105","他の利用者が変更しています。",requestId); }
         catch(Exception e) when(e is SqlException or InvalidOperationException or OperationCanceledException) { var rolledBack=await Rollback(tx); var unknown=writeStarted&&(commitAttempted||!rolledBack); return Result(unknown?Outcome.Unknown:Outcome.SystemError,"E-COM-004",unknown?"削除結果を確認できません。検索で確認してください。":"削除処理に失敗しました。受付番号："+requestId,requestId); }
+    }
+}
+
+// The shared DB keeps Access's ISO text dates, INT identities/versions and UTC
+// datetime2 audit values. Convert only at the persistence boundary; public Web
+// contracts remain Int64/DateOnly/DateTimeOffset and business limits stay intact.
+internal static class SharedAccessSchema
+{
+    private sealed record Profile(bool Shared);
+    private static readonly ConditionalWeakTable<SqlConnection,Profile> Profiles = new();
+    internal static void Register(SqlConnection connection,bool shared) => Profiles.Add(connection,new(shared));
+    internal static bool IsShared(SqlConnection? connection) => connection is not null && Profiles.TryGetValue(connection,out var profile) && profile.Shared;
+    internal static string ConnectionString(string value,StudentDatabaseProfile profile)
+    {
+        var builder=new SqlConnectionStringBuilder(value){Encrypt=SqlConnectionEncryptOption.Mandatory};
+        if(profile!=StudentDatabaseProfile.SharedAccess) builder.TrustServerCertificate=false;
+        else if(builder.TrustServerCertificate && !new[]{@".\SQLEXPRESS",@"localhost\SQLEXPRESS",@"127.0.0.1\SQLEXPRESS"}.Contains(builder.DataSource,StringComparer.OrdinalIgnoreCase))
+            throw new ArgumentException("SharedAccess certificate bypass is restricted to the explicit local SQLEXPRESS instance.");
+        return builder.ConnectionString;
+    }
+    internal static void ConvertParameter(SqlConnection? connection,SqlDbType requested,object? source,int requestedSize,out SqlDbType type,out object? value,out int size)
+    {
+        type=requested;value=source;size=requestedSize;
+        if(!IsShared(connection))return;
+        switch(requested)
+        {
+            case SqlDbType.BigInt:
+                type=SqlDbType.Int;
+                if(source is not null && source is not DBNull)value=checked(Convert.ToInt32(source,CultureInfo.InvariantCulture));
+                break;
+            case SqlDbType.Date:
+                type=SqlDbType.NVarChar;size=10;
+                if(source is not null && source is not DBNull)value=ReadDate(source).ToString("yyyy-MM-dd",CultureInfo.InvariantCulture);
+                break;
+            case SqlDbType.DateTimeOffset:
+                type=SqlDbType.DateTime2;
+                if(source is DateTimeOffset instant)value=instant.UtcDateTime;
+                break;
+            case SqlDbType.UniqueIdentifier:
+                type=SqlDbType.NVarChar;size=36;
+                if(source is Guid id)value=id.ToString("D");
+                break;
+            case SqlDbType.VarChar: type=SqlDbType.NVarChar;break;
+        }
+    }
+    internal static DateOnly ReadDate(object value) => value switch
+    {
+        DateOnly day=>day,
+        DateTime timestamp=>DateOnly.FromDateTime(timestamp),
+        string text=>DateOnly.ParseExact(text,"yyyy-MM-dd",CultureInfo.InvariantCulture),
+        _=>throw new InvalidOperationException("Unexpected SQL date representation.")
+    };
+    internal static DateTimeOffset ReadTimestamp(object value) => value switch
+    {
+        DateTimeOffset instant=>instant.ToUniversalTime(),
+        DateTime timestamp=>new DateTimeOffset(DateTime.SpecifyKind(timestamp,DateTimeKind.Utc)),
+        _=>throw new InvalidOperationException("Unexpected SQL audit timestamp representation.")
+    };
+    internal static object? ReadValue(SqlDataReader reader,string column)
+    {
+        var value=reader[column];
+        if(value is DBNull)return null;
+        if(column is "birth_date" or "admission_date" or "enrollment_end_date" or "valid_from" or "valid_to")return ReadDate(value);
+        if(column is "student_id" or "class_id" or "row_version")return Convert.ToInt64(value,CultureInfo.InvariantCulture);
+        return value;
     }
 }

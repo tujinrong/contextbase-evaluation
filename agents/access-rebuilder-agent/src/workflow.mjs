@@ -49,7 +49,8 @@ export function outputManifest(context) {
 export function prepare(context) {
   const {profile,target,root} = context;
   fs.mkdirSync(path.join(target,'.tmp'),{recursive:true});
-  const record = {schema:'access-rebuilder-inputs/0.2',projectId:profile.projectId,profileId:profile.target.profileId,source:profile.source,authorization:profile.approval,training:profile.training,agentVersion:'0.2',rulesHash:hash(path.join(root,'agents/access-rebuilder-agent/docs/変換ルール.md')),recordedAt:new Date().toISOString()};
+  const referenceInputs=(profile.reference?.allowedFiles??[]).map(file=>({path:file,sha256:hash(safePath(root,file))}));
+  const record = {schema:'access-rebuilder-inputs/0.3',projectId:profile.projectId,profileId:profile.target.profileId,source:profile.source,authorization:profile.approval,training:profile.training,revision:profile.revision??null,rebuildPolicy:profile.rebuildPolicy??null,referencePurpose:profile.reference?.purpose??null,referenceInputs,agentVersion:'0.3',rulesHash:hash(path.join(root,'agents/access-rebuilder-agent/docs/変換ルール.md')),recordedAt:new Date().toISOString()};
   writeJson(path.join(target,'build/generation/inputs.json'),record);
   return record;
 }

@@ -40,10 +40,12 @@ public sealed class EditorSnapshotStore
 
     public static StudentInput Clone(StudentInput input) => JsonSerializer.Deserialize<StudentInput>(JsonSerializer.Serialize(input))!;
 
-    public static IReadOnlyDictionary<string, string> RawValues(StudentInput input) => new Dictionary<string, string>
+    public static IReadOnlyDictionary<string, string> RawValues(StudentInput input)
     {
+        var values = new Dictionary<string, string>
+        {
         ["Input.StudentNo"] = input.StudentNo ?? "", ["Input.StudentName"] = input.StudentName ?? "",
-        ["Input.StudentNameKana"] = input.StudentNameKana ?? "", ["Input.BirthEra"] = input.BirthEra ?? "",
+        ["Input.StudentNameKana"] = input.StudentNameKana ?? "", ["Input.BirthDate"] = input.BirthDate ?? "", ["Input.BirthEra"] = input.BirthEra ?? "",
         ["Input.BirthYear"] = input.BirthYear ?? "", ["Input.BirthMonth"] = input.BirthMonth ?? "", ["Input.BirthDay"] = input.BirthDay ?? "",
         ["Input.GenderCode"] = input.GenderCode ?? "", ["Input.PostalCode"] = input.PostalCode ?? "",
         ["Input.PrefectureCode"] = input.PrefectureCode ?? "", ["Input.AddressLine1"] = input.AddressLine1 ?? "",
@@ -54,5 +56,11 @@ public sealed class EditorSnapshotStore
         ["Input.EmergencyContactName"] = input.EmergencyContactName ?? "", ["Input.RelationshipCode"] = input.RelationshipCode ?? "",
         ["Input.EmergencyPhoneNumber"] = input.EmergencyPhoneNumber ?? "", ["Input.Remarks"] = input.Remarks ?? "",
         ["Input.OperationReason"] = input.OperationReason ?? ""
-    };
+        };
+        // The Web editor renders one ISO date input. Legacy era components stay
+        // as an adapter compatibility input, not invisible dirty-form fields.
+        if (input.BirthDate is not null)
+            foreach (var component in new[] { "BirthEra", "BirthYear", "BirthMonth", "BirthDay" }) values.Remove("Input." + component);
+        return values;
+    }
 }

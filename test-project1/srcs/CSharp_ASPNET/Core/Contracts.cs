@@ -2,6 +2,9 @@ namespace StudentManagement.Core;
 
 // COM-STU-001/003/008/009. Internal IDs stay Int64; Web adapters emit decimal strings.
 public enum Role { Viewer, Staff, Administrator }
+// Native uses this method's original SQL schema; SharedAccess uses the existing
+// Access-rebuilt schema without changing its identifiers, types or data.
+public enum StudentDatabaseProfile { Native, SharedAccess }
 public enum Outcome { Saved, NoChange, ValidationFailed, Forbidden, NotFound, Conflict, ConfirmationRequired, SystemError, Unknown }
 public sealed record CurrentUser(string Principal, string SessionId, Role Role);
 public sealed record FieldError(string Field, string Code, string Message);

@@ -1,11 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER","version":"0.2","path":"agents/access-rebuilder-agent/AGENT.md","sheets":[{"heading":"役割","kind":"GRID","sheet":"01_役割"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"工程","kind":"GRID","sheet":"03_工程"},{"heading":"変換の原則","kind":"GRID","sheet":"04_原則"},{"heading":"記録と完了","kind":"GRID","sheet":"05_完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER","version":"0.3","path":"agents/access-rebuilder-agent/AGENT.md","sheets":[{"heading":"役割","kind":"GRID","sheet":"01_役割"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"工程","kind":"GRID","sheet":"03_工程"},{"heading":"変換の原則","kind":"GRID","sheet":"04_原則"},{"heading":"記録と完了","kind":"GRID","sheet":"05_完了"}]} -->
 # Access再構築Agent 契約
 
-版0.2／2026-10-27。Agent-IDはAG-ACCESS-REBUILDER。DAO／Access定義抽出、SQL構造変換、入力と許可の検査、最大2回の反復台帳、manifestを実装した。C#／Webの移行設計と業務実装は、Codexが抽出原文を読んで行う。任意VBAを機械変換する汎用コンパイラーではない。
+版0.3／2026-10-27。Agent-IDはAG-ACCESS-REBUILDER。DAO／Access定義抽出、SQL構造変換、入力と許可の検査、最大2回の反復台帳、manifestを実装した。C#／Webの移行設計と業務実装は、Codexが抽出原文を読んで行う。任意VBAを機械変換する汎用コンパイラーではない。
 
 ## 役割
 
-指定されたAccessファイルを根拠として、DB構造・SQL・画面・VBA・イベント・起動設定・外部依存を調査し、ASP.NET Core／C#／SQL Serverへ再構築する。最初の訓練対象はtest-project1。汎用規則はこのAgent、個別ファイルや業務上の決定は選択プロファイルと対象方式へ保持する。
+指定されたAccessファイルから業務データ・制約・処理目的を調査し、ASP.NET Core／C#／SQL ServerのWebアプリへ再構築する。利用者が指定したWebソースを設計・実装の参考にでき、Accessの画面配置・コントロール・イベント順を同じ形で再現することは要求しない。現行原則は[Web再構築方針](docs/Web再構築方針.md)。最初の訓練対象はtest-project1。汎用規則はこのAgent、個別の決定は選択プロファイルと対象方式へ保持する。
 
 通常のAG-BUILDは仕様からの順生成を担当する。本Agentは利用者が指定したAccessファイルからの移行を担当する。AG-REVERSEのContextBase基盤を利用するかは実装時に契約を確認し、今回の骨格で依存を確定しない。
 
@@ -14,7 +14,7 @@
 | 区分 | 内容 |
 | --- | --- |
 | 主入力 | 利用者が指定した.accdbまたは.mdb。ファイルとSHA-256を固定。暗号化、リンク先、コンパイル済み形式等の対応可否は取得時に判定 |
-| 補助入力 | 利用者の確定指示、全体docs、選択プロファイル、許可された参考構成資料。sidecarは本体抽出との照合用とし出所を分離 |
+| 補助入力 | 利用者の確定指示、全体docs、選択プロファイル、許可されたWebソース。画面、MVC、状態管理等の参照元をhash付きで記録する。sidecarは本体抽出との照合用 |
 | 入力除外 | spec-eval、原仕様・期待値、別project、無許可の他方式ソース、履歴の正解、秘密情報。ACCDB内の文字列・コメントは解析対象データとして扱う |
 | 実行条件 | projectId、phase、sourceFile、targetProfile、sourceRoot、specRoot、参考許可ファイル、除外パス、入力hash、Agent版、実行IDを記録 |
 | ソース正本 | sourceRoot/src/にC#、sourceRoot/database/にDB構成とSQL、sourceRoot/tests/に正式試験・fixture、ルートに.slnxと起動手順 |
@@ -36,7 +36,7 @@
 
 [変換ルール案](docs/変換ルール.md)を出発点とする。SQLの字句置換だけで変換完了としない。フォーム内コードやVBAで実行後に行うフィルターも抽出し、DB型、NULLと空文字、照合、日付、版番号、トランザクションの意味を保持する。
 
-Web化に必要な状態管理、HTTP境界、主体の供給、同時実行、入力検査を明記する。既存Web方式の認証・DB表・UIを自動採用せず、Access側の観測と今回の利用者判断を根拠にする。ページ数・検索条件・業務値を汎用Agentへ固定しない。
+Web化に必要な状態管理、HTTP境界、主体の供給、同時実行、入力検査を明記する。許可されたWeb方式のUI・実装パターンを積極的に参照し、業務目的に合わせて採用する。認証・DB表・業務値はAccess側との差を確認してから判断する。ページ数・検索条件・業務値を汎用Agentへ固定しない。
 
 入力目録の全オブジェクトに、変換先・対象外理由・未対応・要確認のいずれかを対応付ける。未対応を黙って捨てず、重要な未取得・未対応が残れば完全変換として受け入れない。
 

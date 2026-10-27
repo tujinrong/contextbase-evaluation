@@ -23,7 +23,7 @@ try {
       return entry.isDirectory()?artifacts(file):[file];
     });
     const {hash}=await import('../src/workflow.mjs');
-    result={schema:'access-rebuilder-outputs/0.2',sourceHash:context.profile.source.sha256,recordedAt:new Date().toISOString(),outputs:outputManifest(context),artifacts:artifacts(path.join(context.target,'build')).map(file=>({path:path.relative(context.target,file).replaceAll('\\','/'),bytes:fs.statSync(file).size,sha256:hash(file)})),formalScore:null};
+    result={schema:'access-rebuilder-outputs/0.3',sourceHash:context.profile.source.sha256,revision:context.profile.revision??null,rebuildPolicy:context.profile.rebuildPolicy??null,inputsSha256:hash(path.join(context.target,'build/generation/inputs.json')),recordedAt:new Date().toISOString(),outputs:outputManifest(context),artifacts:artifacts(path.join(context.target,'build')).map(file=>({path:path.relative(context.target,file).replaceAll('\\','/'),bytes:fs.statSync(file).size,sha256:hash(file)})),formalScore:null};
     writeJson(path.join(context.target,'build/generation/outputs.json'),result);
   } else throw Error('Usage: rebuild.mjs prepare|begin-iteration|complete-iteration --result <json>|status|manifest [--profile <path>]');
   process.stdout.write(JSON.stringify(result,null,2)+'\n');

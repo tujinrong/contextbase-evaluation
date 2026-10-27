@@ -1,5 +1,7 @@
 # 当方式専用 SQL Server 2022
 
+2026-10-27：`SharedTrainingSql`は既存の共有DB`AccessRebuilderTraining_01a17be7`を使用する。共有DBに本フォルダーのNative用DDL・seed・空DB専用結合試験を適用しない。既存列・型への対応は[共有DBプロファイル](../../../spec/CSharp_ASPNET/DB定義/SQLServer/共有DBプロファイル.md)、実機試験は方式内`tests/SharedDatabase`を使用する。以下はNative専用DBの手順である。
+
 入力は../../../spec/CSharp_ASPNET/DB定義/SQLServer。生成器とDDLは当方式内だけを使用する。
 
 ```powershell

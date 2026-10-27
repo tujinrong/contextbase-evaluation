@@ -1,5 +1,15 @@
 # C# / ASP.NET Core MVC 学生管理
 
+2026-10-27：`Access-CSharp_ASPNET`と同じローカルSQL Server DBで確認する`SharedTrainingSql`起動プロファイルを追加した。Visual Studioで`StudentManagement.Web`を起動プロジェクト、`SharedTrainingSql`をプロファイルに選ぶか、方式ルートから次を実行する。
+
+```powershell
+dotnet run --project StudentManagement.Web.csproj --launch-profile SharedTrainingSql
+```
+
+接続先は`.\SQLEXPRESS`／`AccessRebuilderTraining_01a17be7`、URLは`https://localhost:7241`。列・型の差は`StudentDatabase:Profile=SharedAccess`で対応する。共有DBに既存のNative用`database/001_schema.sql`や`002_seed.sql`を適用せず、学生・クラス・コードを初期化しない。
+
+このプロファイルは`SharedDatabaseTraining`環境、HTTPS、ローカル接続に限定した確認用の主体を明示する。`verification-admin`の権限を共有DBの`t_app_role`から要求ごとに取得し、`Reader/Staff/Admin`を当方式の`Viewer/Staff/Administrator`へ対応付ける。役割未設定・未知値は拒否し、フォームの役割やサーバープロセス利用者を使わない。暗号化Cookieのセッションを使い、当プロファイル外では確認用Cookieを拒否する。通常のLocalLoginと評価用セッションは従来の有効化条件を維持する。
+
 2026-10-25 再生成（`20261025-regenerate`）：`test-project1/spec/CSharp_ASPNET/` の索引8.5、検索詳細8.4、登録詳細8.5を入力凍結しました。独立DB定義からDDL・初期コードを再生成し、現在のソースをビルド・試験しました。検索4条件・7列と登録34項目の既存Razor/C#実装は最新契約と一致するため維持しています。詳細は [今回の生成記録](build/generation/generation.md) を参照してください。
 
 2026-10-24 配置更新。最終アプリは `build/publish/`、現在の検査は `build/test-results/`、生成記録は `build/generation/`、ソース配布は `build/source.zip` へ固定更新します。これらはGit管理し、日付・run-idごとの履歴ディレクトリーは増やしません。コンパイラのbin/obj、NuGet、npm、キャッシュ、試行ログは方式内 `.tmp/`（Git除外）です。`Directory.Build.props` は通常のdotnetコマンドにも適用します。

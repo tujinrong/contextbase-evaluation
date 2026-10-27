@@ -1,0 +1,161 @@
+{
+  "schema": "access-rebuilder-web-modernization-review/1.0",
+  "revision": "web-native-user-request",
+  "date": "2026-10-27",
+  "method": "Independent read-only source review; this report is separate from the earlier two-round conversion review.",
+  "status": "PASS-with-limitations",
+  "checks": {
+    "optionsReadsOnlyLookups": true,
+    "optionsRequestFieldAllowlist": true,
+    "optionsSnapshotSubjectSessionAndVersion": true,
+    "optionsNoStoreAndCsrf": true,
+    "latestOptionsWins": true,
+    "candidatesSafeTextAndExplicitPayload": true,
+    "localizedFailurePreservesInput": true,
+    "preventedSubmitKeepsDirtyProtection": true,
+    "bfcacheEditorStateRearmed": true,
+    "pagingPreservesCriteriaAndClamps": true,
+    "limitUsesExplicitNonPrecisePresentation": true,
+    "nativeDateAdaptsExistingBusinessValidation": true,
+    "responsiveAndStickyActions": true
+  },
+  "findings": [
+    {
+      "id": "WM-001",
+      "severity": "P2",
+      "status": "resolved-static",
+      "issue": "Search limit sentinel was presented as an exact count and row range despite no rows.",
+      "resolution": "Explicit LimitExceeded model state shows 10,000件超, suppresses row range and pager, and explains narrowing criteria.",
+      "evidence": [
+        "src/StudentManagement.Web/Controllers/StudentsController.cs:35-45",
+        "src/StudentManagement.Web/Views/Students/Index.cshtml:9-10,34,58-63"
+      ]
+    },
+    {
+      "id": "WM-002",
+      "severity": "P2",
+      "status": "resolved-static",
+      "issue": "Reload click set submitted before a pending options request could cancel the form submission, disabling later dirty unload protection.",
+      "resolution": "Only accepted anchor navigation sets submitted in the click handler; form buttons set it after submit guards.",
+      "evidence": [
+        "src/StudentManagement.Web/wwwroot/js/site.js:24-45"
+      ]
+    },
+    {
+      "id": "WM-003",
+      "severity": "P2",
+      "status": "resolved-static",
+      "issue": "Back-forward cache restore reset busy attributes but not the editor closure submitted flag.",
+      "resolution": "Per-editor pageshow resets submitted and recalculates raw dirty state.",
+      "evidence": [
+        "src/StudentManagement.Web/wwwroot/js/site.js:20-21"
+      ]
+    },
+    {
+      "id": "WM-004",
+      "severity": "P3",
+      "status": "resolved-static",
+      "issue": "Non-JSON session/CSRF or network failure could expose parser/transport messages in the candidate status.",
+      "resolution": "Content-Type-aware guarded JSON parsing and localized input-preserving fallback; only known JSON server message is presented.",
+      "evidence": [
+        "src/StudentManagement.Web/wwwroot/js/site.js:70-93"
+      ]
+    }
+  ],
+  "openFindings": 0,
+  "acceptedDesign": [
+    "CSharp_ASPNET source is a read-only Web UI/interaction reference.",
+    "Compact four-condition search, bounded result grid, sorting and Web pagination.",
+    "Responsive section editor with native date input and server-side field errors.",
+    "Async lookup reads preserve form input and use authenticated snapshot, CSRF, allowlist, no-store and latest-request ownership.",
+    "Business save rules and SQL transaction authority remain in the target Core."
+  ],
+  "targetHashes": [
+    {
+      "path": "src/StudentManagement.Web/Controllers/StudentsController.cs",
+      "sha256": "C16AF065F41A534D4DE39387F3F56D7F9C214ED0FB74DB25F3825D5C22EF488C"
+    },
+    {
+      "path": "src/StudentManagement.Web/Infrastructure/EditorSnapshotStore.cs",
+      "sha256": "7C4BD7B480B6F506301E516E30D7970810C900D7B1E0DC5CD259223DA37DF4D6"
+    },
+    {
+      "path": "src/StudentManagement.Web/Infrastructure/ActorFilter.cs",
+      "sha256": "B094F805484E84BAFDF051F4EDF13B4BEEF21C7F714A0C69356B50B127BC7C71"
+    },
+    {
+      "path": "src/StudentManagement.Web/Models/StudentModels.cs",
+      "sha256": "21E561A6E200456C8250C65EB8243FAA97E3AB3D80B8EB3CF0845D93BA0FA7A7"
+    },
+    {
+      "path": "src/StudentManagement.Web/Program.cs",
+      "sha256": "E77B56BFD69E241EFD8401D6580018119E5876047A9FD16C860F76DCE333A340"
+    },
+    {
+      "path": "src/StudentManagement.Web/Views/Students/Index.cshtml",
+      "sha256": "B98DF7425A44A6C9488153F85DDB96CC636ACCBEE8E1D5D84E4A307F278C6A0C"
+    },
+    {
+      "path": "src/StudentManagement.Web/Views/Students/Edit.cshtml",
+      "sha256": "B6793C6CD54DC81900B94190A7F98BB7D6432644C3D0E98A1B21EFB5C7512100"
+    },
+    {
+      "path": "src/StudentManagement.Web/wwwroot/js/site.js",
+      "sha256": "440B8A39656F66774EBFE74E0CBA82548142B0B94A2AFDEA8A2F47DEE9C1849B"
+    },
+    {
+      "path": "src/StudentManagement.Web/wwwroot/css/site.css",
+      "sha256": "E92C28764B92B901DAF42E5D8B34BEB05B9AAEE084C8AAC1DAC64201CF926F50"
+    },
+    {
+      "path": "tests/StudentManagement.Web.Tests/Program.cs",
+      "sha256": "51853B4C1F02FDDBE6879704EF9A81DCADA6F3492D53E5E92CE3366E1685398A"
+    }
+  ],
+  "referenceHashes": [
+    {
+      "path": "test-project1/srcs/CSharp_ASPNET/Views/Students/Search.cshtml",
+      "sha256": "1C3DD9043D81932EF002FDF1B5DAB11A132B4DCA50F7EE18EA862321C1507823"
+    },
+    {
+      "path": "test-project1/srcs/CSharp_ASPNET/Views/Students/Edit.cshtml",
+      "sha256": "83FEF1494F78591FAFE423EC577A12D129DF46095BF7CD97959D5ACA4DC2854F"
+    },
+    {
+      "path": "test-project1/srcs/CSharp_ASPNET/Infrastructure/WebStudentCoordinator.cs",
+      "sha256": "F57E213DC22534B74E357AA066E31E25E58BAC5B4DE1B3F5458502E06E049385"
+    },
+    {
+      "path": "test-project1/srcs/CSharp_ASPNET/Infrastructure/WebPresentation.cs",
+      "sha256": "23800E7F88E643C952A8617F5382E43C5C0D4FFA543C0C1F24E333312EA213F3"
+    },
+    {
+      "path": "test-project1/srcs/CSharp_ASPNET/Web/Controllers/StudentsController.cs",
+      "sha256": "C927CDAB41E0B5D2CE38EB0F88B3680B98EA1BFD1A42634637679CD8B23037B1"
+    },
+    {
+      "path": "test-project1/srcs/CSharp_ASPNET/wwwroot/css/students.css",
+      "sha256": "05377E56B7938D968040D0A49F709AD0B0E6868E85B28383AA025EC73D2F4E5A"
+    },
+    {
+      "path": "test-project1/srcs/CSharp_ASPNET/wwwroot/js/site.js",
+      "sha256": "F21308326355426DC7C110569A416AA2E942A089A9C97230396EB8B078FCF975"
+    }
+  ],
+  "trainingLedger": {
+    "sha256": "18E74A56159025D36B138A489F5011EE1A828F608C96ED3D04DA68668DB03773",
+    "maxIterations": 2,
+    "completed": 2,
+    "policy": "No third iteration opened; new human-directed Web revision recorded separately."
+  },
+  "notRunByReviewer": [
+    "HTTP middleware/CSRF execution",
+    "SQL execution",
+    "browser request race/failure simulation",
+    "mobile/sticky layout rendering and keyboard operation",
+    "manual acceptance",
+    "production authentication deployment"
+  ],
+  "runtimeEvidencePolicy": "Use current web-modernization runtime reports from the parent task. The static checks above do not establish runtime PASS.",
+  "formalScore": null
+}

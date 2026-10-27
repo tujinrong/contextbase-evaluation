@@ -1,11 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER-PROMPT","version":"0.2","path":"agents/access-rebuilder-agent/PROMPT.md","sheets":[{"heading":"共通の指定","kind":"GRID","sheet":"01_指定"},{"heading":"今回の計画工程","kind":"GRID","sheet":"02_計画"},{"heading":"確認後の実施工程","kind":"GRID","sheet":"03_実施"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER-PROMPT","version":"0.3","path":"agents/access-rebuilder-agent/PROMPT.md","sheets":[{"heading":"共通の指定","kind":"GRID","sheet":"01_指定"},{"heading":"今回の計画工程","kind":"GRID","sheet":"02_計画"},{"heading":"確認後の実施工程","kind":"GRID","sheet":"03_実施"}]} -->
 # access-rebuilder-agent 実行指示
 
-版0.2／2026-10-27。Codexへの依頼文と実行機構の運用契約。
+版0.3／2026-10-27。Codexへの依頼文と実行機構の運用契約。
 
 ## 共通の指定
 
-[契約](AGENT.md)と[運用規則](AGENTS.md)を読み、projectId、phase、入力Accessファイル、出力方式、許可範囲を固定する。[訓練プロファイル](profiles/test-project1.json)に利用者の実施指示、最大反復2回、選択された専用DB接続先を記録している。
+[契約](AGENT.md)と[運用規則](AGENTS.md)、[Web再構築方針](docs/Web再構築方針.md)を読み、projectId、phase、入力Accessファイル、出力方式、Web参照ソースと許可範囲を固定する。現行プロファイルはweb-nativeであり、Accessの操作形を同じにする要求はない。完了済みの訓練2回は再開せず、その後の利用者が明示した改訂として実装・検証する。
 
 ## 今回の計画工程
 

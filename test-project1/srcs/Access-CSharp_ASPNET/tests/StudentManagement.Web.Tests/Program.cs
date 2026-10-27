@@ -161,12 +161,136 @@ Test("reload invalidates an earlier duplicate confirmation", () =>
     Equal(0, service.Search(new SearchCriteria { StudentNo = "DUPRELOAD2" }, actor).Rows.Count);
 });
 
+// User-directed Web revision: these test Web adaptations rather than a third
+// Access training candidate. CSRF middleware itself is exercised by HTTP tests.
+Test("native date input maps to the unchanged domain era model", () =>
+{
+    var input = StudentInput.FromStudent(service.Get(1, actor));
+    input.BirthDate = "2019-05-01";
+    var draft = input.ToDraft();
+    Equal("REIWA", draft.BirthEra); Equal("1", draft.BirthYear);
+    Equal("05", draft.BirthMonth); Equal("01", draft.BirthDay);
+});
+Test("invalid native date stays field-addressable instead of using old era values", () =>
+{
+    var input = StudentInput.FromStudent(service.Get(1, actor)); input.BirthDate = "2026-02-30";
+    try { input.ToDraft(); throw new InvalidOperationException("Expected invalid date."); }
+    catch (BusinessException ex) { Equal("BirthDate", ex.Field); }
+    input.BirthDate = "";
+    try { input.ToDraft(); throw new InvalidOperationException("Expected required date."); }
+    catch (BusinessException ex) { Equal("BirthDate", ex.Field); }
+});
+Test("native date dirty baseline excludes unrendered era controls", () =>
+{
+    var baseline = EditorSnapshotStore.RawValues(StudentInput.FromStudent(service.Get(1, actor)));
+    Equal("1998-04-01", baseline["Input.BirthDate"]);
+    True(!baseline.ContainsKey("Input.BirthEra")); True(!baseline.ContainsKey("Input.BirthYear"));
+});
+StudentInput OptionsInput()
+{
+    controller.ModelState.Clear();
+    var model = Editor(controller.Edit(1, "ffffffffffffffffffffffffffffffff"));
+    model.Input.SchoolYear = "2026"; model.Input.GradeCode = "01";
+    return model.Input;
+}
+Test("JSON options return scoped candidates without rendering or saving the form", () =>
+{
+    var input = OptionsInput();
+    var before = service.Get(1, actor);
+    var json = JsonSerializer.SerializeToElement(((JsonResult)controller.EditorOptions(input)).Value);
+    True(json.GetProperty("classes").EnumerateArray().Any(c => c.GetProperty("value").GetString() == "1"));
+    True(!json.GetProperty("clearClass").GetBoolean());
+    Equal(before.RowVersion, service.Get(1, actor).RowVersion);
+});
+Test("JSON options remove an incompatible old selection while keeping raw editor state", () =>
+{
+    var input = OptionsInput(); input.SchoolYear = "2099";
+    var json = JsonSerializer.SerializeToElement(((JsonResult)controller.EditorOptions(input)).Value);
+    True(json.GetProperty("clearClass").GetBoolean()); Equal(0, json.GetProperty("classes").GetArrayLength());
+    Equal("1", input.ClassId); // Client receives a clear decision, no snapshot mutation.
+});
+Test("JSON options reject invalid IDs, stale versions, other sessions and Reader writes", () =>
+{
+    var input = OptionsInput(); input.ClassId = "not-an-id";
+    Equal(422, ((ObjectResult)controller.EditorOptions(input)).StatusCode);
+    input = OptionsInput(); input.ExpectedVersion++;
+    Equal(409, ((ObjectResult)controller.EditorOptions(input)).StatusCode);
+    input = OptionsInput(); http.Session = new TestSession("another-session");
+    Equal(409, ((ObjectResult)controller.EditorOptions(input)).StatusCode);
+    http.Session = session; http.Items["Actor"] = service.ResolveActor("verification-reader");
+    Equal(403, ((StatusCodeResult)controller.EditorOptions(input)).StatusCode);
+    http.Items["Actor"] = actor;
+});
+Test("JSON options reject unknown and duplicate posted fields", () =>
+{
+    var input = OptionsInput();
+    http.Request.ContentType = "application/x-www-form-urlencoded";
+    http.Request.Form = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues> { ["Input.UntrustedRole"] = "Admin" });
+    Equal(400, ((ObjectResult)controller.EditorOptions(input)).StatusCode);
+    http.Request.Form = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues> { ["Input.ClassId"] = new[] { "1", "2" } });
+    Equal(400, ((ObjectResult)controller.EditorOptions(input)).StatusCode);
+    http.Request.ContentType = null; http.Request.Form = new FormCollection(new());
+});
+Test("validation errors target their Web field and preserve the rejected raw value", () =>
+{
+    var input = OptionsInput(); input.StudentName = "";
+    var rejected = Editor(controller.Save(input));
+    True(controller.ModelState.ContainsKey("Input.StudentName"));
+    Equal("", rejected.Input.StudentName);
+    controller.ModelState.Clear();
+});
+Test("save return context remains bound to the originally opened editor", () =>
+{
+    var input = OptionsInput(); input.SearchContextId = "another-tab";
+    try { controller.Save(input); throw new InvalidOperationException("Expected invalid editor return state."); }
+    catch (BusinessException ex) { Equal("E-COM-003", ex.Code); }
+});
+Test("GET result paging slices without overlap and clamps page while retaining total and context", () =>
+{
+    for (var i = 1; i <= 21; i++)
+    {
+        var draft = StudentDraft.FromStudent(service.Get(1, actor));
+        draft.StudentNo = $"WEBPG{i:000}"; draft.StudentName = $"頁確認{i:000}";
+        draft.StudentNameKana = "ページカクニン"; draft.BirthEra = "HEISEI";
+        draft.BirthYear = "12"; draft.BirthMonth = "1"; draft.BirthDay = i.ToString();
+        Equal("Saved", service.Save(draft, null, null, actor, "page-fixture-" + i).Kind);
+    }
+    var context = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+    var first = Search(controller.Index(new SearchInput { ContextId = context, Searched = true, StudentNo = "WEBPG", Page = 1, PageSize = 20 }));
+    var second = Search(controller.Index(new SearchInput { ContextId = context, Searched = true, StudentNo = "WEBPG", Page = 2, PageSize = 20 }));
+    Equal(21, first.TotalCount); Equal(2, first.PageCount); Equal(20, first.Rows.Count); Equal(1, second.Rows.Count);
+    True(!first.Rows.Select(r => r.Id).Intersect(second.Rows.Select(r => r.Id)).Any());
+    var clamped = Search(controller.Index(new SearchInput { ContextId = context, Searched = true, StudentNo = "WEBPG", Page = int.MaxValue, PageSize = 17 }));
+    Equal(2, clamped.Input.Page); Equal(20, clamped.Input.PageSize);
+    var restored = Search(controller.Index(new SearchInput { ContextId = context }));
+    Equal(2, restored.Input.Page); Equal("WEBPG", restored.Input.StudentNo); Equal(1, restored.Rows.Count);
+});
+Test("over-limit result is a bounded-search warning rather than a fabricated exact count or empty match", () =>
+{
+    // An isolated in-memory fixture bypasses normal writes only to exercise the
+    // existing 10,000-row safety branch; no SQL or accepted business data changes.
+    var original = service.Get(1, actor);
+    var fixture = store.Execute(false, s => new { Categories = s.Categories(), Codes = s.Codes(), Classes = s.Classes() });
+    var rows = Enumerable.Range(1, 10001).Select(i => original with { StudentId = i, StudentNo = $"LIMIT{i:00000}" });
+    var limitedStore = new InMemoryStudentRepository(fixture.Categories, fixture.Codes, fixture.Classes, rows,
+        new Dictionary<string, string> { [actor.UserId] = actor.Role.ToString() });
+    var limitedService = new StudentService(limitedStore, () => new DateTime(2026, 10, 27, 0, 0, 0, DateTimeKind.Utc));
+    Equal("LimitExceeded", limitedService.Search(new SearchCriteria { StudentNo = "LIMIT" }, actor).Kind);
+    var context = new DefaultHttpContext { Session = new TestSession("limit-browser") }; context.Items["Actor"] = actor;
+    var limitedController = new StudentsController(limitedService, new ConfirmationStore(), new EditorSnapshotStore())
+        { ControllerContext = new ControllerContext { HttpContext = context } };
+    var model = Search(limitedController.Index(new SearchInput { Searched = true, StudentNo = "LIMIT", Page = 10 }));
+    if (!model.LimitExceeded) throw new InvalidOperationException("Expected limit state; total=" + model.TotalCount + "; status=" + original.EnrollmentStatusCode + "; errors=" + string.Join(";", limitedController.ModelState.SelectMany(p => p.Value!.Errors).Select(e => e.ErrorMessage)));
+    True(!string.IsNullOrEmpty(model.Warning));
+    Equal(0, model.TotalCount); Equal(0, model.Rows.Count); Equal(1, model.PageCount); Equal(1, model.Input.Page);
+});
+
 var record = new
 {
-    schema = "access-rebuilder-web-adapter-tests/1.0", iteration = 2, provider = "VerificationMemory",
+    schema = "access-rebuilder-web-adapter-tests/1.1", revision = "web-native-user-request", provider = "VerificationMemory",
     passed = results.Count - failed, failed, results,
-    scope = "Era boundaries, MVC adapter composition, immutable reset/reload state, raw redraw state, search context and confirmation ownership. Browser/SQL checks are separate.",
-    sourceEvidence = new[] { "modJapaneseDate.BirthParts/FormatBirthDate", "modStudentForms.ResetEdit/ShowDraft/ReadEditSnapshot/EditHasChanges", "clsSearchContext", "clsConfirmation" },
+    scope = "Web date adapter, field errors, immutable edit/confirmation state, scoped JSON dependent candidates and GET result paging. HTTP middleware/CSRF and SQL checks are separate.",
+    sourceEvidence = new[] { "CSharp_ASPNET/Web/Controllers/StudentsController.cs", "CSharp_ASPNET/wwwroot/js/site.js", "Access-derived domain constraints" },
     formalScore = (int?)null
 };
 var report = args.Length >= 2 && args[0] == "--output" ? Path.GetFullPath(args[1]) : Path.Combine(root, "build/test-results/web-adapter.json");

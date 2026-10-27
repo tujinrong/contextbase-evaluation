@@ -64,9 +64,29 @@
       "additionalProperties": false,
       "required": ["purpose", "allowedFiles", "copyBusinessImplementation"],
       "properties": {
-        "purpose": { "const": "solution-layout-and-environment-only" },
+        "purpose": { "enum": ["solution-layout-and-environment-only", "web-app-source-reference"] },
         "allowedFiles": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
         "copyBusinessImplementation": { "const": false }
+      }
+    },
+    "rebuildPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "preserveBusinessRules", "preserveAccessInteraction"],
+      "properties": {
+        "mode": { "enum": ["source-faithful", "web-native"] },
+        "preserveBusinessRules": { "type": "boolean" },
+        "preserveAccessInteraction": { "type": "boolean" }
+      }
+    },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "authorization", "addTrainingIterations"],
+      "properties": {
+        "id": { "type": "string" },
+        "authorization": { "type": "string", "minLength": 1 },
+        "addTrainingIterations": { "const": false }
       }
     },
     "exclusions": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },

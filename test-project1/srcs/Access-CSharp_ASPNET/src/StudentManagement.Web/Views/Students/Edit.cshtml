@@ -1,77 +1,81 @@
 @model EditorViewModel
 @{
     ViewData["Title"] = Model.ReadOnly ? "学生参照" : Model.Input.Id.HasValue ? "学生編集" : "学生新規登録";
+    var birthHint = "西暦で入力すると和暦も表示します";
+    if (DateOnly.TryParseExact(Model.Input.BirthDate, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out _))
+        birthHint = JapaneseDate.FormatBirthDate(Model.Input.BirthDate!);
 }
-<h1>@ViewData["Title"] <span class="muted">* は必須項目</span></h1>
-<form method="post" asp-action="Save" data-track-changes="true" data-draft-baseline="@Model.BaselineJson">
-    <input asp-for="Input.Id" type="hidden" /><input asp-for="Input.ExpectedVersion" type="hidden" />
-    <input asp-for="Input.SearchContextId" type="hidden" />
-    <input asp-for="Input.SnapshotToken" type="hidden" />
-    <div asp-validation-summary="All"></div>
-    <fieldset class="panel" disabled="@Model.ReadOnly">
-        <legend>基本情報</legend>
-        <div class="form-grid">
-            <div class="field"><label>管理番号（自動）</label><input value="@(Model.Input.Id?.ToString() ?? "保存時に採番")" readonly /></div>
-            <div class="field"><label asp-for="Input.StudentNo">学籍番号 *</label><input asp-for="Input.StudentNo" readonly="@Model.Input.Id.HasValue" autocomplete="off" /><small class="muted">英大文字・数字・ハイフン、15文字以内</small></div>
-            <div class="field"><label asp-for="Input.StudentName">氏名 *</label><input asp-for="Input.StudentName" /><small class="muted">8文字以内</small></div>
-            <div class="field"><label asp-for="Input.StudentNameKana">氏名カナ *</label><input asp-for="Input.StudentNameKana" /><small class="muted">全角カナ18文字以内</small></div>
-            <div class="field wide"><label for="Input_BirthEra">生年月日（和暦）*</label><div class="inline">
-                <select asp-for="Input.BirthEra" aria-label="元号"><option value="">元号</option><option value="MEIJI">明治</option><option value="TAISHO">大正</option><option value="SHOWA">昭和</option><option value="HEISEI">平成</option><option value="REIWA">令和</option></select>
-                <input asp-for="Input.BirthYear" aria-label="和暦年" inputmode="numeric" style="width:4rem" />年
-                <input asp-for="Input.BirthMonth" aria-label="月" inputmode="numeric" style="width:3.5rem" />月
-                <input asp-for="Input.BirthDay" aria-label="日" inputmode="numeric" style="width:3.5rem" />日
-            </div></div>
-            <div class="field"><label asp-for="Input.GenderCode">性別 *</label><select asp-for="Input.GenderCode" asp-items="Model.GenderCodes"><option value="">選択</option></select></div>
+<section class="student-editor" aria-labelledby="editor-title">
+    <nav class="breadcrumb" aria-label="現在位置"><a asp-action="Index" asp-route-contextId="@Model.Input.SearchContextId">学生一覧</a><span aria-hidden="true">/</span><span>@ViewData["Title"]</span></nav>
+    <div class="pagehead editor-pagehead"><div><h1 id="editor-title">@ViewData["Title"] <span class="badge @(Model.ReadOnly ? "neutral" : "info")">@(Model.Input.Id.HasValue ? Model.ReadOnly ? "参照" : "編集中" : "新規")</span></h1><p class="page-description">@(Model.ReadOnly ? "登録されている学生情報を確認できます。" : "必要な情報を入力して保存してください。") <span class="required-legend">必須項目には <span class="req">必須</span> を表示しています。</span></p></div><div class="record-id"><span>管理番号</span><strong>@(Model.Input.Id?.ToString() ?? "保存時に採番")</strong></div></div>
+    <form method="post" asp-action="Save" data-track-changes="true" data-editor-form data-options-url="@Url.Action("EditorOptions")" data-draft-baseline="@Model.BaselineJson">
+        <input asp-for="Input.Id" type="hidden" /><input asp-for="Input.ExpectedVersion" type="hidden" />
+        <input asp-for="Input.SearchContextId" type="hidden" /><input asp-for="Input.SnapshotToken" type="hidden" />
+        <div asp-validation-summary="All" role="alert" tabindex="-1" data-error-summary></div>
+        <fieldset class="surface editor-basic" disabled="@Model.ReadOnly">
+            <legend class="section-title"><span class="section-number">01</span>基本情報</legend>
+            <div class="basic-grid">
+                <div class="field"><label asp-for="Input.StudentNo">学籍番号 <span class="req">必須</span></label><input asp-for="Input.StudentNo" readonly="@Model.Input.Id.HasValue" autocomplete="off" maxlength="30" aria-describedby="student-no-hint" required /><small id="student-no-hint">@(Model.Input.Id.HasValue ? "登録済みの学籍番号は変更できません" : "英大文字・数字・ハイフン、15文字まで")</small><span asp-validation-for="Input.StudentNo"></span></div>
+                <div class="field"><label asp-for="Input.StudentName">氏名 <span class="req">必須</span></label><input asp-for="Input.StudentName" autocomplete="name" maxlength="16" placeholder="例：山田 太郎" required /><small>8文字まで</small><span asp-validation-for="Input.StudentName"></span></div>
+                <div class="field"><label asp-for="Input.StudentNameKana">氏名カナ <span class="req">必須</span></label><input asp-for="Input.StudentNameKana" maxlength="72" placeholder="例：ヤマダタロウ" required /><small>全角カナ18文字まで</small><span asp-validation-for="Input.StudentNameKana"></span></div>
+                <div class="field"><label asp-for="Input.BirthDate">生年月日 <span class="req">必須</span></label><input asp-for="Input.BirthDate" type="date" min="1900-01-01" max="@DateTime.UtcNow.AddHours(9).ToString("yyyy-MM-dd")" aria-describedby="birth-date-hint" data-birth-date required /><small id="birth-date-hint" data-birth-hint>@birthHint</small><span asp-validation-for="Input.BirthDate"></span></div>
+                <div class="field"><label asp-for="Input.GenderCode">性別 <span class="req">必須</span></label><select asp-for="Input.GenderCode" asp-items="Model.GenderCodes" required><option value="">選択してください</option></select><span asp-validation-for="Input.GenderCode"></span></div>
+            </div>
+        </fieldset>
+        <div class="editor-sections">
+            <fieldset class="surface editor-section" disabled="@Model.ReadOnly">
+                <legend class="section-title"><span class="section-number">02</span>住所・連絡先</legend>
+                <div class="section-fields">
+                    <div class="field"><label asp-for="Input.PostalCode">郵便番号 <span class="req">必須</span></label><input asp-for="Input.PostalCode" inputmode="text" autocomplete="postal-code" placeholder="001-0001" maxlength="20" required /><span asp-validation-for="Input.PostalCode"></span></div>
+                    <div class="field"><label asp-for="Input.PrefectureCode">都道府県 <span class="req">必須</span></label><select asp-for="Input.PrefectureCode" asp-items="Model.PrefectureCodes" required><option value="">選択してください</option></select><span asp-validation-for="Input.PrefectureCode"></span></div>
+                    <div class="field full"><label asp-for="Input.AddressLine1">住所1 <span class="req">必須</span></label><input asp-for="Input.AddressLine1" autocomplete="address-line1" maxlength="90" placeholder="市区町村・町名・番地" required /><span asp-validation-for="Input.AddressLine1"></span></div>
+                    <div class="field full"><label asp-for="Input.AddressLine2">住所2</label><input asp-for="Input.AddressLine2" autocomplete="address-line2" maxlength="90" placeholder="建物名・部屋番号など" /><span asp-validation-for="Input.AddressLine2"></span></div>
+                    <div class="field"><label asp-for="Input.PhoneNumber">本人電話</label><input asp-for="Input.PhoneNumber" type="tel" autocomplete="tel" maxlength="40" placeholder="03-1234-5678" /><span asp-validation-for="Input.PhoneNumber"></span></div>
+                    <div class="field"><label asp-for="Input.EmailAddress">本人メール</label><input asp-for="Input.EmailAddress" type="text" inputmode="email" autocomplete="email" maxlength="120" placeholder="name@example.com" /><span asp-validation-for="Input.EmailAddress"></span></div>
+                </div>
+                <p class="section-note">本人電話・本人メール・緊急電話のいずれかを入力してください。</p>
+            </fieldset>
+            <fieldset class="surface editor-section" disabled="@Model.ReadOnly">
+                <legend class="section-title"><span class="section-number">03</span>在籍・所属</legend>
+                <div class="section-fields">
+                    <div class="field"><label asp-for="Input.AdmissionDate">入学日 <span class="req">必須</span></label><input asp-for="Input.AdmissionDate" type="date" min="1900-01-01" data-refresh-candidates required /><span asp-validation-for="Input.AdmissionDate"></span></div>
+                    <div class="field"><label asp-for="Input.EnrollmentStatusCode">在籍区分 <span class="req">必須</span></label><select asp-for="Input.EnrollmentStatusCode" asp-items="Model.StatusCodes" data-refresh-candidates required><option value="">選択してください</option></select><span asp-validation-for="Input.EnrollmentStatusCode"></span></div>
+                    <div class="field full"><label asp-for="Input.EnrollmentEndDate">卒業・退学日 <span class="optional-note">卒業・退学時</span></label><input asp-for="Input.EnrollmentEndDate" type="date" min="1900-01-01" readonly="@(Model.Input.EnrollmentStatusCode is "01" or "02")" data-refresh-candidates /><span asp-validation-for="Input.EnrollmentEndDate"></span></div>
+                    <div class="field"><label asp-for="Input.SchoolYear">年度</label><select asp-for="Input.SchoolYear" asp-items="Model.SchoolYears" data-refresh-candidates><option value="">選択してください</option></select><span asp-validation-for="Input.SchoolYear"></span></div>
+                    <div class="field"><label asp-for="Input.GradeCode">学年</label><select asp-for="Input.GradeCode" asp-items="Model.GradeCodes" data-refresh-candidates><option value="">選択してください</option></select><span asp-validation-for="Input.GradeCode"></span></div>
+                    <div class="field full"><label asp-for="Input.ClassId">クラス</label><select asp-for="Input.ClassId" asp-items="Model.Classes" data-refresh-candidates><option value="">未選択</option></select><span asp-validation-for="Input.ClassId"></span></div>
+                </div>
+                <div class="capacity-strip"><span>所属人数／定員</span><output id="class-capacity" data-capacity>@Model.Capacity</output></div>
+                <p class="lookup-status" data-options-status aria-live="polite">年度・学年を選ぶと、利用できるクラスを表示します。</p>
+                <noscript><button type="submit" asp-action="Candidates" formnovalidate data-candidate-submit>候補・人数を更新</button></noscript>
+            </fieldset>
+            <div class="editor-side">
+                <fieldset class="surface editor-section" disabled="@Model.ReadOnly">
+                    <legend class="section-title"><span class="section-number">04</span>緊急連絡先</legend>
+                    <p class="section-note first">登録する場合は、氏名・続柄・電話をすべて入力してください。</p>
+                    <div class="section-fields">
+                        <div class="field"><label asp-for="Input.EmergencyContactName">氏名</label><input asp-for="Input.EmergencyContactName" maxlength="16" /><span asp-validation-for="Input.EmergencyContactName"></span></div>
+                        <div class="field"><label asp-for="Input.RelationshipCode">続柄</label><select asp-for="Input.RelationshipCode" asp-items="Model.RelationshipCodes"><option value="">未選択</option></select><span asp-validation-for="Input.RelationshipCode"></span></div>
+                        <div class="field full"><label asp-for="Input.EmergencyPhoneNumber">電話</label><input asp-for="Input.EmergencyPhoneNumber" type="tel" maxlength="40" /><span asp-validation-for="Input.EmergencyPhoneNumber"></span></div>
+                    </div>
+                </fieldset>
+                <fieldset class="surface editor-section notes-section" disabled="@Model.ReadOnly">
+                    <legend class="section-title">備考・変更理由</legend>
+                    <div class="field"><label asp-for="Input.Remarks">備考 <span class="optional-note">120文字まで</span></label><textarea asp-for="Input.Remarks" rows="2" maxlength="240"></textarea><span asp-validation-for="Input.Remarks"></span></div>
+                    <div class="field"><label asp-for="Input.OperationReason">確認・変更理由</label><textarea asp-for="Input.OperationReason" rows="2" placeholder="重複確認などの理由を記録"></textarea><span asp-validation-for="Input.OperationReason"></span></div>
+                </fieldset>
+            </div>
         </div>
-    </fieldset>
-    <fieldset class="panel" disabled="@Model.ReadOnly">
-        <legend>住所・本人連絡先</legend>
-        <div class="form-grid">
-            <div class="field"><label asp-for="Input.PostalCode">郵便番号 *</label><input asp-for="Input.PostalCode" inputmode="text" placeholder="001-0001" /><small class="muted">ハイフン付き入力可・保存値は数字7桁</small></div>
-            <div class="field"><label asp-for="Input.PrefectureCode">都道府県 *</label><select asp-for="Input.PrefectureCode" asp-items="Model.PrefectureCodes"><option value="">選択</option></select></div>
-            <div class="field wide"><label asp-for="Input.AddressLine1">住所1 *</label><input asp-for="Input.AddressLine1" /></div>
-            <div class="field wide"><label asp-for="Input.AddressLine2">住所2</label><input asp-for="Input.AddressLine2" /></div>
-            <div class="field"><label asp-for="Input.PhoneNumber">本人電話</label><input asp-for="Input.PhoneNumber" type="tel" /></div>
-            <div class="field"><label asp-for="Input.EmailAddress">本人メール</label><input asp-for="Input.EmailAddress" type="text" inputmode="email" /></div>
+        <div class="savebar">
+            <div class="savebar-info"><span class="save-state" data-save-state>@(Model.ReadOnly ? "参照モード" : "未変更")</span><span class="muted">@Model.Updated</span></div>
+            <div class="actions">
+                @if (!Model.ReadOnly)
+                {
+                    <details class="more-actions"><summary>その他の操作</summary><div><button type="submit" asp-action="Reload" formnovalidate data-discard-confirm="reload">最新再読込</button>@if (Model.CanDelete) { <a class="button danger" asp-action="Delete" asp-route-id="@Model.Input.Id" asp-route-contextId="@Model.Input.SearchContextId" asp-route-snapshotToken="@Model.Input.SnapshotToken" data-discard-confirm>論理削除</a> }</div></details>
+                }
+                <a class="button quiet" asp-action="Index" asp-route-contextId="@Model.Input.SearchContextId" data-discard-confirm>@(Model.ReadOnly ? "一覧へ戻る" : "キャンセル")</a>
+                @if (!Model.ReadOnly) { <button class="primary" type="submit">保存</button> }
+            </div>
         </div>
-    </fieldset>
-    <fieldset class="panel" disabled="@Model.ReadOnly">
-        <legend>在籍・所属</legend>
-        <div class="form-grid">
-            <div class="field"><label asp-for="Input.AdmissionDate">入学日 *</label><input asp-for="Input.AdmissionDate" placeholder="yyyy-MM-dd" /></div>
-            <div class="field"><label asp-for="Input.EnrollmentStatusCode">在籍区分 *</label><select asp-for="Input.EnrollmentStatusCode" asp-items="Model.StatusCodes" data-refresh-candidates><option value="">選択</option></select></div>
-            <div class="field"><label asp-for="Input.EnrollmentEndDate">卒業・退学日</label><input asp-for="Input.EnrollmentEndDate" placeholder="yyyy-MM-dd" readonly="@(Model.Input.EnrollmentStatusCode is "01" or "02")" /></div>
-            <div class="field"><label asp-for="Input.SchoolYear">年度</label><select asp-for="Input.SchoolYear" asp-items="Model.SchoolYears" data-refresh-candidates><option value="">選択</option></select></div>
-            <div class="field"><label asp-for="Input.GradeCode">学年</label><select asp-for="Input.GradeCode" asp-items="Model.GradeCodes" data-refresh-candidates><option value="">選択</option></select></div>
-            <div class="field wide"><label asp-for="Input.ClassId">クラス</label><select asp-for="Input.ClassId" asp-items="Model.Classes" data-refresh-candidates><option value="">未選択</option></select></div>
-            <div class="field"><label>所属人数・定員</label><output>@Model.Capacity</output></div>
-        </div>
-        @if (!Model.ReadOnly) { <button type="submit" asp-action="Candidates" formnovalidate data-candidate-submit>候補・人数を更新</button> }
-    </fieldset>
-    <fieldset class="panel" disabled="@Model.ReadOnly">
-        <legend>緊急連絡先</legend>
-        <div class="form-grid">
-            <div class="field"><label asp-for="Input.EmergencyContactName">緊急氏名</label><input asp-for="Input.EmergencyContactName" /></div>
-            <div class="field"><label asp-for="Input.RelationshipCode">緊急続柄</label><select asp-for="Input.RelationshipCode" asp-items="Model.RelationshipCodes"><option value="">未選択</option></select></div>
-            <div class="field"><label asp-for="Input.EmergencyPhoneNumber">緊急電話</label><input asp-for="Input.EmergencyPhoneNumber" type="tel" /></div>
-        </div>
-    </fieldset>
-    <fieldset class="panel" disabled="@Model.ReadOnly">
-        <legend>備考・確認変更理由</legend>
-        <div class="form-grid">
-            <div class="field wide"><label asp-for="Input.Remarks">備考（120文字以内）</label><textarea asp-for="Input.Remarks" rows="3"></textarea></div>
-            <div class="field wide"><label asp-for="Input.OperationReason">確認・変更理由</label><textarea asp-for="Input.OperationReason" rows="3"></textarea></div>
-        </div>
-    </fieldset>
-    <p class="muted">@Model.Updated</p>
-    <div class="actions">
-        @if (!Model.ReadOnly)
-        {
-            <button class="primary" type="submit">保存</button>
-            <button type="submit" asp-action="Reset" formnovalidate data-discard-confirm="reset">編集取消</button>
-            <button type="submit" asp-action="Reload" formnovalidate data-discard-confirm="reload">最新再読込</button>
-        }
-        <a class="button" asp-action="Index" asp-route-contextId="@Model.Input.SearchContextId" data-discard-confirm>検索へ戻る</a>
-        @if (Model.CanDelete) { <a class="button danger" asp-action="Delete" asp-route-id="@Model.Input.Id" asp-route-contextId="@Model.Input.SearchContextId" asp-route-snapshotToken="@Model.Input.SnapshotToken" data-discard-confirm>論理削除</a> }
-    </div>
-</form>
+    </form>
+</section>

@@ -1,6 +1,6 @@
 # Access → ASP.NET Core 学生管理
 
-2026-10-27。`StudentManagement.accdb`本体の抽出内容から作成した独立方式。Visual Studioで[StudentManagement.slnx](StudentManagement.slnx)を開き、`StudentManagement.Web`を起動プロジェクト、`TrainingSql`を起動プロファイルにする。今回は作成済みの専用SQL Server DBへ接続する。CLIは.NET SDK 10.0.401以降の同パッチ系列を使用する。
+2026-10-27。Accessから業務ルールを抽出し、利用者指定の`CSharp_ASPNET`ソースを参考にWeb向けの検索・一覧・編集へ再構築した独立方式。Visual Studioで[StudentManagement.slnx](StudentManagement.slnx)を開き、`StudentManagement.Web`を起動プロジェクト、`TrainingSql`を起動プロファイルにする。作成済みの専用SQL Server DBへ接続する。CLIは.NET SDK 10.0.401以降の同パッチ系列を使用する。
 
 ```powershell
 dotnet build StudentManagement.slnx
@@ -26,7 +26,7 @@ dotnet run --project src/StudentManagement.Web --urls http://127.0.0.1:5091
 
 ## 操作確認
 
-検索で学籍番号`TRN`、在籍区分「在学」を指定すると架空の`TRN001`と`TRN002`が表示される。新規登録は未使用番号（例`TRN003`）、氏名8文字以内、全角カナ、生年月日の和暦、性別、郵便番号、都道府県、住所、本人連絡先、入学日を入力する。所属は年度2026、学年1年、訓練一組を選ぶ。新規保存後に再検索し、編集・取消・再読込み・確認操作を試せる。
+検索で学籍番号`TRN`、在籍区分「在学」を指定すると架空の`TRN001`と`TRN002`が表示される。結果には並び順・表示件数・ページ移動がある。新規登録は未使用番号（例`TRN003`）、氏名8文字以内、全角カナ、生年月日の日付入力、性別、郵便番号、都道府県、住所、本人連絡先、入学日を入力する。和暦は補助表示する。所属は年度2026、学年1年、訓練一組を選び、候補と人数はページを移動せず更新する。
 
 確認データの基準日は2026-10-27、クラスの適用期間は2026-04-01～2027-03-31。期限後は対応する新しい架空データセットを作り、既存データをリセットしない。原ACCDBの学生行は移行していない。
 
@@ -38,6 +38,6 @@ dotnet run --project src/StudentManagement.Web --urls http://127.0.0.1:5091
 dotnet run --project tests/StudentManagement.Core.Tests -- database/seed/approved-masters.json
 ```
 
-実DB・ブラウザー検査の条件と最新結果は[訓練結果](build/test-results/training.md)を参照。Access本体の構造と原文は`build/generation/access-extraction.json`と`access-export/`、オブジェクト対応は`build/generation/object-map.json`、入力と出力hashは同じ`generation/`にある。
+今回のWeb化改訂の条件と最新結果は[Web化検証](build/test-results/web-modernization.md)、先行した2回の記録は[訓練結果](build/test-results/training.md)を参照。Access本体の構造と原文は`build/generation/access-extraction.json`と`access-export/`、オブジェクト対応は`build/generation/object-map.json`、Web参照の出所と現在の入出力hashは同じ`generation/`にある。
 
 抽出・変換・ビルド・試験と、元Accessの業務画面による受入・別Accessファイルへの一般適用性は区別する。訓練反復は最大2回で、今回の台帳は`build/generation/training.json`へ固定保存する。

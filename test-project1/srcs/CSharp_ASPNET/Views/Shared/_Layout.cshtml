@@ -1,5 +1,5 @@
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>学生管理</title><link rel="stylesheet" href="/css/site.css"><link rel="stylesheet" href="/css/students.css"></head><body class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Students" ? "students-page" : "")"><header><strong>学生管理システム</strong>
 @if (User.Identity?.IsAuthenticated == true) {
-    <div class="header-account"><span>利用者 @User.Identity.Name　業務日 @WebPresentation.BusinessDate.ToString("yyyy/MM/dd")</span><form action="/logout" method="post">@Html.AntiForgeryToken()<button type="submit" class="logout-button">ログアウト</button></form></div>
+    <div class="header-account"><span>利用者 @User.Identity.Name　業務日 @WebPresentation.BusinessDate.ToString("yyyy/MM/dd")</span>@if (Context.Items["SharedDatabaseTraining"] is not true) { <form action="/logout" method="post">@Html.AntiForgeryToken()<button type="submit" class="logout-button">ログアウト</button></form> }</div>
 }
-</header><main>@RenderBody()</main><script src="/js/site.js" defer></script></body></html>
+</header>@if (Context.Items["SharedDatabaseTraining"] is true) { <aside class="shared-training-notice" role="status">共有DBの検証環境です。同じ学生データを両方のアプリから参照・更新します。</aside> }<main>@RenderBody()</main><script src="/js/site.js" defer></script></body></html>
