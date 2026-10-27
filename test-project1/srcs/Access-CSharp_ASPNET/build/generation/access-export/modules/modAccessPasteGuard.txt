@@ -1,0 +1,104 @@
+Option Explicit
+Option Compare Binary
+
+Private Declare PtrSafe Function SetWindowSubclass Lib "comctl32" (ByVal hWnd As LongPtr, ByVal callback As LongPtr, ByVal subclassId As LongPtr, ByVal reference As LongPtr) As Long
+Private Declare PtrSafe Function RemoveWindowSubclass Lib "comctl32" (ByVal hWnd As LongPtr, ByVal callback As LongPtr, ByVal subclassId As LongPtr) As Long
+Private Declare PtrSafe Function DefSubclassProc Lib "comctl32" (ByVal hWnd As LongPtr, ByVal message As Long, ByVal wParam As LongPtr, ByVal lParam As LongPtr) As LongPtr
+Private Declare PtrSafe Function GetFocus Lib "user32" () As LongPtr
+Private Declare PtrSafe Function GetWindowThreadProcessId Lib "user32" (ByVal hWnd As LongPtr, ByRef processId As Long) As Long
+Private Declare PtrSafe Function GetCurrentProcessId Lib "kernel32" () As Long
+Private Declare PtrSafe Function GetCurrentThreadId Lib "kernel32" () As Long
+Private Declare PtrSafe Function IsChild Lib "user32" (ByVal parent As LongPtr, ByVal child As LongPtr) As Long
+Private Declare PtrSafe Function IsWindow Lib "user32" (ByVal hWnd As LongPtr) As Long
+
+Private Const GuardId As Long = &H53545053
+Private Const WM_PASTE As Long = &H302
+Private Const WM_NCDESTROY As Long = &H82
+Private guardedWindow As LongPtr
+Private guardedCallback As LongPtr
+Private guardedFormTag As String
+
+Private Function CallbackAddress(ByVal pointer As LongPtr) As LongPtr
+    CallbackAddress = pointer
+End Function
+
+' This short-lived hook belongs only to the currently focused postal edit window.
+' As with every VBA AddressOf callback, resetting code in the IDE while the hook
+' is installed is unsupported. LostFocus, successful Unload and NCDESTROY remove it.
+Public Function AttachPostalPasteGuard() As Boolean
+    Dim hWnd As LongPtr, ownerId As Long, appOwnerId As Long, threadId As Long
+    On Error GoTo Failed
+    If Not PostalInputActive() Then Exit Function
+    hWnd = GetFocus()
+    If hWnd = 0 Then GoTo Failed
+    threadId = GetWindowThreadProcessId(hWnd, ownerId)
+    GetWindowThreadProcessId Application.hWndAccessApp(), appOwnerId
+    If ownerId <> GetCurrentProcessId() Or appOwnerId <> ownerId Or threadId <> GetCurrentThreadId() Then GoTo Failed
+    If IsChild(Application.hWndAccessApp(), hWnd) = 0 Then GoTo Failed
+    If guardedWindow <> 0 Then
+        If guardedWindow = hWnd And guardedFormTag = Screen.ActiveForm.Tag Then AttachPostalPasteGuard = True: Exit Function
+        If Not DetachPostalPasteGuard() Then GoTo Failed
+    End If
+    guardedCallback = CallbackAddress(AddressOf PostalPasteWindowProc)
+    If SetWindowSubclass(hWnd, guardedCallback, CLngPtr(GuardId), 0) = 0 Then GoTo Failed
+    guardedWindow = hWnd: guardedFormTag = Screen.ActiveForm.Tag
+    AttachPostalPasteGuard = True
+    Exit Function
+Failed:
+    PostalGuardFailure
+End Function
+
+Public Function DetachPostalPasteGuard() As Boolean
+    If guardedWindow = 0 Then DetachPostalPasteGuard = True: Exit Function
+    On Error GoTo Failed
+    If IsWindow(guardedWindow) <> 0 Then
+        If RemoveWindowSubclass(guardedWindow, guardedCallback, CLngPtr(GuardId)) = 0 Then GoTo Failed
+    End If
+    guardedWindow = 0: guardedCallback = 0: guardedFormTag = ""
+    DetachPostalPasteGuard = True
+    Exit Function
+Failed:
+    PostalGuardFailure
+End Function
+
+Public Function PostalPasteGuardActive() As Boolean
+    On Error GoTo Inactive
+    If guardedWindow = 0 Then Exit Function
+    If guardedWindow <> GetFocus() Then Exit Function
+    If Not PostalInputActive() Then Exit Function
+    PostalPasteGuardActive = guardedFormTag = Screen.ActiveForm.Tag
+Inactive:
+End Function
+
+Private Sub PostalGuardFailure()
+    On Error Resume Next
+    If PostalInputActive() Then
+        Screen.ActiveForm!lblMessage.Caption = MessageText("E-STU-015|fieldKey=postal_code")
+        Screen.ActiveControl.Locked = True
+        Screen.ActiveForm!cmdSave.Enabled = False
+    End If
+End Sub
+
+Public Function PostalPasteWindowProc(ByVal hWnd As LongPtr, ByVal message As Long, ByVal wParam As LongPtr, ByVal lParam As LongPtr, ByVal subclassId As LongPtr, ByVal reference As LongPtr) As LongPtr
+    On Error GoTo Failed
+    If message = WM_NCDESTROY Then
+        Call RemoveWindowSubclass(hWnd, guardedCallback, subclassId)
+        If guardedWindow = hWnd Then guardedWindow = 0: guardedCallback = 0: guardedFormTag = ""
+    ElseIf message = WM_PASTE And hWnd = guardedWindow Then
+        If PostalInputActive() Then
+            If guardedFormTag <> Screen.ActiveForm.Tag Then GoTo Failed
+            PostalPaste
+            PostalPasteWindowProc = 0
+            Exit Function
+        End If
+    End If
+    PostalPasteWindowProc = DefSubclassProc(hWnd, message, wParam, lParam)
+    Exit Function
+Failed:
+    If message = WM_PASTE Then
+        PostalGuardFailure
+        PostalPasteWindowProc = 0
+    Else
+        PostalPasteWindowProc = DefSubclassProc(hWnd, message, wParam, lParam)
+    End If
+End Function

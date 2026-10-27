@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] — 学生管理</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="app-header">
+        <a class="brand" asp-controller="Students" asp-action="Index">学生管理</a>
+        <nav aria-label="主な操作">
+            <a asp-controller="Students" asp-action="Index">学生検索</a>
+            <a asp-controller="Masters" asp-action="Index">マスタ保守</a>
+        </nav>
+        <span class="identity">@Context.Items["ActorDisplay"]</span>
+    </header>
+    @if (Context.Items["VerificationMode"] is true)
+    {
+        <aside class="verification" role="status">検証専用モード：@Context.Items["VerificationStorage"]</aside>
+    }
+    <main>
+        @if (TempData["Message"] is string message)
+        {
+            <p class="message" role="status">@message</p>
+        }
+        @RenderBody()
+    </main>
+    <script src="~/js/site.js" asp-append-version="true" defer></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

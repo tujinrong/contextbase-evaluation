@@ -1,0 +1,22 @@
+@model ConfirmViewModel
+@{
+    var deleting = Model.Kind == "DELETE";
+    ViewData["Title"] = deleting ? "論理削除の確認" : "重複候補の確認";
+}
+<h1>@ViewData["Title"]</h1>
+<div asp-validation-summary="All"></div>
+<section class="panel">
+    <p>@(deleting ? "この学生を論理削除します。取り消す場合は「戻る」を選んでください。" : "同じ生年月日で氏名または氏名カナが一致する学生候補があります。別人であることを確認してから保存してください。")</p>
+    <dl class="summary"><dt>学籍番号</dt><dd>@Model.Input.StudentNo</dd><dt>氏名</dt><dd>@Model.Input.StudentName</dd><dt>氏名カナ</dt><dd>@Model.Input.StudentNameKana</dd></dl>
+    @if (!deleting)
+    {
+        <table><thead><tr><th>学籍番号</th><th>氏名／カナ</th><th>生年月日</th><th>クラス</th><th>在籍</th></tr></thead><tbody>
+        @foreach (var row in Model.Candidates) { <tr><td>@row.StudentNo</td><td>@row.Name<br />@row.Kana</td><td>@row.BirthDate</td><td>@row.ClassName</td><td>@row.EnrollmentName</td></tr> }
+        </tbody></table>
+    }
+    <form method="post" asp-action="@(deleting ? "ConfirmDelete" : "ConfirmSave")">
+        <input name="token" value="@Model.Token" type="hidden" />
+        <div class="field"><label for="reason">確認・変更理由</label><textarea id="reason" name="reason" rows="3">@Model.Reason</textarea></div>
+        <div class="actions"><button type="submit" class="@(deleting ? "danger" : "primary")">@(deleting ? "確認して論理削除" : "確認して保存")</button><button type="submit" asp-action="CancelConfirmation" name="token" value="@Model.Token">戻る</button></div>
+    </form>
+</section>

@@ -5,7 +5,7 @@
 
 ## 概要
 
-7種類のAgentを定義する。仕様生成、基本設計、実装、3つの独立解析Agent、任意の逆解析互換入口を扱う。Codexが契約と実行指示を読んで作業する。定義文書の存在だけで各工程を実行済みとしない。題材はprojectIdで選択し、全体規則と題材の正解を分離する。実行時に許可ファイルを列挙し、GitHub全体を無制限に参照させない。
+8種類のAgentを定義する。仕様生成、基本設計、実装、Access再構築、3つの独立解析Agent、任意の逆解析互換入口を扱う。Codexが契約と実行指示を読んで作業する。定義文書の存在だけで各工程を実行済みとしない。題材はprojectIdで選択し、全体規則と題材の正解を分離する。実行時に許可ファイルを列挙し、GitHub全体を無制限に参照させない。
 
 取得・目録化はdiscovery-agent、関係構築はrelationship-agent、動作深化はbehavior-agentが独立して実行する。各自にpackage／CLI・source／request／workを持ち、reverse-agentに依存・importせず共通runtime（agents/shared/contextbase-runtime）を使用する。独立検証は各層の抽出と別task・文脈で実行し、それぞれのホストが採用する。
 
@@ -24,9 +24,12 @@
 | AG-RELATIONSHIP | 独立した関係構築 | [契約](relationship-agent/AGENT.md)・[実行](relationship-agent/PROMPT.md)・[案内](relationship-agent/README.md) |
 | AG-BEHAVIOR | 独立した動作深化 | [契約](behavior-agent/AGENT.md)・[実行](behavior-agent/PROMPT.md)・[案内](behavior-agent/README.md) |
 | AG-REVERSE | 任意の互換連続実行・旧仕様書経路の明示入口 | [契約](reverse-agent/AGENT.md)・[実行指示](reverse-agent/PROMPT.md)・[運用案内](reverse-agent/README.md) |
+| AG-ACCESS-REBUILDER | 指定AccessからASP.NET Core／C#／SQL Serverへ再構築。test-project1で最大2回の生成・検証を実施 | [契約](access-rebuilder-agent/AGENT.md)・[作成計画](access-rebuilder-agent/docs/作成計画.md)・[運用案内](access-rebuilder-agent/README.md) |
 
 ## 実行コンテキスト
 
 projectId、仕様セット版、方式ID、specRoot=project/spec/方式ID、sourceRoot=project/srcs/方式ID、入力コミット/ハッシュ、許可パス、除外パス、出力先、Agent定義版、実行IDを固定する。AG-SPECはspecRootを更新し、AG-BUILDは同じspecRootからsourceRootへ生成する。AG-SPEC／AG-BUILDの業務入力は選択方式のspecRoot内で閉じ、旧sourceRoot/specや他方式を代替入力にしない。3つの解析AgentとAG-REVERSEは原仕様を読まず、選択source-only入力を使う。全Agentは最終正本を更新し、最終成果・検査結果はsourceRoot/build/の固定先へ更新する。中間結果はsourceRoot/.tmp/、方式を持たない共通作業は担当Agentまたはprojectの.tmp/を使う。過去生成結果の別名保存はせずGit履歴を使う。spec-evalは採点者の参照先で、逆生成Agentの実行権限・入力選択では移動後のproject/spec/全体とともに禁止し、選択ソース根の外へ物理的に隔離する。逆生成CLIのallowedPaths／excludedPathsはそのソース根内の相対パスに限定し、兄弟の仕様へ範囲を広げない。共有docsに業務正解を隠して隔離を迂回しない。
 
 拒否草稿の限定回復は[明示repair契約](shared/contextbase-runtime/docs/短縮伝送と証拠一括検査.md)に従い、fresh workの未信頼seedからモデルが指定recordだけを置換する。旧成功を引き継がず、全体を機械・独立検証へ戻す。回復実績は実装ガイドで確認する。
+
+AG-ACCESS-REBUILDERは利用者指定のAccessファイルを主入力とする移行工程で、AG-BUILDの仕様入力とは分ける。test-project1ではAccess/build/StudentManagement.accdbから別のsourceRoot=srcs/Access-CSharp_ASPNET/へ再構築し、CSharp_ASPNETは許可された構成資料だけを参考にする。既存原仕様・spec-eval・他方式の業務実装を変換の正解として使わない。利用者の実施指示により、最大2回の訓練で本体取得・C#／SQL生成・検証を行い、指定されたローカルSQLEXPRESSの新規専用DBを使用した。今回の台帳上限を超える反復は開始しない。

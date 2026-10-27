@@ -1,0 +1,15 @@
+@model MasterIndexViewModel
+@{ ViewData["Title"] = "マスタ保守"; }
+<h1>マスタ保守 <span class="muted">管理者専用</span></h1>
+<h2>クラス</h2>
+<p><a class="button" asp-action="Class">クラス追加</a></p>
+<div class="table-wrap" style="max-height:30vh"><table><thead><tr><th>年度</th><th>学年</th><th>コード</th><th>名称</th><th>利用期間</th><th>定員</th><th>状態</th><th>操作</th></tr></thead><tbody>
+@foreach (var item in Model.Classes)
+{ <tr><td>@item.SchoolYear</td><td>@item.GradeCode</td><td>@item.ClassCode</td><td>@item.ClassName</td><td>@item.ValidFrom ～ @item.ValidTo</td><td>@(item.Capacity?.ToString() ?? "上限なし")</td><td>@(item.IsActive ? "有効" : "停止")</td><td><a asp-action="Class" asp-route-id="@item.ClassId">編集</a></td></tr> }
+</tbody></table></div>
+<h2>コード</h2>
+<p><a class="button" asp-action="Code">コード追加</a></p>
+<div class="table-wrap" style="max-height:42vh"><table><thead><tr><th>分類</th><th>コード</th><th>名称</th><th>利用期間</th><th>順序</th><th>状態</th><th>保護</th><th>操作</th></tr></thead><tbody>
+@foreach (var item in Model.Codes)
+{ <tr><td>@item.CategoryId</td><td>@item.CodeValue</td><td>@item.CodeName</td><td>@item.ValidFrom ～ @(item.ValidTo ?? "制限なし")</td><td>@item.DisplayOrder</td><td>@(item.IsActive ? "有効" : "停止")</td><td>@(item.IsProtected ? "保護" : "")</td><td><a asp-action="Code" asp-route-categoryId="@item.CategoryId" asp-route-codeValue="@item.CodeValue">編集</a></td></tr> }
+</tbody></table></div>

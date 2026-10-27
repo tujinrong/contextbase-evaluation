@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {literalArrays} from '../src/vba-data.mjs';
+test('VBA literals preserve Japanese text and leading zero without executing functions',()=>{assert.deepEqual(literalArrays('Public Function Codes()\n Codes.Add Array("01", "テスト", 10, True)\nEnd Function','Codes','Codes'),[['01','テスト',10,true]]);assert.throws(()=>literalArrays('Public Function Codes()\n Codes.Add Array(Shell("bad"))\nEnd Function','Codes','Codes'),/Nonliteral/);});

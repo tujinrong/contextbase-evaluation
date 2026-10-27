@@ -1,0 +1,51 @@
+@model SearchViewModel
+@{
+    ViewData["Title"] = "学生検索";
+    var states = new[] { ("01", "在学"), ("02", "休学"), ("03", "卒業"), ("04", "退学") };
+}
+<h1>学生検索</h1>
+<form method="get" asp-action="Index" class="panel">
+    <input type="hidden" name="Searched" value="true" />
+    <input type="hidden" name="ContextId" value="@Model.Input.ContextId" />
+    <div asp-validation-summary="All"></div>
+    <div class="search-grid">
+        <div class="field"><label for="StudentNo">学籍番号（前方一致）</label><input id="StudentNo" name="StudentNo" value="@Model.Input.StudentNo" autocomplete="off" /></div>
+        <div class="field"><label for="Name">氏名（部分一致）</label><input id="Name" name="Name" value="@Model.Input.Name" /></div>
+        <div class="field"><label for="ClassId">クラス</label><select id="ClassId" name="ClassId" asp-items="Model.Classes"><option value="">全て</option></select></div>
+        <fieldset style="border:0;margin:0;padding:0"><legend style="font-weight:600;font-size:.92rem">在籍区分</legend>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                @foreach (var state in states)
+                {
+                    <label class="inline" style="font-weight:400"><input name="Statuses" type="checkbox" value="@state.Item1" checked="@Model.Input.Statuses.Contains(state.Item1)" />@state.Item2</label>
+                }
+            </div>
+        </fieldset>
+        <div class="actions" style="margin:0"><button class="primary" type="submit">検索</button><a class="button" asp-action="Clear" asp-route-contextId="@Model.Input.ContextId">クリア</a></div>
+    </div>
+    <div class="actions">
+        <label for="SortKey">並び順</label>
+        <select id="SortKey" name="SortKey">
+            @foreach (var key in new[] { ("studentNo", "学籍番号"), ("name", "氏名"), ("admissionDate", "入学日"), ("updatedAt", "更新日時") })
+            { <option value="@key.Item1" selected="@(Model.Input.SortKey == key.Item1)">@key.Item2</option> }
+        </select>
+        <select aria-label="並び方向" name="SortDirection"><option value="asc" selected="@(Model.Input.SortDirection == "asc")">昇順</option><option value="desc" selected="@(Model.Input.SortDirection == "desc")">降順</option></select>
+        @if (Model.CanWrite) { <a class="button" asp-action="New" asp-route-contextId="@Model.Input.ContextId">新規登録</a> }
+    </div>
+</form>
+<div class="actions" style="justify-content:space-between;margin-bottom:.5rem">
+    <span id="result-count">@(Model.Searched ? $"{Model.Rows.Count:N0}件" : "未検索")</span>
+    <span class="muted">@Model.SearchedAt</span>
+</div>
+@if (!string.IsNullOrEmpty(Model.Warning)) { <p class="error" role="alert">@Model.Warning</p> }
+<div class="table-wrap" id="search-results" data-search-context="@Model.Input.ContextId" data-restore-scroll="@(Model.RestoreScroll ? "true" : "false")">
+<table>
+    <thead><tr><th>学籍番号</th><th>氏名 ／ カナ</th><th>生年月日</th><th>年度／学年</th><th>クラス</th><th>在籍</th><th>操作</th></tr></thead>
+    <tbody>
+    @foreach (var row in Model.Rows)
+    {
+        <tr data-student-id="@row.Id"><td class="nowrap">@row.StudentNo</td><td>@row.Name<br /><span class="muted">@row.Kana</span></td><td class="nowrap">@row.BirthDate</td><td>@row.SchoolYearGrade</td><td>@row.ClassName</td><td class="nowrap">@row.EnrollmentName</td><td class="nowrap"><a asp-action="Edit" asp-route-id="@row.Id" asp-route-contextId="@Model.Input.ContextId">@(Model.CanWrite ? "編集" : "参照")</a></td></tr>
+    }
+    @if (Model.Searched && Model.Rows.Count == 0) { <tr><td colspan="7">該当する学生はいません。</td></tr> }
+    </tbody>
+</table>
+</div>

@@ -1,0 +1,148 @@
+Option Explicit
+Option Compare Binary
+
+Public Function NormalizeCriteria(ByVal raw As Object, ByVal day As String) As clsSearchCriteria
+    Dim d As New clsSearchCriteria, k As Variant, i As Long
+    If raw.count <> 7 Then Err.Raise vbObjectError + 140, , "E-SRC-001"
+    For Each k In raw.Keys
+        Select Case CStr(k)
+        Case "studentNo", "name", "class", "status01", "status02", "status03", "status04"
+        Case Else: Err.Raise vbObjectError + 140, , "E-SRC-001"
+        End Select
+    Next
+    d.StudentNoPrefix = Nz(TextValue(raw("studentNo"), 15, 15, "number"), "")
+    d.NameKey = Nz(TextValue(raw("name"), 8, 160, "nameKey"), "")
+    If Nz(raw("class"), "") <> "" Then d.classId = PositiveId(raw("class"))
+    For i = 1 To 4
+        k = "status0" & CStr(i)
+        If VarType(raw(k)) <> vbBoolean Then Err.Raise vbObjectError + 140, , "E-SRC-001"
+        d.StatusSelected(i) = raw(k)
+    Next
+    If d.StudentNoPrefix <> "" Then
+        If Not Match(d.StudentNoPrefix, "^[A-Z0-9][A-Z0-9-]{0,14}$") Then Err.Raise vbObjectError + 140, , "E-STU-003"
+    End If
+    Set NormalizeCriteria = d
+End Function
+
+Public Function SearchStudents(ByVal d As clsSearchCriteria, ByVal SortKey As String, ByVal Direction As String) As Object
+    Dim tx As New clsUnitOfWork, repo As New clsStudentRepository, rs As DAO.Recordset, rows(0 To 10000) As Object
+    Dim item As Object, c As Object, result As Object, view As Collection, count As Long, include As Boolean
+    Dim k As Variant, i As Long, params(0 To 4) As Variant, classes As Object, names As Object, lookupKey As String
+    Set result = Map(): Set SearchStudents = result
+    On Error GoTo Failed
+    Authorize "Read"
+    If d Is Nothing Then Err.Raise vbObjectError + 141, , "E-SRC-001"
+    If SortKey <> "studentNo" And SortKey <> "name" And SortKey <> "admissionDate" And SortKey <> "updatedAt" Then Err.Raise vbObjectError + 141, , "E-SRC-002"
+    If Direction <> "asc" And Direction <> "desc" Then Err.Raise vbObjectError + 141, , "E-SRC-002"
+    tx.BeginWork: Set repo.Database = tx.Database
+    Set classes = Map(): Set names = Map()
+    If Not IsNull(d.classId) Then
+        Set c = repo.ClassById(PositiveId(d.classId))
+        If c Is Nothing Then Err.Raise vbObjectError + 142, , "E-STU-010"
+    End If
+    params(0) = d.classId
+    For i = 1 To 4
+        params(i) = Null
+        If d.StatusSelected(i) Then
+            params(i) = "0" & CStr(i)
+            repo.CheckCode "ENROLLMENT_STATUS", params(i), params(i), "1900-01-01"
+        End If
+    Next
+    Set rs = repo.Query("pClassId LONG, pS1 TEXT(4), pS2 TEXT(4), pS3 TEXT(4), pS4 TEXT(4)", _
+        "SELECT student_id,student_no,student_name,student_name_kana,name_key,birth_date,admission_date,class_id,enrollment_status_code,updated_at FROM m_student WHERE is_deleted=False AND (pClassId Is Null OR class_id=pClassId) AND ((pS1 Is Null AND pS2 Is Null AND pS3 Is Null AND pS4 Is Null) OR enrollment_status_code IN (pS1,pS2,pS3,pS4))", params)
+    Do Until rs.EOF
+        include = True
+        If d.StudentNoPrefix <> "" Then include = StrComp(Left$(rs!student_no, Len(d.StudentNoPrefix)), d.StudentNoPrefix, vbBinaryCompare) = 0
+        If d.NameKey <> "" Then include = include And InStr(1, rs!name_key, d.NameKey, vbBinaryCompare) > 0
+        If include Then
+            Set c = Nothing
+            If Not IsNull(rs!class_id) Then
+                lookupKey = CStr(rs!class_id)
+                If Not classes.Exists(lookupKey) Then classes.Add lookupKey, repo.ClassById(rs!class_id)
+                Set c = classes(lookupKey)
+            End If
+            Set item = repo.RowMap(rs)
+            If c Is Nothing Then
+                item.Add "school_year", Null: item.Add "grade_name", "－": item.Add "class_display", "－"
+            Else
+                item.Add "school_year", c("school_year")
+                lookupKey = "GRADE|" & c("grade_code")
+                If Not names.Exists(lookupKey) Then names.Add lookupKey, repo.CodeName("GRADE", c("grade_code"))
+                item.Add "grade_name", names(lookupKey)
+                item.Add "class_display", c("class_code") & " " & c("class_name")
+                If Not c("is_active") Or c("valid_from") > businessDay(UtcNow()) Or c("valid_to") < businessDay(UtcNow()) Then item("class_display") = item("class_display") & " [停止" & ChrW(&H30FB) & "期間外]"
+            End If
+            lookupKey = "ENROLLMENT_STATUS|" & rs!enrollment_status_code
+            If Not names.Exists(lookupKey) Then names.Add lookupKey, repo.CodeName("ENROLLMENT_STATUS", rs!enrollment_status_code)
+            item.Add "enrollment_name", names(lookupKey)
+            Set rows(count) = item: count = count + 1
+            If count = 10001 Then Exit Do
+        End If
+        rs.MoveNext
+    Loop
+    rs.Close: tx.CloseWork
+    result.Add "total", count: result.Add "at", UtcNow()
+    Set view = New Collection: result.Add "rows", view
+    If count > 10000 Then result.Add "kind", "LimitExceeded": result.Add "message", "W-SRC-001": Exit Function
+    If count = 0 Then result.Add "kind", "Found": result.Add "message", "I-SRC-001": Exit Function
+    SortRows rows, 0, count - 1, SortColumn(SortKey), Direction
+    For i = 0 To count - 1
+        For Each k In Array("name_key", "admission_date", "updated_at", "class_id", "enrollment_status_code")
+            rows(i).Remove k
+        Next
+        view.Add rows(i)
+    Next
+    result.Add "kind", "Found": result.Add "message", ""
+    Exit Function
+Failed:
+    Dim e As String
+    e = Err.description
+    On Error Resume Next: If Not rs Is Nothing Then rs.Close
+    tx.CloseWork: On Error GoTo 0
+    result.Add "kind", "SystemError"
+    If Left$(e, 2) <> "E-" Then e = "E-COM-004"
+    result.Add "message", e
+End Function
+
+Private Function SortColumn(ByVal key As String) As String
+    Select Case key
+    Case "studentNo": SortColumn = "student_no"
+    Case "name": SortColumn = "name_key"
+    Case "admissionDate": SortColumn = "admission_date"
+    Case "updatedAt": SortColumn = "updated_at"
+    End Select
+End Function
+Private Function CompareRow(ByVal a As Object, ByVal b As Object, ByVal key As String, ByVal Direction As String) As Long
+    If key = "updated_at" Then
+        If a(key) < b(key) Then
+            CompareRow = -1
+        ElseIf a(key) > b(key) Then
+            CompareRow = 1
+        End If
+    Else
+        CompareRow = StrComp(CStr(a(key)), CStr(b(key)), vbBinaryCompare)
+    End If
+    If Direction = "desc" Then CompareRow = -CompareRow
+    If CompareRow = 0 Then
+        If a("student_id") < b("student_id") Then
+            CompareRow = -1
+        ElseIf a("student_id") > b("student_id") Then
+            CompareRow = 1
+        End If
+    End If
+End Function
+Private Sub SortRows(ByRef rows() As Object, ByVal lo As Long, ByVal hi As Long, ByVal key As String, ByVal Direction As String)
+    Dim i As Long, j As Long, pivot As Object, temp As Object
+    i = lo: j = hi: Set pivot = rows((lo + hi) \ 2)
+    Do While i <= j
+        Do While CompareRow(rows(i), pivot, key, Direction) < 0: i = i + 1: Loop
+        Do While CompareRow(rows(j), pivot, key, Direction) > 0: j = j - 1: Loop
+        If i <= j Then
+            Set temp = rows(i): Set rows(i) = rows(j): Set rows(j) = temp
+            i = i + 1: j = j - 1
+        End If
+    Loop
+    If lo < j Then SortRows rows, lo, j, key, Direction
+    If i < hi Then SortRows rows, i, hi, key, Direction
+End Sub
+

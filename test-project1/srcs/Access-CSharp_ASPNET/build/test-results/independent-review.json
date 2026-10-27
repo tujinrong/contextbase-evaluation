@@ -1,0 +1,281 @@
+{
+  "schema": "access-rebuilder-independent-review/1.0",
+  "iteration": 2,
+  "sourceHash": "F5FF069C5D7AA45CFAE80584319FD11F0A0B8A6C52E141DA51D5263532D82CA4",
+  "reviewMethod": "Independent static re-review of binary-derived exports against final-iteration Core/Web/SQL source. Runtime tests are recorded separately and are not inferred from source inspection.",
+  "status": "PASS-with-limitations",
+  "findings": [
+    {
+      "id": "IR-001",
+      "severity": "P2",
+      "status": "resolved-static",
+      "area": "audit",
+      "trigger": "Update only phone_number on an existing student.",
+      "source": {
+        "path": "test-project1/srcs/Access-CSharp_ASPNET/build/generation/access-export/modules/clsStudentRepository.txt",
+        "lines": [
+          98,
+          112
+        ],
+        "behavior": "Only changed draft keys plus row_version, updated_at and updated_by are logged; CREATE includes derived/fixed category and creation columns."
+      },
+      "target": {
+        "path": "test-project1/srcs/Access-CSharp_ASPNET/src/StudentManagement.Core/StudentService.cs",
+        "behavior": "ChangedStudentColumns includes only changed stored draft/derived values, generated fixed/creation columns on CREATE and relationship_category on nullability transition."
+      },
+      "requiredCorrection": "Compute changed_columns from actual changed stored values; include generated fields on CREATE and relationship_category when it changes. Add phone-only edit and CREATE audit regression.",
+      "resolvedInIteration": 2,
+      "originalObservedBehavior": "name_key and kana_key unconditionally included in UPDATE; fixed category/creation fields omitted in CREATE.",
+      "resolutionEvidence": [
+        "StudentService.ChangedStudentColumns",
+        "Core.Tests phone-only and CREATE audit regression",
+        "Sql.Tests persisted phone-only and CREATE audit regression"
+      ]
+    },
+    {
+      "id": "IR-002",
+      "severity": "P2",
+      "status": "resolved-static",
+      "area": "audit",
+      "trigger": "Change only a master name while leaving other fields unchanged.",
+      "source": {
+        "path": "test-project1/srcs/Access-CSharp_ASPNET/build/generation/access-export/modules/modMasterMaintenance.txt",
+        "lines": [
+          99,
+          108,
+          142,
+          151
+        ],
+        "behavior": "Master audit includes actual changed keys plus row_version, updated_at, updated_by."
+      },
+      "target": {
+        "path": "test-project1/srcs/Access-CSharp_ASPNET/src/StudentManagement.Core/StudentService.cs",
+        "behavior": "ChangedClassColumns/ChangedCodeColumns compare original/current values and retain row_version/updated_at/updated_by metadata."
+      },
+      "requiredCorrection": "Compute master changed-column list from actual before/after values and preserve create/update/enable/disable operation. Add name-only edit regression.",
+      "resolvedInIteration": 2,
+      "originalObservedBehavior": "MaintainClass and MaintainCode construct fixed arrays containing every editable column.",
+      "resolutionEvidence": [
+        "StudentService.ChangedClassColumns/ChangedCodeColumns",
+        "Core.Tests class/code name-only audit regressions"
+      ]
+    },
+    {
+      "id": "IR-003",
+      "severity": "P2",
+      "status": "resolved-static",
+      "area": "presentation",
+      "trigger": "Display birth date in the student search list.",
+      "source": {
+        "path": "test-project1/srcs/Access-CSharp_ASPNET/build/generation/access-export/modules/modStudentForms.txt",
+        "lines": [
+          196,
+          570
+        ],
+        "behavior": "FormatBirthDate produces Japanese era label, first year 元, and month/day display."
+      },
+      "target": {
+        "path": "test-project1/srcs/Access-CSharp_ASPNET/src/StudentManagement.Web/Views/Students/Index.cshtml",
+        "behavior": "JapaneseDate.FormatBirthDate matches source era labels, first-year 元 and zero-padded month/day; controller uses it for search and duplicate-confirmation rows."
+      },
+      "requiredCorrection": "Add a shared era formatter matching modJapaneseDate.FormatBirthDate and use it in list/confirmation displays; retain ISO storage. Add era-boundary/first-year display regression.",
+      "resolvedInIteration": 2,
+      "originalObservedBehavior": "BirthDate rendered directly as ISO yyyy-MM-dd string.",
+      "resolutionEvidence": [
+        "TextRules.cs JapaneseDate.FormatBirthDate",
+        "StudentsController.ToListItem and duplicate candidate conversion",
+        "Web.Tests era-boundary and formatter usage regressions"
+      ]
+    },
+    {
+      "id": "IR-004",
+      "severity": "P2",
+      "status": "resolved-static",
+      "area": "confirmation-state",
+      "trigger": "Open duplicate-confirmation, reset/reload editor, then submit the old confirmation POST.",
+      "source": {
+        "path": "test-project1/srcs/Access-CSharp_ASPNET/build/generation/access-export/modules/modStudentForms.txt",
+        "lines": [
+          488
+        ],
+        "behavior": "ResetEdit marks prior confirmation consumed."
+      },
+      "target": {
+        "path": "test-project1/srcs/Access-CSharp_ASPNET/src/StudentManagement.Web/Controllers/StudentsController.cs",
+        "behavior": "Reset invalidates pending confirmations and old editor snapshot, then captures a new token with original raw values/version. Reload invalidates pending state and reads a fresh row. ConfirmSave/Delete validate editor identity before domain calls."
+      },
+      "requiredCorrection": "Invalidate/rotate old editor snapshot on Reset and validate pending editor identity on confirmation POST; keep reload invalidation. Reject old confirmation after reset/reload; add regression.",
+      "resolvedInIteration": 2,
+      "originalObservedBehavior": "Reset keeps snapshot token; Reload removes it; ConfirmSave does not validate the old editor snapshot, so pending confirmation can survive reset/reload.",
+      "resolutionEvidence": [
+        "StudentsController.Reset/Reload/InvalidateEditor/IsEditorIdentityValid",
+        "ConfirmationStore.CancelWhere bound to session and subject",
+        "Web adapter stale duplicate confirmation after reset and reload regressions"
+      ]
+    }
+  ],
+  "observedMatches": [
+    "Scalar-count and NFKC/kana normalization branches",
+    "Birth-era boundaries and strict ISO date parsing",
+    "Default search statuses 01/02 and ordinal prefix/name filtering",
+    "10-minute confirmation expiry and user/role binding",
+    "Integer version overflow protection and optimistic expected-version checks"
+  ],
+  "inputs": [
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/build/generation/access-export/modules/clsStudentRepository.txt",
+      "sha256": "BB1251F390AAC905883DCA3D2C621B8EC06E8BD37EDE9AD64991D031E97459A5"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/src/StudentManagement.Core/StudentService.cs",
+      "sha256": "CDB92C88723CB380B0F27DFC73EC848C4E95374692FB2C2384F1C5158B9D6EA0"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/build/generation/access-export/modules/modMasterMaintenance.txt",
+      "sha256": "7C5E0E01A8E5873BEC62E2FBEF052F62148E4594E95EFA67C07B8D6901288356"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/build/generation/access-export/modules/modStudentForms.txt",
+      "sha256": "B027D4D742ADDABE8576BA6E54FCFE891B039721BD016FBDE36EA3F5C6096A18"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/src/StudentManagement.Web/Views/Students/Index.cshtml",
+      "sha256": "6BF5C536B9E0331FF07BF1023E5EA89110D8CDA8C225C0785D6EEE027645027A"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/build/generation/access-export/modules/modJapaneseDate.txt",
+      "sha256": "D6F143902FECFC8605616D4EB9A9A461308F94FFF0007A7AD61A4F8344C9E683"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/build/generation/access-export/modules/modStudentRules.txt",
+      "sha256": "C3958D00518254BF1A4E4863D297B5ED56501F4C522760E7E1C9D9B7B563DF63"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/build/generation/access-export/modules/modUnicode.txt",
+      "sha256": "B1186186A17669A17834B8472D7BD2CCEB2BA74BC9288218873251A63E7CCA21"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/build/generation/access-export/modules/clsConfirmation.txt",
+      "sha256": "930D658349A88620062C5CE712162C41C6F4C0C9BF37A3CFC4BACA3491C69044"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/src/StudentManagement.Core/TextRules.cs",
+      "sha256": "F853BC533901991C731F648084E994A217C887932E622A104E1BCD8817A5B25A"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/src/StudentManagement.Web/Controllers/StudentsController.cs",
+      "sha256": "EB1C88F04EE4A6300FBB26B381D101D072E5025FA908B49CB0D10067B02034C7"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/src/StudentManagement.Web/Infrastructure/EditorSnapshotStore.cs",
+      "sha256": "22B12B83804320AFBB0AF27534ACECD2C64DB5DFC256BDA9DFD84B0AA4D8A7D2"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/src/StudentManagement.Web/wwwroot/js/site.js",
+      "sha256": "92799BC2A874CAACFABD9D275DD7F76D48C5C5BDE294BB4E8354DB784704E3A5"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/database/schema/type-mapping.json",
+      "sha256": "E56A1F87724E8D68E8141FCB929B9302C7B584CF123420FCD82C46CE81B0C248"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/database/sql/001-schema.sql",
+      "sha256": "C1BEC0AD0B43081F3C2AA234A4F9FCEA8CADBC1D1FBACF8A53E38F90017E24D8"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/tests/StudentManagement.Core.Tests/Program.cs",
+      "sha256": "1B5F589A6C53266BB84DBEB5F872D3EA82E3BAB0E6A0926C93A6AB1F0284AC31"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/tests/StudentManagement.Sql.Tests/Program.cs",
+      "sha256": "97ACC3708ED897B5B55B018AF50C20EA3A62B125C9B94C987583C36D51D37028"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/tests/StudentManagement.Web.Tests/Program.cs",
+      "sha256": "0843EED2028D14798FBC68D6280827A8F8567B62BE4707818707617662A6DC99"
+    },
+    {
+      "path": "test-project1/srcs/Access-CSharp_ASPNET/src/StudentManagement.Web/Infrastructure/ConfirmationStore.cs",
+      "sha256": "EA2521CBC7B557F608236BDD98DB54F90DDF0C4DAE73E03C0CD53AEAE7214F22"
+    }
+  ],
+  "notRun": [
+    "Original Access UI business execution",
+    "Differential runtime comparison between original Access and generated app",
+    "Independent reviewer did not execute SQL Server or browser tests; other task reports cover their actual execution"
+  ],
+  "formalScore": null,
+  "additionalReview": {
+    "resetReloadDirtyState": {
+      "observed": "Immutable original raw snapshot retained for Reset; explicit Reload reads current row; original baseline survives candidate/error redraw; JS compares current raw values to original baseline.",
+      "remainingFinding": null,
+      "scope": "static-source-review",
+      "confirmationInvalidationChecks": {
+        "confirmSaveChecksEditorIdentity": true,
+        "confirmDeleteChecksEditorIdentity": true,
+        "resetRotatesSnapshot": true,
+        "reloadInvalidatesSnapshot": true,
+        "pendingSaveAndDeleteCancelled": true,
+        "cancellationBoundToSessionAndSubject": true,
+        "staleResetRegression": true,
+        "staleReloadRegression": true,
+        "explicitEditView": true
+      },
+      "explicitEditViewRouting": "Edit action returns View(\"Edit\",model), including invocation from Reload."
+    },
+    "foreignKeyCapacityAlignment": {
+      "status": "PASS-static",
+      "columns": [
+        {
+          "table": "m_class",
+          "column": "grade_code",
+          "sourceCharacters": 4,
+          "sqlType": "nvarchar(20)",
+          "sourceMaxBytes": 8,
+          "checkPresent": true
+        },
+        {
+          "table": "m_student",
+          "column": "gender_code",
+          "sourceCharacters": 2,
+          "sqlType": "nvarchar(20)",
+          "sourceMaxBytes": 4,
+          "checkPresent": true
+        },
+        {
+          "table": "m_student",
+          "column": "prefecture_code",
+          "sourceCharacters": 4,
+          "sqlType": "nvarchar(20)",
+          "sourceMaxBytes": 8,
+          "checkPresent": true
+        },
+        {
+          "table": "m_student",
+          "column": "enrollment_status_code",
+          "sourceCharacters": 4,
+          "sqlType": "nvarchar(20)",
+          "sourceMaxBytes": 8,
+          "checkPresent": true
+        },
+        {
+          "table": "m_student",
+          "column": "relationship_code",
+          "sourceCharacters": 4,
+          "sqlType": "nvarchar(20)",
+          "sourceMaxBytes": 8,
+          "checkPresent": true
+        }
+      ],
+      "conclusion": "Physical child nvarchar capacity aligned with parent. CHECK preserves original child capacity; business scalar limits remain separately enforced in C#."
+    }
+  },
+  "remainingLimitations": [
+    "Source library references not enumerated by extractor.",
+    "Original Access business UI and source-vs-target runtime equivalence are not verified.",
+    "Arbitrary third-party ActiveX initialization safety is not established by startup/AutoExec fixtures.",
+    "Only test-project1 has been trained; generalization to another Access file is unverified."
+  ],
+  "openFindings": [],
+  "assessment": "All four identified findings are resolved by current source and corresponding regression cases. This is a scoped independent static review; it does not establish complete behavioral equivalence with the original Access application."
+}

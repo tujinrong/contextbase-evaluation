@@ -1,0 +1,66 @@
+{
+  "$schema": "../schemas/request.schema.json",
+  "schema": "access-rebuilder-request/0.1",
+  "projectId": "test-project1",
+  "phase": "verification",
+  "approval": {
+    "implementation": "authorized",
+    "evidence": "2026-10-27 user: この計画で実装とtest-project1での訓練を進めてください。反復回数は２回まで; user selected local SQLEXPRESS new dedicated training DB",
+    "accessExtraction": true,
+    "codeGeneration": true,
+    "databaseExecution": true
+  },
+  "training": {
+    "maxIterations": 2,
+    "iterationDefinition": "one generated candidate, independent verification and rule feedback; preparation is not a conversion iteration"
+  },
+  "source": {
+    "file": "test-project1/srcs/Access/build/StudentManagement.accdb",
+    "sha256": "F5FF069C5D7AA45CFAE80584319FD11F0A0B8A6C52E141DA51D5263532D82CA4",
+    "authority": "access-binary",
+    "sidecarPolicy": "post-extraction-cross-check-only"
+  },
+  "target": {
+    "profileId": "Access-CSharp_ASPNET",
+    "sourceRoot": "test-project1/srcs/Access-CSharp_ASPNET",
+    "specRoot": "test-project1/spec/Access-CSharp_ASPNET",
+    "codeDirectory": "src",
+    "databaseDirectory": "database",
+    "solutionFile": "StudentManagement.slnx",
+    "frameworkProposal": "net10.0",
+    "webProposal": "ASP.NET Core MVC",
+    "sqlCompatibilityProposal": "SQL Server 2022",
+    "databaseConnection": "Server=.\\SQLEXPRESS;Database=AccessRebuilderTraining_01a17be7;Integrated Security=True;Encrypt=True;TrustServerCertificate=True;Application Name=AccessRebuilderTraining"
+  },
+  "reference": {
+    "purpose": "solution-layout-and-environment-only",
+    "allowedFiles": [
+      "test-project1/srcs/CSharp_ASPNET/StudentManagement.slnx",
+      "test-project1/srcs/CSharp_ASPNET/StudentManagement.Web.csproj",
+      "test-project1/srcs/CSharp_ASPNET/Core/StudentManagement.Core.csproj",
+      "test-project1/srcs/CSharp_ASPNET/Directory.Build.props",
+      "test-project1/srcs/CSharp_ASPNET/database/README.md"
+    ],
+    "copyBusinessImplementation": false
+  },
+  "exclusions": [
+    "test-project1/spec-eval/**",
+    "test-project1/spec/全体/**",
+    "test-project1/spec/Access/**",
+    "test-project1/spec/CSharp_ASPNET/**",
+    "test-project1/spec/CSharp_WPF/**",
+    "test-project1/spec/VB.NET_WinForms/**",
+    "test-project1/spec/Vue_CSharpAPI/**",
+    "test-project1/spec/COBOL/**",
+    "test-project1/spec/AS400_RPG/**",
+    "test-project1/srcs/**/spec-eval/**",
+    "test-project1/srcs/**/spec/**",
+    "test-project2/**"
+  ],
+  "notes": [
+    "Repository-relative paths. User authorized implementation, extraction and training for at most two iterations.",
+    "No fallback to existing method specifications. Database execution remains disabled until its dedicated target is specified.",
+    "The target specRoot may be authored and read after implementation authorization; existing method specifications stay excluded.",
+    "Revalidate the source hash and record authorized scope before changing phase."
+  ]
+}

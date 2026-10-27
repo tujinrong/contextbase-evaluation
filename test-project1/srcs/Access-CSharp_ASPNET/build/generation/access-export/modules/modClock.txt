@@ -1,0 +1,30 @@
+Option Explicit
+Option Compare Binary
+Private Type SYSTEMTIME
+    year As Integer
+    month As Integer
+    weekday As Integer
+    day As Integer
+    hour As Integer
+    minute As Integer
+    second As Integer
+    milliseconds As Integer
+End Type
+Private Declare PtrSafe Sub GetSystemTime Lib "kernel32" (ByRef st As SYSTEMTIME)
+Private Declare PtrSafe Function CoCreateGuid Lib "ole32" (ByRef guid As Any) As Long
+Private Declare PtrSafe Function StringFromGUID2 Lib "ole32" (ByRef guid As Any, ByVal text As LongPtr, ByVal count As Long) As Long
+Public Function UtcNow() As Date
+    Dim st As SYSTEMTIME
+    GetSystemTime st
+    UtcNow = DateSerial(st.year, st.month, st.day) + TimeSerial(st.hour, st.minute, st.second)
+End Function
+Public Function businessDay(ByVal utc As Date) As String
+    businessDay = format$(DateAdd("h", 9, utc), "yyyy-mm-dd")
+End Function
+Public Function GuidText() As String
+    Dim guid(0 To 15) As Byte, text As String
+    If CoCreateGuid(guid(0)) <> 0 Then Err.Raise vbObjectError + 115, , "GUID failed"
+    text = String$(39, vbNullChar)
+    If StringFromGUID2(guid(0), StrPtr(text), 39) = 0 Then Err.Raise vbObjectError + 115, , "GUID failed"
+    GuidText = LCase$(Mid$(text, 2, 36))
+End Function

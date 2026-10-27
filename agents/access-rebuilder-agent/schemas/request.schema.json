@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Access rebuilder request",
+  "description": "Request contract. CLI also enforces path, hash, authorization and iteration limits.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "projectId", "phase", "approval", "source", "target", "reference", "exclusions"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema": { "const": "access-rebuilder-request/0.1" },
+    "projectId": { "type": "string", "minLength": 1 },
+    "phase": { "enum": ["planning", "implementation", "verification"] },
+    "training": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxIterations", "iterationDefinition"],
+      "properties": {
+        "maxIterations": { "type": "integer", "minimum": 1, "maximum": 2 },
+        "iterationDefinition": { "type": "string", "minLength": 1 }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["implementation", "evidence", "accessExtraction", "codeGeneration", "databaseExecution"],
+      "properties": {
+        "implementation": { "enum": ["pending-user-review", "authorized"] },
+        "evidence": { "type": ["string", "null"] },
+        "accessExtraction": { "type": "boolean" },
+        "codeGeneration": { "type": "boolean" },
+        "databaseExecution": { "type": "boolean" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "sha256", "authority", "sidecarPolicy"],
+      "properties": {
+        "file": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+        "authority": { "const": "access-binary" },
+        "sidecarPolicy": { "const": "post-extraction-cross-check-only" }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profileId", "sourceRoot", "specRoot", "codeDirectory", "databaseDirectory", "solutionFile", "frameworkProposal", "webProposal", "sqlCompatibilityProposal", "databaseConnection"],
+      "properties": {
+        "profileId": { "type": "string", "minLength": 1 },
+        "sourceRoot": { "type": "string", "minLength": 1 },
+        "specRoot": { "type": "string", "minLength": 1 },
+        "codeDirectory": { "const": "src" },
+        "databaseDirectory": { "const": "database" },
+        "solutionFile": { "type": "string", "pattern": "^[^/\\\\]+\\.slnx$" },
+        "frameworkProposal": { "type": "string" },
+        "webProposal": { "type": "string" },
+        "sqlCompatibilityProposal": { "type": "string" },
+        "databaseConnection": { "type": ["string", "null"] }
+      }
+    },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["purpose", "allowedFiles", "copyBusinessImplementation"],
+      "properties": {
+        "purpose": { "const": "solution-layout-and-environment-only" },
+        "allowedFiles": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "copyBusinessImplementation": { "const": false }
+      }
+    },
+    "exclusions": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "phase": { "const": "planning" } } },
+      "then": {
+        "properties": {
+          "approval": {
+            "properties": {
+              "implementation": { "const": "pending-user-review" },
+              "evidence": { "const": null },
+              "accessExtraction": { "const": false },
+              "codeGeneration": { "const": false },
+              "databaseExecution": { "const": false }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "approval": {
+            "properties": {
+              "implementation": { "const": "authorized" },
+              "evidence": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+Option Explicit
+Option Compare Binary
+Public Token As String
+Public Owner As String
+Public AuthStamp As String
+Public FormKey As String
+Public TargetId As Variant
+Public ExpectedVersion As Variant
+Public DraftFingerprint As String
+Public CandidatesFingerprint As String
+Public ExpiresAt As Date
+Public Consumed As Boolean
+Public Sub Issue(ByVal formId As String, ByVal id As Variant, ByVal version As Variant, ByVal draft As Object, ByVal candidates As String)
+    Token = GuidText(): Owner = CurrentUserId(): AuthStamp = AuthorizationStamp(): FormKey = formId
+    TargetId = id: ExpectedVersion = version
+    DraftFingerprint = Fingerprint(draft): CandidatesFingerprint = candidates
+    ExpiresAt = DateAdd("n", 10, UtcNow()): Consumed = False
+End Sub
+Public Function Valid(ByVal formId As String, ByVal id As Variant, ByVal version As Variant, ByVal draft As Object, ByVal candidates As String) As Boolean
+    Valid = Not Consumed And Owner = CurrentUserId() And AuthStamp = AuthorizationStamp() And FormKey = formId And UtcNow() < ExpiresAt And EqualValue(TargetId, id) And EqualValue(ExpectedVersion, version) And DraftFingerprint = Fingerprint(draft) And CandidatesFingerprint = candidates
+End Function
