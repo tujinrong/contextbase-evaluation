@@ -1,13 +1,15 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"ACCESS-CSHARP-MIGRATION-INDEX","version":"0.4","path":"test-project1/spec/Access-CSharp_ASPNET/README.md","sheets":[{"heading":"対象と根拠","kind":"GRID","sheet":"01_対象"},{"heading":"配置と判断","kind":"GRID","sheet":"02_判断"}]} -->
-# Access-CSharp_ASPNET 移行設計
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"ACCESS-CSHARP-MIGRATION-INDEX","version":"0.5","path":"test-project1/spec/Access-To-CSharp_ASPNET/README.md","sheets":[{"heading":"対象と根拠","kind":"GRID","sheet":"01_対象"},{"heading":"配置と判断","kind":"GRID","sheet":"02_判断"}]} -->
+# Access-To-CSharp_ASPNET 移行設計
 
-版0.4／2026-10-27。
+版0.5／2026-10-28。
 
 ## 対象と根拠
 
-projectId=test-project1、sourceRoot=srcs/Access-CSharp_ASPNET/。利用者が計画の実施と最大2回の訓練、およびローカルSQLEXPRESSへの新規専用DB作成を指定した。原入力はsrcs/Access/build/StudentManagement.accdb、SHA-256 F5FF069C5D7AA45CFAE80584319FD11F0A0B8A6C52E141DA51D5263532D82CA4。
+projectId=test-project1、sourceRoot=srcs/Access-To-CSharp_ASPNET/。利用者が計画の実施と最大2回の訓練、およびローカルSQLEXPRESSへの新規専用DB作成を指定した。原入力はsrcs/Access/build/StudentManagement.accdb、SHA-256 F5FF069C5D7AA45CFAE80584319FD11F0A0B8A6C52E141DA51D5263532D82CA4。
 
 業務の根拠は同本体のDAO構造とフォーム・VBAの抽出内容である。初期の訓練2回ではWebソースを構成参考に限定したが、利用者の追加指示により、現在はCSharp_ASPNETソースを読取り専用の設計・実装参照として使う。Accessのコントロールやイベント順を忠実に再現することは目標としない。既存方式の原仕様・spec-evalは入力にしない。
+
+2026-10-28の名称変更指示により、方式ID・sourceRoot・specRootを上記の新名称へ揃える。既存DB名・接続先・所有者マーカーおよび封印済み2回の訓練記録は変更しない。過去の記録内の旧パスは当時の証跡として保持し、今回の配置検証と区別する。
 
 ## 配置と判断
 

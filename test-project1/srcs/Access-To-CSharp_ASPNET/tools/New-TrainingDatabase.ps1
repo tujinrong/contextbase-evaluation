@@ -10,7 +10,7 @@ if (-not (Test-Path -LiteralPath $schema) -or -not (Test-Path -LiteralPath $seed
 $create="IF DB_ID(N'$Database') IS NOT NULL THROW 51000,'Training database already exists; no changes.',1; EXEC(N'CREATE DATABASE [$Database]');"
 & sqlcmd -S $Server -E -C -b -Q $create
 if ($LASTEXITCODE -ne 0) { throw 'Database creation failed.' }
-& sqlcmd -S $Server -d $Database -E -C -b -Q "EXEC sys.sp_addextendedproperty @name=N'AccessRebuilderOwner',@value=N'test-project1/Access-CSharp_ASPNET';"
+& sqlcmd -S $Server -d $Database -E -C -b -Q "EXEC sys.sp_addextendedproperty @name=N'AccessRebuilderOwner',@value=N'test-project1/Access-To-CSharp_ASPNET';"
 if ($LASTEXITCODE -ne 0) { throw 'Database ownership marker failed.' }
 & sqlcmd -S $Server -d $Database -E -C -b -f 65001 -i $schema
 if ($LASTEXITCODE -ne 0) { throw 'Schema creation failed; dedicated DB retained for inspection.' }

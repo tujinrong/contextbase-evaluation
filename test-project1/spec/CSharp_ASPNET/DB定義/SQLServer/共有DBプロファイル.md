@@ -1,11 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"CSHARP-ASPNET-SHARED-DB","version":"1.0","path":"test-project1/spec/CSharp_ASPNET/DB定義/SQLServer/共有DBプロファイル.md","sheets":[{"heading":"適用","kind":"GRID","sheet":"01_適用"},{"heading":"型と項目の対応","kind":"LIST","sheet":"02_型と項目の対応","key":["項目"]},{"heading":"接続・主体・排他","kind":"GRID","sheet":"03_接続・主体・排他"},{"heading":"配備と検証","kind":"GRID","sheet":"04_配備と検証"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"CSHARP-ASPNET-SHARED-DB","version":"1.1","path":"test-project1/spec/CSharp_ASPNET/DB定義/SQLServer/共有DBプロファイル.md","sheets":[{"heading":"適用","kind":"GRID","sheet":"01_適用"},{"heading":"型と項目の対応","kind":"LIST","sheet":"02_型と項目の対応","key":["項目"]},{"heading":"接続・主体・排他","kind":"GRID","sheet":"03_接続・主体・排他"},{"heading":"配備と検証","kind":"GRID","sheet":"04_配備と検証"}]} -->
 # 共有DBプロファイル
 
-版1.0／2026-10-27。利用者の同一DB利用指示を固定する。
+版1.1／2026-10-28。利用者の同一DB利用指示を固定する。
 
 ## 適用
 
-`CSharp_ASPNET`を`Access-CSharp_ASPNET`と同じローカルSQL Server DBで動作させる。接続先は`.\SQLEXPRESS`、DBは`AccessRebuilderTraining_01a17be7`。既存の7表とデータを使用し、再作成・初期化・Native用DDLの適用は行わない。
+`CSharp_ASPNET`を`Access-To-CSharp_ASPNET`と同じローカルSQL Server DBで動作させる。接続先は`.\SQLEXPRESS`、DBは`AccessRebuilderTraining_01a17be7`。既存の7表とデータを使用し、再作成・初期化・Native用DDLの適用は行わない。
 
 通常の独立DB契約は`StudentDatabase:Profile=Native`として維持する。明示した`SharedAccess`では本文の既存DB互換契約を優先する。画面項目・検索4条件・一覧7列・登録34項目は維持し、物理型の違いをデータアクセス層で吸収する。他方式ソースへの実行時参照は設けない。
 

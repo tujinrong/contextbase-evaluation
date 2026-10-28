@@ -2,7 +2,7 @@
 
 2026-10-27：Debug/Releaseとも既定の起動設定を共有DB用に変更した。保存済みの`https`プロファイルも同じ設定で起動し、独立DBの旧設定は`Native`として残す。
 
-`Access-CSharp_ASPNET`と同じローカルSQL Server DBで確認する`SharedTrainingSql`起動プロファイルを追加した。Visual Studioで`StudentManagement.Web`を起動プロジェクト、`SharedTrainingSql`をプロファイルに選ぶか、方式ルートから次を実行する。
+`Access-To-CSharp_ASPNET`と同じローカルSQL Server DBで確認する`SharedTrainingSql`起動プロファイルを追加した。Visual Studioで`StudentManagement.Web`を起動プロジェクト、`SharedTrainingSql`をプロファイルに選ぶか、方式ルートから次を実行する。
 
 ```powershell
 dotnet run --project StudentManagement.Web.csproj --launch-profile SharedTrainingSql
