@@ -3,7 +3,8 @@ import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} fro
 const here=path.dirname(fileURLToPath(import.meta.url));
 const base=path.resolve(here,'../.tmp/preflight-tests');fs.mkdirSync(base,{recursive:true});
 const fixture=fs.mkdtempSync(path.join(base,'work-'));const root=path.join(fixture,'repo');let passed=0;
-const files=['AGENTS.md','agents/README.md','agents/designs/spec-agent/AGENT.md','agents/builds/build-agent/AGENT.md','agents/builds/build-agent/PROMPT.md','agents/builds/build-agent/README.md','agents/reverses/reverse-agent/AGENT.md','docs/リポジトリ構成.md','docs/開発規約.md','docs/仕様書作成ルール.md','docs/評価規約.md','docs/MD構造・Excel変換規約.md','docs/テーブル仕様書記述規約.md','docs/テストデータ整備規約.md','agents/builds/build-agent/docs/Access生成チェック.md','sample-project1/README.md','sample-project1/プロジェクト情報.md','sample-project1/docs/開発規約.md'];
+const detailInputs=['agents/designs/detail-design-agent/AGENT.md','agents/designs/detail-design-agent/rules/詳細設計書作成ルール.md','agents/designs/detail-design-agent/workflows/詳細設計.md'];
+const files=['AGENTS.md','agents/README.md',...detailInputs,'agents/builds/build-agent/AGENT.md','agents/builds/build-agent/PROMPT.md','agents/builds/build-agent/README.md','agents/reverses/reverse-agent/AGENT.md','docs/リポジトリ構成.md','docs/開発規約.md','docs/仕様書作成ルール.md','docs/評価規約.md','docs/MD構造・Excel変換規約.md','docs/テーブル仕様書記述規約.md','docs/テストデータ整備規約.md','agents/builds/build-agent/docs/Access生成チェック.md','sample-project1/README.md','sample-project1/プロジェクト情報.md','sample-project1/docs/開発規約.md'];
 function write(file,text){const target=path.join(root,file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,text);}
 function doc(file,id){return `<!-- spec-meta: ${JSON.stringify({schema:'spec-md/1.0',documentId:id,version:'1.0',path:file,sheets:[{heading:'定義',kind:'LIST',sheet:'01_定義',key:['ID']}]})} -->\n# fixture\n\n## 定義\n\n| ID | 内容 |\n| --- | --- |\n| A | fixture |\n`;}
 function exec(script,id,expected,profile,inspectOnly=false){const r=spawnSync(process.execPath,[path.join(root,'agents/builds/build-agent/scripts',script),'--project','sample-project1','--run-id',id,...(profile?['--profile',profile]:[]),...(inspectOnly?['--inspect-only','true']:[])],{encoding:'utf8'});if(r.status!==expected)throw new Error(`${script}: expected ${expected}, got ${r.status}: ${r.stderr}${r.stdout}`);passed++;return r;}
@@ -13,6 +14,7 @@ function assert(ok,text){if(!ok)throw new Error(text);passed++;}
 function snapshot(directory=root){return fs.readdirSync(directory,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name)).flatMap(entry=>{const target=path.join(directory,entry.name),file=path.relative(root,target);return entry.isDirectory()?[{file,directory:true},...snapshot(target)]:[{file,data:fs.readFileSync(target).toString('base64')}];});}
 try{
  files.forEach((f,i)=>write(f,doc(f,f==='agents/builds/build-agent/AGENT.md'?'AG-BUILD':`FIX-${i}`)));
+ const requirementTemplate='agents/designs/requirement-agent/AGENT.md';write(requirementTemplate,'Draft requirement Agent must not become an implementation input');
  write('sample-project1/spec/README.md',doc('sample-project1/spec/README.md','ROUTING'));
  for(const profile of ['VB.NET_WinForms','CSharp_WPF','CSharp_ASPNET','Vue_CSharpAPI','COBOL','AS400_RPG','Access']){const file=`sample-project1/spec/${profile}/README.md`;write(file,doc(file,`SPEC-${profile}`));write(`sample-project1/srcs/${profile}/README.md`,`[own specification](../../spec/${profile}/README.md)\n`);}
  for(const script of ['preflight.mjs','manifest.mjs','input-scope.mjs','output-layout.mjs','source-files.mjs','check-isolation.mjs','isolate-specs.mjs','finalize-isolation-docs.mjs','document-dotnet-projects.mjs'])write('agents/builds/build-agent/scripts/'+script,fs.readFileSync(path.join(here,script),'utf8'));
@@ -21,6 +23,7 @@ try{
  write('sample-project1/spec/CSharp_ASPNET/spec-eval/poison.md','Evaluation input must never be read, even under canonical root');
  write('sample-project1/srcs/CSharp_ASPNET/spec/poison.md','Legacy location must never be input or output');
  exec('preflight.mjs','current',0);
+ assert(detailInputs.every(file=>read('inputs.json').files.some(f=>f.file===file))&&!read('inputs.json').files.some(f=>f.file===requirementTemplate),'Detailed-design rules were not frozen or requirement template became an implementation input');
  assert(!read('inputs.json').files.some(f=>f.file.includes('spec-eval')||f.file.includes('spec-analysis')||f.file.includes('/srcs/')),'Evaluation/analysis/source/legacy input leaked');
  assert(read('inputs.json').files.filter(f=>/^sample-project1\/spec\/[^/]+\/README.md$/.test(f.file)).length===7,'Aggregate did not inspect all independent packages');
  const dataRule='docs/テストデータ整備規約.md',accessRule='agents/builds/build-agent/docs/Access生成チェック.md';

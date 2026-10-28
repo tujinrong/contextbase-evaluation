@@ -5,7 +5,10 @@ import {profiles} from './output-layout.mjs';
 
 export function fixedInputFiles(project, profile) {
   return [
-    'AGENTS.md', 'agents/README.md', 'agents/designs/spec-agent/AGENT.md',
+    'AGENTS.md', 'agents/README.md',
+    'agents/designs/detail-design-agent/AGENT.md',
+    'agents/designs/detail-design-agent/rules/詳細設計書作成ルール.md',
+    'agents/designs/detail-design-agent/workflows/詳細設計.md',
     'agents/builds/build-agent/AGENT.md', 'agents/builds/build-agent/PROMPT.md', 'agents/builds/build-agent/README.md', 'agents/reverses/reverse-agent/AGENT.md',
     'docs/リポジトリ構成.md', 'docs/開発規約.md', 'docs/仕様書作成ルール.md',
     'docs/評価規約.md', 'docs/MD構造・Excel変換規約.md', 'docs/テーブル仕様書記述規約.md',

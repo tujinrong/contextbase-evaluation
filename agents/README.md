@@ -1,11 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"8.7","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"8.9","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
 # Agent定義一覧
 
-版8.7／2026-10-28。Agentをbuilds・converts・reverses・designsへ分類し、解析用共有runtimeをreverses内へ配置。ContextBase解析を平級の独立3Agentへ分離し、AG-REVERSEを任意互換入口とする。アプリ実装・実機試験・採点の状態は各実行の報告で区別する。
+版8.9／2026-10-28。要件定義ひな型・基本設計・詳細設計の3担当を配置し、旧汎用仕様Agentの入口を廃止する。
 
 ## 概要
 
-8種類のAgentを定義する。仕様生成、基本設計、実装、Access再構築、3つの独立解析Agent、任意の逆解析互換入口を扱う。Codexが契約と実行指示を読んで作業する。定義文書の存在だけで各工程を実行済みとしない。題材はprojectIdで選択し、全体規則と題材の正解を分離する。実行時に許可ファイルを列挙し、GitHub全体を無制限に参照させない。
+9種類の入口を置く。要件定義はひな型、基本設計・詳細設計は専用の契約とし、実装、Access再構築、3つの独立解析Agent、任意の逆解析互換入口と責務を分ける。Codexが契約と実行指示を読んで作業する。定義文書の存在だけで各工程を実行済みとしない。題材はprojectIdで選択し、全体規則と題材の正解を分離する。実行時に許可ファイルを列挙し、GitHub全体を無制限に参照させない。
 
 取得・目録化はdiscovery-agent、関係構築はrelationship-agent、動作深化はbehavior-agentが独立して実行する。各自にpackage／CLI・source／request／workを持ち、reverse-agentに依存・importせず共通runtime（agents/reverses/shared/contextbase-runtime）を使用する。独立検証は各層の抽出と別task・文脈で実行し、それぞれのホストが採用する。
 
@@ -30,16 +30,18 @@ agents/
 │  ├─ reverse-agent/
 │  └─ shared/contextbase-runtime/
 └─ designs/
-   ├─ spec-agent/
-   └─ basic-design-agent/
+   ├─ requirement-agent/  （要件定義ひな型）
+   ├─ basic-design-agent/
+   └─ detail-design-agent/
 ```
 
 ## Agent一覧
 
 | 分類 | Agent-ID | 役割 | 契約文書 |
 | --- | --- | --- | --- |
-| designs | AG-SPEC | 指定project・方式の仕様書作成・既存改善。検索条件と画面配置の改善を含む | [契約](designs/spec-agent/AGENT.md)・[実行指示](designs/spec-agent/PROMPT.md)・[運用案内](designs/spec-agent/README.md) |
-| designs | AG-BASIC-DESIGN | 指定project・方式の基本設計を作成・改善。詳細・実装・DB実行を分離 | [契約](designs/basic-design-agent/AGENT.md)・[実行指示](designs/basic-design-agent/PROMPT.md)・[運用案内](designs/basic-design-agent/README.md) |
+| designs | AG-REQUIREMENT | 要件定義のひな型（0.1、未整備・実行未検証） | [契約](designs/requirement-agent/AGENT.md)・[実行指示](designs/requirement-agent/PROMPT.md)・[運用案内](designs/requirement-agent/README.md) |
+| designs | AG-BASIC-DESIGN | 基本設計専用。新規作成・改善・レビューと専用ルール・処理の管理 | [契約](designs/basic-design-agent/AGENT.md)・[実行指示](designs/basic-design-agent/PROMPT.md)・[運用案内](designs/basic-design-agent/README.md) |
+| designs | AG-DETAIL-DESIGN | 詳細仕様書専用。新規作成・改善・レビューと専用ルール・処理の管理 | [契約](designs/detail-design-agent/AGENT.md)・[実行指示](designs/detail-design-agent/PROMPT.md)・[運用案内](designs/detail-design-agent/README.md) |
 | builds | AG-BUILD | 仕様からシステム生成 | [build-agent](builds/build-agent/AGENT.md) |
 | reverses | AG-DISCOVERY | 独立した取得・目録化 | [契約](reverses/discovery-agent/AGENT.md)・[実行](reverses/discovery-agent/PROMPT.md)・[案内](reverses/discovery-agent/README.md) |
 | reverses | AG-RELATIONSHIP | 独立した関係構築 | [契約](reverses/relationship-agent/AGENT.md)・[実行](reverses/relationship-agent/PROMPT.md)・[案内](reverses/relationship-agent/README.md) |
@@ -49,7 +51,9 @@ agents/
 
 ## 実行コンテキスト
 
-projectId、仕様セット版、方式ID、specRoot=project/spec/方式ID、sourceRoot=project/srcs/方式ID、入力コミット/ハッシュ、許可パス、除外パス、出力先、Agent定義版、実行IDを固定する。AG-SPECはspecRootを更新し、AG-BUILDは同じspecRootからsourceRootへ生成する。AG-SPEC／AG-BUILDの業務入力は選択方式のspecRoot内で閉じ、旧sourceRoot/specや他方式を代替入力にしない。3つの解析AgentとAG-REVERSEは原仕様を読まず、選択source-only入力を使う。全Agentは最終正本を更新し、最終成果・検査結果はsourceRoot/build/の固定先へ更新する。中間結果はsourceRoot/.tmp/、方式を持たない共通作業は担当Agentまたはprojectの.tmp/を使う。過去生成結果の別名保存はせずGit履歴を使う。spec-evalは採点者の参照先で、逆生成Agentの実行権限・入力選択では移動後のproject/spec/全体とともに禁止し、選択ソース根の外へ物理的に隔離する。逆生成CLIのallowedPaths／excludedPathsはそのソース根内の相対パスに限定し、兄弟の仕様へ範囲を広げない。共有docsに業務正解を隠して隔離を迂回しない。
+基本設計専用の記述規則は[専用ルール](designs/basic-design-agent/rules/基本設計書作成ルール.md)、執筆・検査・描画・記録は[専用工程](designs/basic-design-agent/workflows/基本設計.md)へ集約する。詳細設計の[専用ルール](designs/detail-design-agent/rules/詳細設計書作成ルール.md)と[専用工程](designs/detail-design-agent/workflows/詳細設計.md)はdetail-design-agentへ保存する。要件定義はrequirement-agentのひな型を今後整備する。各担当は要求・既存ID・確定前提・QA・依存を引き継ぎ、他工程の専用ルールや処理を自身の正本として追加しない。旧汎用仕様Agentのフォルダは廃止した。
+
+projectId、仕様セット版、方式ID、specRoot=project/spec/方式ID、sourceRoot=project/srcs/方式ID、入力コミット/ハッシュ、許可パス、除外パス、出力先、Agent定義版、実行IDを固定する。AG-BASIC-DESIGN／AG-DETAIL-DESIGNは各工程のspecRootを更新し、AG-BUILDは選択specRootの実装入力からsourceRootへ生成する。設計Agent／AG-BUILDの業務入力は選択方式のspecRoot内で閉じ、旧sourceRoot/specや他方式を代替入力にしない。3つの解析AgentとAG-REVERSEは原仕様を読まず、選択source-only入力を使う。全Agentは最終正本を更新し、最終成果・検査結果はsourceRoot/build/の固定先へ更新する。中間結果はsourceRoot/.tmp/、方式を持たない共通作業は担当Agentまたはprojectの.tmp/を使う。過去生成結果の別名保存はせずGit履歴を使う。spec-evalは採点者の参照先で、逆生成Agentの実行権限・入力選択では移動後のproject/spec/全体とともに禁止し、選択ソース根の外へ物理的に隔離する。逆生成CLIのallowedPaths／excludedPathsはそのソース根内の相対パスに限定し、兄弟の仕様へ範囲を広げない。共有docsに業務正解を隠して隔離を迂回しない。
 
 拒否草稿の限定回復は[明示repair契約](reverses/shared/contextbase-runtime/docs/短縮伝送と証拠一括検査.md)に従い、fresh workの未信頼seedからモデルが指定recordだけを置換する。旧成功を引き継がず、全体を機械・独立検証へ戻す。回復実績は実装ガイドで確認する。
 

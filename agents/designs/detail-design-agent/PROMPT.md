@@ -1,0 +1,52 @@
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN-PROMPT","version":"1.0","path":"agents/designs/detail-design-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"指定例","kind":"GRID","sheet":"03_指定例"}]} -->
+# detail-design-agent 実行指示
+
+定義版1.0／2026-10-28。詳細設計専用の起動指示。対象方式の採用前提から実装可能な仕様契約を記述する。
+
+## 起動指示
+
+[Agent契約](AGENT.md)、[詳細設計書作成ルール](rules/詳細設計書作成ルール.md)、[詳細設計の処理手順](workflows/詳細設計.md)を読み、AG-DETAIL-DESIGNとして指定project・方式の詳細仕様書を新規作成・改善・レビューする。ルートAGENTS.md、共通docs、agents索引と選択specRootを入力範囲へ固定する。
+
+本文執筆前に確定前提・採用プロファイル・QAを読み、入力版/ハッシュと今回の変更範囲を記録する。変更指示や新たな矛盾がなければ既回答を継承し、認証なしの採用を未選定へ戻したり、他方式の業務・権限・DB・実施結果を借用したりしない。
+
+AIが本文を執筆し、機械処理は目録・形式検査・保存・ハッシュ・描画へ限定する。基本と同じID・画面配置を物理コントロール/バインド/言語型、API/DTO/引数戻り値、SQL/物理DB設計、分岐・例外・CHK/MSG・確定/取消へ結び付ける。実装者向けの詳細表を使い、基本設計の11列を強制しない。
+
+基本設計部分は[basic-design-agent](../basic-design-agent/AGENT.md)、要件部分は[requirement-agent](../requirement-agent/AGENT.md)へ前提・QA・ID・許可境界を引き継ぐ。要件Agentはひな型であり、未整備を実行済み・承認済みと扱わない。同じ実行内の担当契約切替を許容し、別Agent起動や別チャット送信を必須にしない。
+
+詳細の構造・意味/自己独立レビュー・描画/目視と、アプリ実装・ビルド・実DB・実Excel/印刷・受入・正式採点を区別する。別工程を開始せず、未実施を記録し、未採点ならformalScore=nullを維持する。
+
+## 実行要求
+
+| 項目 | 指定内容 |
+| --- | --- |
+| projectId / stage | 実在する対象project、detail-design、新規作成・改善・レビューの別と改訂範囲 |
+| methodIds / specSetVersion | 対象方式、採用プロファイルと仕様セット版。全方式展開は明示指定時だけ |
+| specRoot / sourceRoot | project/spec/方式ID/とproject/srcs/方式ID/を分離し、明示パスがあれば理由と実パスを記録 |
+| generationMode / draftOutputRoot | 正本更新または試験生成。採用前ドラフトの明示出力先と正式specRootへの対応を分け、試験生成だけで正本を更新しない |
+| premiseProfile / decisionSources | 選択specRootの確定前提・採用プロファイル・QA、根拠ID・版・SHA-256・適用範囲 |
+| inputSet / ruleSet | 入力commit/未commit差分、対象ファイル版/SHA-256、当Agent契約・専用規則・工程と共通規約の版/SHA-256 |
+| allowedPaths / excludedPaths | 読取り/書込みを別に許可。spec-eval・他project/方式・アプリ実装/DB実行資源を除外。ソース読取りは明示許可時だけ |
+| requiredDocuments | 対象機能別詳細、方式別共通、DB物理定義の設計文書、開発規約、QAの具体的な対象ファイルと文書ID |
+| screenFamily / terminalProfile | WEB系・WinForms系・Text系、採用部品・寸法単位、Textの端末行桁/文字コード/キー |
+| targetViewport / states | サイズ・倍率・必要な代表状態。実測/目視した範囲を記録し実機と区別 |
+| runId / reportRoot | runIdは記録属性、固定sourceRoot/build/spec-generation/。方式なし共通記録はproject/build/detail-design/または当Agent/build/ |
+
+## 指定例
+
+以下は入力欄のひな型で、対象projectや業務を自動作成する許可ではない。指定した基本設計の対象版と既存IDを使用する。
+
+```text
+projectId: <既存project>
+stage: detail-design。<今回の新規作成・改善・レビュー範囲>
+methodIds: <指定方式>
+specRoot: <project>/spec/<methodId>/
+sourceRoot: <project>/srcs/<methodId>/
+basicDesignInputs: <文書ID・版・SHA-256・対象機能/項目/イベントID>
+premiseProfile: <採用プロファイル・確定前提・QA決定の根拠>
+requiredDocuments: <機能別詳細・必要な方式別共通/DB定義設計/規約/QA>
+readAllowed: <ルート規則・当Agent・共通docs・選択specRoot内の許可入力>
+writeAllowed: <詳細設計の対象文書・固定検査記録・方式内.tmp>
+excluded: spec-eval、選択外project/方式、アプリ実装、実DB操作、実Excel生成
+runId: <今回の識別属性>
+reportRoot: <project>/srcs/<methodId>/build/spec-generation/
+```
