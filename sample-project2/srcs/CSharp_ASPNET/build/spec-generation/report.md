@@ -1,18 +1,30 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-CSharp_ASPNET-GENERATION-REPORT","version":"1.2","path":"sample-project2/srcs/CSharp_ASPNET/build/spec-generation/report.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"検査","kind":"GRID","sheet":"02_検査"},{"heading":"未実施","kind":"GRID","sheet":"03_未実施"}]} -->
-# CSharp_ASPNET 基本設計の今回記録
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-CSharp_ASPNET-GENERATION-REPORT","version":"1.4","path":"sample-project2/srcs/CSharp_ASPNET/build/spec-generation/report.md","sheets":[{"heading":"入力と改訂範囲","kind":"GRID","sheet":"01_入力と改訂範囲"},{"heading":"検査結果","kind":"LIST","sheet":"02_検査結果","key":["検査"]},{"heading":"レビューと残件","kind":"GRID","sheet":"03_レビューと残件"}]} -->
+# 基本設計 生成・検査記録
 
-版1.2／2026-10-28／runId=sp2-basic-design-item-controls／stage=basic-design。
+仕様セット版1.4／2026-10-28／projectId=sample-project2／stage=basic-design。
 
-## 対象
+## 入力と改訂範囲
 
-projectId=sample-project2、methodId=CSharp_ASPNET、仕様セット1.2。specRoot=sample-project2/spec/CSharp_ASPNET/、sourceRoot=sample-project2/srcs/CSharp_ASPNET/。機能6文書83項目を11列化し、グループ・コントロール・入力制限・フォーマット・初期値を追加した。DB見出しと文字数の括弧補足を省き、必須とDB関連、業務条件は保持した。QA-019と方式内規約を同期した。
+対象方式：CSharp_ASPNET。利用者のチェック・整合性・処理手順/仕様・エラーメッセージ充実と、既存機能内での複合分岐による生成Pilotの依頼を反映した。入力は変更前仕様セット1.3の作業ツリー、確定QA、Agent・全体規則。個別文書は1.0～1.3の版を含み、入力/出力manifestで版とSHA-256を固定する。現在のAgentは1.4、仕様書作成ルールは7.11。
 
-## 検査
+5画面・6機能・5テーブル、11列の簡潔な項目表を維持。メニュー項目F02-I01備考だけを現在利用者参照に合わせて改訂し、各方式の残る82行は完全保持。HTML14断片とテーブル10分冊は不変。現在利用者の再確認をF02/F03にも追加し、共通CRUDを同期した。コード分類のER多重度は0件を許す契約へ修正、F02/F06再取得に単表ERを追加した。
 
-項目ID/名称/必須/DB2列を変更前と照合し、初期値・上限・候補・停止/未設定条件の移送を確認した。構造・リンク・DB名対応と独立レビューに未解決指摘はない。現在版の入力/出力ハッシュと検査範囲をmanifest.json、validation.jsonへ更新した。
+経歴11編集値完全一致だけの重複拒否、排他待ち10秒、読込/保持/明示除去集合、確定成否不明時の再保存抑止はQA-022の設計採用であり、利用者承認済みとしない。
 
-画面/帳票HTML7断片とMermaid26定義（ER8図を含む）、テーブル5分冊は変更前と同一。render-review.jsonは不変確認を記録し、過去の描画を今回の製品確認へ流用しない。今回、画面や図の再描画は行っていない。
+## 検査結果
 
-## 未実施
+| 検査 | 結果 | 範囲・根拠 |
+| --- | --- | --- |
+| 文書構造・参照 | PASS | 全体61文書のspec-meta/章/LIST矩形・キー/リンク。方式内業務依存と未定義MSG/CHKを確認 |
+| 処理・整合性定義 | PASS | 対象機能CHK 87件、共通12分類/方式、40メッセージ/方式。分岐とDB期待件数・全体取消・復帰をレビュー |
+| Pilotシナリオ | 設計確認PASS・実行未実施 | 41件/方式。正常・境界・複合・競合・障害、注入層・前提・期待MSGを整合 |
+| 項目・DB対応 | PASS | 全166行中164行保持・2備考改訂。列/ID/DB対応/必須/制限を保持、10TABLE分冊不変 |
+| 図の構文・ER描画 | PASS | 今回版の全Mermaid構文とER描画を検査。個別ハッシュはrender-review.json |
+| 静的HTML配置 | PASS | 今回版から抽出、1366×768・100%・Edge headless。14断片と長文/エラー6状態。製品動作試験とは別 |
+| 独立意味レビュー | PASS | 入力条件・判定優先・コード99件の到達可能性・確定状態・メッセージ方式差を確認、指摘を修正後再確認 |
 
-アプリ/物理DB定義の生成、ビルド、DB接続/更新/投入、実Excel生成/印刷、製品の入力/認証/保存/競合・DPI/IME、設計全体の受入・正式採点は未実施。formalScore=null。既存業務と詳細工程の残件を維持し、他projectや並行作業を変更しない。
+## レビューと残件
+
+検査は現在の入力版から実施し、過去の合格を新改訂へ転記していない。具体的な検査値と対象ハッシュはvalidation.json、描画条件・断片ハッシュはrender-review.json、入力/出力版はmanifest.jsonを参照する。画像は検査中間物で、恒久的な根拠パスへしない。
+
+アプリ生成/ビルド、物理DDL、実DB作成/実行、実際のログイン/保存/競合/障害注入、実Excel生成/読戻し/印刷、性能、利用者受入、正式採点は未実施。41シナリオは実施済みテストではなく次工程の設計入力。formalScore=null。今回Gitのcommit/merge/pushは行っていない。
