@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-INDEX","version":"1.6","path":"sample-project2/spec/Access/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-INDEX","version":"1.7","path":"sample-project2/spec/Access/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
 # Access 基本設計書一覧
 
-仕様セット版1.6／2026-10-28。社員経歴管理システム。
+仕様セット版1.7／2026-10-28。社員経歴管理システム。
 
 ## 対象と状態
 
@@ -14,6 +14,7 @@
 
 | 区分 | 文書 | 参照 |
 | --- | --- | --- |
+| 要件 | 要件定義書 | [既存仕様から再構成した要求・受入条件・QA](要件定義書.md) |
 | 前提 | プロジェクト情報 | [目的・方式・認証境界](プロジェクト情報.md) |
 | 前提 | QA | [確定要求・設計判断・残件](QA.md) |
 | 共通 | システム概要 | [目的・機能・業務遷移](共通/01_システム概要.md) |

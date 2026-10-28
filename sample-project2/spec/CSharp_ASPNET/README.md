@@ -1,9 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-CSharp_ASPNET-INDEX","version":"1.6","path":"sample-project2/spec/CSharp_ASPNET/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-CSharp_ASPNET-INDEX","version":"1.7","path":"sample-project2/spec/CSharp_ASPNET/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
 # CSharp_ASPNET 基本設計書一覧
 
-仕様セット版1.6／2026-10-28。社員経歴管理システム。
+索引版1.7／2026-10-28。社員経歴管理システム。要件定義書1.0を追加し、既存基本設計・QAは個別の現行版を継続。
 
 ## 対象と状態
+
+2026-10-28：本方式の既存仕様から[要件定義書](要件定義書.md)1.0を逆生成した。確定指示・設計採用・詳細工程残件を区別し、根拠版/ハッシュと未実施の受入条件を対応付けた。今回の新たな利用者承認・基本/詳細設計改訂・アプリ/DB/実Excel/受入試験・正式採点は未実施。
 
 本方式は2方式パターン（Access・CSharp_ASPNET）の一つ。フル方式の構造参照元はsample-project1（旧test-project1）。過去の依頼文・検査ハッシュは旧名の記録として保持する。
 
@@ -14,6 +16,7 @@
 
 | 区分 | 文書 | 参照 |
 | --- | --- | --- |
+| 要件 | 要件定義書 | [既存仕様から逆生成・1.0](要件定義書.md) |
 | 前提 | プロジェクト情報 | [目的・方式・認証境界](プロジェクト情報.md) |
 | 前提 | QA | [確定要求・設計判断・残件](QA.md) |
 | 共通 | システム概要 | [目的・機能・業務遷移](共通/01_システム概要.md) |
