@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"CSHARP_WPF-SPEC-INDEX","version":"8.5","path":"sample-project1/spec/CSharp_WPF/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"},{"heading":"画面最適化の改訂","kind":"GRID","sheet":"04_画面最適化の改訂"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"CSHARP_WPF-SPEC-INDEX","version":"8.6","path":"sample-project1/spec/CSharp_WPF/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"},{"heading":"画面最適化の改訂","kind":"GRID","sheet":"04_画面最適化の改訂"}]} -->
 # CSharp_WPF 仕様書
 
-版8.5／2026-10-28。
+版8.6／2026-10-28。要件定義書の入口を追加。
 
 ## 対象
 
@@ -14,6 +14,7 @@
 | 区分 | 文書 |
 | --- | --- |
 | 対象 | [プロジェクト仕様](プロジェクト情報.md) |
+| 要件 | [要件定義書](要件定義書.md)（既存仕様から再構成・利用者承認未実施） |
 | 業務 | [仕様索引](共通/00_設計書一覧.md) |
 | 検索 | [詳細](詳細仕様書/01_学生検索画面.md) |
 | 登録 | [詳細](詳細仕様書/02_学生登録画面.md) |

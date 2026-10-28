@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN-README","version":"1.0","path":"agents/designs/detail-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"担当と保存先","kind":"GRID","sheet":"02_担当と保存先"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"},{"heading":"移行した記録","kind":"GRID","sheet":"04_移行した記録"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN-README","version":"1.1","path":"agents/designs/detail-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"担当と保存先","kind":"GRID","sheet":"02_担当と保存先"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"},{"heading":"移行した記録","kind":"GRID","sheet":"04_移行した記録"}]} -->
 # detail-design-agent
 
-定義版1.0／2026-10-28。詳細設計専用Agent。役割IDはAG-DETAIL-DESIGN。
+定義版1.1／2026-10-28。詳細設計専用Agent。役割IDはAG-DETAIL-DESIGN。
 
 ## 使い方
 
@@ -17,7 +17,7 @@
 
 仕様生成の試験では、実行要求に明示したsourceRoot/.tmp/等へ採用前ドラフトを保存できる。正式specRootと実出力先、対象版・ハッシュ、検査・採用の状態を記録し、試験生成だけで既存正本を上書きしない。
 
-要件定義は[requirement-agent](../requirement-agent/README.md)（今回はひな型）、基本設計は[basic-design-agent](../basic-design-agent/README.md)を参照する。複合依頼は許可範囲と前提・QA・ID・入力版を引き継ぎ、同じ実行内で担当契約を切り替えてよい。詳細設計だけの依頼から全工程へ展開せず、基本設計や要件の未決を自動承認しない。
+要件定義は[requirement-agent](../requirement-agent/README.md)（仕様からの逆生成を含む）、基本設計は[basic-design-agent](../basic-design-agent/README.md)を参照する。複合依頼は許可範囲と前提・QA・ID・入力版を引き継ぎ、同じ実行内で担当契約を切り替えてよい。詳細設計だけの依頼から全工程へ展開せず、基本設計や要件の未決を自動承認しない。
 
 ## 確認と引継ぎ
 

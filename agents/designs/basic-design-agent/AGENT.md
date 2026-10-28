@@ -1,11 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN","version":"1.8","path":"agents/designs/basic-design-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"実行コンテキスト","kind":"LIST","sheet":"02_実行コンテキスト","key":["項目"]},{"heading":"入出力と境界","kind":"LIST","sheet":"03_入出力と境界","key":["区分"]},{"heading":"成果物の構成","kind":"GRID","sheet":"04_成果物の構成"},{"heading":"実行手順","kind":"GRID","sheet":"05_実行手順"},{"heading":"検査と完了","kind":"GRID","sheet":"06_検査と完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN","version":"1.9","path":"agents/designs/basic-design-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"実行コンテキスト","kind":"LIST","sheet":"02_実行コンテキスト","key":["項目"]},{"heading":"入出力と境界","kind":"LIST","sheet":"03_入出力と境界","key":["区分"]},{"heading":"成果物の構成","kind":"GRID","sheet":"04_成果物の構成"},{"heading":"実行手順","kind":"GRID","sheet":"05_実行手順"},{"heading":"検査と完了","kind":"GRID","sheet":"06_検査と完了"}]} -->
 # 基本設計書作成Agent 契約
 
-定義版1.8／2026-10-28。基本設計専用の契約・ルール・処理を維持し、要件定義ひな型と詳細設計Agentへの引継ぎを明確にする。
+定義版1.9／2026-10-28。基本設計専用の契約・ルール・処理を維持し、要件定義と詳細設計Agentへの引継ぎを明確にする。
 
 ## 概要
 
-工程は[要件定義ひな型](../requirement-agent/README.md)・当Agentの基本設計・[詳細設計](../detail-design-agent/README.md)に分かれる。要件定義Agentは今後整備するひな型である。要件の新判断はQAと利用者の指示へ戻し、詳細設計への引継ぎは要求・ID・確定前提・QA・対象版を保持する。依頼されていない後工程を自動開始しない。
+工程は[要件定義](../requirement-agent/README.md)・当Agentの基本設計・[詳細設計](../detail-design-agent/README.md)に分かれる。要件定義Agentは既存仕様から要件への逆生成も担当する。要件の新判断はQAと利用者の指示へ戻し、詳細設計への引継ぎは要求・ID・確定前提・QA・対象版を保持する。依頼されていない後工程を自動開始しない。
 
 このAgentは基本設計専用である。基本設計の新規作成・改善・レビューと、そのための検査を担当する。基本設計専用ルールは[rules/基本設計書作成ルール.md](rules/基本設計書作成ルール.md)、処理手順は[workflows/基本設計.md](workflows/基本設計.md)を正本とする。共通docsと他Agentには参照案内を置き、専用ルール・工程の別正本を作らない。
 

@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"COBOL-SPEC-INDEX","version":"8.8","path":"sample-project1/spec/COBOL/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"},{"heading":"Windows認証なしサンプル","kind":"GRID","sheet":"04_Windows認証なしサンプル"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"COBOL-SPEC-INDEX","version":"8.9","path":"sample-project1/spec/COBOL/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"},{"heading":"Windows認証なしサンプル","kind":"GRID","sheet":"04_Windows認証なしサンプル"}]} -->
 # COBOL 仕様書
 
-版8.8／2026-10-28。
+版8.9／2026-10-28。
 
 ## 対象
 
@@ -13,6 +13,7 @@
 
 | 区分 | 文書 |
 | --- | --- |
+| 要件 | [要件定義書](要件定義書.md) |
 | 対象 | [プロジェクト仕様](プロジェクト情報.md) |
 | 業務 | [仕様索引](共通/00_設計書一覧.md) |
 | 検索 | [詳細](詳細仕様書/01_学生検索画面.md) |

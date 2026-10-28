@@ -1,9 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"ACCESS-CSHARP-MIGRATION-INDEX","version":"0.6","path":"sample-project1/spec/Access-To-CSharp_ASPNET/README.md","sheets":[{"heading":"対象と根拠","kind":"GRID","sheet":"01_対象"},{"heading":"配置と判断","kind":"GRID","sheet":"02_判断"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"ACCESS-CSHARP-MIGRATION-INDEX","version":"0.7","path":"sample-project1/spec/Access-To-CSharp_ASPNET/README.md","sheets":[{"heading":"対象と根拠","kind":"GRID","sheet":"01_対象"},{"heading":"配置と判断","kind":"GRID","sheet":"02_判断"}]} -->
 # Access-To-CSharp_ASPNET 移行設計
 
-版0.6／2026-10-28。
+版0.7／2026-10-28。
 
 ## 対象と根拠
+
+[要件定義書](要件定義書.md)に、本移行設計から再構成した要求・制約・受入条件・未確認事項を整理する。業務の詳細仕様や新たな利用者承認を追加したものではない。
 
 projectId=sample-project1、sourceRoot=srcs/Access-To-CSharp_ASPNET/。利用者が計画の実施と最大2回の訓練、およびローカルSQLEXPRESSへの新規専用DB作成を指定した。原入力はsrcs/Access/build/StudentManagement.accdb、SHA-256 F5FF069C5D7AA45CFAE80584319FD11F0A0B8A6C52E141DA51D5263532D82CA4。
 

@@ -1,11 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN-README","version":"1.8","path":"agents/designs/basic-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物","kind":"GRID","sheet":"02_成果物"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN-README","version":"1.9","path":"agents/designs/basic-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物","kind":"GRID","sheet":"02_成果物"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"}]} -->
 # basic-design-agent
 
-定義版1.8／2026-10-28。基本設計専用の契約・ルール・処理を維持し、要件定義ひな型と詳細設計Agentへの引継ぎを明確にする。
+定義版1.9／2026-10-28。基本設計専用の契約・ルール・処理を維持し、要件定義と詳細設計Agentへの引継ぎを明確にする。
 
 ## 使い方
 
-工程は[要件定義ひな型](../requirement-agent/README.md)・当Agentの基本設計・[詳細設計](../detail-design-agent/README.md)に分かれる。要件定義Agentは今後整備するひな型である。要件の新判断はQAと利用者の指示へ戻し、詳細設計への引継ぎは要求・ID・確定前提・QA・対象版を保持する。依頼されていない後工程を自動開始しない。
+工程は[要件定義](../requirement-agent/README.md)・当Agentの基本設計・[詳細設計](../detail-design-agent/README.md)に分かれる。要件定義Agentは既存仕様から要件への逆生成も担当する。要件の新判断はQAと利用者の指示へ戻し、詳細設計への引継ぎは要求・ID・確定前提・QA・対象版を保持する。依頼されていない後工程を自動開始しない。
 
 [AGENT.md](AGENT.md)が役割・入出力・工程の契約、[PROMPT.md](PROMPT.md)が起動指示と実行例である。CodexへPROMPT.mdと対象project・方式・基本設計の要求を渡す。基本設計専用Agentとして新規作成・改善・レビューを行う。専用のルールと処理はこのフォルダを正本とする。
 

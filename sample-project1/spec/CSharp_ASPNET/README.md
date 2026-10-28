@@ -1,9 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"CSHARP_ASPNET-SPEC-INDEX","version":"8.7","path":"sample-project1/spec/CSharp_ASPNET/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"CSHARP_ASPNET-SPEC-INDEX","version":"8.8","path":"sample-project1/spec/CSharp_ASPNET/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"}]} -->
 # CSharp_ASPNET 仕様書
 
-版8.7／2026-10-28。検索・学生編集画面と共有DBプロファイル。
+版8.8／2026-10-28。検索・学生編集画面と共有DBプロファイル。
 
 ## 対象
+
+2026-10-28：本方式の既存仕様から[要件定義書](要件定義書.md)1.0を逆生成した。要件・受入条件・未決・根拠版/ハッシュを整理した文書更新であり、新たな利用者承認・アプリ/DB実行・受入・正式採点は行っていない。
 
 本プロジェクトだけの実装・DB・画面仕様。
 
@@ -19,6 +21,7 @@
 
 | 区分 | 文書 |
 | --- | --- |
+| 要件定義 | [要件定義書](要件定義書.md)（既存仕様から逆生成・1.0） |
 | 対象 | [プロジェクト仕様](プロジェクト情報.md) |
 | 業務 | [仕様索引](共通/00_設計書一覧.md) |
 | 検索 | [詳細](詳細仕様書/01_学生検索画面.md) |

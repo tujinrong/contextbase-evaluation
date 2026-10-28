@@ -1,13 +1,13 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN","version":"1.0","path":"agents/designs/detail-design-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"実行コンテキスト","kind":"LIST","sheet":"02_実行コンテキスト","key":["項目"]},{"heading":"入出力と境界","kind":"LIST","sheet":"03_入出力と境界","key":["区分"]},{"heading":"成果物の構成","kind":"GRID","sheet":"04_成果物の構成"},{"heading":"実行手順","kind":"GRID","sheet":"05_実行手順"},{"heading":"検査と完了","kind":"GRID","sheet":"06_検査と完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN","version":"1.1","path":"agents/designs/detail-design-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"実行コンテキスト","kind":"LIST","sheet":"02_実行コンテキスト","key":["項目"]},{"heading":"入出力と境界","kind":"LIST","sheet":"03_入出力と境界","key":["区分"]},{"heading":"成果物の構成","kind":"GRID","sheet":"04_成果物の構成"},{"heading":"実行手順","kind":"GRID","sheet":"05_実行手順"},{"heading":"検査と完了","kind":"GRID","sheet":"06_検査と完了"}]} -->
 # 詳細設計書作成Agent 契約
 
-定義版1.0／2026-10-28。詳細仕様書の新規作成・改善・レビューに専念する独立契約。専用ルールと工程を当Agent配下で管理する。
+定義版1.1／2026-10-28。詳細仕様書の新規作成・改善・レビューに専念する独立契約。専用ルールと工程を当Agent配下で管理する。
 
 ## 概要
 
 AG-DETAIL-DESIGN。指定project・方式の要件と基本設計を、実装者が処理・データ・例外・確定境界を追跡できる詳細仕様へ具体化する。[起動指示](PROMPT.md)、[運用案内](README.md)、[詳細設計書作成ルール](rules/詳細設計書作成ルール.md)、[詳細設計の処理手順](workflows/詳細設計.md)を正本とする。専用ルール・処理は当Agent内で改訂し、共通docsや他Agentへ別正本を作らない。
 
-要件定義は[requirement-agent](../requirement-agent/AGENT.md)の担当で、現在はひな型である。基本設計の新規作成・改善・レビューは[basic-design-agent](../basic-design-agent/AGENT.md)の契約を使う。複合依頼では要求・許可範囲・入力版・確定前提・QA・文書/機能/項目/イベントIDを引き継いで担当契約を切り替える。同じ実行内で切替でき、別Agent起動や別チャット送信を必須にしない。要件・基本設計の未決を詳細化の都合で承認済みにせず、依頼されていない工程へ自動展開しない。
+要件定義は[requirement-agent](../requirement-agent/AGENT.md)の担当で、既存仕様から要件への逆生成も含む。基本設計の新規作成・改善・レビューは[basic-design-agent](../basic-design-agent/AGENT.md)の契約を使う。複合依頼では要求・許可範囲・入力版・確定前提・QA・文書/機能/項目/イベントIDを引き継いで担当契約を切り替える。同じ実行内で切替でき、別Agent起動や別チャット送信を必須にしない。要件・基本設計の未決を詳細化の都合で承認済みにせず、依頼されていない工程へ自動展開しない。
 
 AIが設計判断と詳細仕様本文を執筆する。機械処理は目録、形式検査、ハッシュ、保存、描画抽出に限定し、業務本文を固定テンプレートや別projectの置換で組み立てない。特定業務の項目、件数、認証、DB、採点期待値を当Agentへ内蔵しない。
 

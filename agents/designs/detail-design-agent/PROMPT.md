@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN-PROMPT","version":"1.0","path":"agents/designs/detail-design-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"指定例","kind":"GRID","sheet":"03_指定例"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN-PROMPT","version":"1.1","path":"agents/designs/detail-design-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"指定例","kind":"GRID","sheet":"03_指定例"}]} -->
 # detail-design-agent 実行指示
 
-定義版1.0／2026-10-28。詳細設計専用の起動指示。対象方式の採用前提から実装可能な仕様契約を記述する。
+定義版1.1／2026-10-28。詳細設計専用の起動指示。対象方式の採用前提から実装可能な仕様契約を記述する。
 
 ## 起動指示
 
@@ -11,7 +11,7 @@
 
 AIが本文を執筆し、機械処理は目録・形式検査・保存・ハッシュ・描画へ限定する。基本と同じID・画面配置を物理コントロール/バインド/言語型、API/DTO/引数戻り値、SQL/物理DB設計、分岐・例外・CHK/MSG・確定/取消へ結び付ける。実装者向けの詳細表を使い、基本設計の11列を強制しない。
 
-基本設計部分は[basic-design-agent](../basic-design-agent/AGENT.md)、要件部分は[requirement-agent](../requirement-agent/AGENT.md)へ前提・QA・ID・許可境界を引き継ぐ。要件Agentはひな型であり、未整備を実行済み・承認済みと扱わない。同じ実行内の担当契約切替を許容し、別Agent起動や別チャット送信を必須にしない。
+基本設計部分は[basic-design-agent](../basic-design-agent/AGENT.md)、要件部分は[requirement-agent](../requirement-agent/AGENT.md)へ前提・QA・ID・許可境界を引き継ぐ。要件Agentは仕様からの逆生成にも対応し、文書生成を利用者承認・受入試験済みと扱わない。同じ実行内の担当契約切替を許容し、別Agent起動や別チャット送信を必須にしない。
 
 詳細の構造・意味/自己独立レビュー・描画/目視と、アプリ実装・ビルド・実DB・実Excel/印刷・受入・正式採点を区別する。別工程を開始せず、未実施を記録し、未採点ならformalScore=nullを維持する。
 

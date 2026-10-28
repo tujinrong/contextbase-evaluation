@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"REPO-AGENTS","version":"7.8","path":"AGENTS.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"配置","kind":"GRID","sheet":"02_配置"},{"heading":"完了","kind":"GRID","sheet":"03_完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"REPO-AGENTS","version":"7.9","path":"AGENTS.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"配置","kind":"GRID","sheet":"02_配置"},{"heading":"完了","kind":"GRID","sheet":"03_完了"}]} -->
 # 作業Agent向けルーティング
 
-版7.8／2026-10-28。要件定義ひな型・基本設計・詳細設計の3担当へ整理し、旧汎用仕様Agentを廃止する。入力隔離・確定前提の継承と固定出力の運用を維持する。
+版7.9／2026-10-28。要件定義・基本設計・詳細設計の3担当へ整理し、旧汎用仕様Agentを廃止する。入力隔離・確定前提の継承と固定出力の運用を維持する。仕様書から要件への逆生成はrequirement-agentの担当とし、コードからの逆仕様評価とは入力契約を区別する。
 
 ## 対象
 
@@ -11,7 +11,7 @@
 
 ## 配置
 
-設計工程は要件定義・基本設計・詳細設計の3担当へ分ける。[requirement-agent](agents/designs/requirement-agent/AGENT.md)は要件定義用のひな型（0.1、未整備・実行未検証）、[basic-design-agent](agents/designs/basic-design-agent/AGENT.md)は基本設計専用、[detail-design-agent](agents/designs/detail-design-agent/AGENT.md)は詳細仕様書専用とする。旧spec-agentは廃止し、同フォルダと互換入口を残さない。複合依頼は要求・確定前提・QA・各IDを担当工程へ引き継ぎ、依頼されていない後工程を自動開始しない。
+設計工程は要件定義・基本設計・詳細設計の3担当へ分ける。[requirement-agent](agents/designs/requirement-agent/AGENT.md)は要件定義専用（0.2、既存仕様からの逆生成を含む）、[basic-design-agent](agents/designs/basic-design-agent/AGENT.md)は基本設計専用、[detail-design-agent](agents/designs/detail-design-agent/AGENT.md)は詳細仕様書専用とする。旧spec-agentは廃止し、同フォルダと互換入口を残さない。複合依頼は要求・確定前提・QA・各IDを担当工程へ引き継ぎ、依頼されていない後工程を自動開始しない。
 
 基本設計の新規作成・改善・レビューは[基本設計専用Agent](agents/designs/basic-design-agent/AGENT.md)が担当する。基本設計専用のルールは同Agentの[rules/](agents/designs/basic-design-agent/rules/基本設計書作成ルール.md)、処理手順は[workflows/](agents/designs/basic-design-agent/workflows/基本設計.md)を正本とし、共通docsや他Agentへ別正本を保存しない。業務仕様と既存の採用済み規約・QAは対象specRootに保持する。
 
