@@ -1,11 +1,11 @@
 <!-- spec-meta: {"schema":"spec-md/1.0","documentId":"TEST-PROJECT1-SPEC-BUG-REPORT","version":"1.0","path":"test-project1-spec-bug-report.md","sheets":[{"heading":"対象と判定","kind":"GRID","sheet":"01_対象と判定"},{"heading":"指摘一覧","kind":"LIST","sheet":"02_指摘一覧","key":["ID"]},{"heading":"仕様改訂が必要な事項","kind":"GRID","sheet":"03_仕様改訂が必要な事項"},{"heading":"仕様の補足改善と実装不備","kind":"GRID","sheet":"04_補足改善と実装不備"},{"heading":"確認した入力版","kind":"LIST","sheet":"05_確認した入力版","key":["文書ID"]},{"heading":"検査範囲と未実施","kind":"GRID","sheet":"06_検査範囲と未実施"}]} -->
-# test-project1 仕様問題・改善報告
+# sample-project1 仕様問題・改善報告
 
 版1.0／2026-10-25。今回の対象はAccess。利用者が指摘したフォント・グループ見出し・新規キー・郵便番号・初期確認用データについて、選択方式の仕様正本を読み、仕様変更が必要な事項と実装側の不備を区別する。
 
 ## 対象と判定
 
-specRootは`test-project1/spec/Access/`、sourceRootは`test-project1/srcs/Access/`。本書の仕様レビューでは他方式の業務仕様、spec-eval、評価期待値を参照していない。Access仕様正本は今回変更せず、利用者の今回の品質改善/初期データ指示と旧仕様の差分を次回の仕様生成へ引き継ぐ。実装の適用差分は方式内`build/generation/user-overrides.json`、実行した試験は方式内`build/test-results/`で管理する。
+specRootは`sample-project1/spec/Access/`、sourceRootは`sample-project1/srcs/Access/`。本書の仕様レビューでは他方式の業務仕様、spec-eval、評価期待値を参照していない。Access仕様正本は今回変更せず、利用者の今回の品質改善/初期データ指示と旧仕様の差分を次回の仕様生成へ引き継ぐ。実装の適用差分は方式内`build/generation/user-overrides.json`、実行した試験は方式内`build/test-results/`で管理する。
 
 利用者の指摘だけから仕様バグと断定しない。従来9ptや空データ配布が定義されていた事実と、今回の改善要求が異なることを明示する。7桁の郵便番号、新規のみ学籍番号を入力できること、自動採番の学生管理番号を入力させないことは既に定義されており、これを未定義として作り直さない。グループ枠の部品選択やマスクの具体化は、業務要件の誤りとは区別した補足改善である。
 
@@ -65,14 +65,14 @@ specRootは`test-project1/spec/Access/`、sourceRootは`test-project1/srcs/Acces
 
 | 文書ID | 版 | ファイル | SHA-256 |
 | --- | --- | --- | --- |
-| ACCESS-PROJECT | 8.5 | test-project1/spec/Access/プロジェクト情報.md | 61d3afc1e3fca5ea94447cd599ef8bdcd8c84b4afa8c087a754b0df35f6dbc19 |
-| ACCESS-COM-STU-004 | 8.4 | test-project1/spec/Access/共通/04_共通UI部品設計.md | 7c7523ec7166377282762470b20b1ed8e7f5ca591ad49d2bc53f558b81e703a8 |
-| ACCESS-COM-Access | 8.6 | test-project1/spec/Access/共通/方式別/01_共通実装仕様.md | c27cecfe3c249474a3253884a765321e6c1b7f216f3c8ab7a6f2b8adcbd66f55 |
-| ACCESS-DET-Access-SCR-STU-002 | 8.4 | test-project1/spec/Access/詳細仕様書/02_学生登録画面.md | 73004a66ae957880ec769342c566349193c9493cced635b823088bbfe248cffd |
-| ACCESS-BAS-STU-02 | 8.3 | test-project1/spec/Access/基本設計書/02_学生登録画面.md | 9d5bbfe4f907a3df70996a8982371a7534ac6d36b6a2e2b4d25ae48dfff9f35e |
-| ACCESS-COM-STU-005 | 8.3 | test-project1/spec/Access/共通/05_チェック・メッセージ設計.md | d05b2afd466b358b409c2824d1a8d1fbbe1afdba849404c47585ded54b8b87e0 |
-| ACCESS-COM-STU-009 | 8.4 | test-project1/spec/Access/共通/09_項目制約定義.md | 2555ee791685e11e3b2109c2c091687aec08d0e4477343c90a08fc5444c20d2c |
-| ACCESS-DBDEF-ACCESS-M_STUDENT | 8.1 | test-project1/spec/Access/DB定義/Access/テーブル/01_m_student.md | 49efd20e769e677ec9e20963b5a61690c738152c9c85aba22aa706bf43088e61 |
+| ACCESS-PROJECT | 8.5 | sample-project1/spec/Access/プロジェクト情報.md | 61d3afc1e3fca5ea94447cd599ef8bdcd8c84b4afa8c087a754b0df35f6dbc19 |
+| ACCESS-COM-STU-004 | 8.4 | sample-project1/spec/Access/共通/04_共通UI部品設計.md | 7c7523ec7166377282762470b20b1ed8e7f5ca591ad49d2bc53f558b81e703a8 |
+| ACCESS-COM-Access | 8.6 | sample-project1/spec/Access/共通/方式別/01_共通実装仕様.md | c27cecfe3c249474a3253884a765321e6c1b7f216f3c8ab7a6f2b8adcbd66f55 |
+| ACCESS-DET-Access-SCR-STU-002 | 8.4 | sample-project1/spec/Access/詳細仕様書/02_学生登録画面.md | 73004a66ae957880ec769342c566349193c9493cced635b823088bbfe248cffd |
+| ACCESS-BAS-STU-02 | 8.3 | sample-project1/spec/Access/基本設計書/02_学生登録画面.md | 9d5bbfe4f907a3df70996a8982371a7534ac6d36b6a2e2b4d25ae48dfff9f35e |
+| ACCESS-COM-STU-005 | 8.3 | sample-project1/spec/Access/共通/05_チェック・メッセージ設計.md | d05b2afd466b358b409c2824d1a8d1fbbe1afdba849404c47585ded54b8b87e0 |
+| ACCESS-COM-STU-009 | 8.4 | sample-project1/spec/Access/共通/09_項目制約定義.md | 2555ee791685e11e3b2109c2c091687aec08d0e4477343c90a08fc5444c20d2c |
+| ACCESS-DBDEF-ACCESS-M_STUDENT | 8.1 | sample-project1/spec/Access/DB定義/Access/テーブル/01_m_student.md | 49efd20e769e677ec9e20963b5a61690c738152c9c85aba22aa706bf43088e61 |
 
 ## 検査範囲と未実施
 
