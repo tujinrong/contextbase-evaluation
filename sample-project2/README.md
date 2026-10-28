@@ -1,9 +1,12 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-README","version":"1.5","path":"sample-project2/README.md","sheets":[{"heading":"目的と今回の範囲","kind":"GRID","sheet":"01_目的と範囲"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["領域"]},{"heading":"実施状態","kind":"GRID","sheet":"03_実施状態"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-README","version":"1.6","path":"sample-project2/README.md","sheets":[{"heading":"目的と今回の範囲","kind":"GRID","sheet":"01_目的と範囲"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["領域"]},{"heading":"実施状態","kind":"GRID","sheet":"03_実施状態"}]} -->
 # 社員経歴管理システム — sample-project2
 
-版1.5／2026-10-28。Agent訓練・DEMO用の最小構成。基本設計改訂版（処理手順の階層化、全体受入前）。
+版1.6／2026-10-28。Agent訓練・DEMO用の最小構成。基本設計改訂版（処理手順の階層化、全体受入前）。
 
 ## 目的と今回の範囲
+
+本projectはAccess・CSharp_ASPNETの2方式パターン。sample-project1（旧test-project1）のフル方式パターンと区別し、他方式を自動追加しない。
+
 
 社員の基本情報と職務・案件経歴を登録し、日本語の職務経歴書をExcelで作成する。ログイン、メニュー、社員検索、社員登録（経歴登録を含む）、検索画面からの経歴書出力、汎用コードマスタの6機能を設計する。画面は5種類で、帳票出力の専用画面は増やさない。今回の改訂は、既存処理の順序・条件を保った手順の階層化。Pilotシナリオの実行は未実施。
 

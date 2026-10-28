@@ -22,15 +22,15 @@ exportは前層workなしで読めるportable受渡し。全有効記録・未�
 
 ## プロジェクト設定による実行
 
-[contextbase.toml](../../../test-project1/contextbase.toml)で入力と結果の置き場を切り替えられる。各相対パスは設定ファイルの位置から解決する。既定profile csharp_aspnetのsourceはtest-project1/srcs/CSharp_ASPNET、結果は [spec-reverse/relationship-agent/contextbase.json](../../../test-project1/spec-reverse/relationship-agent/README.md)で、現在は未生成。
+[contextbase.toml](../../../sample-project1/contextbase.toml)で入力と結果の置き場を切り替えられる。各相対パスは設定ファイルの位置から解決する。既定profile csharp_aspnetのsourceはsample-project1/srcs/CSharp_ASPNET、結果は [spec-reverse/relationship-agent/contextbase.json](../../../sample-project1/spec-reverse/relationship-agent/README.md)で、現在は未生成。
 
 このAgentディレクトリからの例：
 
 ```text
-contextbase-relationship paths --config ../../../test-project1/contextbase.toml
-contextbase-relationship init --config ../../../test-project1/contextbase.toml
-contextbase-relationship run --config ../../../test-project1/contextbase.toml
-contextbase-relationship export --config ../../../test-project1/contextbase.toml
+contextbase-relationship paths --config ../../../sample-project1/contextbase.toml
+contextbase-relationship init --config ../../../sample-project1/contextbase.toml
+contextbase-relationship run --config ../../../sample-project1/contextbase.toml
+contextbase-relationship export --config ../../../sample-project1/contextbase.toml
 ```
 
 --profile NAMEで切り替える。--configはコマンドの後に指定し、明示 --source／--request／--work／--handoff／--outputとは併用しない。pathsは解決した入力・作業・出力・前層成果を表示するだけで、snapshot作成やモデル呼出しを行わない。

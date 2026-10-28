@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN-PROMPT","version":"1.5","path":"agents/designs/basic-design-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"今回の指定例","kind":"GRID","sheet":"03_今回の指定例"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN-PROMPT","version":"1.6","path":"agents/designs/basic-design-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"今回の指定例","kind":"GRID","sheet":"03_今回の指定例"}]} -->
 # basic-design-agent 実行指示
 
-定義版1.5／2026-10-28。4項目以上の処理手順を階層化し、簡潔な11列と具体的な判定・分岐を維持する。要求から基本設計を作成する。詳細・実装・DB実行・採点は別工程とする。
+定義版1.6／2026-10-28。4項目以上の処理手順を階層化し、簡潔な11列と具体的な判定・分岐を維持する。要求から基本設計を作成する。詳細・実装・DB実行・採点は別工程とする。
 
 ## 起動指示
 
@@ -57,7 +57,7 @@ specRoot: sample-project2/spec/<methodId>
 sourceRoot: sample-project2/srcs/<methodId>
 scope: ログイン、メニュー、社員検索、社員登録（経歴登録含む）、検索画面からの経歴書Excel出力、汎用コードマスタ
 externalResearch: 日本で使う経歴書の公開事例を調べ、独自のExcel帳票設計へ反映
-structureReferences: test-project1の配置索引、test-project1/spec/Access/とCSharp_ASPNET/の構成・書式。学生管理の業務内容は転用しない
+structureReferences: sample-project1の配置索引、sample-project1/spec/Access/とCSharp_ASPNET/の構成・書式。学生管理の業務内容は転用しない
 readAllowed: ルートAGENTS.md、docs/、agentsの役割定義、当Agent、上記構造参照、選択specRoot、公開調査資料
 writeAllowed: agents/designs/basic-design-agent/（今回のAgent作成依頼）、sample-project2の配置案内、各specRoot、各sourceRoot/build/spec-generation/、各sourceRoot/.tmp/、共通のproject/build/basic-design/とproject/.tmp/
 excluded: 全spec-eval、選択外方式、他projectの業務実装、実DB操作、詳細仕様・物理DDL・アプリ・実Excel帳票の生成
@@ -70,3 +70,5 @@ sharedReportRoot: sample-project2/build/basic-design/
 ```
 
 Agent定義と入口索引の同期は、今回の明示依頼に含まれる準備作業である。実行例が将来のAgent改訂、別project作成、実装・DB実行への継続許可になるとは扱わない。
+
+対象projectの方式はその索引から選ぶ。sample-project1はフル方式パターン（登録方式を将来追加可）、sample-project2はAccess・CSharp_ASPNETの2方式パターン。前者の仕様適用では既存業務の条件を保持し、方式固有の認証・DB・ページ操作を他方式の値へ置換しない。

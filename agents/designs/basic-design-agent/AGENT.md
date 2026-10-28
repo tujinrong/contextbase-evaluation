@@ -1,9 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN","version":"1.5","path":"agents/designs/basic-design-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"実行コンテキスト","kind":"LIST","sheet":"02_実行コンテキスト","key":["項目"]},{"heading":"入出力と境界","kind":"LIST","sheet":"03_入出力と境界","key":["区分"]},{"heading":"成果物の構成","kind":"GRID","sheet":"04_成果物の構成"},{"heading":"実行手順","kind":"GRID","sheet":"05_実行手順"},{"heading":"検査と完了","kind":"GRID","sheet":"06_検査と完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN","version":"1.6","path":"agents/designs/basic-design-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"実行コンテキスト","kind":"LIST","sheet":"02_実行コンテキスト","key":["項目"]},{"heading":"入出力と境界","kind":"LIST","sheet":"03_入出力と境界","key":["区分"]},{"heading":"成果物の構成","kind":"GRID","sheet":"04_成果物の構成"},{"heading":"実行手順","kind":"GRID","sheet":"05_実行手順"},{"heading":"検査と完了","kind":"GRID","sheet":"06_検査と完了"}]} -->
 # 基本設計書作成Agent 契約
 
-定義版1.5／2026-10-28。4項目以上の処理手順を階層化し、簡潔な11列と具体的な判定・分岐を維持する。AG-SPECの執筆・入力隔離・画面設計・検証の契約を継承し、基本設計の作成と改善を担当する。
+定義版1.6／2026-10-28。4項目以上の処理手順を階層化し、簡潔な11列と具体的な判定・分岐を維持する。AG-SPECの執筆・入力隔離・画面設計・検証の契約を継承し、基本設計の作成と改善を担当する。
 
 ## 概要
+
+対象方式はproject索引と今回の指定で確定する。フル方式パターンは現在登録された方式を対象とし、方式追加は索引・プロファイル・検査へ明示登録する。限定方式パターンへ他方式の仕様や前提を自動追加しない。
 
 AG-BASIC-DESIGN。利用者が指定したproject・方式について、要求を基本設計書へ具体化する。[実行指示](PROMPT.md)を入口に、[運用案内](README.md)、[仕様書作成ルール](../../../docs/仕様書作成ルール.md)、[MD構造・Excel変換規約](../../../docs/MD構造・Excel変換規約.md)、[テーブル記述規約](../../../docs/テーブル仕様書記述規約.md)を適用する。[spec-agent](../spec-agent/AGENT.md)を参照した専用の工程契約である。
 

@@ -13,11 +13,11 @@ from output_layout import write_json_latest
 
 ROOT=Path(__file__).resolve().parents[4]
 PROFILES=['VB.NET_WinForms','CSharp_WPF','CSharp_ASPNET','Vue_CSharpAPI','COBOL','AS400_RPG','Access']
-parser=argparse.ArgumentParser();parser.add_argument('--project',default='test-project1')
+parser=argparse.ArgumentParser();parser.add_argument('--project',default='sample-project1')
 parser.add_argument('--allow-spec-repair',action='append',default=[],help='Exact specification file with a current local-spec-fix.json and matching before/after hashes')
 parser.add_argument('--allow-spec-update',action='append',default=[],help='Exact specification file with a user-requested spec-update.json and matching before/after/frozen hashes')
 args=parser.parse_args()
-if not re.fullmatch(r'test-project[1-9]\d*',args.project):raise SystemExit('Explicit existing project required')
+if not re.fullmatch(r'(?:sample|test)-project[1-9]\d*',args.project):raise SystemExit('Explicit existing project required')
 project=ROOT/args.project
 if not project.is_dir():raise SystemExit('Project does not exist')
 findings=[];methods=[];final_files=[]

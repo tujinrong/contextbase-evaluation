@@ -9,11 +9,11 @@
 Accessの生成・更新では[Access生成チェック](docs/Access生成チェック.md)を併用する。標準フォーム/部品、フォントとグループ見出し、モード別の入力属性、マスク/表示/保存の契約を確認し、実ACCDBのキーボード/貼付操作と画面表示を検査する。VBAコンパイルやプロパティ検査のみで入力と可読性を保証しない。
 
 ```powershell
-node agents/builds/build-agent/scripts/preflight.mjs --project test-project1 --profile CSharp_ASPNET --run-id current
-python -X utf8 test-project1/srcs/CSharp_ASPNET/tools/build.py
+node agents/builds/build-agent/scripts/preflight.mjs --project sample-project1 --profile CSharp_ASPNET --run-id current
+python -X utf8 sample-project1/srcs/CSharp_ASPNET/tools/build.py
 python -X utf8 agents/builds/build-agent/scripts/package-source.py current --profile CSharp_ASPNET
 python -X utf8 agents/builds/build-agent/scripts/verify-packages.py current --profile CSharp_ASPNET --hashes-only
-node agents/builds/build-agent/scripts/manifest.mjs --project test-project1 --profile CSharp_ASPNET --run-id current
+node agents/builds/build-agent/scripts/manifest.mjs --project sample-project1 --profile CSharp_ASPNET --run-id current
 ```
 
 配置検査だけを行う場合は上記preflightへ`--inspect-only true`を付ける。inputs/structureは標準出力JSONへ返し、build/と.tmp/への書込み、旧outputs.jsonの失効、source.zipの移動は行わない。検査専用結果からmanifestを確定せず、実装生成時は通常preflightを実行する。

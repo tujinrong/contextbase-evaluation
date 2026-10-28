@@ -1,11 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER","version":"0.5","path":"agents/converts/access-rebuilder-agent/AGENT.md","sheets":[{"heading":"役割","kind":"GRID","sheet":"01_役割"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"工程","kind":"GRID","sheet":"03_工程"},{"heading":"変換の原則","kind":"GRID","sheet":"04_原則"},{"heading":"記録と完了","kind":"GRID","sheet":"05_完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER","version":"0.6","path":"agents/converts/access-rebuilder-agent/AGENT.md","sheets":[{"heading":"役割","kind":"GRID","sheet":"01_役割"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"工程","kind":"GRID","sheet":"03_工程"},{"heading":"変換の原則","kind":"GRID","sheet":"04_原則"},{"heading":"記録と完了","kind":"GRID","sheet":"05_完了"}]} -->
 # Access再構築Agent 契約
 
-版0.5／2026-10-28。Agent-IDはAG-ACCESS-REBUILDER。DAO／Access定義抽出、SQL構造変換、入力と許可の検査、最大2回の反復台帳、manifestを実装した。C#／Webの移行設計と業務実装は、Codexが抽出原文を読んで行う。任意VBAを機械変換する汎用コンパイラーではない。
+版0.6／2026-10-28。Agent-IDはAG-ACCESS-REBUILDER。DAO／Access定義抽出、SQL構造変換、入力と許可の検査、最大2回の反復台帳、manifestを実装した。C#／Webの移行設計と業務実装は、Codexが抽出原文を読んで行う。任意VBAを機械変換する汎用コンパイラーではない。
 
 ## 役割
 
-指定されたAccessファイルから業務データ・制約・処理目的を調査し、ASP.NET Core／C#／SQL ServerのWebアプリへ再構築する。利用者が指定したWebソースを設計・実装の参考にでき、Accessの画面配置・コントロール・イベント順を同じ形で再現することは要求しない。現行原則は[Web再構築方針](docs/Web再構築方針.md)。最初の訓練対象はtest-project1。汎用規則はこのAgent、個別の決定は選択プロファイルと対象方式へ保持する。
+指定されたAccessファイルから業務データ・制約・処理目的を調査し、ASP.NET Core／C#／SQL ServerのWebアプリへ再構築する。利用者が指定したWebソースを設計・実装の参考にでき、Accessの画面配置・コントロール・イベント順を同じ形で再現することは要求しない。現行原則は[Web再構築方針](docs/Web再構築方針.md)。最初の訓練対象はsample-project1。汎用規則はこのAgent、個別の決定は選択プロファイルと対象方式へ保持する。
 
 通常のAG-BUILDは仕様からの順生成を担当する。本Agentは利用者が指定したAccessファイルからの移行を担当する。AG-REVERSEのContextBase基盤を利用するかは実装時に契約を確認し、今回の骨格で依存を確定しない。
 
@@ -46,4 +46,4 @@ Web化に必要な状態管理、HTTP境界、主体の供給、同時実行、�
 
 入力と出力のファイル・版・hash、Agent／ルール／プロファイル版、実施コマンド、処理系、検査対象・結果、未決・未実施を記録する。抽出、設計、コード生成、ビルド、単体、DB統合、画面操作、受入、汎用性確認を別状態にし、正式採点がなければformalScore=nullとする。
 
-訓練成功はtest-project1の観測範囲で述べる。別Accessファイルで未検証なら一般適用性を検証済みとしない。再実行で原本・対象外を変更せず、方式外参照なしに.slnxから復元・ビルド・起動でき、許可された比較試験と未対応確認を満たすことを目標とする。
+訓練成功はsample-project1の観測範囲で述べる。別Accessファイルで未検証なら一般適用性を検証済みとしない。再実行で原本・対象外を変更せず、方式外参照なしに.slnxから復元・ビルド・起動でき、許可された比較試験と未対応確認を満たすことを目標とする。

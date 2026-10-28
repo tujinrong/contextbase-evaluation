@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"VUE_CSHARPAPI-SPEC-INDEX","version":"8.4","path":"test-project1/spec/Vue_CSharpAPI/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"VUE_CSHARPAPI-SPEC-INDEX","version":"8.5","path":"test-project1/spec/Vue_CSharpAPI/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"}]} -->
 # Vue_CSharpAPI 仕様書
 
-版8.4／2026-10-25。
+版8.5／2026-10-28。
 
 ## 対象
 
@@ -30,3 +30,7 @@
 ### 2026-10-23 画面仕様の最適化
 
 本方式の検索と学生編集を独立して改訂。検索は4条件・7列8項目、編集はREG全34項目を維持した横並び基本情報と下段3列、確認を別状態にする。[画面最適化記録](画面最適化記録.md)に個別版・理由・描画条件・未実施を記載。仕様セットの改訂対象は8.1、既に8.1だった共通08は8.2。他方式への参照を実装入力にしない。
+
+### 2026-10-28 基本設計の書式適用
+
+[学生検索](基本設計書/01_学生検索画面.md)と[学生登録](基本設計書/02_学生登録画面.md)へ11列の簡潔項目一覧、標準部品、論理DB2列、階層手順、既存CHK/日本語MSG、検索ER/DB操作対応を適用した。業務・詳細・DB/TABLE・HTML・確定前提を維持した設計更新で、今回アプリ/DB実行・正式採点は行わない。

@@ -21,7 +21,7 @@ export function safePath(root, relative) {
 }
 export function loadRequest(root, profilePath) {
   const profile = readJson(safePath(root, profilePath));
-  if (profile.schema !== 'access-rebuilder-request/0.1' || !/^test-project[\w-]+$/.test(profile.projectId)) throw Error('Unsupported request/project');
+  if (profile.schema !== 'access-rebuilder-request/0.1' || !/^(?:sample|test)-project[\w-]+$/.test(profile.projectId)) throw Error('Unsupported request/project');
   if (!['implementation','verification'].includes(profile.phase) || profile.approval?.implementation !== 'authorized' || !profile.approval?.evidence || !profile.approval?.accessExtraction || !profile.approval?.codeGeneration) throw Error('Implementation is not authorized');
   const maximum = profile.training?.maxIterations;
   if (!Number.isInteger(maximum) || maximum < 1 || maximum > 2) throw Error('Training requires maxIterations between 1 and 2');

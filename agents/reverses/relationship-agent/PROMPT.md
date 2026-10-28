@@ -30,14 +30,14 @@ contextbase-relationship retry --work WORK --feedback CANDIDATE_SHA256
 Agentディレクトリからの例。相対パスの解決基準はconfigファイルの位置である。
 
 ```text
-contextbase-relationship paths --config ../../../test-project1/contextbase.toml --profile csharp_aspnet
-contextbase-relationship init --config ../../../test-project1/contextbase.toml --profile csharp_aspnet
-contextbase-relationship run --config ../../../test-project1/contextbase.toml --profile csharp_aspnet
-contextbase-relationship export --config ../../../test-project1/contextbase.toml --profile csharp_aspnet
+contextbase-relationship paths --config ../../../sample-project1/contextbase.toml --profile csharp_aspnet
+contextbase-relationship init --config ../../../sample-project1/contextbase.toml --profile csharp_aspnet
+contextbase-relationship run --config ../../../sample-project1/contextbase.toml --profile csharp_aspnet
+contextbase-relationship export --config ../../../sample-project1/contextbase.toml --profile csharp_aspnet
 ```
 
 pathsは表示だけで原文封印・LLMを起動しない。init／run等の実行は依頼されたときに行う。--configを使う場合は明示source／request／work／handoff／outputを混在させない。status／index／retry／revise／cancel／resumeにも同じconfigと任意profileを指定できる。
 
-固定出力は設定output/relationship-agent/contextbase.json。target.jsonの所有束縛とロック・原子更新を使い、別profile／source／goalへ上書きしない。手動 --output のfresh-only制約とは区別する。設定、結果未生成の状態は [プロジェクト出力案内](../../../test-project1/spec-reverse/README.md)を参照する。現在、実業務のLLM解析は開始していない。
+固定出力は設定output/relationship-agent/contextbase.json。target.jsonの所有束縛とロック・原子更新を使い、別profile／source／goalへ上書きしない。手動 --output のfresh-only制約とは区別する。設定、結果未生成の状態は [プロジェクト出力案内](../../../sample-project1/spec-reverse/README.md)を参照する。現在、実業務のLLM解析は開始していない。
 
 設定にはcsharp_wpfもあり、--profile csharp_wpfでsource・work・outputをWPF用へ分けられる。既定csharp_aspnetは変えず、今回どちらの実業務LLM解析も実行しない。

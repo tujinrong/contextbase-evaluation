@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN-README","version":"1.5","path":"agents/designs/basic-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物","kind":"GRID","sheet":"02_成果物"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN-README","version":"1.6","path":"agents/designs/basic-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物","kind":"GRID","sheet":"02_成果物"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"}]} -->
 # basic-design-agent
 
-定義版1.5／2026-10-28。4項目以上の処理手順を階層化し、簡潔な11列と具体的な判定・分岐を維持する。利用者要求から基本設計を作成するための運用入口。役割IDはAG-BASIC-DESIGN。
+定義版1.6／2026-10-28。4項目以上の処理手順を階層化し、簡潔な11列と具体的な判定・分岐を維持する。利用者要求から基本設計を作成するための運用入口。役割IDはAG-BASIC-DESIGN。
 
 ## 使い方
 
@@ -31,7 +31,7 @@ Pilot検証設計は既存業務に必要な正常・境界・複合条件・競
 
 帳票は元データ、項目、順序、表示、印刷、改ページ、長文、空値、失敗・再出力まで設計する。Excel経歴書を出すシステムの設計と、基本設計書をExcelへ変換する作業を区別する。基本設計だけの依頼では、詳細仕様・DDL・アプリ・ACCDB・実DB・実Excel帳票・採点表を生成しない。
 
-2026-10-27の初回対象はsample-project2、方式はAccessとCSharp_ASPNET、題材は社員経歴管理である。具体的な業務仕様は[方式索引](../../../sample-project2/spec/README.md)から選択し、このAgentへ埋め込まない。test-project1は今回許可された構成・書式の参照先であり、社員業務の正解入力ではない。
+2026-10-27の初回対象はsample-project2、方式はAccessとCSharp_ASPNET、題材は社員経歴管理である。具体的な業務仕様は[方式索引](../../../sample-project2/spec/README.md)から選択し、このAgentへ埋め込まない。sample-project1は今回許可された構成・書式の参照先であり、社員業務の正解入力ではない。
 
 ## 確認と引継ぎ
 
@@ -42,3 +42,5 @@ Pilot検証設計は既存業務に必要な正常・境界・複合条件・競
 最終検査記録と入出力manifestは各sourceRoot/build/spec-generation/へ固定名で更新する。方式を持たない共通記録だけproject/build/basic-design/を使用する。中間生成・失敗試行は.tmp/へ置き、履歴はGitを使う。原入力・QA・正式試験コード・fixtureと対象外ローカル変更を保全する。
 
 最終報告には入力/出力の版・ファイル・SHA-256、検査範囲、設計判断、未決・未実施を含める。構造・意味レビュー・描画/目視・実Excel・実装・ビルド・DB/実機・正式採点を分け、未採点ならformalScore=null。基本設計の存在を実装着手可能な詳細仕様の完成や受入合格と扱わない。次工程へは文書ID・版、機能/項目/イベントID、確定前提・QA決定を引き継ぐ。
+
+対象projectの方式はその索引から選ぶ。sample-project1はフル方式パターン（登録方式を将来追加可）、sample-project2はAccess・CSharp_ASPNETの2方式パターン。前者の仕様適用では既存業務の条件を保持し、方式固有の認証・DB・ページ操作を他方式の値へ置換しない。

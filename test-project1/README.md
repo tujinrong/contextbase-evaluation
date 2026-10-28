@@ -1,9 +1,14 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-README","version":"8.7","path":"test-project1/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"方式一覧","kind":"LIST","sheet":"02_方式一覧","key":["方式ID"]},{"heading":"入力と報告","kind":"GRID","sheet":"03_入力と報告"},{"heading":"隔離境界","kind":"GRID","sheet":"04_隔離境界"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-README","version":"8.8","path":"test-project1/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"方式一覧","kind":"LIST","sheet":"02_方式一覧","key":["方式ID"]},{"heading":"入力と報告","kind":"GRID","sheet":"03_入力と報告"},{"heading":"隔離境界","kind":"GRID","sheet":"04_隔離境界"}]} -->
 # test-project1 学生管理
 
-版8.7／2026-10-28。Access移行方式とContextBase一括起動を含む現行の独立配置。各実行結果は試験報告の範囲で判定する。
+版8.8／2026-10-28。Access移行方式とContextBase一括起動を含む現行の独立配置。各実行結果は試験報告の範囲で判定する。
 
 ## 対象
+
+sample-project1（旧test-project1）はフル方式パターンである。現在の標準7方式とAccess-To-CSharp_ASPNETの移行拡張を保持し、将来方式を追加できる。方式追加時はspec/README.md、方式プロファイル、Agentの登録・入力境界・検査を同期する。sample-project2はAccess・CSharp_ASPNETの2方式パターンで、今回の工程は基本設計。
+
+今回、各標準方式の既存基本設計へ11列項目表・空欄/-/〇・処理手順の階層化・チェック/メッセージ・論理DB/ER/更新の記述規則を適用した。既存の業務条件・方式差は保持し、アプリ・DB・Excelの再生成/実行は行わない。改名はディレクトリと現在の入力経路に適用し、旧build/解析/評価のハッシュ・projectIdは当時の証跡として保持する。
+
 
 仕様書解析Agent検証用の8つの独立方式。検索と登録・編集・参照・論理削除、およびクラス・コード保守を題材とする。各方式の原仕様はspec/方式ID/（specRoot）、ソース・DB資源・生成器・ビルド・試験はsrcs/方式ID/（sourceRoot）へ分離して置く。
 

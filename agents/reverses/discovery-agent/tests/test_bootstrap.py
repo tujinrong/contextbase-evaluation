@@ -153,10 +153,10 @@ class BootstrapTests(unittest.TestCase):
     @unittest.skipUnless(os.name == 'nt', 'Windows command wrapper')
     def test_cmd_handles_checkout_spaces_other_cwd_and_nonzero_exit(self):
         checkout = self.root / 'checkout with spaces'
-        project = checkout / 'test-project1'
+        project = checkout / 'sample-project1'
         project.mkdir(parents=True)
         wrapper = project / 'run-discovery.cmd'
-        shutil.copyfile(AGENT_ROOT.parents[2] / 'test-project1/run-discovery.cmd', wrapper)
+        shutil.copyfile(AGENT_ROOT.parents[2] / 'sample-project1/run-discovery.cmd', wrapper)
         (project / 'contextbase.toml').write_text('', encoding='utf-8')
         fake_bootstrap = checkout / 'agents/reverses/discovery-agent/launch.py'
         fake_bootstrap.parent.mkdir(parents=True)

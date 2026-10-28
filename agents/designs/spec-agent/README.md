@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC-README","version":"8.5","path":"agents/designs/spec-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物と確認","kind":"GRID","sheet":"02_成果物と確認"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC-README","version":"8.6","path":"agents/designs/spec-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物と確認","kind":"GRID","sheet":"02_成果物と確認"}]} -->
 # spec-agent
 
-定義版8.5／2026-10-25。指定projectの仕様書をCodexが作成・改善し、三種類の画面分類を新規画面にも適用するための運用入口。
+定義版8.6／2026-10-28。指定projectの仕様書をCodexが作成・改善し、三種類の画面分類を新規画面にも適用するための運用入口。
 
 ## 使い方
 
@@ -13,11 +13,11 @@
 
 検索画面の改善では、業務で使う条件だけを残す理由、空条件・初期表示・クリア・一致方式・並び順・件数・ページングを仕様へ記述し、主要操作を近接させて余白を整理する。検索UIを簡素化しても、登録項目・保存制約・権限制約の削除とは扱わない。画面サイズと状態を固定して1画面の達成範囲を確認する。
 
-2026-10-23に開始したPilotの現仕様正本は `test-project1/spec/CSharp_ASPNET`、sourceRootは `test-project1/srcs/CSharp_ASPNET`。小規模の学生管理に合わせた検索条件とレイアウトの改善を行う指定例をPROMPT.mdへ置く。これを将来のprojectや他方式への実行許可として流用しない。
+2026-10-23に開始したPilotの現仕様正本は `sample-project1/spec/CSharp_ASPNET`、sourceRootは `sample-project1/srcs/CSharp_ASPNET`。小規模の学生管理に合わせた検索条件とレイアウトの改善を行う指定例をPROMPT.mdへ置く。これを将来のprojectや他方式への実行許可として流用しない。
 
 ## 成果物と確認
 
-画面設計はWEB系（WPFを含む）・WinForms系・Text系の三種類とする。test-project1ではCSharp_ASPNET/CSharp_WPF/Vue_CSharpAPI、VB.NET_WinForms/Access、COBOL/AS400_RPGをそれぞれに対応させる。WPFのXAMLやAccessのフォーム等の実装技術は維持する。今後の画面も分類と方式別共通UIに従い、新方式の所属と制約は実装前に定める。Text系は固定行桁、半角/全角セル、保護/入力、カーソル、選択、キー、ページ、エラー/確認、長文の到達を定義する。
+画面設計はWEB系（WPFを含む）・WinForms系・Text系の三種類とする。sample-project1ではCSharp_ASPNET/CSharp_WPF/Vue_CSharpAPI、VB.NET_WinForms/Access、COBOL/AS400_RPGをそれぞれに対応させる。WPFのXAMLやAccessのフォーム等の実装技術は維持する。今後の画面も分類と方式別共通UIに従い、新方式の所属と制約は実装前に定める。Text系は固定行桁、半角/全角セル、保護/入力、カーソル、選択、キー、ページ、エラー/確認、長文の到達を定義する。
 
 仕様の画面表現はMD内の埋込みHTMLだけとし、基本/詳細に別レイアウトを描かない。画面PNGや単独HTMLを併置せず、方式内.tmp/へ同じ断片を抽出して描画・目視する。Access/WinFormsは従来フォームと標準部品、入力桁数に応じた幅と整列を記述する。文書版、入力/出力SHA-256、HTML断片ハッシュ、ブラウザー版、画面サイズ・倍率、確認状態、計測と目視結果を残す。Text系の文字モック確認はCCSID/DBCS・端末キーの実行確認と分ける。再生成では同じ最終パスを更新し、runIdは記録の属性として保持する。
 

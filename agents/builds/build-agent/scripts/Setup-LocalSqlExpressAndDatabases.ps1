@@ -5,12 +5,12 @@ param(
 )
 $ErrorActionPreference='Stop'
 $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..'))
-$project=Join-Path $workspace 'test-project1'
+$project=Join-Path $workspace 'sample-project1'
 $work=Join-Path $project '.tmp\sqlserver-setup'
 $reports=Join-Path $project 'build\sql-setup'
 $administrator=[Security.Principal.WindowsIdentity]::GetCurrent().Name
 $plan=[ordered]@{
-    status='PLAN_ONLY';project='test-project1';runId=$RunId;server='tcp:127.0.0.1,1433'
+    status='PLAN_ONLY';project='sample-project1';runId=$RunId;server='tcp:127.0.0.1,1433'
     version='SQL Server 2025 Express CU9 17.0.5005.3';authentication='Windows only'
     windowsAdministrator=$administrator;executeRequested=[bool]$Execute
     removal='Exact MSI removal of installed LocalDB 2016/2019/2025 engines; old database files retained'

@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC-PROMPT","version":"8.5","path":"agents/designs/spec-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求の指定項目","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"今回のPilot指定例","kind":"GRID","sheet":"03_Pilot指定例"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC-PROMPT","version":"8.6","path":"agents/designs/spec-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求の指定項目","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"今回のPilot指定例","kind":"GRID","sheet":"03_Pilot指定例"}]} -->
 # spec-agent 実行指示
 
-定義版8.5／2026-10-25。自身仕様で確定した前提と三種類の画面分類を実行要求へ固定し、次回も継承する。
+定義版8.6／2026-10-28。自身仕様で確定した前提と三種類の画面分類を実行要求へ固定し、次回も継承する。
 
 ## 起動指示
 
@@ -11,7 +11,7 @@ AIが要求と入力仕様を読み、設計判断と仕様本文を直接執筆
 
 本文の執筆前に、選択specRootのプロジェクト情報・方式別共通仕様・採用プロファイル・QA決定を読み、確定済み利用者前提と根拠の版・SHA-256・適用範囲をpremiseProfileへ固定する。変更指示や新たな矛盾がなければ既回答を継承し、旧案・未選定へ戻したり同じ質問を繰り返したりしない。実行環境、認証なしサンプルの適用範囲、固定主体/操作権限、DB/入力/版/監査の契約を関連文書へ一貫して反映する。前提と前回のビルド・検査状態は分け、他方式へ無断適用しない。
 
-対象MD内の埋込みHTMLだけを画面表現の正本とし、基本/詳細で同じ配置を使う。全体ルールのWEB系（WPFを含む）・WinForms系・Text系を選び、方式別共通UIに従う。test-project1はCSharp_ASPNET/CSharp_WPF/Vue_CSharpAPIがWEB系、VB.NET_WinForms/AccessがWinForms系、COBOL/AS400_RPGがText系である。将来の新規画面にも適用し、実装技術は変更しない。未分類の新方式は三種類への所属と固有制約を実装前に定める。
+対象MD内の埋込みHTMLだけを画面表現の正本とし、基本/詳細で同じ配置を使う。全体ルールのWEB系（WPFを含む）・WinForms系・Text系を選び、方式別共通UIに従う。sample-project1はCSharp_ASPNET/CSharp_WPF/Vue_CSharpAPIがWEB系、VB.NET_WinForms/AccessがWinForms系、COBOL/AS400_RPGがText系である。将来の新規画面にも適用し、実装技術は変更しない。未分類の新方式は三種類への所属と固有制約を実装前に定める。
 
 画面PNGや単独HTMLは仕様へ併置しない。採用UIの標準部品、表示桁数に応じた幅、ラベル/入力/行/操作の整列、寸法と単位を記述する。Access/WinFormsは従来フォーム、COBOL/AS400_RPGは固定行桁・半角/全角セル・保護/入力・選択欄・機能キー・メッセージ行・確認/長文ページで表現する。ページング不要の指定は取得・状態・復帰の関連契約まで反映する。同じ断片を.tmp/に抽出して指定サイズで描画・目視し、切れ・重なり・スクロールまたは行桁超過と対象版を記録する。Text系のCCSID/DBCS・端末キーの実機確認とブラウザーの文字モック確認を分ける。機械検査はAIの本文執筆や意味レビューを代替しない。
 
@@ -37,16 +37,16 @@ sourceRoot/build/spec-generation/の固定レポートへ今回runId属性と入
 以下は2026-10-23の利用者要求を再現する指定例であり、他projectへ学生管理の条件を持ち込むテンプレートではない。runIdは今回の識別属性であり、出力先の世代分けに使わない。
 
 ```text
-projectId: test-project1
+projectId: sample-project1
 stage: 既存改善。小規模の学生管理を前提に検索条件を必要なものへ絞り、検索画面を省スペースで合理的に配置する。主要操作がなるべく1画面に収まる仕様へ改善する。
 methodId: CSharp_ASPNET
-specRoot: test-project1/spec/CSharp_ASPNET
-sourceRoot: test-project1/srcs/CSharp_ASPNET
+specRoot: sample-project1/spec/CSharp_ASPNET
+sourceRoot: sample-project1/srcs/CSharp_ASPNET
 readAllowed: ルートAGENTS.md、docs/、agentsの役割定義、上記specRoot内の仕様・既存画面資源・QA
-writeAllowed: 上記specRoot、test-project1/srcs/CSharp_ASPNET/build/spec-generation/
+writeAllowed: 上記specRoot、sample-project1/srcs/CSharp_ASPNET/build/spec-generation/
 excluded: 全spec-eval、別project、他方式、アプリ実装・DB実行資源、buildの配布物と他検査結果（上記spec-generationだけ書込み許可）
 runId: <今回の識別>
-reportRoot: test-project1/srcs/CSharp_ASPNET/build/spec-generation/
+reportRoot: sample-project1/srcs/CSharp_ASPNET/build/spec-generation/
 targetViewport: 1366×650 CSS px、100%（768px高ディスプレイのブラウザー本文領域を想定）
 additionalViewport: 1280×650 CSS px。狭幅・200%では縦スクロールを許容
 states: 変更画面の通常・空結果・入力エラー・長い代表値等。実際に確認した状態を記録する

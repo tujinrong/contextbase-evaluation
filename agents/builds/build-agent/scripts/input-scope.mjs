@@ -25,7 +25,7 @@ export function assertRegular(target, directory = false) {
 export const specificationRoot = (root, project, profile) => path.join(root, project, 'spec', profile);
 
 export function collectInputFiles(root, project, profile) {
-  if (!/^test-project[1-9]\d*$/.test(project) || (profile !== undefined && !profiles.includes(profile))) throw new Error('Invalid input scope.');
+  if (!/^(?:sample|test)-project[1-9]\d*$/.test(project) || (profile !== undefined && !profiles.includes(profile))) throw new Error('Invalid input scope.');
   const files = [];
   function walk(directory) {
     assertRegular(directory, true);

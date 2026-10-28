@@ -15,7 +15,7 @@ parser.add_argument('run_id');parser.add_argument('--profile',choices=PROFILES)
 args=parser.parse_args();run=args.run_id
 if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,79}',run):raise SystemExit('Pass a safe run ID')
 selected=[args.profile] if args.profile else PROFILES
-report=ROOT/'test-project1'/('srcs/'+args.profile if args.profile else '')/'build/generation'
+report=ROOT/'sample-project1'/('srcs/'+args.profile if args.profile else '')/'build/generation'
 ensure_directory(report)
 manifest=report/'source-packages.json'
 packages=[]
@@ -35,7 +35,7 @@ def source_files(folder):
             yield source
 
 for profile in selected:
-    folder=ROOT/'test-project1/srcs'/profile
+    folder=ROOT/'sample-project1/srcs'/profile
     state_file=folder/'build/generation/regeneration.json'
     state=json.loads(state_file.read_text('utf-8')) if state_file.is_file() else None
     if state and (state.get('runId')!=run or state.get('profileId')!=profile):raise RuntimeError('Generation status belongs to another run/profile')
@@ -117,10 +117,10 @@ for profile in selected:
     os.replace(filename,final)
     packages.append({'profile':profile,'generationStatus':generation_status,'file':final.relative_to(ROOT).as_posix(),'bytes':final.stat().st_size,'sha256':hashlib.sha256(final.read_bytes()).hexdigest(),'entries':entries})
 record={'runId':run,'sourceOnly':True,'historyPolicy':'git-only; latest fixed paths','excluded':sorted(SKIP|OMIT),'packages':packages}
-scratch=ROOT/'test-project1'/('srcs/'+args.profile if args.profile else '')/'.tmp/source-package'
+scratch=ROOT/'sample-project1'/('srcs/'+args.profile if args.profile else '')/'.tmp/source-package'
 write_json_latest(manifest,record,scratch)
 # A profile's package record is also usable by its scoped manifest.
 for pack in packages:
- local=ROOT/'test-project1/srcs'/pack['profile']/'build/generation/source-packages.json'
- if local!=manifest:write_json_latest(local,{**record,'packages':[pack]},ROOT/'test-project1/srcs'/pack['profile']/'.tmp/source-package')
+ local=ROOT/'sample-project1/srcs'/pack['profile']/'build/generation/source-packages.json'
+ if local!=manifest:write_json_latest(local,{**record,'packages':[pack]},ROOT/'sample-project1/srcs'/pack['profile']/'.tmp/source-package')
 print(json.dumps({'profiles':len(packages),'files':sum(len(p['entries']) for p in packages),'manifest':manifest.relative_to(ROOT).as_posix()}))

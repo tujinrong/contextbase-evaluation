@@ -8,10 +8,10 @@ $ErrorActionPreference = 'Stop'
 $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw 'Run this script in an elevated Windows PowerShell session.' }
 $workspace = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..'))
-$allowed = [IO.Path]::GetFullPath((Join-Path $workspace 'test-project1')) + '\'
+$allowed = [IO.Path]::GetFullPath((Join-Path $workspace 'sample-project1')) + '\'
 $WorkDirectory = [IO.Path]::GetFullPath($WorkDirectory)
 $ReportDirectory = [IO.Path]::GetFullPath($ReportDirectory)
-foreach ($path in @($WorkDirectory,$ReportDirectory)) { if (-not $path.StartsWith($allowed,[StringComparison]::OrdinalIgnoreCase)) { throw "Path outside test-project1: $path" } }
+foreach ($path in @($WorkDirectory,$ReportDirectory)) { if (-not $path.StartsWith($allowed,[StringComparison]::OrdinalIgnoreCase)) { throw "Path outside sample-project1: $path" } }
 New-Item -ItemType Directory -Path $WorkDirectory,$ReportDirectory -Force | Out-Null
 Start-Transcript -LiteralPath (Join-Path $ReportDirectory 'installation.raw.log') -Force | Out-Null
 $state = [ordered]@{ started=(Get-Date).ToString('o'); status='RUNNING'; administrator=$WindowsAdministrator; instance='SQLEXPRESS'; targetVersion='17.0.5005.3'; removed=@(); steps=@(); certificate=$null; error=$null }

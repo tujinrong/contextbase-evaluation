@@ -14,9 +14,9 @@ for(let i=0;i<args.length;i+=2) {
   if(args[i]==='--project'&&!project) project=args[i+1];
   else if(args[i]==='--run-id'&&!runId) runId=args[i+1];
   else if(args[i]==='--profile'&&!profile) profile=args[i+1];
-  else throw new Error('Usage: manifest.mjs --project test-projectN --run-id <preflight-id> [--profile <profile-id>]');
+  else throw new Error('Usage: manifest.mjs --project sample-projectN --run-id <preflight-id> [--profile <profile-id>]');
 }
-if(!/^test-project[1-9]\d*$/.test(project??'')||!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId??'')||(profile!==undefined&&!profiles.includes(profile))) throw new Error('Explicit safe project/run-id and supported profile required.');
+if(!/^(?:sample|test)-project[1-9]\d*$/.test(project??'')||!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId??'')||(profile!==undefined&&!profiles.includes(profile))) throw new Error('Explicit safe project/run-id and supported profile required.');
 const outputLayout=layout(root,project,profile);
 const report=outputLayout.generation;
 const output=path.join(report,'outputs.json');

@@ -16,17 +16,17 @@ class LayoutTests(unittest.TestCase):
   for name in ['package-source.py','verify-packages.py','output_layout.py']:
    shutil.copyfile(HERE/name,tools/name)
   for profile in PROFILES:
-   base=self.root/'test-project1/srcs'/profile;base.mkdir(parents=True)
-   canonical=self.root/'test-project1/spec'/profile;canonical.mkdir(parents=True)
+   base=self.root/'sample-project1/srcs'/profile;base.mkdir(parents=True)
+   canonical=self.root/'sample-project1/spec'/profile;canonical.mkdir(parents=True)
    (canonical/'original-spec.md').write_text('canonical original specification must never enter source packages','utf-8')
    (base/'README.md').write_text('source fixture','utf-8');(base/'app.cs').write_text('// version one','utf-8')
    for excluded in ['.tmp','spec','spec-eval','spec-analysis','tests']:
     (base/excluded).mkdir();(base/excluded/'poison.txt').write_text('not an archive input','utf-8')
-  self.base=self.root/'test-project1/srcs/Access'
+  self.base=self.root/'sample-project1/srcs/Access'
   (self.base/'profile.json').write_text(json.dumps({'name':'Access','specRoot':'../../spec/Access','inputRoot':'../../spec/Access'}),'utf-8')
   (self.base/'tools').mkdir();(self.base/'tools/GeneratedPaths.ps1').write_text('# required production helper','utf-8');(self.base/'tools/test-oracle.py').write_text('# excluded','utf-8')
   # Use the real builder as fixture input, but never execute Access/VBA/DB or its build pipeline.
-  shutil.copyfile(ROOT/'test-project1/srcs/Access/Build-Access.ps1',self.base/'Build-Access.ps1')
+  shutil.copyfile(ROOT/'sample-project1/srcs/Access/Build-Access.ps1',self.base/'Build-Access.ps1')
  def tearDown(self):self.temp.cleanup()
  def run_tool(self,name,*args,expected=0):
   result=subprocess.run([sys.executable,'-X','utf8',str(self.root/'agents/builds/build-agent/scripts'/name),*args],capture_output=True,text=True,encoding='utf-8')
@@ -51,7 +51,7 @@ class LayoutTests(unittest.TestCase):
   value=copy.deepcopy(original);value['packages']=[];variants.append(value)
   value=copy.deepcopy(original);value['packages']*=2;variants.append(value)
   value=copy.deepcopy(original);value['packages'][0]['profile']='../spec';variants.append(value)
-  value=copy.deepcopy(original);value['packages'][0]['file']='test-project1/other.zip';variants.append(value)
+  value=copy.deepcopy(original);value['packages'][0]['file']='sample-project1/other.zip';variants.append(value)
   for value in variants:
    with self.subTest(value=value):
     self.manifest().write_text(json.dumps(value),'utf-8');self.verify(expected=1);self.assertEqual(self.result()['status'],'FAILED')
@@ -112,7 +112,7 @@ const redirected=path.join(base,'redirected');fs.symlinkSync(path.join(base,'spe
 
 if __name__=='__main__':
  stream=io.StringIO();result=unittest.TextTestRunner(stream=stream,verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(LayoutTests));text=stream.getvalue();print(text,end='')
- final=ROOT/'test-project1/build/test-results';scratch=ROOT/'test-project1/.tmp/layout-tests'
+ final=ROOT/'sample-project1/build/test-results';scratch=ROOT/'sample-project1/.tmp/layout-tests'
  write_json_latest(final/'output-layout-tests.json',{'status':'PASSED' if result.wasSuccessful() else 'FAILED','tests':result.testsRun,'failures':len(result.failures),'errors':len(result.errors),'scope':'fixed path/package/exclusion/filesystem contracts in disposable fixtures; no business/DB/native acceptance','formalScore':None},scratch)
  from output_layout import write_latest
  write_latest(final/'output-layout-tests.log',text,scratch)

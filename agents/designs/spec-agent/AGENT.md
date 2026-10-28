@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC","version":"8.5","path":"agents/designs/spec-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"実行コンテキスト","kind":"LIST","sheet":"02_実行コンテキスト","key":["項目"]},{"heading":"入出力と境界","kind":"LIST","sheet":"03_入出力と境界","key":["区分"]},{"heading":"実行手順","kind":"GRID","sheet":"04_実行手順"},{"heading":"検索と画面設計","kind":"GRID","sheet":"05_検索と画面設計"},{"heading":"検査と中断","kind":"GRID","sheet":"06_検査と中断"},{"heading":"完了条件","kind":"GRID","sheet":"07_完了条件"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-SPEC","version":"8.6","path":"agents/designs/spec-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"実行コンテキスト","kind":"LIST","sheet":"02_実行コンテキスト","key":["項目"]},{"heading":"入出力と境界","kind":"LIST","sheet":"03_入出力と境界","key":["区分"]},{"heading":"実行手順","kind":"GRID","sheet":"04_実行手順"},{"heading":"検索と画面設計","kind":"GRID","sheet":"05_検索と画面設計"},{"heading":"検査と中断","kind":"GRID","sheet":"06_検査と中断"},{"heading":"完了条件","kind":"GRID","sheet":"07_完了条件"}]} -->
 # 仕様書作成・改善Agent 契約
 
-版8.5／2026-10-25。確定済みの利用者前提を仕様正本から引き継ぎ、三種類の画面分類とText系の行桁・キー操作を今後の新規画面にも適用する。業務アプリの実装・実機試験・正式採点の実施状態は、各実行の報告で区別する。
+版8.6／2026-10-28。確定済みの利用者前提を仕様正本から引き継ぎ、三種類の画面分類とText系の行桁・キー操作を今後の新規画面にも適用する。業務アプリの実装・実機試験・正式採点の実施状態は、各実行の報告で区別する。
 
 ## 概要
 
@@ -59,7 +59,7 @@ AG-SPEC。利用者が指定したprojectの要求と既存仕様から、AIが�
 
 画面は指定サイズで主要操作が1画面に収まるよう、見出し、検索条件、操作、件数、一覧を近接させる。関連する短い条件は同じ行にまとめ、余白やカードの過剰な分割を減らす。文字や入力欄を極端に小さくして収めない。小さい画面や拡大表示で必要な折返しやスクロールは許容し、主要操作の欠落・切捨て・重なりで面積を減らさない。大量の一覧行まで同時表示することを1画面完結の条件にせず、一覧領域の高さ・内部スクロール/ページング・操作の到達方法を明示する。
 
-画面設計はWEB系（WPFを含む）・WinForms系・Text系の三種類とする。test-project1はCSharp_ASPNET/CSharp_WPF/Vue_CSharpAPIをWEB系、VB.NET_WinForms/AccessをWinForms系、COBOL/AS400_RPGをText系とする。これは設計分類であり、WPFのXAMLやAccessのフォーム等の実装技術を置き換えない。今後の画面は対象方式の分類と共通UIへ従い、新方式で未分類なら所属と方式固有制約を実装前に定める。
+画面設計はWEB系（WPFを含む）・WinForms系・Text系の三種類とする。sample-project1はCSharp_ASPNET/CSharp_WPF/Vue_CSharpAPIをWEB系、VB.NET_WinForms/AccessをWinForms系、COBOL/AS400_RPGをText系とする。これは設計分類であり、WPFのXAMLやAccessのフォーム等の実装技術を置き換えない。今後の画面は対象方式の分類と共通UIへ従い、新方式で未分類なら所属と方式固有制約を実装前に定める。
 
 HTMLは配置図を記述する媒体である。Accessは単票フォームと標準Label/TextBox/ComboBox/CheckBox/Frame/ListBox/CommandButton、WinFormsは標準Form/Label/TextBox/ComboBox/CheckBox/GroupBox/DataGridView/Buttonの制約と外観へ合わせる。従来フォームへWeb風の色帯・カード・影・角丸・レスポンシブカード積替え・全項目の一律全幅を持ち込まない。部品が持たない行内ボタン・複数行セル等を描かない。
 

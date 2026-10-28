@@ -4,7 +4,7 @@
 
 ## ワンクリック起動
 
-Windowsでは [test-project1/run-discovery.cmd](../../../test-project1/run-discovery.cmd) をダブルクリックする。入力は同じディレクトリのcontextbase.tomlで選び、既定profileからdiscoveryだけを起動する。relationship／behaviorは起動しない。
+Windowsでは [sample-project1/run-discovery.cmd](../../../sample-project1/run-discovery.cmd) をダブルクリックする。入力は同じディレクトリのcontextbase.tomlで選び、既定profileからdiscoveryだけを起動する。relationship／behaviorは起動しない。
 
 事前にPython 3.11以降と、共通runtimeが使用するCodex CLIを利用可能な状態にする。初回は [launch.py](launch.py) が本Agent専用環境を作り、共通runtimeのanalysis依存とdiscovery-agentだけを導入する。パッケージ取得ができない場合はエラーと非零終了にし、正式成果を変更しない。reverse-agentは導入しない。
 
@@ -16,7 +16,7 @@ Windowsでは [test-project1/run-discovery.cmd](../../../test-project1/run-disco
 
 結果の入口は選択profileのoutput/discovery-agent/review.md。正式成果はcontextbase.json、構文索引はfacts/、最終目録検証はresult/validation.json。候補・実行診断・テストログは.tmpへ置き、正式成果とは区別する。人手受入れや後続層の完了を自動判定しない。
 
-コマンドからprofileを切り替える例（test-project1で実行）：
+コマンドからprofileを切り替える例（sample-project1で実行）：
 
 ```powershell
 .\run-discovery.cmd --no-pause --profile csharp_aspnet
@@ -46,15 +46,15 @@ exportは前層workなしで読めるportable受渡し。全有効記録・未�
 
 ## プロジェクト設定による実行
 
-[contextbase.toml](../../../test-project1/contextbase.toml)で入力と結果を切り替える。既定sourceはtest-project1/srcs/CSharp_ASPNET、workは選択profileのwork基点を使う。[成果案内](../../../test-project1/spec-reverse/discovery-agent/README.md)で現在の実行・検証・採用状態を確認する。
+[contextbase.toml](../../../sample-project1/contextbase.toml)で入力と結果を切り替える。既定sourceはsample-project1/srcs/CSharp_ASPNET、workは選択profileのwork基点を使う。[成果案内](../../../sample-project1/spec-reverse/discovery-agent/README.md)で現在の実行・検証・採用状態を確認する。
 
 このAgentディレクトリからの例：
 
 ```text
-contextbase-discovery paths --config ../../../test-project1/contextbase.toml
-contextbase-discovery init --config ../../../test-project1/contextbase.toml
-contextbase-discovery run --config ../../../test-project1/contextbase.toml
-contextbase-discovery export --config ../../../test-project1/contextbase.toml
+contextbase-discovery paths --config ../../../sample-project1/contextbase.toml
+contextbase-discovery init --config ../../../sample-project1/contextbase.toml
+contextbase-discovery run --config ../../../sample-project1/contextbase.toml
+contextbase-discovery export --config ../../../sample-project1/contextbase.toml
 ```
 
 --profile NAMEで切り替える。--configはコマンドの後に指定し、明示 --source／--request／--work／--handoff／--outputとは併用しない。pathsは解決した入力・作業・出力・前層成果を表示するだけで、snapshot作成やモデル呼出しを行わない。
@@ -65,7 +65,7 @@ workは設定work基点/discovery-agent。後続層は同じ設定の前層固�
 
 ## 現在のレビュー成果と正式export
 
-公開入口は[成果README](../../../test-project1/spec-reverse/discovery-agent/README.md)。完了後はreview.mdに機能・根拠・独立判定を示し、最終検証はresult/、索引はfacts/へ保存する。現在の件数・根拠・採用範囲は今回の正式成果で確認し、過去のpassや合成確認を実モデルの合格へ広げない。
+公開入口は[成果README](../../../sample-project1/spec-reverse/discovery-agent/README.md)。完了後はreview.mdに機能・根拠・独立判定を示し、最終検証はresult/、索引はfacts/へ保存する。現在の件数・根拠・採用範囲は今回の正式成果で確認し、過去のpassや合成確認を実モデルの合格へ広げない。
 
 rootのtarget.jsonは公開slotの所有保護として残す。採用後のみroot/contextbase.jsonを出力し、後続層は同一request・source・前提版を照合した上で、別文脈の原文再検証を行う。候補を正式な前提へ代用しない。作業記録は現在の固定workに置き、旧世代やbackupを累積しない。
 

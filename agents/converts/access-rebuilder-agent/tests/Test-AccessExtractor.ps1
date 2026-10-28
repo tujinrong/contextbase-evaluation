@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$TargetRoot = 'test-project1/srcs/Access-To-CSharp_ASPNET')
+param([string]$TargetRoot = 'sample-project1/srcs/Access-To-CSharp_ASPNET')
 $ErrorActionPreference = 'Stop'
 $target = [IO.Path]::GetFullPath($TargetRoot)
 $fixtureDir = Join-Path $target '.tmp/extractor-safety'

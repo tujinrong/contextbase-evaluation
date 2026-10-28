@@ -26,9 +26,9 @@ tests/の正式テストは合成入力と模擬providerを使う。実モデル
 
 ## プロジェクトprofile設定
 
-[test-project1/contextbase.toml](../../../../test-project1/contextbase.toml)はcontextbase-project/1の設定。各CLIはコマンド後の --configと任意 --profileでsource／request／work／outputを解決し、pathsは表示だけを行う。設定相対パスはconfigファイルの位置が基準である。
+[sample-project1/contextbase.toml](../../../../sample-project1/contextbase.toml)はcontextbase-project/1の設定。各CLIはコマンド後の --configと任意 --profileでsource／request／work／outputを解決し、pathsは表示だけを行う。設定相対パスはconfigファイルの位置が基準である。
 
-既定sourceはtest-project1/srcs/CSharp_ASPNET、正式結果はtest-project1/spec-reverse/各Agent/contextbase.json。設定exportはtarget.jsonの所有束縛・ロック・原子的更新を使い、手動--outputはfresh-only。現在の実行・採用・未実施範囲は[実装ガイド](../../reverse-agent/docs/ContextBase初期実装.md)で確認し、設定・合成検査とモデル品質・人手受入れを区別する。
+既定sourceはsample-project1/srcs/CSharp_ASPNET、正式結果はsample-project1/spec-reverse/各Agent/contextbase.json。設定exportはtarget.jsonの所有束縛・ロック・原子的更新を使い、手動--outputはfresh-only。現在の実行・採用・未実施範囲は[実装ガイド](../../reverse-agent/docs/ContextBase初期実装.md)で確認し、設定・合成検査とモデル品質・人手受入れを区別する。
 
 ## 可搬前提の版と過時拒否
 

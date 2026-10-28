@@ -9,7 +9,7 @@ try {
   const options={};
   while(args.length) { const key=args.shift(); if(!key.startsWith('--') || !args.length) throw Error('Expected --name value'); options[key.slice(2)]=args.shift(); }
   const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../../..');
-  const context=loadRequest(root,options.profile ?? 'agents/converts/access-rebuilder-agent/profiles/test-project1.json');
+  const context=loadRequest(root,options.profile ?? 'agents/converts/access-rebuilder-agent/profiles/sample-project1.json');
   let result;
   if(command==='prepare') result=prepare(context);
   else if(command==='begin-iteration') result=begin(context);

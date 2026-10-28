@@ -10,7 +10,7 @@ parser=argparse.ArgumentParser();parser.add_argument('run_id');parser.add_argume
 args=parser.parse_args();run=args.run_id
 if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,79}',run):raise SystemExit('Safe package run ID required')
 selected=[args.profile] if args.profile else PROFILES
-base=ROOT/'test-project1'/('srcs/'+args.profile if args.profile else '')
+base=ROOT/'sample-project1'/('srcs/'+args.profile if args.profile else '')
 prefix=base/'build/test-results/source-package-validation';scratch=base/'.tmp/source-package'
 results=[];prepared=[];logs=[];error=None
 write_json_latest(prefix.with_suffix('.json'),{'runId':run,'status':'RUNNING','formalScore':None},scratch)
@@ -30,8 +30,8 @@ try:
     names=[pack.get('profile') for pack in packages]
     if len(names)!=len(selected) or len(set(names))!=len(names) or set(names)!=set(selected):raise RuntimeError('Exactly the selected nonempty profile set is required')
     for pack in packages:
-        profile=pack['profile'];owner=ROOT/'test-project1/srcs'/profile
-        if pack['file']!=f'test-project1/srcs/{profile}/build/source.zip':raise RuntimeError('Package outside current delivery path')
+        profile=pack['profile'];owner=ROOT/'sample-project1/srcs'/profile
+        if pack['file']!=f'sample-project1/srcs/{profile}/build/source.zip':raise RuntimeError('Package outside current delivery path')
         source=ROOT/pack['file'];regular_destination(source)
         if hashlib.sha256(source.read_bytes()).hexdigest()!=pack['sha256']:raise RuntimeError('Archive hash mismatch')
         entries=pack['entries'];expected={entry['file']:entry for entry in entries}
@@ -57,7 +57,7 @@ try:
     print(f'PREPARED {len(prepared)} independent source-only archives',flush=True)
     for profile in ([] if args.hashes_only else selected):
         if profile not in ['CSharp_WPF','VB.NET_WinForms','CSharp_ASPNET','Vue_CSharpAPI']:continue
-        cwd=ROOT/f'test-project1/srcs/{profile}/.tmp/source-isolation'
+        cwd=ROOT/f'sample-project1/srcs/{profile}/.tmp/source-isolation'
         solution='StudentManagement.WinForms.slnx' if profile=='VB.NET_WinForms' else 'StudentManagement.slnx'
         invoke(profile,cwd,['dotnet','build',solution,'-c','Release','--nologo','-p:RestoreLockedMode=true'])
         if profile in ['CSharp_WPF','VB.NET_WinForms']:
@@ -76,6 +76,6 @@ finally:
     write_json_latest(prefix.with_suffix('.json'),record,scratch)
     for profile in selected:
         if profile not in PROFILES:continue
-        own=ROOT/'test-project1/srcs'/profile
+        own=ROOT/'sample-project1/srcs'/profile
         write_json_latest(own/'build/test-results/source-package-validation.json',{**record,'prepared':[item for item in prepared if item['profile']==profile],'runs':[item for item in results if item['profile']==profile]},own/'.tmp/source-package')
 raise SystemExit(1 if error else 0)

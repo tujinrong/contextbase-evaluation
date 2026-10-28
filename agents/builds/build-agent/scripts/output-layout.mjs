@@ -4,7 +4,7 @@ import path from 'node:path';
 export const profiles = ['VB.NET_WinForms', 'CSharp_WPF', 'CSharp_ASPNET', 'Vue_CSharpAPI', 'COBOL', 'AS400_RPG', 'Access'];
 
 export function layout(root, project, profile) {
-  if (!/^test-project[1-9]\d*$/.test(project) || (profile !== undefined && !profiles.includes(profile))) throw new Error('Invalid output scope.');
+  if (!/^(?:sample|test)-project[1-9]\d*$/.test(project) || (profile !== undefined && !profiles.includes(profile))) throw new Error('Invalid output scope.');
   const base = path.join(root, project, ...(profile ? ['srcs', profile] : []));
   const build = path.join(base, 'build');
   const scratch = path.join(base, '.tmp', 'build-agent');

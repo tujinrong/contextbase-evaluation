@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"CSHARP_ASPNET-SPEC-INDEX","version":"8.6","path":"test-project1/spec/CSharp_ASPNET/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"CSHARP_ASPNET-SPEC-INDEX","version":"8.7","path":"test-project1/spec/CSharp_ASPNET/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"}]} -->
 # CSharp_ASPNET 仕様書
 
-版8.6／2026-10-27。検索・学生編集画面と共有DBプロファイル。
+版8.7／2026-10-28。検索・学生編集画面と共有DBプロファイル。
 
 ## 対象
 
@@ -33,3 +33,7 @@
 仕様正本（specRoot）は `test-project1/spec/CSharp_ASPNET/`、生成ソースと実行資源の正本（sourceRoot）は `test-project1/srcs/CSharp_ASPNET/` とする。仕様の依存はspecRoot内で閉じる。本文中の方式内build/・.tmp/、生成コマンドの作業ディレクトリ、ソース相対パスはsourceRootを基準とし、仕様フォルダーの直下へ生成しない。順生成はこのspecRootを明示して入力版を固定する。
 
 すべての仕様参照はこのフォルダー内で閉じる。業務項目・規則IDは維持し、文書IDは本方式専用とした。他プロジェクトと共通の仕様ファイル、symlink、外部への相互引用は使用しない。
+
+### 2026-10-28 基本設計の書式適用
+
+[学生検索](基本設計書/01_学生検索画面.md)と[学生登録](基本設計書/02_学生登録画面.md)へ11列の簡潔項目一覧、標準部品、論理DB2列、階層手順、既存CHK/日本語MSG、検索ER/DB操作対応を適用した。業務・詳細・DB/TABLE・HTML・確定前提を維持した設計更新で、今回アプリ/DB実行・正式採点は行わない。

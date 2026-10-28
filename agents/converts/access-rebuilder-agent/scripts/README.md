@@ -1,6 +1,6 @@
 # 工程用スクリプト
 
-リポジトリから実行する。今回のtest-project1は既に2回の訓練を完了する台帳を持つため、同じプロファイルでbegin-iterationを再実行して訓練を増やさない。
+リポジトリから実行する。今回のsample-project1は既に2回の訓練を完了する台帳を持つため、同じプロファイルでbegin-iterationを再実行して訓練を増やさない。
 
 ```powershell
 node agents/converts/access-rebuilder-agent/scripts/rebuild.mjs status

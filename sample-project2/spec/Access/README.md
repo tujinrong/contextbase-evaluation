@@ -1,9 +1,12 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-INDEX","version":"1.5","path":"sample-project2/spec/Access/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-INDEX","version":"1.6","path":"sample-project2/spec/Access/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
 # Access 基本設計書一覧
 
-仕様セット版1.5／2026-10-28。社員経歴管理システム。
+仕様セット版1.6／2026-10-28。社員経歴管理システム。
 
 ## 対象と状態
+
+本方式は2方式パターン（Access・CSharp_ASPNET）の一つ。フル方式の構造参照元はsample-project1（旧test-project1）。過去の依頼文・検査ハッシュは旧名の記録として保持する。
+
 
 社員と経歴の登録から日本語Excel職務経歴書を作成する最小DEMO。[採用プロファイル](プロジェクト情報.md)と[QA](QA.md)を先に読む。5画面・6機能・5テーブル。基本設計改訂版。項目一覧11列を維持し、空欄・ハイフン・〇で簡潔化。条件とDB関連は保持。4項目以上の手順を階層化。検査順序・整合性・DB確定・エラー復帰を具体化し、Pilot41シナリオを設計（実行未実施）。設計全体の利用者受入は未実施。実装・DB・実Excel・印刷・正式採点は未実施。
 

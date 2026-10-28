@@ -7,9 +7,9 @@ param(
 $ErrorActionPreference='Stop'
 if($Execute -and $VerifyOnly){throw 'Choose Execute or VerifyOnly.'}
 $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..'))
-$report=Join-Path $workspace 'test-project1\build\shared-db'
+$report=Join-Path $workspace 'sample-project1\build\shared-db'
 $database='contextbase_test_project1'
-$state=[ordered]@{status='PLAN_ONLY';project='test-project1';server='tcp:127.0.0.1,1433';provider='ODBC Driver 18 for SQL Server';hostnameInCertificate='localhost';database=$database;authentication='Windows only';encrypt=$true;trustServerCertificate=$false;compatibilityLevel=160;schemaStatus='EMPTY_PENDING_SHARED_DATABASE_CONTRACT';existingDatabasePolicy='Refuse creation if present; never drop or overwrite';notRun=@('Shared schema/roles/normalization/locking deployment','Non-sysadmin application authentication and CRUD','Access linked SQL backend migration','IBM i connection and Windows identity mapping')}
+$state=[ordered]@{status='PLAN_ONLY';project='sample-project1';server='tcp:127.0.0.1,1433';provider='ODBC Driver 18 for SQL Server';hostnameInCertificate='localhost';database=$database;authentication='Windows only';encrypt=$true;trustServerCertificate=$false;compatibilityLevel=160;schemaStatus='EMPTY_PENDING_SHARED_DATABASE_CONTRACT';existingDatabasePolicy='Refuse creation if present; never drop or overwrite';notRun=@('Shared schema/roles/normalization/locking deployment','Non-sysadmin application authentication and CRUD','Access linked SQL backend migration','IBM i connection and Windows identity mapping')}
 if(-not $Execute -and -not $VerifyOnly){$state | ConvertTo-Json -Depth 6;return}
 New-Item -ItemType Directory -Path $report -Force | Out-Null
 $state.status='RUNNING';$state.started=(Get-Date).ToString('o');$state.databaseCreated=$false;$state.error=$null

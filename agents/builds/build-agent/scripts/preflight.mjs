@@ -17,9 +17,9 @@ for (let i = 0; i < args.length; i += 2) {
   else if (args[i] === '--run-id' && !runId) runId = args[i + 1];
   else if (args[i] === '--profile' && !profile) profile = args[i + 1];
   else if (args[i] === '--inspect-only' && !inspectionOption && ['true', 'false'].includes(args[i + 1])) {inspectOnly = args[i + 1] === 'true'; inspectionOption = true;}
-  else throw new Error('Usage: preflight.mjs --project test-projectN --run-id <unique-id> [--profile <profile-id>] [--inspect-only true]');
+  else throw new Error('Usage: preflight.mjs --project sample-projectN --run-id <unique-id> [--profile <profile-id>] [--inspect-only true]');
 }
-if (!/^test-project[1-9]\d*$/.test(project ?? '') || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId ?? '') || (profile !== undefined && !profiles.includes(profile))) {
+if (!/^(?:sample|test)-project[1-9]\d*$/.test(project ?? '') || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId ?? '') || (profile !== undefined && !profiles.includes(profile))) {
   throw new Error('Explicit project and safe unique run-id are required.');
 }
 const projectRoot = path.join(root, project);

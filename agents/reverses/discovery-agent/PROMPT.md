@@ -43,15 +43,15 @@ contextbase-discovery retry --work WORK --feedback CANDIDATE_SHA256
 Agentディレクトリからの例。相対パスの解決基準はconfigファイルの位置である。
 
 ```text
-contextbase-discovery paths --config ../../../test-project1/contextbase.toml --profile csharp_aspnet
-contextbase-discovery init --config ../../../test-project1/contextbase.toml --profile csharp_aspnet
-contextbase-discovery run --config ../../../test-project1/contextbase.toml --profile csharp_aspnet
-contextbase-discovery export --config ../../../test-project1/contextbase.toml --profile csharp_aspnet
+contextbase-discovery paths --config ../../../sample-project1/contextbase.toml --profile csharp_aspnet
+contextbase-discovery init --config ../../../sample-project1/contextbase.toml --profile csharp_aspnet
+contextbase-discovery run --config ../../../sample-project1/contextbase.toml --profile csharp_aspnet
+contextbase-discovery export --config ../../../sample-project1/contextbase.toml --profile csharp_aspnet
 ```
 
 pathsは表示だけで原文封印・LLMを起動しない。init／run等の実行は依頼されたときに行う。--configを使う場合は明示source／request／work／handoff／outputを混在させない。status／index／retry／revise／cancel／resumeにも同じconfigと任意profileを指定できる。
 
-固定出力は設定output/discovery-agent/contextbase.json。target.jsonの所有束縛とロック・原子更新を使い、別profile／source／goalへ上書きしない。手動 --output のfresh-only制約とは区別する。実行済み範囲・人手レビュー状態は [プロジェクト出力案内](../../../test-project1/spec-reverse/README.md)を参照する。
+固定出力は設定output/discovery-agent/contextbase.json。target.jsonの所有束縛とロック・原子更新を使い、別profile／source／goalへ上書きしない。手動 --output のfresh-only制約とは区別する。実行済み範囲・人手レビュー状態は [プロジェクト出力案内](../../../sample-project1/spec-reverse/README.md)を参照する。
 
 設定にはcsharp_wpfもあり、--profile csharp_wpfでsource・work・outputをWPF用へ分けられる。既定csharp_aspnetは変えず、他profileの解析は個別の実行要求に従う。
 
@@ -70,7 +70,7 @@ R／Bを起動・作成しない。実測件数・検証・採用・失敗の状
 [短縮伝送と証拠一括検査](../shared/contextbase-runtime/docs/短縮伝送と証拠一括検査.md)を読み、source-fact対応Dでだけ--compactを指定する。出力はtaskの厳密schemaとwireSha256に従い、evidence.fileとfact参照は同taskのaliasを使う。理由は目録深度で簡潔にし、必要な候補・未解決・反例は残す。
 
 ```text
-contextbase-discovery run --config ../../../test-project1/contextbase.toml --profile csharp_aspnet --inline-sources --compact
+contextbase-discovery run --config ../../../sample-project1/contextbase.toml --profile csharp_aspnet --inline-sources --compact
 ```
 
 既定はcanonical互換である。compactでも原文は全量であり、必要原文だけを取り寄せる複数回の調査ループは未実装。新規回帰・実D結果は実装ガイドに記録した。候補化とfact利用の支持、catalog未採用を区別する。

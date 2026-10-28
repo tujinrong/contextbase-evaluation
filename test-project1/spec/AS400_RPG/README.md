@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AS400_RPG-SPEC-INDEX","version":"8.5","path":"test-project1/spec/AS400_RPG/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AS400_RPG-SPEC-INDEX","version":"8.6","path":"test-project1/spec/AS400_RPG/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["区分"]},{"heading":"隔離","kind":"GRID","sheet":"03_隔離"}]} -->
 # AS400_RPG 仕様書
 
-版8.5／2026-10-25。
+版8.6／2026-10-28。
 
 ## 対象
 
@@ -32,3 +32,9 @@
 ### 2026-10-23 画面配置改訂
 
 検索は4条件へ整理し、学生編集は保存項目を維持して省スペース化した。方式適合・確認範囲は[画面最適化記録](画面最適化記録.md)。アプリ実装、実DB、ネイティブ実機、正式採点は未実施。formalScore=null。
+
+### 2026-10-28 基本設計の記述規則適用
+
+検索・学生登録の基本設計を11列項目表へ整理し、候補/正規化/チェック/イベントと論理DB項目の対応を保持した。入力制限に原入力/保存上限を残し、4以上の手順を階層化し、既存CHK・実メッセージ・期待DB件数と原子的確定をイベントへ対応付けた。検索ERには既存の関係線を保持してキー/分類属性を補記した。
+
+今回の更新は基本設計と説明/索引だけ。方式固有の確定前提、学生業務/制約、詳細仕様、物理DB定義、TABLE9列、画面HTML/CSSは維持する。実装・DB実行・ネイティブ画面/端末・正式採点の新たな実施を意味せず、検査記録は今回の入力版/ハッシュで更新する。

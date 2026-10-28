@@ -7,15 +7,26 @@ import {spawnSync} from 'node:child_process';
 import {safePath,loadRequest,hash,writeJson,begin,complete} from '../src/workflow.mjs';
 
 const agent=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-function fixture() {
+function fixture(projectId='sample-project1') {
   const root=fs.mkdtempSync(path.join(fs.mkdirSync(path.join(agent,'.tmp/tests'),{recursive:true}) ?? path.join(agent,'.tmp/tests'),'workflow-'));
-  const source=path.join(root,'test-project1/srcs/Access/build/input.accdb'); fs.mkdirSync(path.dirname(source),{recursive:true}); fs.writeFileSync(source,'inert test bytes');
+  const sourceFile=`${projectId}/srcs/Access/build/input.accdb`;
+  const source=path.join(root,sourceFile); fs.mkdirSync(path.dirname(source),{recursive:true}); fs.writeFileSync(source,'inert test bytes');
   const rules=path.join(root,'agents/converts/access-rebuilder-agent/docs/変換ルール.md'); fs.mkdirSync(path.dirname(rules),{recursive:true});fs.writeFileSync(rules,'rules');
-  const profile={schema:'access-rebuilder-request/0.1',projectId:'test-project1',phase:'implementation',approval:{implementation:'authorized',evidence:'unit fixture',accessExtraction:true,codeGeneration:true,databaseExecution:false},training:{maxIterations:2},source:{file:'test-project1/srcs/Access/build/input.accdb',sha256:hash(source)},target:{profileId:'Access-To-CSharp_ASPNET',sourceRoot:'test-project1/srcs/Access-To-CSharp_ASPNET',specRoot:'test-project1/spec/Access-To-CSharp_ASPNET'}};
+  const profile={schema:'access-rebuilder-request/0.1',projectId,phase:'implementation',approval:{implementation:'authorized',evidence:'unit fixture',accessExtraction:true,codeGeneration:true,databaseExecution:false},training:{maxIterations:2},source:{file:sourceFile,sha256:hash(source)},target:{profileId:'Access-To-CSharp_ASPNET',sourceRoot:`${projectId}/srcs/Access-To-CSharp_ASPNET`,specRoot:`${projectId}/spec/Access-To-CSharp_ASPNET`}};
   writeJson(path.join(root,'profile.json'),profile);
   return {root,profile};
 }
 test('unsafe parent and absolute paths are rejected',()=>{ assert.throws(()=>safePath(agent,'../source'));assert.throws(()=>safePath(agent,'C:/Windows')); });
+test('sample and legacy project IDs preserve path and request boundaries',()=>{
+  for(const projectId of ['sample-project1','test-project1']) {
+    const {root,profile}=fixture(projectId);
+    assert.equal(loadRequest(root,'profile.json').profile.projectId,projectId);
+    for(const invalid of ['../sample-project1','sample-project1/other','sample-project1\\other','D:/sample-project1']) {
+      writeJson(path.join(root,'profile.json'),{...profile,projectId:invalid});
+      assert.throws(()=>loadRequest(root,'profile.json'),/Unsupported request\/project/);
+    }
+  }
+});
 test('grouped CLI finds its repository and default profile outside the working directory',()=>{
   const {root,profile}=fixture();
   const checkout=path.join(root,'agents/converts/access-rebuilder-agent');
@@ -24,7 +35,7 @@ test('grouped CLI finds its repository and default profile outside the working d
     fs.mkdirSync(path.dirname(destination),{recursive:true});
     fs.copyFileSync(path.join(agent,relative),destination);
   }
-  writeJson(path.join(checkout,'profiles/test-project1.json'),profile);
+  writeJson(path.join(checkout,'profiles/sample-project1.json'),profile);
   const result=spawnSync(process.execPath,[path.join(checkout,'scripts/rebuild.mjs'),'status'],{cwd:path.dirname(root),encoding:'utf8'});
   assert.equal(result.status,0,result.stderr);
   assert.deepEqual(JSON.parse(result.stdout),{iterations:[],maxIterations:2});

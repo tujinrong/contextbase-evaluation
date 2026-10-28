@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-QA","version":"1.5","path":"sample-project2/spec/Access/QA.md","sheets":[{"heading":"状態の区別","kind":"GRID","sheet":"01_状態の区別"},{"heading":"要求・判断一覧","kind":"LIST","sheet":"02_要求と判断","key":["QA-ID"]},{"heading":"次工程への引継ぎ","kind":"GRID","sheet":"03_次工程への引継ぎ"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-QA","version":"1.6","path":"sample-project2/spec/Access/QA.md","sheets":[{"heading":"状態の区別","kind":"GRID","sheet":"01_状態の区別"},{"heading":"要求・判断一覧","kind":"LIST","sheet":"02_要求と判断","key":["QA-ID"]},{"heading":"次工程への引継ぎ","kind":"GRID","sheet":"03_次工程への引継ぎ"}]} -->
 # 要求・QA・設計判断
 
-版1.5／2026-10-28。改訂版。未確認を承認扱いにしない。
+版1.6／2026-10-28。改訂版。未確認を承認扱いにしない。
 
 ## 状態の区別
 
@@ -34,6 +34,7 @@
 | QA-021 | 利用者確定 | チェック内容・整合性チェック・処理手順と仕様・エラー文言を充実し、生成Pilotで複合条件と異常系を扱う | 2026-10-28追加指示、共通04/05/08、F01～F06、basic-design-agent1.4 |
 | QA-022 | 設計採用 | 既存5画面/6機能/5表を維持。正規化後の経歴11編集値完全一致のみ重複拒否、排他待ち10秒、読込集合と保持/明示除去集合の対応、保存成否不明時の再保存抑止、メニュー起動時の現在利用者/役割再確認を具体化 | Pilot向け設計者判断。利用者承認と混同しない。期間重複・前職・同一案件名のみは許可。共通04/05/08・F04/F06 |
 | QA-023 | 利用者確定 | 処理手順が多い場合は階層化する。4項目以上を目安に意味単位の大項目・小項目へまとめ、参照番号も同期する | 2026-10-28追加指示、F01～F06・共通04・方式内規約・basic-design-agent1.5。処理順・業務条件は維持 |
+| QA-024 | 利用者確定 | sample-project1は旧test-project1を改名したフル方式パターン、sample-project2はAccess・CSharp_ASPNETの2方式パターン | 2026-10-28追加指示。元の構造参照依頼は旧名による当時の記録として保持 |
 
 ## 次工程への引継ぎ
 

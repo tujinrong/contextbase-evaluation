@@ -1,5 +1,5 @@
 // AG-BUILD: render verified, unchanged screenshot artifacts as a portable gallery.
-// Usage: node agents/builds/build-agent/scripts/write-test-evidence.mjs --project test-project1 --run-id <fresh-run-id>
+// Usage: node agents/builds/build-agent/scripts/write-test-evidence.mjs --project sample-project1 --run-id <fresh-run-id>
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -12,10 +12,10 @@ for (let i = 0; i < args.length; i += 2) {
   if (args[i] === '--project' && !project) project = args[i + 1];
   else if (args[i] === '--profile' && !selectedProfile) selectedProfile = args[i + 1];
   else if (args[i] === '--run-id' && !runId) runId = args[i + 1];
-  else throw new Error('Usage: write-test-evidence.mjs --project test-project1 --run-id <run-id>');
+  else throw new Error('Usage: write-test-evidence.mjs --project sample-project1 --run-id <run-id>');
 }
-if (project !== 'test-project1' || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(runId ?? '')) {
-  throw new Error('Explicit test-project1 and a safe run-id are required.');
+if (!/^(?:sample|test)-project[1-9]\d*$/.test(project ?? '') || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(runId ?? '')) {
+  throw new Error('Explicit safe project and run-id are required.');
 }
 
 const hash = data => crypto.createHash('sha256').update(data).digest('hex');

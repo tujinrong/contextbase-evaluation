@@ -99,7 +99,7 @@ contextbase-behavior export --work WORK_B --output BEHAVIOR_HANDOFF.json
 
 ## 4.1 プロジェクト設定と成果配置
 
-[正式設定](../../../../test-project1/contextbase.toml)と[要求](../../../../test-project1/contextbase-request.json)を使う。設定schemaはcontextbase-project/1、default_profileはcsharp_aspnet。相対パスはconfigファイルのディレクトリから解決する。
+[正式設定](../../../../sample-project1/contextbase.toml)と[要求](../../../../sample-project1/contextbase-request.json)を使う。設定schemaはcontextbase-project/1、default_profileはcsharp_aspnet。相対パスはconfigファイルのディレクトリから解決する。
 
 | csharp_aspnet | 値 |
 | --- | --- |
@@ -111,10 +111,10 @@ contextbase-behavior export --work WORK_B --output BEHAVIOR_HANDOFF.json
 各Agentのworkは設定work基点/Agent名、正式export先はoutput基点/Agent名/contextbase.jsonである。csharp_wpfの切替例はWPF専用のsource・work・outputを使うが、解析は個別の実行要求に従う。
 
 ```text
-contextbase-discovery paths --config test-project1/contextbase.toml
-contextbase-discovery init --config test-project1/contextbase.toml
-contextbase-discovery run --config test-project1/contextbase.toml --inline-sources --compact
-contextbase-discovery status --config test-project1/contextbase.toml
+contextbase-discovery paths --config sample-project1/contextbase.toml
+contextbase-discovery init --config sample-project1/contextbase.toml
+contextbase-discovery run --config sample-project1/contextbase.toml --inline-sources --compact
+contextbase-discovery status --config sample-project1/contextbase.toml
 ```
 
 pathsは解決したsource／request／work／output／上流成果を表示するだけで、snapshot・モデルを作らない。--configはコマンド後に指定し、必要なら--profile NAMEを加える。明示--source／--request／--work／--handoff／--outputとは混在させない。init／run／status／index／query／validate-index／retry／repair／export／revise／cancel／resumeで設定を使える。
@@ -128,7 +128,7 @@ pathsは解決したsource／request／work／output／上流成果を表示す�
 | facts/ | 構文索引・機械検査・fact利用レビュー |
 | .tmp/diagnostics/ | 一時的な診断。公開READMEにも判定・制約を要約する |
 
-正式exportはtarget.jsonのprofile名・source絶対パス・request digest・output root・Agentに対する所有束縛とロックで固定contextbase.jsonを原子的に更新する。同じ所有・内容は冪等、異なるprofile／source／goalは上書きを拒否する。targetは署名ではなくplainな所有情報である。正式履歴はGitを使い、run-id／attempt／archive別に固定出力を増やさない。最新状態は[プロジェクト成果案内](../../../../test-project1/spec-reverse/discovery-agent/README.md)と本書末尾で確認する。
+正式exportはtarget.jsonのprofile名・source絶対パス・request digest・output root・Agentに対する所有束縛とロックで固定contextbase.jsonを原子的に更新する。同じ所有・内容は冪等、異なるprofile／source／goalは上書きを拒否する。targetは署名ではなくplainな所有情報である。正式履歴はGitを使い、run-id／attempt／archive別に固定出力を増やさない。最新状態は[プロジェクト成果案内](../../../../sample-project1/spec-reverse/discovery-agent/README.md)と本書末尾で確認する。
 
 ## 5. Portable handoffと受信側の独立再検証
 
@@ -231,7 +231,7 @@ AI作成の汎用草稿であり、人手承認済み正解表ではない。
 
 実行要求に固定した入力・出力・契約の版、ファイル、hash、検査範囲と未実施を、今回の結果案内で確認する。実行ID、件数、hash、所要時間、provider応答及び試験ログを本書へ転記・累積しない。中間物・実行記録はwork、利用者向けの結果は選択したoutputに置く。
 
-既定profileの人手確認入口はtest-project1/spec-reverse/discovery-agent/review.md。正式な可搬成果は同Agentのcontextbase.json、目録検証はresult/validation.json、構文事実の機械検証はfacts/validation.jsonで確認する。これらは種類の異なる検証であり、索引の機械検証だけで目録の意味や業務品質を承認しない。後続層と人手受入れは、その工程自身の今回の記録で判断する。
+既定profileの人手確認入口はsample-project1/spec-reverse/discovery-agent/review.md。正式な可搬成果は同Agentのcontextbase.json、目録検証はresult/validation.json、構文事実の機械検証はfacts/validation.jsonで確認する。これらは種類の異なる検証であり、索引の機械検証だけで目録の意味や業務品質を承認しない。後続層と人手受入れは、その工程自身の今回の記録で判断する。
 
 分類の内訳、原文根拠、未解決事項及び採用範囲は今回のreviewと正式成果を参照する。discoveryの完了を元goal全体の完了へ広げず、relationship／behaviorの実行や原アプリ・SQL・DBの動作確認へ読み替えない。
 
