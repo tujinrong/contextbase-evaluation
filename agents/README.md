@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"8.5","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"8.6","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
 # Agent定義一覧
 
-版8.5／2026-10-27。Agentをbuilds・converts・reverses・designsへ分類し、解析用共有runtimeをreverses内へ配置。ContextBase解析を平級の独立3Agentへ分離し、AG-REVERSEを任意互換入口とする。アプリ実装・実機試験・採点の状態は各実行の報告で区別する。
+版8.6／2026-10-28。Agentをbuilds・converts・reverses・designsへ分類し、解析用共有runtimeをreverses内へ配置。ContextBase解析を平級の独立3Agentへ分離し、AG-REVERSEを任意互換入口とする。アプリ実装・実機試験・採点の状態は各実行の報告で区別する。
 
 ## 概要
 
@@ -53,4 +53,4 @@ projectId、仕様セット版、方式ID、specRoot=project/spec/方式ID、sou
 
 拒否草稿の限定回復は[明示repair契約](reverses/shared/contextbase-runtime/docs/短縮伝送と証拠一括検査.md)に従い、fresh workの未信頼seedからモデルが指定recordだけを置換する。旧成功を引き継がず、全体を機械・独立検証へ戻す。回復実績は実装ガイドで確認する。
 
-AG-ACCESS-REBUILDERは利用者指定のAccessファイルを主入力とする移行工程で、AG-BUILDの仕様入力とは分ける。test-project1ではAccess/build/StudentManagement.accdbから別のsourceRoot=srcs/Access-CSharp_ASPNET/へ再構築し、利用者の追加指示によりCSharp_ASPNETソースを読取り専用のWeb設計・実装の参考に使い、Accessの画面操作の同形再現は要求しない。既存原仕様・spec-evalは入力にせず、業務制約とUIの採用判断を分ける。利用者の実施指示により、最大2回の訓練で本体取得・C#／SQL生成・検証を行い、指定されたローカルSQLEXPRESSの新規専用DBを使用した。今回の台帳上限を超える反復は開始しない。
+AG-ACCESS-REBUILDERは利用者指定のAccessファイルを主入力とする移行工程で、AG-BUILDの仕様入力とは分ける。test-project1ではAccess/build/StudentManagement.accdbから別のsourceRoot=srcs/Access-To-CSharp_ASPNET/へ再構築し、利用者の追加指示によりCSharp_ASPNETソースを読取り専用のWeb設計・実装の参考に使い、Accessの画面操作の同形再現は要求しない。既存原仕様・spec-evalは入力にせず、業務制約とUIの採用判断を分ける。利用者の実施指示により、最大2回の訓練で本体取得・C#／SQL生成・検証を行い、指定されたローカルSQLEXPRESSの新規専用DBを使用した。今回の台帳上限を超える反復は開始しない。

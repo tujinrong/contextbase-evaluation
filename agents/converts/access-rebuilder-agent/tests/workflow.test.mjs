@@ -11,7 +11,7 @@ function fixture() {
   const root=fs.mkdtempSync(path.join(fs.mkdirSync(path.join(agent,'.tmp/tests'),{recursive:true}) ?? path.join(agent,'.tmp/tests'),'workflow-'));
   const source=path.join(root,'test-project1/srcs/Access/build/input.accdb'); fs.mkdirSync(path.dirname(source),{recursive:true}); fs.writeFileSync(source,'inert test bytes');
   const rules=path.join(root,'agents/converts/access-rebuilder-agent/docs/変換ルール.md'); fs.mkdirSync(path.dirname(rules),{recursive:true});fs.writeFileSync(rules,'rules');
-  const profile={schema:'access-rebuilder-request/0.1',projectId:'test-project1',phase:'implementation',approval:{implementation:'authorized',evidence:'unit fixture',accessExtraction:true,codeGeneration:true,databaseExecution:false},training:{maxIterations:2},source:{file:'test-project1/srcs/Access/build/input.accdb',sha256:hash(source)},target:{profileId:'Access-CSharp_ASPNET',sourceRoot:'test-project1/srcs/Access-CSharp_ASPNET',specRoot:'test-project1/spec/Access-CSharp_ASPNET'}};
+  const profile={schema:'access-rebuilder-request/0.1',projectId:'test-project1',phase:'implementation',approval:{implementation:'authorized',evidence:'unit fixture',accessExtraction:true,codeGeneration:true,databaseExecution:false},training:{maxIterations:2},source:{file:'test-project1/srcs/Access/build/input.accdb',sha256:hash(source)},target:{profileId:'Access-To-CSharp_ASPNET',sourceRoot:'test-project1/srcs/Access-To-CSharp_ASPNET',specRoot:'test-project1/spec/Access-To-CSharp_ASPNET'}};
   writeJson(path.join(root,'profile.json'),profile);
   return {root,profile};
 }

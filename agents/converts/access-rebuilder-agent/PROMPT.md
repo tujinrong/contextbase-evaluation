@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER-PROMPT","version":"0.4","path":"agents/converts/access-rebuilder-agent/PROMPT.md","sheets":[{"heading":"共通の指定","kind":"GRID","sheet":"01_指定"},{"heading":"今回の計画工程","kind":"GRID","sheet":"02_計画"},{"heading":"確認後の実施工程","kind":"GRID","sheet":"03_実施"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER-PROMPT","version":"0.5","path":"agents/converts/access-rebuilder-agent/PROMPT.md","sheets":[{"heading":"共通の指定","kind":"GRID","sheet":"01_指定"},{"heading":"今回の計画工程","kind":"GRID","sheet":"02_計画"},{"heading":"確認後の実施工程","kind":"GRID","sheet":"03_実施"}]} -->
 # access-rebuilder-agent 実行指示
 
-版0.4／2026-10-27。Codexへの依頼文と実行機構の運用契約。
+版0.5／2026-10-28。Codexへの依頼文と実行機構の運用契約。
 
 ## 共通の指定
 
@@ -11,7 +11,7 @@ Web画面は有効スペースを節約し、PCでは左見出し・右項目の
 
 ## 今回の計画工程
 
-> projectId=test-project1、phase=planning。入力はtest-project1/srcs/Access/build/StudentManagement.accdb、予定出力はtest-project1/srcs/Access-CSharp_ASPNET/。骨格、読取り調査、作成計画を作成する。StudentManagement.slnxは構成の参考にする。Access起動・実抽出・変換器実装・C#／SQL生成・DB実行は行わず、計画を利用者へ提示する。
+> projectId=test-project1、phase=planning。入力はtest-project1/srcs/Access/build/StudentManagement.accdb、予定出力はtest-project1/srcs/Access-To-CSharp_ASPNET/。骨格、読取り調査、作成計画を作成する。StudentManagement.slnxは構成の参考にする。Access起動・実抽出・変換器実装・C#／SQL生成・DB実行は行わず、計画を利用者へ提示する。
 
 ## 確認後の実施工程
 

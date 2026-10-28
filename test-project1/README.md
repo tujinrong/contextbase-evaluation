@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-README","version":"8.6","path":"test-project1/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"方式一覧","kind":"LIST","sheet":"02_方式一覧","key":["方式ID"]},{"heading":"入力と報告","kind":"GRID","sheet":"03_入力と報告"},{"heading":"隔離境界","kind":"GRID","sheet":"04_隔離境界"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"PROJECT-README","version":"8.7","path":"test-project1/README.md","sheets":[{"heading":"対象","kind":"GRID","sheet":"01_対象"},{"heading":"方式一覧","kind":"LIST","sheet":"02_方式一覧","key":["方式ID"]},{"heading":"入力と報告","kind":"GRID","sheet":"03_入力と報告"},{"heading":"隔離境界","kind":"GRID","sheet":"04_隔離境界"}]} -->
 # test-project1 学生管理
 
-版8.6／2026-10-27。Access移行方式とContextBase一括起動を含む現行の独立配置。各実行結果は試験報告の範囲で判定する。
+版8.7／2026-10-28。Access移行方式とContextBase一括起動を含む現行の独立配置。各実行結果は試験報告の範囲で判定する。
 
 ## 対象
 
@@ -18,7 +18,7 @@
 | COBOL | GnuCOBOL / C / Windows標準Console（Text） | SQL Server 2022 | [ソース・手順](srcs/COBOL/README.md) |
 | AS400_RPG | ILE RPG / DDS / CL | Db2 for i | [ソース・手順](srcs/AS400_RPG/README.md) |
 | Access | VBA / DAO / Access forms | ACE | [ソース・手順](srcs/Access/README.md) |
-| Access-CSharp_ASPNET | Access本体からASP.NET Core / C#への移行訓練 | SQL Server | [ソース・手順](srcs/Access-CSharp_ASPNET/README.md) |
+| Access-To-CSharp_ASPNET | Access本体からASP.NET Core / C#への移行訓練 | SQL Server | [ソース・手順](srcs/Access-To-CSharp_ASPNET/README.md) |
 
 ## 入力と報告
 
