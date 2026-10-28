@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"REPO-README","version":"7.7","path":"README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入口一覧","kind":"LIST","sheet":"02_入口一覧","key":["領域"]},{"heading":"状態","kind":"GRID","sheet":"03_状態"},{"heading":"サンプルの方式パターン","kind":"GRID","sheet":"04_方式パターン"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"REPO-README","version":"7.8","path":"README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入口一覧","kind":"LIST","sheet":"02_入口一覧","key":["領域"]},{"heading":"状態","kind":"GRID","sheet":"03_状態"},{"heading":"サンプルの方式パターン","kind":"GRID","sheet":"04_方式パターン"}]} -->
 # contextbase-evaluation
 
-版7.7／2026-10-28。設計工程を要件定義・基本設計・詳細設計へ整理する。各工程の実施状態は対象版の検査記録で区別する。
+版7.8／2026-10-28。設計工程を要件定義・基本設計・詳細設計へ整理する。各工程の実施状態は対象版の検査記録で区別する。
 
 ## 概要
 
@@ -16,7 +16,7 @@
 | フル方式パターン（拡張可） | [README](sample-project1/README.md) |
 | 題材1の原仕様 | [方式別仕様索引](sample-project1/spec/README.md)。正本はsample-project1/spec/方式ID/ |
 | 題材1の評価 | [00_採点規則](sample-project1/spec-eval/00_採点規則.md) |
-| 2方式パターン | [sample-project2](sample-project2/README.md)（Access・CSharp_ASPNETの要件・基本設計） |
+| 2方式パターン | [sample-project2](sample-project2/README.md)（Access・CSharp_ASPNETの要件・基本・詳細設計） |
 | 次の題材 | test-project2（予定・未作成） |
 
 ## 状態
@@ -27,4 +27,4 @@
 
 ## サンプルの方式パターン
 
-sample-project1（旧test-project1）は全登録方式を扱うフル方式パターン。現在は基本7方式とAccess移行拡張を保持し、方式追加を上限7で禁止しない。追加時は方式索引・プロファイル・入出力境界と検査を更新する。sample-project2はAccess・CSharp_ASPNETの2方式パターンで、既存基本設計から要件定義書を逆生成した。詳細設計・実装は未実施。方式数と実装/検査の完了を混同しない。
+sample-project1（旧test-project1）は全登録方式を扱うフル方式パターン。現在は基本7方式とAccess移行拡張を保持し、方式追加を上限7で禁止しない。追加時は方式索引・プロファイル・入出力境界と検査を更新する。sample-project2はAccess・CSharp_ASPNETの2方式パターンで、既存基本設計から要件定義書を逆生成した。詳細仕様・物理DBの設計文書を作成する工程で、実装・実DB操作は未実施。方式数と実装/検査の完了を混同しない。
