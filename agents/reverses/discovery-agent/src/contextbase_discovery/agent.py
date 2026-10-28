@@ -45,6 +45,9 @@ instead of fabricating links or deep behavior. Return only catalog record kinds.
                                 'Do not impose one function per screen, Web-only scope or any expected count.',
                 'resourcesToAccountFor': inventories,
                 'languageAcquisition': {'indexSha256': context['structure']['indexSha256'],
-                                       'location': 'structure (one complete source-fact table set)'},
+                                       'location': 'host evidence queries (all indexed facts available)'
+                                           if (context.get('task', {}).get('evidencePolicy')
+                                               or context.get('task', {}).get('incrementalPolicy')) else
+                                           'structure (one complete source-fact table set)'},
                 'omittedMaterials': context['inventory']['omitted'],
                 'completion': 'Every assigned scope has source evidence, coverage and explicit unresolved gaps.'}

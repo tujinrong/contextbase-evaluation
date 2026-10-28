@@ -22,6 +22,11 @@ def main(agent_type, argv=None):
     init = commands.add_parser('init', help='source-only入力と自身の作業先を固定する')
     init.add_argument('--source', type=Path)
     init.add_argument('--request', type=Path)
+    init_modes = init.add_mutually_exclusive_group()
+    init_modes.add_argument('--evidence', action='store_true',
+                            help='新しい作業先でhost取証対話を明示利用する。設定時はcontext_mode=evidenceが必要')
+    init_modes.add_argument('--incremental', action='store_true',
+                            help='新しい作業先で草稿保存と分割独立検証を利用する。設定時はcontext_mode=incrementalが必要')
     if agent_type.stage != 'discovery':
         init.add_argument('--handoff', type=Path, help='前層の可搬成果。runで独立再検証する')
     run = commands.add_parser('run', help='必要な前提を再検証し、自層だけ抽出・独立検証する')
@@ -88,14 +93,21 @@ def main(agent_type, argv=None):
         elif args.command == 'init':
             handoff = getattr(args, 'handoff', None)
             if profile:
+                selected_mode = 'evidence' if args.evidence else 'incremental' if args.incremental else None
+                if selected_mode is not None and profile.context_mode != selected_mode:
+                    raise ValueError('--' + selected_mode + ' requires context_mode="' + selected_mode
+                                     + '" in the selected profile; the flag cannot override its configured mode')
                 agent = agent_type.create(profile.source, args.work, profile.request,
-                                          handoff=profile.upstream(agent_type))
+                                          handoff=profile.upstream(agent_type),
+                                          evidence_mode=profile.context_mode == 'evidence',
+                                          incremental_mode=profile.context_mode == 'incremental')
                 profile.bind(agent)
             else:
                 if args.source is None or args.request is None:
                     raise ValueError('Manual init requires --source and --request')
                 agent = agent_type.create(args.source, args.work, load(args.request),
-                                          handoff=load(handoff) if handoff else None)
+                                          handoff=load(handoff) if handoff else None,
+                                          evidence_mode=args.evidence, incremental_mode=args.incremental)
             result = agent.status()
         else:
             agent = agent_type(args.work)

@@ -27,7 +27,7 @@ class AgentWorkspace(Session):
         records = (view or {}).get('records', {})
         modern = (getattr(self.agent, 'catalog_policy', None) == catalog.VERSION or
                   (task['operation'] == 'verify' and self._catalog_policy()))
-        extensions = {}
+        extensions = super()._task_extensions(task, view)
         if modern:
             extensions.update({'catalogPolicy': catalog.VERSION,
                     'classificationBindings': catalog.bindings(records) if task['operation'] == 'verify' else []}
@@ -50,21 +50,44 @@ class AgentWorkspace(Session):
 
     def _instruction(self, task):
         if task['operation'] == 'extract':
-            from .facts import POLICY
+            from .facts import POLICY, EVIDENCE_POLICY
             from .repair import POLICY as REPAIR_POLICY
-            return self.agent.instruction + ('\n' + POLICY if task.get('sourceFactsSha256') else '') + ('\n' + REPAIR_POLICY if task.get('repairSeedSha256') else '') + '''
+            fact_policy = EVIDENCE_POLICY if task.get('evidencePolicy') or task.get('incrementalPolicy') else POLICY
+            return self.agent.instruction + ('\n' + fact_policy if task.get('sourceFactsSha256') else '') + ('\n' + REPAIR_POLICY if task.get('repairSeedSha256') else '') + '''
 Follow-up paths name acquired files from task.authorizedSourcePaths only.
 For missing or omitted materials, preserve the requested names in the question
 and unknown, using paths:[] unless an acquired file actually supports the query.
 Do not fabricate an anchor. Follow-up stage and requirement must match an
 original goal obligation in the assigned scope; requirement may be null.'''
-        from .facts import VERIFY_POLICY
-        return super()._instruction(task) + ('\n' + VERIFY_POLICY if task.get('sourceFactsSha256') else '') + (catalog.VERIFICATION_RULES
+        from .facts import VERIFY_POLICY, EVIDENCE_VERIFY_POLICY
+        fact_policy = EVIDENCE_VERIFY_POLICY if task.get('evidencePolicy') or task.get('incrementalPolicy') else VERIFY_POLICY
+        return super()._instruction(task) + ('\n' + fact_policy if task.get('sourceFactsSha256') else '') + (catalog.VERIFICATION_RULES
             if task.get('catalogPolicy') == catalog.VERSION else '') + '''\nQuestions whose ID starts with followup:
 are explicit investigation requests. Mark one resolved with exact source evidence
 only after its question has been answered. A non-blocking judgment permits work
 in a narrower scope but does not close the investigation request. Historical
 acceptance of the target requirement alone is not proof of resolution.'''
+
+    def _incremental_instruction(self, task):
+        from .facts import EVIDENCE_POLICY, EVIDENCE_VERIFY_POLICY
+        if task['operation'] == 'extract':
+            return (self.agent.instruction + ('\n' + EVIDENCE_POLICY if task.get('sourceFactsSha256') else '')
+                    + '\nPreserve original scope/owner and return only this phase schema. '
+                    'Followup paths must name acquired files; missing materials use paths:[].')
+        return (super()._incremental_instruction(task)
+                + ('\n' + catalog.EXTRACTION_RULES if task.get('catalogPolicy') == catalog.VERSION else '')
+                + ('\n' + EVIDENCE_VERIFY_POLICY if task.get('sourceFactsSha256') else '')
+                + '\nThe current host unit alone assigns returned record/unknown/scope/check arrays. '
+                  'Root requirements remain complete and the host exhaustively assigns all other units. '
+                  'Independently resolve inherited followup questions from source; historical acceptance '
+                  'and non-blocking judgments do not prove a followup was answered.')
+
+    def _validate_incremental_answer(self, task, answer):
+        if task['operation'] == 'extract':
+            self.agent.validate_extraction(answer)
+            if task.get('sourceFactsSha256'):
+                self.fact_index().validate_usage(answer, task['sourceFactsSha256'])
+        return super()._validate_incremental_answer(task, answer)
 
     def _context(self, task, inline_sources):
         context = super()._context(task, inline_sources)
@@ -178,12 +201,13 @@ class AnalysisAgent:
                 'implementationSha256': contracts.digest(files)}
 
     @classmethod
-    def create(cls, source, work, request, *, handoff=None):
+    def create(cls, source, work, request, *, handoff=None, evidence_mode=False, incremental_mode=False):
         contracts.validate_request(request)
         cls.validate_request(request)
         if cls.stage == 'discovery' and handoff is not None:
             raise ValueError('Discovery starts from source and does not accept upstream handoffs')
-        session = Session.create(Path(source), Path(work), request)
+        session = Session.create(Path(source), Path(work), request, evidence_mode=evidence_mode,
+                                 incremental_mode=incremental_mode)
         session.store.put('agent.json', cls.binding())
         agent = cls(work)
         if handoff is not None:
@@ -216,9 +240,27 @@ class AnalysisAgent:
     def _execute_attempt(self, requirements, *, timeout, inline_sources, runner, compact,
                          feedback=None, attempt_key=None):
         """Extract, independently verify and adopt once, retaining a rejected result."""
-        proposed = self.session.execute(self.stage, requirements=requirements, feedback=feedback,
-                                        timeout=timeout, inline_sources=inline_sources,
-                                        runner=runner, compact=compact)
+        proposed = None
+        if self.session.config.get('incrementalPolicy') and feedback is None:
+            # A transport failure in verification must not re-extract the
+            # already frozen candidate. Resumed review uses the same view.
+            state = self.session._state()
+            expected_origin = 'host-composed' if runner is None else 'injected-test-transport'
+            for key in reversed(state['candidates']):
+                saved = self.session.store.get('candidates/' + key + '.json')
+                if (saved['stage'] == self.stage and saved['requirements'] == requirements
+                        and saved['baseVersion'] == state['version']
+                        and saved['baseRevision'] == state['revision']
+                        and saved['feedback'] is None
+                        and saved['provenance'].get('kind') == expected_origin):
+                    self.session._replay_evidence(
+                        self.session.store.get('tasks/' + saved['taskId'] + '/request.json'), saved)
+                    proposed = {'id': key, 'result': deepcopy(saved['answer'])}
+                    break
+        if proposed is None:
+            proposed = self.session.execute(self.stage, requirements=requirements, feedback=feedback,
+                                            timeout=timeout, inline_sources=inline_sources,
+                                            runner=runner, compact=compact)
         verified = self.session.verify(proposed['id'], timeout=timeout,
                                        inline_sources=inline_sources, runner=runner, compact=compact)
         action = {'agent': self.name, 'requirements': requirements,

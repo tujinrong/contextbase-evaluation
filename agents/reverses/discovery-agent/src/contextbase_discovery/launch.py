@@ -1,4 +1,4 @@
-"""One-click discovery: fresh owned work, normal gates, and consistent delivery."""
+"""One-click discovery with owned work, incremental recovery, and normal gates."""
 from __future__ import annotations
 
 import argparse
@@ -223,12 +223,42 @@ def _publish(profile, agent, staging):
             raise
 
 
-def start(config, profile_name=None, *, timeout=1800, publish_work=None, emit=print):
+def _incremental_continuation(profile, work, staging):
+    """Validate an existing checkpoint against rules, profile and current input."""
+    from contextbase_runtime.sources import SourceAccess
+
+    try:
+        agent = DiscoveryAgent(work)
+        profile.validate_workspace(agent)
+        # Use the exact acquisition rules, including additions, exclusions and
+        # unsupported material states; checking old file hashes alone misses
+        # new files. The comparison snapshot stays in owned ignored staging.
+        observed = SourceAccess.create(profile.source, staging / 'resume-source',
+            project_id=profile.request['projectId'], allowed_paths=profile.request['allowedPaths'],
+            excluded_paths=profile.request['excludedPaths'])
+        if observed.manifest != agent.session.source.manifest:
+            raise ValueError('Current source inventory or contents changed')
+        return agent, agent.status()
+    except (OSError, ValueError) as exc:
+        raise ValueError('Incremental checkpoint cannot be continued: ' + str(exc)
+                         + '. Existing work was retained. Use --fresh for an explicitly new run '
+                         'within the same owned target, or select a separate work path.') from exc
+
+
+def start(config, profile_name=None, *, timeout=1800, publish_work=None, fresh=False, emit=print):
     """Run discovery only, or finish delivery from an already-adopted local work."""
     if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
         raise ValueError('A positive finite per-operation timeout is required')
+    if type(fresh) is not bool or (fresh and publish_work is not None):
+        raise ValueError('Explicit fresh analysis cannot be combined with publish-work')
     profile = ProjectProfile.load(config, profile_name)
-    home, owner = _prepare_home(profile)
+    try:
+        home, owner = _prepare_home(profile)
+    except ValueError as exc:
+        if profile.context_mode != 'incremental':
+            raise
+        raise ValueError(str(exc) + '. Existing work was retained. Select a separate configured work path, '
+                         'or restore the original target before using --fresh.') from exc
     current, staging = home / 'current', home / 'staging'
     with _lock(home):
         _recover(profile, home, staging, owner)
@@ -236,9 +266,13 @@ def start(config, profile_name=None, *, timeout=1800, publish_work=None, emit=pr
             publish_work = safe_path(Path(publish_work))
             if publish_work == current or current in publish_work.parents:
                 raise ValueError('publish-work must be separate from launcher current work')
-        # No manual CLI work or other agent directory is touched here.
-        _clean(home, current, owner)
-        _create_owned(current, owner)
+        # Only an explicit fresh request discards incremental checkpoints.
+        # Full/evidence retain their existing fresh-on-click semantics.
+        if profile.context_mode == 'incremental' and not fresh and current.exists():
+            _owned(home, current, owner)
+        else:
+            _clean(home, current, owner)
+            _create_owned(current, owner)
         _create_owned(staging, owner)
 
         def progress(phase, message, **details):
@@ -256,12 +290,29 @@ def start(config, profile_name=None, *, timeout=1800, publish_work=None, emit=pr
             progress('prepare', 'discoveryを開始します。入力: ' + str(profile.source))
             if publish_work is None:
                 work = current / 'work'
-                agent = DiscoveryAgent.create(profile.source, work, profile.request)
-                profile.bind(agent)
+                evidence_mode = profile.context_mode == 'evidence'
+                incremental_mode = profile.context_mode == 'incremental'
+                previous = None
+                if incremental_mode and work.exists():
+                    agent, previous = _incremental_continuation(profile, work, staging)
+                    if previous['status'] in {'stopped', 'cancelled'}:
+                        agent.session.resume(profile.request)
+                        progress('resume', '保存した調査・検証を同じ入力条件で再開します。', work=str(work))
+                    elif previous['status'] not in {'active', 'complete'}:
+                        raise ValueError('Incremental work is not resumable; retain diagnostics and use --fresh')
+                else:
+                    agent = DiscoveryAgent.create(profile.source, work, profile.request,
+                                                  evidence_mode=evidence_mode, incremental_mode=incremental_mode)
+                    profile.bind(agent)
                 checked = agent.session.fact_index().validate()
                 progress('analysis', '索引検査pass。抽出と別文脈の独立検証を実行中です。',
                          work=str(work), sourceFactsSha256=checked['indexSha256'])
-                result = agent.run(timeout=timeout, inline_sources=True, compact=True)
+                full_mode = profile.context_mode == 'full'
+                if incremental_mode and previous is not None and not previous['remainingAgentRequirements']:
+                    result = {'status': 'complete', 'actions': [], 'session': previous}
+                    progress('report', '採用済みのDiscovery成果を再配布します。モデルは起動しません。', work=str(work))
+                else:
+                    result = agent.run(timeout=timeout, inline_sources=full_mode, compact=full_mode)
                 if result['status'] != 'complete':
                     progress('stopped', '未完了: ' + result['status'] + '。旧正式成果を保持しました。',
                              result=result, work=str(work))
@@ -294,9 +345,11 @@ def main(argv=None):
     parser.add_argument('--profile')
     parser.add_argument('--timeout', type=float, default=1800)
     parser.add_argument('--publish-work', type=Path, help='採用済みworkからの配布だけを行う。モデルは起動しない')
+    parser.add_argument('--fresh', action='store_true',
+                        help='incrementalの保存済み作業を、所有を確認した範囲内で明示的に作り直す')
     args = parser.parse_args(argv)
     try:
-        result = start(args.config, args.profile, timeout=args.timeout, publish_work=args.publish_work,
+        result = start(args.config, args.profile, timeout=args.timeout, publish_work=args.publish_work, fresh=args.fresh,
                        emit=lambda message: print(message, flush=True))
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result.get('published') else 2

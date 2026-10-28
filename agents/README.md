@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"8.10","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"8.11","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
 # Agent定義一覧
 
-版8.10／2026-10-28。要件定義・基本設計・詳細設計の3担当を配置し、旧汎用仕様Agentの入口を廃止する。
+版8.11／2026-10-28。要件定義・基本設計・詳細設計の3担当を配置し、旧汎用仕様Agentの入口を廃止する。ContextBaseの明示incrementalによる分割調査・草稿保存・独立検証と継続を接続し、実行・採用・人手受入れは今回の報告で区別する。
 
 ## 概要
 
@@ -11,7 +11,7 @@
 
 後続Agentはportable handoffを受け取り、同一request・ソースmanifest／内容を自身の原文で再検証する。前層workは不要、外部passは監査情報だけに使う。前提不足はneeds-prerequisites。reverse-agentは希望時だけ使う互換連続実行入口で、3Agentを統括しない。独立導入とportable受渡しの構造・合成検証は通過した。実モデル品質・人手受入れは別途未完了。
 
-機能の意味・粒度・集計は[用語集](GLOSSARY.md)と[分類境界](reverses/shared/contextbase-runtime/docs/機能分類境界.md)、Tree-sitter事実は[索引契約](reverses/shared/contextbase-runtime/docs/ソース事実索引.md)、compactと明示repairは[短縮伝送契約](reverses/shared/contextbase-runtime/docs/短縮伝送と証拠一括検査.md)を正本とする。現行規則は独立ログインを機能として扱い、メニューの利用責務を区別する。最新の実行・検証・採用範囲は[実装ガイド](reverses/reverse-agent/docs/ContextBase初期実装.md)へ集約し、旧試行の詳細を複数の索引に蓄積しない。原文オンデマンド取得は未実装であり、R／Bと人手受入れの実施は別途区別する。
+機能の意味・粒度・集計は[用語集](GLOSSARY.md)と[分類境界](reverses/shared/contextbase-runtime/docs/機能分類境界.md)、Tree-sitter事実は[索引契約](reverses/shared/contextbase-runtime/docs/ソース事実索引.md)、compactと明示repairは[短縮伝送契約](reverses/shared/contextbase-runtime/docs/短縮伝送と証拠一括検査.md)を正本とする。新workの[host取証](reverses/shared/contextbase-runtime/docs/ホスト取証プロトコル.md)に加え、[incremental](reverses/shared/contextbase-runtime/docs/分割調査・独立検証プロトコル.md)は元義務内の単位草稿、完全候補組立、局所／全体レビューの集約と継続を提供する。領域子集の正式交接・選択前提有効化と汎用再利用は未実装。実装範囲は[実装ガイド](reverses/reverse-agent/docs/ContextBase初期実装.md)、実モデル・採用と人手受入れは各成果案内で区別する。
 
 配置は成果の責務で分類する。分類フォルダは起動制御やAgent間の上下関係を追加しない。
 

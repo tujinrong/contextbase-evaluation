@@ -1,6 +1,6 @@
 # ContextBase 独立Agentの実装ガイド
 
-版4.1／2026-10-27。独立3Agentの導入・操作・入力境界と現行規則を定める。[設計](ContextBase段階的抽出・検証フロー.md)・[実装計画](ContextBase実装計画.md)のD01～D12を維持する。試行明細を本文へ累積せず、末尾の「実行結果の確認」で確認先を定める。
+版4.7／2026-10-28。独立3Agentの導入・操作・入力境界と現行規則を定める。[設計](ContextBase段階的抽出・検証フロー.md)・[実装計画](ContextBase実装計画.md)のD01～D12を維持する。§8.2では作者の原義務収束と逐項の独立検証を分け、収束包と検証対象の版束縛を明示する。実モデル試行と合成検査は区別し、末尾の「実行結果の確認」で確認先を定める。
 
 ## 1. 独立した実行単位
 
@@ -105,7 +105,7 @@ contextbase-behavior export --work WORK_B --output BEHAVIOR_HANDOFF.json
 | --- | --- |
 | source | srcs/CSharp_ASPNET |
 | request | contextbase-request.json |
-| output | spec-reverse |
+| output | spec-reverse/CSharp_ASPNET |
 | work | .tmp/contextbase/csharp_aspnet |
 
 各Agentのworkは設定work基点/Agent名、正式export先はoutput基点/Agent名/contextbase.jsonである。csharp_wpfの切替例はWPF専用のsource・work・outputを使うが、解析は個別の実行要求に従う。
@@ -128,7 +128,7 @@ pathsは解決したsource／request／work／output／上流成果を表示す�
 | facts/ | 構文索引・機械検査・fact利用レビュー |
 | .tmp/diagnostics/ | 一時的な診断。公開READMEにも判定・制約を要約する |
 
-正式exportはtarget.jsonのprofile名・source絶対パス・request digest・output root・Agentに対する所有束縛とロックで固定contextbase.jsonを原子的に更新する。同じ所有・内容は冪等、異なるprofile／source／goalは上書きを拒否する。targetは署名ではなくplainな所有情報である。正式履歴はGitを使い、run-id／attempt／archive別に固定出力を増やさない。最新状態は[プロジェクト成果案内](../../../../sample-project1/spec-reverse/discovery-agent/README.md)と本書末尾で確認する。
+正式exportはtarget.jsonのprofile名・source絶対パス・request digest・output root・Agentに対する所有束縛とロックで固定contextbase.jsonを原子的に更新する。同じ所有・内容は冪等、異なるprofile／source／goalは上書きを拒否する。targetは署名ではなくplainな所有情報である。正式履歴はGitを使い、run-id／attempt／archive別に固定出力を増やさない。最新状態は[プロジェクト成果案内](../../../../sample-project1/spec-reverse/README.md)と本書末尾で確認する。
 
 ## 5. Portable handoffと受信側の独立再検証
 
@@ -206,6 +206,62 @@ query／validate-indexはモデルを呼ばない。queryのlimitは明示した
 
 拒否草稿のrepairはホストが明示したrecordだけをモデルが全置換する。fresh workで同一snapshot／request／indexの未信頼seedを照合し、key／kind／owner・他record・coverage・未知を保護する。追加削除・scope変更はunresolvedへ戻し、全体の機械検査・独立verify・採用再生を行う。利用できる拒否草稿が存在する場合だけ使い、削除済みの旧記録を前提にしない。ホストは業務内容や未知を推測補完しない。
 
+## 8.1 ホスト取証モードの第1段階
+
+新workのinit --evidence又はprofileのcontext_mode="evidence"で[ホスト取証プロトコル](../../shared/contextbase-runtime/docs/ホスト取証プロトコル.md)を選ぶ。既定fullモードは維持し、evidenceモードでは--inline-sources／--compact／repairを併用しない。profileのモード不一致と既存workの暗黙移行を拒否する。一括起動も選択profileに従う。
+
+hostが封印原文と索引の検索・読取りへ応答し、各provider呼出し、返答、canonical最終内容をtask・context・snapshot・indexへ束縛する。採用と外部前提の有効化で実行鎖を回放検査する。作者と検証者の取証記録は独立し、queryの位置参照だけでは原文取得と扱わない。取証台帳は意味的合格ではない。
+
+このevidence経路は完全view、全unknown／followup、分類・scope・fact利用の検査を維持し、局所草稿・レビュー合成は提供しない。実D試行は既取得原文の再収集が続いて候補化前に停止した。以下のincrementalとは別方式であり、作業窓の合成回帰を実モデルの可用性へ外挿しない。
+
+## 8.2 分割調査・独立検証と継続
+
+[分割調査・独立検証プロトコル](../../shared/contextbase-runtime/docs/分割調査・独立検証プロトコル.md)を新workで明示する。
+
+```text
+contextbase-discovery init --source SOURCE --request REQUEST.json --work NEW_WORK --incremental
+contextbase-discovery run --work NEW_WORK
+contextbase-discovery status --work NEW_WORK
+contextbase-discovery resume --work NEW_WORK --request REQUEST.json
+contextbase-discovery run --work NEW_WORK
+```
+
+profileのcontext_mode="incremental"も同じ方式である。fullを共通の既定として保持し、evidenceとの混在、--inline-sources／--compact／旧repairとの併用、既存workの自動移行は拒否する。R／Bも同じフラグを持ち、正確なportable前提を自分の別文脈で原文確認してから自層を進める。
+
+調査planの各単位は原文取得から型付き草稿を保存し、hostが元義務の完全候補へ組み立てる。closureのsupported等はモデルの判断で、hostは明示ownerからrecordKeysだけを計算する。CASのない競合、未確認の同一性統合、未知削除や後勝ち補正は認めない。モデルへ最後の全文候補再出力を要求しない。
+
+検証者は全record・分類・未知へhostが分配した対象を確認し、別のglobal単位が元scopeと原資料から漏れ・矛盾を探す。局所fail／unknownを全体passで上書きしない。host-composedは実際の子task／contextと原文供給・応答・割当集合を再生し、既存の分類・fact・unknown・full-view採用gateも通す。これは一回のhost-executed推論結果ではない。
+
+同basisの継続は、検査を通った子呼出しの元IDを保持し、完了単位を再推論しない。作者完了後の検証故障では既候補の検証集合を再開する。拒否回答は診断と分割feedbackへ置き、継続traceへ入れない。候補修訂後に旧局所passを再利用せず、新版を再検証する。statusのinvestigationsは未採用の途中表示で、receiptの代用ではない。
+
+部分草稿の後は、直前回答SHA、原文の残質問、累積record／unknown ID、現在のCAS版を続行contextへ渡す。前回提出版と現在の合併版を区別し、全文はcheckpoints材料で読める。unitは実行回数の少ない順に巡回し、先頭の未完了unitだけを反復しない。候補材料はretainedMaterialsで原文retainedEvidenceと分離し、共通容量内で原返答・object版・文字区間を再生する。
+
+completeは現在の権限・入力での調査終了であり、未知解決や元義務の充足ではない。実行できない外部／禁止入力の問題はtyped unknownとして保持し、remainingQuestionsには許可内の次の実行可能な調査を書く。未完了の空転はunitを切り替えても累積し、未知を削除して終了を作らない。現に未解決の阻碍は原義務のunresolved判断と採用拒否へ残す。
+
+選択C#のsample-project1/contextbase.tomlは新モードと新workを明示している。run-discovery.cmdは同入力・規則のowned workを継続し、完了済みなら再推論せず再公開する。入力の追加・削除・変更と規則変更を検出したら旧checkpointを保持して拒否する。明示--freshで同ownerのcurrentだけを新規化でき、異ownerの削除や旧work指紋の書換えは行わない。full／evidenceのクリック動作は従来どおりである。
+
+合成回帰と実案件のDiscoveryは分けて記録する。実D再試行の最新状態は案件成果案内を参照する。実案件R／B、原アプリ・SQL・DB、仕様書生成はこの作業では実行していない。人手受入れ、二言語業務試行、D03の領域子集正式交接、cross-snapshot再利用、R／B固有の型拡張は残作業である。
+
+前改訂4.3の確認対象は重複を除き435件（共有runtime 282、Discovery起動・報告36、旧analysis互換117）。Discoveryは35成功・環境skip1、旧互換は115成功・環境skip2であった。runtime全体実行では281成功・1件の旧エラーメッセージ断言不一致があり、同期後に公開incremental 19件とprotocol 13件を再確認した。単一回の全件成功や、本改訂後の全件検査へ読み替えない。
+
+本改訂は、実Dで判明した先頭unitの再調査と候補ページの消失を、二単位・二材料の再現経路で確認した。関連97件（incremental CLI／公開経路／protocol 44、材料窓15、草稿14、検証集合17、一括起動7）は成功した。未知を保った調査終了、巡回、残質問のhash束縛、材料共存と再生を検査し、業務上の完全性や速度はこの合成成功から推測しない。生ログ・途中返答はGit対象外の.tmpへ保存する。
+
+前改訂の実Discoveryは37分51秒で停止した。6/7調査単位の106件の草稿を保存したが、`query(path="deployment/")`が完全一致するファイルパスの契約に違反し、要求単位の例外が抽出タスクへ伝播した。候補・独立検証・採用は0件で、全体の循環解消や高速化を証明していない。今回の続行状況と成果は[案件レビュー](../../../../sample-project1/spec-reverse/discovery-agent/review.md)を参照する。
+
+本改訂のquery／searchは末尾`/`を封印manifest内のディレクトリ接頭辞として扱う。readは完全一致のまま維持する。修正可能な要求だけをEvidenceRequestErrorとして返し、incrementalの同batch正常返答を保存する。失敗返答は証拠・fact・候補材料・進展へ数えず、source／index／版の破損は引き続き停止する。旧正常replyとpromptは変えず、明示checkpoint_upgradeで旧engine・依存・Agent・入力・全完成呼出しを再生検査し、草稿・未知・followupと原呼出しの識別情報を保つ。候補や旧passは移行しない。具体的な保守手順と中断回復は[分割調査プロトコル](../../shared/contextbase-runtime/docs/分割調査・独立検証プロトコル.md)を参照する。
+
+前改訂の要求回復では関連129件が成功した（incremental49、directory／error新規15、既存EvidenceAccess16、既存取証対話28、明示互換移行14、一括起動7）。合成providerの成功を実Discoveryの採用・速度・人手受入れへ外挿しない。実案件の続行では同じworkを使い、保存済み草稿の再抽出やfresh初期化を行わない。
+
+未終了子呼出しは単位から再試行する方式で、直前roundの完全復元は未実装である。原草稿の復元成功を、原catalog義務の完了や性能改善と言い換えない。実案件の件数・失敗・所要時間・採用状態は案件成果案内へ集約する。
+
+収束包は原義務、単位と原回答の束縛、階層目録、根拠位置、全unknown／followup、factUsage宣言数と取得境界をまとめ、作者は対象の被覆と既知不足だけを声明する。合格は件数から導かず、各record・factUsage・scope・反例の完全な独立検査を後続に残す。作業窓と無進展保護は緩めず、収束を作者による逐項の再審査へ広げない。
+
+reviewでは材料全体のhashと記録／unknownの検証版を分けて表示する。返答schemaは対象IDと期待版を対で固定し、hostの全件集合・版一致検査も維持する。意味的な判定・理由・原文証拠は独立モデルの回答であり、hostがHashを補正して合格させない。
+
+限定保守は二つの審査済み旧新版の対を扱う。草稿のみの移行と、収束済み未採用候補1件の検証移行を分け、後者は候補と前監査を明示し、成功review断片のない停止／取消しworkに限る。原候補のバイト列・view・全作者呼出しを一致再生し、再抽出・再収束せず検証だけを続ける。旧失敗reviewは履歴として残し、合格には流用しない。通常のengine不一致拒否を回避する汎用機能ではない。
+
+検証版束縛改訂の関連102件（incremental49、既存互換移行18、凍結候補移行7、版束縛11、既存review集合17）が成功した。実際の保存済み9作者呼出し・52roundのcontext、prompt、wire schemaも一致した。実モデルの収束・独立検証・採用の最新結果は案件成果案内で確認する。
+
 ## 9. 人手照合チェックリスト草稿
 
 AI作成の汎用草稿であり、人手承認済み正解表ではない。
@@ -231,7 +287,7 @@ AI作成の汎用草稿であり、人手承認済み正解表ではない。
 
 実行要求に固定した入力・出力・契約の版、ファイル、hash、検査範囲と未実施を、今回の結果案内で確認する。実行ID、件数、hash、所要時間、provider応答及び試験ログを本書へ転記・累積しない。中間物・実行記録はwork、利用者向けの結果は選択したoutputに置く。
 
-既定profileの人手確認入口はsample-project1/spec-reverse/discovery-agent/review.md。正式な可搬成果は同Agentのcontextbase.json、目録検証はresult/validation.json、構文事実の機械検証はfacts/validation.jsonで確認する。これらは種類の異なる検証であり、索引の機械検証だけで目録の意味や業務品質を承認しない。後続層と人手受入れは、その工程自身の今回の記録で判断する。
+既定profileの新しい人手確認入口はsample-project1/spec-reverse/CSharp_ASPNET/discovery-agent/review.md（新projectでは未生成）。旧projectの実行記録は案件索引に明示して残す。正式な可搬成果は同Agentのcontextbase.json、目録検証はresult/validation.json、構文事実の機械検証はfacts/validation.jsonで確認する。これらは種類の異なる検証であり、索引の機械検証だけで目録の意味や業務品質を承認しない。後続層と人手受入れは、その工程自身の今回の記録で判断する。
 
 分類の内訳、原文根拠、未解決事項及び採用範囲は今回のreviewと正式成果を参照する。discoveryの完了を元goal全体の完了へ広げず、relationship／behaviorの実行や原アプリ・SQL・DBの動作確認へ読み替えない。
 

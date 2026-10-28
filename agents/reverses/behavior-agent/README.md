@@ -1,6 +1,10 @@
 # behavior-agent — 独立した動作深化
 
-版1.1／2026-10-26。package／CLIはcontextbase-behavior、Pythonモジュールはcontextbase_behavior。reverse-agentのインストール・import・統括起動を必要としない。新配置とportable受渡しの構造・合成検証は通過した。
+版1.3／2026-10-28。package／CLIはcontextbase-behavior、Pythonモジュールはcontextbase_behavior。reverse-agentのインストール・import・統括起動を必要としない。新配置とportable受渡しの構造・合成検証は通過した。
+
+新workのinit --incremental又はcontext_mode="incremental"で[分割調査・独立検証](../shared/contextbase-runtime/docs/分割調査・独立検証プロトコル.md)を選べる。関係前提を自分の原文で再検証し、質問別草稿と独立レビューを保存する。全体義務の採用条件と独立起動は維持する。B固有事実の型拡張と実業務精度は別の残作業で、今回Bの実解析は行っていない。
+
+新規workはinit --evidence、設定モードはprofileのcontext_mode="evidence"で[ホスト取証](../shared/contextbase-runtime/docs/ホスト取証プロトコル.md)を明示できる。動作に関する指定質問に必要な事実・原文をhostから取得し、受領関係の独立再検証と完全view採用を維持する。旧fullモードは既定で、新モードへ--inline-sources／--compactを併用しない。
 
 ## 導入
 
@@ -22,7 +26,7 @@ exportは前層workなしで読めるportable受渡し。全有効記録・未�
 
 ## プロジェクト設定による実行
 
-[contextbase.toml](../../../sample-project1/contextbase.toml)で入力と結果の置き場を切り替えられる。各相対パスは設定ファイルの位置から解決する。既定profile csharp_aspnetのsourceはsample-project1/srcs/CSharp_ASPNET、結果は [spec-reverse/behavior-agent/contextbase.json](../../../sample-project1/spec-reverse/behavior-agent/README.md)で、現在は未生成。
+[contextbase.toml](../../../sample-project1/contextbase.toml)で入力と結果の置き場を切り替えられる。各相対パスは設定ファイルの位置から解決する。既定profile csharp_aspnetのsourceはsample-project1/srcs/CSharp_ASPNET、結果は [spec-reverse/CSharp_ASPNET/behavior-agent/contextbase.json](../../../sample-project1/spec-reverse/README.md)で、現在は未生成。
 
 このAgentディレクトリからの例：
 
@@ -46,3 +50,5 @@ workは設定work基点/behavior-agent。後続層は同じ設定の前層固定
 共有する束縛・保存機構は [共通runtime](../shared/contextbase-runtime/README.md)を参照する。retryは既知の自層候補への明示1回再調査で、上流を自動起動・修訂しない。
 
 独立導入と合成受渡しの検証範囲は [実装ガイド](../reverse-agent/docs/ContextBase初期実装.md)を参照する。これはreverse-agentの実行依存ではなく検証記録の参照である。
+
+新sample-project1の既定出力はspec-reverse/CSharp_ASPNET/各Agent/。根のspec-reverse/各Agent/は旧test-project1の保持記録であり、新projectの前提成果へ自動転用しない。新projectの解析は未実施。

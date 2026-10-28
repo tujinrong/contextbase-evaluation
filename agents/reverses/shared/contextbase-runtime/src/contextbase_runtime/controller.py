@@ -23,7 +23,9 @@ class AcceptanceError(ValueError):
 def engine_fingerprint() -> str:
     files = {name: Path(__file__).with_name(name).read_text(encoding='utf-8')
              for name in ('agents.py', 'contracts.py', 'controller.py', 'storage.py',
-                          'sources.py', 'adapters.py', 'paths.py', 'provider.py', 'catalog.py', 'facts.py', 'wire.py', 'repair.py')}
+                          'sources.py', 'adapters.py', 'paths.py', 'provider.py', 'catalog.py', 'facts.py', 'wire.py', 'repair.py',
+                          'evidence.py', 'evidence_dialog.py', 'incremental.py',
+                          'investigation.py', 'review_set.py', 'material_window.py')}
     versions = {}
     for package in ('jsonschema', 'tree-sitter', 'tree-sitter-c-sharp', 'tree-sitter-java'):
         try:
@@ -41,14 +43,27 @@ class Session:
             raise ValueError('Legacy analysis session is preserved but cannot be auto-migrated; '
                              'create a new v2 session with explicit stages, scopes and prerequisites')
         contracts.validate_request(self.config['request'])
+        if 'evidencePolicy' in self.config:
+            from .evidence_dialog import VERSION
+            if self.config['evidencePolicy'] != VERSION:
+                raise ValueError('Unknown evidence policy; create a fresh supported workspace')
+        if 'incrementalPolicy' in self.config:
+            from .incremental import VERSION
+            if self.config['incrementalPolicy'] != VERSION or 'evidencePolicy' in self.config:
+                raise ValueError('Unknown or conflicting incremental policy; create a fresh workspace')
         self.source = SourceAccess.open(self.store.path('snapshot'))
         if self.source.snapshot_id != self.config['snapshotId']:
             raise ValueError('Session source binding changed')
         self._state()
 
     @classmethod
-    def create(cls, source: Path, work: Path, request: dict) -> 'Session':
+    def create(cls, source: Path, work: Path, request: dict, *, evidence_mode=False,
+               incremental_mode=False) -> 'Session':
         contracts.validate_request(request)
+        if type(evidence_mode) is not bool or type(incremental_mode) is not bool:
+            raise ValueError('Investigation modes must be explicitly enabled with booleans')
+        if evidence_mode and incremental_mode:
+            raise ValueError('Evidence and incremental are distinct workspace modes')
         source, work = safe_path(source), safe_path(work)
         if source == work or source in work.parents or work in source.parents:
             raise ValueError('Session and source trees must be disjoint')
@@ -61,6 +76,12 @@ class Session:
         config = {'schema': contracts.VERSION, 'id': uuid.uuid4().hex,
                   'engineSha256': engine_fingerprint(), 'snapshotId': access.snapshot_id,
                   'request': deepcopy(request)}
+        if evidence_mode:
+            from .evidence_dialog import VERSION
+            config['evidencePolicy'] = VERSION
+        if incremental_mode:
+            from .incremental import VERSION
+            config['incrementalPolicy'] = VERSION
         store.put('session.json', config)
         store.save_state({'sessionSha256': contracts.digest(config), 'version': 0, 'revision': None,
                           'status': 'active', 'executionEpoch': 0, 'acceptedRequirements': [],
@@ -130,13 +151,17 @@ class Session:
         state = self._state()
         current = self._current(state)
         accepted = set(state['acceptedRequirements'])
-        return {**deepcopy(state), 'schema': contracts.VERSION,
+        result = {**deepcopy(state), 'schema': contracts.VERSION,
                 'projectId': self.config['request']['projectId'], 'snapshotId': self.source.snapshot_id,
                 'remainingRequirements': self._ordered(set(self.obligations) - accepted),
                 'readyRequirements': [key for key, item in self.obligations.items()
                                       if key not in accepted and set(item['requires']).issubset(accepted)],
                 'records': deepcopy(current['records']), 'unknowns': deepcopy(current['unknowns']),
                 'receipts': deepcopy(current['receipts'])}
+        if self.config.get('incrementalPolicy'):
+            from .incremental import status
+            result['investigations'] = status(self.store)
+        return result
 
     def index(self) -> list[dict]:
         return self.fact_index().raw_indexes()
@@ -329,6 +354,17 @@ class Session:
         return task
 
     def _task_extensions(self, task, view):
+        if self.config.get('incrementalPolicy'):
+            from .review_set import VERSION as REVIEW_VERSION
+            return {'incrementalPolicy': self.config['incrementalPolicy'],
+                    'reviewSetPolicy': REVIEW_VERSION,
+                    'evidenceIndexSha256': self.fact_index().sha256}
+        if self.config.get('evidencePolicy'):
+            from .evidence_dialog import WINDOW_POLICY
+            return {'evidencePolicy': self.config['evidencePolicy'],
+                    'evidenceIndexSha256': self.fact_index().sha256,
+                    'evidenceReviewPolicy': 'contextbase-complete-view-review/1',
+                    'evidenceWindowPolicy': deepcopy(WINDOW_POLICY)}
         return {}
 
     def prepare(self, stage, *, requirements=None, feedback=None) -> dict:
@@ -380,8 +416,18 @@ class Session:
 
     def _context(self, task, inline_sources):
         state = self._state()
+        if task.get('evidencePolicy') or task.get('incrementalPolicy'):
+            index = self.fact_index()
+            from collections import Counter
+            structure = {'schema': index.document['schema'], 'indexSha256': index.sha256,
+                         'snapshotId': self.source.snapshot_id,
+                         'files': deepcopy(index.document['files']),
+                         'counts': dict(Counter(item['kind'] for item in index.document['facts'])),
+                         'delivery': 'Query the host for fact rows; this is the complete capability inventory, not the fact rows.'}
+        else:
+            structure = self._structure_context()
         context = {'request': self.config['request'], 'task': task,
-                   'inventory': self.source.manifest, 'structure': self._structure_context(),
+                   'inventory': self.source.manifest, 'structure': structure,
                    'currentRecords': self._current(state)['records']}
         if task['operation'] == 'extract':
             notes = []
@@ -404,7 +450,19 @@ class Session:
             context['feedback'] = {'candidate': prior, 'verifications': [
                 self.store.get('verifications/' + key + '.json') for key in state['verifications']
                 if self.store.get('verifications/' + key + '.json')['candidate'] == task['feedback']]}
-        if inline_sources:
+        if task.get('incrementalPolicy'):
+            context['sourceDelivery'] = {'mode': 'host-incremental-requests',
+                'instruction': 'All sealed originals and facts are available through host queries.'}
+        elif task.get('evidencePolicy'):
+            context['sourceDelivery'] = {'mode': 'host-evidence-requests',
+                'instruction': 'Request exact original source through the host. No input program or shell execution is needed. '
+                               'All authorized files remain available, including unsupported files.'}
+            context['reviewContract'] = {'schema': task['evidenceReviewPolicy'],
+                'requirements': list(task['requirements']), 'candidateSha256': task['candidate'],
+                'viewSha256': task['viewSha256'],
+                'instruction': 'Evidence pages do not narrow the assigned obligations. Verify the complete candidate '
+                               'and retained view, all unknowns, and omissions independently before returning a verdict.'}
+        elif inline_sources:
             if sum(entry['bytes'] for entry in self.source.manifest['files']) > 1_048_576:
                 raise ValueError('Inline source scope exceeds 1 MiB; choose a smaller explicit scope')
             originals = []
@@ -424,11 +482,28 @@ class Session:
     def _instruction(self, task):
         return VERIFICATION if task['operation'] == 'verify' else AGENTS[task['stage']].instruction
 
+    def _incremental_instruction(self, task):
+        if task['operation'] == 'extract':
+            return AGENTS[task['stage']].instruction
+        return ('Independently check source-backed correctness, uncertainty and completeness. '
+                'The host assigns record reviews and separate global omission/scope reviews. '
+                'Inspect counterexamples and records outside the author plan through host queries. '
+                'Return exactly the current unit schema; the host aggregates the complete obligation set.')
+
+    def _validate_incremental_answer(self, task, answer):
+        state = self._state()
+        contracts.validate_result(answer, task, self.source, self._current(state)['records'])
+        if task['operation'] == 'extract':
+            self._proposal_view(state, task, answer)
+
     def _execute(self, stage, operation, *, requirements=None, candidate=None, feedback=None,
                  timeout=1800, inline_sources=False, runner=None, compact=False):
         if (isinstance(timeout, bool) or not isinstance(timeout, (int, float))
                 or not math.isfinite(timeout) or timeout <= 0):
             raise ValueError('A positive finite per-operation timeout is required')
+        if ((self.config.get('evidencePolicy') or self.config.get('incrementalPolicy'))
+                and (inline_sources or compact or self.store.path('repair-seed.json').exists())):
+            raise ValueError('Host investigation uses requests; inline sources, compact and rejected-draft repair are separate modes')
         trusted = runner is None
         prepared_at = time.perf_counter()
         task = self._prepare(stage, operation, requirements, candidate,
@@ -460,8 +535,20 @@ class Session:
                 from .provider import run_job
                 provider = run_job
             provider_at = time.perf_counter()
-            response = provider(self.source.root, self.store.path('tasks/' + task['id'] + '/provider'),
-                                prompt, schema, timeout)
+            if task.get('incrementalPolicy'):
+                from .incremental import run
+                response = run(self.source, self.fact_index(), self.store, task, context,
+                               self._incremental_instruction(task), provider, timeout,
+                               check_current=lambda: self._check_task_current(task),
+                               validate_final=lambda answer: self._validate_incremental_answer(task, answer))
+            elif task.get('evidencePolicy'):
+                from .evidence_dialog import run
+                response = run(self.source, self.fact_index(), self.store, task, context,
+                               POLICY + '\n' + instruction, schema, provider, timeout,
+                               check_current=lambda: self._check_task_current(task))
+            else:
+                response = provider(self.source.root, self.store.path('tasks/' + task['id'] + '/provider'),
+                                    prompt, schema, timeout)
             phases['provider'] = time.perf_counter() - provider_at
             self.store.put('tasks/' + task['id'] + '/transport.json', response)
             if response.get('exit_code') != 0 or response.get('metadata', {}).get('status') != 'passed':
@@ -490,9 +577,18 @@ class Session:
                     'rawAnswerSha256': contracts.digest(raw_answer), 'canonicalAnswerSha256': contracts.digest(answer)})
             provenance = {'kind': task['origin'], 'contextId': task['contextId'],
                           'invocationId': task['id'], 'independenceVerified': trusted and operation == 'verify',
-                          'transport': 'codex-ephemeral' if trusted else 'injected-test-transport',
+                          'transport': self._execution_transport(task) if trusted else 'injected-test-transport',
                           'elapsedSeconds': time.perf_counter() - start,
                           'answerSha256': contracts.digest(answer)}
+            if task.get('incrementalPolicy'):
+                from .incremental import ORIGIN
+                if trusted:
+                    provenance['kind'] = 'host-composed'
+                provenance.update(incrementalTranscriptSha256=response['metadata']['incrementalTranscriptSha256'],
+                                  responseOrigin=ORIGIN, executionMode='composite')
+            if task.get('evidencePolicy'):
+                provenance.update(evidenceTranscriptSha256=response['metadata']['evidenceTranscriptSha256'],
+                                  responseOrigin='host-assembled-evidence-dialog')
             if codec:
                 provenance.update(responseEncoding=codec.binding['schema'], wireSha256=task['wireSha256'],
                                   rawAnswerSha256=contracts.digest(raw_answer))
@@ -521,6 +617,43 @@ class Session:
                         latest.update(status='stopped', stopReason=type(exc).__name__ + ': ' + str(exc))
                 self.store.save_state(latest)
             raise
+
+    def _check_task_current(self, task):
+        """Fence each evidence round against cancellation and concurrent revisions."""
+        state = self._state()
+        if (state['status'] != 'active' or state['tasks'].get(task['id']) != 'issued'
+                or state['executionEpoch'] != task['executionEpoch']
+                or state['version'] != task['baseVersion'] or state['revision'] != task['baseRevision']):
+            raise ValueError('Evidence task was cancelled or its base version changed')
+
+    @staticmethod
+    def _execution_transport(task):
+        if task.get('incrementalPolicy'):
+            from .incremental import TRANSPORT
+            return TRANSPORT
+        return 'codex-ephemeral-evidence-dialog' if task.get('evidencePolicy') else 'codex-ephemeral'
+
+    def _replay_evidence(self, task, artifact):
+        if task.get('incrementalPolicy'):
+            from .incremental import VERSION, ORIGIN, replay
+            if (self.config.get('incrementalPolicy') != VERSION
+                    or artifact['provenance'].get('responseOrigin') != ORIGIN
+                    or artifact['provenance'].get('executionMode') != 'composite'):
+                raise AcceptanceError('Incremental execution policy binding changed')
+            replay(self.source, self.fact_index(), self.store, task, artifact['answer'],
+                   artifact['provenance'].get('incrementalTranscriptSha256'),
+                   validate_final=lambda answer: self._validate_incremental_answer(task, answer))
+            return
+        if not task.get('evidencePolicy'):
+            return
+        from .evidence_dialog import VERSION, replay
+        provenance = artifact['provenance']
+        if (task['evidencePolicy'] != VERSION or self.config.get('evidencePolicy') != VERSION
+                or task['evidenceReviewPolicy'] != 'contextbase-complete-view-review/1'
+                or provenance.get('responseOrigin') != 'host-assembled-evidence-dialog'):
+            raise AcceptanceError('Evidence execution policy binding changed')
+        replay(self.source, self.fact_index(), self.store, task, artifact['answer'],
+               provenance.get('evidenceTranscriptSha256'))
 
     def execute(self, stage, *, requirements=None, feedback=None, timeout=1800,
                 inline_sources=False, runner=None, compact=False):
@@ -587,8 +720,9 @@ class Session:
                     if (decoded != artifact['answer']
                             or provenance.get('rawAnswerSha256') != contracts.digest(raw)):
                         raise AcceptanceError('Response materialization binding changed')
-                if (provenance.get('kind') != 'host-executed'
-                        or provenance.get('transport') != 'codex-ephemeral'
+                expected_kind = 'host-composed' if task.get('incrementalPolicy') else 'host-executed'
+                if (provenance.get('kind') != expected_kind
+                        or provenance.get('transport') != self._execution_transport(task)
                         or task['origin'] != 'host-executed'
                         or task['operation'] != operation or task['stage'] != proposal['stage']
                         or task['sessionId'] != self.config['id']
@@ -601,6 +735,7 @@ class Session:
                         or provenance['invocationId'] != task['id']
                         or provenance['answerSha256'] != contracts.digest(artifact['answer'])):
                     raise AcceptanceError('Independent host-owned execution provenance required')
+                self._replay_evidence(task, artifact)
                 contracts.validate_result(artifact['answer'], task, self.source, self._current(state)['records'])
             if (proposal['contextId'] == verification['contextId']
                     or proposal['taskId'] == verification['taskId']

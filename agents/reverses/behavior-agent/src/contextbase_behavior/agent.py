@@ -22,9 +22,14 @@ from unresolved links or run another agent. Produce facts, not specification pro
         graph = {key: deepcopy(record) for key, record in context['currentRecords'].items()
                  if record['ownerRequirement'] in required}
         dependencies = {dep['key'] for record in graph.values() for dep in record['dependencies']}
-        return {'verifiedRelationships': graph,
-                'supportingCatalog': {key: deepcopy(record) for key, record in context['currentRecords'].items()
-                                      if key in dependencies},
+        references = ({'relationshipKeys': sorted(graph),
+                       'supportingCatalogKeys': sorted(key for key in dependencies if key in context['currentRecords']),
+                       'recordsLocation': 'currentRecords'}
+                      if context['task'].get('evidencePolicy') or context['task'].get('incrementalPolicy') else {
+                           'verifiedRelationships': graph,
+                           'supportingCatalog': {key: deepcopy(record) for key, record in context['currentRecords'].items()
+                                                 if key in dependencies}})
+        return {**references,
                 'behaviorQuestions': ['values and defaults', 'conditions and branches', 'state and order',
                                      'errors and transactions', 'data changes', 'caller differences'],
                 'completion': 'Each behavior fact binds a verified relationship and exact original source evidence.'}

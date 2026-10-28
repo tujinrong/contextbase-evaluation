@@ -1,0 +1,121 @@
+{
+  "schema": "contextbase-source-reference/1",
+  "materialKind": "repository-source-ddl-reference",
+  "inputProfile": "SharedAccess",
+  "source": {
+    "path": "test-project1/srcs/Access-CSharp_ASPNET/database/sql/001-schema.sql",
+    "sha256": "d33c729896e7bd0dc16f94421de296af0099d7660d58f596b91b372bd383229f",
+    "repositoryRevision": "f4c735ca3f0f551587bf68dfaf25996f47d994de",
+    "workingTreeChanges": []
+  },
+  "copy": {
+    "path": "database/shared-access/001-schema.sql",
+    "sha256": "d33c729896e7bd0dc16f94421de296af0099d7660d58f596b91b372bd383229f"
+  },
+  "producerSource": {
+    "path": "test-project1/srcs/Access-CSharp_ASPNET/tools/New-TrainingDatabase.ps1",
+    "sha256": "d89d636ae8cf1fbaaefb4a4c3c2a9e6edd1d5c83c5583788e076c5f3409fc019",
+    "startLine": 1,
+    "endLine": 18,
+    "lines": [
+      {
+        "line": 1,
+        "text": "[CmdletBinding()]"
+      },
+      {
+        "line": 2,
+        "text": "param([string]$Server='.\\SQLEXPRESS', [string]$Database='AccessRebuilderTraining_01a17be7')"
+      },
+      {
+        "line": 3,
+        "text": "$ErrorActionPreference='Stop'"
+      },
+      {
+        "line": 4,
+        "text": "if ($Server -ne '.\\SQLEXPRESS' -or $Database -notmatch '^AccessRebuilderTraining_[A-Za-z0-9_]+$') { throw 'This helper only creates a named local training database.' }"
+      },
+      {
+        "line": 5,
+        "text": "$methodRoot=Split-Path -Parent $PSScriptRoot"
+      },
+      {
+        "line": 6,
+        "text": "$schema=Join-Path $methodRoot 'database/sql/001-schema.sql'"
+      },
+      {
+        "line": 7,
+        "text": "$seed=Join-Path $methodRoot 'database/sql/002-seed.sql'"
+      },
+      {
+        "line": 8,
+        "text": "if (-not (Test-Path -LiteralPath $schema) -or -not (Test-Path -LiteralPath $seed)) { throw 'Generate schema and seed first.' }"
+      },
+      {
+        "line": 9,
+        "text": "# A pre-existing database is never dropped, reset or adopted by this creation helper."
+      },
+      {
+        "line": 10,
+        "text": "$create=\"IF DB_ID(N'$Database') IS NOT NULL THROW 51000,'Training database already exists; no changes.',1; EXEC(N'CREATE DATABASE [$Database]');\""
+      },
+      {
+        "line": 11,
+        "text": "& sqlcmd -S $Server -E -C -b -Q $create"
+      },
+      {
+        "line": 12,
+        "text": "if ($LASTEXITCODE -ne 0) { throw 'Database creation failed.' }"
+      },
+      {
+        "line": 13,
+        "text": "& sqlcmd -S $Server -d $Database -E -C -b -Q \"EXEC sys.sp_addextendedproperty @name=N'AccessRebuilderOwner',@value=N'test-project1/Access-CSharp_ASPNET';\""
+      },
+      {
+        "line": 14,
+        "text": "if ($LASTEXITCODE -ne 0) { throw 'Database ownership marker failed.' }"
+      },
+      {
+        "line": 15,
+        "text": "& sqlcmd -S $Server -d $Database -E -C -b -f 65001 -i $schema"
+      },
+      {
+        "line": 16,
+        "text": "if ($LASTEXITCODE -ne 0) { throw 'Schema creation failed; dedicated DB retained for inspection.' }"
+      },
+      {
+        "line": 17,
+        "text": "& sqlcmd -S $Server -d $Database -E -C -b -f 65001 -i $seed"
+      },
+      {
+        "line": 18,
+        "text": "if ($LASTEXITCODE -ne 0) { throw 'Seed failed; dedicated DB retained for inspection.' }"
+      }
+    ],
+    "defaultDatabaseName": "AccessRebuilderTraining_01a17be7"
+  },
+  "consumerSource": {
+    "path": "Properties/launchSettings.json",
+    "sha256": "72d1f4a434b06a83dcc5537605403d3d681b971e46cc40c329e84e0c8fcddefa",
+    "declaredProfiles": [
+      {
+        "profile": "SharedTrainingSql",
+        "databaseName": "AccessRebuilderTraining_01a17be7",
+        "studentDatabaseProfile": "SharedAccess"
+      },
+      {
+        "profile": "https",
+        "databaseName": "AccessRebuilderTraining_01a17be7",
+        "studentDatabaseProfile": "SharedAccess"
+      }
+    ]
+  },
+  "evidenceBoundary": {
+    "schemaDeclarationSource": "Access-CSharp_ASPNET SQL Server generation source",
+    "nativeSchemaFile": "database/001_schema.sql",
+    "nativeSchemaReplaced": false,
+    "sqlExecuted": false,
+    "liveSchemaInspected": false,
+    "compatibilityAccepted": false,
+    "meaning": "Repository source declarations for static analysis; runtime deployment and schema drift remain unverified."
+  }
+}
