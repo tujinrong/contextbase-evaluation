@@ -70,6 +70,7 @@ class ProjectProfile:
     output_root: Path
     work_root: Path
     request: dict
+    context_mode: str = 'full'
 
     @classmethod
     def load(cls, config_path, name=None):
@@ -86,9 +87,14 @@ class ProjectProfile:
         if selected not in document['profiles']:
             raise ValueError('Unknown project profile: ' + str(selected))
         section = document['profiles'][selected]
-        if (not isinstance(section, dict) or set(section) != {'source', 'request', 'output', 'work'}
-                or any(not isinstance(value, str) or not value.strip() for value in section.values())):
+        required = {'source', 'request', 'output', 'work'}
+        if (not isinstance(section, dict) or not required.issubset(section)
+                or set(section) - required - {'context_mode'}
+                or any(not isinstance(section[key], str) or not section[key].strip() for key in required)):
             raise ValueError('A profile requires source, request, output and work paths')
+        context_mode = section.get('context_mode', 'full')
+        if not isinstance(context_mode, str) or context_mode not in {'full', 'evidence', 'incremental'}:
+            raise ValueError('Profile context_mode must be full, evidence or incremental')
 
         def resolve(key):
             value = Path(section[key])
@@ -101,7 +107,7 @@ class ProjectProfile:
             raise ValueError('Configuration and request inputs must be outside work and output trees')
         request = read_json(request_path)
         contracts.validate_request(request)
-        return cls(path, selected, source, request_path, output, work, request)
+        return cls(path, selected, source, request_path, output, work, request, context_mode)
 
     def work(self, agent_name):
         return safe_path(self.work_root / agent_name)
@@ -120,9 +126,27 @@ class ProjectProfile:
         return {'profile': self.name, 'source': str(self.source), 'request': str(self.request_path),
                 'work': str(self.work(agent_type.name)), 'output': str(self.output(agent_type.name)),
                 'handoff': str(self.output(previous + '-agent')) if previous else None,
-                'sourceMode': 'sealed-snapshot-on-init', 'agent': agent_type.name}
+                'sourceMode': 'sealed-snapshot-on-init', 'contextMode': self.context_mode,
+                'agent': agent_type.name}
+
+    def _validate_context_mode(self, agent):
+        expected = {}
+        if self.context_mode == 'evidence':
+            from .evidence_dialog import VERSION as EVIDENCE_POLICY
+            expected['evidencePolicy'] = EVIDENCE_POLICY
+        elif self.context_mode == 'incremental':
+            from .incremental import VERSION as INCREMENTAL_POLICY
+            expected['incrementalPolicy'] = INCREMENTAL_POLICY
+        elif self.context_mode != 'full':
+            raise ValueError('Unknown project context_mode')
+        actual = {key: agent.session.config[key] for key in ('evidencePolicy', 'incrementalPolicy')
+                  if key in agent.session.config}
+        if actual != expected:
+            raise ValueError('Project context_mode differs from the initialized workspace; '
+                             'select a separate work directory and initialize it with the matching mode')
 
     def bind(self, agent):
+        self._validate_context_mode(agent)
         agent.session.store.put('project.json', self.binding(agent.name))
 
     def validate_workspace(self, agent, *, check_upstream=False):
@@ -132,6 +156,7 @@ class ProjectProfile:
                 or agent.session.config['request'] != self.request
                 or agent.session.source.manifest['sourceRoot'] != str(self.source)):
             raise ValueError('Project profile, source, request or output changed; select a separate work directory')
+        self._validate_context_mode(agent)
         if check_upstream:
             self.validate_upstream(agent)
 

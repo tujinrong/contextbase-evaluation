@@ -17,9 +17,7 @@ from .sources import decode
 
 
 VERSION = 'contextbase-source-facts/1'
-POLICY = '''Use the complete source-fact tables in structure, together with the
-original source and full inventory. Table columns define each row; file indexes
-refer to structure.files. Fact IDs, source hashes and line ranges are host-owned.
+_USAGE_POLICY = '''Fact IDs, source hashes and line ranges are host-owned.
 Calls are syntax observations, not resolved semantic edges. A caller is the
 containing declaration; lambda bodies retain their enclosing declared caller.
 Entries are registration/declaration candidates, not proof of runtime reachability
@@ -37,12 +35,31 @@ Retain only fact references whose source evidence the record explicitly cites.
 Empty factIds are allowed only when the record's evidence has no indexed facts;
 explain the unsupported or uncovered material instead. Do not invent identifiers.
 Return sourceFactsSha256 exactly as bound by the host task.'''
+POLICY = '''Use the complete source-fact tables in structure, together with the
+original source and full inventory. Table columns define each row; file indexes
+refer to structure.files. ''' + _USAGE_POLICY
+EVIDENCE_POLICY = '''Use host evidence requests to query snapshot-bound source
+facts and read exact original source. The initial structure contains capability
+metadata, not the complete fact rows. All facts and authorized original materials
+remain available. Page through relevant results and investigate omissions using
+the full inventory, registrations, reverse uses and unsupported materials.
+Query evidence pointers are not original-source reads. Cite only source ranges
+actually delivered in this task and fact IDs returned by its fact queries.
+''' + _USAGE_POLICY
 VERIFY_POLICY = '''Independently check the candidate's factUsage against the full
 source-fact index, original source and inventory, including omissions outside
 the author's chosen fact IDs. Return factUsageCheck with pass/fail/unknown,
 reason and original-source evidence. An existing ID or matching file is not
 proof that the fact supports the business claim. Preserve syntax/semantic and
 registration/reachability distinctions. Return the host's sourceFactsSha256.'''
+EVIDENCE_VERIFY_POLICY = '''Independently query the host's complete source-fact
+index and read original source, including omissions outside the author's chosen
+fact IDs. Query pointers alone do not prove that original source was read.
+Return factUsageCheck with pass/fail/unknown, reason and original-source evidence
+actually supplied to this verifier task. Preserve syntax/semantic and
+registration/reachability distinctions. Return the host's sourceFactsSha256.
+The entire candidate and retained verification view remain assigned; evidence
+pagination does not narrow the requirements or permit skipping unknowns.'''
 
 
 def extractor_fingerprint():

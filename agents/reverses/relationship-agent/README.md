@@ -1,6 +1,10 @@
 # relationship-agent — 独立した関係構築
 
-版1.1／2026-10-26。package／CLIはcontextbase-relationship、Pythonモジュールはcontextbase_relationship。reverse-agentのインストール・import・統括起動を必要としない。新配置とportable受渡しの構造・合成検証は通過した。
+版1.4／2026-10-28。package／CLIはcontextbase-relationship、Pythonモジュールはcontextbase_relationship。reverse-agentのインストール・import・統括起動を必要としない。新配置とportable受渡しの構造・合成検証は通過した。
+
+新workのinit --incremental又はcontext_mode="incremental"で[分割調査・独立検証](../shared/contextbase-runtime/docs/分割調査・独立検証プロトコル.md)を選べる。受領前提を自分の原文で再検証し、関係草稿と検証を分割して保存する。全体義務の採用条件と独立起動は維持する。R固有の関係型拡張と実業務精度は別の残作業で、今回Rの実解析は行っていない。
+
+新規workはinit --evidence、設定モードはprofileのcontext_mode="evidence"で[ホスト取証](../shared/contextbase-runtime/docs/ホスト取証プロトコル.md)を明示できる。受領前提と関係候補を別contextで原文から確認し、完全view採用を維持する。前提recordは文脈へ一度だけ置く。旧fullモードは既定で、新モードへ--inline-sources／--compactを併用しない。
 
 ## 導入
 
@@ -22,7 +26,7 @@ exportは前層workなしで読めるportable受渡し。全有効記録・未�
 
 ## プロジェクト設定による実行
 
-[contextbase.toml](../../../sample-project1/contextbase.toml)で入力と結果の置き場を切り替えられる。各相対パスは設定ファイルの位置から解決する。既定profile csharp_aspnetのsourceはsample-project1/srcs/CSharp_ASPNET、結果は [spec-reverse/relationship-agent/contextbase.json](../../../sample-project1/spec-reverse/relationship-agent/README.md)で、現在は未生成。
+[contextbase.toml](../../../sample-project1/contextbase.toml)で入力と結果の置き場を切り替えられる。各相対パスは設定ファイルの位置から解決する。既定profile csharp_aspnetのsourceはsample-project1/srcs/CSharp_ASPNET、結果は [spec-reverse/CSharp_ASPNET/relationship-agent/contextbase.json](../../../sample-project1/spec-reverse/README.md)。本層の候補・独立検証・採用可否は成果案内で確認する。
 
 このAgentディレクトリからの例：
 
@@ -37,7 +41,7 @@ contextbase-relationship export --config ../../../sample-project1/contextbase.to
 
 workは設定work基点/relationship-agent。後続層は同じ設定の前層固定成果だけを読み、自動実行せず原文で再検証する。前提をまだ受信していない空workでは、前層成果の到着後にrunで取り込める。非空workの入力を入れ替えず、新workを使う。封印後は元ソース変更を自動追従しない。
 
-正式exportはtarget.jsonのprofile・source・goal等の所有束縛、ロック、原子的更新を使う。同所有範囲・同内容は冪等、別profile／source／goalの上書きは拒否する。切替例profiles.csharp_wpfはsource=srcs/CSharp_WPF、output=spec-reverse/CSharp_WPF、work=.tmp/contextbase/csharp_wpf、requestは共通。--profile csharp_wpfで入力・作業・出力を分けられるが、今回WPF解析は行わない。この設定改訂の設定・合成検証とpathsによる解決確認は通過した。範囲は実装ガイドを参照し、旧535件を重複計上しない。今回、実業務のLLM解析や結果JSON生成は行わない。
+正式exportはtarget.jsonのprofile・source・goal等の所有束縛、ロック、原子的更新を使う。同所有範囲・同内容は冪等、別profile／source／goalの上書きは拒否する。切替例profiles.csharp_wpfはsource=srcs/CSharp_WPF、output=spec-reverse/CSharp_WPF、work=.tmp/contextbase/csharp_wpf、requestは共通。--profile csharp_wpfで入力・作業・出力を分けられるが、今回WPF解析は行わない。この設定改訂の設定・合成検証とpathsによる解決確認は通過した。範囲は実装ガイドを参照し、旧535件を重複計上しない。実モデル実行と正式exportの採用状態は、各projectの今回の成果案内を正本とする。未採用候補のレビューを正式な可搬成果へ読み替えない。
 
 ## 制約
 
@@ -46,3 +50,5 @@ workは設定work基点/relationship-agent。後続層は同じ設定の前層�
 共有する束縛・保存機構は [共通runtime](../shared/contextbase-runtime/README.md)を参照する。retryは既知の自層候補への明示1回再調査で、上流を自動起動・修訂しない。
 
 独立導入と合成受渡しの検証範囲は [実装ガイド](../reverse-agent/docs/ContextBase初期実装.md)を参照する。これはreverse-agentの実行依存ではなく検証記録の参照である。
+
+新sample-project1の既定出力はspec-reverse/CSharp_ASPNET/各Agent/。根のspec-reverse/各Agent/は旧test-project1の保持記録であり、新projectの前提成果へ自動転用しない。新projectの解析は未実施。

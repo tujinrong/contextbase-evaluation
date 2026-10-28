@@ -315,8 +315,8 @@ def _activate(agent, candidate_id, verification_id):
                 or candidate['provenance']['kind'] != 'external-handoff'
                 or candidate['provenance']['handoffSha256'] != incoming['sha256']
                 or task['origin'] != 'host-executed' or task['operation'] != 'verify'
-                or provenance.get('kind') != 'host-executed'
-                or provenance.get('transport') != 'codex-ephemeral'
+                or provenance.get('kind') != ('host-composed' if task.get('incrementalPolicy') else 'host-executed')
+                or provenance.get('transport') != session._execution_transport(task)
                 or not provenance.get('independenceVerified')
                 or task['sessionId'] != session.config['id']
                 or verification['sessionId'] != session.config['id']
@@ -331,6 +331,7 @@ def _activate(agent, candidate_id, verification_id):
                 or provenance['answerSha256'] != contracts.digest(verification['answer'])
                 or verification['contextId'] == candidate['contextId']):
             raise AcceptanceError('Local independent host-owned verification required for external premises')
+        session._replay_evidence(task, verification)
         view = session._proposal_view(state, author, candidate['answer'])
         if (contracts.digest(view) != candidate['viewSha256']
                 or verification['viewSha256'] != candidate['viewSha256']
