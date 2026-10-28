@@ -12,8 +12,9 @@
         <input asp-for="Input.Id" type="hidden" /><input asp-for="Input.ExpectedVersion" type="hidden" />
         <input asp-for="Input.SearchContextId" type="hidden" /><input asp-for="Input.SnapshotToken" type="hidden" />
         <div asp-validation-summary="All" role="alert" tabindex="-1" data-error-summary></div>
-        <fieldset class="surface editor-basic" disabled="@Model.ReadOnly">
-            <legend class="section-title"><span class="section-number">01</span>基本情報</legend>
+        <section class="editor-group editor-basic-group" aria-labelledby="basic-info-heading">
+                <h2 id="basic-info-heading" class="section-title" data-group-heading><span class="section-number">01</span>基本情報</h2>
+                <fieldset class="surface editor-basic" aria-labelledby="basic-info-heading" disabled="@Model.ReadOnly">
             <div class="basic-grid">
                 <div class="field"><label asp-for="Input.StudentNo">学籍番号 <span class="req">必須</span></label><div class="field-value"><input asp-for="Input.StudentNo" readonly="@Model.Input.Id.HasValue" autocomplete="off" maxlength="30" aria-describedby="student-no-hint" required /><small id="student-no-hint">@(Model.Input.Id.HasValue ? "登録済みの学籍番号は変更できません" : "英大文字・数字・-、15文字まで")</small><span asp-validation-for="Input.StudentNo"></span></div></div>
                 <div class="field"><label asp-for="Input.StudentName">氏名 <span class="req">必須</span></label><div class="field-value"><input asp-for="Input.StudentName" autocomplete="name" maxlength="16" placeholder="氏名（8文字まで）" required /><span asp-validation-for="Input.StudentName"></span></div></div>
@@ -22,9 +23,11 @@
                 <div class="field"><label asp-for="Input.GenderCode">性別 <span class="req">必須</span></label><div class="field-value"><select asp-for="Input.GenderCode" asp-items="Model.GenderCodes" required><option value="">選択してください</option></select><span asp-validation-for="Input.GenderCode"></span></div></div>
             </div>
         </fieldset>
+            </section>
         <div class="editor-sections">
-            <fieldset class="surface editor-section" disabled="@Model.ReadOnly">
-                <legend class="section-title"><span class="section-number">02</span>住所・連絡先</legend>
+            <section class="editor-group" aria-labelledby="contact-heading">
+                <h2 id="contact-heading" class="section-title" data-group-heading><span class="section-number">02</span>住所・連絡先</h2>
+                <fieldset class="surface editor-section" aria-labelledby="contact-heading" disabled="@Model.ReadOnly">
                 <div class="section-fields">
                     <div class="field"><label asp-for="Input.PostalCode">郵便番号 <span class="req">必須</span></label><div class="field-value"><input asp-for="Input.PostalCode" inputmode="text" autocomplete="postal-code" placeholder="001-0001" maxlength="20" required /><span asp-validation-for="Input.PostalCode"></span></div></div>
                     <div class="field"><label asp-for="Input.PrefectureCode">都道府県 <span class="req">必須</span></label><div class="field-value"><select asp-for="Input.PrefectureCode" asp-items="Model.PrefectureCodes" required><option value="">選択してください</option></select><span asp-validation-for="Input.PrefectureCode"></span></div></div>
@@ -35,8 +38,10 @@
                 </div>
                 <p class="section-note">本人電話・本人メール・緊急電話のいずれかを入力してください。</p>
             </fieldset>
-            <fieldset class="surface editor-section" disabled="@Model.ReadOnly">
-                <legend class="section-title"><span class="section-number">03</span>在籍・所属</legend>
+            </section>
+            <section class="editor-group" aria-labelledby="enrollment-heading">
+                <h2 id="enrollment-heading" class="section-title" data-group-heading><span class="section-number">03</span>在籍・所属</h2>
+                <fieldset class="surface editor-section" aria-labelledby="enrollment-heading" disabled="@Model.ReadOnly">
                 <div class="section-fields">
                     <div class="field"><label asp-for="Input.AdmissionDate">入学日 <span class="req">必須</span></label><div class="field-value date-value"><input asp-for="Input.AdmissionDate" type="date" min="1900-01-01" data-refresh-candidates data-japanese-date aria-describedby="admission-date-hint" required /><small id="admission-date-hint" data-japanese-date-for="Input_AdmissionDate" aria-live="polite">@(DateOnly.TryParse(Model.Input.AdmissionDate, out _) ? JapaneseDate.FormatBirthDate(Model.Input.AdmissionDate!) : "日付を選択")</small><span asp-validation-for="Input.AdmissionDate"></span></div></div>
                     <div class="field"><label asp-for="Input.EnrollmentStatusCode">在籍区分 <span class="req">必須</span></label><div class="field-value"><select asp-for="Input.EnrollmentStatusCode" asp-items="Model.StatusCodes" data-refresh-candidates required><option value="">選択してください</option></select><span asp-validation-for="Input.EnrollmentStatusCode"></span></div></div>
@@ -49,9 +54,11 @@
                 <p class="lookup-status" data-options-status aria-live="polite">年度・学年に応じてクラスを表示</p>
                 <noscript><button type="submit" asp-action="Candidates" formnovalidate data-candidate-submit>候補・人数を更新</button></noscript>
             </fieldset>
+            </section>
             <div class="editor-side">
-                <fieldset class="surface editor-section" disabled="@Model.ReadOnly">
-                    <legend class="section-title"><span class="section-number">04</span>緊急連絡先</legend>
+                <section class="editor-group" aria-labelledby="emergency-heading">
+                <h2 id="emergency-heading" class="section-title" data-group-heading><span class="section-number">04</span>緊急連絡先</h2>
+                <fieldset class="surface editor-section" aria-labelledby="emergency-heading" disabled="@Model.ReadOnly">
                     <p class="section-note first">登録時は氏名・続柄・電話を入力</p>
                     <div class="section-fields">
                         <div class="field"><label asp-for="Input.EmergencyContactName">氏名</label><div class="field-value"><input asp-for="Input.EmergencyContactName" maxlength="16" /><span asp-validation-for="Input.EmergencyContactName"></span></div></div>
@@ -59,11 +66,14 @@
                         <div class="field full"><label asp-for="Input.EmergencyPhoneNumber">電話</label><div class="field-value"><input asp-for="Input.EmergencyPhoneNumber" type="tel" maxlength="40" /><span asp-validation-for="Input.EmergencyPhoneNumber"></span></div></div>
                     </div>
                 </fieldset>
-                <fieldset class="surface editor-section notes-section" disabled="@Model.ReadOnly">
-                    <legend class="section-title">備考・変更理由</legend>
+            </section>
+                <section class="editor-group" aria-labelledby="notes-heading">
+                <h2 id="notes-heading" class="section-title" data-group-heading><span class="section-number">05</span>備考・変更理由</h2>
+                <fieldset class="surface editor-section notes-section" aria-labelledby="notes-heading" disabled="@Model.ReadOnly">
                     <div class="field"><label asp-for="Input.Remarks">備考 <span class="optional-note">120文字まで</span></label><div class="field-value"><textarea asp-for="Input.Remarks" rows="1" maxlength="240"></textarea><span asp-validation-for="Input.Remarks"></span></div></div>
                     <div class="field"><label asp-for="Input.OperationReason">確認・変更理由</label><div class="field-value"><textarea asp-for="Input.OperationReason" rows="2" placeholder="重複確認などの理由を記録"></textarea><span asp-validation-for="Input.OperationReason"></span></div></div>
                 </fieldset>
+            </section>
             </div>
         </div>
         <div class="savebar">

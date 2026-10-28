@@ -1,13 +1,15 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER-README","version":"0.6","path":"agents/converts/access-rebuilder-agent/README.md","sheets":[{"heading":"現在の状態","kind":"GRID","sheet":"01_状態"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["文書"]},{"heading":"訓練と配置","kind":"GRID","sheet":"03_訓練"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-ACCESS-REBUILDER-README","version":"0.7","path":"agents/converts/access-rebuilder-agent/README.md","sheets":[{"heading":"現在の状態","kind":"GRID","sheet":"01_状態"},{"heading":"入口","kind":"LIST","sheet":"02_入口","key":["文書"]},{"heading":"訓練と配置","kind":"GRID","sheet":"03_訓練"}]} -->
 # access-rebuilder-agent
 
-版0.6／2026-10-28。指定されたAccessファイルからASP.NET Core／C#／SQL Serverのシステムを再構築するAgent。
+版0.7／2026-10-28。指定されたAccessファイルからASP.NET Core／C#／SQL Serverのシステムを再構築するAgent。
 
 ## 現在の状態
 
 利用者の追加指示により、[Web再構築方針](docs/Web再構築方針.md)を採用した。CSharp_ASPNETソースを参照し、Accessの業務目的をWebとして使いやすいUI・操作へ再設計する。抽出器・SQL構造変換・入力検査・反復制御とtest-project1のC#／Web／SQL Server成果物を持つ。初回の[訓練結果](docs/訓練結果.md)2回は台帳を保持し、その後の明示されたWeb化改訂の結果を別に記録する。
 
 2026-10-27の確定ルール：Web画面は有効スペースを節約し、PCでは左見出し・右項目の列を揃えた表形式を標準とする。日付・和暦はコンパクトなカレンダー入力と同期した和暦表示を使う（AR028～030）。正本は[Web再構築方針](docs/Web再構築方針.md)。ルール採用後、利用者が「このルールで変換し直してください」を指示したため、test-project1のAccess-To-CSharp_ASPNETへ適用する。今回の対象はPCブラウザーで、スマートフォン対応は不要と確定した。実装・検証状態は対象sourceRoot/build/test-resultsの今回記録で確認する。
+
+2026-10-28の追加ルール：グループ見出しは内容領域の上方に独立した太字で置き、Access風の枠線切欠き表示を既定にしない。主要なWebメニューは左の縦サイドメニューに配置し、選択中・権限・キーボード操作と本文の有効幅を保持する（AR031・AR032）。今回の適用・検証状態は対象sourceRootの今回記録で確認する。
 
 ## 入口
 

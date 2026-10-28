@@ -1,11 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-CSharp_ASPNET-INDEX","version":"1.1","path":"sample-project2/spec/CSharp_ASPNET/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-CSharp_ASPNET-INDEX","version":"1.2","path":"sample-project2/spec/CSharp_ASPNET/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
 # CSharp_ASPNET 基本設計書一覧
 
-仕様セット版1.1／2026-10-27。社員経歴管理システム。
+仕様セット版1.2／2026-10-28。社員経歴管理システム。
 
 ## 対象と状態
 
-社員と経歴の登録から日本語Excel職務経歴書を作成する最小DEMO。[採用プロファイル](プロジェクト情報.md)と[QA](QA.md)を先に読む。5画面・6機能・5テーブル。基本設計改訂版。項目一覧6列化・論理DB関連/検索ER/更新仕様を強化。設計全体の利用者受入は未実施。実装・DB・実Excel・印刷・正式採点は未実施。
+社員と経歴の登録から日本語Excel職務経歴書を作成する最小DEMO。[採用プロファイル](プロジェクト情報.md)と[QA](QA.md)を先に読む。5画面・6機能・5テーブル。基本設計改訂版。項目一覧を11列へ改訂。グループ・部品・入力制限・フォーマット・初期値とDB関連を明記。設計全体の利用者受入は未実施。実装・DB・実Excel・印刷・正式採点は未実施。
 
 ## 設計書一覧
 

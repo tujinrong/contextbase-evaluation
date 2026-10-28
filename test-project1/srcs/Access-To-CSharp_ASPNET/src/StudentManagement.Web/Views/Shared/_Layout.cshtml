@@ -12,29 +12,33 @@
 </head>
 <body>
     <a href="#main-content" class="skip-link">本文へ移動</a>
-    <header class="app-header">
+    <aside class="app-sidebar" aria-label="サイトメニュー">
         <a class="brand" asp-controller="Students" asp-action="Index"><span class="brand-mark" aria-hidden="true">S</span><span>学生管理<span class="brand-sub">Student Management</span></span></a>
-        <nav aria-label="メインナビゲーション">
-            <a class="@(controller == "Students" ? "active" : "")" aria-current="@(controller == "Students" ? "page" : null)" asp-controller="Students" asp-action="Index">学生一覧</a>
+        <p class="nav-label">メニュー</p>
+        <nav aria-label="メインメニュー">
+            <a class="@(controller == "Students" ? "active" : "")" aria-current="@(controller == "Students" ? "page" : null)" asp-controller="Students" asp-action="Index"><span class="nav-icon" aria-hidden="true">▤</span><span>学生一覧</span></a>
             @if (actor?.Role == Role.Admin)
             {
-                <a class="@(controller == "Masters" ? "active" : "")" aria-current="@(controller == "Masters" ? "page" : null)" asp-controller="Masters" asp-action="Index">マスタ管理</a>
+                <a class="@(controller == "Masters" ? "active" : "")" aria-current="@(controller == "Masters" ? "page" : null)" asp-controller="Masters" asp-action="Index"><span class="nav-icon" aria-hidden="true">⚙</span><span>マスタ管理</span></a>
             }
         </nav>
-        <span class="identity"><span class="identity-dot" aria-hidden="true"></span>@Context.Items["ActorDisplay"]</span>
-    </header>
-    @if (Context.Items["VerificationMode"] is true)
-    {
-        <aside class="verification" role="status"><strong>検証環境</strong><span>@Context.Items["VerificationStorage"]</span></aside>
-    }
-    <main id="main-content">
-        @if (TempData["Message"] is string message)
+        <div class="sidebar-footer"><span>Student Management</span><small>学生情報管理</small></div>
+    </aside>
+    <div class="app-workspace">
+        <header class="app-toolbar"><span class="workspace-label">学生管理システム</span><span class="identity"><span class="identity-dot" aria-hidden="true"></span>@Context.Items["ActorDisplay"]</span></header>
+        @if (Context.Items["VerificationMode"] is true)
         {
-            <div class="message" role="status"><span class="message-symbol" aria-hidden="true">✓</span><p>@message</p></div>
+            <aside class="verification" role="status"><strong>検証環境</strong><span>@Context.Items["VerificationStorage"]</span></aside>
         }
-        @RenderBody()
-    </main>
-    <footer class="app-footer">学生管理システム<span>Student Management</span></footer>
+        <main id="main-content">
+            @if (TempData["Message"] is string message)
+            {
+                <div class="message" role="status"><span class="message-symbol" aria-hidden="true">✓</span><p>@message</p></div>
+            }
+            @RenderBody()
+        </main>
+        <footer class="app-footer">学生管理システム<span>Student Management</span></footer>
+    </div>
     <script src="~/js/site.js" asp-append-version="true" defer></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

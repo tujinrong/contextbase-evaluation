@@ -1,5 +1,7 @@
 # Access → ASP.NET Core 学生管理
 
+2026-10-28：グループ名を内容の上方に独立した太字見出し（例：01 基本情報）で配置し、メニューを左サイドバーへ変更した。PC画面の省スペース化と、既存の権限・入力・日付・保存の契約を維持する。今回の検証は[Web見出し・サイドメニュー](build/test-results/web-shell.md)を参照。
+
 2026-10-28：方式ID・フォルダー名を`Access-To-CSharp_ASPNET`へ変更した。Agent正本は`agents/converts/access-rebuilder-agent/`。既存DB・訓練台帳は維持し、旧名は過去の証跡内に残す。
 
 2026-10-27。Accessから業務ルールを抽出し、利用者指定の`CSharp_ASPNET`ソースを参考にWeb向けの検索・一覧・編集へ再構築した独立方式。AR028～030により、PC向けの左見出し／右入力の表形式へ改修し、余白・入力幅・説明を整理した。生年月日・入学日・卒業退学日はカレンダー入力と和暦表示を同じ行に配置する。対象はPCブラウザー1280×650／1366×650で、スマートフォン対応は対象外。Visual Studioで[StudentManagement.slnx](StudentManagement.slnx)を開き、`StudentManagement.Web`を起動プロジェクト、`TrainingSql`を起動プロファイルにする。作成済みの専用SQL Server DBへ接続する。CLIは.NET SDK 10.0.401以降の同パッチ系列を使用する。

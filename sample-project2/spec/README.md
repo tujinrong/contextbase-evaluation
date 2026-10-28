@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-SPEC-INDEX","version":"1.1","path":"sample-project2/spec/README.md","sheets":[{"heading":"配置索引","kind":"LIST","sheet":"01_配置索引","key":["方式ID"]},{"heading":"工程","kind":"GRID","sheet":"02_工程"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-SPEC-INDEX","version":"1.2","path":"sample-project2/spec/README.md","sheets":[{"heading":"配置索引","kind":"LIST","sheet":"01_配置索引","key":["方式ID"]},{"heading":"工程","kind":"GRID","sheet":"02_工程"}]} -->
 # sample-project2 方式別仕様索引
 
-版1.1／2026-10-27。配置情報のみ。業務仕様の共用入力ではない。
+版1.2／2026-10-28。配置情報のみ。業務仕様の共用入力ではない。
 
 ## 配置索引
 
