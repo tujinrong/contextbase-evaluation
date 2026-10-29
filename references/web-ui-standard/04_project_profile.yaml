@@ -1,0 +1,95 @@
+# 依頼・設計用のひな形。アプリの実行設定ではない。
+standard_version: "1.0"
+project:
+  name: "プロジェクト名を記入"
+  purpose: "業務目的を記入"
+  operation: create # create / modify
+  change_scope: full # layout_only / ui_behavior / full
+  language: ja
+  timezone: "業務要件で定義"
+  framework: "未指定。既存の技術スタックを優先"
+  existing_design_system: null
+  roles: [] # 業務定義を記入。空を全権限と解釈しない
+
+navigation:
+  shell: sidebar # sidebar / top
+  home: list # list / dashboard / home
+  independent_menu_page: false
+  menu_items: [] # label, route, required_role をプロジェクトで記入
+
+design:
+  deliverable: html
+  prototype_only: true
+  external_network: false
+  notes_in_html: true
+  design_version: "draft-0.1"
+  approval_status: draft # draft / reviewed / approved
+  reference_html: "05_design_template.html"
+
+visual:
+  token_file: "06_ui_tokens.css"
+  density: normal # normal / compact / touch
+  theme: light
+  font_family: '"Noto Sans JP", "Yu Gothic UI", "Hiragino Sans", Meiryo, system-ui, sans-serif'
+  root_font_size: "100%"
+  body_font_size: "1rem"
+  label_font_size: ".875rem"
+  table_font_size: ".875rem"
+  title_font_size: "1.5rem"
+  control_min_height: "2.5rem"
+  table_row_min_height: "3rem"
+  token_overrides: {} # 差分はここへ集約。通常は上記既定値のまま
+
+responsive:
+  sidebar_breakpoint_rem: 64
+  compact_layout_breakpoint_rem: 48
+  form_two_columns_min_content_rem: 45
+  review_viewport_widths_css_px: [1440, 1280, 1024, 768, 390, 320]
+  browser_zoom_checks: [100, 200]
+  reflow_check_css_px: 320
+  target_browsers: [] # バージョンを別途確定。未指定は全ブラウザー保証ではない
+
+list:
+  pagination: numbered # numbered / cursor / none
+  page_size: 20
+  page_sizes: [20, 50, 100]
+  total_count: exact # exact / unknown / estimate（概数表示を明記）
+  default_sort: "業務で定義。必ず安定した一意キーを含める"
+  selection: none # none / page_multiple / query_multiple
+  row_actions: [detail, edit]
+  search_trigger: submit # submit / debounced
+  clear_action: reset_defaults_and_search
+  preserve_state_on_return: true
+  export_scope: "要件がある場合のみ定義"
+
+editing:
+  save_mode: undecided # explicit / automatic / per_item / none / undecided
+  save_unit: "業務で定義"
+  discard_scope: "業務で定義"
+  unsaved_navigation_guard: true
+  concurrency_policy: "業務で定義"
+  draft_storage: none # セキュリティ要件とともに決める
+
+# 24パターンすべてを実装する必要はない。必要なもののみ指定する。
+screens:
+  - id: SCR-001
+    name: "対象一覧"
+    pattern: P02_SEARCH_LIST
+    route: /records
+    roles: []
+    fields: []
+    actions: [search, detail, edit, create]
+    states: [initial, loading, ready, empty, error, forbidden]
+    acceptance_tests: []
+  - id: SCR-002
+    name: "対象編集"
+    pattern: P04_EDIT_FORM
+    route: /records/{id}/edit
+    roles: []
+    fields: []
+    actions: [save, back]
+    states: [ready, dirty, saving, validation_error, error, conflict]
+    acceptance_tests: []
+
+extensions: [] # PX-* の定義を追加
+open_questions: []

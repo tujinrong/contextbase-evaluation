@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BUILD","version":"7.11","path":"agents/builds/build-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"実行手順","kind":"GRID","sheet":"03_実行手順"},{"heading":"問題の分類と中断","kind":"GRID","sheet":"04_問題の分類と中断"},{"heading":"完了条件","kind":"GRID","sheet":"05_完了条件"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BUILD","version":"7.12","path":"agents/builds/build-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"実行手順","kind":"GRID","sheet":"03_実行手順"},{"heading":"問題の分類と中断","kind":"GRID","sheet":"04_問題の分類と中断"},{"heading":"完了条件","kind":"GRID","sheet":"05_完了条件"}]} -->
 # 仕様からシステム生成Agent 契約
 
-版7.11／2026-10-29。固定build/・方式内.tmp/・Git履歴を維持し、Accessの画面タイプと利用者4観点を事前期待値・実画面・保存操作の検査へ接続する。
+版7.12／2026-10-29。固定build/・方式内.tmp/・Git履歴とAccess品質gateを維持し、WEB/WinForms/Textの配置familyと描画技術を、独立期待値・実製品の検査へ接続する。
 
 ## 概要
 
@@ -23,8 +23,12 @@ AG-BUILD。Codexが本契約を読み、選択projectの仕様から各方式の
 1. 全体docsとagentsの役割定義を読み、projectId、工程、方式一覧、specRootとsourceRoot、出力先、許可/除外パス、実行IDを確定する。存在しないprojectを自動作成しない。
 2. `node agents/builds/build-agent/scripts/preflight.mjs --project <projectId> --run-id <実行ID> --profile <方式ID>` をリポジトリから実行する。build/generation/の固定inputs.json・structure.json・structure.mdを今回の値へ更新し、前回のoutputs.jsonを失効させる。実行IDは属性であり履歴フォルダーを作らない。終了コード2は構造問題による中断、1は検査自体の失敗、0は機械的構造検査の通過だけを意味する。配置確認だけの工程では同じコマンドへ`--inspect-only true`を加える。検査専用ではinputs/structureを標準出力のJSONへ返し、build/・.tmp/を書き換えず、旧outputs.jsonやsource.zipも失効させない。この結果から実装生成のmanifestを確定せず、生成工程は通常のpreflightで入力を凍結する。
 3. 自動検査とは別に、各方式の詳細・共通・DB・規約の入出力、型、状態、認証、正規化、保存/取消境界の整合性を確認する。初回に読んだ仕様のハッシュを固定し、他Agentが入力を変更した場合は旧版と混在させず再検査する。
+
+   [UIパターン規約](../../../docs/UIパターン規約.md)と[UIパターン生成チェック](docs/UIパターン生成チェック.md)を全方式で読み、WEB=CSharp_ASPNET/Vue_CSharpAPI/CSharp_WPF、WINFORMS=VB.NET_WinForms/Access、TEXT=COBOL/AS400_RPGの配置分類を保つ。該当する[WEB](../../../docs/WEB画面品質規約.md)/[WinForms](../../../docs/WinForms画面品質規約.md)/[Text](../../../docs/Text画面品質規約.md)規約だけを方式別に凍結する。新profileは選択specRootの規約/UIパターン.jsonでfamily/rendererを明示し、未確定のUIを完成扱いにしない。既知分類の無断変更、CLIの画面化、source側profile.jsonからの入力分類推測を禁止する。
 4. 局所バグは下記基準に従って仕様と必要な関連資料を修正し、変更前後の版/ハッシュ・理由をbuild/generation/へ記録して再検査する。構造問題は修正せず、同固定先へ根拠を記録して生成を中断する。
 5. 構造問題がなくなった入力セットから、各方式の規約どおりのプロジェクト・実ソース・DDL・設定例・画面資源をsrcs/方式ID/へ生成する。別方式のUIで代替せず、既存成果物を無断で削除しない。入力仕様IDと実装ファイル/シンボルの対応を保存する。
+
+   MDの文章・項目/イベントと埋込み静的HTMLを正本として、採用パターン・共通トークン・状態/保存契約を同方式内の標準部品へ実装する。外部の単独HTML/JSデモや架空の保存・件数を本番処理へ転用せず、設計との差分を記録する。ブラウザー方式は共通サイト枠、行の対象操作、サーバー側検索/安定順序/ページング、URL/履歴・復帰・未保存保護を実装する。20/50/100件やCSS寸法は採用候補であり既存契約や他familyへ強制しない。CSharp_WPFはWEB配置をXAML/DIP/実部品で実現し、DOM/CSS/URL/ブラウザー履歴を必須化しない。WinFormsはFormのclient領域/DPI/伸縮/実入力と保存境界、Textは採用端末の行列/セル/保護属性/キーとページ・入力保持を検査する。具体手順は生成チェックに従う。
 
    採用方式の標準部品と入力機能を使い、新規/編集/参照の入力属性、業務キー/自動採番ID、raw/表示/正規化/保存の桁、フォント・グループ見出しの可読性を具体化する。Accessは[Access生成チェック](docs/Access生成チェック.md)を実施する。値の直接代入やHTMLモックの表示だけでキーボード入力・マスク・実画面が合格したとしない。
 
@@ -57,3 +61,5 @@ source-onlyの再構築・通常初期設定に必要なhelperはsourceRoot/prof
 初期確認用データの件数/版/基準日/用途、投入と再投入の結果、利用者向け確認手順を残す。Accessは今回生成したACCDBで、新規キーの実入力、マスク対象の桁/貼付/保存再読込、編集/参照の保護、フォント/見出し/一覧/ダイアログを検査する。実機の版・bit・DPI・サイズ・範囲を明示し、未導入の環境や未実施を過去のPASSで補わない。
 
 Accessでは4観点レビューの各指摘を画面/状態・利用者の支障・修正・個別合格条件・再検証へ対応させる。全画面のaccessScreenChecks・操作証拠の欠落をUI gateとmanifestで拒否し、全欄同幅・余白削減・文字縮小だけを品質達成にしない。通常表示以外の長文/未選択/空/失敗/未保存離脱と対象環境の実施範囲を示す。仕様HTMLの描画、構造検査、実ACCDBの見やすさ、実操作/再読込、利用者受入は別状態で報告する。
+
+各familyで設計ID→実装/部品→UI契約の個別rule→最終製品の属性/描画/操作証拠を追跡できることを完了条件にする。描画技術に合う単位・方法を使い、WPFのHTMLモック、Textのstdout整列、参考パッケージの過去PASSを製品UI合格にしない。既知/明示family規約の削除・更新ではpreflight/manifestを失効させ、非該当familyの規約を方式固有入力に混ぜない。構造・ビルド・実UI・DB/API再読込・正式受入と未実施を分ける。

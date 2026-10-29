@@ -4,11 +4,11 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {selectedProfiles} from './project-scope.mjs';
-import {collectInputFiles} from './input-scope.mjs';
+import {collectInputFiles,resolveUIFamily} from './input-scope.mjs';
 import {writeJson} from './output-layout.mjs';
 
 export const UI_SCHEMA_VERSION = 1;
-export const UI_VALIDATOR_VERSION = '1.1';
+export const UI_VALIDATOR_VERSION = '1.4';
 const accessQualitySource = 'docs/Access画面品質規約.md';
 const accessScreenTypes = new Set(['AUTH','HOME','SEARCH_LIST','DETAIL','EDIT_FORM','MASTER_DETAIL','WIZARD','DASHBOARD_REPORT','SETTINGS','DIALOG','CUSTOM']);
 const accessSurfaceKinds = new Set(['form','page','tabpage','dialog','surface']);
@@ -213,7 +213,14 @@ export function validateUIConformance({root,project,profile,runId}) {
     if(observations.contractSha256?.toLowerCase()!==result.contract.sha256) add('CONTRACT_HASH','Observations do not reference the exact independently authored contract.');
     if(observations.frozenInputManifestSha256?.toLowerCase()!==result.frozenInputs.sha256) add('INPUT_MANIFEST_HASH','Observations do not reference the exact current frozen input manifest.');
     if(!Array.isArray(inputs.files) || !inputs.files.length) throw new Error('Nonempty frozen inputs required.');
-    const accessChecksRequired=profile==='Access' && inputs.files.some(entry=>entry.file===accessQualitySource);
+    const hasPatternPolicy=inputs.files.some(entry=>entry.file==='docs/UIパターン規約.md');
+    let ui;
+    if(hasPatternPolicy) {
+      ui=resolveUIFamily(root,project,profile);
+      result.uiFamily=ui.family;result.uiRenderer=ui.renderer;
+      if(!ui.family || !ui.renderer) add('UI_FAMILY_UNRESOLVED','A UI profile requires its layout family and renderer in the selected specification; non-UI exemptions use the existing profile policy.');
+    }
+    const accessChecksRequired=(hasPatternPolicy?ui?.renderer==='ACCESS':profile==='Access') && inputs.files.some(entry=>entry.file===accessQualitySource);
     result.accessScreenChecksRequired=accessChecksRequired;
     const currentInputs=collectInputFiles(root,project,profile).map(target=>path.relative(root,target).split(path.sep).join('/')).sort();
     if(!same(inputs.files.map(entry=>entry.file).sort(),currentInputs)) add('FROZEN_INPUT_SET','Current required input files differ from the frozen set.');
@@ -245,10 +252,15 @@ export function validateUIConformance({root,project,profile,runId}) {
     result.artifact={file:contract.artifact.file,...artifactHash};
     if(observations.artifact?.file!==contract.artifact.file || observations.artifact?.sha256?.toLowerCase()!==artifactHash.sha256) add('ARTIFACT_HASH','Observations are stale or describe another final artifact.');
     const environment=observations.environment;
+    const terminalCells=hasPatternPolicy && ui?.renderer==='TERMINAL' && environment?.viewport?.unit==='cells';
+    const positive=value=>Number.isFinite(value)&&value>0;
+    const terminalNotApplicable=(property,reason)=>terminalCells && property===null && typeof reason==='string' && !!reason.trim();
     if(!isObject(environment) || typeof environment.platform!=='string' || !environment.platform || typeof environment.renderer!=='string' || !environment.renderer ||
-       !Number.isFinite(environment.scale) || environment.scale<=0 || !Number.isFinite(environment.dpi) || environment.dpi<=0 ||
+       !(positive(environment.scale)||terminalNotApplicable(environment.scale,environment.scaleReason)) ||
+       !(positive(environment.dpi)||terminalNotApplicable(environment.dpi,environment.dpiReason)) ||
        !isObject(environment.viewport) || !Number.isFinite(environment.viewport.width) || environment.viewport.width<=0 ||
-       !Number.isFinite(environment.viewport.height) || environment.viewport.height<=0 || typeof environment.viewport.unit!=='string' || !environment.viewport.unit) add('ENVIRONMENT','Actual renderer, platform, DPI, scale and viewport are required.');
+       !Number.isFinite(environment.viewport.height) || environment.viewport.height<=0 || typeof environment.viewport.unit!=='string' || !environment.viewport.unit ||
+       (terminalCells&&(!Number.isInteger(environment.viewport.width)||!Number.isInteger(environment.viewport.height)))) add('ENVIRONMENT','Actual renderer, platform, DPI, scale and viewport are required; current TERMINAL cell environments may declare justified null DPI/scale.');
     result.environment=environment;
     if(!Array.isArray(contract.components) || !contract.components.length || !Array.isArray(observations.components)) throw new Error('Expected and independently observed component inventories are required.');
     const components=new Map(), actualComponents=new Map();
@@ -328,7 +340,7 @@ export function requireCurrentUIResult(options) {
   const owner=path.join(options.root,options.project,'srcs',options.profile);
   const target=path.join(owner,'build/test-results/ui-conformance.json');regular(target);
   const previous=read(target);
-  for(const key of ['schemaVersion','validatorVersion','projectId','profileId','runId','status','contract','observations','frozenInputs','validator','artifact','measurementSources']) {
+  for(const key of ['schemaVersion','validatorVersion','projectId','profileId','runId','status','contract','observations','frozenInputs','validator','artifact','measurementSources','uiFamily','uiRenderer']) {
     if(!same(previous[key],current[key])) throw new Error('UI conformance result is missing or stale: '+key);
   }
   return fileRecord(options.root,target);

@@ -4,7 +4,8 @@ const here=path.dirname(fileURLToPath(import.meta.url));
 const base=path.resolve(here,'../.tmp/preflight-tests');fs.mkdirSync(base,{recursive:true});
 const fixture=fs.mkdtempSync(path.join(base,'work-'));const root=path.join(fixture,'repo');let passed=0;
 const detailInputs=['agents/designs/detail-design-agent/AGENT.md','agents/designs/detail-design-agent/rules/詳細設計書作成ルール.md','agents/designs/detail-design-agent/workflows/詳細設計.md'];
-const files=['AGENTS.md','agents/README.md',...detailInputs,'agents/builds/build-agent/AGENT.md','agents/builds/build-agent/PROMPT.md','agents/builds/build-agent/README.md','agents/reverses/reverse-agent/AGENT.md','docs/リポジトリ構成.md','docs/開発規約.md','docs/仕様書作成ルール.md','docs/評価規約.md','docs/MD構造・Excel変換規約.md','docs/テーブル仕様書記述規約.md','docs/テストデータ整備規約.md','docs/UI適合検査.md','docs/Access画面品質規約.md','agents/builds/build-agent/docs/Access生成チェック.md','sample-project1/README.md','sample-project1/プロジェクト情報.md','sample-project1/docs/開発規約.md'];
+const uiInputs=['docs/UIパターン規約.md','docs/WEB画面品質規約.md','docs/WinForms画面品質規約.md','docs/Text画面品質規約.md','agents/builds/build-agent/docs/UIパターン生成チェック.md'];
+const files=['AGENTS.md','agents/README.md',...detailInputs,...uiInputs,'agents/builds/build-agent/AGENT.md','agents/builds/build-agent/PROMPT.md','agents/builds/build-agent/README.md','agents/reverses/reverse-agent/AGENT.md','docs/リポジトリ構成.md','docs/開発規約.md','docs/仕様書作成ルール.md','docs/評価規約.md','docs/MD構造・Excel変換規約.md','docs/テーブル仕様書記述規約.md','docs/テストデータ整備規約.md','docs/UI適合検査.md','docs/Access画面品質規約.md','agents/builds/build-agent/docs/Access生成チェック.md','sample-project1/README.md','sample-project1/プロジェクト情報.md','sample-project1/docs/開発規約.md'];
 function write(file,text){const target=path.join(root,file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,text);}
 function doc(file,id){return `<!-- spec-meta: ${JSON.stringify({schema:'spec-md/1.0',documentId:id,version:'1.0',path:file,sheets:[{heading:'定義',kind:'LIST',sheet:'01_定義',key:['ID']}]})} -->\n# fixture\n\n## 定義\n\n| ID | 内容 |\n| --- | --- |\n| A | fixture |\n`;}
 function exec(script,id,expected,profile,inspectOnly=false,project='sample-project1'){const r=spawnSync(process.execPath,[path.join(root,'agents/builds/build-agent/scripts',script),'--project',project,'--run-id',id,...(profile?['--profile',profile]:[]),...(inspectOnly?['--inspect-only','true']:[])],{encoding:'utf8'});if(r.status!==expected)throw new Error(`${script}: expected ${expected}, got ${r.status}: ${r.stderr}${r.stdout}`);passed++;return r;}
@@ -29,6 +30,10 @@ try{
  assert(detailInputs.every(file=>read('inputs.json').files.some(f=>f.file===file))&&!read('inputs.json').files.some(f=>f.file===requirementTemplate),'Detailed-design rules were not frozen or requirement template became an implementation input');
  assert(!read('inputs.json').files.some(f=>f.file.includes('spec-eval')||f.file.includes('spec-analysis')||f.file.includes('/srcs/')),'Evaluation/analysis/source/legacy input leaked');
  assert(read('inputs.json').files.filter(f=>/^sample-project1\/spec\/[^/]+\/README.md$/.test(f.file)).length===7,'Aggregate did not inspect all independent packages');
+ assert(uiInputs.every(file=>read('inputs.json').files.some(f=>f.file===file)),'Aggregate omitted UI family or generation rules');
+ const familyRules={WEB:'docs/WEB画面品質規約.md',WINFORMS:'docs/WinForms画面品質規約.md',TEXT:'docs/Text画面品質規約.md'};
+ function checkFamily(inspection,family){const names=inspection.inputs.files.map(record=>record.file);assert(names.includes('docs/UIパターン規約.md')&&names.includes('agents/builds/build-agent/docs/UIパターン生成チェック.md'),'Common UI inputs missing');assert(Object.entries(familyRules).every(([key,file])=>names.includes(file)===(key===family)),'Wrong family rules selected for '+family);}
+ for(const [method,family] of [['CSharp_ASPNET','WEB'],['Vue_CSharpAPI','WEB'],['CSharp_WPF','WEB'],['VB.NET_WinForms','WINFORMS'],['Access','WINFORMS'],['COBOL','TEXT'],['AS400_RPG','TEXT']]) checkFamily(JSON.parse(exec('preflight.mjs','family-scope',0,method,true).stdout),family);
  const uiRule='docs/UI適合検査.md';
  assert(read('inputs.json').files.some(f=>f.file===uiRule),'Aggregate omitted the common UI conformance rule');
  const dataRule='docs/テストデータ整備規約.md',accessRule='agents/builds/build-agent/docs/Access生成チェック.md',accessLayoutRule='docs/Access画面品質規約.md';
@@ -49,6 +54,17 @@ try{
  exec('preflight.mjs','missing-access-layout',1,'Access',true);
  exec('preflight.mjs','other-layout-absent',0,'CSharp_ASPNET',true);
  write(accessLayoutRule,accessLayoutOriginal);
+ // Each family freezes its rule, rejects its removal/change, and ignores peer policies.
+ for(const [method,family,peer] of [['CSharp_WPF','WEB','VB.NET_WinForms'],['VB.NET_WinForms','WINFORMS','COBOL'],['COBOL','TEXT','CSharp_WPF']]) {
+  const file=familyRules[family],original=fs.readFileSync(path.join(root,file));
+  exec('preflight.mjs','family-policy',0,method);exec('manifest.mjs','family-policy',0,method);
+  write(file,original.toString('utf8').replace('| A | fixture |','| A | changed family policy |'));
+  exec('manifest.mjs','family-policy',1,method);assert(!fs.existsSync(path.join(generation(method),'outputs.json')),'Changed family policy retained old outputs');
+  exec('preflight.mjs','peer-policy',0,peer,true);write(file,original);exec('manifest.mjs','family-policy',0,method);
+  fs.unlinkSync(path.join(root,file));exec('manifest.mjs','family-policy',1,method);
+  assert(!fs.existsSync(path.join(generation(method),'outputs.json')),'Deleted family policy retained old outputs');
+  exec('preflight.mjs','missing-family',1,method,true);exec('preflight.mjs','peer-policy-absent',0,peer,true);write(file,original);
+ }
  write('sample-project1/build/generation/outputs.json','obsolete success');
  exec('preflight.mjs','current',0);
  assert(!fs.existsSync(path.join(generation(),'outputs.json')),'Old output manifest remained current');
@@ -124,7 +140,31 @@ try{
  exec('preflight.mjs','unregistered',1,'COBOL',true,'sample-project2');
  write('sample-project2/spec/README.md',routing('sample-project2',['Access','CSharp_ASPNET','New_GUI']));
  for(const leaf of ['README.md','規約/開発規約.md']){const f=`sample-project2/spec/New_GUI/${leaf}`;write(f,doc(f,`SP2-New-${leaf}`));}
- exec('preflight.mjs','registered-extension',0,'New_GUI',true,'sample-project2');
+ checkFamily(JSON.parse(exec('preflight.mjs','registered-extension',0,'New_GUI',true,'sample-project2').stdout),null);
+ write('sample-project2/srcs/New_GUI/profile.json',JSON.stringify({uiFamily:'WEB',renderer:'BROWSER'}));
+ checkFamily(JSON.parse(exec('preflight.mjs','source-family-ignored',0,'New_GUI',true,'sample-project2').stdout),null);
+ const uiMetadata='sample-project2/spec/New_GUI/規約/UIパターン.json';
+ for(const [family,renderer] of [['WEB','BROWSER'],['WEB','WPF'],['TEXT','TERMINAL'],['WINFORMS','ACCESS'],['WINFORMS','WINFORMS']]) {
+  write(uiMetadata,JSON.stringify({schemaVersion:1,family,renderer}));
+  const declared=JSON.parse(exec('preflight.mjs','declared-extension',0,'New_GUI',true,'sample-project2').stdout);checkFamily(declared,family);
+  assert(declared.inputs.files.some(record=>record.file===uiMetadata),'Explicit UI family metadata was not frozen');
+  assert([accessRule,accessLayoutRule].every(file=>declared.inputs.files.some(record=>record.file===file)===(renderer==='ACCESS')),'Access renderer policies were omitted or leaked to another renderer');
+  if(renderer==='ACCESS') {
+   fs.unlinkSync(path.join(root,accessLayoutRule));exec('preflight.mjs','unknown-access-policy-missing',1,'New_GUI',true,'sample-project2');
+   write(uiMetadata,JSON.stringify({schemaVersion:1,family:'WEB',renderer:'BROWSER'}));exec('preflight.mjs','unknown-browser-policy-isolation',0,'New_GUI',true,'sample-project2');write(accessLayoutRule,accessLayoutOriginal);
+  }
+ }
+ for(const value of ['{broken',JSON.stringify({schemaVersion:2,family:'WEB',renderer:'BROWSER'}),JSON.stringify({schemaVersion:1,family:'OTHER',renderer:'BROWSER'}),JSON.stringify({schemaVersion:1,family:'WEB',renderer:'TERMINAL'}),JSON.stringify({schemaVersion:1,family:'WEB',renderer:'BROWSER',render:'typo'})]) {write(uiMetadata,value);exec('preflight.mjs','invalid-ui-metadata',1,'New_GUI',true,'sample-project2');}
+ fs.unlinkSync(path.join(root,uiMetadata));fs.mkdirSync(path.join(root,uiMetadata));exec('preflight.mjs','nonregular-ui-metadata',1,'New_GUI',true,'sample-project2');fs.rmdirSync(path.join(root,uiMetadata));
+ fs.symlinkSync(path.dirname(path.join(root,uiMetadata)),path.join(root,uiMetadata),'junction');exec('preflight.mjs','linked-ui-metadata',1,'New_GUI',true,'sample-project2');fs.unlinkSync(path.join(root,uiMetadata));
+ const knownMetadata='sample-project2/spec/Access/規約/UIパターン.json';write(knownMetadata,JSON.stringify({schemaVersion:1,family:'WEB',renderer:'BROWSER'}));exec('preflight.mjs','known-ui-conflict',1,'Access',true,'sample-project2');
+ write(knownMetadata,JSON.stringify({schemaVersion:1,family:'WINFORMS',renderer:'WINFORMS'}));exec('preflight.mjs','known-renderer-conflict',1,'Access',true,'sample-project2');
+ write(knownMetadata,JSON.stringify({schemaVersion:1,family:'WINFORMS',renderer:'ACCESS'}));exec('preflight.mjs','known-ui-match',0,'Access',true,'sample-project2');fs.unlinkSync(path.join(root,knownMetadata));
+ write(uiMetadata,JSON.stringify({schemaVersion:1,family:'WEB',renderer:'BROWSER'}));
+ write('sample-project2/srcs/New_GUI/profile.json',JSON.stringify({uiConformance:{required:false,reason:'Synthetic metadata lifecycle fixture has no product UI',sourceFiles:['sample-project2/spec/New_GUI/README.md']}}));
+ exec('preflight.mjs','extension-metadata',0,'New_GUI',false,'sample-project2');exec('manifest.mjs','extension-metadata',0,'New_GUI',false,'sample-project2');
+ write(uiMetadata,JSON.stringify({schemaVersion:1,family:'TEXT',renderer:'TERMINAL'}));exec('manifest.mjs','extension-metadata',1,'New_GUI',false,'sample-project2');
+ assert(!fs.existsSync(path.join(root,'sample-project2/srcs/New_GUI/build/generation/outputs.json')),'Changed explicit UI metadata retained old outputs');fs.unlinkSync(path.join(root,uiMetadata));
  write('sample-project2/spec/README.md',routing('sample-project2',['Access','CSharp_ASPNET']));
  const sharedRule='docs/仕様書作成ルール.md',sharedBefore=fs.readFileSync(path.join(root,sharedRule));write(sharedRule,sharedBefore.toString('utf8')+'| B | [other project routing](../sample-project9/spec/Other/missing.md) |\n');
  exec('preflight.mjs','foreign-routing',0,'Access',true,'sample-project2');write(sharedRule,sharedBefore);
@@ -146,7 +186,7 @@ try{
  for(const script of ['isolate-specs.mjs','finalize-isolation-docs.mjs','document-dotnet-projects.mjs']){before=JSON.stringify(snapshot());const retired=spawnSync(process.execPath,[path.join(root,'agents/builds/build-agent/scripts',script)],{encoding:'utf8'});assert(retired.status===1&&retired.stderr.includes('Retired migration'),'Historical writer was not refused');assert(JSON.stringify(snapshot())===before,'Historical writer changed files');}
  function isolation(expected){const r=spawnSync(process.execPath,[path.join(root,'agents/builds/build-agent/scripts/check-isolation.mjs'),'fixture-isolation','--project','sample-project1'],{encoding:'utf8'});assert(r.status===expected,`Isolation expected ${expected}: ${r.stderr}${r.stdout}`);}
  isolation(0);const ownReadme=`sample-project1/spec/${profile}/README.md`,ownOriginal=fs.readFileSync(path.join(root,ownReadme));write(ownReadme,`[source](../../srcs/${profile}/README.md)\n`);isolation(1);const isolatedResult=JSON.parse(fs.readFileSync(path.join(root,'sample-project1/build/test-results/isolation.json'),'utf8'));assert(isolatedResult.findings.some(f=>f.code==='SPECIFICATION_REFERENCE_OUTSIDE'),'Specification dependency on generated source was not rejected');write(ownReadme,ownOriginal);
- console.log(`PASS ${passed} assertions: canonical specification roots, independent closure, common data and scoped Access quality rule freezing, read-only inspection, frozen-set checks, retired writers, latest replacement and source-only inventory; fixture only.`);
+ console.log(`PASS ${passed} assertions: canonical specification roots, independent closure, scoped WEB/WinForms/Text and Access policies, explicit extension metadata and renderer checks, read-only inspection, frozen-set checks, retired writers, latest replacement and source-only inventory; fixture only.`);
 }finally{
  const resolved=path.resolve(fixture);if(!resolved.startsWith(base+path.sep))throw new Error('Cleanup target outside fixture area');fs.rmSync(resolved,{recursive:true,force:true});
 }

@@ -3,6 +3,33 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {selectedProfiles} from './project-scope.mjs';
 
+// Layout family is separate from the native rendering technology (notably WPF).
+const uiFamilies = Object.freeze({
+  CSharp_ASPNET:'WEB', Vue_CSharpAPI:'WEB', CSharp_WPF:'WEB',
+  'VB.NET_WinForms':'WINFORMS', Access:'WINFORMS', COBOL:'TEXT', AS400_RPG:'TEXT',
+});
+const uiQualityFiles = Object.freeze({WEB:'docs/WEB画面品質規約.md',WINFORMS:'docs/WinForms画面品質規約.md',TEXT:'docs/Text画面品質規約.md'});
+const uiRenderers = Object.freeze({CSharp_ASPNET:'BROWSER',Vue_CSharpAPI:'BROWSER',CSharp_WPF:'WPF','VB.NET_WinForms':'WINFORMS',Access:'ACCESS',COBOL:'TERMINAL',AS400_RPG:'TERMINAL'});
+const familyRenderers = Object.freeze({WEB:['BROWSER','WPF'],WINFORMS:['WINFORMS','ACCESS'],TEXT:['TERMINAL']});
+export const uiFamilyForProfile = profile => Object.hasOwn(uiFamilies,profile) ? uiFamilies[profile] : null;
+
+export function resolveUIFamily(root, project, profile) {
+  selectedProfiles(root,project,profile);
+  if(!profile) throw new Error('Exactly one profile is required to resolve its UI family.');
+  const known=uiFamilyForProfile(profile), renderer=Object.hasOwn(uiRenderers,profile)?uiRenderers[profile]:null;
+  const relative=`${project}/spec/${profile}/規約/UIパターン.json`,target=path.join(root,relative);
+  // lstat also detects dangling links; existsSync would silently treat those as absent.
+  let info;try{info=fs.lstatSync(target);}catch(error){if(error.code!=='ENOENT')throw error;}
+  if(!info) return {family:known,renderer,source:null};
+  assertRegular(target);
+  const value=JSON.parse(fs.readFileSync(target,'utf8').replace(/^\uFEFF/,''));
+  if(!value || typeof value!=='object' || Array.isArray(value) || value.schemaVersion!==1 ||
+     !Object.hasOwn(familyRenderers,value.family) || !familyRenderers[value.family].includes(value.renderer) ||
+     Object.keys(value).some(key=>!['schemaVersion','family','renderer'].includes(key))) throw new Error('Invalid UI pattern specification: '+relative);
+  if(known && (value.family!==known || value.renderer!==renderer)) throw new Error('UI pattern specification contradicts the registered family/renderer: '+profile);
+  return {family:value.family,renderer:value.renderer,source:relative};
+}
+
 export function fixedInputFiles(project, profile) {
   return [
     'AGENTS.md', 'agents/README.md',
@@ -12,7 +39,9 @@ export function fixedInputFiles(project, profile) {
     'agents/builds/build-agent/AGENT.md', 'agents/builds/build-agent/PROMPT.md', 'agents/builds/build-agent/README.md', 'agents/reverses/reverse-agent/AGENT.md',
     'docs/リポジトリ構成.md', 'docs/開発規約.md', 'docs/仕様書作成ルール.md',
     'docs/評価規約.md', 'docs/MD構造・Excel変換規約.md', 'docs/テーブル仕様書記述規約.md',
-    'docs/テストデータ整備規約.md', 'docs/UI適合検査.md',
+    'docs/テストデータ整備規約.md', 'docs/UI適合検査.md', 'docs/UIパターン規約.md',
+    'agents/builds/build-agent/docs/UIパターン生成チェック.md',
+    ...(!profile ? Object.values(uiQualityFiles) : uiFamilyForProfile(profile) ? [uiQualityFiles[uiFamilyForProfile(profile)]] : []),
     ...(!profile || profile === 'Access' ? ['docs/Access画面品質規約.md', 'agents/builds/build-agent/docs/Access生成チェック.md'] : []),
     `${project}/README.md`, `${project}/プロジェクト情報.md`, `${project}/spec/README.md`,
   ];
@@ -43,6 +72,9 @@ export function collectInputFiles(root, project, profile) {
   assertRegular(path.join(root, project), true);
   for (const name of fixedInputFiles(project, profile)) {const target = path.join(root, name); assertRegular(target); files.push(target);}
   for (const method of methods) {
+    const ui=resolveUIFamily(root,project,method);
+    if(ui.family) {const target=path.join(root,uiQualityFiles[ui.family]);assertRegular(target);files.push(target);}
+    if(ui.renderer==='ACCESS') for(const name of ['docs/Access画面品質規約.md','agents/builds/build-agent/docs/Access生成チェック.md']) {const target=path.join(root,name);assertRegular(target);files.push(target);}
     const spec = specificationRoot(root, project, method);
     assertRegular(path.join(spec, '規約', '開発規約.md'));
     walk(spec);

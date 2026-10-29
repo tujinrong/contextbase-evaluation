@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN-README","version":"1.10","path":"agents/designs/basic-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物","kind":"GRID","sheet":"02_成果物"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN-README","version":"1.11","path":"agents/designs/basic-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物","kind":"GRID","sheet":"02_成果物"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"}]} -->
 # basic-design-agent
 
-定義版1.10／2026-10-29。基本設計専用の正本を維持し、Access画面品質を設計・モック・状態/操作のレビューと下流への引継ぎへ接続する。
+定義版1.11／2026-10-29。基本設計専用の正本とAccess品質条件を維持し、3分類のUIパターンと実行基盤別の設計・確認・引継ぎを接続する。
 
 ## 使い方
 
@@ -12,6 +12,8 @@
 専用規則は[rules/基本設計書作成ルール.md](rules/基本設計書作成ルール.md)、執筆・検査・描画・記録の工程は[workflows/基本設計.md](workflows/基本設計.md)へ保存する。共通docsと他Agentはこの正本を参照し、基本設計専用の別ルールを持たない。
 
 Accessの段階横断UI品質は[Access画面品質規約](../../../docs/Access画面品質規約.md)を使用する。当工程は要件の利用者タスク・環境・保存単位・合理性/統一性/見やすさ/操作性の受入条件を読み、画面タイプ別構成、共通トークン、対象常時識別、実データ長に応じた一覧/詳細、保存/取消境界、状態とキー操作へ具体化する。
+
+分類と工程間の採用条件は[UIパターン規約](../../../docs/UIパターン規約.md)、分類別品質は[WEB](../../../docs/WEB画面品質規約.md)・[WinForms](../../../docs/WinForms画面品質規約.md)・[Text](../../../docs/Text画面品質規約.md)を使用する。利用者タスクから必要な主/補助パターンだけを選び、WEB系のWPFもネイティブ基盤を維持する。Webのサイトメニュー・行操作・ページング、WinFormsの標準部品/DPI/確定経路、Textの行桁/DBCS/保護/機能キー/ページ保持を同じ配置・数値に統一しない。
 
 全体docsを読み、specRoot=project/spec/方式ID/とsourceRoot=project/srcs/方式ID/、許可入力・出力、除外、版・ハッシュを固定する。新projectは利用者の明示作成依頼があるときだけ作る。既存projectは許可された構造と書式を参照し、別題材の業務値や確定前提を転用しない。
 
@@ -38,6 +40,8 @@ Accessの段階横断UI品質は[Access画面品質規約](../../../docs/Access�
 AccessではForm/Page/Dialogと状態を列挙し、identity/layout/content/selection/saveCancel/navigation/keyboard/states/viewportの9カテゴリに個別の合格条件、適用/対象外理由、根拠、設計確認結果、下流での実画面検証方法を対応付ける。4観点を単一のreadable=trueに集約せず、重要な未決・不適合・未検証があれば影響と次の確認条件を明記する。製品検査用JSONはこの工程では生成しない。
 
 暫定の寸法/倍率を正式な対応環境へ自動昇格せず、画像から保存・取消・キー操作を確定しない。既存確定前提と変更範囲を守り、全画面中央寄せ・均等幅・全11pt・認証復活・自動保存への変更を画面品質の名目で強制しない。
+
+3分類の完了時はscreenFamily/renderer・必要purposePatternIds・採用理由/差分、画面/領域と遷移・状態/環境・個別合格条件を要求IDと根拠付きで照合し、下流へ実基盤ごとの検査方法と未実施を渡す。参照資料の独立HTMLやJSデモを正本として併置せず、MD概要GRID内の同じ静的断片を.tmp/へ抽出して描画する。全24パターンやWebの20件等の提案値を全方式へ強制せず、既存のAccess取得/保存/字体条件を維持する。
 
 イベントの品質確認では、具体手順・判定・分岐・更新前再判定・DB結果・メッセージと復帰・Pilotケースが対応しているかを確認する。定義のない参照や「検査する」「共通エラー」のみの説明を残さず、独立レビューとシナリオ設計/試験実施の状態を分けて記録する。
 

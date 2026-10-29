@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN","version":"1.2","path":"agents/designs/detail-design-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"実行コンテキスト","kind":"LIST","sheet":"02_実行コンテキスト","key":["項目"]},{"heading":"入出力と境界","kind":"LIST","sheet":"03_入出力と境界","key":["区分"]},{"heading":"成果物の構成","kind":"GRID","sheet":"04_成果物の構成"},{"heading":"実行手順","kind":"GRID","sheet":"05_実行手順"},{"heading":"検査と完了","kind":"GRID","sheet":"06_検査と完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN","version":"1.3","path":"agents/designs/detail-design-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"実行コンテキスト","kind":"LIST","sheet":"02_実行コンテキスト","key":["項目"]},{"heading":"入出力と境界","kind":"LIST","sheet":"03_入出力と境界","key":["区分"]},{"heading":"成果物の構成","kind":"GRID","sheet":"04_成果物の構成"},{"heading":"実行手順","kind":"GRID","sheet":"05_実行手順"},{"heading":"検査と完了","kind":"GRID","sheet":"06_検査と完了"}]} -->
 # 詳細設計書作成Agent 契約
 
-定義版1.2／2026-10-29。詳細仕様書の新規作成・改善・レビューに専念する独立契約。Accessの画面品質を物理部品、操作・保存境界、検証条件へ具体化する。
+定義版1.3／2026-10-29。詳細仕様書の新規作成・改善・レビューに専念する独立契約。WEB系・WinForms系・Text系のUI品質を各方式の部品、操作・保存境界、検証条件へ具体化する。
 
 ## 概要
 
@@ -12,6 +12,8 @@ AG-DETAIL-DESIGN。指定project・方式の要件と基本設計を、実装者
 AIが設計判断と詳細仕様本文を執筆する。機械処理は目録、形式検査、ハッシュ、保存、描画抽出に限定し、業務本文を固定テンプレートや別projectの置換で組み立てない。特定業務の項目、件数、認証、DB、採点期待値を当Agentへ内蔵しない。
 
 [全体の仕様作成規則](../../../docs/仕様書作成ルール.md)、[MD/Excel規約](../../../docs/MD構造・Excel変換規約.md)、[TABLE規約](../../../docs/テーブル仕様書記述規約.md)、[配置規則](../../../docs/リポジトリ構成.md)、[テストデータ整備規約](../../../docs/テストデータ整備規約.md)の共通責務を適用する。
+
+UIの分類と段階横断の引継ぎは[UIパターン規約](../../../docs/UIパターン規約.md)、方式別品質は[WEB画面品質規約](../../../docs/WEB画面品質規約.md)、[WinForms画面品質規約](../../../docs/WinForms画面品質規約.md)、[Text画面品質規約](../../../docs/Text画面品質規約.md)の該当範囲を採用する。WEB系に含むWPFもXAML・DIP・バインド/コマンド・ネイティブ操作を維持し、URL/DOM/CSS/ブラウザーを必須にしない。24の用途パターンは主/補助の必要分だけを選び、3系統の分類やscreen_typeと区別する。
 
 Accessでは段階横断の[Access画面品質規約](../../../docs/Access画面品質規約.md)と[UI適合検査](../../../docs/UI適合検査.md)を採用し、詳細設計での具体化は当Agentの専用規則と工程へ従う。画面タイプ別の目的、合理性・統一性・見やすさ・操作性の合格条件を、物理部品・状態遷移・保存単位・実装後の検査方法まで対応付ける。外部レビューの初期値や画像の見た目を、利用者の確定条件や実動作の証拠へ読み替えない。
 
@@ -28,10 +30,12 @@ Accessでは段階横断の[Access画面品質規約](../../../docs/Access画面
 | inputSet / ruleSet | 入力commit、未commit差分、入力ファイルの版・SHA-256、当Agentの契約・専用規則・工程と共通規約の版・SHA-256。現在の入力をcommitだけで代表させない |
 | requiredDocuments / expectedFiles | 指定範囲に必要な索引・機能別詳細・方式別共通・DB定義・規約・QA・参照先を文書IDと実パスで列挙する。既存保持・入力のみ・生成/改訂・対象外を区分し、ファイル漏れと未定義参照を検査する |
 | allowedPaths / excludedPaths | 読取りと書込みを別に列挙。選択外project/方式、spec-eval、期待値付き採点資料、アプリ実装・DB実行資源を除外し、許可がある場合だけソースを読取り入力へ追加する |
-| screenFamily / terminalProfile | WEB系（WPFを含む）・WinForms系・Text系の所属、標準部品、単位・基準DPI、Text系の行桁・文字コード・キー。未分類なら所属と方式固有制約を先に定める |
+| screenFamily / renderer / terminalProfile | familyはWEB/WINFORMS/TEXT、rendererはBROWSER/WPF/WINFORMS/ACCESS/TERMINALへ正規化する。WEBはBROWSER/WPF、WINFORMSはWINFORMS/ACCESS、TEXTはTERMINALの組だけを採用し、既知7方式の所属は共通規約に従う。Textの行桁・CCSID/DBCS・キー等の実行条件を別に固定する |
+| familySource | 追加方式のUI分類は必要に応じspecRoot/規約/UIパターン.json（schemaVersion=1、family、renderer）を採用根拠付きで定義し、方式別共通UI/QAの具体条件へ対応付ける。未分類のUIを完了にせず、理由・根拠付きの非UI例外と区別する |
 | screen_type / purpose / traits | 画面タイプ、利用者の作業目的・選択対象・主操作と必要な追加特性。配置分類と画面用途を区別し、全画面へ同じ構成を強制しない |
+| purposePatternIds / uiRuleMapping | P00〜P23等から採用した主/補助パターンと理由、規約ID→画面/項目/操作・イベントID→期待条件IDの対応。全24パターンや対応外の部品を追加しない |
 | change_scope / saveContract | layout_only・ui_behavior・data_logicの許可範囲、保存方式・単位・確定時点・未反映入力・取消範囲・失敗時の扱い。既存の保存契約を継承し、不明はundecided/QAとする |
-| targetViewport / states | 採用済みの最小有効表示領域、表示倍率、必要状態を優先する。Access未指定時は1280×720論理px相当の有効領域を暫定設計基準、100/125/150%を確認候補とし、実測/対応保証へ昇格しない。他方式の既定1366×768 CSS px・100%は各方式の設計確認用として区別する |
+| targetViewport / states | 採用済みの最小有効領域・倍率・必要状態を優先し、WebのCSS px/ズーム、WPFのDIP、WinFormsの基準DPIのpx、Accessのtwip/pt、Textの行/表示セルを区別する。ブラウザーWebの未指定時1366×768 CSS px・100%、Accessの1280×720論理px相当と100/125/150%候補は暫定確認用に留め、他方式の保証や端末行桁へ転用しない |
 | runId / reportRoot | runIdは記録の属性。最終記録はsourceRoot/build/spec-generation/の固定先、中間物はsourceRoot/.tmp/。方式を持たない共通記録はproject/build/detail-design/または当Agent/build/を使う |
 
 ## 入出力と境界
@@ -56,6 +60,7 @@ Accessでは段階横断の[Access画面品質規約](../../../docs/Access画面
 3. DB定義・開発規約・初期確認用データの設計。TABLE9列、物理型/容量/NULL/キー/索引/既定値、命名・配置、データセットと再投入/検査の設計を各責務へ分ける。設計文書やSQL例の記述をDB実行許可と扱わない。
 4. QA・検査記録・引継ぎ。決定根拠と未決、基本から詳細/物理DB/メッセージへの対応、対象版の検査範囲と未実施を示す。詳細設計の存在だけで実装・受入・正式採点を完了扱いしない。
 5. AccessのUI実装・検査契約。対象specRoot内の方式別共通と機能別詳細へ、Form/Section/Page/Controlと付属ラベル・一覧見出しの一覧、トークンと寸法・列幅、状態/キー/フォーカス、編集バッファからDBまでの確定・取消範囲を記す。各合格条件を根拠ID/版と期待値・検査方法・証拠へ結び、実装Agentがtests/ui-contract.jsonへ転記できるようにする。この工程では製品用JSONや実測結果を生成して検査済みとしない。
+6. 3系統のUI引継ぎ。選択specRootの方式別共通/機能詳細へ、共有枠と現在位置、独立見出し、遷移/対象操作、検索条件・ページ/出力、入力/保存/離脱、キー/状態と実装部品を対応付ける。WebはURL・意味HTML・CSSトークン・DOM、WPFはXAML/DIP・バインド、WinFormsはForm/Control/DPI、Textは入出力レコードと行桁/キーの実装契約へ具体化し、各方式の最終製品から実測する個別条件と必要証拠を渡す。仕様画面の正本はMD概要GRIDの静的HTML/CSSを維持し、参照パッケージの単独HTMLや試作JavaScriptを最終仕様・機能完成の根拠にしない。
 
 ## 実行手順
 
@@ -68,5 +73,7 @@ Accessでは段階横断の[Access画面品質規約](../../../docs/Access画面
 重大な定義不足、正本間の矛盾、範囲内で解消できない要件・基本設計の変更は根拠、影響、担当契約、再開条件を記録する。影響部分を保留し、独立して進められる範囲を進める。軽微または対象外の問題はQAへ残し、既存成果物を繰り返し再生成しない。
 
 Accessでは全タブの対象識別、重要列の判読/全文到達、選択と詳細の一致、未反映入力を含む保存、取消・離脱・保存失敗、Tab/Enter/Escの合格条件と担当が揃うことを詳細設計の完了条件にする。適合・不適合・未検証・理由付き対象外を分け、設計済みと実機で動作確認済みを区別する。layout_onlyで保存方式・検索意味・認証・DBを変更せず、操作契約の変更案は別のQA/担当工程へ引き継ぐ。
+
+全UI方式は採用規約/用途パターンから画面/項目/操作ID、物理部品/端末領域、実装前の個別期待値と最終製品の検証方法へ追跡できることを完了条件にする。Webの直接URL/履歴・条件/ページ復元、WPFのバインド確定とネイティブ遷移、WinFormsのDPI/Anchor・Dock/Tab・保存境界、Textの行桁/保護/入力レコード/機能キー/CCSID等は、該当範囲の条件を定義して未実施の実機検査へ渡す。Access9カテゴリは維持し、他方式に11ptやAccess固有APIを強制しない。重大な欠落は影響範囲を未完了とし、Agent改訂だけで既存仕様・製品を再生成しない。
 
 最終報告はproject・方式・工程・specRoot/sourceRoot、入力/出力の文書ID・版・ファイル・SHA-256、変更内容、検査範囲/結果、未決・未実施を含む。過去成果を別名で累積せず、今回の最終記録とmanifestを固定パスへ更新し、履歴はGitで管理する。

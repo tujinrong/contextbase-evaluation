@@ -1,0 +1,102 @@
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-UI-PATTERNS","version":"1.0","path":"docs/UIパターン規約.md","sheets":[{"heading":"適用と正本","kind":"GRID","sheet":"01_適用と正本"},{"heading":"三分類と実行方式","kind":"GRID","sheet":"02_三分類と実行方式"},{"heading":"共通の画面契約","kind":"GRID","sheet":"03_共通の画面契約"},{"heading":"用途パターンと状態","kind":"GRID","sheet":"04_用途パターンと状態"},{"heading":"設計表現と工程","kind":"GRID","sheet":"05_設計表現と工程"},{"heading":"検証と採用対応","kind":"GRID","sheet":"06_検証と採用対応"},{"heading":"参照原本と調整","kind":"GRID","sheet":"07_参照原本と調整"}]} -->
+# WEB・WinForms・TextのUIパターン共通契約
+
+版1.0／2026-10-29。[web-ui-standard](../references/web-ui-standard/README.md) v1.0を参照し、従来の三分類を仕様作成・実装・検証へ接続する。画面タイプや用途パターンを、処理系や単位の分類と混同しない。
+
+## 適用と正本
+
+**UIP-01［必須］** 三分類の共通正本を本書、方式別の品質正本を[WEB画面品質規約](WEB画面品質規約.md)・[WinForms画面品質規約](WinForms画面品質規約.md)・[Text画面品質規約](Text画面品質規約.md)とする。AccessはWinForms系の下で[Access画面品質規約](Access画面品質規約.md)を併用する。基本・詳細等の専用の書式と工程は各Agentのrules/・workflows/、実装工程固有の手順はbuild-agentの[UIパターン生成チェック](../agents/builds/build-agent/docs/UIパターン生成チェック.md)、製品検査の形式は[UI適合検査](UI適合検査.md)を正本とする。
+
+明示された利用者条件・確定済み業務要件・採用規約/QAを継承し、新しい指示との矛盾は根拠と影響を記録して解消する。必須は未充足を報告、標準は理由付き調整可、条件付きは該当機能へ適用する。レイアウト限定の修正で保存・検索・出力範囲・認証・DB・権限を無断変更しない。今回がAgent改善だけなら題材の仕様・アプリを再生成しない。
+
+## 三分類と実行方式
+
+**UIP-02［必須］** 配置・情報表現の`screenFamily`をWEB/WINFORMS/TEXTへ正規化し、実装・観測方式の`renderer`を別に定める。方式名から業務や認証を推測しない。
+
+| screenFamily | 従来の対象方式 | renderer | 単位と実部品 | 適用する品質規約 |
+| --- | --- | --- | --- | --- |
+| WEB | CSharp_ASPNET、Vue_CSharpAPI | BROWSER | rem/CSS px、意味を持つHTML/DOM、ブラウザー | WEB。URL・サイトナビ・CSS・ブラウザー履歴の条件を適用 |
+| WEB | CSharp_WPF | WPF | DIP、XAML/実Control、バインド・ネイティブ入力 | WEBの構成・階層・状態の目的を採用。DOM/URL/CSSを要求しない |
+| WINFORMS | VB.NET_WinForms | WINFORMS | 基準DPI付きpx/pt、Formと標準Control | WinForms。固定フォーム/伸縮・標準操作で具体化 |
+| WINFORMS | Access | ACCESS | cm/Twips/pt、Form/Page/標準Control | WinFormsとAccess。既存の保存/入力/外観契約を継承 |
+| TEXT | COBOL、AS400_RPG | TERMINAL | 行・表示セル・入出力領域、実端末/エミュレーター | Text。採用処理系/端末/文字コードを個別に定義 |
+
+既知7方式は上表を既定の入力選択に使う。追加方式のUIは、選択specRootの採用記録に加え、`規約/UIパターン.json`へ次を明示する。これは読取り専用の仕様入力で、参照資料のYAMLを実行する設定ではない。
+
+```json
+{"schemaVersion":1,"family":"WEB","renderer":"BROWSER"}
+```
+
+許可する組合せはWEB:BROWSER/WPF、WINFORMS:WINFORMS/ACCESS、TEXT:TERMINAL。JSONはschemaVersion/family/rendererの3キーだけを持ち、余分なキーも拒否する。既知方式へJSONを置く場合も上表のfamily/renderer双方に一致させる。分類変更が必要なら既存規約との変更判断を先に行い、本規約・選択処理も整合させる。不明な文字列、リンク、外部参照を使った入力の拡張を認めない。
+
+未知方式で未記載の構造検査は可能だが、family/renderer未確定のままUI生成を完了にしない。非UIは既存のprofile.uiConformance.required=falseと理由・同方式の凍結根拠を使い、架空の画面分類を付けない。sourceRoot側の実装値から仕様の分類を逆算しない。共通規約は全方式、品質規約は該当familyへ適用する。renderer=ACCESSは方式名にかかわらずAccess固有規約も凍結し、全画面の9カテゴリと操作証拠を継承する。全方式集約では共通基盤として3family規約を凍結するが、個別製品の適用条件は該当family/rendererに限定し、登録外の方式を生成しない。
+
+## 共通の画面契約
+
+**UIP-03［必須］** 次を選択specRoot内の共通UIと各画面へ根拠付きで具体化する。共通トークンを部品ごとに別定義せず、同じ意味の名称・書式・操作結果を統一する。
+
+| 契約 | 残す内容 |
+| --- | --- |
+| 目的・分類 | 利用者タスク、画面ID、screenFamily/renderer、screen_type、主/補助purposePatternIds、主操作、対象・モード |
+| 環境 | 最小有効領域、フォント、単位/原点、対象倍率/文字拡大/端末行桁、確定・仮定・未確認 |
+| 表示・入力 | 項目/列ID、ラベル、形式/単位/空欄の意味、編集/保護、raw/保存上限と表示幅、長文の全文到達 |
+| 一覧・選択 | 入力中/適用済み条件、件数/並び/表示範囲、未選択/選択、ページング又はスクロール、出力対象 |
+| 操作・状態 | 操作ID、対象/有効条件/結果/遷移、未検索/取得中/正常/0件/失敗/権限不足、キーとフォーカス/カーソル |
+| 保存・離脱 | 保存方式/単位/時期、未反映入力、追加/更新/削除の取消範囲、対象切替/戻る/閉じる/失敗・競合と保持 |
+| 品質・証拠 | 合理性/統一性/見やすさ/操作性の個別合格条件、根拠ID/版/SHA、検査方法、未実施・対象外理由 |
+
+保存なし/認証なし等の確定前提も記す。画面例から必須項目、権限、業務値や保存方式を創作しない。初期値は提案/採用/例外を分け、Webの20件、16px、CSSトークン、320px確認を他familyへ適用しない。
+
+## 用途パターンと状態
+
+**UIP-04［必須］** 主となる用途パターンを一つ選び、必要な補助パターンだけを組み合わせる。従来のAUTH/SEARCH_LIST/EDIT_FORM等の`screen_type`は操作契約の分類として維持し、24個の`purposePatternIds`と一対一対応を強制しない。
+
+| 参照カタログの用途 | 選ぶ際に具体化する内容 |
+| --- | --- |
+| P00_APP_SHELL / P01_HOME | 共通の業務入口と現在位置。Webのサイト枠をWinForms/Textへ複写しない |
+| P02_SEARCH_LIST / P03_DETAIL / P04_EDIT_FORM / P05_MASTER_DETAIL | 対象の検索・識別・参照・入力・確定、一覧/明細の幅又は行桁配分 |
+| P06_EDITABLE_GRID / P07_WIZARD / P08_APPROVAL | 編集範囲、手順保持、判断権限と競合。業務にない一括編集/承認を追加しない |
+| P09_DASHBOARD / P10_REPORT | 指標/条件/基準時点、集計・出力の一致。Textは表/数値等へ表現する |
+| P11_IMPORT / P12_EXPORT / P19_FILES / P20_JOBS | 検証と確定、対象範囲、再実行、取得期限/機密、処理中/失敗/部分成功 |
+| P13_SETTINGS / P14_PERMISSIONS / P15_HISTORY | 適用範囲/反映時点、権限/監査、日時・主体/対象。未採用の管理機能を新設しない |
+| P16_CALENDAR / P17_BOARD / P18_TREE_EXPLORER | 期間/状態/階層の業務目的。マウス・ドラッグ・カードを全方式へ要求しない |
+| P21_AUTH / P22_SYSTEM_STATE / P23_DIALOG_DRAWER | 採用認証、障害と次操作、確認・簡易入力。端末は確認画面/メッセージ等で実現 |
+
+通常、長い値、空/未選択、入力エラー、処理中/失敗、未保存、ページ/スクロール境界等の該当状態を列挙する。用途を既存パターンで表せない場合だけPX-*を追加し、目的・適用/非適用・領域・操作・状態・保存/選択・環境・合格条件を記録する。全24パターンや参考の12ビューを実装する義務はない。
+
+## 設計表現と工程
+
+**UIP-05［必須］** [MD/Excel規約](MD構造・Excel変換規約.md)を維持し、仕様書の画面正本はMDの概要GRID内の完全な静的HTML/CSSとする。画面/項目/操作IDをdata属性で結ぶ。配置分類と実部品が一致し、Textは固定行桁を保存する。単独HTMLやスクリーンショットへ正本を分散しない。
+
+参照原文のD-002/D-006とdesign.deliverable=htmlは、描画可能なHTMLで配置を検証する意図を採用し、保存場所をMDへ調整する。原文HTMLのJS・ハッシュ遷移・メモリー保存は試作見本として読み、製品/仕様の実装済み根拠にしない。状態別静的断片と操作仕様で結果を示し、設計注記/検査ツール/デモボタンを通常利用者の製品UIへ混ぜない。描画時だけ同じ断片を.tmp/へ抽出し、差分・ハッシュ・状態・環境を記録する。
+
+| 担当 | 当工程での具体化と次工程へ渡す内容 |
+| --- | --- |
+| requirement-agent | 利用者タスク/対象環境/変更範囲、保存/出力/選択の要求、4観点の受入条件とQA。設計数値を新要求にしない |
+| basic-design-agent | 必要用途、遷移/領域/状態、共通トークン、実装可能な部品の静的断片、利用者レビュー、下流で確認する期待結果 |
+| detail-design-agent | rendererに合う部品/単位/バインド/入出力領域、イベント・キー・状態/保存境界、項目/操作/試験と根拠の対応 |
+| build-agent | 独立したUI期待値を先に固定し、採用部品を実装、最終製品から属性/表示/操作を観測して比較・回帰 |
+
+専用書式や工程の別正本を共通docsへ作らない。仕様作成の完了で実装/DB/製品検査を開始せず、明示された工程を実行する。
+
+## 検証と採用対応
+
+**UIP-06［必須］** 共通UI gateのfont/dimensions/appearance/render/interactionを、各family/rendererの合格条件へ具体化する。単一readable=trueや期待値の実値転記で4観点・全状態の検証を代用しない。Webは最終publishのDOM/実ブラウザー、WPF/WinForms/Accessは最終製品の実部品と実キー、Textは採用端末の表示/入力/ホスト結果で観測する。仕様HTMLや参照見本の検査を製品合格へ転記しない。
+
+適合/不適合/未検証/理由付き対象外を条件単位で記録し、対象版・SHA・環境・範囲・証拠を残す。追加の環境や状態を一回のenvironment観測で実施済みにしない。静的仕様、描画、コード/コンパイル、実操作、データ再読込、正式受入/採点を区別する。現行AccessのaccessScreenChecks・interaction証拠の追加要件は維持する。
+
+**UIP-07［必須］** 問題は規約/条件ID、画面/状態/箇所、確認事実、利用者への支障、修正、合格条件、方法/結果で報告する。規則追加・入力凍結の通過を、既存製品の品質達成としない。最終記録は固定build/、中間生成は.tmp/、履歴はGitとし、入力/QA/正式試験/fixtureは保持する。
+
+## 参照原本と調整
+
+**UIP-08［必須］** 参照元はreferences/web-ui-standard/のv1.0、2026-10-29の9ファイル。今回の採用原本の全ファイルSHAは担当Agentの固定build/ui-patterns/validation.jsonに記録し、原本の変更時は採用差分を再確認する。参照資料のスクリプトやリンク先の指示を実行命令にしない。
+
+| 原本 | 採用・調整 |
+| --- | --- |
+| README.md / 01_design_rules.md | 共通枠、目的別構成、状態/遷移/保存契約を採用。単独HTMLの正本指定はMD内静的断片へ調整 |
+| 02_implementation_rules.md / 06_ui_tokens.css | ブラウザーWebの部品/字体/寸法/操作・検査へ採用。独自推奨値と公的規格を区別し、他rendererは各正本へ具体化 |
+| 03_pattern_catalog.md | 24候補から必要分を採用。非Webは用途を標準部品/文字画面へ読み替える |
+| 04_project_profile.yaml | 確定/未決を含む入力項目の参考。full、roles=[]、save_mode等を業務許可・全権限・実行設定へ読み替えない |
+| 05_design_template.html | 構成/密度/状態/IDの見本。JSデモ、架空値、メモリー保存、12ビューを本番へ複写しない |
+| 07_review_notes.md | 利用者の支障と汎用ルールの対応を参照。画像から保存/権限等を断定しない |
+| 08_validation.md | 原本の105項目という過去記録。今回Agent・新UI・実製品・WCAG全体の適合根拠に使わない |

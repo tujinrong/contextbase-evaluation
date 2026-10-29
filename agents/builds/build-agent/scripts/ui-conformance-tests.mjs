@@ -101,12 +101,16 @@ function fails(name,change,code){setup();change();const result=validateUIConform
 function mutateObservation(change){const value=read(observationFile);change(value);write(observationFile,value);}
 function mutateContract(change){const value=read(contractFile);change(value);write(contractFile,value);refreshContractHash();}
 function cli(script,expected){const output=spawnSync(process.execPath,[path.join(root,'agents/builds/build-agent/scripts',script),'--project',project,'--profile',profile,'--run-id',runId],{cwd:root,encoding:'utf8'});assert(output.status===expected,script+' expected '+expected+' got '+output.status+': '+output.stderr+output.stdout);}
-function peerFixture(){
+function peerFixture(peer='CSharp_ASPNET',declaredUI=null){
  setup();
- const peer='CSharp_ASPNET',peerOwner=`${project}/srcs/${peer}`,peerSpec=`${project}/spec/${peer}/規約/UI生成条件.md`;
- write(`${project}/spec/README.md`,'| 方式ID | specRoot | sourceRoot |\n| --- | --- | --- |\n| Access | sample-project1/spec/Access/ | sample-project1/srcs/Access/ |\n| CSharp_ASPNET | sample-project1/spec/CSharp_ASPNET/ | sample-project1/srcs/CSharp_ASPNET/ |\n');
+ const peerOwner=`${project}/srcs/${peer}`,peerSpec=`${project}/spec/${peer}/規約/UI生成条件.md`,uiMetadata=`${project}/spec/${peer}/規約/UIパターン.json`;
+ for(const file of fixedInputFiles(project,peer))write(file,doc(file,'FIX-'+sha(file).slice(0,12)));
+ for(const file of ['docs/WEB画面品質規約.md','docs/WinForms画面品質規約.md','docs/Text画面品質規約.md'])write(file,doc(file,'FIX-'+sha(file).slice(0,12)));
+ write(`${project}/spec/README.md`,`| 方式ID | specRoot | sourceRoot |\n| --- | --- | --- |\n| Access | sample-project1/spec/Access/ | sample-project1/srcs/Access/ |\n| ${peer} | sample-project1/spec/${peer}/ | sample-project1/srcs/${peer}/ |\n`);
  write(`${project}/spec/${peer}/規約/開発規約.md`,doc(`${project}/spec/${peer}/規約/開発規約.md`,'FIX-PEER-DEV'));
  write(peerSpec,doc(peerSpec,'FIX-PEER-UI'));
+ if(fs.existsSync(path.join(root,uiMetadata)))fs.unlinkSync(path.join(root,uiMetadata));
+ if(declaredUI)write(uiMetadata,{schemaVersion:1,...declaredUI});
  write(`${peerOwner}/profile.json`,{uiConformance:{required:true,contract:'tests/ui-contract.json'}});
  for(const file of ['build/app/product.bin','build/app/site.css','build/test-results/ui/screen.txt','build/test-results/ui/operations.txt','tests/observe.py','tools/measure-helper.py']) write(`${peerOwner}/${file}`,fs.readFileSync(path.join(root,owner,file),'utf8'));
  const files=collectInputFiles(root,project,peer).map(target=>{
@@ -114,15 +118,26 @@ function peerFixture(){
   return {file:path.relative(root,target).split(path.sep).join('/'),sha256:sha(data),bytes:data.length,...(metadata?{documentId:metadata.documentId,version:metadata.version}:{})};
  });
  write(`${peerOwner}/build/generation/inputs.json`,{...read(inputsFile),profileId:peer,files});
- const contract=read(contractFile);contract.profileId=peer;delete contract.accessScreenChecks;
+ const accessRenderer=declaredUI?.renderer==='ACCESS';
+ const contract=read(contractFile);contract.profileId=peer;if(!accessRenderer)delete contract.accessScreenChecks;
  contract.sources=[{file:peerSpec,documentId:'FIX-PEER-UI',version:'1.0',sha256:hash(peerSpec)}];
  for(const rule of contract.rules) rule.sourceFiles=[peerSpec];
  write(`${peerOwner}/tests/ui-contract.json`,contract);
  const actual=read(observationFile);actual.profileId=peer;actual.contractSha256=hash(`${peerOwner}/tests/ui-contract.json`);
  actual.frozenInputManifestSha256=hash(`${peerOwner}/build/generation/inputs.json`);
- for(const observed of actual.observations) if(observed.method==='keyboard-operation') delete observed.evidence;
+ for(const observed of actual.observations) if(!accessRenderer&&observed.method==='keyboard-operation') delete observed.evidence;
  write(`${peerOwner}/build/test-results/ui-observations.json`,actual);
  return {root,project,profile:peer,runId};
+}
+function cellTerminalFixture(change=()=>{}) {
+ const currentOptions=peerFixture('New_GUI',{family:'TEXT',renderer:'TERMINAL'}),file=`${project}/srcs/New_GUI/build/test-results/ui-observations.json`;
+ const actual=read(file);
+ actual.environment={platform:'Synthetic character terminal',renderer:'Synthetic terminal host',dpi:null,dpiReason:'Pixel DPI is not applicable to this fixed-cell terminal.',scale:null,scaleReason:'Pixel display scaling is not applicable to this fixed-cell terminal.',viewport:{width:80,height:24,unit:'cells'}};
+ change(actual);write(file,actual);return currentOptions;
+}
+function cellTerminalFails(name,change) {
+ const result=validateUIConformance(cellTerminalFixture(change));
+ assert(result.status==='FAIL'&&result.findings.some(item=>item.code==='ENVIRONMENT'),name+' was accepted or had no environment finding.');
 }
 try {
  setup();assert(validateUIConformance(options).status==='PASS','Valid native fixture failed');
@@ -216,6 +231,63 @@ try {
  assert(legacyResult.findings.some(item=>item.code==='FROZEN_INPUT_SET'),'Old frozen input set bypassed the current required input set.');
  const peerResult=validateUIConformance(peerFixture());
  assert(peerResult.status==='PASS'&&peerResult.accessScreenChecksRequired===false,'Access-specific screen checks or interaction evidence affected another profile: '+JSON.stringify(peerResult.findings));
+ assert(peerResult.uiFamily==='WEB'&&peerResult.uiRenderer==='BROWSER','Browser family/renderer was not recorded.');
+ const nativeWpf=validateUIConformance(peerFixture('CSharp_WPF'));
+ assert(nativeWpf.status==='PASS'&&nativeWpf.uiFamily==='WEB'&&nativeWpf.uiRenderer==='WPF','WPF layout family incorrectly required browser-specific measurements.');
+ for(const [peer,family,renderer] of [['VB.NET_WinForms','WINFORMS','WINFORMS'],['COBOL','TEXT','TERMINAL']]) {
+  const result=validateUIConformance(peerFixture(peer));assert(result.status==='PASS'&&result.uiFamily===family&&result.uiRenderer===renderer,'Native family contract was rejected: '+JSON.stringify(result.findings));
+ }
+ const unresolvedOptions=peerFixture('New_GUI'),unresolved=validateUIConformance(unresolvedOptions);
+ assert(unresolved.status==='FAIL'&&unresolved.findings.some(item=>item.code==='UI_FAMILY_UNRESOLVED'),'Undecided new UI family was accepted.');
+ const unknownOwner=`${project}/srcs/New_GUI`,unknownSpec=`${project}/spec/New_GUI/規約/UI生成条件.md`;
+ fs.unlinkSync(path.join(root,unknownOwner,'tests/ui-contract.json'));fs.unlinkSync(path.join(root,unknownOwner,'build/test-results/ui-observations.json'));
+ write(`${unknownOwner}/profile.json`,{uiConformance:{required:false,reason:'Synthetic noninteractive CLI',sourceFiles:[unknownSpec]}});
+ assert(uiPolicyForProfile({...unresolvedOptions,requireDeclaration:true,frozenInputs:read(`${unknownOwner}/build/generation/inputs.json`)}).status==='NOT_APPLICABLE','New CLI was forced into a UI family.');
+ for(const [family,renderer] of [['WEB','BROWSER'],['WEB','WPF'],['TEXT','TERMINAL']]) {
+  const result=validateUIConformance(peerFixture('New_GUI',{family,renderer}));
+  assert(result.status==='PASS'&&result.uiFamily===family&&result.uiRenderer===renderer,'Explicit new family/renderer was not accepted: '+JSON.stringify(result.findings));
+ }
+ const extendedAccessOptions=peerFixture('New_GUI',{family:'WINFORMS',renderer:'ACCESS'});
+ let extendedAccessResult=validateUIConformance(extendedAccessOptions);
+ assert(extendedAccessResult.status==='PASS'&&extendedAccessResult.accessScreenChecksRequired===true,'New Access renderer did not require Access screen checks.');
+ const extendedContract=`${unknownOwner}/tests/ui-contract.json`,extendedObservation=`${unknownOwner}/build/test-results/ui-observations.json`;
+ let extendedValue=read(extendedContract);delete extendedValue.accessScreenChecks;write(extendedContract,extendedValue);
+ let extendedActual=read(extendedObservation);extendedActual.contractSha256=hash(extendedContract);write(extendedObservation,extendedActual);
+ extendedAccessResult=validateUIConformance(extendedAccessOptions);
+ assert(extendedAccessResult.status==='FAIL'&&extendedAccessResult.findings.some(item=>item.code==='ACCESS_SCREEN_CHECKS_MISSING'),'New Access renderer bypassed nine-category coverage.');
+ peerFixture('New_GUI',{family:'WINFORMS',renderer:'ACCESS'});extendedActual=read(extendedObservation);delete extendedActual.observations.find(item=>item.ruleId==='SAVE-CANCEL').evidence;write(extendedObservation,extendedActual);
+ assert(validateUIConformance(extendedAccessOptions).findings.some(item=>item.code==='INTERACTION_EVIDENCE_MISSING'),'New Access renderer bypassed operation evidence.');
+ peerFixture('New_GUI',{family:'WINFORMS',renderer:'ACCESS'});
+ const legacyExtendedInputsFile=`${unknownOwner}/build/generation/inputs.json`,legacyExtendedInputs=read(legacyExtendedInputsFile);
+ legacyExtendedInputs.files=legacyExtendedInputs.files.filter(file=>file.file!=='docs/UIパターン規約.md');write(legacyExtendedInputsFile,legacyExtendedInputs);
+ extendedValue=read(extendedContract);delete extendedValue.accessScreenChecks;write(extendedContract,extendedValue);
+ extendedActual=read(extendedObservation);extendedActual.contractSha256=hash(extendedContract);extendedActual.frozenInputManifestSha256=hash(legacyExtendedInputsFile);for(const item of extendedActual.observations)if(item.method==='keyboard-operation')delete item.evidence;write(extendedObservation,extendedActual);
+ extendedAccessResult=validateUIConformance(extendedAccessOptions);
+ assert(extendedAccessResult.accessScreenChecksRequired===false&&extendedAccessResult.findings.some(item=>item.code==='FROZEN_INPUT_SET')&&!extendedAccessResult.findings.some(item=>item.code.startsWith('ACCESS_')||item.code==='INTERACTION_EVIDENCE_MISSING'),'Index-free legacy profile received renderer-based Access checks or reused stale inputs.');
+ const nativeExtension=validateUIConformance(peerFixture('New_GUI',{family:'WINFORMS',renderer:'WINFORMS'}));
+ assert(nativeExtension.status==='PASS'&&nativeExtension.accessScreenChecksRequired===false,'Native WinForms extension received Access-only checks.');
+ assert(validateUIConformance(cellTerminalFixture()).status==='PASS','Justified pixel-independent terminal cell environment failed.');
+ assert(validateUIConformance(cellTerminalFixture(value=>{value.environment.dpi=144;value.environment.scale=1.5;delete value.environment.dpiReason;delete value.environment.scaleReason;})).status==='PASS','Measured DPI/scale in a terminal emulator failed.');
+ cellTerminalFails('Missing DPI reason',value=>delete value.environment.dpiReason);
+ cellTerminalFails('Missing scale reason',value=>delete value.environment.scaleReason);
+ cellTerminalFails('Blank DPI reason',value=>value.environment.dpiReason=' ');
+ cellTerminalFails('Blank scale reason',value=>value.environment.scaleReason=' ');
+ cellTerminalFails('Undefined DPI is not explicit nonapplicability',value=>delete value.environment.dpi);
+ cellTerminalFails('Undefined scale is not explicit nonapplicability',value=>delete value.environment.scale);
+ cellTerminalFails('Zero DPI is not nonapplicability',value=>value.environment.dpi=0);
+ cellTerminalFails('Zero scale is not nonapplicability',value=>value.environment.scale=0);
+ cellTerminalFails('Negative DPI is not nonapplicability',value=>value.environment.dpi=-1);
+ cellTerminalFails('Pixel viewport cannot omit pixel environment',value=>value.environment.viewport.unit='px');
+ cellTerminalFails('Fractional terminal columns',value=>value.environment.viewport.width=80.5);
+ const terminalLegacyOptions=cellTerminalFixture(),terminalLegacyInputFile=`${project}/srcs/New_GUI/build/generation/inputs.json`,terminalLegacyObservationFile=`${project}/srcs/New_GUI/build/test-results/ui-observations.json`;
+ const terminalLegacyInputs=read(terminalLegacyInputFile);terminalLegacyInputs.files=terminalLegacyInputs.files.filter(file=>file.file!=='docs/UIパターン規約.md');write(terminalLegacyInputFile,terminalLegacyInputs);
+ const terminalLegacyActual=read(terminalLegacyObservationFile);terminalLegacyActual.frozenInputManifestSha256=hash(terminalLegacyInputFile);write(terminalLegacyObservationFile,terminalLegacyActual);
+ assert(validateUIConformance(terminalLegacyOptions).findings.some(item=>item.code==='ENVIRONMENT'),'Index-free legacy observations received terminal nonapplicability.');
+ for(const [peer,family,renderer] of [['CSharp_ASPNET','WEB','BROWSER'],['CSharp_WPF','WEB','WPF'],['VB.NET_WinForms','WINFORMS','WINFORMS'],['New_GUI','WINFORMS','ACCESS']]) {
+  const currentOptions=peerFixture(peer,peer==='New_GUI'?{family,renderer}:null),file=`${project}/srcs/${peer}/build/test-results/ui-observations.json`,actual=read(file);
+  actual.environment={platform:'Synthetic Windows',renderer:'Synthetic native or browser renderer',dpi:null,dpiReason:'Not a valid pixel-independent terminal.',scale:null,scaleReason:'Not a valid pixel-independent terminal.',viewport:{width:80,height:24,unit:'cells'}};write(file,actual);
+  assert(validateUIConformance(currentOptions).findings.some(item=>item.code==='ENVIRONMENT'),renderer+' bypassed actual pixel environment requirements.');
+ }
  setup();write(resultFile,validateUIConformance(options));assert(requireCurrentUIResult(options).file.endsWith('/ui-conformance.json'),'Current saved gate not accepted');
  mutateObservation(value=>value.observations[2].properties.width=461);let refused=false;try{requireCurrentUIResult(options);}catch{refused=true;}assert(refused,'Changed observations reused old saved gate');
  setup();const policyOptions={root,project,profile,requireDeclaration:true,frozenInputs:read(inputsFile)};

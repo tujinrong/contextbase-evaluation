@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-UI-CONFORMANCE","version":"1.1","path":"docs/UI適合検査.md","sheets":[{"heading":"適用と境界","kind":"GRID","sheet":"01_適用と境界"},{"heading":"期待値の契約","kind":"GRID","sheet":"02_期待値の契約"},{"heading":"実測の記録","kind":"GRID","sheet":"03_実測の記録"},{"heading":"判定と配布","kind":"GRID","sheet":"04_判定と配布"},{"heading":"回帰と未実施","kind":"GRID","sheet":"05_回帰と未実施"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-UI-CONFORMANCE","version":"1.2","path":"docs/UI適合検査.md","sheets":[{"heading":"適用と境界","kind":"GRID","sheet":"01_適用と境界"},{"heading":"期待値の契約","kind":"GRID","sheet":"02_期待値の契約"},{"heading":"実測の記録","kind":"GRID","sheet":"03_実測の記録"},{"heading":"判定と配布","kind":"GRID","sheet":"04_判定と配布"},{"heading":"回帰と未実施","kind":"GRID","sheet":"05_回帰と未実施"}]} -->
 # UI条件と生成結果の共通適合検査
 
-版1.1／2026-10-29。全方式の新規生成・UI改修に適用する。確定した方式別の字体、寸法、外観、読みやすさ、操作を、凍結した根拠から独立に期待値化し、今回の最終配布物の実測と比較する。Accessでは画面タイプ別の検査網羅性と操作証拠を追加する。Accessのptやクラシック外観をWeb・WPF・Textへ移植する規則ではない。
+版1.2／2026-10-29。全方式の新規生成・UI改修に適用する。確定した方式別の字体、寸法、外観、読みやすさ、操作を、凍結した根拠から独立に期待値化し、今回の最終配布物の実測と比較する。3系統の分類と実装/観測方式を区別し、Accessの画面別網羅性と操作証拠を維持する。Accessのptやクラシック外観をWeb・WPF・Textへ移植する規則ではない。
 
 ## 適用と境界
 
@@ -10,6 +10,8 @@
 UIを持つ方式はsourceRoot/profile.jsonへ`"uiConformance":{"required":true,"contract":"tests/ui-contract.json"}`を宣言する。UIを持たないCLI/ライブラリー等だけは`required:false`、空でない`reason`、同方式の凍結仕様を参照する`sourceFiles`を記す。UIのある製品を検査回避のため対象外にしない。今回の規則を凍結した生成では宣言自体の欠落も失敗とする。更新を依頼していない過去方式の成果物やmanifestを、規則追加だけで更新/合格へ書き換えない。
 
 ## 期待値の契約
+
+[UIパターン規約](UIパターン規約.md)と該当する[WEB](WEB画面品質規約.md)・[WinForms](WinForms画面品質規約.md)・[Text](Text画面品質規約.md)の条件を同方式specRootへ具体化し、font/dimensions/appearance/render/interactionの個別期待値にする。screenFamilyは配置分類、rendererは実部品/観測方式とし、WPFにDOM/URL/CSS、TextにGUI操作、WinFormsにWebのページング等を要求しない。新共通規約を凍結したUIは分類を解決し、uiFamily/uiRendererを検査結果へ記録する。追加方式の規約/UIパターン.jsonがなく未解決ならFAILとし、理由/凍結根拠付き非UI免除は維持する。
 
 正式な期待値はsourceRoot/tests/ui-contract.json、schemaVersion=1とする。実装・実測より先に仕様と確定指示の採用記録から作り、SHA-256を固定する。生成済み部品の実値を期待値へ転記してPASSを作らない。期待値変更には仕様根拠と理由を残し、新しい契約で実測からやり直す。
 
@@ -24,6 +26,8 @@ rulesはid、kind、target（component ID）、mandatory=true、sourceFiles、pr
 ## 実測の記録
 
 sourceRoot/build/test-results/ui-observations.jsonにschemaVersion=1、projectId、profileId、任意のrunId、contractSha256、frozenInputManifestSha256、validatorSha256、artifact（file・sha256）、environment、components、observationsを記録する。validatorSha256は実測時のui-conformance.mjs本体。environmentはplatform、renderer、dpi、scale、viewportのwidth/height/unitを実測し、未測定のDPIを推測で埋めない。製品が複数ファイルならexport関数hashArtifactで全ファイルのPOSIX相対名・bytes・SHAをソートした配列のJSON.stringifyをSHA-256化する。CSSや資源だけの変更も旧観測を失効させる。
+
+新UIパターン規約を凍結し、解決したrendererがTERMINALでviewport.unit=cells（widthは列数、heightは行数）の場合に限り、ピクセルDPI/倍率が意味を持たない実端末を非適用として記録できる。dpi=nullには空でないdpiReason、scale=nullには空でないscaleReasonが必要。単なる未測定/取得失敗を非適用へ読み替えず、端末モデル・プロファイルと実際の行桁を根拠にする。エミュレーター等で実測値があれば正数を記す。他renderer、cells以外、理由なし、0値は許容しない。架空の96dpiや倍率を埋めてPASSにしない。
 
 測定器と使用した試験/helperコードは必須のmeasurementSources配列へ`{"file":"tests/observe.py","sha256":"実測時のSHA-256"}`形式で記録する。fileは同方式内のtests/、tools/、src/、database/配下のPOSIX相対コードファイルとし、全使用コードと補助処理を含める。重複、外部/リンク、build/.tmp、原仕様、metadata、期待値JSON、実測・判定・画像等の証拠自身は認めない。実測中の前後一致だけでなく、gateとmanifest再検証時にも各現ファイルSHAを照合し、測定後にコードだけを変えて旧観測を使わない。
 
@@ -42,6 +46,8 @@ Accessは最終ACCDBと同一ハッシュの所有コピーから実Form/Control
 manifest.mjsはprofileの必須宣言を読み、契約削除での迂回を拒否し、現在の比較を再実行して保存済みui-conformance.jsonの入力/契約/実測/validator/製品SHAも再照合する。失敗・未実施・旧版ならoutputs.jsonを確定しない。testsと期待値は正本として保持する。source-only ZIPから原仕様・試験期待値とuiConformanceの試験参照を除外し、配布ソースの独立ビルドと原仕様に基づく適合判定を分ける。
 
 ## 回帰と未実施
+
+3系統の規約選択、未知方式の明示分類/未確定UI拒否、非UI免除、不正/外部/リンク/不一致な分類JSON、該当規約の削除/変更による旧結果失効、非該当方式への非影響を隔離fixtureで検査する。Webは最終publish、WPF/WinForms/Accessは最終製品の実部品、Textは実端末とホスト結果を観測する。共通の5kindをそろえるだけで各系統の意味条件・利用者4観点を自動証明しない。
 
 隔離.tmp fixtureで、正常例、Tab字体漏れ、テーマ復活、寸法上書き、狭幅overflow、根拠/版不一致、未観測/未知rule、契約/証拠削除、旧ACCDB・CSS変更後の旧観測、manifest拒否、理由付き非UI例外を確認する。fixtureの合格を実アプリ合格にしない。Office/browser/処理系・bit・DPI・画面/状態・入力操作・未実施を方式内へ残し、正式受入・全利用者環境・採点は別状態とする。
 

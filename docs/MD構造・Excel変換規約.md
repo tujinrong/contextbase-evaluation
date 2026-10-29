@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-MD-EXCEL","version":"7.10","path":"docs/MD構造・Excel変換規約.md","sheets":[{"heading":"章とシートの対応","kind":"GRID","sheet":"01_章とシートの対応"},{"heading":"LIST構文","kind":"GRID","sheet":"02_LIST構文"},{"heading":"LISTのExcel配置","kind":"GRID","sheet":"03_LISTのExcel配置"},{"heading":"GRIDのExcel配置","kind":"GRID","sheet":"04_GRIDのExcel配置"},{"heading":"メタ情報と復元","kind":"GRID","sheet":"05_メタ情報と復元"},{"heading":"検査と参照資料","kind":"GRID","sheet":"06_検査と参照資料"},{"heading":"描画可能な画面HTML・評価チェックリスト","kind":"GRID","sheet":"07_描画可能な画面HTML・評価チェックリスト"},{"heading":"テーブル文書の同一シート特例","kind":"GRID","sheet":"08_テーブル文書の同一シート特例"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-MD-EXCEL","version":"7.11","path":"docs/MD構造・Excel変換規約.md","sheets":[{"heading":"章とシートの対応","kind":"GRID","sheet":"01_章とシートの対応"},{"heading":"LIST構文","kind":"GRID","sheet":"02_LIST構文"},{"heading":"LISTのExcel配置","kind":"GRID","sheet":"03_LISTのExcel配置"},{"heading":"GRIDのExcel配置","kind":"GRID","sheet":"04_GRIDのExcel配置"},{"heading":"メタ情報と復元","kind":"GRID","sheet":"05_メタ情報と復元"},{"heading":"検査と参照資料","kind":"GRID","sheet":"06_検査と参照資料"},{"heading":"描画可能な画面HTML・評価チェックリスト","kind":"GRID","sheet":"07_描画可能な画面HTML・評価チェックリスト"},{"heading":"テーブル文書の同一シート特例","kind":"GRID","sheet":"08_テーブル文書の同一シート特例"}]} -->
 # MD構造・Excel変換規約
 
-版7.10／2026-10-28。基本設計専用の項目表規則をbasic-design-agent配下へ移動し、変換時は専用規約と原値を保持する。三種類の画面分類と固定行桁のText系画面の表現・検査を明確化。業務アプリ・実DBの実行試験は未実施。
+版7.11／2026-10-29。基本設計専用の項目表規則をbasic-design-agent配下へ移動し、変換時は専用規約と原値を保持する。三種類の画面分類と固定行桁のText系画面の表現・検査を明確化。業務アプリ・実DBの実行試験は未実施。
 
 ## 章とシートの対応
 
@@ -58,6 +58,8 @@ Excel内のメタ情報には文書ID、版、元ファイル相対パス、元�
 EX-01：Microsoft「Excel specifications and limits」https://support.microsoft.com/en-us/excel/excel-specifications-and-limits （2026-10-11参照）。EX-02：Microsoft「Rename a worksheet」https://support.microsoft.com/en-us/excel/rename-a-worksheet （同日参照）。GFMの表・HTML・エスケープの基礎：https://github.github.com/gfm/ （同日参照）。LIST／GRID、120列、JSONコメント、文字列優先は本プロジェクトの独自規約であり製品仕様ではない。
 
 ## 描画可能な画面HTML・評価チェックリスト
+
+[UIパターン規約](UIパターン規約.md)と各系統の品質正本を適用し、画面rootにscreenFamily/renderer、画面/項目/操作IDと主/補助purposePatternIdsを対応付ける。参照Web標準のHTML主成果物は本リポジトリーでは概要GRID内の静的断片として保持する。参照の単独HTMLやJS試作を二重の正本・実装済み動作にしない。設計注記は通常の画面内容と区分し、製品へ検査用表示を追加する根拠にしない。
 
 画面レイアウトは基本・詳細の概要の下に完全な静的HTMLとCSSを埋め込み、同じ画面・状態では同じ配置断片を使用する。[仕様書作成ルール](仕様書作成ルール.md)のWEB系（WPFを含む）・WinForms系・Text系の三分類を宣言し、入力、選択、操作、一覧、必須、メッセージ、モード・確認を各分類の部品や操作に即して配置する。画面項目IDと詳細の物理コントロール／バインド先、Text系の入出力領域をHTMLのdata属性でも対応付ける。物理名は基本設計の利用者向けラベルへ表示しない。WPFをWEB系へ分類してもXAML等の実装方式は変更せず、Access/WinFormsは従来フォームと標準部品、COBOL/AS400_RPGは文字端末の行桁・入力保護・キー操作を維持する。
 

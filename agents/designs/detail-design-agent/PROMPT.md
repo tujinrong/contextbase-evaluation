@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN-PROMPT","version":"1.2","path":"agents/designs/detail-design-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"指定例","kind":"GRID","sheet":"03_指定例"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN-PROMPT","version":"1.3","path":"agents/designs/detail-design-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"指定例","kind":"GRID","sheet":"03_指定例"}]} -->
 # detail-design-agent 実行指示
 
-定義版1.2／2026-10-29。詳細設計専用の起動指示。対象方式の採用前提から画面・操作・保存を検証できる実装契約を記述する。
+定義版1.3／2026-10-29。詳細設計専用の起動指示。3系統の採用前提から画面・操作・保存を検証できる実装契約を記述する。
 
 ## 起動指示
 
@@ -10,6 +10,14 @@
 本文執筆前に確定前提・採用プロファイル・QAを読み、入力版/ハッシュと今回の変更範囲を記録する。変更指示や新たな矛盾がなければ既回答を継承し、認証なしの採用を未選定へ戻したり、他方式の業務・権限・DB・実施結果を借用したりしない。
 
 AIが本文を執筆し、機械処理は目録・形式検査・保存・ハッシュ・描画へ限定する。基本と同じID・画面配置を物理コントロール/バインド/言語型、API/DTO/引数戻り値、SQL/物理DB設計、分岐・例外・CHK/MSG・確定/取消へ結び付ける。実装者向けの詳細表を使い、基本設計の11列を強制しない。
+
+[UIパターン規約](../../../docs/UIパターン規約.md)を読み、WEB/WINFORMS/TEXTのfamily、BROWSER/WPF/WINFORMS/ACCESS/TERMINALのrendererと、screen_type・主/補助の用途パターンを分ける。24パターンは必要分だけ採用する。既知方式の分類を維持し、追加方式は必要に応じspecRoot/規約/UIパターン.jsonのschemaVersion=1/family/rendererを採用根拠・共通UI/QAへ対応付ける。未分類UIの詳細設計を完了にしない。
+
+[WEB画面品質規約](../../../docs/WEB画面品質規約.md)では共通shell/現在位置/独立見出し、リンクとボタン/行操作、条件とページ・安定順/出力範囲、フォーム/保存離脱/URL・履歴/状態とキー、意味HTML/CSSトークン/DOMから最終publishの検査までを具体化する。WPFは同じ目的をXAML/DIP・Style/バインド/Command・ネイティブ遷移と実Window操作へ対応させ、URL/DOM/CSS/browserを必須にしない。
+
+[WinForms画面品質規約](../../../docs/WinForms画面品質規約.md)ではForm/Control/DPI/Anchor・Dock/Tab/既定・取消キーと編集モデル・保存の境界、[Text画面品質規約](../../../docs/Text画面品質規約.md)では固定行桁/半角全角セル/CCSID・DBCS・バイト長/保護・カーソル/機能キー・メッセージ/ページ・長文継続/入出力レコードを具体化する。規約ID→画面/項目/操作ID→実装前個別期待値→各方式の最終製品検証方法・必要証拠をつなぎ、他方式へAccess11ptや固有APIを強制しない。
+
+参照パッケージの単独HTML主成果物指示を採用せず、MD概要GRIDの静的HTML/CSSを正本とし、同じ断片を.tmp/へ抽出して検査する。参照HTMLのJS試作や過去の適合結果を機能完成・今回製品の実機合格へ読み替えない。新たな製品UI契約スキーマは作らず、既存rulesとAccess9カテゴリへ方式別の個別期待値を引き継ぐ。
 
 Accessでは[Access画面品質規約](../../../docs/Access画面品質規約.md)を読み、screen_type・利用者タスク・変更範囲・最小有効領域/表示倍率・保存契約の確定/仮定/未確認を固定する。専用規則に従い、Form/Section/Page/Control・付属ラベル・一覧見出しを列挙し、位置/寸法/cm・twipの換算・pt・トークン/列幅、選択/対象識別、Tab/Enter/Esc/フォーカス、連結/非連結と未反映入力・Dirty/BeforeUpdate/Undo/Refresh/Requeryの責務を具体化する。
 
@@ -31,8 +39,9 @@ Accessでは[Access画面品質規約](../../../docs/Access画面品質規約.md
 | inputSet / ruleSet | 入力commit/未commit差分、対象ファイル版/SHA-256、当Agent契約・専用規則・工程と共通規約の版/SHA-256 |
 | allowedPaths / excludedPaths | 読取り/書込みを別に許可。spec-eval・他project/方式・アプリ実装/DB実行資源を除外。ソース読取りは明示許可時だけ |
 | requiredDocuments | 対象機能別詳細、方式別共通、DB物理定義の設計文書、開発規約、QAの具体的な対象ファイルと文書ID |
-| screenFamily / terminalProfile | WEB系・WinForms系・Text系、採用部品・寸法単位、Textの端末行桁/文字コード/キー |
-| screen_type / purpose / traits | Accessの画面用途、利用者タスク・選択対象・主操作・追加特性。方式の配置分類と別に指定 |
+| screenFamily / renderer / terminalProfile | WEB/WINFORMS/TEXTと採用renderer、標準部品・単位/DPI、Textの端末行桁/CCSID・DBCS/キー。未分類UIは完了不可 |
+| purposePatternIds / uiRuleMapping | 24候補から必要な主/補助パターン、採用理由、規約/画面/項目/操作IDと個別期待値の対応 |
+| screen_type / purpose / traits | 画面用途、利用者タスク・選択対象・主操作・追加特性。3系統と用途パターンを区別 |
 | change_scope / saveContract | layout_only・ui_behavior・data_logic、保存方式/単位/確定/未反映入力/取消/失敗。確定済みを継承し未決はQA付き |
 | targetViewport / states | サイズ・倍率・必要な代表状態。実測/目視した範囲を記録し実機と区別 |
 | runId / reportRoot | runIdは記録属性、固定sourceRoot/build/spec-generation/。方式なし共通記録はproject/build/detail-design/または当Agent/build/ |
@@ -50,7 +59,9 @@ sourceRoot: <project>/srcs/<methodId>/
 basicDesignInputs: <文書ID・版・SHA-256・対象機能/項目/イベントID>
 premiseProfile: <採用プロファイル・確定前提・QA決定の根拠>
 requiredDocuments: <機能別詳細・必要な方式別共通/DB定義設計/規約/QA>
-screen_type: <Accessでは採用した画面タイプ。領域ごとの補助タイプも可>
+screenFamily / renderer: <採用分類と描画方式。追加方式は規約/UIパターン.jsonと根拠を対応>
+purposePatternIds: <必要な主/補助のP00〜P23又は独自用途。全パターン作成の指示ではない>
+screen_type: <採用した画面タイプ。領域ごとの補助タイプも可>
 change_scope: <layout_only / ui_behavior / data_logic。既存UI修正の未指定時はlayout_only>
 saveContract: <保存方式・単位・確定時点・未反映入力・取消範囲・失敗時。未決はQA-ID>
 minimum_client_area / display_scales: <採用済み環境と未確認の候補を区別>

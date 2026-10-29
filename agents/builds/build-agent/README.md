@@ -1,8 +1,12 @@
 # build-agent
 
-定義版7.11／2026-10-29。[契約](AGENT.md)・[起動指示](PROMPT.md)に従い、選択方式のspecRoot=project/spec/方式ID/からsourceRoot=project/srcs/方式ID/へ独立したシステムを生成する。旧sourceRoot/specへの自動復帰や他方式仕様の共用は行わない。業務コード・DB・試験の横断共用はしない。
+定義版7.12／2026-10-29。[契約](AGENT.md)・[起動指示](PROMPT.md)に従い、選択方式のspecRoot=project/spec/方式ID/からsourceRoot=project/srcs/方式ID/へ独立したシステムを生成する。旧sourceRoot/specへの自動復帰や他方式仕様の共用は行わない。業務コード・DB・試験の横断共用はしない。
 
 最終ソースはsrcs/方式ID/の正本を更新する。最終配布物は方式内build/app・build/publish等、Accessは採用プロファイル又は方式の配布設定で指定した最終ACCDB1個。最終検査記録はbuild/test-results/、入力・出力manifestはbuild/generation/、解析用ZIPはbuild/source.zipへ固定名で更新し、Gitで履歴を管理する。中間生成・失敗試行・処理系・cache・隔離展開は各方式.tmp/へ置く。過去成果をrun-id別・backup別に累積しない。共通集約だけproject/build/、共通作業だけproject/.tmp/を使用する。
+
+UI生成は[UIパターン規約](../../../docs/UIパターン規約.md)・[UIパターン生成チェック](docs/UIパターン生成チェック.md)と、選択familyの[WEB](../../../docs/WEB画面品質規約.md)/[WinForms](../../../docs/WinForms画面品質規約.md)/[Text](../../../docs/Text画面品質規約.md)規約を使う。WEB=CSharp_ASPNET/Vue_CSharpAPI/CSharp_WPF、WINFORMS=VB.NET_WinForms/Access、TEXT=COBOL/AS400_RPGを維持する。WPFの配置はWEB、実装はXAML/DIP/実部品でありブラウザー用APIを必須化しない。未知profileは同方式specRootの規約/UIパターン.jsonでfamily/rendererを明示し、未確定UIを完成にしない。非UIの既存免除は維持する。
+
+MD/埋込み静的HTMLから設計ID・パターン・トークン・状態/保存境界を引き継ぎ、最終製品の実測へ対応させる。参考HTML/JSのデモ保存・架空データ・過去PASSを本番実装や製品検査へ流用しない。Webのサイト枠/行操作/サーバー検索/ページング/履歴復帰、WinFormsの実Form/DPI/入力、Textの採用端末セル/保護属性/キーを各技術で検査する。WebのCSS16px・20/50/100件を全方式へ強制せず、規約変更時は入力/製品版から再検査する。
 
 全方式の次回生成は[テストデータ整備規約](../../../docs/テストデータ整備規約.md)に従い、起動後に検索・新規登録・編集を試せる架空の初期確認用データと確認手順を備える。必要マスタ、確認用の業務行、異常系fixture、利用者の既存データを分け、初回投入と冪等な再投入・既存値保護を検査し、件数と基準日を固定manifestへ残す。共通規則の追加だけで指定外方式の投入済みとは扱わない。
 

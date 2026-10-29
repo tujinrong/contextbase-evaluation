@@ -1,13 +1,17 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN-README","version":"1.2","path":"agents/designs/detail-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"担当と保存先","kind":"GRID","sheet":"02_担当と保存先"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"},{"heading":"移行した記録","kind":"GRID","sheet":"04_移行した記録"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN-README","version":"1.3","path":"agents/designs/detail-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"担当と保存先","kind":"GRID","sheet":"02_担当と保存先"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"},{"heading":"移行した記録","kind":"GRID","sheet":"04_移行した記録"}]} -->
 # detail-design-agent
 
-定義版1.2／2026-10-29。詳細設計専用Agent。役割IDはAG-DETAIL-DESIGN。Accessの画面品質と保存・取消の検査契約を詳細化する。
+定義版1.3／2026-10-29。詳細設計専用Agent。役割IDはAG-DETAIL-DESIGN。3系統の画面品質と保存・取消の検査契約を詳細化する。
 
 ## 使い方
 
 [AGENT.md](AGENT.md)が役割・入力隔離・出力範囲の契約、[PROMPT.md](PROMPT.md)が実行指示と指定例である。専用規則は[rules/詳細設計書作成ルール.md](rules/詳細設計書作成ルール.md)、執筆・検査・描画・記録は[workflows/詳細設計.md](workflows/詳細設計.md)へ保存する。共通docsと他Agentはこの正本を参照し、詳細設計専用の別正本を作らない。
 
 対象project・方式・詳細化する機能と入力版を指定し、選択specRootの確定前提・採用プロファイル・QAを先に読む。既存ID、利用者確定事項、方式固有の認証/DB/入力/版/監査を維持する。特定業務の項目や検索条件、方式数・採用DBを汎用Agentの既定値へ固定しない。
+
+[UIパターン規約](../../../docs/UIパターン規約.md)からWEB/WINFORMS/TEXTのfamilyと実rendererを確定し、screen_typeとは別に主/補助の用途パターンを必要分選ぶ。追加方式のUI分類は必要に応じspecRoot/規約/UIパターン.jsonと共通UI/QAへ根拠付きで記録する。未分類と理由付きの非UI例外を区別し、24パターンの全実装や指定外方式を追加しない。
+
+方式別の正本は[WEB画面品質規約](../../../docs/WEB画面品質規約.md)、[WinForms画面品質規約](../../../docs/WinForms画面品質規約.md)、[Text画面品質規約](../../../docs/Text画面品質規約.md)とする。WEB系のWPFはXAML/DIP・バインド/ネイティブ操作、WinForms系は標準Form/Control/DPI、Text系は固定行桁と実端末・入出力レコードへ具体化する。URL/DOM/CSSはブラウザーWebの範囲に限り、Accessの字体/プロパティを他方式へ転用しない。
 
 Accessでは[Access画面品質規約](../../../docs/Access画面品質規約.md)を適用し、画面タイプ、利用者の作業、変更範囲、保存方式/単位、最小有効領域/倍率を引き継ぐ。既存UIの修正範囲が未指定ならlayout_onlyとし、操作結果や保存境界の変更案を見た目の修正と分ける。寸法初期値や倍率候補は既存の確定条件を上書きせず、仮定/未確認のまま管理する。
 
@@ -26,6 +30,10 @@ Accessでは[Access画面品質規約](../../../docs/Access画面品質規約.md
 AIが本文を執筆し、機械処理は収集・形式検査・ハッシュ・保存・描画を担当する。基本と同じ画面/状態のHTML配置、各IDから型/API/SQL/DB列/CHK/MSG/復帰への対応、対象版の構造・意味レビュー・描画/目視を確認する。既存入力・QA・正式試験コード/fixture・範囲外ローカル変更を保全する。
 
 Accessの成果物には全Form/Section/Page/Control・付属ラベル・一覧見出しの対応と、採用トークン/字体/寸法/列幅、対象の常時識別・長文の全文到達、選択と詳細の一致、未反映入力と保存/取消/離脱、Tab/Enter/Esc/フォーカスの実装契約を含める。連結/非連結とイベント・DB確定の関係を定め、実装Agentがtests/ui-contract.jsonを作れる部品/状態/属性/根拠と期待結果を渡す。合理性・統一性・見やすさ・操作性を利用者タスクから評価し、指摘には合格条件と検証方法を付ける。
+
+全UI方式で規約ID→画面/項目/操作・イベントID→実部品/端末領域→実装前の個別期待値→最終製品の実測/実操作・データ再読込を対応付ける。Webの共通ナビゲーション/現在位置/行操作/URL・履歴/条件・ページ・出力、WPFのバインド確定、WinFormsのDPI/Anchor・Dock/Tab、Textの表示セル/保護/キー/CCSID・DBCSを該当する期待条件にする。製品用契約は既存rulesを使い、Access9カテゴリを維持する。
+
+画面の正本はMD概要GRID内の静的HTML/CSSで、同じ断片を.tmp/へ抽出してレビューする。参考HTML/CSSの構成を参照しても、単独HTMLを主成果物に変更せず、JS試作や同梱検査の過去PASSで今回の製品実機・保存・権限を合格にしない。
 
 描画記録はMDと抽出HTML断片のSHA-256、サイズ・倍率・ブラウザー版、状態、計測と目視結果を持つ。Textの文字モックとCCSID/DBCS・端末キー・IMEの実機確認、仕様帳票と実Excel/印刷は別状態である。構造・描画・独立レビューのPASSをアプリ/DB/受入・正式採点へ読み替えず、未採点ならformalScore=nullとする。
 

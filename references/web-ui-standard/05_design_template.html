@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>業務Web UI｜HTMLレイアウト設計書</title><style>/* 業務Web UI 標準 v1.0。値はプロジェクト用初期値。フォント配信なし。 */
+:root {
+  --font-family: "Noto Sans JP", "Yu Gothic UI", "Hiragino Sans", Meiryo, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  --font-body: 1rem;
+  --font-title: 1.5rem;
+  --font-section: 1.125rem;
+  --font-ui: .875rem;
+  --font-table: .875rem;
+  --font-help: .875rem;
+  --font-metric: 2rem;
+  --line-body: 1.6;
+  --line-ui: 1.5;
+  --weight-body: 400;
+  --weight-label: 600;
+  --weight-title: 700;
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: .75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --control-min: 2.5rem;
+  --button-min-width: 5rem;
+  --row-min: 3rem;
+  --cell-y: .75rem;
+  --cell-x: 1rem;
+  --header-min: 4rem;
+  --nav-width: 15rem;
+  --page-padding: 1.5rem;
+  --panel-padding: 1.5rem;
+  --content-max: 90rem;
+  --form-max: 60rem;
+  --auth-max: 28rem;
+  --textarea-min: 7rem;
+  --radius-control: .375rem;
+  --radius-panel: .5rem;
+  --border-width: 1px;
+  --color-text: #182230;
+  --color-muted: #526171;
+  --color-bg: #F4F6F9;
+  --color-surface: #FFFFFF;
+  --color-primary: #1D4ED8;
+  --color-primary-hover: #1E40AF;
+  --color-selected: #EFF6FF;
+  --color-border: #758295;
+  --color-divider: #D6DDE7;
+  --color-danger: #B42318;
+  --color-success: #166534;
+  --color-warning: #854D0E;
+  --color-focus: #1D4ED8;
+  --focus-width: 3px;
+  --shadow-panel: 0 1px 3px rgb(24 34 48 / 5%);
+  --z-header: 20;
+  --z-menu: 30;
+  --z-dialog: 50;
+}
+[data-density="compact"] {
+  --control-min: 2.25rem;
+  --row-min: 2.5rem;
+  --cell-y: .5rem;
+  --cell-x: .75rem;
+}
+[data-density="touch"] {
+  --control-min: 2.75rem;
+  --row-min: 3.5rem;
+  --cell-y: 1rem;
+  --cell-x: 1rem;
+}
+html { font-size: 100%; }
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: var(--font-body);
+  line-height: var(--line-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+button, input, select, textarea { font-family: inherit; }
+input, select, textarea { font-size: var(--font-body); line-height: var(--line-ui); }
+button { font-size: var(--font-ui); line-height: var(--line-ui); }
+:focus-visible { outline: var(--focus-width) solid var(--color-focus); outline-offset: 3px; }
+@media (max-width: 47.999rem) {
+  :root { --page-padding: 1rem; --panel-padding: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+}
+
+
+a { color: var(--color-primary); text-underline-offset: .18em; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button, .button { cursor: pointer; }
+[hidden] { display: none !important; }
+.skip { position: fixed; top: -6rem; left: 1rem; background: white; padding: 1rem; z-index: 99; }
+.skip:focus { top: .5rem; }
+.header { min-height: var(--header-min); display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem 1.5rem; background: white; border-bottom: 1px solid var(--color-divider); position: sticky; top: 0; z-index: var(--z-header); }
+.brand { display: flex; align-items: center; gap: .75rem; font-weight: 700; color: var(--color-text); text-decoration: none; white-space: nowrap; }
+.brandmark { width: 2rem; height: 2rem; display: grid; place-items: center; background: var(--color-primary); color: white; border-radius: .5rem; font-size: 1rem; }
+.header-tools { display: flex; gap: 1rem; align-items: center; font-size: var(--font-ui); flex-wrap: wrap; }
+.header-tools select { min-height: 2.25rem; font-size: var(--font-ui); padding: .25rem .5rem; width: 12rem; }
+.header-tools label { margin: 0; }
+.shell { display: grid; grid-template-columns: var(--nav-width) minmax(0, 1fr); align-items: start; }
+.sidebar { background: white; border-right: 1px solid var(--color-divider); padding: 1.25rem .875rem; position: sticky; top: var(--header-min); height: calc(100dvh - var(--header-min)); overflow-y: auto; }
+.nav-group { margin-bottom: 1.5rem; }
+.nav-label { padding: 0 .75rem; font-size: var(--font-help); color: var(--color-muted); margin-bottom: .375rem; font-weight: 600; }
+.nav-link { display: flex; align-items: center; min-height: 2.75rem; padding: .625rem .75rem; margin: .125rem 0; gap: .625rem; color: var(--color-text); font-size: var(--font-ui); text-decoration: none; border-radius: .375rem; border-left: 3px solid transparent; }
+.nav-link:hover { background: var(--color-bg); }
+.nav-link[aria-current="page"] { color: var(--color-primary); background: var(--color-selected); border-left-color: var(--color-primary); font-weight: 700; }
+.nav-symbol { width: 1.25rem; text-align: center; font-size: 1rem; }
+.nav-foot { font-size: var(--font-help); color: var(--color-muted); padding: .75rem; border-top: 1px solid var(--color-divider); }
+.menu-toggle { display: none; }
+main { min-width: 0; padding: var(--page-padding); container-type: inline-size; }
+.content { max-width: var(--content-max); margin-inline: auto; }
+.prototype { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; justify-content: space-between; font-size: var(--font-help); color: var(--color-muted); margin-bottom: 1rem; }
+.prototype strong { color: var(--color-primary); font-weight: 600; }
+.breadcrumbs { font-size: var(--font-help); color: var(--color-muted); margin: 0 0 .75rem; }
+h1 { font-size: var(--font-title); line-height: 1.4; margin: 0; font-weight: var(--weight-title); }
+h2 { font-size: var(--font-section); line-height: 1.5; margin: 0 0 1rem; font-weight: 600; }
+h3 { font-size: 1rem; margin: 0 0 .75rem; font-weight: 600; }
+p { margin: 0 0 1rem; }
+.page-header { display: flex; justify-content: space-between; align-items: start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.page-subtitle { color: var(--color-muted); font-size: var(--font-help); margin: .5rem 0 0; }
+.button, button { display: inline-flex; justify-content: center; align-items: center; gap: .5rem; min-height: var(--control-min); padding: .5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-control); background: white; color: var(--color-text); text-decoration: none; font-weight: 600; font-size: var(--font-ui); line-height: 1.5; }
+.button:hover, button:hover { background: #F1F5F9; }
+.primary { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+.primary:hover { background: var(--color-primary-hover); }
+.danger { color: var(--color-danger); border-color: var(--color-danger); }
+.quiet { color: var(--color-primary); border-color: transparent; background: transparent; }
+button:disabled { color: var(--color-muted); background: #EDF0F4; border-color: var(--color-divider); cursor: not-allowed; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.panel { background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: var(--radius-panel); padding: var(--panel-padding); margin-bottom: 1.5rem; box-shadow: var(--shadow-panel); min-width: 0; }
+.table-panel { padding: 0; overflow: hidden; }
+.panel-top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 1rem 1.5rem; border-bottom: 1px solid var(--color-divider); }
+.panel-top h2, .panel-top p { margin: 0; }
+label, .field-label { display: block; font-size: var(--font-ui); font-weight: 600; margin-bottom: .25rem; }
+input:not([type=checkbox]):not([type=radio]), select, textarea { width: 100%; max-width: 100%; min-height: var(--control-min); padding: .5rem .75rem; border: 1px solid var(--color-border); background: white; color: var(--color-text); border-radius: var(--radius-control); }
+input[readonly] { background: var(--color-bg) !important; }
+textarea { min-height: var(--textarea-min); resize: vertical; }
+input[type=checkbox], input[type=radio] { width: 1.125rem; height: 1.125rem; accent-color: var(--color-primary); }
+.inline-check { display: flex; align-items: center; gap: .5rem; min-height: 2.5rem; font-weight: 400; }
+.filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: 1rem; align-items: end; }
+.filters .search-actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.help { font-size: var(--font-help); line-height: 1.5; color: var(--color-muted); margin: .375rem 0 0; }
+.small { font-size: var(--font-help); }
+.muted { color: var(--color-muted); }
+.required { color: var(--color-danger); font-size: var(--font-help); margin-left: .5rem; }
+.form-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 1rem; }
+.form-grid > * { min-width: 0; }
+.form-full { grid-column: 1 / -1; }
+.form-width { max-width: var(--form-max); }
+.short-field { max-width: 12rem; }
+.medium-field { max-width: 20rem; }
+.form-section + .form-section { margin-top: 1.5rem; border-top: 1px solid var(--color-divider); padding-top: 1.5rem; }
+.action-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 1rem 0; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: var(--font-table); line-height: 1.5; }
+.data-table { min-width: 44rem; }
+caption { text-align: left; font-weight: 600; padding: 1rem; }
+th { text-align: left; background: #F8FAFC; color: #344054; font-weight: 600; }
+th, td { padding: var(--cell-y) var(--cell-x); border-bottom: 1px solid var(--color-divider); vertical-align: middle; height: var(--row-min); }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: #FAFBFD; }
+.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+.nowrap { white-space: nowrap; }
+.name-cell { min-width: 12rem; max-width: 25rem; overflow-wrap: anywhere; }
+.code { font-family: var(--font-mono); font-size: var(--font-help); white-space: nowrap; }
+.row-link { font-size: var(--font-ui); padding: .5rem; margin: -.5rem; display: inline-flex; align-items: center; min-height: 2.5rem; }
+.sort-button { min-height: 2rem; border: 0; padding: 0; color: inherit; background: transparent; font-size: inherit; }
+.badge { display: inline-block; border-radius: .25rem; padding: .125rem .5rem; font-size: var(--font-help); font-weight: 600; white-space: nowrap; color: #344054; background: #EDF1F5; }
+.badge.blue { color: #1E40AF; background: #EAF1FF; }
+.badge.green { color: var(--color-success); background: #EAF7EE; }
+.badge.amber { color: var(--color-warning); background: #FFF5D9; }
+.badge.red { color: var(--color-danger); background: #FEECEB; }
+.pagination { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding: 1rem 1.5rem; border-top: 1px solid var(--color-divider); font-size: var(--font-help); }
+.pagination nav { display: flex; flex-wrap: wrap; gap: .5rem; }
+.page-link { min-width: var(--control-min); min-height: var(--control-min); padding: .5rem; }
+.page-link[aria-current=page] { background: var(--color-primary); border-color: var(--color-primary); color: white; }
+.size-control { display: inline-flex; align-items: center; gap: .5rem; font-size: var(--font-ui); font-weight: 400; margin: 0; }
+.size-control select { width: 5rem; font-size: var(--font-ui); }
+.header-tools .size-control select { width: 12rem; max-width: 100%; }
+.spec { margin-top: 1.5rem; background: #F9FAFC; border: 1px dashed var(--color-border); border-radius: .5rem; padding: 1rem 1.25rem; font-size: var(--font-help); }
+summary { cursor: pointer; color: var(--color-text); font-weight: 600; min-height: 1.75rem; }
+.spec-body { margin-top: 1rem; }
+dl { margin: 0; }
+.spec dt, .facts dt { color: var(--color-muted); font-size: var(--font-ui); font-weight: 600; }
+.spec dd { margin: .25rem 0 1rem; }
+.facts { display: grid; grid-template-columns: minmax(0,1fr); gap: 1rem; }
+.facts dd { margin: .25rem 0 0; overflow-wrap: anywhere; }
+.state-note { border-left: 4px solid var(--color-primary); background: var(--color-selected); padding: 1rem; margin-bottom: 1.5rem; font-size: var(--font-help); }
+.error-note { border-color: var(--color-danger); background: #FFF1F0; color: #7A271A; }
+.empty { padding: 3rem 1.5rem; text-align: center; }
+.empty h2 { margin-bottom: .5rem; }
+.empty .actions { justify-content: center; margin-top: 1rem; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,12rem),1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.metric { padding: 1.5rem; margin: 0; }
+.metric-value { font-size: var(--font-metric); font-weight: 700; line-height: 1.25; margin: .5rem 0; font-variant-numeric: tabular-nums; }
+.metric-value small { font-size: 1rem; font-weight: 400; margin-left: .25rem; }
+.two-panels { display: grid; grid-template-columns: minmax(0,1fr); gap: 1.5rem; }
+.task-list { padding: 0; margin: 0; list-style: none; }
+.task-list li { padding: 1rem 0; border-bottom: 1px solid var(--color-divider); }
+.task-list li:last-child { border: 0; }
+.task-list a { font-weight: 600; }
+.master-layout { display: grid; grid-template-columns: minmax(0,1fr); gap: 1.5rem; align-items: start; }
+.master-item { width: 100%; display: block; text-align: left; margin-bottom: .5rem; padding: 1rem; border-color: var(--color-divider); font-weight: 400; }
+.master-item[aria-pressed=true] { background: var(--color-selected); border-color: var(--color-primary); }
+.master-item strong { display: block; margin-bottom: .25rem; }
+.pattern-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,19rem),1fr)); gap: 1rem; }
+.pattern-card { margin: 0; }
+.pattern-card .code { white-space: normal; overflow-wrap: anywhere; color: var(--color-primary); margin-bottom: .5rem; }
+.pattern-card h2 { margin-bottom: .5rem; }
+.pattern-card p { font-size: var(--font-help); }
+.pattern-card details { font-size: var(--font-help); }
+.step-list { display: flex; gap: .75rem; flex-wrap: wrap; list-style: none; margin: 0 0 1.5rem; padding: 0; }
+.step-list li { padding: .5rem .75rem; background: #EDF1F5; border-radius: .375rem; font-size: var(--font-ui); }
+.step-list li.active { background: var(--color-selected); color: var(--color-primary); font-weight: 600; }
+.upload-box { border: 2px dashed var(--color-border); padding: 1.5rem; border-radius: .5rem; margin-bottom: 1rem; }
+.notice { padding: .75rem 1rem; background: #EAF7EE; border: 1px solid #8AAA95; border-radius: .375rem; font-size: var(--font-help); margin-bottom: 1rem; }
+dialog { border: 1px solid var(--color-divider); border-radius: .75rem; padding: 1.5rem; max-width: 34rem; width: calc(100% - 2rem); color: var(--color-text); box-shadow: 0 16px 60px rgb(0 0 0 / 20%); }
+dialog::backdrop { background: rgb(15 23 42 / 45%); }
+dialog .actions { margin-top: 1.5rem; justify-content: flex-end; }
+@container (min-width: 45rem) { .form-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .facts { grid-template-columns: repeat(2,minmax(0,1fr)); } .two-panels { grid-template-columns: 1.2fr 1fr; } }
+@container (min-width: 55rem) { .master-layout { grid-template-columns: minmax(16rem, .36fr) minmax(0,.64fr); } }
+@media (max-width: 63.999rem) { .header { position: static; } .shell { grid-template-columns: minmax(0,1fr); } .sidebar { display: none; position: static; height: auto; border-bottom: 1px solid var(--color-divider); } .sidebar.open { display: block; } .menu-toggle { display: inline-flex; } .header-tools .user { display: none; } }
+@media (max-width: 47.999rem) { .header { padding: .75rem 1rem; flex-wrap: wrap; } .header-tools { gap: .5rem; width: 100%; justify-content: space-between; } .header-tools select { max-width: 10rem; } .header-tools .prototype-label { display:none; } .page-header { margin-bottom: 1rem; } .page-header .actions { width: 100%; } .panel-top, .pagination { padding: 1rem; } .prototype { font-size: var(--font-help); } }
+@media print { .header, .sidebar, .prototype, .spec, .no-print, .breadcrumbs { display: none !important; } .shell { display:block; } main { padding: 0; } .panel { box-shadow:none; break-inside:avoid; } body { background:white; } }
+</style></head>
+<body data-density="normal">
+<a class="skip" href="#main">本文へ移動</a>
+<header class="header">
+ <a class="brand" href="#/home"><span class="brandmark" aria-hidden="true">W</span>業務ポータル</a>
+ <div class="header-tools"><span class="prototype-label badge blue">HTML設計書</span><label class="size-control" for="view-picker">パターン<select id="view-picker" aria-label="設計画面を選択"></select></label><span class="user">デモ利用者</span><button class="menu-toggle" id="menu-toggle" aria-controls="site-menu" aria-expanded="false">メニュー</button></div>
+</header>
+<div class="shell"><aside class="sidebar" id="site-menu"><nav aria-label="サイトメニュー" id="navigation"></nav><div class="nav-foot">設計用の架空データです。<br>DB・APIへの接続はありません。</div></aside>
+<main id="main" tabindex="-1"><div class="content"><div class="prototype"><span><strong>レイアウト設計 v1.0</strong> ／ 本番実装とは別の試作</span><span id="pattern-id"></span></div><div id="notice" class="notice" role="status" hidden></div><div id="app"></div></div></main></div>
+<dialog id="dialog" aria-labelledby="dialog-title"><h2 id="dialog-title"></h2><div id="dialog-body"></div><div class="actions" id="dialog-actions"></div></dialog>
+<script>
+'use strict';
+const PATTERNS=[["P00_APP_SHELL", "サイト共通構成", "認証後の全ページ", "ヘッダー／サイトメニュー／現在位置／本文", "機能へ移動、利用者メニュー", "独立メニュー画面への往復を前提にしない。現在位置を表示し、権限別の入口を整理する。", "通常、狭幅、メニュー展開、権限差", "どのページからも主要機能へ移動でき、狭幅でも本文を圧迫しない。"], ["P01_HOME", "ホーム・業務入口", "未処理業務や最近の活動を把握する", "要対応／最近利用／業務へのリンク", "未処理対象を開く", "指標や入口には実務上の意味を持たせる。大きなメニューボタンだけを並べない。不要なら主一覧をホームにする。", "通常、未処理なし、取得失敗", "要対応項目から対象へ直接移動でき、情報の基準時点が分かる。"], ["P02_SEARCH_LIST", "検索・一覧", "条件に合う対象を探す", "タイトル・新規／検索／件数・表／ページャー", "検索、新規、行の参照・編集", "単一行操作は直接リンクを基本とし、複数選択は必要時のみ。ページング、並び順、条件復元、出力範囲を定義する。", "初期、取得中、通常、0件、失敗、端ページ", "20件の境界を超えても範囲と総数が一致し、詳細から戻ると一覧状態が復元される。"], ["P03_DETAIL", "詳細参照", "対象情報を読む", "対象識別／要約／情報区分／関連情報", "編集、関連情報へ移動", "読み取り情報は定義リストや表で表示し、無効な入力欄の羅列を避ける。更新日時・状態・識別子を示す。", "通常、対象なし、権限なし", "入力不可の情報でも確認・コピーができ、編集先の対象を取り違えない。"], ["P04_EDIT_FORM", "新規・編集", "対象を入力・更新する", "対象・モード／入力グループ／保存・戻る", "保存、変更破棄", "1〜2列を基本とし、必須・形式・単位を明示する。保存単位と未保存離脱、検証エラー、競合を定義する。", "未変更、変更あり、保存中、入力エラー、失敗、競合", "保存失敗で値が消えず、保存・破棄後の再表示が契約と一致する。"], ["P05_MASTER_DETAIL", "一覧＋詳細・親子明細", "対象を切り替えながら詳細を編集する", "対象識別／一覧＋詳細／全体操作", "対象切替、明細追加、変更、削除、保存", "幅比を固定せず双方の最小幅を確保する。明細選択と編集対象を一致させ、最終保存に編集中の値を含める。", "未選択、選択、明細変更あり、保存失敗", "別行選択で入力を失わず、削除対象と保存対象が明確。狭幅は上下配置または画面分離。"], ["P06_EDITABLE_GRID", "一覧内編集・一括修正", "多数の同形式データをまとめて更新する", "対象条件／編集表／検証・一括確定", "セル編集、行追加、一括保存", "スプレッドシート同等操作を無断で増やさない。セルエラー、未保存行、部分成功、貼付範囲を定義する。", "編集、検証エラー、部分成功、競合", "行と列を特定してエラーを直せ、ページをまたぐ未保存が失われない。"], ["P07_WIZARD", "段階入力・申請作成", "長い作業を順序立てて進める", "手順表示／現在手順／戻る・次へ／最終確認", "次へ、前へ、確定", "手順移動と保存を区別する。戻っても値を保持し、完了前の不可逆処理を避ける。", "入力中、手順エラー、中断、最終確認", "前の手順へ戻っても値が維持され、最終確定前に対象・内容を確認できる。"], ["P08_APPROVAL", "承認・レビュー", "申請等を判断する", "対象要約／内容・差分／履歴／判断領域", "承認、差戻し、却下", "状態・実行権限・理由必須条件を業務定義する。承認を削除と同じ危険色に統一しない。最新状態を実行時に再確認する。", "待ち、実行中、決定済み、競合", "二重承認や権限外実行を防ぎ、誰がいつ何を判断したか追跡できる。"], ["P09_DASHBOARD", "ダッシュボード", "業務状況の変化や異常を把握する", "期間／要点指標／傾向／要対応", "期間変更、詳細へ掘り下げ", "指標の定義・単位・基準時点を示す。全データが同じ時点でない場合は明記する。図には表や文章の代替を用意する。", "通常、0、データなし、部分取得失敗", "数値の意味を説明でき、0と未取得を区別できる。"], ["P10_REPORT", "集計・帳票照会", "条件に基づく集計・帳票を確認する", "条件／集計要約／表／出力", "集計、出力、印刷", "表示条件と出力条件を一致させる。日付基準、通貨、丸め、集計単位を定義する。印刷レイアウトは操作画面と分ける。", "集計中、0件、成功、失敗", "総計と明細が整合し、出力範囲・条件が画面から確認できる。"], ["P11_IMPORT", "ファイル取込", "外部データを検証して取り込む", "形式説明／ファイル選択／検証結果／実行", "選択、検証、取込", "選択・検証・実確定を区別する。文字コード、サイズ、重複、エラー行、部分成功、再実行を定義する。", "未選択、検証中、エラー、実行中、完了", "検証だけでは本番データが変わらず、失敗行と修正方法を特定できる。"], ["P12_EXPORT", "出力・ダウンロード", "条件や選択対象をファイル化する", "対象範囲／形式／実行／結果", "出力予約、取得", "現在ページと検索全件を区別する。大きな処理はジョブ化し、取得期限・機密性・権限・再実行を定義する。", "準備、実行中、生成済、期限切れ、失敗", "画面に表示した対象範囲と実際の出力対象が一致する。"], ["P13_SETTINGS", "設定・マスター管理", "個人・組織等の設定を変更する", "適用範囲／分類別設定／保存", "保存、初期値へ戻す", "個人設定と全体設定を区別する。即時反映、保存後、再起動後の違いを示し、変更破棄と初期値復元を分ける。", "通常、変更あり、反映待ち、失敗", "対象範囲と反映時点が明確で、無関係な設定を上書きしない。"], ["P14_PERMISSIONS", "利用者・権限管理", "実行権限や所属を管理する", "対象／ロール・権限／影響／確定", "権限変更、利用停止", "変更の影響を表示し、最後の管理者の喪失等の制約を業務定義する。権限の非表示だけで認可を済ませない。", "権限不足、変更、影響確認、競合", "対象外の操作がAPIでも拒否され、変更の監査履歴が残る。"], ["P15_HISTORY", "履歴・監査ログ", "誰がいつ何を変更したか確認する", "期間・対象条件／時系列／差分", "検索、変更差分の参照", "タイムゾーン、操作主体、対象、結果を示す。履歴の編集・削除を通常操作として出さず、機密情報を制御する。", "通常、0件、取得不可", "履歴と現在状態を混同せず、日時と対象が明確。"], ["P16_CALENDAR", "予定・予約・稼働", "日時に紐づく業務を管理する", "期間・表示切替／予定／詳細", "期間移動、作成、変更", "月・週・一覧等の必要表示を選ぶ。重複、終日、タイムゾーン、変更確認を定義し、ドラッグだけに依存しない。", "空、重複、変更中、権限差", "ドラッグなしでも予定を確認・変更でき、狭幅では一覧へ切り替えられる。"], ["P17_BOARD", "ステータス別ボード", "作業の状態を一覧し更新する", "絞込／状態列／カード／詳細", "開く、状態変更", "大量カードの取得範囲を決め、状態遷移の権限を検証する。移動先を選べるボタンを併設する。", "空列、移動中、遷移不可、競合", "ドラッグ操作なしで同等の状態変更ができ、失敗時に元へ戻る。"], ["P18_TREE_EXPLORER", "階層・分類・エクスプローラー", "分類構造から対象を探す", "階層／一覧または詳細／階層操作", "展開、選択、移動", "パンくずと選択を一致させる。子要素取得中、循環参照、移動権限を考慮する。狭幅は階層を段階表示する。", "未展開、取得中、空、選択、失敗", "深い階層でも現在位置と親に戻る方法が分かる。"], ["P19_FILES", "添付・文書管理", "文書を添付・確認・管理する", "対象／ファイル一覧／アップロード／詳細", "追加、プレビュー、取得、削除", "種類、容量、版、公開範囲、検査待ち、削除を定義する。アップロード完了と業務データ保存完了を混同しない。", "送信中、検査待ち、利用可、拒否、失敗", "危険なファイルをそのまま実行せず、対象と共有範囲が分かる。"], ["P20_JOBS", "ジョブ・バッチ実行状況", "長時間処理を追跡する", "処理一覧／状態／詳細／結果", "開始、結果参照、再試行、取消可能時の取消", "不明な進捗率は表示しない。受付・待機・実行・完了・失敗・取消を区別し、再実行の重複を防ぐ。", "待機、実行、完了、失敗、取消", "画面を離れて戻っても状態を復元でき、部分成功を全件成功として扱わない。"], ["P21_AUTH", "認証・本人確認", "利用開始・再認証を行う", "サービス名／認証／補助導線", "ログイン、再認証", "共通業務メニューの例外とする。パスワード貼付・管理ツールを不要に妨げず、失敗・期限切れ・復帰先を定義する。", "初期、送信、失敗、期限切れ", "秘密を漏らさず、再認証後の復帰先と入力保護が定義されている。"], ["P22_SYSTEM_STATE", "システム状態・エラー", "通常業務を継続できない状態を説明する", "状態見出し／理由／次の操作／参照ID", "再試行、戻る、再認証", "403、404、通信失敗、保守等を区別する。スタックトレースや秘密を表示しない。再試行で入力を消さない。", "権限なし、対象なし、障害、保守", "原因の範囲と次の操作が分かり、サポートへの照会情報がある。"], ["P23_DIALOG_DRAWER", "確認・簡易入力・補助パネル", "主画面の文脈を保って小さな処理をする", "タイトル・対象／内容／確定・閉じる", "確認、簡易保存、閉じる", "モーダルは一つの目的に限定する。多段モーダルを避け、複雑な編集はページ化する。ドロワーのモーダル性を定義する。", "表示、入力エラー、実行中", "フォーカス、Esc、閉じた後の復帰と未保存保護が設計どおり。"]];
+const views={home:['ホーム','P01_HOME'],list:['対象一覧','P02_SEARCH_LIST'],detail:['詳細参照','P03_DETAIL'],edit:['登録・編集','P04_EDIT_FORM'],master:['親子・明細編集','P05_MASTER_DETAIL'],approval:['承認・レビュー','P08_APPROVAL'],report:['集計レポート','P10_REPORT'],import:['ファイル取込','P11_IMPORT'],jobs:['処理・出力状況','P20_JOBS'],settings:['設定','P13_SETTINGS'],history:['変更履歴','P15_HISTORY'],patterns:['パターンカタログ','P00〜P23']};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const app=document.getElementById('app');
+const data=Array.from({length:57},(_,i)=>({id:`R-${String(i+1).padStart(4,'0')}`,name:`サンプル案件 ${String(i+1).padStart(3,'0')}`,category:['分類A','分類B','分類C'][i%3],status:['進行中','下書き','完了'][i%3],owner:['担当A','担当B','担当C'][i%3],date:`2026-10-${String(28-(i%20)).padStart(2,'0')}`,start:'2026-10-01',end:'',memo:'これはHTMLレイアウト確認用の架空データです。'}));
+let route='list', params=new URLSearchParams(), lastList='#/list', draft=null, dirty=false, failSave=false, approvalState='承認待ち', demoState='normal';
+let children=[{id:'D-001',name:'明細サンプル 01',category:'分類A',memo:'対象の内容をここで編集します。'},{id:'D-002',name:'明細サンプル 02',category:'分類B',memo:'別の対象を選んでも編集途中の値を保持します。'}];
+let childWorking=structuredClone(children), selectedChild=0;
+const options=(xs,selected)=>xs.map(x=>`<option value="${esc(x)}" ${x===selected?'selected':''}>${esc(x||'すべて')}</option>`).join('');
+const href=(name,obj={})=>'#/'+name+(Object.keys(obj).length?'?'+new URLSearchParams(obj).toString():'');
+const badge=(status)=>`<span class="badge ${/完了|承認済/.test(status)?'green':/失敗|差戻/.test(status)?'red':/下書|待ち/.test(status)?'amber':'blue'}">${esc(status)}</span>`;
+const link=(text,to,cls='button')=>`<a class="${cls}" href="${esc(to)}">${esc(text)}</a>`;
+function notify(text){const el=document.getElementById('notice');el.textContent=text;el.hidden=false;}
+function hideNotice(){document.getElementById('notice').hidden=true;}
+function head(title,subtitle,actions=''){return `<div class="breadcrumbs"><a href="#/home">ホーム</a> / ${esc(title)}</div><div class="page-header"><div><h1 tabindex="-1">${esc(title)}</h1><p class="page-subtitle">${esc(subtitle)}</p></div><div class="actions">${actions}</div></div>`;}
+function specs(id,purpose,contract,states,checks,extra=''){return `<details class="spec"><summary>設計仕様を確認：${esc(id)}</summary><div class="spec-body"><dl><dt>目的・画面ID</dt><dd>${esc(purpose)} ／ ${esc(id)}</dd><dt>操作・保存契約</dt><dd>${esc(contract)}</dd><dt>確認する状態</dt><dd>${esc(states)}</dd><dt>受入条件</dt><dd>${esc(checks)}</dd><dt>デモと本番の境界</dt><dd>架空データのみ。認証・権限・DB/API・実ファイル処理は未実装。画面上の変更は再読込で失われます。未保存保護の見本はアプリ内リンクが対象で、ブラウザー終了は保護しません。</dd></dl>${extra}</div></details>`;}
+function showDialog(title,body,buttons){const dialog=document.getElementById('dialog');document.getElementById('dialog-title').textContent=title;document.getElementById('dialog-body').innerHTML=body;const actions=document.getElementById('dialog-actions');actions.replaceChildren();buttons.forEach((x,i)=>{const b=document.createElement('button');b.type='button';b.textContent=x.label;b.className=x.cls||'';if(i===0)b.autofocus=true;b.onclick=()=>{dialog.close();x.run?.();};actions.appendChild(b);});dialog.showModal();}
+function go(target){if(dirty){showDialog('未保存の変更があります','<p>この画面の変更をどう扱いますか。</p>',[{label:'編集を続ける'},{label:'破棄して移動',run:()=>{draft=null;dirty=false;childWorking=structuredClone(children);location.hash=target;}},{label:'保存して移動',cls:'primary',run:()=>{if(saveCurrent())location.hash=target;}}]);}else{location.hash=target;}}
+function renderNavigation(){let groups=[['業務',[['home','ホーム','⌂'],['list','対象一覧','▤'],['approval','承認・レビュー','✓']]],['分析',[['report','集計レポート','▥'],['history','変更履歴','↺']]],['管理',[['import','ファイル取込','↥'],['jobs','処理・出力状況','≡'],['settings','設定','⚙']]],['設計確認',[['patterns','パターンカタログ','□']]]];let active=['detail','edit','master'].includes(route)?'list':route;document.getElementById('navigation').innerHTML=groups.map(([g,items])=>`<div class="nav-group"><div class="nav-label">${g}</div>${items.map(([r,n,s])=>`<a class="nav-link" href="#/${r}" ${active===r?'aria-current="page"':''}><span class="nav-symbol" aria-hidden="true">${s}</span>${n}</a>`).join('')}</div>`).join('');}
+function simpleTable(rows,headers){return `<div class="table-wrap" tabindex="0" role="region" aria-label="データ表。狭い画面では横にスクロールできます"><table class="data-table"><thead><tr>${headers.map(x=>`<th scope="col">${x}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map(x=>`<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;}
+function renderHome(){return head('ホーム','業務の入口と要対応事項を集約するパターン',link('対象一覧へ','#/list','button primary'))+`<div class="metrics"><section class="panel metric"><div class="small muted">要確認の申請</div><div class="metric-value">3<small>件</small></div><a href="#/approval" class="small">承認・レビューを開く</a></section><section class="panel metric"><div class="small muted">進行中の対象</div><div class="metric-value">19<small>件</small></div><a href="${href('list',{status:'進行中'})}" class="small">進行中の一覧を見る</a></section><section class="panel metric"><div class="small muted">処理エラー</div><div class="metric-value">1<small>件</small></div><a href="#/jobs" class="small">処理状況を確認する</a></section></div><div class="two-panels"><section class="panel"><h2>次に行うこと</h2><ul class="task-list"><li><a href="#/approval">申請内容のレビュー</a><p class="help">判断待ちの内容と変更差分を確認します。</p></li><li><a href="#/jobs">失敗した取込の結果確認</a><p class="help">失敗理由を確認してから再実行します。</p></li><li><a href="#/edit">新しい対象を登録</a><p class="help">入力内容は最後にまとめて保存します。</p></li></ul></section><section class="panel"><h2>最近利用した対象</h2><ul class="task-list">${data.slice(0,3).map(r=>`<li><a href="${href('detail',{id:r.id})}">${esc(r.name)}</a><p class="help">${r.id} · ${r.category} · ${r.date}</p></li>`).join('')}</ul></section></div>`+specs('SCR-HOME','未処理事項と最近利用した対象への入口','カードから対応画面へリンク。指標はすべて架空の例示値。','通常、0件、取得失敗','不要な独立メニュー画面を経由せず、業務を開始できる。');}
+function listParams(extra={}){return Object.assign(Object.fromEntries(params.entries()),extra);}
+function renderList(){lastList=location.hash||'#/list';const q=params.get('q')||'',category=params.get('category')||'',status=params.get('status')||'',sort=params.get('sort')||'id',direction=params.get('dir')||'asc';let size=Number(params.get('size')||20);if(![20,50,100].includes(size))size=20;let rows=data.filter(r=>(!q||(r.id+' '+r.name).includes(q))&&(!category||r.category===category)&&(!status||r.status===status));rows.sort((a,b)=>((a[sort]||a.id).localeCompare(b[sort]||b.id,'ja')||a.id.localeCompare(b.id))*(direction==='desc'?-1:1));if(demoState==='empty')rows=[];let total=rows.length,pages=Math.max(1,Math.ceil(total/size)),page=Math.min(pages,Math.max(1,Number(params.get('page'))||1)),start=(page-1)*size,visible=rows.slice(start,start+size);let top=head('対象一覧','検索・ページング・行からの参照と編集',`<button type="button" data-demo="export">出力条件</button>${link('＋ 新規作成','#/edit','button primary')}`)+`<section class="panel" aria-label="検索条件"><form id="search-form" data-action-id="A-SEARCH"><div class="filters"><div><label for="keyword">キーワード</label><input id="keyword" name="q" value="${esc(q)}" placeholder="番号または名称"></div><div><label for="category">分類</label><select id="category" name="category">${options(['','分類A','分類B','分類C'],category)}</select></div><div><label for="status">状態</label><select id="status" name="status">${options(['','進行中','下書き','完了'],status)}</select></div><div class="search-actions"><button class="primary" type="submit">検索</button><a class="button" href="#/list">クリア</a></div></div><p class="help" id="pending-filter" hidden>条件を変更しました。「検索」で結果に適用します。</p></form></section>`;
+const tools=`<div class="panel-top"><p id="result-count" role="status">${total?`全${total}件中 <strong>${start+1}〜${Math.min(start+size,total)}件</strong>`:'検索結果：0件'}</p><label class="size-control" for="page-size">表示件数<select id="page-size">${[20,50,100].map(n=>`<option ${n===size?'selected':''}>${n}</option>`).join('')}</select></label>${pages>1?`<nav class="actions" aria-label="検索結果のページ（上部）">${page>1?`<a class="button" href="${esc(href('list',listParams({page:page-1,size})))}" aria-label="前のページ（上部）">前へ</a>`:'<button type="button" disabled>前へ</button>'}<span class="small">${page} / ${pages}</span>${page<pages?`<a class="button" href="${esc(href('list',listParams({page:page+1,size})))}" aria-label="次のページ（上部）">次へ</a>`:'<button type="button" disabled>次へ</button>'}</nav>`:''}</div>`;
+let body;
+if(demoState==='error')body=`<div class="empty"><h2>データを取得できませんでした</h2><p class="muted">検索条件は保持しています。接続を確認して再試行してください。</p><div class="actions"><button type="button" data-action="retry" class="primary">再試行（デモ）</button></div></div>`;
+else if(demoState==='loading')body=`<div class="empty" role="status" aria-busy="true"><h2>読み込み中</h2><p class="muted">設計確認のため、この状態を保持しています。</p></div>`;
+else if(!total)body=`<div class="empty"><h2>該当するデータがありません</h2><p class="muted">条件を減らすか、別のキーワードで検索してください。</p><div class="actions"><button type="button" data-action="retry">通常表示へ戻す</button><a href="#/list" class="button">条件をクリア</a></div></div>`;
+else body=`<div class="table-wrap" tabindex="0" role="region" aria-label="検索結果。狭い画面では横にスクロールできます"><table class="data-table"><thead><tr><th scope="col" ${sort==='id'?`aria-sort="${direction==='asc'?'ascending':'descending'}"`:''}><button class="sort-button" data-sort="id">番号 ${sort==='id'?(direction==='asc'?'↑':'↓'):''}</button></th><th scope="col" ${sort==='name'?`aria-sort="${direction==='asc'?'ascending':'descending'}"`:''}><button class="sort-button" data-sort="name">名称 ${sort==='name'?(direction==='asc'?'↑':'↓'):''}</button></th><th scope="col">分類</th><th scope="col">状態</th><th scope="col">更新日</th><th scope="col">操作</th></tr></thead><tbody>${visible.map((r,i)=>`<tr data-record-id="${r.id}"><td class="code">${r.id}</td><td class="name-cell"><a href="${href('detail',{id:r.id})}">${esc(demoState==='long'&&i===0?'非常に長い名称でも内容を切り捨てずに確認できることを試すためのサンプル案件名':r.name)}</a></td><td>${r.category}</td><td>${badge(r.status)}</td><td class="nowrap">${r.date}</td><td><a class="row-link" href="${href('edit',{id:r.id})}" aria-label="${esc(r.name)}を編集">編集</a></td></tr>`).join('')}</tbody></table></div>`;
+const pg=(n,label)=>`<a class="button page-link" href="${esc(href('list',listParams({page:n,size})))}" ${n===page?'aria-current="page"':''} aria-label="${typeof label==='number'?`${label}ページ`:label}">${label}</a>`;
+let pagination=(total&&demoState!=='error'&&demoState!=='loading')?`<div class="pagination"><span>${page} / ${pages}ページ</span>${pages>1?`<nav aria-label="検索結果のページ">${page>1?pg(page-1,'前へ'):'<button disabled>前へ</button>'}${Array.from({length:pages},(_,i)=>pg(i+1,i+1)).join('')}${page<pages?pg(page+1,'次へ'):'<button disabled>次へ</button>'}</nav>`:''}</div>`:'';
+let demo=`<label for="demo-state">設計確認用の表示状態</label><select id="demo-state" class="medium-field">${[['normal','通常'],['empty','0件'],['error','通信失敗'],['loading','取得中'],['long','長い名称']].map(([v,l])=>`<option value="${v}" ${demoState===v?'selected':''}>${l}</option>`).join('')}</select>`;
+return top+`<section class="panel table-panel" aria-label="検索結果">${demoState==='error'||demoState==='loading'?'<div class="panel-top"><p>検索結果は未取得です</p></div>':tools}${body}${pagination}</section>`+specs('SCR-LIST','条件に合う対象を探す','キーワード・分類・状態・並び順・ページをURLハッシュで保持。20／50／100件。条件変更は検索時に適用。','通常、0件、通信失敗、取得中、長い名称','21件以上で次ページへ移れ、詳細から戻ると一覧状態を復元する。',demo);}
+function record(){return data.find(r=>r.id===params.get('id'));}
+function notFound(){return head('対象が見つかりません','直接URL表示時の対象なし状態')+`<section class="panel empty"><h2>指定された対象は存在しません</h2><p>削除されたか、URLが変更された可能性があります。</p>${link('対象一覧へ','#/list','button primary')}</section>`;}
+function renderDetail(){const r=record()||(!params.has('id')?data[0]:null);if(!r)return notFound();return head(r.name,`${r.id} ／ 詳細参照`,link('一覧へ戻る',lastList)+link('編集する',href('edit',{id:r.id}),'button primary'))+`<div class="form-width"><section class="panel"><div class="actions" style="margin-bottom:1rem">${badge(r.status)}<span class="small muted">更新日：${r.date}</span></div><h2>基本情報</h2><dl class="facts"><div><dt>番号</dt><dd class="code">${r.id}</dd></div><div><dt>名称</dt><dd>${esc(r.name)}</dd></div><div><dt>分類</dt><dd>${r.category}</dd></div><div><dt>担当</dt><dd>${r.owner}</dd></div><div><dt>開始日</dt><dd>${r.start}</dd></div><div><dt>終了日</dt><dd>${r.end||'未設定'}</dd></div></dl></section><section class="panel"><h2>説明</h2><p>${esc(r.memo)}</p><div class="actions">${link('関連する明細を開く','#/master')}${link('変更履歴を見る','#/history')}</div></section></div>`+specs('SCR-DETAIL','対象を読み取り、関連業務へ進む','情報は読み取り専用。名称とIDで対象を識別。入力欄の無効化ではなく情報表示として構成。','通常、対象なし、権限なし','長い情報が読めてコピーでき、編集先と対象が一致する。');}
+function editField(id,label,value,type='text',required=false){return `<div><label for="${id}">${label}${required?'<span class="required">必須</span>':''}</label><input id="${id}" name="${id}" data-field-id="F-${id.toUpperCase()}" type="${type}" value="${esc(value)}" ${required?'required':''}></div>`;}
+function renderEdit(){const id=params.get('id');const r=id?record():null;if(id&&!r)return notFound();if(!draft||draft._id!==id){draft=Object.assign({_id:id,id:id||'新規',name:'',category:'分類A',status:'下書き',owner:'担当A',start:'',end:'',memo:''},r||{});dirty=false;}return head(id?'対象を編集':'新しい対象を登録',id?`${id} ／ ${r.name}`:'基本情報を入力し、最後にまとめて保存します。',link('一覧へ戻る',lastList))+`<form id="edit-form" class="form-width" data-screen-id="SCR-EDIT"><div id="edit-error" class="state-note error-note" role="alert" hidden></div><section class="panel"><div class="form-section"><h2>基本情報</h2><div class="form-grid">${editField('name','名称',draft.name,'text',true)}<div><label for="edit-category">分類</label><select id="edit-category" name="category">${options(['分類A','分類B','分類C'],draft.category)}</select></div><div><label for="edit-status">状態</label><select id="edit-status" name="status">${options(['下書き','進行中','完了'],draft.status)}</select></div>${editField('owner','担当',draft.owner)}</div></div><div class="form-section"><h2>期間・説明</h2><div class="form-grid">${editField('start','開始日',draft.start,'date')}${editField('end','終了日',draft.end,'date')}<div class="form-full"><label for="memo">説明</label><textarea id="memo" name="memo">${esc(draft.memo)}</textarea><p class="help">補足情報や判断に必要な内容を記載します。</p></div></div></div></section><div class="action-bar"><span class="small muted" id="dirty-state">${dirty?'未保存の変更があります':'変更はありません'}</span><div class="actions"><button type="button" data-action="discard-edit">変更を破棄</button><button class="primary" type="submit" data-action-id="A-SAVE">保存</button></div></div></form>`+specs('SCR-EDIT','新規または既存の対象を編集する','明示保存。対象1件が単位。未保存のアプリ内リンク移動では選択を求める。保存はメモリー上のデモのみ。','未変更、未保存、入力エラー、保存成功、保存失敗','保存失敗で値を保持し、空の名称はエラー。保存して移動と破棄して移動を区別する。',`<label class="inline-check"><input type="checkbox" id="fail-save" ${failSave?'checked':''}>次の保存を通信失敗にする（設計確認用）</label>`);}
+function saveCurrent(){if(route==='master'){if(!childWorking.every(x=>x.name.trim())){notify('明細名を入力してください。');return false;}children=structuredClone(childWorking);dirty=false;notify('デモ上で親子全体を保存しました。再読込で元に戻ります。');return true;}if(!draft)return true;if(!draft.name.trim()){const el=document.getElementById('edit-error');if(el){el.textContent='名称を入力してください。入力内容は保持しています。';el.hidden=false;}document.getElementById('name')?.focus();return false;}if(failSave){const el=document.getElementById('edit-error');if(el){el.textContent='保存できませんでした。入力内容を保持しています。再試行してください。';el.hidden=false;}return false;}let r=data.find(x=>x.id===draft._id);if(!r){r={id:`R-${String(data.length+1).padStart(4,'0')}`};data.push(r);draft._id=r.id;draft.id=r.id;}for(const k of ['name','category','status','owner','start','end','memo'])r[k]=draft[k];r.date='2026-10-29';dirty=false;document.getElementById('dirty-state')&&(document.getElementById('dirty-state').textContent='デモ上で保存済み');document.getElementById('edit-error')&&(document.getElementById('edit-error').hidden=true);notify('デモ上で保存しました。実DBへの保存はありません。');return true;}
+function renderMaster(){selectedChild=Math.min(selectedChild,Math.max(0,childWorking.length-1));let c=childWorking[selectedChild];return head('親子・明細を編集','親データ：P-0001 ／ サンプル対象',link('対象一覧へ',lastList))+`<div class="state-note">この例は「全体保存」で親子データをまとめて確定します。明細切替だけではDBへ確定しません。</div><div class="master-layout"><section class="panel"><div class="actions" style="justify-content:space-between;margin-bottom:1rem"><h2 style="margin:0">明細一覧</h2><button type="button" data-action="add-child">追加</button></div>${childWorking.map((x,i)=>`<button class="master-item" type="button" data-child="${i}" aria-pressed="${selectedChild===i}"><strong>${esc(x.name)}</strong><span class="small muted">${x.id} ／ ${x.category}</span></button>`).join('')||'<p class="muted">明細はまだありません。</p>'}</section><section class="panel">${c?`<h2>選択中：${esc(c.id)}</h2><form id="child-form"><div class="form-grid"><div><label for="child-name">明細名<span class="required">必須</span></label><input id="child-name" name="name" value="${esc(c.name)}"></div><div><label for="child-category">分類</label><select id="child-category" name="category">${options(['分類A','分類B','分類C'],c.category)}</select></div><div class="form-full"><label for="child-memo">説明</label><textarea id="child-memo" name="memo">${esc(c.memo)}</textarea></div></div><div class="actions" style="margin-top:1rem"><button class="danger" type="button" data-action="delete-child">この明細を削除</button></div></form>`:'<h2>明細を追加してください</h2>'}</section></div><div class="action-bar"><span class="small muted" id="dirty-state">${dirty?'未保存の変更があります':'変更はありません'}</span><div class="actions"><button data-action="discard-children">変更を破棄</button><button data-action="save-children" class="primary">全体保存</button></div></div>`+specs('SCR-MASTER','一覧の対象を切り替えて子データを編集する','子の編集状態を維持し、全体保存に現在の入力を含める。削除も保存前は未確定。','未選択、明細なし、変更あり、削除確認','別行へ切り替えても編集値が残り、明細反映ボタンを押し忘れる設計にしない。');}
+function renderApproval(){return head('申請をレビュー','REQ-0008 ／ サンプル変更申請',badge(approvalState))+`<div class="form-width"><section class="panel"><h2>申請内容</h2><dl class="facts"><div><dt>申請者</dt><dd>申請者A（架空）</dd></div><div><dt>申請日</dt><dd>2026-10-28</dd></div><div><dt>対象</dt><dd>R-0001 ／ サンプル案件 001</dd></div><div><dt>変更理由</dt><dd>担当体制の見直し</dd></div></dl></section><section class="panel table-panel"><div class="panel-top"><h2>変更差分</h2></div>${simpleTable([['担当','担当A','担当B'],['分類','分類A','分類B']],['項目','変更前','変更後'])}</section><section class="panel"><h2>判断</h2><label for="decision-reason">コメント</label><textarea id="decision-reason" placeholder="判断の理由を入力"></textarea><p class="help">このサンプルでは差戻し時のみ理由を必須とします。実際の条件は業務仕様で定義します。</p><div class="actions" style="margin-top:1rem"><button data-action="approve" class="primary" ${approvalState!=='承認待ち'?'disabled':''}>承認する</button><button data-action="return" ${approvalState!=='承認待ち'?'disabled':''}>差し戻す</button></div></section></div>`+specs('SCR-APPROVAL','内容と変更差分を確認して判断する','判断実行前に内容を確認。認可・競合検出・監査記録は本番実装対象。','承認待ち、承認済み、差戻し、競合','同じ申請の二重処理と状態の取り違えを防ぐ。');}
+function renderReport(){return head('集計レポート','期間・条件・単位を明示するパターン',`<button data-demo="print">印刷の設計方針</button><button data-demo="export" class="primary">出力条件</button>`)+`<section class="panel"><div class="filters"><div><label for="report-period">対象期間</label><select id="report-period"><option>2026年10月（サンプル）</option></select></div><div><label for="report-class">分類</label><select id="report-class">${options(['','分類A','分類B','分類C'],'')}</select></div><div class="actions"><button data-action="report-filter" class="primary">集計</button></div></div><p class="help">基準時点：2026-10-29 ／ 単位：件 ／ 以下はすべて架空データ</p></section><div class="metrics"><section class="panel metric"><div class="small muted">対象数</div><div class="metric-value" id="report-total">57<small>件</small></div></section><section class="panel metric"><div class="small muted">進行中</div><div class="metric-value" id="report-progress">19<small>件</small></div></section><section class="panel metric"><div class="small muted">完了</div><div class="metric-value" id="report-done">19<small>件</small></div></section></div><section class="panel table-panel"><div class="panel-top"><h2>分類別集計</h2></div><div id="report-table">${reportTable('')}</div></section>`+specs('SCR-REPORT','条件に基づく件数集計を確認する','デモ配列を分類別に集計。出力・印刷は設計説明のみ。','通常、0件、集計中、失敗','条件、基準時点、単位、総数と内訳を一致させる。');}
+function reportTable(filter){let cls=filter?[filter]:['分類A','分類B','分類C'];return simpleTable(cls.map(c=>{let rs=data.filter(r=>r.category===c);return [c,...['進行中','下書き','完了'].map(s=>String(rs.filter(r=>r.status===s).length)),String(rs.length)];}),['分類','進行中','下書き','完了','合計']);}
+function renderImport(){return head('ファイル取込','選択 → 検証 → 確認 → 取込を分離する')+`<div class="form-width"><ol class="step-list"><li class="active">1 ファイル選択</li><li>2 検証結果</li><li>3 取込実行</li><li>4 結果確認</li></ol><section class="panel"><h2>ファイルを選択</h2><div class="upload-box"><label for="import-file">CSVファイル（デモ）</label><input id="import-file" type="file" accept=".csv,text/csv"><p class="help">このHTMLはファイル内容を読み取りません。選択後、架空の検証結果を表示します。</p></div><button type="button" class="primary" data-action="validate-import">検証結果の見本を表示</button></section><div id="import-result" hidden><section class="panel"><h2>検証結果の見本</h2><div class="state-note error-note">30件のうち2件にエラーがあります（架空の結果）。本番の取込は行っていません。</div>${simpleTable([['8','名称','必須項目がありません'],['21','日付','日付の形式を確認してください']],['行','項目','修正内容'])}<p class="help">実際の検証方式、部分取込の可否、再実行時の重複防止を業務仕様で定義します。</p></section></div></div>`+specs('SCR-IMPORT','取り込み前に形式・内容の問題を確認する','ファイル内容の読み取り・サーバー送信なし。検証結果表示のみデモ。','未選択、検証中、検証エラー、取込中、完了','検証段階でDBを変更しない。行と項目を特定してエラーを直せる。');}
+function renderJobs(){return head('処理・出力状況','時間のかかる処理を一覧で追跡する',`<button data-demo="jobs-refresh">状態を更新</button>`)+`<div class="state-note">以下は状態表示の見本です。実行中の処理やバックグラウンド処理は存在しません。</div><section class="panel table-panel">${simpleTable([['JOB-003','データ出力',badge('完了'),'2026-10-29 10:30','<button data-demo="job-result">結果を見る</button>'],['JOB-002','データ取込',badge('実行中'),'2026-10-29 10:20','進捗率は取得できていません'],['JOB-001','データ取込',badge('失敗'),'2026-10-29 10:00','<button data-demo="job-error">失敗理由</button>']],['番号','処理','状態','開始日時（業務TZ）','操作・補足'])}</section>`+specs('SCR-JOBS','処理の状態と結果を追跡する','サンプル表示のみ。取消可否・再実行・結果期限は業務ごとに定義。','待機、実行、完了、失敗、取消','不明な進捗率を捏造せず、処理が存在するように誤認させない。');}
+function renderSettings(){return head('表示設定','個人設定と全体設定の範囲を明確にする')+`<form id="settings-form" class="form-width"><section class="panel"><h2>この設計デモの表示</h2><div class="form-grid"><div><label for="density">情報密度</label><select id="density" name="density">${[['normal','標準：操作40px・行48px'],['compact','高密度：操作36px・行40px'],['touch','タッチ：操作44px・行56px']].map(([v,l])=>`<option value="${v}" ${document.body.dataset.density===v?'selected':''}>${l}</option>`).join('')}</select><p class="help">値は16pxを基準にした相当値です。文字の拡大を妨げません。</p></div><div><label for="setting-scope">適用範囲</label><input id="setting-scope" value="このHTMLを開いている間だけ" readonly></div></div></section><div class="action-bar"><span class="small muted">ブラウザー再読込で標準に戻ります。</span><button type="submit" class="primary">表示に適用</button></div></form><section class="panel"><h2>フォント・サイズの標準</h2>${simpleTable([['本文・入力値','1rem','16px'],['画面タイトル','1.5rem','24px'],['見出し','1.125rem','18px'],['ラベル・表・補足','.875rem','14px']],['用途','規定値','基本文字サイズ16pxの場合'])}<p class="help">CSSの共通トークンを使用しています。実際の書体は端末にインストールされた代替フォントにも依存します。</p></section>`+specs('SCR-SETTINGS','設定の適用範囲と反映時点を確認する','表示密度だけをメモリー上で変更。個人設定の保存や権限設定は実装しない。','通常、変更、適用、失敗','設定値の適用範囲を表示し、他の利用者へ影響するように見せない。');}
+function renderHistory(){return head('変更履歴','操作主体・対象・日時・結果を照会する')+`<section class="panel"><p class="small muted" style="margin:0">対象：R-0001 ／ 日時表示：業務で定義するタイムゾーン ／ 以下は架空の履歴</p></section><section class="panel table-panel">${simpleTable([['2026-10-29 10:15','担当A','更新','R-0001',badge('完了'),'<button data-demo="history-diff">差分</button>'],['2026-10-28 15:20','担当B','承認','REQ-0008',badge('完了'),'<button data-demo="history-diff">内容</button>'],['2026-10-27 09:30','担当A','作成','R-0001',badge('完了'),'<button data-demo="history-diff">内容</button>']],['日時','操作主体','操作','対象','結果','参照'])}</section>`+specs('SCR-HISTORY','過去の操作と変更内容を照会する','参照のみ。履歴の更新・削除ボタンは設けない。サーバー監査ログ未接続。','通常、0件、取得失敗、閲覧権限なし','現在情報と過去情報を区別し、対象と時点を特定できる。');}
+function renderPatterns(){return head('パターンカタログ','24の画面・領域パターンを組み合わせ、別プロジェクトへ展開する')+`<div class="state-note">このHTMLは12の代表ビューを用意しています。全24パターンの完成した画面ではありません。設計注記・状態切替は本番UIから分離してください。</div><section class="panel"><label for="pattern-filter">パターンを探す</label><input id="pattern-filter" placeholder="例：承認、予約、P04"></section><div class="pattern-grid">${PATTERNS.map(r=>`<section class="panel pattern-card" data-pattern-text="${esc(r.join(' '))}"><p class="code">${r[0]}</p><h2>${r[1]}</h2><p class="muted">${r[2]}</p><p><strong>構成：</strong>${r[3]}</p><details><summary>ルールと合格条件</summary><p style="margin-top:.75rem">${r[5]}</p><p><strong>状態：</strong>${r[6]}</p><p><strong>合格条件：</strong>${r[7]}</p></details></section>`).join('')}</div>`;}
+const renderers={home:renderHome,list:renderList,detail:renderDetail,edit:renderEdit,master:renderMaster,approval:renderApproval,report:renderReport,import:renderImport,jobs:renderJobs,settings:renderSettings,history:renderHistory,patterns:renderPatterns};
+function render(){const bits=(location.hash||'#/list').slice(2).split('?');route=views[bits[0]]?bits[0]:'list';params=new URLSearchParams(bits[1]||'');if(!['edit','master'].includes(route)){dirty=false;draft=null;}renderNavigation();document.getElementById('pattern-id').textContent=views[route][1];document.getElementById('view-picker').value=route;hideNotice();app.innerHTML=renderers[route]();document.title=views[route][0]+'｜業務Web HTML設計書';document.getElementById('site-menu').classList.remove('open');document.getElementById('menu-toggle').setAttribute('aria-expanded','false');}
+document.getElementById('view-picker').innerHTML=Object.entries(views).map(([k,v])=>`<option value="${k}">${v[0]}</option>`).join('');
+document.getElementById('view-picker').onchange=e=>{let target='#/'+e.target.value;e.target.value=route;go(target);};
+document.getElementById('menu-toggle').onclick=()=>{let open=document.getElementById('site-menu').classList.toggle('open');document.getElementById('menu-toggle').setAttribute('aria-expanded',String(open));};
+document.addEventListener('click',e=>{let a=e.target.closest('a[href^="#/"]');if(a){e.preventDefault();go(a.getAttribute('href'));return;}let sort=e.target.closest('[data-sort]');if(sort){let key=sort.dataset.sort;location.hash=href('list',listParams({sort:key,dir:params.get('sort')===key&&params.get('dir')!=='desc'?'desc':'asc',page:1}));return;}let child=e.target.closest('[data-child]');if(child){selectedChild=Number(child.dataset.child);app.innerHTML=renderMaster();return;}let demo=e.target.closest('[data-demo]');if(demo){const messages={export:['出力範囲の設計','<p>本番では「検索結果全件」「現在ページ」「選択行」を明示して選択します。</p><p class="help">この設計デモではファイルを生成しません。大きな処理はジョブ画面で追跡します。</p>'],print:['印刷レイアウト','<p>操作画面とは別の印刷レイアウトを設計します。条件・基準時点・ページ番号等を定義してください。</p>'],'jobs-refresh':['更新の見本','<p>本番ではサーバーの最新状態を取得します。このHTMLでは通信を行いません。</p>'],'job-result':['結果の見本','<p>出力が完了した状態の表示例です。実ファイルやダウンロードURLはありません。</p>'],'job-error':['失敗理由の見本','<p>入力ファイルの項目定義が一致しませんでした（架空の例）。</p><p class="help">実際には修正対象と再実行条件を表示します。</p>'],'history-diff':['変更差分の見本','<p>担当：担当A → 担当B</p><p class="help">架空の履歴です。機密情報は権限に応じて表示を制限します。</p>']};let m=messages[demo.dataset.demo];showDialog(m[0],m[1],[{label:'閉じる'}]);return;}let b=e.target.closest('[data-action]');if(!b)return;switch(b.dataset.action){case'retry':demoState='normal';app.innerHTML=renderList();break;case'discard-edit':showDialog('変更を破棄しますか','<p>この対象の未保存の変更を破棄します。</p>',[{label:'編集を続ける'},{label:'変更を破棄',run:()=>{dirty=false;draft=null;render();}}]);break;case'add-child':childWorking.push({id:'D-'+String(Date.now()).slice(-5),name:'新しい明細',category:'分類A',memo:''});selectedChild=childWorking.length-1;dirty=true;app.innerHTML=renderMaster();break;case'delete-child':showDialog('明細を削除しますか',`<p>対象：${esc(childWorking[selectedChild].name)}</p><p class="help">全体保存まではデータベースへの確定を行わない設計です。</p>`,[{label:'キャンセル'},{label:'削除する',cls:'danger',run:()=>{childWorking.splice(selectedChild,1);dirty=true;app.innerHTML=renderMaster();}}]);break;case'discard-children':childWorking=structuredClone(children);dirty=false;app.innerHTML=renderMaster();break;case'save-children':if(saveCurrent())app.innerHTML=renderMaster();break;case'approve':case'return':{let back=b.dataset.action==='return',reason=document.getElementById('decision-reason').value.trim();if(back&&!reason){notify('差戻し理由を入力してください。');document.getElementById('decision-reason').focus();return;}showDialog(back?'差し戻しますか':'承認しますか','<p>対象：REQ-0008 ／ サンプル変更申請</p><p class="help">判断はこのデモ内の表示にだけ反映されます。</p>',[{label:'キャンセル'},{label:back?'差し戻す':'承認する',cls:'primary',run:()=>{approvalState=back?'差戻し済み':'承認済み';app.innerHTML=renderApproval();notify('デモ上の状態を変更しました。実際の申請処理は行っていません。');}}]);break;}case'validate-import':document.getElementById('import-result').hidden=false;break;case'report-filter':{let c=document.getElementById('report-class').value;let rows=data.filter(r=>!c||r.category===c);document.getElementById('report-table').innerHTML=reportTable(c);document.getElementById('report-total').innerHTML=rows.length+'<small>件</small>';document.getElementById('report-progress').innerHTML=rows.filter(r=>r.status==='進行中').length+'<small>件</small>';document.getElementById('report-done').innerHTML=rows.filter(r=>r.status==='完了').length+'<small>件</small>';notify('デモデータを集計しました。');break;}}});
+document.addEventListener('submit',e=>{e.preventDefault();if(e.target.id==='search-form'){const f=new FormData(e.target);location.hash=href('list',{q:f.get('q'),category:f.get('category'),status:f.get('status'),page:1,size:params.get('size')||20});}else if(e.target.id==='edit-form'){saveCurrent();}else if(e.target.id==='settings-form'){document.body.dataset.density=document.getElementById('density').value;notify('このHTMLの表示密度を変更しました。再読込で標準に戻ります。');}});
+document.addEventListener('input',e=>{if(e.target.closest('#edit-form')&&e.target.name){draft[e.target.name]=e.target.value;dirty=true;document.getElementById('dirty-state').textContent='未保存の変更があります';}if(e.target.closest('#child-form')&&e.target.name){childWorking[selectedChild][e.target.name]=e.target.value;dirty=true;document.getElementById('dirty-state').textContent='未保存の変更があります';}if(e.target.closest('#search-form'))document.getElementById('pending-filter').hidden=false;if(e.target.id==='pattern-filter'){let q=e.target.value.toLocaleLowerCase();document.querySelectorAll('.pattern-card').forEach(x=>x.hidden=!x.dataset.patternText.toLocaleLowerCase().includes(q));}});
+document.addEventListener('change',e=>{if(e.target.id==='page-size')location.hash=href('list',listParams({page:1,size:e.target.value}));if(e.target.id==='demo-state'){demoState=e.target.value;app.innerHTML=renderList();document.querySelector('.spec').open=true;}if(e.target.id==='fail-save')failSave=e.target.checked;});
+window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0);document.querySelector('h1')?.focus({preventScroll:true});});
+render();
+</script></body></html>

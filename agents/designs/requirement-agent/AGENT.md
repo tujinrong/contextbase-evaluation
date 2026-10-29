@@ -1,13 +1,15 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-REQUIREMENT","version":"0.3","path":"agents/designs/requirement-agent/AGENT.md","sheets":[{"heading":"状態と役割","kind":"GRID","sheet":"01_状態と役割"},{"heading":"実行コンテキスト","kind":"LIST","sheet":"02_実行コンテキスト","key":["項目"]},{"heading":"生成モードと成果物","kind":"GRID","sheet":"03_生成モードと成果物"},{"heading":"入出力と境界","kind":"LIST","sheet":"04_入出力と境界","key":["区分"]},{"heading":"実行工程","kind":"GRID","sheet":"05_実行工程"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"06_確認と引継ぎ"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-REQUIREMENT","version":"0.4","path":"agents/designs/requirement-agent/AGENT.md","sheets":[{"heading":"状態と役割","kind":"GRID","sheet":"01_状態と役割"},{"heading":"実行コンテキスト","kind":"LIST","sheet":"02_実行コンテキスト","key":["項目"]},{"heading":"生成モードと成果物","kind":"GRID","sheet":"03_生成モードと成果物"},{"heading":"入出力と境界","kind":"LIST","sheet":"04_入出力と境界","key":["区分"]},{"heading":"実行工程","kind":"GRID","sheet":"05_実行工程"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"06_確認と引継ぎ"}]} -->
 # 要件定義Agent 契約
 
-定義版0.3／2026-10-29。既存仕様からの逆生成を維持し、Access画面の利用者タスク・利用環境・保存単位と4観点の受入条件を基本設計へ引き継ぐ。汎用適用性と利用者による業務承認は別途未検証。
+定義版0.4／2026-10-29。既存仕様からの逆生成とAccessの品質条件を維持し、WEB系・WinForms系・Text系のUI要件を分類別の受入条件と基本設計への引継ぎへ接続する。汎用適用性と利用者による業務承認は別途未検証。
 
 ## 状態と役割
 
 AG-REQUIREMENT。利用者要求と許可された原資料を、目的・対象・必要な振る舞い・制約・受入条件として整理する要件定義専用Agent。既存仕様からの要件の再構成も当Agentの機能とする。[実行指示](PROMPT.md)、[運用案内](README.md)、[専用規則](rules/要件定義書作成ルール.md)、[処理手順](workflows/要件定義.md)を使用し、[配置規則](../../../docs/リポジトリ構成.md)、[共通文書規則](../../../docs/仕様書作成ルール.md)、[MD構造規約](../../../docs/MD構造・Excel変換規約.md)に従う。
 
 Accessの段階横断UI品質は[Access画面品質規約](../../../docs/Access画面品質規約.md)を正本とする。当工程では利用者の目的・操作結果・制約・受入条件へ落とし、基本設計専用の配置手順や実装方式を要求として複製しない。
+
+UI分類と工程間の共通契約は[UIパターン規約](../../../docs/UIパターン規約.md)、分類別品質は[WEB画面品質規約](../../../docs/WEB画面品質規約.md)・[WinForms画面品質規約](../../../docs/WinForms画面品質規約.md)・[Text画面品質規約](../../../docs/Text画面品質規約.md)を使用する。WEB系に含むWPFも実行基盤を区別し、URL・DOM・CSS・ブラウザー履歴を必須化しない。適用するUIパターンと利用環境を要求から選び、全パターンやWebの数値例を全方式へ展開しない。
 
 仕様書からの逆生成は設計済みの振る舞いを要求の粒度へ戻す文書工程。コードから仕様を復元するreverses配下のAgentや、原仕様を遮断する逆生成評価とは入力契約が異なる。生成物を利用者の新たな承認や実装済みの証明として扱わない。
 
@@ -22,7 +24,8 @@ Accessの段階横断UI品質は[Access画面品質規約](../../../docs/Access�
 | scope / requiredDocuments | 業務範囲、対象外、要件定義書.mdの文書ID・版、入口の更新範囲、既存要求IDとの対応 |
 | premiseProfile / decisionSources | 利用者確定前提、採用プロファイル、QA決定、根拠文書ID・版・SHA-256・適用範囲 |
 | inputSet / ruleSet | 入力と共通/専用規則のID・版・SHA-256。コミットと未コミット差分を区別 |
-| uiRequirements / changeScope | Accessでは利用者タスク、対象識別、最小有効表示領域・表示倍率・入力方法、保存方式/保存単位/確定時期/取消範囲、合理性・統一性・見やすさ・操作性の受入条件。確認済み/仮定/未確認と変更許可範囲を区別 |
+| screenFamily / renderer / purposePatternIds | WEB/WINFORMS/TEXTとBROWSER/WPF/WINFORMS/ACCESS/TERMINAL、必要な主/補助パターンと理由、既存画面/要求IDとの対応。追加方式は同specRootの規約/UIパターン.jsonのfamily・rendererと採用記録を継承し、分類で採用技術や業務機能を変更しない |
+| uiRequirements / changeScope | 利用者タスク、対象識別、有効表示領域・倍率又は端末行桁・入力方法、保存方式/保存単位/確定時期/取消範囲、合理性・統一性・見やすさ・操作性の受入条件。確認済み/仮定/未確認と変更許可範囲を区別 |
 | allowedPaths / excludedPaths | 読取りと書込みを分ける。対象外project・方式・spec/全体・spec-eval・実装資源を除外 |
 | runId / reportRoot | 方式別はsourceRoot/build/spec-generation/requirement-definition/。方式なし共通記録はproject/build/requirement-definition/。中間物は対応する.tmp/、履歴はGit |
 
@@ -53,12 +56,16 @@ requests-to-requirementsでは利用者要求・許可された原資料と選�
 
 Accessでは[専用規則の画面品質要件](rules/要件定義書作成ルール.md#access画面品質の要件)に従い、利用者が何を探し、何を確認・編集し、どの単位で確定するかを要求IDへ対応付ける。画像は見えている配置の根拠に限定し、保存・取消・キー操作や権限の実動作を確定しない。未確定の環境値・保存契約はQAとして残し、暫定寸法を正式な対応保証にしない。
 
+[3分類のUI要件](rules/要件定義書作成ルール.md#3分類のui要件)に従い、Webの機能間移動・行操作・一覧状態/出力範囲、WinFormsの標準部品とDPI/確定経路、Textの行桁/保護/機能キー/ページ入力保持を必要な要求と受入条件へ整理する。WPFはDIP・ネイティブの移動/キー操作へ対応させる。参照資料のHTML/JSデモ、設定ひな形、検証済み件数を新しい業務要求や実機試験結果にしない。
+
 ## 確認と引継ぎ
 
 構造・リンク、要求から根拠、受入条件から要求、既存前提と方式固有差分を確認する。資料のID・版・SHA-256を実ファイルと照合し、生成途中の変更は影響を再確認。自己レビューと独立レビューを区別し、担当と対象版を記録する。
 
 Accessの要件整理の完了条件は、利用者タスク・環境・保存単位と4観点の受入条件が要求ID・根拠・確認方法に対応し、不足がQAで特定できることとする。対象外には理由を付ける。画面分類を理由に認証を復活させたり、全画面中央寄せ・均等幅・全11pt・自動保存への変更を新たな要求として強制しない。
 
+3分類のUI要件の完了には、採用分類/実行基盤/必要パターンと適用理由、環境・移動/選択・検索取得/出力・保存/取消・キー操作・必要状態の受入条件を要求IDと根拠へ対応付ける。方式固有の非適用には理由を付け、未決は影響と基本設計で具体化する内容をQAへ残す。Webの20件案や狭幅候補をAccess・Text等の確定済み取得/表示方式へ上書きしない。
+
 受入条件は期待結果の定義であり試験結果ではない。構造・本文レビュー・利用者承認・アプリ実行・受入試験・正式採点を分け、未採点ならformalScore=null。過去のPASSを今回の版へ転用しない。
 
-[基本設計Agent](../basic-design-agent/AGENT.md)へ要求ID・文書版・確定前提・QA・根拠に加え、利用者タスク、環境の確定状態、保存・取消の要求、4観点の受入条件と未実施の確認方法を渡す。[詳細設計Agent](../detail-design-agent/AGENT.md)は基本設計の採用版を踏まえる。同一実行内の契約切替でもよく、別Agent起動・別チャット送信を必須にしない。要件定義だけの依頼から後工程を自動開始しない。
+[基本設計Agent](../basic-design-agent/AGENT.md)へ要求ID・文書版・確定前提・QA・根拠に加え、UI分類/実行基盤/必要パターン、利用者タスク、環境の確定状態、移動/検索/選択/保存・取消の要求、4観点の受入条件と未実施の確認方法を渡す。[詳細設計Agent](../detail-design-agent/AGENT.md)は基本設計の採用版を踏まえる。同一実行内の契約切替でもよく、別Agent起動・別チャット送信を必須にしない。要件定義だけの依頼から後工程を自動開始しない。

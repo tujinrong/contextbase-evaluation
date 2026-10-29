@@ -1,13 +1,15 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-REQUIREMENT-README","version":"0.3","path":"agents/designs/requirement-agent/README.md","sheets":[{"heading":"状態と入口","kind":"GRID","sheet":"01_状態と入口"},{"heading":"担当範囲","kind":"GRID","sheet":"02_担当範囲"},{"heading":"実行例と確認","kind":"GRID","sheet":"03_実行例と確認"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-REQUIREMENT-README","version":"0.4","path":"agents/designs/requirement-agent/README.md","sheets":[{"heading":"状態と入口","kind":"GRID","sheet":"01_状態と入口"},{"heading":"担当範囲","kind":"GRID","sheet":"02_担当範囲"},{"heading":"実行例と確認","kind":"GRID","sheet":"03_実行例と確認"}]} -->
 # requirement-agent
 
-定義版0.3／2026-10-29。既存仕様からの逆生成に加え、Access画面の利用者タスク・環境・保存単位・4観点の受入条件を基本設計へ引き継ぐ。
+定義版0.4／2026-10-29。既存仕様からの逆生成とAccessの品質要件を維持し、3分類のUIパターンを要求と受入条件へ整理する。
 
 ## 状態と入口
 
 [AGENT.md](AGENT.md)に契約、[PROMPT.md](PROMPT.md)に実行指示、[専用規則](rules/要件定義書作成ルール.md)に書き方、[処理手順](workflows/要件定義.md)に調査・執筆・検査・記録を置く。Codexが契約を読んで実行する。専用CLIや固定業務文章の自動生成器は設けない。
 
 0.1はひな型、0.2は仕様からの逆生成手順を具体化したもの。0.3は[Access画面品質規約](../../../docs/Access画面品質規約.md)を要件整理・受入条件・引継ぎへ接続する。要求起点の新規案件への汎用適用性や利用者承認の完了を表さない。今回の実施範囲は対象projectの固定build/記録で確認する。
+
+0.4は[UIパターン規約](../../../docs/UIパターン規約.md)と分類別の[WEB](../../../docs/WEB画面品質規約.md)・[WinForms](../../../docs/WinForms画面品質規約.md)・[Text](../../../docs/Text画面品質規約.md)規約を、専用規則・手順の要求整理と完了条件へ接続する。WEB系に含むWPFも実行基盤を分け、Web専用のURL/DOM/CSS/ブラウザー履歴を要求しない。
 
 ## 担当範囲
 
@@ -28,3 +30,5 @@ Accessでは利用者が行う作業、操作対象の識別、利用環境と�
 受入条件は未実施の確認計画で、アプリ・DB試験合格や利用者承認ではない。Excel/PDF変換、実装、実DB、受入試験、正式採点は当工程に含めない。
 
 完了時はUI要件から基本設計へ渡す利用者タスク・環境・保存/取消契約・4観点の受入条件、未確認とQAを示す。画像から動作を確定せず、暫定寸法・倍率を対応保証へ変更しない。既存の認証なし等の確定前提を継承し、画面品質の改善を理由に業務機能や保存方式を追加・変更しない。
+
+3分類では必要な主/補助パターン、移動/検索・取得/選択/出力/保存/キー操作と環境の条件を、要求ID・根拠・適用/非適用理由付きで基本設計へ渡す。全24パターンの実装や設定YAMLの複製は要求せず、Webの20件案をAccessの一覧内スクロールやTextのページ契約へ一律適用しない。HTMLモックの作成は基本設計の担当であり、参照HTMLのデモ動作や過去の検証件数を今回の実機結果へ流用しない。
