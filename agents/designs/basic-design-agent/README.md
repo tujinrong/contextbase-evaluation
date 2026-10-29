@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN-README","version":"1.9","path":"agents/designs/basic-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物","kind":"GRID","sheet":"02_成果物"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN-README","version":"1.10","path":"agents/designs/basic-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物","kind":"GRID","sheet":"02_成果物"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"}]} -->
 # basic-design-agent
 
-定義版1.9／2026-10-28。基本設計専用の契約・ルール・処理を維持し、要件定義と詳細設計Agentへの引継ぎを明確にする。
+定義版1.10／2026-10-29。基本設計専用の正本を維持し、Access画面品質を設計・モック・状態/操作のレビューと下流への引継ぎへ接続する。
 
 ## 使い方
 
@@ -10,6 +10,8 @@
 [AGENT.md](AGENT.md)が役割・入出力・工程の契約、[PROMPT.md](PROMPT.md)が起動指示と実行例である。CodexへPROMPT.mdと対象project・方式・基本設計の要求を渡す。基本設計専用Agentとして新規作成・改善・レビューを行う。専用のルールと処理はこのフォルダを正本とする。
 
 専用規則は[rules/基本設計書作成ルール.md](rules/基本設計書作成ルール.md)、執筆・検査・描画・記録の工程は[workflows/基本設計.md](workflows/基本設計.md)へ保存する。共通docsと他Agentはこの正本を参照し、基本設計専用の別ルールを持たない。
+
+Accessの段階横断UI品質は[Access画面品質規約](../../../docs/Access画面品質規約.md)を使用する。当工程は要件の利用者タスク・環境・保存単位・合理性/統一性/見やすさ/操作性の受入条件を読み、画面タイプ別構成、共通トークン、対象常時識別、実データ長に応じた一覧/詳細、保存/取消境界、状態とキー操作へ具体化する。
 
 全体docsを読み、specRoot=project/spec/方式ID/とsourceRoot=project/srcs/方式ID/、許可入力・出力、除外、版・ハッシュを固定する。新projectは利用者の明示作成依頼があるときだけ作る。既存projectは許可された構造と書式を参照し、別題材の業務値や確定前提を転用しない。
 
@@ -32,6 +34,10 @@
 再利用可能な基本設計専用の機械処理を追加する場合はscripts/、Agent自体の最終検査記録はbuild/、中間物は.tmp/へ置く。project固有の一回用処理・過去の検査記録と、specRootの既存仕様・採用済み規約・QAは、それぞれの所有範囲で保持する。
 
 要求・項目・イベント・CRUD・テーブル・帳票の意味を照合し、spec-meta、見出し、LIST/TABLE、ID、リンク、方式内依存を検査する。画面HTMLはsourceRoot/.tmp/へ同じ断片を抽出して描画・目視し、サイズ・倍率・状態・対象版・断片ハッシュ・計測/目視を記録する。静的モック、実Excelの印刷、製品実機の操作確認は別の状態である。
+
+AccessではForm/Page/Dialogと状態を列挙し、identity/layout/content/selection/saveCancel/navigation/keyboard/states/viewportの9カテゴリに個別の合格条件、適用/対象外理由、根拠、設計確認結果、下流での実画面検証方法を対応付ける。4観点を単一のreadable=trueに集約せず、重要な未決・不適合・未検証があれば影響と次の確認条件を明記する。製品検査用JSONはこの工程では生成しない。
+
+暫定の寸法/倍率を正式な対応環境へ自動昇格せず、画像から保存・取消・キー操作を確定しない。既存確定前提と変更範囲を守り、全画面中央寄せ・均等幅・全11pt・認証復活・自動保存への変更を画面品質の名目で強制しない。
 
 イベントの品質確認では、具体手順・判定・分岐・更新前再判定・DB結果・メッセージと復帰・Pilotケースが対応しているかを確認する。定義のない参照や「検査する」「共通エラー」のみの説明を残さず、独立レビューとシナリオ設計/試験実施の状態を分けて記録する。
 

@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-UI-CONFORMANCE","version":"1.0","path":"docs/UI適合検査.md","sheets":[{"heading":"適用と境界","kind":"GRID","sheet":"01_適用と境界"},{"heading":"期待値の契約","kind":"GRID","sheet":"02_期待値の契約"},{"heading":"実測の記録","kind":"GRID","sheet":"03_実測の記録"},{"heading":"判定と配布","kind":"GRID","sheet":"04_判定と配布"},{"heading":"回帰と未実施","kind":"GRID","sheet":"05_回帰と未実施"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-UI-CONFORMANCE","version":"1.1","path":"docs/UI適合検査.md","sheets":[{"heading":"適用と境界","kind":"GRID","sheet":"01_適用と境界"},{"heading":"期待値の契約","kind":"GRID","sheet":"02_期待値の契約"},{"heading":"実測の記録","kind":"GRID","sheet":"03_実測の記録"},{"heading":"判定と配布","kind":"GRID","sheet":"04_判定と配布"},{"heading":"回帰と未実施","kind":"GRID","sheet":"05_回帰と未実施"}]} -->
 # UI条件と生成結果の共通適合検査
 
-版1.0／2026-10-29。全方式の新規生成・UI改修に適用する。確定した方式別の字体、寸法、外観、読みやすさ、操作を、凍結した根拠から独立に期待値化し、今回の最終配布物の実測と比較する。Accessのptやクラシック外観をWeb・WPF・Textへ移植する規則ではない。
+版1.1／2026-10-29。全方式の新規生成・UI改修に適用する。確定した方式別の字体、寸法、外観、読みやすさ、操作を、凍結した根拠から独立に期待値化し、今回の最終配布物の実測と比較する。Accessでは画面タイプ別の検査網羅性と操作証拠を追加する。Accessのptやクラシック外観をWeb・WPF・Textへ移植する規則ではない。
 
 ## 適用と境界
 
@@ -19,6 +19,8 @@ componentsは検査範囲の全製品部品をid・kind・textCapableで列挙�
 
 rulesはid、kind、target（component ID）、mandatory=true、sourceFiles、propertiesを持つ。font・dimensions・appearance・render・interactionの5種を全契約で必須とし、外観は方式ごとに採用した部品・色・コントラスト等を検査する。WebやTextへAccessの外観値を強制しない。propertiesは属性名と`{"op":"eq","value":11}`等の期待値。opはeq/min/max/range/oneOf、rangeは上下限2値、oneOfは空でない許容値配列とし、Nullや空の期待定義を認めない。fontにはfontFamily/fontSize/fontUnitが必要。寸法はwidth/heightや狭幅時overflow等を方式に合う単位で定義し、外観も部品ごとの適用可否を区別する。
 
+今回の凍結入力に[Access画面品質規約](Access画面品質規約.md)を含むAccessのUIでは、同規約AUI-16の`accessScreenChecks`を必須にする。全Form/Page/TabPage/Dialog/Surfaceの画面タイプと9カテゴリ（identity/layout/content/selection/saveCancel/navigation/keyboard/states/viewport）を、実在する個別必須ruleへ対応させる。必要kind、必須カテゴリ、対象外理由、カテゴリ間のrule使い回しを検査し、単一のreadable属性だけで利用者4観点を満たしたとしない。他方式や規約追加前の観測へ追加条件を遡及してPASSを書き換えず、今回必要な入力集合との差異と新契約への再検査を区別する。
+
 ## 実測の記録
 
 sourceRoot/build/test-results/ui-observations.jsonにschemaVersion=1、projectId、profileId、任意のrunId、contractSha256、frozenInputManifestSha256、validatorSha256、artifact（file・sha256）、environment、components、observationsを記録する。validatorSha256は実測時のui-conformance.mjs本体。environmentはplatform、renderer、dpi、scale、viewportのwidth/height/unitを実測し、未測定のDPIを推測で埋めない。製品が複数ファイルならexport関数hashArtifactで全ファイルのPOSIX相対名・bytes・SHAをソートした配列のJSON.stringifyをSHA-256化する。CSSや資源だけの変更も旧観測を失効させる。
@@ -26,6 +28,8 @@ sourceRoot/build/test-results/ui-observations.jsonにschemaVersion=1、projectId
 測定器と使用した試験/helperコードは必須のmeasurementSources配列へ`{"file":"tests/observe.py","sha256":"実測時のSHA-256"}`形式で記録する。fileは同方式内のtests/、tools/、src/、database/配下のPOSIX相対コードファイルとし、全使用コードと補助処理を含める。重複、外部/リンク、build/.tmp、原仕様、metadata、期待値JSON、実測・判定・画像等の証拠自身は認めない。実測中の前後一致だけでなく、gateとmanifest再検証時にも各現ファイルSHAを照合し、測定後にコードだけを変えて旧観測を使わない。
 
 各observationsはruleId、target、method、properties（実値）、任意のevidence配列を持つ。methodはnative-property/computed-style/layout-measurement/render-review/keyboard-operation。fontはnative-property又はcomputed-style、renderはrender-review又はlayout-measurement、interactionは実キー/クリック等の意味ある操作をkeyboard-operationとして記録する。renderには今回の画像・計測記録等のevidenceを必須とし、方式内build/test-results配下のfile・sha256で参照する。期待値や実測JSON自身を画面証拠に使わない。
+
+Access画面品質規約を今回凍結したAccessはinteractionのevidenceも必須とし、開始状態/操作/対象/結果、保存・取消に該当すればDB再読込を記録する。定義漏れと証拠の有無を機械的に比較しても、証拠内容の正しさや目視品質を自動証明したことにしない。environmentは一条件の実測であり、他の有効領域・DPI・倍率は個別の観測/証拠と実施状態を記す。
 
 Accessは最終ACCDBと同一ハッシュの所有コピーから実Form/Controlの属性を読む。Webは最終publishだけを使う専用hostで実DOMのcomputed styleと矩形を測る。WPF/WinFormsは実部品、Textは採用端末のセルとキーを測り、方式の部品・単位・拡大/長文到達を検査する。生成定義の自己比較、HTML仕様モック、モデルへの値代入だけで製品適合を主張しない。幅・長文・空/エラー・新規/既存・Tab/モーダル等、仕様に必要な状態を独立ruleで記録する。
 
@@ -40,3 +44,5 @@ manifest.mjsはprofileの必須宣言を読み、契約削除での迂回を拒�
 ## 回帰と未実施
 
 隔離.tmp fixtureで、正常例、Tab字体漏れ、テーマ復活、寸法上書き、狭幅overflow、根拠/版不一致、未観測/未知rule、契約/証拠削除、旧ACCDB・CSS変更後の旧観測、manifest拒否、理由付き非UI例外を確認する。fixtureの合格を実アプリ合格にしない。Office/browser/処理系・bit・DPI・画面/状態・入力操作・未実施を方式内へ残し、正式受入・全利用者環境・採点は別状態とする。
+
+Accessの新契約では全画面登録、9カテゴリの欠落/不正な対象外、必要kind不足、存在しないrule、カテゴリ間の万能rule流用、interaction証拠欠落を拒否する。Access専用規約の未凍結/削除/更新時の失効と、他方式への追加条件の非適用も回帰する。

@@ -40,6 +40,7 @@ var sessions=new SessionRegistry(clock);var current=new CurrentUserService(datab
 var employees=new EmployeeService(database,repo,current,clock);var codes=new CodeService(database,repo,current,clock);
 var manifestPath=Path.Combine(root,".tmp","fixtures",dbName,"seed-manifest.json");
 var created=false;
+object? credentialMigrationEvidence=null;
 try
 {
     await Check("SQL-01","new owned fixture schema",async()=>{await SafeInitializer.CreateAsync(options,await File.ReadAllTextAsync(Path.Combine(root,"database","schema.sql")),ct);created=true;});
@@ -61,6 +62,94 @@ try
     {
         await using var u=await database.BeginAsync(false,ct);await SafeInitializer.RequireOwnerAsync(u,ct);
         await using var q=u.Command("SELECT COUNT(DISTINCT t.object_id),COUNT(*) FROM sys.tables t JOIN sys.columns c ON c.object_id=t.object_id WHERE t.is_ms_shipped=0;");await using var r=await q.ExecuteReaderAsync(ct);await r.ReadAsync(ct);Assert(r.GetInt32(0)==5&&r.GetInt32(1)==48);
+    });
+    await Check("AUTH-DEMO-01","password3/128 scalar boundaries retain original values",async()=>
+    {
+        foreach(var value in new[]{"123","😀12",new string('x',128)})Validation.Password(value);
+        await Expect(4,()=>{Validation.Password("");return Task.CompletedTask;});
+        foreach(var value in new[]{"1","12",new string('x',129),"\ud800"})
+            await Expect(5,()=>{Validation.Password(value);return Task.CompletedTask;});
+    });
+    await Check("AUTH-DEMO-02","auth migration refuses foreign ownership without changes",async()=>
+    {
+        var before=await UserSnapshot(database,ct);
+        await using(var u=await database.BeginAsync(true,ct))
+        {await using var q=u.Command("EXEC sys.sp_updateextendedproperty @name=N'SP2Owner',@value=N'foreign-credential-fixture';");await q.ExecuteNonQueryAsync(ct);await u.CommitAsync(ct);}
+        try
+        {
+            try{await DemoCredentialUpdater.ApplyAsync(database,repo,ct);throw new Exception("Expected ownership refusal");}
+            catch(InvalidOperationException){}
+            Assert(before==await UserSnapshot(database,ct));
+        }
+        finally
+        {
+            await using var u=await database.BeginAsync(true,ct);await using var q=u.Command("EXEC sys.sp_updateextendedproperty @name=N'SP2Owner',@value=@owner;",P.N("@owner",200,SafeInitializer.Owner));await q.ExecuteNonQueryAsync(ct);await u.CommitAsync(ct);
+        }
+    });
+    var previousPassword=Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
+    await Check("AUTH-DEMO-03","login collision rolls back both accounts",async()=>
+    {
+        await using(var u=await database.BeginAsync(true,ct))
+        {
+            foreach(var value in definition.Users)
+            {
+                var user=(await repo.UserAsync(u,value[0],false,ct))!;var verifier=AuthService.CreateHasher().HashPassword(user,previousPassword);
+                await using var q=u.Command("UPDATE dbo.m_app_user SET login_id=@login,password_verifier=@verifier,is_enabled=0,failed_count=5,locked_until=DATEADD(minute,15,SYSUTCDATETIME()) WHERE user_id=@id;",
+                    P.V("@login",20,user.Role==UserRole.ADMIN?"demoadmin":"demostaff"),P.N("@verifier",2048,verifier),P.N("@id",40,user.UserId));await q.ExecuteNonQueryAsync(ct);
+            }
+            var other=new AppUser("OTHER1","staff","unrelated fixture","",UserRole.STAFF,true,0,null);
+            await using(var q=u.Command("INSERT dbo.m_app_user(user_id,login_id,display_name,password_verifier,role_id,is_enabled,failed_count) VALUES(N'OTHER1','staff',N'unrelated fixture',@verifier,'STAFF',1,0);",P.N("@verifier",2048,AuthService.CreateHasher().HashPassword(other,previousPassword))))await q.ExecuteNonQueryAsync(ct);
+            await u.CommitAsync(ct);
+        }
+        var before=await UserSnapshot(database,ct);
+        try{await DemoCredentialUpdater.ApplyAsync(database,repo,ct);throw new Exception("Expected collision refusal");}
+        catch(InvalidOperationException){}
+        Assert(before==await UserSnapshot(database,ct));
+        await using var update=await database.BeginAsync(true,ct);await using var rename=update.Command("UPDATE dbo.m_app_user SET login_id='otheruser' WHERE user_id=N'OTHER1';");await rename.ExecuteNonQueryAsync(ct);await update.CommitAsync(ct);
+    });
+    await Check("AUTH-DEMO-04","legacy DEMO auth-only migration preserves full business values",async()=>
+    {
+        var migration=await DemoCredentialUpdater.ApplyAsync(database,repo,ct);
+        Assert(migration.State=="AppliedAuthOnly"&&migration.AccountsChanged==2&&migration.BusinessBefore.OrderBy(x=>x.Key).SequenceEqual(migration.BusinessAfter.OrderBy(x=>x.Key))&&migration.OtherUsersBefore==migration.OtherUsersAfter);
+        var beforeRepeat=await UserSnapshot(database,ct);var repeat=await DemoCredentialUpdater.ApplyAsync(database,repo,ct);
+        Assert(repeat.State=="SkippedExactMatch"&&repeat.AccountsChanged==0&&beforeRepeat==await UserSnapshot(database,ct));
+        credentialMigrationEvidence=new{migration,repeatState=repeat.State,repeatAccountChanges=repeat.AccountsChanged,otherUserPreserved=true,collisionRefusalWithoutChanges=true,foreignOwnerRefusalWithoutChanges=true};
+    });
+    await Check("AUTH-DEMO-05","old login IDs and previous verifiers rejected after migration",async()=>
+    {
+        foreach(var login in new[]{"demoadmin","demostaff"})Assert(await auth.AuthenticateAsync(new(login,"123"),ct)is null);
+        foreach(var login in new[]{"admin","staff"})
+        {
+            Assert(await auth.AuthenticateAsync(new(login,previousPassword),ct)is null);
+            Assert(await auth.AuthenticateAsync(new(login,"123"),ct)is not null);
+        }
+    });
+    await Check("AUTH-DEMO-06","IdentityV3 salted100000 verifiers retained for both DEMO users",async()=>
+    {
+        await using var u=await database.BeginAsync(false,ct);var salts=new List<string>();
+        foreach(var id in new[]{"SP2ADMIN","SP2STAFF"})
+        {
+            var user=(await repo.UserAsync(u,id,false,ct))!;var encoded=Convert.FromBase64String(user.PasswordVerifier);
+            Assert(encoded[0]==1&&System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(encoded.AsSpan(5,4))==100000);
+            var saltLength=checked((int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(encoded.AsSpan(9,4)));Assert(saltLength>=16);
+            salts.Add(Convert.ToHexString(encoded.AsSpan(13,saltLength)));
+            Assert(AuthService.CreateHasher().VerifyHashedPassword(user,user.PasswordVerifier,"123")!=Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed);
+        }
+        Assert(salts.Distinct(StringComparer.Ordinal).Count()==2);
+    });
+    await Check("AUTH-DEMO-07","two-account writes roll back completely on BeforeCommit failure",async()=>
+    {
+        // Move only the owned test identities back to legacy IDs, requiring two writes.
+        await using(var u=await database.BeginAsync(true,ct))
+        {
+            await using var q=u.Command("UPDATE dbo.m_app_user SET login_id=CASE user_id WHEN N'SP2ADMIN' THEN 'demoadmin' ELSE 'demostaff' END WHERE user_id IN(N'SP2ADMIN',N'SP2STAFF');");
+            await q.ExecuteNonQueryAsync(ct);await u.CommitAsync(ct);
+        }
+        var before=await DatabaseSnapshot(database,ct);var faulty=new Database(options,new Faults{BeforeCommitFailure=true});
+        try{await DemoCredentialUpdater.ApplyAsync(faulty,repo,ct);throw new Exception("Expected pre-commit failure");}
+        catch(IOException){}
+        Assert(before==await DatabaseSnapshot(database,ct));
+        Assert((await DemoCredentialUpdater.ApplyAsync(database,repo,ct)).AccountsChanged==2);
     });
     Actor? admin=null,staff=null;
     await Check("AUTH-01","normal ADMIN STAFF current roles",async()=>{admin=await auth.AuthenticateAsync(new("admin",adminPassword),ct);staff=await auth.AuthenticateAsync(new("staff",staffPassword),ct);Assert(admin?.Role==UserRole.ADMIN&&staff?.Role==UserRole.STAFF);});
@@ -239,15 +328,31 @@ finally
     if(!browser)
     {
         var dir=Path.Combine(root,"build","test-results");Directory.CreateDirectory(dir);
-        await File.WriteAllTextAsync(Path.Combine(dir,$"self-cycle-{cycle}.json"),JsonSerializer.Serialize(new{projectId="sample-project2",methodId="CSharp_ASPNET",runId=currentRunId,inputManifestSha256,testedRuntimeArtifacts,cycle,executedUtc=DateTimeOffset.UtcNow,dbEngine="SQL Server 2025 Express (17.0), compatibility 160; SQL Server 2022 host untested",passed=failed==0,failed,tests=results,unperformed=new[]{"formal acceptance","SQL Server 2022 physical host","real Excel print","browser (root independent)"}},SafeInitializer.Json));
+        await File.WriteAllTextAsync(Path.Combine(dir,$"self-cycle-{cycle}.json"),JsonSerializer.Serialize(new{projectId="sample-project2",methodId="CSharp_ASPNET",runId=currentRunId,inputManifestSha256,testedRuntimeArtifacts,cycle,executedUtc=DateTimeOffset.UtcNow,dbEngine="SQL Server 2025 Express (17.0), compatibility 160; SQL Server 2022 host untested",passed=failed==0,failed,tests=results,credentialMigrationEvidence,unperformed=new[]{"formal acceptance","SQL Server 2022 physical host","real Excel print","browser (root independent)"}},SafeInitializer.Json));
     }
 }
 return failed==0?0:1;
+static async Task<string> UserSnapshot(Database database,CancellationToken ct)
+{
+    await using var u=await database.BeginAsync(false,ct);await using var q=u.Command("SELECT * FROM dbo.m_app_user ORDER BY user_id FOR JSON PATH,INCLUDE_NULL_VALUES;");
+    var value=new StringBuilder();await using var r=await q.ExecuteReaderAsync(ct);while(await r.ReadAsync(ct))value.Append(r.GetString(0));return value.ToString();
+}
+static async Task<string> DatabaseSnapshot(Database database,CancellationToken ct)
+{
+    (string Table,string Order)[] tables=[("m_app_user","user_id"),("m_code_category","category_id"),("m_code","category_id,code"),("m_employee","employee_id"),("t_career","career_id")];
+    await using var u=await database.BeginAsync(false,ct);var value=new StringBuilder();
+    foreach(var table in tables)
+    {
+        value.Append(table.Table);await using var q=u.Command($"SELECT * FROM dbo.{table.Table} ORDER BY {table.Order} FOR JSON PATH,INCLUDE_NULL_VALUES;");
+        await using var r=await q.ExecuteReaderAsync(ct);while(await r.ReadAsync(ct))value.Append(r.GetString(0));
+    }
+    return value.ToString();
+}
 sealed class ManualTime(DateTimeOffset value):TimeProvider{public DateTimeOffset Now{get;set;}=value;public override DateTimeOffset GetUtcNow()=>Now;}
 sealed class Faults:IDbFaults
 {
-    public bool ChildFailure{get;init;}public bool AfterCommitFailure{get;init;}public bool RollbackFailure{get;init;}
-    public void BeforeChildWrite(){if(ChildFailure)throw new IOException("Test child fault.");}public void BeforeCommit(){}public void BeforeRead(){}
+    public bool ChildFailure{get;init;}public bool AfterCommitFailure{get;init;}public bool RollbackFailure{get;init;}public bool BeforeCommitFailure{get;init;}
+    public void BeforeChildWrite(){if(ChildFailure)throw new IOException("Test child fault.");}public void BeforeCommit(){if(BeforeCommitFailure)throw new IOException("Test pre-commit fault.");}public void BeforeRead(){}
     public void AfterCommit(){if(AfterCommitFailure)throw new IOException("Test acknowledgement loss.");}
     public void BeforeRollback(){if(RollbackFailure)throw new IOException("Test rollback confirmation loss.");}
 }

@@ -1,13 +1,15 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN-README","version":"1.1","path":"agents/designs/detail-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"担当と保存先","kind":"GRID","sheet":"02_担当と保存先"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"},{"heading":"移行した記録","kind":"GRID","sheet":"04_移行した記録"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN-README","version":"1.2","path":"agents/designs/detail-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"担当と保存先","kind":"GRID","sheet":"02_担当と保存先"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"},{"heading":"移行した記録","kind":"GRID","sheet":"04_移行した記録"}]} -->
 # detail-design-agent
 
-定義版1.1／2026-10-28。詳細設計専用Agent。役割IDはAG-DETAIL-DESIGN。
+定義版1.2／2026-10-29。詳細設計専用Agent。役割IDはAG-DETAIL-DESIGN。Accessの画面品質と保存・取消の検査契約を詳細化する。
 
 ## 使い方
 
 [AGENT.md](AGENT.md)が役割・入力隔離・出力範囲の契約、[PROMPT.md](PROMPT.md)が実行指示と指定例である。専用規則は[rules/詳細設計書作成ルール.md](rules/詳細設計書作成ルール.md)、執筆・検査・描画・記録は[workflows/詳細設計.md](workflows/詳細設計.md)へ保存する。共通docsと他Agentはこの正本を参照し、詳細設計専用の別正本を作らない。
 
 対象project・方式・詳細化する機能と入力版を指定し、選択specRootの確定前提・採用プロファイル・QAを先に読む。既存ID、利用者確定事項、方式固有の認証/DB/入力/版/監査を維持する。特定業務の項目や検索条件、方式数・採用DBを汎用Agentの既定値へ固定しない。
+
+Accessでは[Access画面品質規約](../../../docs/Access画面品質規約.md)を適用し、画面タイプ、利用者の作業、変更範囲、保存方式/単位、最小有効領域/倍率を引き継ぐ。既存UIの修正範囲が未指定ならlayout_onlyとし、操作結果や保存境界の変更案を見た目の修正と分ける。寸法初期値や倍率候補は既存の確定条件を上書きせず、仮定/未確認のまま管理する。
 
 ## 担当と保存先
 
@@ -22,6 +24,8 @@
 ## 確認と引継ぎ
 
 AIが本文を執筆し、機械処理は収集・形式検査・ハッシュ・保存・描画を担当する。基本と同じ画面/状態のHTML配置、各IDから型/API/SQL/DB列/CHK/MSG/復帰への対応、対象版の構造・意味レビュー・描画/目視を確認する。既存入力・QA・正式試験コード/fixture・範囲外ローカル変更を保全する。
+
+Accessの成果物には全Form/Section/Page/Control・付属ラベル・一覧見出しの対応と、採用トークン/字体/寸法/列幅、対象の常時識別・長文の全文到達、選択と詳細の一致、未反映入力と保存/取消/離脱、Tab/Enter/Esc/フォーカスの実装契約を含める。連結/非連結とイベント・DB確定の関係を定め、実装Agentがtests/ui-contract.jsonを作れる部品/状態/属性/根拠と期待結果を渡す。合理性・統一性・見やすさ・操作性を利用者タスクから評価し、指摘には合格条件と検証方法を付ける。
 
 描画記録はMDと抽出HTML断片のSHA-256、サイズ・倍率・ブラウザー版、状態、計測と目視結果を持つ。Textの文字モックとCCSID/DBCS・端末キー・IMEの実機確認、仕様帳票と実Excel/印刷は別状態である。構造・描画・独立レビューのPASSをアプリ/DB/受入・正式採点へ読み替えず、未採点ならformalScore=nullとする。
 

@@ -8,7 +8,15 @@ import {collectInputFiles} from './input-scope.mjs';
 import {writeJson} from './output-layout.mjs';
 
 export const UI_SCHEMA_VERSION = 1;
-export const UI_VALIDATOR_VERSION = '1.0';
+export const UI_VALIDATOR_VERSION = '1.1';
+const accessQualitySource = 'docs/Access画面品質規約.md';
+const accessScreenTypes = new Set(['AUTH','HOME','SEARCH_LIST','DETAIL','EDIT_FORM','MASTER_DETAIL','WIZARD','DASHBOARD_REPORT','SETTINGS','DIALOG','CUSTOM']);
+const accessSurfaceKinds = new Set(['form','page','tabpage','dialog','surface']);
+const accessCheckKinds = {
+  identity:['render'], layout:['dimensions'], content:['render'], selection:['interaction'],
+  saveCancel:['interaction'], navigation:['interaction'], keyboard:['interaction'], states:['render'], viewport:['dimensions','render'],
+};
+const accessAlwaysApplicable = new Set(['identity','layout','content','navigation','keyboard','states','viewport']);
 const kinds = new Set(['font', 'dimensions', 'appearance', 'render', 'interaction']);
 const methods = {
   font: new Set(['native-property', 'computed-style']),
@@ -107,6 +115,55 @@ function compare(expected, actual) {
   return false;
 }
 
+// Coverage is a structural safeguard. Referenced measurements still require independent
+// review of their meaning; this does not infer usability or data preservation from JSON.
+function validateAccessScreenChecks(contract, components, rules, add) {
+  const screens=contract.accessScreenChecks;
+  if(!Array.isArray(screens) || !screens.length) {add('ACCESS_SCREEN_CHECKS_MISSING','A nonempty accessScreenChecks array is required.');return;}
+  const targets=new Set(), ruleCategories=new Map(), categories=Object.keys(accessCheckKinds);
+  for(const screen of screens) {
+    if(!isObject(screen) || !identifier(screen.target) || !components.has(screen.target)) {add('ACCESS_SCREEN_TARGET','Each Access screen check must reference an existing component.');continue;}
+    const target=screen.target;
+    if(targets.has(target)) add('ACCESS_SCREEN_DUPLICATE',target);
+    targets.add(target);
+    if(!accessScreenTypes.has(screen.screenType)) add('ACCESS_SCREEN_TYPE',target+' has an unknown screenType.');
+    if(screen.screenType==='CUSTOM' && (typeof screen.purpose!=='string' || !screen.purpose.trim())) add('ACCESS_SCREEN_PURPOSE',target+' CUSTOM screen requires a purpose.');
+    if(!isObject(screen.checks)) {add('ACCESS_CHECK_CATEGORIES',target+' requires all nine check categories.');continue;}
+    const keys=Object.keys(screen.checks);
+    if(keys.length!==categories.length || categories.some(category=>!Object.hasOwn(screen.checks,category)) || keys.some(category=>!Object.hasOwn(accessCheckKinds,category))) {
+      add('ACCESS_CHECK_CATEGORIES',target+' must declare exactly: '+categories.join(', '));
+    }
+    for(const category of categories) {
+      const check=screen.checks[category], label=target+'/'+category;
+      if(!isObject(check) || typeof check.applicable!=='boolean' || !Array.isArray(check.ruleIds)) {add('ACCESS_CHECK_SHAPE',label+' requires applicable and ruleIds.');continue;}
+      const required=accessAlwaysApplicable.has(category) ||
+        (category==='selection' && ['SEARCH_LIST','MASTER_DETAIL'].includes(screen.screenType)) ||
+        (category==='saveCancel' && ['EDIT_FORM','MASTER_DETAIL','WIZARD','SETTINGS'].includes(screen.screenType));
+      if(!check.applicable) {
+        if(required) add('ACCESS_CHECK_REQUIRED',label+' cannot be excluded for '+screen.screenType+'.');
+        if(typeof check.reason!=='string' || !check.reason.trim() || check.ruleIds.length) add('ACCESS_CHECK_EXCLUSION',label+' exclusion requires a nonempty reason and empty ruleIds.');
+        continue;
+      }
+      if(!check.ruleIds.length) add('ACCESS_CHECK_RULES_MISSING',label+' requires nonempty ruleIds.');
+      const used=new Set(), presentKinds=new Set();
+      for(const id of check.ruleIds) {
+        if(!identifier(id) || used.has(id)) {add('ACCESS_CHECK_RULE_REFERENCE',label+' has an invalid or repeated rule ID.');continue;}
+        used.add(id);
+        const rule=rules.get(id);
+        if(!rule || rule.mandatory!==true) {add('ACCESS_CHECK_RULE_REFERENCE',label+' references an absent or nonmandatory rule: '+id);continue;}
+        presentKinds.add(rule.kind);
+        const previous=ruleCategories.get(id);
+        if(previous && previous!==category) add('ACCESS_CHECK_RULE_REUSE',id+' is reused across '+previous+' and '+category+'.');
+        else ruleCategories.set(id,category);
+      }
+      for(const kind of accessCheckKinds[category]) if(!presentKinds.has(kind)) add('ACCESS_CHECK_KIND',label+' requires a '+kind+' rule.');
+    }
+  }
+  for(const [id,component] of components) {
+    if(accessSurfaceKinds.has(component.kind.toLowerCase()) && !targets.has(id)) add('ACCESS_SCREEN_UNCOVERED',id+' is a Form/Page/TabPage/Dialog/Surface without screen checks.');
+  }
+}
+
 export function validateUIConformance({root,project,profile,runId}) {
   const findings=[], checks=[];
   const add=(code,detail)=>findings.push({code,detail});
@@ -156,6 +213,8 @@ export function validateUIConformance({root,project,profile,runId}) {
     if(observations.contractSha256?.toLowerCase()!==result.contract.sha256) add('CONTRACT_HASH','Observations do not reference the exact independently authored contract.');
     if(observations.frozenInputManifestSha256?.toLowerCase()!==result.frozenInputs.sha256) add('INPUT_MANIFEST_HASH','Observations do not reference the exact current frozen input manifest.');
     if(!Array.isArray(inputs.files) || !inputs.files.length) throw new Error('Nonempty frozen inputs required.');
+    const accessChecksRequired=profile==='Access' && inputs.files.some(entry=>entry.file===accessQualitySource);
+    result.accessScreenChecksRequired=accessChecksRequired;
     const currentInputs=collectInputFiles(root,project,profile).map(target=>path.relative(root,target).split(path.sep).join('/')).sort();
     if(!same(inputs.files.map(entry=>entry.file).sort(),currentInputs)) add('FROZEN_INPUT_SET','Current required input files differ from the frozen set.');
     const frozen=new Map();
@@ -222,6 +281,7 @@ export function validateUIConformance({root,project,profile,runId}) {
       presentKinds.add(rule.kind);
     }
     for(const kind of ['font','dimensions','appearance','render','interaction']) if(!presentKinds.has(kind)) add('REQUIRED_KIND_MISSING',kind);
+    if(accessChecksRequired) validateAccessScreenChecks(contract,components,rules,add);
     for(const [id,component] of components) {
       const componentRules=[...rules.values()].filter(rule=>rule.target===id && rule.mandatory===true);
       if(!componentRules.length) add('COMPONENT_UNCOVERED',id);
@@ -248,6 +308,7 @@ export function validateUIConformance({root,project,profile,runId}) {
       }
       if(observed.evidence!==undefined && !Array.isArray(observed.evidence)) {add('EVIDENCE_SHAPE',id);continue;}
       if(rule.kind==='render' && !observed.evidence?.length) add('RENDER_EVIDENCE_MISSING',id);
+      if(accessChecksRequired && rule.kind==='interaction' && !observed.evidence?.length) add('INTERACTION_EVIDENCE_MISSING',id);
       for(const item of observed.evidence??[]) {
         if(!isObject(item) || !item.file?.startsWith('build/test-results/') || item.file==='build/test-results/ui-observations.json' || item.file==='build/test-results/ui-conformance.json') {add('EVIDENCE_SCOPE',id);continue;}
         const target=local(owner,item.file);regular(target);

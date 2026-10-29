@@ -39,6 +39,8 @@ Excel は専用 instance で2シート `.xlsx` を生成し、保存先を利用
 
 ## 検査と境界
 
+認証変更は `python -B -X utf8 tests/credentials.py --run-id <runId>` で最終候補の専用コピーを検査します。admin/staffの123認証、実フォームの検査・イベントAPI、旧ID/旧パスワードの拒否、3～128境界・Unicode・ロック・権限、独立PBKDF2再計算、業務/監査/PK/役割の不変を確認します。フォームAPI検査は物理キー/IMEによるログイン操作とは区別します。
+
 検査は `.tmp` の専用コピーだけで実施します。今回の最終候補の再検査は `build/test-results/current-runtime.json`、業務・境界値は `cycle3.json`、描画と実キーの確認は `native-ui.json`、属性と共通判定は `ui-observations.json` / `ui-conformance.json` に記録します。入力・候補・試験ソースのSHAと実施範囲を照合し、過去候補のPASSを引き継ぎません。独自検査のPASSは原41Pilotの全条件や正式受入の合格を意味しません。
 
 処理中は入力・一覧・タブを物理的に保護し、Esc 以外のキーを消費します。Esc の取消は既存の社員検索・帳票要求の範囲に限ります。サービス終了後に元の保護状態を復元してから、保存済みコードのキー読取専用、新規経歴の入力可能等の業務状態を適用します。専用コピーの `tests/busy.py` は成功・失敗・取消と状態遷移を確認します。

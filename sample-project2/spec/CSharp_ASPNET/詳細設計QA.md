@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-CSharp_ASPNET-DET-QA","version":"1.1","path":"sample-project2/spec/CSharp_ASPNET/詳細設計QA.md","sheets":[{"heading":"境界と継承","kind":"GRID","sheet":"01_境界と継承"},{"heading":"詳細設計の採用判断","kind":"LIST","sheet":"02_詳細採用判断","key":["QA-ID"]},{"heading":"残件と検証","kind":"LIST","sheet":"03_残件と検証","key":["QA-ID"]},{"heading":"既存版と後工程","kind":"GRID","sheet":"04_既存版と後工程"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-CSharp_ASPNET-DET-QA","version":"1.2","path":"sample-project2/spec/CSharp_ASPNET/詳細設計QA.md","sheets":[{"heading":"境界と継承","kind":"GRID","sheet":"01_境界と継承"},{"heading":"詳細設計の採用判断","kind":"LIST","sheet":"02_詳細採用判断","key":["QA-ID"]},{"heading":"残件と検証","kind":"LIST","sheet":"03_残件と検証","key":["QA-ID"]},{"heading":"既存版と後工程","kind":"GRID","sheet":"04_既存版と後工程"}]} -->
 # CSharp_ASPNET 詳細設計QA・採用判断
 
-版1.1／2026-10-29。stage=detail-design、generationMode=canonical-update。元[QA](QA.md)1.6、[プロジェクト情報](プロジェクト情報.md)1.6、[要件定義](要件定義書.md)1.0と既存基本設計を入力にする。新しい判断を利用者確定へ格上げせず、元文書を改訂しない。
+版1.2／2026-10-29。stage=detail-design、generationMode=canonical-update。現行の[QA](QA.md)、[プロジェクト情報](プロジェクト情報.md)、[要件定義](要件定義書.md)と既存基本設計を入力にする。設計者判断を利用者確定へ格上げせず、本改訂は利用者確定QA-025の認証条件だけを関係文書へ同期する。
 
 ## 境界と継承
 
@@ -14,7 +14,7 @@
 | QA-ID | 状態 | 今回の具体化・採用理由 | 影響機能・参照 | 実証・承認の扱い |
 | --- | --- | --- | --- | --- |
 | DQA-001 | 詳細設計採用 | ASP.NET Core Cookie＋サーバーSessionRegistry/ScreenState、乱数32byteの識別、厳密無操作30分、現在DB役割/有効性を毎保護要求と確定/受渡前に照合。単一ホスト再起動は失効 | F01/F02/F03～06、[方式別共通](共通/方式別/01_共通実装仕様.md) | 新しい利用者承認なし。Session/Cookie/API挙動は実装時試験 |
-| DQA-002 | 詳細設計採用 | PasswordHasher<AppUser> IdentityV3/明示100000回を採用し、初期秘密は非表示対話設定。SuccessRehashNeededは認証成功として扱い、元F01の更新範囲を守ってpassword_verifierは更新しない。自動再符号化とパスワード変更機能は今回対象外 | F01、利用者T01、元QA-015 | パスワード原文保存なし。実反復時間/暗号API/初期CLI未実行 |
+| DQA-002 | 詳細設計採用 | PasswordHasher<AppUser> IdentityV3/明示100000回を採用し、標準DEMO初期秘密はQA-025の共通123、任意の非表示対話設定は明示モードだけ。SuccessRehashNeededは認証成功として扱い、元F01の更新範囲を守ってpassword_verifierは更新しない。自動再符号化とパスワード変更機能は今回対象外 | F01、利用者T01、元QA-015 | パスワード原文保存なし。実反復時間/暗号API/初期CLI未実行 |
 | DQA-003 | 詳細設計採用 | SQL ServerでSerializable＋同一sp_getapplock資源を全更新Exclusive/一括読取Shared、Transaction所有/待ち10000ms。Snapshot DB設定を変更せず同等の一貫性で具体化 | F01～06、[DB定義](DB定義/SQLServer/01_DB定義書.md) | 元のSnapshot又は同等直列化の許容範囲。2接続競合/10秒/取消/成否不明は未試験 |
 | DQA-004 | 詳細設計採用 | 48列/fieldIdsを保持しnvarcharは業務スカラー上限の2倍UTF-16容量、ASCII固定キーはchar/varchar、ID bigint/版int/年月date/UTC datetime2。検索照合キー/セッション/結果表は増やさない | 5TABLE、全項目表 | RuneLength/raw/保存/物理容量の照合は文書確認。実DB境界試験未実施 |
 | DQA-005 | 詳細設計採用 | SqlClient6.1.3を設計対象版として明示。型/Size/DBNullを固定し、Commit後通信例外をUnknown、DB自動再試行なし。updated_byは当時主体の記録/FKなしで元のマスタ→利用者初期順を維持 | F04/F06、元QA-015、DB索引 | NuGet導入/推移依存/脆弱性/実例外は未検証。Microsoft公式NuGet/SQL資料を方式別共通へ記録 |
@@ -24,6 +24,7 @@
 | DQA-009 | 詳細設計採用 | 画面状態を所有Session/Tab/Revisionで管理し、条件一字編集で旧結果/選択失効。親読込版と全LoadedCareerIdsをサーバーへ保存し、送信の保持/明示除去集合を照合。Unknown後CanSave=false | F03/F04/F06、元QA-022 | 状態の新DB列なし。直接要求/古い応答/不正集合の試験未実施 |
 | DQA-010 | 詳細設計採用 | 固定ReportSnapshotから生成、GDI GetTextExtentPoint32WとTextElementで長文分割、2シート全量読戻し。完成後再認可だけ行いResponse.HasStartedで開始前後を分け、既送信内容を撤回しない | F05、元QA-016/022 | GDI測定はExcel印刷保証ではない。実フォント/印刷/応答中断の実証が残る |
 | DQA-UI01 | 利用者確定 | 2026-10-29追加指示。Web標準HTML/CSS、14px以上、項目別基準寸法と狭幅折返し、確定条件を実装と検査へ追跡する共通適合検査 | F01～F06、[UI生成条件](規約/UI生成条件.md) | 最終publishの実ブラウザー測定と入力検査は今回のbuildで記録。Accessのクラシック外観をWebへ流用せず、未実施を過去PASSで補わない |
+| DQA-AUTH01 | 利用者確定 | QA-025のadmin/staff・共通123、最小3/最大128、新規seed1.1、既存2利用者だけの認証移行 | F01、SP2-DEMO-01、[DEMO認証条件](規約/DEMO認証条件.md) | IdentityV3/100000・内部ID/役割・業務行は維持。実適用/認証結果は今回build記録で確認 |
 
 ## 残件と検証
 

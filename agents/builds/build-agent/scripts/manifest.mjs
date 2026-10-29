@@ -30,11 +30,17 @@ if(generationState&&(generationState.runId!==runId||generationState.profileId!==
 if(input.projectId!==project||input.runId!==runId||input.profileId!==profile||structure.runId!==runId||structure.profileId!==profile||structure.status!=='structure-check-passed') throw new Error('Matching successful preflight and profile scope required.');
 if(input.inspectionOnly!==false||structure.inspectionOnly!==false||input.specificationLayout!=='project/spec/profile')throw new Error('Current publishing preflight required; inspection-only and legacy layouts are not generation authorization.');
 const hash=data=>crypto.createHash('sha256').update(data).digest('hex');
-const currentInputs=collectInputFiles(root,project,profile).map(file=>path.relative(root,file).split(path.sep).join('/')).sort();
-if(!Array.isArray(input.files)||JSON.stringify(input.files.map(record=>record.file).sort())!==JSON.stringify(currentInputs))throw new Error('Input file set changed or is outside the selected specification scope.');
-for(const record of input.files) {
+try {
+ const currentInputs=collectInputFiles(root,project,profile).map(file=>path.relative(root,file).split(path.sep).join('/')).sort();
+ if(!Array.isArray(input.files)||JSON.stringify(input.files.map(record=>record.file).sort())!==JSON.stringify(currentInputs))throw new Error('Input file set changed or is outside the selected specification scope.');
+ for(const record of input.files) {
   const target=path.join(root,record.file);assertRegular(target);
   if(hash(fs.readFileSync(target))!==record.sha256) throw new Error(`Input changed after preflight: ${record.file}`);
+ }
+} catch(error) {
+ // A changed/deleted UI policy must not leave the previous manifest looking current.
+ if(fs.existsSync(output)){assertRegular(output);fs.unlinkSync(output);}
+ throw error;
 }
 // This is an independent UI gate, not an inference from structural preflight PASS.
 let uiConformance;

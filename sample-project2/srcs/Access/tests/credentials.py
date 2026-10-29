@@ -22,9 +22,17 @@ Rejected:
  RefusedVerifier=True
 End Function
 Public Function CredentialRegression(ByVal oldAdmin As String,ByVal oldStaff As String) As String
- Dim r As clsResult,v As String,i As Long,mark As Date,emoji As String
+ Dim r As clsResult,v As String,i As Long,mark As Date,emoji As String,f As Access.Form
  On Error GoTo Failed
  report="":Reset "SP2ADMIN":Reset "SP2STAFF"
+ Call LogoutNow
+ Set f=Forms("frmLogin"):f!txtLoginId="admin":f!txtPassword="12":UiAction f,"cmdLogin"
+ Need "login-form-rejects-two-scalars",Not gSession.IsAuthenticated And IsNull(Forms("frmLogin")!txtPassword)
+ f!txtPassword="123":UiAction f,"cmdLogin":Set f=Nothing
+ Need "login-form-admin123",gSession.IsAuthenticated And gSession.RoleId="ADMIN" And CurrentProject.AllForms("frmMenu").IsLoaded
+ Call LogoutNow
+ Set f=Forms("frmLogin"):f!txtLoginId="staff":f!txtPassword="123":UiAction f,"cmdLogin":Set f=Nothing
+ Need "login-form-staff123",gSession.IsAuthenticated And gSession.RoleId="STAFF" And CurrentProject.AllForms("frmMenu").IsLoaded
  Need "policy-minimum-three",MinimumPasswordScalars=3
  Set r=Authenticate("admin","123"):Need "admin-123-login",r.Kind="OK" And gSession.UserId="SP2ADMIN" And gSession.RoleId="ADMIN"
  Set r=Authorize("ADMIN"):Need "admin-authorization",r.Kind="OK"
@@ -96,23 +104,24 @@ def stable_snapshot(data):
     for row in clean.get('m_app_user',[]):
         if str(row.get('user_id','')).upper() in ('SP2ADMIN','SP2STAFF'):
             for name in ('login_id','password_verifier','failed_count','locked_until'):row.pop(name,None)
+    for name in clean:clean[name]=sorted(clean[name],key=lambda row:json.dumps(row,ensure_ascii=False,sort_keys=True,default=str))
     return clean
 
 def digest(data):return hashlib.sha256(json.dumps(data,ensure_ascii=False,sort_keys=True,default=str).encode()).hexdigest()
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--database',type=Path,default=build.ROOT/'build/CareerManagement.accdb');p.add_argument('--record',type=Path,default=build.ROOT/'build/test-results/credentials.json');p.add_argument('--run-id',required=True);args=p.parse_args()
-    source=args.database.resolve();source_hash=build.sha(source);work=build.ROOT/'.tmp/credentials';work.mkdir(parents=True,exist_ok=True)
+    source=args.database.resolve();source_hash=build.sha(source);input_path=build.ROOT/'build/generation/inputs.json';input_hash=build.sha(input_path) if input_path.exists() else None;work=build.ROOT/'.tmp/credentials';work.mkdir(parents=True,exist_ok=True)
     target=work/'CareerManagement-auth-test.accdb';shutil.copy2(source,target)
     prior=work/'previous-test-secrets.dpapi'
     old=json.loads(build.win32crypt.CryptUnprotectData(prior.read_bytes(),None,None,None,0)[1]) if prior.exists() else ['prior-admin-credential-unavailable','prior-staff-credential-unavailable']
     if old[0]=='123' or old[1]=='123':old=['previous-generated-admin-value','previous-generated-staff-value']
-    before_pids=set(build.win32process.EnumProcesses());app=None;db=None;handle=None;checks=[];record={'status':'FAIL','projectId':'sample-project2','profileId':'Access','runId':args.run_id,'artifactSha256':source_hash,'startedAtUtc':dt.datetime.now(dt.timezone.utc).isoformat(),'scope':'Authentication/authorization and credential boundaries on private copy only; no user authentication UI or reseed','formalScore':None}
+    before_pids=set(build.win32process.EnumProcesses());app=None;db=None;handle=None;checks=[];record={'status':'FAIL','projectId':'sample-project2','profileId':'Access','runId':args.run_id,'artifactSha256':source_hash,'frozenInputManifestSha256':input_hash,'startedAtUtc':dt.datetime.now(dt.timezone.utc).isoformat(),'scope':'Authentication/authorization, actual form validation/event API and credential boundaries on private copy only; no native keyboard/login-dialog automation or reseed','formalScore':None}
     try:
         app=build.win32com.client.gencache.EnsureDispatch(build.win32com.client.DispatchEx('Access.Application'));app.Visible=False
         window=app.hWndAccessApp;window=window() if callable(window) else window;pid=build.win32process.GetWindowThreadProcessId(window)[1]
         if pid in before_pids:raise RuntimeError('New owned Access required')
-        handle=build.win32api.OpenProcess(0x100000|0x400,False,pid);app.OpenCurrentDatabase(str(target))
+        handle=build.win32api.OpenProcess(0x100000|0x400,False,pid);app.OpenCurrentDatabase(str(target));print('OWNED_ACCESS_OPEN '+str(pid),flush=True)
         db=app.CurrentDb();before=snapshot(db);db.Close();db=None
         salts=[]
         for identity,role in [('ADMIN','ADMIN'),('STAFF','STAFF')]:
@@ -125,19 +134,22 @@ def main():
         assert salts[0]!=salts[1];checks.append({'id':'distinct-random-salts','status':'PASS'})
         component=app.VBE.ActiveVBProject.VBComponents.Add(1);component.Name='CredentialRegressionModule';module=component.CodeModule
         if module.CountOfLines:module.DeleteLines(1,module.CountOfLines)
-        module.AddFromString(build.vbe_text(HARNESS));module=None;component=None;app.DoCmd.RunCommand(126)
-        assert app.IsCompiled
+        module.AddFromString(build.vbe_text(HARNESS));module=None;component=None
+        app.DoCmd.Save(5,'CredentialRegressionModule');print('TEST_MODULE_SAVED',flush=True)
+        record['compileGate']=build.compile_gate(app)
+        assert app.IsCompiled;print('TEST_MODULE_COMPILED',flush=True)
         result=app.Run('CredentialRegression',*old);old.clear()
+        print('FORM_AND_AUTH_HARNESS_RETURNED',flush=True)
         if isinstance(result,tuple):result=result[0]
         for line in str(result).splitlines():
             parts=line.split('|',2);checks.append({'id':parts[0],'status':parts[1],**({'detail':parts[2]} if len(parts)>2 else {})})
         db=app.CurrentDb();after=snapshot(db);db.Close();db=None
         assert stable_snapshot(before)==stable_snapshot(after)
         checks.append({'id':'all-business-audit-pk-role-values-preserved','status':'PASS'})
-        record.update(checks=checks,businessStableDigest=digest(stable_snapshot(after)),rows={name:len(rows) for name,rows in after.items()},testSourceSha256=build.sha(Path(__file__)))
+        record.update(checks=checks,businessStableDigest=digest(stable_snapshot(after)),rows={name:len(rows) for name,rows in after.items()},testSourceSha256=build.sha(Path(__file__)),measurementSources={name:build.sha(build.ROOT/name) for name in ['tests/credentials.py','tools/build.py','database/schema.py','src/forms/definitions.py']})
         app.CloseCurrentDatabase();app.Quit(2);app=None;build.release()
         exited=build.win32event.WaitForSingleObject(handle,10000)==0;code=build.win32process.GetExitCodeProcess(handle)
-        unchanged=build.sha(source)==source_hash
+        unchanged=build.sha(source)==source_hash and (build.sha(input_path) if input_path.exists() else None)==input_hash
         record.update(ownedProcess={'pid':pid,'newInstance':True,'exited':exited,'exitCode':code},sourceArtifactUnchanged=unchanged)
         if checks and all(c['status']=='PASS' for c in checks) and exited and code==0 and unchanged:record['status']='PASS'
     except BaseException as error:

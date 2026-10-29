@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"8.11","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AGENT-INDEX","version":"8.12","path":"agents/README.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"Agent一覧","kind":"LIST","sheet":"02_Agent一覧","key":["Agent-ID"]},{"heading":"実行コンテキスト","kind":"GRID","sheet":"03_実行コンテキスト"}]} -->
 # Agent定義一覧
 
-版8.11／2026-10-28。要件定義・基本設計・詳細設計の3担当を配置し、旧汎用仕様Agentの入口を廃止する。ContextBaseの明示incrementalによる分割調査・草稿保存・独立検証と継続を接続し、実行・採用・人手受入れは今回の報告で区別する。
+版8.12／2026-10-29。要件定義・基本設計・詳細設計の3担当を配置し、旧汎用仕様Agentの入口を廃止する。ContextBaseの明示incrementalによる分割調査・草稿保存・独立検証と継続を接続し、実行・採用・人手受入れは今回の報告で区別する。
 
 ## 概要
 
@@ -39,7 +39,7 @@ agents/
 
 | 分類 | Agent-ID | 役割 | 契約文書 |
 | --- | --- | --- | --- |
-| designs | AG-REQUIREMENT | 要件定義専用（0.2）。要求起点と既存仕様からの逆生成 | [契約](designs/requirement-agent/AGENT.md)・[実行指示](designs/requirement-agent/PROMPT.md)・[運用案内](designs/requirement-agent/README.md) |
+| designs | AG-REQUIREMENT | 要件定義専用（0.3）。要求起点と既存仕様からの逆生成 | [契約](designs/requirement-agent/AGENT.md)・[実行指示](designs/requirement-agent/PROMPT.md)・[運用案内](designs/requirement-agent/README.md) |
 | designs | AG-BASIC-DESIGN | 基本設計専用。新規作成・改善・レビューと専用ルール・処理の管理 | [契約](designs/basic-design-agent/AGENT.md)・[実行指示](designs/basic-design-agent/PROMPT.md)・[運用案内](designs/basic-design-agent/README.md) |
 | designs | AG-DETAIL-DESIGN | 詳細仕様書専用。新規作成・改善・レビューと専用ルール・処理の管理 | [契約](designs/detail-design-agent/AGENT.md)・[実行指示](designs/detail-design-agent/PROMPT.md)・[運用案内](designs/detail-design-agent/README.md) |
 | builds | AG-BUILD | 仕様からシステム生成 | [build-agent](builds/build-agent/AGENT.md) |
@@ -50,6 +50,8 @@ agents/
 | converts | AG-ACCESS-REBUILDER | 指定AccessからASP.NET Core／C#／SQL Serverへ再構築。sample-project1で最大2回の生成・検証を実施 | [契約](converts/access-rebuilder-agent/AGENT.md)・[作成計画](converts/access-rebuilder-agent/docs/作成計画.md)・[運用案内](converts/access-rebuilder-agent/README.md) |
 
 ## 実行コンテキスト
+
+Access画面は[工程横断の品質規約](../docs/Access画面品質規約.md)を採用し、要件の利用者タスク/受入条件→基本のタイプ別構成→詳細の実部品/保存状態→buildの独立期待値/実画面検査へ引き継ぐ。各工程で合理性・統一性・見やすさ・操作性を確認し、新規約を凍結するAccessのUI生成では画面別accessScreenChecksと操作証拠を必須にする。既存のアプリや別方式を依頼なしに更新しない。
 
 基本設計専用の記述規則は[専用ルール](designs/basic-design-agent/rules/基本設計書作成ルール.md)、執筆・検査・描画・記録は[専用工程](designs/basic-design-agent/workflows/基本設計.md)へ集約する。詳細設計の[専用ルール](designs/detail-design-agent/rules/詳細設計書作成ルール.md)と[専用工程](designs/detail-design-agent/workflows/詳細設計.md)はdetail-design-agentへ保存する。要件定義の[専用規則](designs/requirement-agent/rules/要件定義書作成ルール.md)と[処理手順](designs/requirement-agent/workflows/要件定義.md)はrequirement-agentへ保存し、仕様書から要件への逆生成も同Agentが担当する。各担当は要求・既存ID・確定前提・QA・依存を引き継ぎ、他工程の専用ルールや処理を自身の正本として追加しない。旧汎用仕様Agentのフォルダは廃止した。
 

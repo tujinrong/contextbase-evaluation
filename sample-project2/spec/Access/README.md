@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-INDEX","version":"1.8","path":"sample-project2/spec/Access/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-INDEX","version":"1.9","path":"sample-project2/spec/Access/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
 # Access 基本設計書一覧
 
-仕様セット版1.8／2026-10-28。社員経歴管理システム。
+仕様セット版1.9／2026-10-29。社員経歴管理システム。
 
 ## 対象と状態
 
@@ -43,6 +43,7 @@
 | 基本 | F06 | [汎用コードマスタ画面](基本設計書/06_汎用コードマスタ画面.md) |
 | 基本 | テーブル索引 | [共通制約・5テーブル分冊](基本設計書/07_テーブル仕様書.md) |
 | 基本 | コード | [分類・初期9コード・保護](基本設計書/08_コード設計書.md) |
+| 規約 | DEMO認証条件 | [利用者確定のadmin/staff・共通123・認証移行](規約/DEMO認証条件.md) |
 | 規約 | 設計条件 | [適用書式と今回の工程](規約/基本設計作成条件.md) |
 
 ## 独立入力と次工程

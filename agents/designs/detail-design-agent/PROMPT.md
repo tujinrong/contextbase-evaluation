@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN-PROMPT","version":"1.1","path":"agents/designs/detail-design-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"指定例","kind":"GRID","sheet":"03_指定例"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN-PROMPT","version":"1.2","path":"agents/designs/detail-design-agent/PROMPT.md","sheets":[{"heading":"起動指示","kind":"GRID","sheet":"01_起動指示"},{"heading":"実行要求","kind":"LIST","sheet":"02_実行要求","key":["項目"]},{"heading":"指定例","kind":"GRID","sheet":"03_指定例"}]} -->
 # detail-design-agent 実行指示
 
-定義版1.1／2026-10-28。詳細設計専用の起動指示。対象方式の採用前提から実装可能な仕様契約を記述する。
+定義版1.2／2026-10-29。詳細設計専用の起動指示。対象方式の採用前提から画面・操作・保存を検証できる実装契約を記述する。
 
 ## 起動指示
 
@@ -10,6 +10,10 @@
 本文執筆前に確定前提・採用プロファイル・QAを読み、入力版/ハッシュと今回の変更範囲を記録する。変更指示や新たな矛盾がなければ既回答を継承し、認証なしの採用を未選定へ戻したり、他方式の業務・権限・DB・実施結果を借用したりしない。
 
 AIが本文を執筆し、機械処理は目録・形式検査・保存・ハッシュ・描画へ限定する。基本と同じID・画面配置を物理コントロール/バインド/言語型、API/DTO/引数戻り値、SQL/物理DB設計、分岐・例外・CHK/MSG・確定/取消へ結び付ける。実装者向けの詳細表を使い、基本設計の11列を強制しない。
+
+Accessでは[Access画面品質規約](../../../docs/Access画面品質規約.md)を読み、screen_type・利用者タスク・変更範囲・最小有効領域/表示倍率・保存契約の確定/仮定/未確認を固定する。専用規則に従い、Form/Section/Page/Control・付属ラベル・一覧見出しを列挙し、位置/寸法/cm・twipの換算・pt・トークン/列幅、選択/対象識別、Tab/Enter/Esc/フォーカス、連結/非連結と未反映入力・Dirty/BeforeUpdate/Undo/Refresh/Requeryの責務を具体化する。
+
+合理性・統一性・見やすさ・操作性の指摘を、観測事実・利用者への影響・修正・合格条件・検証方法へ分解する。[UI適合検査](../../../docs/UI適合検査.md)の部品/属性/状態/根拠に対応する期待値を仕様へ記し、製品の実測・保存後再読込・キー操作の実施は実装工程へ引き継ぐ。全画面の中央寄せ、均等な欄幅、全テキストの11pt化を品質の代用にせず、画像から保存動作を確定しない。layout_onlyでは保存/検索/認証/DBの変更を混ぜない。
 
 基本設計部分は[basic-design-agent](../basic-design-agent/AGENT.md)、要件部分は[requirement-agent](../requirement-agent/AGENT.md)へ前提・QA・ID・許可境界を引き継ぐ。要件Agentは仕様からの逆生成にも対応し、文書生成を利用者承認・受入試験済みと扱わない。同じ実行内の担当契約切替を許容し、別Agent起動や別チャット送信を必須にしない。
 
@@ -28,6 +32,8 @@ AIが本文を執筆し、機械処理は目録・形式検査・保存・ハッ
 | allowedPaths / excludedPaths | 読取り/書込みを別に許可。spec-eval・他project/方式・アプリ実装/DB実行資源を除外。ソース読取りは明示許可時だけ |
 | requiredDocuments | 対象機能別詳細、方式別共通、DB物理定義の設計文書、開発規約、QAの具体的な対象ファイルと文書ID |
 | screenFamily / terminalProfile | WEB系・WinForms系・Text系、採用部品・寸法単位、Textの端末行桁/文字コード/キー |
+| screen_type / purpose / traits | Accessの画面用途、利用者タスク・選択対象・主操作・追加特性。方式の配置分類と別に指定 |
+| change_scope / saveContract | layout_only・ui_behavior・data_logic、保存方式/単位/確定/未反映入力/取消/失敗。確定済みを継承し未決はQA付き |
 | targetViewport / states | サイズ・倍率・必要な代表状態。実測/目視した範囲を記録し実機と区別 |
 | runId / reportRoot | runIdは記録属性、固定sourceRoot/build/spec-generation/。方式なし共通記録はproject/build/detail-design/または当Agent/build/ |
 
@@ -44,6 +50,10 @@ sourceRoot: <project>/srcs/<methodId>/
 basicDesignInputs: <文書ID・版・SHA-256・対象機能/項目/イベントID>
 premiseProfile: <採用プロファイル・確定前提・QA決定の根拠>
 requiredDocuments: <機能別詳細・必要な方式別共通/DB定義設計/規約/QA>
+screen_type: <Accessでは採用した画面タイプ。領域ごとの補助タイプも可>
+change_scope: <layout_only / ui_behavior / data_logic。既存UI修正の未指定時はlayout_only>
+saveContract: <保存方式・単位・確定時点・未反映入力・取消範囲・失敗時。未決はQA-ID>
+minimum_client_area / display_scales: <採用済み環境と未確認の候補を区別>
 readAllowed: <ルート規則・当Agent・共通docs・選択specRoot内の許可入力>
 writeAllowed: <詳細設計の対象文書・固定検査記録・方式内.tmp>
 excluded: spec-eval、選択外project/方式、アプリ実装、実DB操作、実Excel生成

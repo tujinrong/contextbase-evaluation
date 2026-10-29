@@ -36,8 +36,10 @@ HTTPSのURL/証明書はASP.NET Coreの通常構成で指定します。`SP2_DAT
 
 採用依存はSqlClient6.1.3/ClosedXML0.105.1、推移Pkcsのみ **10.0.13** を明示固定しました。2026-10-29の復元監査で旧Pkcs9.0.4がNU1902/1903となり、Microsoft公式の [GHSA-846f-f764-76mx](https://github.com/dotnet/runtime/security/advisories/GHSA-846f-f764-76mx) / [GHSA-2fmv-rv2c-59x7](https://github.com/dotnet/runtime/security/advisories/GHSA-2fmv-rv2c-59x7) と [修正版NuGet](https://www.nuget.org/packages/System.Security.Cryptography.Pkcs/10.0.13) を確認した補正です。監査やwarnings-as-errorsは無効化していません。依存ロックと今回のSBOM/検査記録を固定buildへ保存します。
 
-入力版と実装対応は `build/generation/inputs.json` / `spec-implementation-map.json`、3回の検査・修正・回帰は `build/test-results/quality-cycles.json` を参照してください。仕様の設計採用・ソース生成・実行試験・独立レビュー・利用者受入・正式採点は別状態です。
+入力版と実装対応は `build/generation/inputs.json` / `spec-implementation-map.json` を参照してください。今回のDEMO認証変更は `build/test-results/self-cycle-3.json` の47件と `demo-credentials-http.json` の14件、既存DBの限定移行は `demo-credentials-migration.json` へ対象版付きで記録します。仕様の設計採用・ソース生成・実行試験・独立レビュー・利用者受入・正式採点は別状態です。
 
-今回のUI再生成では、採用済みUI条件をRazorの項目classとCSSへ反映しました。基準幅1366pxでは氏名260px・氏名カナ330px・日付150px、狭幅ではmax-widthで収縮し、文字は14px以上を維持します。実測前に仕様根拠から固定した [UI期待値](tests/ui-contract.json) と、最終publishをEdgeで測る [収集器](tests/Web/ui-observations.cjs) を共通ゲートで照合します。未知の文字部品・Tab到達不能の負例も検査します。公開物tree・入力・期待値・収集器・判定器のSHAが変われば以前のUI合格は使用できません。実測記録は `build/test-results/ui-observations.json` と `ui-conformance.json` です。
+今回のUI再生成では、採用済みUI条件をRazorの項目classとCSSへ反映しました。基準幅1366pxでは氏名260px・氏名カナ330px・日付150px、狭幅ではmax-widthで収縮し、文字は14px以上を維持します。実測前に仕様根拠から固定した [UI期待値](tests/ui-contract.json) と、最終publishをEdgeで測る [収集器](tests/Web/ui-observations.cjs) を共通ゲートで照合します。未知の文字部品・Tab到達不能の負例も検査します。公開物tree・入力・期待値・収集器・判定器のSHAが変われば以前のUI合格は使用できません。UI実測の標準保存先は `build/test-results/ui-observations.json` と `ui-conformance.json` です。今回の認証改訂ではUI再測定を行っておらず、旧publishのUI/ブラウザー/印刷PASSを最新として提示しません。共通UIゲートは未実施として失敗状態を記録します。
 
-3回の業務検査PASSとPH05 OPENは別状態です。入力・実装・検査の対応は [生成記録](build/generation/regeneration.json) と今回の固定build記録を参照してください。
+今回の認証・SQL検査の実施範囲とPH05 OPENは別状態です。以前の3回品質検査やUI検査を今回のPASSへ転用しません。入力・実装・検査の対応は [生成記録](build/generation/regeneration.json) と今回の固定build記録を参照してください。
+
+この作業環境の既存DEMOは `https://localhost:7443` です。停止中は `./tools/Start-Fixture.ps1 -ProfilePath .tmp/runtime/profile.json -Published` で最新 `build/publish` を起動します。既存の専用profileと所有DBを使い、生成済み業務データを初期化しません。これは当リポジトリの明示DEMO環境向けであり、source-only ZIPの配備先は前述の通常初期設定で用意します。

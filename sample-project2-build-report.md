@@ -1,48 +1,49 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-BUILD-REPORT","version":"1.1","path":"sample-project2-build-report.md","sheets":[{"heading":"実行条件","kind":"GRID","sheet":"01_実行条件"},{"heading":"Agentの問題","kind":"GRID","sheet":"02_Agentの問題"},{"heading":"別工程の問題","kind":"GRID","sheet":"03_別工程の問題"},{"heading":"検証結果","kind":"GRID","sheet":"04_検証結果"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-BUILD-REPORT","version":"1.2","path":"sample-project2-build-report.md","sheets":[{"heading":"実行条件","kind":"GRID","sheet":"01_実行条件"},{"heading":"Agentの問題","kind":"GRID","sheet":"02_Agentの問題"},{"heading":"別工程の問題","kind":"GRID","sheet":"03_別工程の問題"},{"heading":"検証結果","kind":"GRID","sheet":"04_検証結果"}]} -->
 # sample-project2 ビルド報告
 
-2026-10-29。実行ID `20261029-sp2-ui-conformance`。コード修正・両方式の再生成と自動回帰は完了。実画面操作は利用者の物理Escで停止したため、Accessの最終UI適合・集約manifest確定は未完了。本書と方式別固定記録は今回の状態へ更新し、過去候補のPASSを新候補へ転用しない。
+2026-10-29。実行ID `20261029-sp2-demo-login`。今回の資格情報変更は完了。Access・ASP.NETとも `admin / 123`、`staff / 123` を使用する。既存業務データを初期化せず、対象2利用者の認証列だけを移行した。レイアウト改修・実キー・印刷・正式受入は今回の検証範囲に含めない。
 
 ## 実行条件
 
 |項目|内容|
 |---|---|
-|対象|build-agent / sample-project2 / Access・CSharp_ASPNET。共通適合検査は全登録方式に適用する|
-|確定条件|Accessのクラシック風・適切な字体を明示し、各方式の標準機能に合う実現方法で再生成する|
-|入力|方式別specRootと採用規約・QA。各build/generation/inputs.jsonへ文書版・SHAを固定。UI条件の更新はexact-fileのspec-update.jsonへ記録する|
-|出力|方式別ソース正本とbuild/固定パス。中間生成・隔離試験は.tmp/、履歴はGit|
-|検査資源|所有するACCDBコピー・新規SQL fixture・専用Office instance。既存データや利用者Officeは使用しない|
-|評価境界|構造・属性・描画・実操作・業務実行・ソース再構築を分ける。正式受入・採点は未実施、formalScore=null|
+|対象|sample-project2 / Access・CSharp_ASPNET。利用者が明示したDEMO資格情報変更のみ|
+|確定条件|QA-025 / DQA-AUTH01 / 各方式の規約/DEMO認証条件.md。admin=ADMIN、staff=STAFF、共通初期パスワード123。入力長3～128 Unicodeスカラー|
+|既存データ|内部user_id、role、社員・経歴・コード・分類・監査値を保全。全量seed・表再作成なし|
+|新規データ|SP2-DEMO-01 v1.1は新規の空のDEMO環境向け。既存DBへの認証移行を全量v1.1投入済みと扱わない|
+|暗号方式|Accessの既存CNG/PBKDF2-SHA256/600000、Webの既存IdentityV3/100000を維持。DBはソルト付き検証情報のみ|
+|凍結入力|Access65 / Web63 / 集約108。方式別build/generation/inputs.jsonへ文書版・SHAを固定。仕様24文書の変更は各spec-update.jsonへ記録|
+|配置|最終ファイル・今回証拠は固定build/、中間・実行copy・失敗harnessは.tmp/、履歴はGit|
 
 ## Agentの問題
 
-|ID|原因|修正と予防|
-|---|---|---|
-|UI-01|クラシック風の具体値が入力条件と生成設定へ十分に展開されていなかった|Access生成チェックと方式別UI条件へ灰色/白入力/黒文字、標準四角ボタン、テーマ・グラデーション非依存、全テキスト部品Yu Gothic UI11ptを明示。業務エラー色とOS管理外枠は区別する|
-|UI-02|Tab見出し等がフォント設定対象から漏れ、Office既定値が残った|Tab・付随ラベル・一覧見出しまで実Controlsを列挙して独立部品表と照合。未知部品・字体設定漏れを失敗にする|
-|UI-03|位置/寸法の検査と構造PASSだけでは最終画面の不適合を拒否できなかった|共通UI適合検査を全方式へ適用。font/dimensions/appearance/render/interactionの5種を必須にし、独立期待値と実測を比較。入力・製品・期待値・収集器・判定器SHAの不一致、旧結果・未観測を拒否し、manifest確定を止める|
-|UI-04|Webの項目別CSSに対応するRazor classが不足した|HTMLへ項目classを適用。氏名260px/カナ330px/日付150px等の基準幅、14px以上の本文、狭幅では字体を縮小せず配置とスクロールで対応。Login460pxは維持する|
-|UI-05|AccessのLoad中busy保護がfooterへfocusを移し、初期focusだけ戻しても縦scrollが残った|通常のメニュー→検索→新規/既存遷移で再現。初期focus・activeTab・viewportを一組で確認し、Tab見出しを含む初期表示と再遷移を検査する。測定前の強制scroll補正だけで通常遷移を合格にしない|
-|UI-06|再試験失敗や収集器変更後も以前のPASSが残る可能性があった|実測開始時RUNNING・失敗時FAILへ失効。measurementSourcesの現SHAを共通gateで再検証。部品追加やTab到達不能の負例も確認する|
-|UI-07|Access試験journalのPython PID再利用で記録が上書きされる穴があった|PIDだけで識別せず、実行ごとの一意なjournalへ記録し、所有Officeの終了を直接確認する。記録がない旧終了結果を推定しない|
+|項目|今回の処置|
+|---|---|
+|旧12文字下限と指定123が衝突|sample-project2に限り最小3へ明示変更し、認証サービス・フォーム検査・新規seed・CLI・仕様・試験を整合|
+|旧ランダムDEMO資格情報|通常の新規DEMO生成はadmin/staff123を採用。既存データは所有者・安定ID・role・login衝突を検証し2行のみ更新|
+|既存データを含むAccessが開かれていた|検証候補を先に作成。利用者の保存・閉鎖回答後、閉鎖時の最新49db0f92候補から再準備して置換。元業務値を保持|
+|試験VBAモジュールの保存待ち|失敗した専用copyだけを終了し.tmpへFAIL保存。明示モジュール保存を追加し、新copyで39項目・正常終了を確認。失敗試行をPASSへ流用しない|
+|確定直前の所有確認|Web移行のUPDATE前とCommit直前で所有を再確認。2行書込み後の故障注入と完全rollbackを追加|
+|変更の追跡|明示的認証変更のexact-file保護検査を追加。HEAD/current/frozen SHA・利用者指示・理由の検査を保った17件回帰PASS。利用者の並行Git commit・Agent更新を保全|
 
 ## 別工程の問題
 
-|ID|問題|現在の扱い|
-|---|---|---|
-|PH-01|採用SQL Server2022 Expressに対し、実機は2025 Express17.0|専用fixture・互換160で検査。2022物理ホストの合格は主張しない|
-|PH-05|Webの未検索raw条件→新規→無編集取消で条件が失われる。現在DTOはrawを運ばない|OPEN / 詳細設計補完待ち。777777が空へ戻りDB書込0を今回再現。保存後AppliedCriteriaによる再検索と区別し、独断でAPIや業務契約を拡張しない|
-|PH-07|Access ExcelのFit Toと手動改ページ制御が衝突する|実装の数値Zoom/実印刷幅・境界検査による回避を維持。詳細工程への修正依頼は継続。低水準API指定の完全一致PASSにはしない|
+|ID|状態|
+|---|---|
+|PH-05|Webの未検索raw条件→新規→無編集取消の条件保持は既知OPEN。今回UI再検査なし、修正済みにしない|
+|PH-07|Access帳票のFit Toと手動改ページの設計差分は継続。既存実装回避を維持、今回印刷再検査なし|
+|UIレイアウト|案件名の切れ・対象社員表示・反映/保存の分かりやすさ等、利用者画像レビューの指摘は今回未改修。旧候補のUI/印刷PASSは.tmpへ失効し、資格情報変更後の合格へ転記していない|
 
 ## 検証結果
 
-|対象|今回の実施範囲|記録|
+|対象|今回の実測|記録|
 |---|---|---|
-|Access|最終00904338候補で全9工程PASS、状態85/入力保護19/業務境界65/障害3/初期化4/競合4/独立18/認証race3、37個の所有Access全Exit0。298規則中1,116 native属性一致。最終版の実キー・清浄な目視は利用者Esc停止で未完了|[最終業務検査](sample-project2/srcs/Access/build/test-results/current-runtime.json)、[UI判定](sample-project2/srcs/Access/build/test-results/ui-conformance.json)|
-|CSharp_ASPNET|最終publishの18状態・527規則/2096属性、1366/1024/390pxでPASS。SQL23/40/40、HTTP12、独立35+35、ブラウザー24、DL2冊の再読取がPASS。実Excel3冊73頁をPDF化し本文全頁を再読取、通常4頁・最大69頁contactと1/35/69頁拡大を目視。PH05はOPEN|[最終検査](sample-project2/srcs/CSharp_ASPNET/build/test-results/final-verification.json)、[独立目視](sample-project2/srcs/CSharp_ASPNET/build/test-results/ui-independent-visual-review.json)|
-|共通ツール|UI111、preflight87、梱包14、独立配置8、最終整合回帰14を実行。製品受入とは別範囲|[ツール回帰](agents/builds/build-agent/build/tool-tests/)|
-|配布ソース|Web84ファイルを原仕様・試験期待値なしで別展開しRelease build PASS。37license/NOTICEはsource・ZIP・publishの全SHA一致。Access35ファイルも最新ZIPから原仕様なしで再構築し、全class/IsCompiled/一時probe除去/5form/48列/初期データ/所有Office正常終了を確認済み|[Web ZIP](sample-project2/srcs/CSharp_ASPNET/build/source.zip)、[ライセンス照合](sample-project2/srcs/CSharp_ASPNET/build/test-results/license-package-verification.json)|
+|Access最終ACCDB|SHA01b81b1d…、最終copy39/39PASS。admin/staff123、フォームの入力検査→イベントAPI→メニュー、旧ID/旧秘密拒否、1/2/129拒否・Unicode境界、塩分離・独立PBKDF2、ロック・役割を確認。全class初期化/126/IsCompiled/probe除去、所有Office正常終了|[認証](sample-project2/srcs/Access/build/test-results/credentials.json)、[移行](sample-project2/srcs/Access/build/test-results/credential-migration.json)|
+|Access配布ソース|ZIP35件を原仕様・試験期待値なしで別展開し実ACCDB再構築。新規seed1.1・認証39/39PASS、再構築/試験Office終了コード0。元最終ACCDB不変|[ソースZIP](sample-project2/srcs/Access/build/source.zip)、[再構築](sample-project2/srcs/Access/build/test-results/source-package-rebuild.json)|
+|Web最終publish|treeSHAd0d6b6fa…/104files。SQL47件・最終publish HTTPS認証14件PASS。所有/衝突拒否・Commit前再確認・2行書込み後rollback、旧ID/旧秘密拒否・CSRF・管理者/担当者権限を確認|[検査まとめ](sample-project2/srcs/CSharp_ASPNET/build/test-results/credential-update.json)、[HTTP](sample-project2/srcs/CSharp_ASPNET/build/test-results/demo-credentials-http.json)|
+|Web既存DB|明示された所有DEMO DB SP2_WebFixture_20261029のみ移行。社員6/経歴6/コード12/分類3と他利用者全値digest不変。2回目は0変更SKIP。元seed版のmanifestがないため、元版を断定せずauth-only系譜として記録|[移行](sample-project2/srcs/CSharp_ASPNET/build/test-results/demo-credentials-migration.json)|
+|Web配布ソース|ZIP86件のoriginal/member/archive全SHA一致、原仕様・試験期待値なしの別展開Release build PASS|[ソースZIP](sample-project2/srcs/CSharp_ASPNET/build/source.zip)、[配布検査](sample-project2/srcs/CSharp_ASPNET/build/test-results/source-package-validation.json)|
 
-実入力は実施項目だけをnative-ui.jsonへ記録する。値代入/API検査を実キーボード・Clipboard・IME変換の合格へ置換しない。Accessのログイン画面の実キーは手操作確認待ち。利用者は手操作可能と回答したが、結果はまだ確認していない。最終候補の画面操作はphysical Escで中止し、所有UIコピー23728を正常終了、元候補不変を確認した。desktop矩形画像は別アプリの遮蔽があり全10枚を証拠から撤回・削除し、WGC対象window画像の再採取待ちとした。別DPI/別Office・プリンタ、紙への印刷、利用者秘密による初期設定、全障害条件、原41Pilot全条件・正式受入・正式採点は未実施。
+Accessは[CareerManagement.accdb](sample-project2/srcs/Access/build/CareerManagement.accdb)を開いて利用する。Webは最終publishの[https://localhost:7443](https://localhost:7443)をDEMO用に起動した状態。実行主体・URLは[稼働記録](sample-project2/srcs/CSharp_ASPNET/build/generation/demo-runtime.json)で確認する。
 
-Webの方式別manifestは全373entryのSHAを再照合済み。Accessの最終UI gateと入出力manifest、集約manifest・最終整合検査は未完了で、再開後の実画面確認に続いて確定する。sample-project1の既存変更ACCDBは開始前SHAと一致し、今回の再生成対象にしていない。
+今回の入力・製品・証拠・ZIPのSHAは両方式build/generation/credential-update.json、集約状態はsample-project2/build/generation/regeneration.jsonへ固定した。UI適合の再実行と全体outputs manifestの確定は別工程として未完了。ネイティブ実キー/IME・別DPI・実SQL Server2022・紙への印刷・全Pilot/正式受入・採点は未実施、formalScore=null。sample-project1の既存ACCDBは開始時SHAと一致し変更していない。

@@ -59,6 +59,7 @@ public static class DemoCredentialUpdater
         var after=await BusinessHashesAsync(unit,ct);var othersAfter=await OtherUsersHashAsync(unit,ct);
         if(!before.OrderBy(x=>x.Key,StringComparer.Ordinal).SequenceEqual(after.OrderBy(x=>x.Key,StringComparer.Ordinal))||othersBefore!=othersAfter)
             throw new InvalidOperationException("Unrelated data changed during credential update; transaction rolled back.");
+        await SafeInitializer.RequireOwnerAsync(unit,ct);
         await unit.CommitAsync(ct);
         return new("sample-project2","CSharp_ASPNET",database.Options.AllowedDatabase,SafeInitializer.Owner,
             DateTimeOffset.UtcNow,changed==0?"SkippedExactMatch":"AppliedAuthOnly",changed,
