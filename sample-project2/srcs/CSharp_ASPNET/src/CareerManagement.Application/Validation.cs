@@ -6,6 +6,9 @@ namespace CareerManagement.Application;
 
 public static partial class Validation
 {
+    // sample-project2 DEMO credential policy confirmed by the user on 2026-10-29.
+    public const int MinimumPasswordScalars = 3;
+    public const int MaximumPasswordScalars = 128;
     [GeneratedRegex("^[0-9]{6}$", RegexOptions.CultureInvariant)] private static partial Regex EmployeeNoPattern();
     [GeneratedRegex("^[0-9]{2}$", RegexOptions.CultureInvariant)] private static partial Regex CodePattern();
     [GeneratedRegex("^[A-Za-z0-9]{1,20}$", RegexOptions.CultureInvariant)] private static partial Regex LoginPattern();
@@ -53,7 +56,7 @@ public static partial class Validation
     {
         var count=ScalarLength(raw);
         if (count==0) throw Field(4,"F01-I02","パスワード");
-        if (count is <12 or >128) throw Field(5,"F01-I02","パスワード");
+        if (count is <MinimumPasswordScalars or >MaximumPasswordScalars) throw Field(5,"F01-I02","パスワード");
     }
     public static string SearchKey(string? value) => value is null ? "" : string.Concat(value.Normalize(NormalizationForm.FormKC)
         .EnumerateRunes().Where(r=>!Rune.IsWhiteSpace(r)).Select(r=>r.ToString())).ToUpperInvariant();

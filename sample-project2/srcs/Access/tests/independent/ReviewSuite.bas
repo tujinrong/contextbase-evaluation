@@ -82,14 +82,14 @@ Public Function RunReviewCase(ByVal caseId As String, ByVal staffPassword As Str
     Dim f As Access.Form, criteria As New clsSearchCriteria, row As Variant, revision As Long, id As Long, text As String, previousTimer As String, previousInterval As Long
     On Error GoTo Failed
     CloseReviewForms
-    Set result = Authenticate("demostaff", staffPassword): Need result.Kind = "OK", "Fixture authentication failed"
+    Set result = Authenticate("staff", staffPassword): Need result.Kind = "OK", "Fixture authentication failed"
     Select Case caseId
     Case "IR-A01-seed-and-schema"
         Need CurrentDb.TableDefs("m_app_user").Fields.Count = 8 And CurrentDb.TableDefs("m_employee").Fields.Count = 16 And CurrentDb.TableDefs("t_career").Fields.Count = 14 And CurrentDb.TableDefs("m_code_category").Fields.Count = 2 And CurrentDb.TableDefs("m_code").Fields.Count = 8, "Five-table 48-field schema differs"
         Need DCount("*", "m_employee") = 3 And DCount("*", "t_career") = 3 And DCount("*", "m_code") = 9, "Seed counts differ"
     Case "IR-A02-failure4-success-reset"
         CurrentDb.Execute "UPDATE m_app_user SET failed_count=4,locked_until=Null WHERE user_id='SP2STAFF'", dbFailOnError
-        Set result = Authenticate("demostaff", staffPassword)
+        Set result = Authenticate("staff", staffPassword)
         Need result.Kind = "OK" And DLookup("failed_count", "m_app_user", "user_id='SP2STAFF'") = 0 And IsNull(DLookup("locked_until", "m_app_user", "user_id='SP2STAFF'")), "Success did not reset prior four failures"
     Case "IR-A03-search-native-seven-columns"
         criteria.EmployeeNo = "000001": criteria.NameRaw = "": criteria.Department = Null: criteria.Status = Null
@@ -189,7 +189,7 @@ Public Function RunReviewCase(ByVal caseId As String, ByVal staffPassword As Str
         Need Not gBusy And ControlState(f) = text, "Successful search did not restore prior control states"
         Need IsNull(gSelectedEmployee) And Not f!cmdEdit.Enabled And Not f!cmdExport.Enabled And gSearchRows.Count = 1, "Successful search enabled an unselected employee operation"
         CloseReviewForms
-        Set result = Authenticate("demoadmin", adminPassword): Need result.Kind = "OK", "Admin fixture authentication failed"
+        Set result = Authenticate("admin", adminPassword): Need result.Kind = "OK", "Admin fixture authentication failed"
         DoCmd.OpenForm "frmCodeMaster": Set f = Forms("frmCodeMaster")
         Need CStr(Nz(f!cboCategory, "")) = "DEPARTMENT" And f!lstCodes.ListCount = 3, "Natural code Form_Load candidate initialization failed"
         Need Not f!cmdSave.Enabled And Not f!cmdCancel.Enabled And f!cmdNew.Enabled, "Natural code Form_Load model-state buttons differ"

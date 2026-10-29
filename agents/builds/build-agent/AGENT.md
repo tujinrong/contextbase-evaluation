@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BUILD","version":"7.9","path":"agents/builds/build-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"実行手順","kind":"GRID","sheet":"03_実行手順"},{"heading":"問題の分類と中断","kind":"GRID","sheet":"04_問題の分類と中断"},{"heading":"完了条件","kind":"GRID","sheet":"05_完了条件"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BUILD","version":"7.10","path":"agents/builds/build-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"実行手順","kind":"GRID","sheet":"03_実行手順"},{"heading":"問題の分類と中断","kind":"GRID","sheet":"04_問題の分類と中断"},{"heading":"完了条件","kind":"GRID","sheet":"05_完了条件"}]} -->
 # 仕様からシステム生成Agent 契約
 
-版7.9／2026-10-29。固定build/・方式内.tmp/・Git履歴を維持し、標準UIの実入力検査と初期確認用データを生成条件へ加える。
+版7.10／2026-10-29。固定build/・方式内.tmp/・Git履歴を維持し、標準UIの実入力検査と初期確認用データを生成条件へ加える。
 
 ## 概要
 
@@ -28,11 +28,15 @@ AG-BUILD。Codexが本契約を読み、選択projectの仕様から各方式の
 
    採用方式の標準部品と入力機能を使い、新規/編集/参照の入力属性、業務キー/自動採番ID、raw/表示/正規化/保存の桁、フォント・グループ見出しの可読性を具体化する。Accessは[Access生成チェック](docs/Access生成チェック.md)を実施する。値の直接代入やHTMLモックの表示だけでキーボード入力・マスク・実画面が合格したとしない。
 
+   全方式で[UI適合検査](../../../docs/UI適合検査.md)を適用し、実装前にtests/ui-contract.jsonの具体的期待値と根拠版/SHAを固定する。profile.jsonのuiConformance.required/contractを宣言し、最終製品から独立取得したui-observations.jsonで全対象部品・必須rule/property、字体・寸法・描画/可読性・実操作を照合する。AccessはTab/付属ラベルを含め標準のクラシック外観/11ptを具体化し、Web等は同方式仕様の単位/部品/最適な実現を使う。未観測・未指定部品・旧製品・期待値欠落は失敗とし、生成実値の転記や定義の自己比較でPASSを作らない。
+
    [テストデータ整備規約](../../../docs/テストデータ整備規約.md)に従い、必要マスタと架空の初期確認用業務データ・投入処理・操作手順を作成する。初回の空の確認用環境へ投入し、既存利用者データを自動リセットせず、再実行の冪等性・参照整合・通常の検索/新規保存経路を検査する。データ定義・正式fixtureはsourceRootの正本、実行コピーは.tmp、今回のデータmanifest/検査/手順はbuildの固定先へ置く。データ整備は全方式の次回生成に適用し、別方式を今回の実行範囲へ追加する根拠にしない。
 
 各方式は独立したテスト材料とする。仕様は `project/spec/方式ID/` のspecRoot内で独立して完結し、コード・DB資源・生成器・ビルド・試験は `project/srcs/方式ID/` のsourceRoot内で完結する。方式内閉包はこの対応する2つの領域を意味し、仕様をソース内へ戻す条件ではない。specRootの不足は構造問題として記録し、旧sourceRoot/specや横断共有仕様から補わない。他方式の仕様・ライブラリー・ソースを引用しない。共通ファイル、外部ProjectReference、リンクによる共用は使用しない。方式に適した言語・構成で作成する。逆生成へ渡すsource-onlyパッケージから原仕様を除外し、逆生成のallowedPathsへproject/spec/全体・spec-eval・他方式を含めない。DB共有・Access単体/サーバーDB・成果物名は選択project/方式の採用プロファイルで固定する。特定題材の過去指示を全projectへ強制しない。共有プロファイルが明示採用された場合だけ同方式内の共有契約を使い、独立ACCDBを採用する方式を暗黙にSQLフロントエンドへ変更しない。成果物名やsolution名も題材固定とせず、方式の実装配置契約・配布設定を参照する。
 6. 利用可能な処理系でコンパイル/単体検査を行う。実行要求の品質水準と改善回数を記録し、品質「高」では正常系・境界/複合/権限/競合/障害・独立テスト・実UI・配布再現の必要範囲を検査する。改善回数Nは検査→指摘修正→回帰確認のサイクルをN回行い、固定build/test-results/quality-cycles.jsonの配列へ入力/コード版・検査・指摘・修正・再検証・未実施を記録する。変更不要の回も根拠を残し、不具合や修正を捏造しない。コンパイル途中、fixture実行コピー、試行・失敗ログ、処理系・キャッシュは方式内.tmp/に置く。最終配布物だけbuild/、今回の最終検査結果・実行コマンド・処理系・終了値・検査範囲・未実施はbuild/test-results/の固定ファイルへ更新する。日付・実行ID・attempt別成果やbackupを累積しない。DB実行・実機試験は利用者の指示と環境に従い、専用fixtureと配備初期DBを分ける。秘密情報や本番データを成果物へ含めない。
 7. 生成・ビルド・単体・結合・実機・逆生成・採点を別状態で報告する。最後に同じproject・profile・実行IDでmanifest.mjsを実行し、入力ハッシュを再照合してbuild/generation/outputs.jsonを更新する。入力変更・失敗を以前のPASSで補わない。全方式指定の共通集約だけproject/build/、共通中間物だけproject/.tmp/を使う。履歴はGitで管理する。manifestは実装や正式受入の合格を意味しない。
+
+   UI方式は先にui-conformance.mjsで今回のgate記録を確定する。manifestは必須宣言・契約・実測・原根拠・validator・最終artifactのSHAを再照合し、削除/未検査/旧観測ならoutputsを確定しない。非UI例外はrequired:false、理由、同方式の凍結根拠sourceFilesを明示する。今回の規則を凍結した生成で宣言を省略しない。source-only ZIPからUI試験期待値とprofileの試験参照を除外する。
 
 source-onlyの再構築・通常初期設定に必要なhelperはsourceRoot/profile.jsonのproductionHelpersへ、方式内POSIX相対ファイルの完全一致配列で明示する。toolsは宣言ファイルと必要ancestorだけを含め、題材固有helperを無条件で許可しない。絶対/外部/リンク/重複/不在/ディレクトリ、tests・.tmp・仕様/評価・バイナリを拒否する。正常初期データ資源と正式ライセンスはproductionの必要資源として保持し、独立試験の期待値を混ぜない。梱包後は原仕様も未宣言toolsもない別展開から、実ビルド入口と初期設定CLIの閉包を検証する。
 

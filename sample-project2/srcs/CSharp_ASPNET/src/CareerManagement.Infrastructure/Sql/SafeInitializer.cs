@@ -44,7 +44,7 @@ public static class SafeInitializer
         string adminPassword,string staffPassword,string? manifestPath,CancellationToken ct)
     {
         Validation.Password(adminPassword);Validation.Password(staffPassword);
-        if(definition.DatasetId!="SP2-DEMO-01"||definition.Version!="1.0"||!definition.Fictional||definition.BasisDate!="2026-10-27"||definition.Categories.Length!=3||definition.Codes.Length!=9||definition.Users.Length!=2||definition.Employees.Length!=3||definition.Careers.Length!=3)throw new InvalidOperationException("Unexpected dataset definition.");
+        if(definition.DatasetId!="SP2-DEMO-01"||definition.Version!="1.1"||!definition.Fictional||definition.BasisDate!="2026-10-27"||definition.Categories.Length!=3||definition.Codes.Length!=9||definition.Users.Length!=2||definition.Employees.Length!=3||definition.Careers.Length!=3||!definition.Users.Select(x=>(x[0],x[1],x[3])).SequenceEqual(new[]{("SP2ADMIN","admin","ADMIN"),("SP2STAFF","staff","STAFF")}))throw new InvalidOperationException("Unexpected dataset definition.");
         var now=DateTimeOffset.UtcNow;var today=DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now,TimeZoneInfo.FindSystemTimeZoneById("Tokyo Standard Time")).DateTime);
         if(today<DateOnly.Parse(definition.BasisDate,System.Globalization.CultureInfo.InvariantCulture))throw new InvalidOperationException("Dataset is not valid before its basis date.");
         var contentHash=Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(definition,Json))));
@@ -55,7 +55,7 @@ public static class SafeInitializer
         {
             if(manifestPath is null||!File.Exists(manifestPath))throw new InvalidOperationException("Existing data without matching external seed manifest; no changes applied.");
             var prior=JsonSerializer.Deserialize<SeedManifest>(await File.ReadAllTextAsync(manifestPath,ct),Json)??throw new InvalidOperationException("Invalid seed manifest.");
-            if(prior.Database!=database.Options.AllowedDatabase||prior.Owner!=Owner||prior.ContentSha256!=contentHash||existing!=20)throw new InvalidOperationException("Existing dataset/owner/content differs; no changes applied.");
+            if(prior.Database!=database.Options.AllowedDatabase||prior.Owner!=Owner||prior.DatasetId!=definition.DatasetId||prior.Version!=definition.Version||prior.BasisDate!=definition.BasisDate||prior.ContentSha256!=contentHash||existing!=20)throw new InvalidOperationException("Existing dataset/owner/content differs; no changes applied.");
             await VerifyAsync(unit,repository,definition,adminPassword,staffPassword,today,ct);
             return prior with{State="SkippedExactMatch"};
         }

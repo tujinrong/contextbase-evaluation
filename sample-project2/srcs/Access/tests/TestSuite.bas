@@ -34,7 +34,7 @@ Public Function RunSuite(ByVal adminPassword As String, ByVal staffPassword As S
     Assert "cng-correct", VerifyPassword("vector test " & scalar & "  ", verifier)
     Assert "cng-original-spaces", Not VerifyPassword("vector test " & scalar, verifier)
     Assert "cng-unknown-version", Not VerifyPassword("vector test " & scalar & "  ", Replace(verifier, "$v=1$", "$v=2$"))
-    Set result = Authenticate("  DEMOSTAFF  ", staffPassword)
+    Set result = Authenticate("  STAFF  ", staffPassword)
     Assert "auth-result-object", Not result Is Nothing
     Assert "auth-session-object", Not gSession Is Nothing
     Assert "API-login-staff", result.Kind = "OK" And gSession.RoleId = "STAFF"
@@ -45,11 +45,11 @@ Public Function RunSuite(ByVal adminPassword As String, ByVal staffPassword As S
     Assert "API-idle-no-revive", Not TouchActivity() And Not gSession.IsAuthenticated
     ResetControl "SP2STAFF"
     For i = 1 To 5
-        Set result = Authenticate("demostaff", "wrong isolated test password")
+        Set result = Authenticate("staff", "wrong isolated test password")
         Assert "lock-failure-" & CStr(i), result.MessageId = "MSG-001" And DLookup("failed_count", "m_app_user", "user_id='SP2STAFF'") = i
     Next
     at = DLookup("locked_until", "m_app_user", "user_id='SP2STAFF'")
-    Set result = Authenticate("demostaff", staffPassword)
+    Set result = Authenticate("staff", staffPassword)
     Assert "API-locked-no-extend", result.MessageId = "MSG-001" And DLookup("locked_until", "m_app_user", "user_id='SP2STAFF'") = at And DLookup("failed_count", "m_app_user", "user_id='SP2STAFF'") = 5
     CurrentDb.Execute "UPDATE m_app_user SET locked_until=DateAdd('n',-1,Now()) WHERE user_id='SP2STAFF'", dbFailOnError
     ' Use UTC directly (host locale Now is deliberately not the application clock).
@@ -58,7 +58,7 @@ Public Function RunSuite(ByVal adminPassword As String, ByVal staffPassword As S
     Dim q As DAO.QueryDef
     Set q = Query(u.Db, "PARAMETERS p DateTime; UPDATE m_app_user SET locked_until=p WHERE user_id='SP2STAFF'", DateAdd("s", -1, UtcNow()))
     q.Execute dbFailOnError: q.Close: u.Commit: u.CloseUnit
-    Set result = Authenticate("demostaff", staffPassword)
+    Set result = Authenticate("staff", staffPassword)
     Assert "API-lock-elapsed-reset", result.Kind = "OK" And DLookup("failed_count", "m_app_user", "user_id='SP2STAFF'") = 0 And IsNull(DLookup("locked_until", "m_app_user", "user_id='SP2STAFF'"))
     Set criteria_ = Criteria(): Set result = SearchEmployees(criteria_, gSession)
     Assert "API-initial-search", result.Kind = "OK" And result.Value.Count = 2
@@ -89,7 +89,7 @@ Public Function RunSuite(ByVal adminPassword As String, ByVal staffPassword As S
     other.Name = "修正": other.Kana = "abc": Set result = SaveEmployee(other, gSession): Assert "kana-allowlist", result.MessageId = "MSG-005" And other.Kana = "abc"
     Set other = CloneEmployee(e): other.EmployeeId = Null: other.ExpectedRevision = Null
     Set result = SaveEmployee(other, gSession): Assert "API-employee-number-duplicate-sequential", result.MessageId = "MSG-006"
-    Set result = Authenticate("demoadmin", adminPassword): Assert "admin-login", result.Kind = "OK"
+    Set result = Authenticate("admin", adminPassword): Assert "admin-login", result.Kind = "OK"
     Set code = New clsCodeEdit: code.CategoryId = "DEPARTMENT": code.Code = "04": code.Name = "架空部署": code.SortOrder = 4
     Set result = SaveCode(code, gSession): Assert "code-add", result.Kind = "OK"
     version = code.ExpectedRevision: Set result = SaveCode(code, gSession): Assert "API-code-nochange-audit", result.Kind = "NoChange" And code.ExpectedRevision = version
@@ -140,7 +140,7 @@ Private Sub BoundarySuite(ByVal adminPassword As String, ByVal staffPassword As 
     CurrentDb.Execute "UPDATE m_employee SET revision=2147483647 WHERE employee_id=" & CStr(id), dbFailOnError
     Set e = GetEdit("000004"): Set result = SaveEmployee(e, gSession): Assert "API-max-revision-nochange", result.Kind = "NoChange"
     e.Name = "版上限変更": Set result = SaveEmployee(e, gSession): Assert "API-max-revision-change-reject", result.MessageId = "MSG-039"
-    Set result = Authenticate("demostaff", staffPassword): Assert "staff-relogin", result.Kind = "OK"
+    Set result = Authenticate("staff", staffPassword): Assert "staff-relogin", result.Kind = "OK"
     CurrentDb.Execute "UPDATE m_app_user SET is_enabled=False WHERE user_id='SP2STAFF'", dbFailOnError
     Set result = Authorize("STAFF"): Assert "API-stopped-current-user", result.MessageId = "MSG-002"
     ResetControl "SP2STAFF"

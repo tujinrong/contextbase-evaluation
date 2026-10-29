@@ -4,13 +4,25 @@ Private target As Access.Form
 Private states As Object
 Private previousBusy As Boolean
 Private priorFocus As String
+Private priorRight As Long
+Private priorDown As Long
+Private physicalOverlay As Boolean
 Private active As Boolean
 Public Sub Acquire(ByVal f As Access.Form)
     Dim c As Object, kind As Long, locked As Variant, anchor As String
     On Error GoTo Failed
     Set target = f: Set states = CreateObject("Scripting.Dictionary")
-    previousBusy = gBusy: gBusy = True: active = True
+    previousBusy = gBusy: gBusy = True: active = True: priorFocus = "": physicalOverlay = False
+    ' Form.Load runs before the first normal paint. Moving to a footer here
+    ' scrolls the new form before it is visible and leaves its Tab header above
+    ' the viewport. Keep the logical guard; native controls need no overlay
+    ' until the initial form setup has finished. Runtime overlays are unchanged.
+    If UiIsInitialisingForm(f) Then Exit Sub
     priorFocus = FocusName(f)
+    priorRight = -CLng(f.CurrentSectionLeft): priorDown = -CLng(f.CurrentSectionTop)
+    If priorRight < 0 Then priorRight = 0
+    If priorDown < 0 Then priorDown = 0
+    physicalOverlay = True
     Select Case f.Name
     Case "frmLogin": anchor = "cmdExit"
     Case "frmMenu": anchor = "cmdLogout"
@@ -63,6 +75,9 @@ Public Sub Restore()
         c.Enabled = CBool(state(1)): c.TabStop = CBool(state(3))
         If Not IsNull(state(2)) Then c.Locked = CBool(state(2))
     Next
+    ' SetFocus alone scrolls only enough to expose the old control, leaving Tab
+    ' captions above the viewport. Restore the saved native page offsets first.
+    If physicalOverlay Then target.GoToPage 1, priorRight, priorDown
     If priorFocus <> "" Then
         If target.Controls(priorFocus).Enabled And target.Controls(priorFocus).Visible Then target.Controls(priorFocus).SetFocus
     End If

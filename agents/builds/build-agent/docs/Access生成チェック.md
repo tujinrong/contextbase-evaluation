@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BUILD-ACCESS-QUALITY","version":"1.0","path":"agents/builds/build-agent/docs/Access生成チェック.md","sheets":[{"heading":"適用と入力","kind":"GRID","sheet":"01_適用と入力"},{"heading":"フォームと可読性","kind":"GRID","sheet":"02_フォームと可読性"},{"heading":"入力状態とマスク","kind":"GRID","sheet":"03_入力状態とマスク"},{"heading":"初期確認用データ","kind":"GRID","sheet":"04_初期確認用データ"},{"heading":"実機試験と証跡","kind":"GRID","sheet":"05_実機試験と証跡"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BUILD-ACCESS-QUALITY","version":"1.2","path":"agents/builds/build-agent/docs/Access生成チェック.md","sheets":[{"heading":"適用と入力","kind":"GRID","sheet":"01_適用と入力"},{"heading":"フォームと可読性","kind":"GRID","sheet":"02_フォームと可読性"},{"heading":"入力状態とマスク","kind":"GRID","sheet":"03_入力状態とマスク"},{"heading":"初期確認用データ","kind":"GRID","sheet":"04_初期確認用データ"},{"heading":"実機試験と証跡","kind":"GRID","sheet":"05_実機試験と証跡"}]} -->
 # Access生成時の品質チェック
 
-版1.0／2026-10-25。build-agentがAccess方式を生成・更新する場合に適用する。方式の独立したspecRootで確定した業務桁数、入力可否、フォント、認証、単体/分割DB構成を根拠に具体化する。このチェック文書に特定題材の正解値を固定しない。
+版1.2／2026-10-29。build-agentがAccess方式を生成・更新する場合に適用する。方式の独立したspecRootで確定した業務桁数、入力可否、フォント、認証、単体/分割DB構成を根拠に具体化する。このチェック文書に特定題材の正解値を固定しない。
 
 ## 適用と入力
 
@@ -12,6 +12,10 @@ Accessの単票/連続フォーム、Label、TextBox、ComboBox、CheckBox、Rec
 ## フォームと可読性
 
 座標はTwips、文字はptとし、フォーム幅・Detail高・入力高・ラベル高・余白の換算を揃える。本文、ラベル、一覧、ボタン、ダイアログのFontName/FontSizeを明示し、既定フォント任せによる不揃いを防ぐ。利用者が読める文字サイズを先に定め、その実測字幅と部品の内側余白から欄幅/高さを決める。小さい文字へ縮めるだけで全項目を収めない。
+
+Access方式の標準既定はネイティブ単票フォームと標準矩形部品によるクラシック外観とし、フォーム/ボタンは灰色（基準RGB #F0F0F0）、通常文字は黒、入力域は白とする。色帯・カード・角丸・影・グラデーションやOfficeテーマ任せの外観を既定にしない。本文・Label・付属ラベル・ListBox/列見出し・Button・ComboBox・TextBox・CheckBoxの付属Label・Tabの文字はYu Gothic UI 11ptを明示し、Tabや部品既定定義から旧フォントが漏れないようにする。エラー強調等の題材固有色、OS管理chrome、業務上必要な明示例外は方式内QAへ根拠/範囲を残す。11ptはAccess方式の標準であり、他方式やExcel帳票の採用値を上書きしない。
+
+CommandButtonは対応する公式APIでUseTheme=False、Shape=0（Rectangle）、Gradient=0（None）を設定し、保存後/再読込後の実部品で確認する。フォント/色のテーマ索引も明示値を上書きしない状態へ設定する。部品種別に存在しない属性を一律代入して例外を無視せず、適用属性を部品別に定義する。根拠はMicrosoft公式の[UseTheme](https://learn.microsoft.com/en-us/office/vba/api/access.commandbutton.usetheme)、[Shape](https://learn.microsoft.com/en-us/office/vba/api/access.commandbutton.shape)、[Gradient](https://learn.microsoft.com/en-us/office/vba/api/access.commandbutton.gradient)（2026-10-29確認）。寸法は仕様のpt/Twipsを保ち、拡大時は文字を縮小せずネイティブなスクロール等で到達させる。
 
 意味を持たない装飾枠はRectangle等を使い、OptionGroupを枠線だけのために生成しない。OptionGroupは実際に相互排他的な選択を表す場合に使う。グループ見出しを枠上へ配置する場合は、文字幅に応じたラベル幅、左右余白、背景、前後関係を設定し、枠線が文字を横切らず過剰な白帯が生じないようにする。装飾部品が入力領域を覆うこと、Tab順へ入り入力を妨げることを防ぐ。
 
@@ -24,6 +28,10 @@ Accessの子ウィンドウHWNDは、フォーカス移動やフォーム/ウィ
 ## 入力状態とマスク
 
 新規・編集・参照・処理中・検査エラー・リセット・保存後について、Locked、Enabled、TabStop、初期フォーカスを明示的に設定する。共通初期化の既定値や直前モードを引き継がない。自動採番IDは新規でも入力させず、新規だけ利用者が指定する業務キーは新規で実際に入力できるようにする。既存キー不変はUIと保存入口の両方で検査する。エラー後も編集中値と適切な入力属性を保つ。
+
+Accessでは初期フォーカス・activeTab・初期viewportを一組で定義する。下端や長文欄へ移動した直前のスクロールが、次の新規/既存編集やTab再表示へ残り、入力先へfocusできてもForm/Tabの見出しが上へ隠れる場合がある。初期化途中のfocus設定だけで完了とせず、通常のメニュー→検索→新規/既存編集、保存/取消→復帰、両Tab切替・再表示の操作が完了した直後に、意図した初期位置と見出し/Tabstripの実可視領域を確認する。仕様で保持する検索一覧位置と不要なFormスクロール残留を区別し、無条件に全画面を先頭へ戻して保持契約を壊さない。
+
+viewportの観測はDPIの論理/物理座標、Formのclient clip領域、一覧等の内部スクロールを区別する。測定専用のscrollリセットや強制focusで正常な表示を作った写真だけを、通常遷移の初期表示成功の証拠にしない。focusが正しくてもTab見出しが隠れる負例、下端操作→取消→新規/既存再表示、Tab切替後の再表示と、保持すべき一覧位置の退行がないことを回帰試験へ含める。Access固有のAPIや数値を他方式へ強制しない。
 
 編集フォームの終了可否判定では編集状態を破棄せず、Detach失敗等でForm_Unloadが取り消された場合も入力値と状態を保持し、状態解放は終了が確定したForm_Closeで行うことを回帰試験する。
 
@@ -50,6 +58,8 @@ NFKC、全角数字、空白、許可区切り文字等を受理する既存仕�
 投入全体の原子性をDAOトランザクションで保証しないビルドでは、新規の隔離staging/fixtureでだけ初期行追加を許可し、全作成・検査成功後に最終ACCDBを置換する。完成配布物では初期行追加の許可を無効にし、再確認で不足キーが見つかっても挿入前に停止する。既存サンプル行の利用者編集/論理削除を保持し、構築途中の失敗を公開ACCDBや既存利用者ファイルへ反映しない。行ごとのトランザクションをデータセット全体のRollbackと呼ばず、採用した公開境界と失敗時の最終ファイル無変更を検査する。
 
 ## 実機試験と証跡
+
+[共通UI適合検査](../../../../docs/UI適合検査.md)へ従い、最終ACCDBの同一ハッシュコピーから全製品部品の属性・inventoryを実測する。通常入力だけでなく両Tab Page・付属ラベル・一覧見出し・確認/エラー状態を含め、事前契約のfont/dimensions/appearance/render/interactionと比較する。UseTheme/Shape/Gradient、字体/11pt、仕様寸法、文字切れ/重なり、長文/拡大時の到達、実キー操作を別ruleにし、未指定/未観測をFAILにする。HTML仕様図や生成定義だけの自己比較を実ACCDBの適合結果にしない。
 
 VBAコンパイル、DAO制約/業務試験、属性/座標検査、実キーボード/貼付操作、画面の目視確認を別に実施・記録する。TextBox.Valueへの代入だけで新規入力やInputMaskが動いたと判定しない。少なくとも新規フォームの業務キーへフォーカスして文字を入力し、登録→検索→再読込でキー・保存値・書式を確認する。既存編集/参照の保護、モード移動、入力エラー後の再入力、取消後の無保存を検査する。
 

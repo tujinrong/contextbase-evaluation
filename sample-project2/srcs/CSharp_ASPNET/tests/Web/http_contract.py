@@ -1,5 +1,5 @@
 """Real HTTPS contracts against a newly created private fixture. Never prints credentials or bodies."""
-import html, http.cookiejar, io, json, pathlib, re, ssl, sys, urllib.error, urllib.parse, urllib.request, uuid, zipfile
+import hashlib, html, http.cookiejar, io, json, pathlib, re, ssl, sys, urllib.error, urllib.parse, urllib.request, uuid, zipfile
 from datetime import datetime, timezone
 
 root=pathlib.Path.cwd()
@@ -32,7 +32,7 @@ class Client:
         return json.loads(html.unescape(initial.group(1))) if initial else text
     def login(self):
         self.page("/account/login")
-        data=urllib.parse.urlencode({"LoginId":"demostaff","Password":profile["staffPassword"],"__RequestVerificationToken":self.token}).encode()
+        data=urllib.parse.urlencode({"LoginId":"staff","Password":profile["staffPassword"],"__RequestVerificationToken":self.token}).encode()
         with self.opener.open(urllib.request.Request(base+"/account/login",data,{"Content-Type":"application/x-www-form-urlencoded","Sec-Fetch-Mode":"navigate"}),timeout=30) as r:assert r.status==200 and r.url.endswith("/menu")
         return self.page("/employees")
 
@@ -85,5 +85,5 @@ if redirect:
 
 out=root/"build"/"test-results"/"http-contract.json"
 out.parent.mkdir(parents=True,exist_ok=True)
-out.write_text(json.dumps({"executedUtc":datetime.now(timezone.utc).isoformat(),"passed":all(x["status"]=="PASS" for x in results),"tests":results,"scope":"real HTTPS, CSRF, strict body shape/IDs, owned state/revision, maximum JSON scalar aggregate and downloadable workbook; new isolated owned fixture only","unperformed":["terminal save success","SQL Server 2022 physical host","formal acceptance"]},ensure_ascii=False,indent=2),encoding="utf-8")
+out.write_text(json.dumps({"runId":json.loads((root/"build/generation/inputs.json").read_text(encoding="utf-8-sig"))["runId"],"inputManifestSha256":hashlib.sha256((root/"build/generation/inputs.json").read_bytes()).hexdigest(),"publishedArtifacts":[dict(file="build/publish/"+n,sha256=hashlib.sha256((root/"build/publish"/n).read_bytes()).hexdigest()) for n in ["CareerManagement.Web.dll","CareerManagement.Application.dll","CareerManagement.Infrastructure.dll"]],"testSourceSha256":hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest(),"executedUtc":datetime.now(timezone.utc).isoformat(),"passed":all(x["status"]=="PASS" for x in results),"tests":results,"scope":"real HTTPS, CSRF, strict body shape/IDs, owned state/revision, maximum JSON scalar aggregate and downloadable workbook; new isolated owned fixture only","unperformed":["terminal save success","SQL Server 2022 physical host","formal acceptance"]},ensure_ascii=False,indent=2),encoding="utf-8")
 sys.exit(0 if all(x["status"]=="PASS" for x in results) else 1)

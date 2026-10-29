@@ -14,7 +14,7 @@ Public Function IRPrime() As Long
 End Function
 Public Function IRBadPassword() As String
  Dim result As clsResult
- Set result = Authenticate("demostaff", "independent incorrect password")
+ Set result = Authenticate("staff", "independent incorrect password")
  IRBadPassword = result.MessageId
 End Function
 Public Function IRState() As String
@@ -64,7 +64,7 @@ def worker(target, barrier):
     return {'pid': pid, 'primedCount': primed, 'messageId': message, 'ownedProcessExited': owned.exited}
 
 def main():
-    source = ROOT / '.tmp/build/CareerManagement.accdb'; before = sha(source)
+    source = ROOT / 'build/CareerManagement.accdb'; before = sha(source)
     folder = ROOT / '.tmp/independent-review'; folder.mkdir(parents=True, exist_ok=True)
     if folder.resolve() != folder.absolute(): raise RuntimeError('Redirected review scratch refused')
     rows = []; started = dt.datetime.now(dt.timezone.utc).isoformat()

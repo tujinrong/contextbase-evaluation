@@ -1,6 +1,6 @@
-# 独立配置検査 20261029-sp2-build
+# 独立配置検査 20261029-sp2-ui-conformance
 
-PASSED。sample-project2、1方式、148ファイル、495参照。
+PASSED。sample-project2、1方式、154ファイル、499参照。
 
 
 

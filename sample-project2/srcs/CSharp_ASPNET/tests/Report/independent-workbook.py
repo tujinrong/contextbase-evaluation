@@ -2,6 +2,7 @@
 from pathlib import Path
 import hashlib
 import json
+import os
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -48,6 +49,6 @@ for name in ['seed-career','literal-career']:
                 assert value in values,'Literal or supplementary text changed'
             assert values.count('=1+1')==2 and values.count("'原文 😀")==2,'Paragraphs or original LF boundaries lost'
         checks.append(dict(file=file.relative_to(ROOT).as_posix(),sha256=hashlib.sha256(file.read_bytes()).hexdigest(),status='PASS',sheets=2,textCells=len(values),scope='Actual browser download: sheet names/count, text values, formulas, macros/external links, leading zero, literal prefixes, LF and supplementary Unicode, A4/margins'))
-record=dict(status='PASS',reviewer='/root',runId='20261029-sp2-build',checks=checks,notExecuted=['Visual print layout; recorded separately using real Excel PDF export','Formal acceptance/scoring'],formalScore=None)
+record=dict(status='PASS',reviewer='/root',runId=os.environ.get('SP2_RUN_ID','20261029-sp2-build'),checks=checks,notExecuted=['Visual print layout; recorded separately using real Excel PDF export','Formal acceptance/scoring'],formalScore=None)
 (AREA/'workbook-review.json').write_text(json.dumps(record,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 print(json.dumps(dict(status=record['status'],workbooks=len(checks)),ensure_ascii=False))

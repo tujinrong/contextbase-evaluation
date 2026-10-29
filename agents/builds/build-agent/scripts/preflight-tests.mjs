@@ -4,7 +4,7 @@ const here=path.dirname(fileURLToPath(import.meta.url));
 const base=path.resolve(here,'../.tmp/preflight-tests');fs.mkdirSync(base,{recursive:true});
 const fixture=fs.mkdtempSync(path.join(base,'work-'));const root=path.join(fixture,'repo');let passed=0;
 const detailInputs=['agents/designs/detail-design-agent/AGENT.md','agents/designs/detail-design-agent/rules/詳細設計書作成ルール.md','agents/designs/detail-design-agent/workflows/詳細設計.md'];
-const files=['AGENTS.md','agents/README.md',...detailInputs,'agents/builds/build-agent/AGENT.md','agents/builds/build-agent/PROMPT.md','agents/builds/build-agent/README.md','agents/reverses/reverse-agent/AGENT.md','docs/リポジトリ構成.md','docs/開発規約.md','docs/仕様書作成ルール.md','docs/評価規約.md','docs/MD構造・Excel変換規約.md','docs/テーブル仕様書記述規約.md','docs/テストデータ整備規約.md','agents/builds/build-agent/docs/Access生成チェック.md','sample-project1/README.md','sample-project1/プロジェクト情報.md','sample-project1/docs/開発規約.md'];
+const files=['AGENTS.md','agents/README.md',...detailInputs,'agents/builds/build-agent/AGENT.md','agents/builds/build-agent/PROMPT.md','agents/builds/build-agent/README.md','agents/reverses/reverse-agent/AGENT.md','docs/リポジトリ構成.md','docs/開発規約.md','docs/仕様書作成ルール.md','docs/評価規約.md','docs/MD構造・Excel変換規約.md','docs/テーブル仕様書記述規約.md','docs/テストデータ整備規約.md','docs/UI適合検査.md','agents/builds/build-agent/docs/Access生成チェック.md','sample-project1/README.md','sample-project1/プロジェクト情報.md','sample-project1/docs/開発規約.md'];
 function write(file,text){const target=path.join(root,file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,text);}
 function doc(file,id){return `<!-- spec-meta: ${JSON.stringify({schema:'spec-md/1.0',documentId:id,version:'1.0',path:file,sheets:[{heading:'定義',kind:'LIST',sheet:'01_定義',key:['ID']}]})} -->\n# fixture\n\n## 定義\n\n| ID | 内容 |\n| --- | --- |\n| A | fixture |\n`;}
 function exec(script,id,expected,profile,inspectOnly=false,project='sample-project1'){const r=spawnSync(process.execPath,[path.join(root,'agents/builds/build-agent/scripts',script),'--project',project,'--run-id',id,...(profile?['--profile',profile]:[]),...(inspectOnly?['--inspect-only','true']:[])],{encoding:'utf8'});if(r.status!==expected)throw new Error(`${script}: expected ${expected}, got ${r.status}: ${r.stderr}${r.stdout}`);passed++;return r;}
@@ -19,7 +19,8 @@ try{
  const requirementTemplate='agents/designs/requirement-agent/AGENT.md';write(requirementTemplate,'Draft requirement Agent must not become an implementation input');
  write('sample-project1/spec/README.md',routing('sample-project1',['VB.NET_WinForms','CSharp_WPF','CSharp_ASPNET','Vue_CSharpAPI','COBOL','AS400_RPG','Access']));
  for(const profile of ['VB.NET_WinForms','CSharp_WPF','CSharp_ASPNET','Vue_CSharpAPI','COBOL','AS400_RPG','Access']){const file=`sample-project1/spec/${profile}/README.md`;write(file,doc(file,`SPEC-${profile}`));const rule=`sample-project1/spec/${profile}/規約/開発規約.md`;write(rule,doc(rule,`RULE-${profile}`));write(`sample-project1/srcs/${profile}/README.md`,`[own specification](../../spec/${profile}/README.md)\n`);}
- for(const script of ['preflight.mjs','manifest.mjs','input-scope.mjs','output-layout.mjs','project-scope.mjs','source-files.mjs','check-isolation.mjs','isolate-specs.mjs','finalize-isolation-docs.mjs','document-dotnet-projects.mjs'])write('agents/builds/build-agent/scripts/'+script,fs.readFileSync(path.join(here,script),'utf8'));
+ for(const script of ['preflight.mjs','manifest.mjs','ui-conformance.mjs','input-scope.mjs','output-layout.mjs','project-scope.mjs','source-files.mjs','check-isolation.mjs','isolate-specs.mjs','finalize-isolation-docs.mjs','document-dotnet-projects.mjs'])write('agents/builds/build-agent/scripts/'+script,fs.readFileSync(path.join(here,script),'utf8'));
+ for(const method of ['VB.NET_WinForms','CSharp_WPF','CSharp_ASPNET','Vue_CSharpAPI','COBOL','AS400_RPG','Access'])write(`sample-project1/srcs/${method}/profile.json`,JSON.stringify({uiConformance:{required:false,reason:'Synthetic pipeline fixture has no product UI',sourceFiles:[`sample-project1/spec/${method}/README.md`]}}));
  write('sample-project1/spec-eval/poison.md','Must never be input');
  write('sample-project1/spec/CSharp_ASPNET/spec-analysis/poison.md','Reverse-generated analysis must never be an original input');
  write('sample-project1/spec/CSharp_ASPNET/spec-eval/poison.md','Evaluation input must never be read, even under canonical root');
@@ -28,6 +29,8 @@ try{
  assert(detailInputs.every(file=>read('inputs.json').files.some(f=>f.file===file))&&!read('inputs.json').files.some(f=>f.file===requirementTemplate),'Detailed-design rules were not frozen or requirement template became an implementation input');
  assert(!read('inputs.json').files.some(f=>f.file.includes('spec-eval')||f.file.includes('spec-analysis')||f.file.includes('/srcs/')),'Evaluation/analysis/source/legacy input leaked');
  assert(read('inputs.json').files.filter(f=>/^sample-project1\/spec\/[^/]+\/README.md$/.test(f.file)).length===7,'Aggregate did not inspect all independent packages');
+ const uiRule='docs/UI適合検査.md';
+ assert(read('inputs.json').files.some(f=>f.file===uiRule),'Aggregate omitted the common UI conformance rule');
  const dataRule='docs/テストデータ整備規約.md',accessRule='agents/builds/build-agent/docs/Access生成チェック.md';
  assert(read('inputs.json').files.some(f=>f.file===dataRule)&&read('inputs.json').files.some(f=>f.file===accessRule),'Aggregate omitted common data or Access quality rules');
  const accessOriginal=fs.readFileSync(path.join(root,accessRule));
@@ -56,6 +59,8 @@ try{
  assert(!result.files.some(f=>/\/(?:\.tmp|spec)\//.test(f.file)),'Scratch/legacy specification leaked into manifest');
  assert(result.artifacts.some(f=>f.file.endsWith('/build/app/final.txt')),'Final artifact missing');
  assert(!result.artifacts.some(f=>f.file.endsWith('/source.zip')),'Unvalidated source archive became current');
+ const uiOriginal=fs.readFileSync(path.join(root,uiRule));
+ write(uiRule,uiOriginal.toString('utf8').replace('| A | fixture |','| A | changed UI conformance rule |'));exec('manifest.mjs','scoped',1,profile);write(uiRule,uiOriginal);
  const dataOriginal=fs.readFileSync(path.join(root,dataRule));
  write(dataRule,dataOriginal.toString('utf8').replace('| A | fixture |','| A | changed data contract |'));exec('manifest.mjs','scoped',1,profile);write(dataRule,dataOriginal);
  exec('preflight.mjs','access-rules',0,'Access');
@@ -105,6 +110,7 @@ try{
  const ownRule=path.join(root,'sample-project2/spec/Access/規約/開発規約.md'),heldRule=path.join(fixture,'held-rule.md');fs.renameSync(ownRule,heldRule);exec('preflight.mjs','missing-method-rule',1,'Access',true,'sample-project2');fs.renameSync(heldRule,ownRule);
  for(const script of ['package-source.py','verify-packages.py','output_layout.py','project_scope.py'])write('agents/builds/build-agent/scripts/'+script,fs.readFileSync(path.join(here,script),'utf8'));
  for(const method of ['Access','CSharp_ASPNET'])write(`sample-project2/srcs/${method}/README.md`,'Production source fixture; original specifications excluded.\n');
+ for(const method of ['Access','CSharp_ASPNET'])write(`sample-project2/srcs/${method}/profile.json`,JSON.stringify({uiConformance:{required:false,reason:'Synthetic package fixture has no product UI',sourceFiles:[`sample-project2/spec/${method}/README.md`]}}));
  write('sample-project2/srcs/Access/Build-Access.ps1','# Self-contained production builder fixture\n');write('sample-project2/srcs/Access/build/CareerManagement.accdb','fixture bytes only; not a real database');
  write('sample-project2/srcs/CSharp_ASPNET/CareerPortal.csproj','<Project Sdk="Microsoft.NET.Sdk.Web"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup></Project>\n');
  exec('preflight.mjs','sp2-pipeline',0,undefined,false,'sample-project2');

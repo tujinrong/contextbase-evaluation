@@ -6,7 +6,7 @@ import build
 from faults import import_module,call
 def main():
     folder=build.ROOT/'.tmp/busy'; folder.mkdir(parents=True,exist_ok=True); path=folder/'CareerManagement-busy.accdb'
-    candidate=build.ROOT/'.tmp/build/CareerManagement.accdb'
+    candidate=build.ROOT/'build/CareerManagement.accdb'
     manifest=json.loads((candidate.parent/'seed-manifest.json').read_text(encoding='utf-8'))
     if build.sha(candidate)!=manifest['artifactSha256'] or not manifest.get('compileGate',{}).get('isCompiled'):
         raise RuntimeError('Staging is not the successfully compiled manifest artifact')
@@ -23,7 +23,7 @@ def main():
         for line in value.splitlines():
             pieces=line.split('|',2); checks.append({'id':pieces[0],'status':pieces[1],**({'detail':pieces[2]} if len(pieces)>2 else {})})
         app.Run('LogoutNow'); app.CloseCurrentDatabase(); app.Quit(2); app=None; build.release()
-        out={'artifactSha256':build.sha(build.ROOT/'.tmp/build/CareerManagement.accdb'),'command':'python -X utf8 sample-project2/srcs/Access/tests/busy.py','exitCode':int(any(c['status']!='PASS' for c in checks)),'compileGate':{'isCompiled':True},'testSource':{name:build.sha(build.ROOT/'tests'/name) for name in ('busy.py','BusySuite.bas','UiHarness.bas')},'checks':checks,'scope':'actual Access control properties/events; keyboard-code handling, not native SendInput or IME acceptance','formalScore':None}
+        out={'artifactSha256':build.sha(build.ROOT/'build/CareerManagement.accdb'),'command':'python -X utf8 sample-project2/srcs/Access/tests/busy.py','exitCode':int(any(c['status']!='PASS' for c in checks)),'compileGate':{'isCompiled':True},'testSource':{name:build.sha(build.ROOT/'tests'/name) for name in ('busy.py','BusySuite.bas','UiHarness.bas')},'checks':checks,'scope':'actual Access control properties/events; keyboard-code handling, not native SendInput or IME acceptance','formalScore':None}
         (build.ROOT/'build/test-results/busy.json').write_text(json.dumps(out,indent=2),encoding='utf-8'); print(json.dumps(out)); return out['exitCode']
     finally:
         password=''

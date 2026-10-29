@@ -124,7 +124,7 @@ for file in protected_changes:
         if len(matches)!=1:raise ValueError('Exactly one explicit local repair record required')
         record={**matches[0],'runId':matches[0].get('runId',repair_set.get('runId'))}
         if update:
-            if repair_set.get('classification')!='user-requested-platform-change' or not repair_set.get('userInstruction'):raise ValueError('Explicit user-requested platform change evidence required')
+            if repair_set.get('classification') not in {'user-requested-platform-change','user-requested-ui-change','user-requested-authentication-change'} or not isinstance(repair_set.get('userInstruction'),str) or not repair_set['userInstruction'].strip():raise ValueError('Explicit user-requested platform, UI or authentication change evidence required')
             record.update(classification=repair_set['classification'],userInstruction=repair_set['userInstruction'])
         frozen=json.loads((base/'build/generation/inputs.json').read_text('utf-8'))
         current=(ROOT/relative).read_bytes()
@@ -136,7 +136,7 @@ for file in protected_changes:
             before_matches=True
         else:before_matches=str(record['beforeSha256']).lower() in before_hashes
         current_hash=hashlib.sha256(current).hexdigest()
-        if record['file']!=file or record['runId']!=frozen['runId'] or not record.get('reason') or not before_matches or str(record['afterSha256']).lower()!=current_hash or not any(entry['file']==file and entry['sha256']==current_hash for entry in frozen['files']):raise ValueError('Repair record, HEAD, current source and frozen input disagree')
+        if record['file']!=file or record['runId']!=frozen['runId'] or not isinstance(record.get('reason'),str) or not record['reason'].strip() or not before_matches or str(record['afterSha256']).lower()!=current_hash or not any(entry['file']==file and entry['sha256']==current_hash for entry in frozen['files']):raise ValueError('Repair record, HEAD, current source and frozen input disagree')
         (authorized_updates if update else authorized_repairs).append(record)
     except (ValueError,KeyError,OSError,subprocess.CalledProcessError) as error:
         findings.append({'file':file,'code':'UNVERIFIED_SPEC_REPAIR','detail':str(error)})
@@ -144,7 +144,7 @@ for file in set(args.allow_spec_repair)-set(protected_changes):findings.append({
 for file in set(args.allow_spec_update)-set(protected_changes):findings.append({'file':file,'code':'UNUSED_SPEC_UPDATE_EXCEPTION'})
 whitespace=subprocess.run(['git','-c','core.safecrlf=false','diff','--check','--',args.project,'agents/builds/build-agent',f'{args.project}-build-report.md'],cwd=ROOT,capture_output=True,text=True,encoding='utf-8')
 if whitespace.returncode:findings.append({'code':'DIFF_CHECK','detail':whitespace.stdout})
-result={'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'projectId':args.project,'status':'PASS' if not findings else 'FAIL','methods':methods,'finalFiles':len(final_files),'tmpIgnoredAndUntracked':not any(x['code'] in {'TMP_TRACKED','TMP_NOT_IGNORED'} for x in findings),'protectedInputDiff':protected_changes,'authorizedLocalSpecRepairs':authorized_repairs,'authorizedUserSpecUpdates':authorized_updates,'diffCheck':whitespace.returncode,'findings':findings,'scope':'current frozen input/output/artifact/delivery hashes, complete final coverage, fixed layout, Git inclusion/exclusion, HEAD and untracked protected-input diff with explicit hash-verified local repairs and user-requested platform changes','notChecked':['runtime acceptance','SQL Server integration','IBM i native','formal scoring'],'formalScore':None}
+result={'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'projectId':args.project,'status':'PASS' if not findings else 'FAIL','methods':methods,'finalFiles':len(final_files),'tmpIgnoredAndUntracked':not any(x['code'] in {'TMP_TRACKED','TMP_NOT_IGNORED'} for x in findings),'protectedInputDiff':protected_changes,'authorizedLocalSpecRepairs':authorized_repairs,'authorizedUserSpecUpdates':authorized_updates,'diffCheck':whitespace.returncode,'findings':findings,'scope':'current frozen input/output/artifact/delivery hashes, complete final coverage, fixed layout, Git inclusion/exclusion, HEAD and untracked protected-input diff with explicit hash-verified local repairs and user-requested platform or UI changes','notChecked':['runtime acceptance','SQL Server integration','IBM i native','formal scoring'],'formalScore':None}
 write_json_latest(project/'build/test-results/final-integrity.json',result,project/'.tmp/output-layout')
 print(json.dumps(result,ensure_ascii=False))
 raise SystemExit(1 if findings else 0)

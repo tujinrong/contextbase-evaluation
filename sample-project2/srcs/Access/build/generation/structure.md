@@ -1,8 +1,8 @@
-# build-agent 構造検査 20261029-sp2-build
+# build-agent 構造検査 20261029-sp2-ui-conformance
 
-対象：sample-project2 / Access。Agent版7.9。入力版・SHA-256はinputs.jsonを参照。
+対象：sample-project2 / Access。Agent版7.10。入力版・SHA-256はinputs.jsonを参照。
 
-判定：structure-check-passed。現行入力61ファイルを検査。問題0件。
+判定：structure-check-passed。現行入力63ファイルを検査。問題0件。
 
 
 検査範囲：メタ情報、章/シート対応、LIST矩形・キー、TABLE列/項目ID/PK、イベント6節、入力範囲内のローカル参照先の存在。

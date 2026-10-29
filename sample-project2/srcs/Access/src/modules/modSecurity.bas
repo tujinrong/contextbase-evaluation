@@ -42,7 +42,7 @@ Public Function Authenticate(ByVal login As String, ByVal password As String) As
         c = AscW(Mid$(login, i, 1))
         If Not ((c >= 48 And c <= 57) Or (c >= 65 And c <= 90)) Then GoTo Denied
     Next
-    If ScalarLength(password) < 12 Or ScalarLength(password) > 128 Then GoTo Denied
+    If ScalarLength(password) < MinimumPasswordScalars Or ScalarLength(password) > 128 Then GoTo Denied
     u.OpenUnit True
     Set q = Query(u.Db, "PARAMETERS p Text(20); SELECT * FROM m_app_user WHERE login_id=p", login)
     Set r = ReadOne(q, True)

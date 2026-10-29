@@ -89,7 +89,7 @@ for profile in selected:
                 transformation='production deployment instructions exclude original-spec regeneration inputs'
             elif relative.as_posix() in {'profile.json','rpg-project.json'}:
                 metadata=json.loads(data)
-                for key in ['specRoot','inputRoot','specVersion','testRunner','hostTest','databaseGenerator','sourceOnlyExcluded']:metadata.pop(key,None)
+                for key in ['specRoot','inputRoot','specVersion','testRunner','hostTest','databaseGenerator','sourceOnlyExcluded','uiConformance']:metadata.pop(key,None)
                 data=(json.dumps(metadata,ensure_ascii=False,indent=2)+'\n').encode()
                 transformation='runtime project metadata excludes original input and test references'
             elif relative.as_posix()=='frontend/package.json':

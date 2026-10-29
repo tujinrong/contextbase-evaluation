@@ -1,6 +1,7 @@
+param([switch]$Published)
 $ErrorActionPreference='Stop'
 Set-Location -LiteralPath (Split-Path -Parent $PSScriptRoot)
-dotnet run --project tests/CareerManagement.Tests/CareerManagement.Tests.csproj -c Release -- --prepare-http
+dotnet run --project tests/CareerManagement.Tests/CareerManagement.Tests.csproj -c Release --no-build -- --prepare-http
 if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
 $sp2Runtime=Get-Content -LiteralPath '.tmp/http-runtime/profile.json' -Raw -Encoding UTF8 | ConvertFrom-Json
 if($sp2Runtime.database -cnotmatch '^SP2_WebFixture_Http_[a-f0-9]{12}$'){throw 'HTTP fixture name scope violation.'}
@@ -14,8 +15,10 @@ $env:ASPNETCORE_Kestrel__Certificates__Default__Password=$sp2Runtime.certificate
 $sp2Process=$null
 $sp2Exit=1
 try{
-  $env:ASPNETCORE_CONTENTROOT=Join-Path (Get-Location).Path 'src/CareerManagement.Web'
-  $sp2Process=Start-Process -FilePath 'dotnet' -ArgumentList @('.tmp/bin/CareerManagement.Web/Release/net10.0/CareerManagement.Web.dll') -WorkingDirectory (Get-Location).Path -WindowStyle Hidden -PassThru -RedirectStandardOutput '.tmp/http-runtime/stdout.log' -RedirectStandardError '.tmp/http-runtime/stderr.log'
+  $sp2Content=Join-Path (Get-Location).Path $(if($Published){'build/publish'}else{'src/CareerManagement.Web'})
+  $sp2Dll=Join-Path (Get-Location).Path $(if($Published){'build/publish/CareerManagement.Web.dll'}else{'.tmp/bin/CareerManagement.Web/Release/net10.0/CareerManagement.Web.dll'})
+  $env:ASPNETCORE_CONTENTROOT=$sp2Content
+  $sp2Process=Start-Process -FilePath 'dotnet' -ArgumentList @(('"'+$sp2Dll+'"'),'--contentRoot',('"'+$sp2Content+'"')) -WorkingDirectory (Get-Location).Path -WindowStyle Hidden -PassThru -RedirectStandardOutput '.tmp/http-runtime/stdout.log' -RedirectStandardError '.tmp/http-runtime/stderr.log'
   $sp2Ready=$false
   for($sp2Try=0;$sp2Try -lt 40;$sp2Try++){
     try{Invoke-WebRequest -Uri 'https://localhost:7444/account/login' -SkipCertificateCheck -TimeoutSec 1 | Out-Null;$sp2Ready=$true;break}catch{Start-Sleep -Milliseconds 200}

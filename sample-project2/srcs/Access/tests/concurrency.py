@@ -14,10 +14,10 @@ Public Function CreateConcurrent(ByVal no As String) As String
  Set r=SaveEmployee(e,gSession): CreateConcurrent=r.Kind & "/" & r.MessageId
 End Function
 Public Function LoginConcurrent(ByVal password As String) As Boolean
- Dim r As clsResult: Set r=Authenticate("demoadmin",password): LoginConcurrent=(r.Kind="OK")
+ Dim r As clsResult: Set r=Authenticate("admin",password): LoginConcurrent=(r.Kind="OK")
 End Function
 Public Function FailureConcurrent() As String
- Dim r As clsResult: Set r=Authenticate("demoadmin","isolated invalid password"): FailureConcurrent=r.MessageId
+ Dim r As clsResult: Set r=Authenticate("admin","isolated invalid password"): FailureConcurrent=r.MessageId
 End Function
 Public Function ProbeTimeout() As String
  Dim r As clsResult: Set r=Authorize("STAFF"): ProbeTimeout=r.MessageId
@@ -52,7 +52,7 @@ def worker(path,no,ready,start,output,kind='save'):
             except Exception: pass
         app=None; build.release()
 def prepare(target,count,auth=False):
-    shutil.copy2(build.ROOT/'.tmp/build/CareerManagement.accdb',target)
+    shutil.copy2(build.ROOT/'build/CareerManagement.accdb',target)
     app=None; db=None; r=None; c=None; m=None
     try:
         app=build.win32com.client.gencache.EnsureDispatch(build.win32com.client.DispatchEx('Access.Application')); app.OpenCurrentDatabase(str(target))
@@ -119,7 +119,7 @@ def main():
             try: app.CloseCurrentDatabase(); app.Quit(2)
             except Exception: pass
         app=None; build.release()
-    out={'artifactSha256':build.sha(build.ROOT/'.tmp/build/CareerManagement.accdb'),'inputManifestSha256':build.sha(build.ROOT/'build/generation/inputs.json'),'checks':rows,'scope':'actual two Access processes, same canonical file path, private DAO and Global mutex','formalScore':None}
+    out={'artifactSha256':build.sha(build.ROOT/'build/CareerManagement.accdb'),'inputManifestSha256':build.sha(build.ROOT/'build/generation/inputs.json'),'checks':rows,'scope':'actual two Access processes, same canonical file path, private DAO and Global mutex','formalScore':None}
     (build.ROOT/'build/test-results/concurrency.json').write_text(json.dumps(out,indent=2),encoding='utf-8')
     print(json.dumps(out)); return 0 if all(r['status']=='PASS' for r in rows) else 1
 if __name__=='__main__': sys.exit(main())

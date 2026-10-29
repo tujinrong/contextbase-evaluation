@@ -1,11 +1,14 @@
 Option Compare Binary
 Option Explicit
+Public Function UiVerificationFlags() As String
+    UiVerificationFlags = CStr(gDirty) & "|" & CStr(gDraftDirty) & "|" & CStr(gBusy) & "|" & CStr(gUiLoading)
+End Function
 Public Function PrepareUi(ByVal screen As String, Optional ByVal password As String = "") As Boolean
     Dim result As clsResult, f As Access.Form
     EnsureSession
     If screen = "login" Then LogoutNow: PrepareUi = True: Exit Function
     If password <> "" Then
-        Set result = Authenticate("demoadmin", password)
+        Set result = Authenticate("admin", password)
         If result.Kind <> "OK" Then Exit Function
     End If
     gAllowClose = True: gDirty = False: gDraftDirty = False: gBusy = False

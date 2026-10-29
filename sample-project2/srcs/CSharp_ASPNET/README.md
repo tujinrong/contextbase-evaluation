@@ -14,7 +14,9 @@ dotnet run --project tools/CareerManagement.Setup -- create SampleProject2_Caree
 dotnet run --project tools/CareerManagement.Setup -- seed SampleProject2_Career
 ```
 
-seedは端末でADMIN/STAFFそれぞれの初期パスワード（12～128 Unicodeスカラー）を非表示で2回尋ねます。引数・平文ファイル・環境変数のパスワード入力は受け付けません。ログインIDは **demoadmin / demostaff** です。Web起動にDDL/seedはありません。投入データは `fixtures/SP2-DEMO-01.json`、外部manifestは `build/generation/seed-manifest.json` です。初回は5表合計20行（分類3/コード9/利用者2/社員3/経歴3）を一括確定し、同一manifestと全業務値の一致時だけ再投入をスキップします。変更・不足・別所有なら無変更で停止します。マニフェストを削除して強制投入しないでください。
+DEMOの初期ログインは **admin / staff、パスワードは両方123** です（2026-10-29利用者確定、最小3～最大128 Unicodeスカラー）。標準の`seed`はこのDEMO資格情報を設定します。明示的な別資格情報を使う場合だけ`seed-interactive`で非表示入力を2回行います。引数・環境変数による個別パスワード入力は受け付けません。Web起動にDDL/seedはありません。投入データは `fixtures/SP2-DEMO-01.json`、外部manifestは `build/generation/seed-manifest.json` です。新規SP2-DEMO-01 v1.1の初回は5表合計20行（分類3/コード9/利用者2/社員3/経歴3）を一括確定し、同一manifestと全業務値の一致時だけ再投入をスキップします。変更・不足・別所有なら無変更で停止します。マニフェストを削除して強制投入しないでください。
+
+既存の所有DEMO DBでアカウントだけを更新するときは、接続先を明示して `dotnet run --project tools/CareerManagement.Setup -- demo-credentials <正確なDB名>` を実行します。SP2Ownerと安定user_id SP2ADMIN/SP2STAFF・既存ロール・login_idの対応を確認し、2名のlogin_id/ハッシュ/有効状態/失敗数/ロック期限だけを一つのトランザクションで更新します。ID・権限・表示名、他利用者と業務4表の全値/監査値を保持し、衝突・所有不一致・対象欠落は無変更で停止します。二度目は検証してSKIPし、既存seed-manifestは上書きしません。auth-onlyの系譜と全業務値の前後SHAは `build/generation/auth-migration.json` へ記録し、v1.1の全量再投入済みとは扱いません。稼働中Webは旧セッションを残さないため、更新後に対象ホストを再起動してログインし直します。
 
 DB所有者の設定後、Web実行用Windows主体には `database/application-permissions.sql` の限定roleだけを割り当ててください。スクリプトは既存server loginを作成/変更しません。Web主体にsysadmin/db_owner/db_ddladminを付けず、利用者/社員/分類/コードのDELETE・DDLを拒否します。経歴DELETEは全体保存時の明示除去だけです。自己試験がWindows統合管理主体で接続した事実と、配備先の限定主体による稼働確認は区別してください。
 
@@ -28,7 +30,7 @@ HTTPSのURL/証明書はASP.NET Coreの通常構成で指定します。`SP2_DAT
 
 正式自己試験は `dotnet run --project tests/CareerManagement.Tests -c Release -- --cycle 1`（通常）、`--cycle 2`（境界・競合・障害を追加）、`--cycle 3`（全回帰）です。各回は **新しい** `SP2_WebFixture_Test_<乱数>` のみを作成し、DB所有markerを照合してその1件だけを最後に削除します。既存DBやブラウザー用DBを再利用しません。ローカルfixtureの自己署名SQL証明書だけ `TrustServerCertificate=True` を明示しています。製品既定へこの例外を持ち込んでいません。失敗結果も `build/test-results/self-cycle-N.json` に保存します。
 
-ブラウザー用fixtureを作成するテスト専用 `--prepare-browser` は、未存在の `SP2_WebFixture_20261029` と `.tmp/runtime/profile.json` / HTTPS証明書を作ります。テストだけのランダム秘密はこのGit除外領域へ保存し、通常seedのパスワード経路を変更しません。既に同名DBがある場合は停止します。`tools/Start-Fixture.ps1` は同プロファイルでHTTPSを起動します。この専用資源以外へ再利用せず、秘密ファイルを配布・ログ・manifestへ含めません。
+最終公開物のブラウザー検査では、テスト専用 `--prepare-ui` が新しい `SP2_WebFixture_UI_<乱数>` と `.tmp/ui-runtime/profile.json` / HTTPS証明書を作ります。同プロファイルが残っていれば停止し、既存DBを再初期化しません。`tools/Start-Fixture.ps1 -ProfilePath .tmp/ui-runtime/profile.json -Published` で `build/publish` だけをHTTPS 7445に起動します。終了時は `tools/Stop-UIFixture.ps1 -DropOwnedDatabase` が生成DB名・所有marker・PID開始時刻・実行DLLを照合して自分の資源だけを終了します。ランダム秘密はGit除外領域だけへ保存し、配布・ログ・manifestへ含めません。旧 `--prepare-browser` の固定名fixtureはこの検査で再利用しません。
 
 実装上の受渡し補足：EditVmの `removedCareerIds` はサーバー確認済み明示除去集合、`isNew` は番号欄の読取専用表示に使用します。停止確認MSG-038のYesだけ `X-SP2-Confirm-Stop: Yes` と改訂後StateRevisionで再送し、サーバーが同一の正規化入力/所有Stateとの一致を検査します。GET `/employees/edit?state=<乱数>` は表示専用で、URLに氏名/番号/経歴本文を含みません。その他の公開DTOは方式別共通契約に従います。
 
@@ -36,4 +38,6 @@ HTTPSのURL/証明書はASP.NET Coreの通常構成で指定します。`SP2_DAT
 
 入力版と実装対応は `build/generation/inputs.json` / `spec-implementation-map.json`、3回の検査・修正・回帰は `build/test-results/quality-cycles.json` を参照してください。仕様の設計採用・ソース生成・実行試験・独立レビュー・利用者受入・正式採点は別状態です。
 
-最終入力の更新はAgentのproductionHelpers契約とproject入口metadataだけです。業務仕様・製品ソースを変更せず、各cycleの実行時入力SHAは保持しています。最終入力の識別と更新理由は、このsourceRoot内の[生成記録](build/generation/regeneration.json)を参照してください。3回の検査PASSとPH05 OPENを別々に記録しています。
+今回のUI再生成では、採用済みUI条件をRazorの項目classとCSSへ反映しました。基準幅1366pxでは氏名260px・氏名カナ330px・日付150px、狭幅ではmax-widthで収縮し、文字は14px以上を維持します。実測前に仕様根拠から固定した [UI期待値](tests/ui-contract.json) と、最終publishをEdgeで測る [収集器](tests/Web/ui-observations.cjs) を共通ゲートで照合します。未知の文字部品・Tab到達不能の負例も検査します。公開物tree・入力・期待値・収集器・判定器のSHAが変われば以前のUI合格は使用できません。実測記録は `build/test-results/ui-observations.json` と `ui-conformance.json` です。
+
+3回の業務検査PASSとPH05 OPENは別状態です。入力・実装・検査の対応は [生成記録](build/generation/regeneration.json) と今回の固定build記録を参照してください。

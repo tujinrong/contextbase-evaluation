@@ -40,8 +40,8 @@ Public Function InitializeDemo(ByVal adminPassword As String, ByVal staffPasswor
             InsertRow u.Db, "m_code", Array("category_id", "code", "code_name", "sort_order", "is_enabled", "updated_at", "updated_by", "revision"), Array(categories(i), Format$(j + 1, "00"), group(j), j + 1, True, at, "SP2ADMIN", 1)
         Next
     Next
-    InsertRow u.Db, "m_app_user", Array("user_id", "login_id", "display_name", "password_verifier", "role_id", "is_enabled", "failed_count", "locked_until"), Array("SP2ADMIN", "DEMOADMIN", "DEMO管理者", NewVerifier(adminPassword), "ADMIN", True, 0, Null)
-    InsertRow u.Db, "m_app_user", Array("user_id", "login_id", "display_name", "password_verifier", "role_id", "is_enabled", "failed_count", "locked_until"), Array("SP2STAFF", "DEMOSTAFF", "DEMO担当者", NewVerifier(staffPassword), "STAFF", True, 0, Null)
+    InsertRow u.Db, "m_app_user", Array("user_id", "login_id", "display_name", "password_verifier", "role_id", "is_enabled", "failed_count", "locked_until"), Array("SP2ADMIN", "ADMIN", "DEMO管理者", NewVerifier(adminPassword), "ADMIN", True, 0, Null)
+    InsertRow u.Db, "m_app_user", Array("user_id", "login_id", "display_name", "password_verifier", "role_id", "is_enabled", "failed_count", "locked_until"), Array("SP2STAFF", "STAFF", "DEMO担当者", NewVerifier(staffPassword), "STAFF", True, 0, Null)
     adminPassword = "": staffPassword = ""
     id1 = SeedEmployee(u.Db, Array("000001", "山田 太郎", "ヤマダ タロウ", "01", "01", DateSerial(2022, 4, 1), "業務システムの開発と運用を担当。", "C#、SQL、要件整理", "架空資格A／2023年06月", "利用部門の相談を仕様へ整理することを得意とします。"), at)
     id2 = SeedEmployee(u.Db, Array("000002", "佐藤 花子", "サトウ ハナコ", "02", "01", DateSerial(2024, 4, 1), "基盤運用と監視改善を担当。", "Windows、運用設計", Null, "定常作業を整理し、引継ぎやすい運用を心掛けています。"), at)

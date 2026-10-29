@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-DETAIL-QA","version":"1.0","path":"sample-project2/spec/Access/詳細設計QA.md","sheets":[{"heading":"適用と決定","kind":"GRID","sheet":"01_適用と決定"},{"heading":"採用と残件","kind":"LIST","sheet":"02_採用と残件","key":["QA-ID"]},{"heading":"工程状態","kind":"GRID","sheet":"03_工程状態"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-DETAIL-QA","version":"1.1","path":"sample-project2/spec/Access/詳細設計QA.md","sheets":[{"heading":"適用と決定","kind":"GRID","sheet":"01_適用と決定"},{"heading":"採用と残件","kind":"LIST","sheet":"02_採用と残件","key":["QA-ID"]},{"heading":"工程状態","kind":"GRID","sheet":"03_工程状態"}]} -->
 # Access 詳細設計QA・技術採用
 
-版1.0／2026-10-28。stage=detail-design、generationMode=canonical-update。
+版1.1／2026-10-29。stage=detail-design、generationMode=canonical-update。
 
 ## 適用と決定
 
@@ -19,6 +19,7 @@
 | DQA-A06 | QA-017 | Access Formの原点・Twips/pt・96DPI換算、標準未連結部品と明示DTO、基本HTML同一断片 | 設計採用。1366×768モックと実Accessの外枠/DPIを区別。125/150%・IME・Tab・MaxLengthに依存しないscalar入力・実ListBox全文到達は未検証 | [共通実装](共通/方式別/01_共通実装仕様.md)、各詳細 |
 | DQA-A07 | QA-017、REQ-N-005 | 200社員／4000経歴／同時2人、検索2秒・Excel5秒、Office起動／手動保存除外を継承 | 目標案・未測定。機器／Office版／測定分位と判定基準は実装時に記録し、詳細の存在を達成済みにしない | [日付・データアクセス](共通/05_日付・データアクセス仕様.md) |
 | DQA-A08 | QA-REQ-OPERATIONS | 保持期間、復旧時間／復旧点、配布後の運用責任、バックアップ保管先 | 未確定を継承。詳細で具体値を創作せず、稼働前に利用者と採用範囲を決定する。復元／障害注入も未実施 | [要件](要件定義書.md)、[既存QA](QA.md) |
+| DQA-UI01 | 2026-10-29利用者追加指示、QA-017 | クラシックな標準Access部品、全text部品Yu Gothic UI11pt、項目別Twips、標準入力補助と共通適合検査を採用 | 利用者確定。生成と最終ACCDBの実測・実入力は今回のbuild記録で確認し、過去のPASSを流用しない | [UI生成条件](規約/UI生成条件.md) |
 
 ## 工程状態
 

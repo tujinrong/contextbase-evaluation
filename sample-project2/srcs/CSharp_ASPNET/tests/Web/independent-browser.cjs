@@ -2,8 +2,10 @@
 // Independent real-browser tests. Credentials stay in the owned local fixture profile.
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),assert=require('node:assert/strict');
 const {chromium}=require(process.env.SP2_PLAYWRIGHT_MODULE||'playwright-core');
-const root=path.resolve(__dirname,'../..'),profile=JSON.parse(fs.readFileSync(path.join(root,'.tmp/runtime/profile.json'),'utf8'));
-assert.match(profile.database,/^SP2_WebFixture_/);assert.equal(profile.url,'https://localhost:7443');
+const root=path.resolve(__dirname,'../..'),profilePath=path.resolve(root,process.env.SP2_PROFILE_PATH||'.tmp/runtime/profile.json');
+assert.ok(profilePath.startsWith(path.join(root,'.tmp')+path.sep),'Owned private profile required.');
+const profile=JSON.parse(fs.readFileSync(profilePath,'utf8'));
+assert.match(profile.database,/^SP2_WebFixture_/);assert.ok(['https://localhost:7443','https://localhost:7445'].includes(profile.url),'Owned HTTPS endpoint required.');
 const out=path.join(root,'build/test-results/independent-browser'),scratch=path.join(root,'.tmp/independent-browser');
 fs.mkdirSync(out,{recursive:true});fs.mkdirSync(scratch,{recursive:true});
 const results=[],errors=[];let browser,page,context,fatal;
@@ -16,7 +18,7 @@ async function dialogYes(){await page.locator('dialog[open]').getByRole('button'
 async function shot(name){await page.screenshot({path:path.join(out,name+'.png'),fullPage:true});}
 async function search(no='',name='',status='01'){await page.locator('#search-no').fill(no);await page.locator('#search-name').fill(name);await page.locator('#search-status').selectOption(status);const r=await apiClick('#search-run','/employees/search');assert.equal(r.status(),200);return r;}
 async function chooseEmployee(no){await page.locator('#search-rows tr').filter({hasText:no}).locator('input[type=radio]').check();}
-async function login(target,role){await target.goto(profile.url+'/account/login');await target.locator('#sp2-login-id').fill(role==='admin'?'demoadmin':'demostaff');await target.locator('#sp2-login-pw').fill(role==='admin'?profile.adminPassword:profile.staffPassword);await Promise.all([target.waitForURL('**/menu'),target.locator('button[type=submit]').filter({hasText:'ログイン'}).click()]);}
+async function login(target,role){await target.goto(profile.url+'/account/login');await target.locator('#sp2-login-id').fill(role==='admin'?'admin':'staff');await target.locator('#sp2-login-pw').fill(role==='admin'?profile.adminPassword:profile.staffPassword);await Promise.all([target.waitForURL('**/menu'),target.locator('button[type=submit]').filter({hasText:'ログイン'}).click()]);}
 async function exportFile(name){const download=page.waitForEvent('download');await page.locator('#employee-export').click();const d=await download;assert.equal(await d.failure(),null);await d.saveAs(path.join(out,name+'.xlsx'));assert.ok(fs.statSync(path.join(out,name+'.xlsx')).size>1000);}
 (async()=>{
  try{
@@ -65,6 +67,6 @@ async function exportFile(name){const download=page.waitForEvent('download');awa
  }catch(e){fatal=redact(e.message);console.log('Workflow stopped: '+redact(e.name));}
  finally{
   if(browser)await browser.close();const after=sourceHashes();const changed=JSON.stringify(before)!==JSON.stringify(after);
-  const record={runId:'20261029-sp2-build',projectId:'sample-project2',profileId:'CSharp_ASPNET',recordedAt:new Date().toISOString(),reviewer:'/root',status:fatal||changed||results.some(r=>r.status==='FAIL')?'FAIL':'PASS',inputManifestSha256:inputHash,sources:before,sourcesChangedDuringRun:changed,browser:'Edge via Playwright',viewport:{width:1366,height:768},fixtureDatabase:profile.database,fixtureOnlyTlsException:true,checks:results.length,passed:results.filter(r=>r.status==='PASS').length,failed:results.filter(r=>r.status==='FAIL').length,fatal,results,notExecuted:['Physical Japanese IME composition','SQL Server 2022 actual instance','User acceptance and formal scoring'],formalScore:null};fs.writeFileSync(path.join(out,'review.json'),JSON.stringify(record,null,2)+'\n');console.log(JSON.stringify({status:record.status,checks:record.checks,failed:record.failed,sourcesChangedDuringRun:changed}));process.exitCode=record.status==='PASS'?0:1;
+  const record={runId:process.env.SP2_RUN_ID||'20261029-sp2-build',projectId:'sample-project2',profileId:'CSharp_ASPNET',recordedAt:new Date().toISOString(),reviewer:'/root',status:fatal||changed||results.some(r=>r.status==='FAIL')?'FAIL':'PASS',inputManifestSha256:inputHash,sources:before,sourcesChangedDuringRun:changed,browser:'Edge via Playwright',viewport:{width:1366,height:768},fixtureDatabase:profile.database,fixtureOnlyTlsException:true,checks:results.length,passed:results.filter(r=>r.status==='PASS').length,failed:results.filter(r=>r.status==='FAIL').length,fatal,results,notExecuted:['Physical Japanese IME composition','SQL Server 2022 actual instance','User acceptance and formal scoring'],formalScore:null};fs.writeFileSync(path.join(out,'review.json'),JSON.stringify(record,null,2)+'\n');console.log(JSON.stringify({status:record.status,checks:record.checks,failed:record.failed,sourcesChangedDuringRun:changed}));process.exitCode=record.status==='PASS'?0:1;
  }
 })().catch(()=>{console.error('Independent browser harness failed before final record.');process.exitCode=1;});

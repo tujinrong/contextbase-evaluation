@@ -24,7 +24,7 @@ class LayoutTests(unittest.TestCase):
     (base/excluded).mkdir();(base/excluded/'poison.txt').write_text('not an archive input','utf-8')
   (self.root/'sample-project1/spec/README.md').write_text(self.routing('sample-project1',PROFILES),'utf-8')
   self.base=self.root/'sample-project1/srcs/Access'
-  (self.base/'profile.json').write_text(json.dumps({'name':'Access','specRoot':'../../spec/Access','inputRoot':'../../spec/Access','productionHelpers':['tools/GeneratedPaths.ps1']}),'utf-8')
+  (self.base/'profile.json').write_text(json.dumps({'name':'Access','specRoot':'../../spec/Access','inputRoot':'../../spec/Access','productionHelpers':['tools/GeneratedPaths.ps1'],'uiConformance':{'required':True,'contract':'tests/ui-contract.json'}}),'utf-8')
   (self.base/'tools').mkdir();(self.base/'tools/GeneratedPaths.ps1').write_text('# required production helper','utf-8');(self.base/'tools/test-oracle.py').write_text('# excluded','utf-8')
   # A self-contained legacy evidence fixture; no application source is read.
   (self.base/'Build-Access.ps1').write_text("""# Production builder fixture before input evidence
@@ -52,7 +52,7 @@ function Invoke-FixtureBuild {
   with zipfile.ZipFile(source) as archive:
    names=archive.namelist();self.assertIn('tools/GeneratedPaths.ps1',names);self.assertNotIn('tools/test-oracle.py',names);self.assertFalse(any(part in {'.tmp','spec','spec-eval','spec-analysis','tests'} for name in names for part in Path(name).parts))
    self.assertNotIn('original-spec.md',names)
-   metadata=json.loads(archive.read('profile.json'));self.assertNotIn('specRoot',metadata);self.assertNotIn('inputRoot',metadata)
+   metadata=json.loads(archive.read('profile.json'));self.assertNotIn('specRoot',metadata);self.assertNotIn('inputRoot',metadata);self.assertNotIn('uiConformance',metadata)
   (self.base/'app.cs').write_text('// version two','utf-8');self.package();self.assertNotEqual(before,hashlib.sha256(source.read_bytes()).hexdigest())
   self.assertEqual(sorted(p.name for p in (self.base/'build').iterdir()),['generation','source.zip'])
   self.verify();self.assertEqual(self.result()['status'],'PASSED');self.assertTrue((self.base/'.tmp/source-isolation/app.cs').is_file())

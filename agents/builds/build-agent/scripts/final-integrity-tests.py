@@ -61,10 +61,32 @@ class FinalIntegrityTests(unittest.TestCase):
     def entry(self, file):
         return {'file': file, 'sha256': hashlib.sha256((self.root / file).read_bytes()).hexdigest()}
 
-    def run_check(self, expected=0, profile=None):
-        result = subprocess.run([sys.executable, '-X', 'utf8', str(self.root / 'agents/builds/build-agent/scripts/check-output-layout.py'), '--project', 'sample-project2', *(['--profile', profile] if profile else [])], capture_output=True, text=True, encoding='utf-8')
+    def run_check(self, expected=0, profile=None, extra=()):
+        result = subprocess.run([sys.executable, '-X', 'utf8', str(self.root / 'agents/builds/build-agent/scripts/check-output-layout.py'), '--project', 'sample-project2', *(['--profile', profile] if profile else []), *extra], capture_output=True, text=True, encoding='utf-8')
         self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
         return json.loads((self.root / 'sample-project2/build/test-results/final-integrity.json').read_text('utf-8'))
+
+    def prepare_spec_update(self, classification, *, creation=False, reason='Explicit fixture UI/platform adoption', instruction='Change the selected specification as requested'):
+        file = 'sample-project2/spec/Access/UI-new.md' if creation else 'sample-project2/spec/Access/README.md'
+        before = None if creation else (self.root / file).read_bytes()
+        self.write(file, '# Updated canonical specification\n\nSynthetic requested change only.\n')
+        generation = 'sample-project2/srcs/Access/build/generation'
+        change = {'file': file, 'beforeVersion': None if creation else '1.0', 'afterVersion': '1.0' if creation else '1.1',
+                  'beforeSha256': None if before is None else hashlib.sha256(before).hexdigest(),
+                  'afterSha256': self.entry(file)['sha256'], 'reason': reason}
+        record = {'runId': 'current', 'classification': classification, 'userInstruction': instruction, 'changes': [change]}
+        self.write(f'{generation}/spec-update.json', json.dumps(record))
+        inputs = json.loads((self.root / generation / 'inputs.json').read_text('utf-8'))
+        inputs['files'] = [entry for entry in inputs['files'] if entry['file'] != file] + [self.entry(file)]
+        self.write(f'{generation}/inputs.json', json.dumps(inputs))
+        self.refresh_update_delivery()
+        return file
+
+    def refresh_update_delivery(self):
+        generation = 'sample-project2/srcs/Access/build/generation'
+        output = json.loads((self.root / generation / 'outputs.json').read_text('utf-8'))
+        output['delivery'] = [self.entry(f'{generation}/{name}.json') for name in ['inputs', 'structure', 'spec-update']]
+        self.write(f'{generation}/outputs.json', json.dumps(output))
 
     def test_registered_two_methods_and_product_specific_artifact(self):
         result = self.run_check()
@@ -116,6 +138,83 @@ class FinalIntegrityTests(unittest.TestCase):
         value['files'].append({'file': '../outside', 'sha256': '0' * 64})
         file.write_text(json.dumps(value), encoding='utf-8')
         self.assertTrue(any(item['code'] == 'EXCLUDED_MANIFEST_ENTRY' for item in self.run_check(1)['findings']))
+
+    def test_explicit_platform_update_retains_exact_hash_verified_authorization(self):
+        file = self.prepare_spec_update('user-requested-platform-change')
+        result = self.run_check(extra=['--allow-spec-update', file])
+        self.assertEqual(result['authorizedUserSpecUpdates'][0]['classification'], 'user-requested-platform-change')
+        self.assertEqual(result['protectedInputDiff'], [file])
+
+    def test_explicit_ui_update_has_separate_classification_and_exact_file(self):
+        file = self.prepare_spec_update('user-requested-ui-change')
+        result = self.run_check(extra=['--allow-spec-update', file])
+        self.assertEqual(result['authorizedUserSpecUpdates'][0]['classification'], 'user-requested-ui-change')
+        self.assertEqual(result['authorizedUserSpecUpdates'][0]['file'], file)
+        self.write('sample-project2/spec/Access/unauthorized.md', '# Other protected change\n')
+        result = self.run_check(1, extra=['--allow-spec-update', file])
+        self.assertTrue(any(item['code'] == 'PROTECTED_INPUT_CHANGED' and item['file'].endswith('/unauthorized.md') for item in result['findings']))
+
+    def test_ui_spec_creation_requires_explicit_null_previous_provenance(self):
+        file = self.prepare_spec_update('user-requested-ui-change', creation=True)
+        result = self.run_check(extra=['--allow-spec-update', file])
+        self.assertIsNone(result['authorizedUserSpecUpdates'][0]['beforeSha256'])
+        record_path = self.root / 'sample-project2/srcs/Access/build/generation/spec-update.json'
+        record = json.loads(record_path.read_text('utf-8'))
+        record['changes'][0]['beforeSha256'] = '0' * 64
+        record_path.write_text(json.dumps(record), encoding='utf-8')
+        self.refresh_update_delivery()
+        self.assertTrue(any(item['code'] == 'UNVERIFIED_SPEC_REPAIR' for item in self.run_check(1, extra=['--allow-spec-update', file])['findings']))
+
+    def test_explicit_authentication_update_retains_exact_file_authorization(self):
+        file = self.prepare_spec_update('user-requested-authentication-change', instruction='User requested demo admin/staff credentials.')
+        result = self.run_check(extra=['--allow-spec-update', file])
+        self.assertEqual(result['authorizedUserSpecUpdates'][0]['classification'], 'user-requested-authentication-change')
+        self.write('sample-project2/spec/Access/unrequested-auth.md', '# Unrequested authentication change\n')
+        self.assertTrue(any(item['code'] == 'PROTECTED_INPUT_CHANGED' for item in self.run_check(1, extra=['--allow-spec-update', file])['findings']))
+
+    def test_authentication_update_without_user_instruction_is_rejected(self):
+        file = self.prepare_spec_update('user-requested-authentication-change', instruction=' ')
+        self.assertTrue(any(item['code'] == 'UNVERIFIED_SPEC_REPAIR' for item in self.run_check(1, extra=['--allow-spec-update', file])['findings']))
+
+    def test_authentication_update_does_not_relax_current_hash(self):
+        file = self.prepare_spec_update('user-requested-authentication-change')
+        record_path = self.root / 'sample-project2/srcs/Access/build/generation/spec-update.json'
+        record = json.loads(record_path.read_text('utf-8'))
+        record['changes'][0]['afterSha256'] = '0' * 64
+        record_path.write_text(json.dumps(record), encoding='utf-8')
+        self.refresh_update_delivery()
+        self.assertTrue(any(item['code'] == 'UNVERIFIED_SPEC_REPAIR' for item in self.run_check(1, extra=['--allow-spec-update', file])['findings']))
+
+    def test_unsupported_user_update_classification_is_rejected(self):
+        file = self.prepare_spec_update('automatic-ui-guess')
+        self.assertTrue(any(item['code'] == 'UNVERIFIED_SPEC_REPAIR' for item in self.run_check(1, extra=['--allow-spec-update', file])['findings']))
+
+    def test_ui_update_without_user_instruction_is_rejected(self):
+        file = self.prepare_spec_update('user-requested-ui-change', instruction='  ')
+        self.assertTrue(any(item['code'] == 'UNVERIFIED_SPEC_REPAIR' for item in self.run_check(1, extra=['--allow-spec-update', file])['findings']))
+
+    def test_ui_update_without_reason_is_rejected(self):
+        file = self.prepare_spec_update('user-requested-ui-change', reason='  ')
+        self.assertTrue(any(item['code'] == 'UNVERIFIED_SPEC_REPAIR' for item in self.run_check(1, extra=['--allow-spec-update', file])['findings']))
+
+    def test_ui_update_does_not_relax_head_current_or_frozen_hashes(self):
+        file = self.prepare_spec_update('user-requested-ui-change')
+        record_path = self.root / 'sample-project2/srcs/Access/build/generation/spec-update.json'
+        baseline = json.loads(record_path.read_text('utf-8'))
+        for field in ['beforeSha256', 'afterSha256']:
+            with self.subTest(field=field):
+                record = json.loads(json.dumps(baseline))
+                record['changes'][0][field] = '0' * 64
+                record_path.write_text(json.dumps(record), encoding='utf-8')
+                self.refresh_update_delivery()
+                self.assertTrue(any(item['code'] == 'UNVERIFIED_SPEC_REPAIR' for item in self.run_check(1, extra=['--allow-spec-update', file])['findings']))
+        record_path.write_text(json.dumps(baseline), encoding='utf-8')
+        input_path = self.root / 'sample-project2/srcs/Access/build/generation/inputs.json'
+        inputs = json.loads(input_path.read_text('utf-8'))
+        next(entry for entry in inputs['files'] if entry['file'] == file)['sha256'] = '0' * 64
+        input_path.write_text(json.dumps(inputs), encoding='utf-8')
+        self.refresh_update_delivery()
+        self.assertTrue(any(item['code'] == 'UNVERIFIED_SPEC_REPAIR' for item in self.run_check(1, extra=['--allow-spec-update', file])['findings']))
 
 
 if __name__ == '__main__':

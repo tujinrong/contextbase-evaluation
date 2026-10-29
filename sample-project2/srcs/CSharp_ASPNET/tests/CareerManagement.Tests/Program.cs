@@ -14,6 +14,11 @@ using Microsoft.Data.SqlClient;
 Console.OutputEncoding=Encoding.UTF8;
 var root=Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,"../../../../../.."));
 if(!File.Exists(Path.Combine(root,"global.json")))root=Environment.CurrentDirectory;
+var inputFile=Path.Combine(root,"build","generation","inputs.json");
+using var inputJson=JsonDocument.Parse(File.ReadAllBytes(inputFile));
+var currentRunId=inputJson.RootElement.GetProperty("runId").GetString();
+var inputManifestSha256=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(inputFile)));
+var testedRuntimeArtifacts=new[]{typeof(EmployeeService).Assembly,typeof(BusinessClock).Assembly}.Select(a=>new{file=Path.GetFileName(a.Location),sha256=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(a.Location)))}).ToArray();
 var results=new List<object>();var failed=0;var cycle=args.Contains("--cycle")?int.Parse(args[Array.IndexOf(args,"--cycle")+1],System.Globalization.CultureInfo.InvariantCulture):1;
 var ct=CancellationToken.None;var clock=new BusinessClock(TimeProvider.System);
 async Task Check(string id,string name,Func<Task> test)
@@ -24,9 +29,11 @@ async Task Check(string id,string name,Func<Task> test)
 static void Assert(bool ok,string reason="Assertion failed"){if(!ok)throw new InvalidOperationException(reason);}
 static async Task Expect(int msg,Func<Task> action){try{await action();throw new InvalidOperationException("Expected MSG-"+msg);}catch(BusinessException b){Assert(b.Outcome.MessageId==$"MSG-{msg:000}",b.Outcome.MessageId);}}
 var definition=JsonSerializer.Deserialize<SeedDefinition>(await File.ReadAllTextAsync(Path.Combine(root,"fixtures","SP2-DEMO-01.json")),SafeInitializer.Json)!;
-var adminPassword=Convert.ToHexString(RandomNumberGenerator.GetBytes(24));var staffPassword=Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
-var browser=args.Contains("--prepare-browser")||args.Contains("--prepare-http");var http=args.Contains("--prepare-http");
-var dbName=browser?(http?"SP2_WebFixture_Http_"+Guid.NewGuid().ToString("N")[..12]:"SP2_WebFixture_20261029"):"SP2_WebFixture_Test_"+Guid.NewGuid().ToString("N")[..12];
+var adminPassword=DemoCredentialUpdater.Password;var staffPassword=DemoCredentialUpdater.Password;
+var ui=args.Contains("--prepare-ui");
+var browser=args.Contains("--prepare-browser")||args.Contains("--prepare-http")||ui;var http=args.Contains("--prepare-http");
+if(ui&&File.Exists(Path.Combine(root,".tmp","ui-runtime","profile.json")))throw new InvalidOperationException("An owned UI profile already exists. Explicitly stop and clean up that fixture before creating another.");
+var dbName=ui?"SP2_WebFixture_UI_"+Guid.NewGuid().ToString("N")[..12]:browser?(http?"SP2_WebFixture_Http_"+Guid.NewGuid().ToString("N")[..12]:"SP2_WebFixture_20261029"):"SP2_WebFixture_Test_"+Guid.NewGuid().ToString("N")[..12];
 var options=new DatabaseOptions{ConnectionString=$"Server=.\\SQLEXPRESS;Database={dbName};Integrated Security=True;Encrypt=True;TrustServerCertificate=True",AllowedDatabase=dbName,Fixture=true};
 var repo=new Repository();var database=new Database(options,new NoDbFaults());
 var sessions=new SessionRegistry(clock);var current=new CurrentUserService(database,repo,sessions);var auth=new AuthService(database,repo,clock,sessions);
@@ -41,14 +48,14 @@ try
     await Check("SQL-03","seed idempotency exact match",async()=>Assert((await SafeInitializer.SeedAsync(database,repo,definition,adminPassword,staffPassword,manifestPath,ct)).State=="SkippedExactMatch"));
     if(browser)
     {
-        var runtime=Path.Combine(root,".tmp",http?"http-runtime":"runtime");Directory.CreateDirectory(runtime);
+        var runtime=Path.Combine(root,".tmp",ui?"ui-runtime":http?"http-runtime":"runtime");Directory.CreateDirectory(runtime);
         using var rsa=RSA.Create(2048);var request=new CertificateRequest("CN=localhost",rsa,HashAlgorithmName.SHA256,RSASignaturePadding.Pkcs1);
         var san=new SubjectAlternativeNameBuilder();san.AddDnsName("localhost");san.AddIpAddress(System.Net.IPAddress.Loopback);request.CertificateExtensions.Add(san.Build());
         request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature|X509KeyUsageFlags.KeyEncipherment,true));
         using var cert=request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-5),DateTimeOffset.UtcNow.AddDays(7));
         var certPassword=Convert.ToHexString(RandomNumberGenerator.GetBytes(24));var certPath=Path.Combine(runtime,"server.pfx");await File.WriteAllBytesAsync(certPath,cert.Export(X509ContentType.Pfx,certPassword));
-        await File.WriteAllTextAsync(Path.Combine(runtime,"profile.json"),JsonSerializer.Serialize(new{database=dbName,connectionString=options.ConnectionString,adminPassword,staffPassword,certificate=certPath,certificatePassword=certPassword,url=http?"https://localhost:7444":"https://localhost:7443",keys=Path.Combine(runtime,"keys")},SafeInitializer.Json));
-        Console.WriteLine("Browser fixture and private .tmp/runtime/profile.json created. Secrets omitted.");return 0;
+        await File.WriteAllTextAsync(Path.Combine(runtime,"profile.json"),JsonSerializer.Serialize(new{database=dbName,connectionString=options.ConnectionString,adminPassword,staffPassword,certificate=certPath,certificatePassword=certPassword,url=ui?"https://localhost:7445":http?"https://localhost:7444":"https://localhost:7443",keys=Path.Combine(runtime,"keys")},SafeInitializer.Json));
+        Console.WriteLine("Owned browser fixture and private runtime profile created. Secrets omitted.");return 0;
     }
     await Check("SQL-04","5 tables 48 physical columns",async()=>
     {
@@ -56,7 +63,7 @@ try
         await using var q=u.Command("SELECT COUNT(DISTINCT t.object_id),COUNT(*) FROM sys.tables t JOIN sys.columns c ON c.object_id=t.object_id WHERE t.is_ms_shipped=0;");await using var r=await q.ExecuteReaderAsync(ct);await r.ReadAsync(ct);Assert(r.GetInt32(0)==5&&r.GetInt32(1)==48);
     });
     Actor? admin=null,staff=null;
-    await Check("AUTH-01","normal ADMIN STAFF current roles",async()=>{admin=await auth.AuthenticateAsync(new("demoadmin",adminPassword),ct);staff=await auth.AuthenticateAsync(new("demostaff",staffPassword),ct);Assert(admin?.Role==UserRole.ADMIN&&staff?.Role==UserRole.STAFF);});
+    await Check("AUTH-01","normal ADMIN STAFF current roles",async()=>{admin=await auth.AuthenticateAsync(new("admin",adminPassword),ct);staff=await auth.AuthenticateAsync(new("staff",staffPassword),ct);Assert(admin?.Role==UserRole.ADMIN&&staff?.Role==UserRole.STAFF);});
     if(admin is null||staff is null)throw new InvalidOperationException("Normal authentication failed.");
     var a=admin;var s=staff;
     await Check("F03-01","initial status default two ascending results",async()=>{var found=await employees.SearchAsync(s,new(null,null,null,"01"),ct);Assert(found.Rows.Select(x=>x.EmployeeNo).SequenceEqual(new[]{"000001","000002"}));});
@@ -101,9 +108,9 @@ try
         await Check("AUTH-02","fifth failure lock then no extension",async()=>
         {
             await using(var u=await database.BeginAsync(true,ct)){await repo.UpdateAuthAsync(u,"SP2STAFF",4,null,ct);await u.CommitAsync(ct);}
-            Assert(await auth.AuthenticateAsync(new("demostaff",new string('x',16)),ct)is null);
+            Assert(await auth.AuthenticateAsync(new("staff",new string('x',16)),ct)is null);
             AppUser before;await using(var u=await database.BeginAsync(false,ct)){before=(await repo.UserAsync(u,"SP2STAFF",false,ct))!;}
-            Assert(before.FailedCount==5&&before.LockedUntil>DateTimeOffset.UtcNow.AddMinutes(14));Assert(await auth.AuthenticateAsync(new("demostaff",staffPassword),ct)is null);
+            Assert(before.FailedCount==5&&before.LockedUntil>DateTimeOffset.UtcNow.AddMinutes(14));Assert(await auth.AuthenticateAsync(new("staff",staffPassword),ct)is null);
             await using(var u=await database.BeginAsync(true,ct)){var after=(await repo.UserAsync(u,"SP2STAFF",false,ct))!;Assert(after.LockedUntil==before.LockedUntil);await repo.UpdateAuthAsync(u,"SP2STAFF",0,null,ct);await u.CommitAsync(ct);}
         });
         await Check("STATE-01","exact idle 30 minute expiry",()=>
@@ -152,9 +159,9 @@ try
         {
             var deadline=DateTimeOffset.UtcNow;await using(var u=await database.BeginAsync(true,ct)){await repo.UpdateAuthAsync(u,"SP2STAFF",5,deadline,ct);await u.CommitAsync(ct);}
             var time=new ManualTime(deadline.AddTicks(-1));var registry=new SessionRegistry(new(time));var verifier=new AuthService(database,repo,new(time),registry);
-            Assert(await verifier.AuthenticateAsync(new("demostaff",staffPassword),ct)is null);time.Now=deadline;Assert(await verifier.AuthenticateAsync(new("demostaff",staffPassword),ct)is not null);
+            Assert(await verifier.AuthenticateAsync(new("staff",staffPassword),ct)is null);time.Now=deadline;Assert(await verifier.AuthenticateAsync(new("staff",staffPassword),ct)is not null);
             await using(var u=await database.BeginAsync(true,ct)){await repo.UpdateAuthAsync(u,"SP2STAFF",3,null,ct);await u.CommitAsync(ct);}
-            var denied=await Task.WhenAll(Enumerable.Range(0,2).Select(_=>auth.AuthenticateAsync(new("demostaff",new string('x',16)),ct)));Assert(denied.All(x=>x is null));
+            var denied=await Task.WhenAll(Enumerable.Range(0,2).Select(_=>auth.AuthenticateAsync(new("staff",new string('x',16)),ct)));Assert(denied.All(x=>x is null));
             await using(var u=await database.BeginAsync(true,ct)){var user=(await repo.UserAsync(u,"SP2STAFF",false,ct))!;Assert(user.FailedCount==5);await repo.UpdateAuthAsync(u,"SP2STAFF",0,null,ct);await u.CommitAsync(ct);}
         });
         await Check("F04-15","editable invalid business value vs report corruption",async()=>
@@ -232,7 +239,7 @@ finally
     if(!browser)
     {
         var dir=Path.Combine(root,"build","test-results");Directory.CreateDirectory(dir);
-        await File.WriteAllTextAsync(Path.Combine(dir,$"self-cycle-{cycle}.json"),JsonSerializer.Serialize(new{projectId="sample-project2",methodId="CSharp_ASPNET",cycle,executedUtc=DateTimeOffset.UtcNow,dbEngine="SQL Server 2025 Express (17.0), compatibility 160; SQL Server 2022 host untested",passed=failed==0,failed,tests=results,unperformed=new[]{"formal acceptance","SQL Server 2022 physical host","real Excel print","browser (root independent)"}},SafeInitializer.Json));
+        await File.WriteAllTextAsync(Path.Combine(dir,$"self-cycle-{cycle}.json"),JsonSerializer.Serialize(new{projectId="sample-project2",methodId="CSharp_ASPNET",runId=currentRunId,inputManifestSha256,testedRuntimeArtifacts,cycle,executedUtc=DateTimeOffset.UtcNow,dbEngine="SQL Server 2025 Express (17.0), compatibility 160; SQL Server 2022 host untested",passed=failed==0,failed,tests=results,unperformed=new[]{"formal acceptance","SQL Server 2022 physical host","real Excel print","browser (root independent)"}},SafeInitializer.Json));
     }
 }
 return failed==0?0:1;

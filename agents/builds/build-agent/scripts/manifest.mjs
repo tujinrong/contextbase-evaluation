@@ -7,6 +7,7 @@ import {execFileSync,spawnSync} from 'node:child_process';
 import {layout, writeJson} from './output-layout.mjs';
 import {assertRegular, collectInputFiles} from './input-scope.mjs';
 import {selectedProfiles, validProfile} from './project-scope.mjs';
+import {uiPolicyForProfile,requireCurrentUIResult} from './ui-conformance.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../../..');
 const args=process.argv.slice(2);let project,runId,profile;
 if(args.length%2)throw new Error('Every option requires a value.');
@@ -34,6 +35,18 @@ if(!Array.isArray(input.files)||JSON.stringify(input.files.map(record=>record.fi
 for(const record of input.files) {
   const target=path.join(root,record.file);assertRegular(target);
   if(hash(fs.readFileSync(target))!==record.sha256) throw new Error(`Input changed after preflight: ${record.file}`);
+}
+// This is an independent UI gate, not an inference from structural preflight PASS.
+let uiConformance;
+try {
+ uiConformance=methods.map(method=>{
+  const policy=uiPolicyForProfile({root,project,profile:method,requireDeclaration:input.files.some(record=>record.file==='docs/UI適合検査.md'),frozenInputs:input});
+  if(!policy.required)return {profileId:method,...policy};
+  return {profileId:method,required:true,status:'PASS',record:requireCurrentUIResult({root,project,profile:method,runId})};
+ });
+} catch(error) {
+ if(fs.existsSync(output)){assertRegular(output);fs.unlinkSync(output);}
+ throw error;
 }
 const excluded=new Set(['.tmp','bin','obj','node_modules','dist','build','__pycache__','.vs','.git','spec','spec-eval','spec-analysis','test-report','test-evidence']);
 const files=[];
@@ -111,6 +124,6 @@ function finalFiles(directory) {
  }
 }
 for(const method of methods)finalFiles(path.join(root,project,'srcs',method,'build'));
-const result={projectId:project,...(profile?{profileId:profile}:{}),runId,inputCommit:input.inputCommit,recordedAt:new Date().toISOString(),outputVersion:runId,inputManifest:'inputs.json',structureReport:'structure.json',generationStatus:generationState?.status??'NOT_RECORDED',sourceOnly:true,historyPolicy:'git-only; fixed latest build paths',excluded:['.tmp/bin/obj/node_modules/dist/build/__pycache__/.vs in source inventory','spec-eval','local secrets/configuration',...(profile?['other profiles','build-agent files outside scripts']:[])],artifacts,delivery,documentChanges,files};
+const result={projectId:project,...(profile?{profileId:profile}:{}),runId,inputCommit:input.inputCommit,recordedAt:new Date().toISOString(),outputVersion:runId,inputManifest:'inputs.json',structureReport:'structure.json',generationStatus:generationState?.status??'NOT_RECORDED',uiConformance,sourceOnly:true,historyPolicy:'git-only; fixed latest build paths',excluded:['.tmp/bin/obj/node_modules/dist/build/__pycache__/.vs in source inventory','spec-eval','local secrets/configuration',...(profile?['other profiles','build-agent files outside scripts']:[])],artifacts,delivery,documentChanges,files};
 writeJson(output,result,outputLayout.scratch);
 console.log(JSON.stringify({projectId:project,...(profile?{profileId:profile}:{}),runId,files:files.length,documentChanges:documentChanges.length,inputHashesVerified:true,output:path.relative(root,output).split(path.sep).join('/')}));

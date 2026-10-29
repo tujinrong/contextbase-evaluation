@@ -1,5 +1,6 @@
 Option Compare Binary
 Option Explicit
+Public Const MinimumPasswordScalars As Long = 3
 Private Declare PtrSafe Function BCryptOpenAlgorithmProvider Lib "bcrypt" (ByRef h As LongPtr, ByVal alg As LongPtr, ByVal implementation As LongPtr, ByVal flags As Long) As Long
 Private Declare PtrSafe Function BCryptCloseAlgorithmProvider Lib "bcrypt" (ByVal h As LongPtr, ByVal flags As Long) As Long
 Private Declare PtrSafe Function BCryptGenRandom Lib "bcrypt" (ByVal h As LongPtr, ByRef buffer As Byte, ByVal length As Long, ByVal flags As Long) As Long
@@ -48,7 +49,7 @@ End Function
 Public Function NewVerifier(ByVal password As String) As String
     Dim salt(0 To 31) As Byte, derived() As Byte
     CheckText password, 128, True, "パスワード", False
-    If ScalarLength(password) < 12 Then Err.Raise vbObjectError + 713, , "MSG-005|パスワード"
+    If ScalarLength(password) < MinimumPasswordScalars Then Err.Raise vbObjectError + 713, , "MSG-005|パスワード"
     If BCryptGenRandom(0, salt(0), 32, &H2) <> 0 Then Err.Raise vbObjectError + 712, , "MSG-001"
     derived = Derive(password, salt)
     NewVerifier = "PBKDF2-SHA256$v=1$i=600000$s=" & HexBytes(salt) & "$dk=" & HexBytes(derived)
@@ -57,7 +58,7 @@ End Function
 Public Function VerifyPassword(ByVal password As String, ByVal verifier As String) As Boolean
     Dim pieces() As String, salt() As Byte, expected() As Byte, actual() As Byte, i As Long, difference As Long
     On Error GoTo Denied
-    If ScalarLength(password) < 12 Or ScalarLength(password) > 128 Then Exit Function
+    If ScalarLength(password) < MinimumPasswordScalars Or ScalarLength(password) > 128 Then Exit Function
     pieces = Split(verifier, "$")
     If UBound(pieces) <> 4 Then Exit Function
     If pieces(0) <> "PBKDF2-SHA256" Or pieces(1) <> "v=1" Or pieces(2) <> "i=600000" Then Exit Function

@@ -12,7 +12,7 @@ export function fixedInputFiles(project, profile) {
     'agents/builds/build-agent/AGENT.md', 'agents/builds/build-agent/PROMPT.md', 'agents/builds/build-agent/README.md', 'agents/reverses/reverse-agent/AGENT.md',
     'docs/リポジトリ構成.md', 'docs/開発規約.md', 'docs/仕様書作成ルール.md',
     'docs/評価規約.md', 'docs/MD構造・Excel変換規約.md', 'docs/テーブル仕様書記述規約.md',
-    'docs/テストデータ整備規約.md',
+    'docs/テストデータ整備規約.md', 'docs/UI適合検査.md',
     ...(!profile || profile === 'Access' ? ['agents/builds/build-agent/docs/Access生成チェック.md'] : []),
     `${project}/README.md`, `${project}/プロジェクト情報.md`, `${project}/spec/README.md`,
   ];

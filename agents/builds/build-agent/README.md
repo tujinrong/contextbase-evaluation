@@ -1,12 +1,14 @@
 # build-agent
 
-定義版7.9／2026-10-29。[契約](AGENT.md)・[起動指示](PROMPT.md)に従い、選択方式のspecRoot=project/spec/方式ID/からsourceRoot=project/srcs/方式ID/へ独立したシステムを生成する。旧sourceRoot/specへの自動復帰や他方式仕様の共用は行わない。業務コード・DB・試験の横断共用はしない。
+定義版7.10／2026-10-29。[契約](AGENT.md)・[起動指示](PROMPT.md)に従い、選択方式のspecRoot=project/spec/方式ID/からsourceRoot=project/srcs/方式ID/へ独立したシステムを生成する。旧sourceRoot/specへの自動復帰や他方式仕様の共用は行わない。業務コード・DB・試験の横断共用はしない。
 
 最終ソースはsrcs/方式ID/の正本を更新する。最終配布物は方式内build/app・build/publish等、Accessは採用プロファイル又は方式の配布設定で指定した最終ACCDB1個。最終検査記録はbuild/test-results/、入力・出力manifestはbuild/generation/、解析用ZIPはbuild/source.zipへ固定名で更新し、Gitで履歴を管理する。中間生成・失敗試行・処理系・cache・隔離展開は各方式.tmp/へ置く。過去成果をrun-id別・backup別に累積しない。共通集約だけproject/build/、共通作業だけproject/.tmp/を使用する。
 
 全方式の次回生成は[テストデータ整備規約](../../../docs/テストデータ整備規約.md)に従い、起動後に検索・新規登録・編集を試せる架空の初期確認用データと確認手順を備える。必要マスタ、確認用の業務行、異常系fixture、利用者の既存データを分け、初回投入と冪等な再投入・既存値保護を検査し、件数と基準日を固定manifestへ残す。共通規則の追加だけで指定外方式の投入済みとは扱わない。
 
 Accessの生成・更新では[Access生成チェック](docs/Access生成チェック.md)を併用する。標準フォーム/部品、フォントとグループ見出し、モード別の入力属性、マスク/表示/保存の契約を確認し、実ACCDBのキーボード/貼付操作と画面表示を検査する。VBAコンパイルやプロパティ検査のみで入力と可読性を保証しない。
+
+全方式のUI生成/改修は[UI適合検査](../../../docs/UI適合検査.md)で、事前に固定したtests/ui-contract.jsonと最終製品のui-observations.jsonを比較する。profile.uiConformanceの必須宣言、仕様根拠の版/SHA、全component/font対象、寸法/外観/render/操作、今回artifact/validator SHAを照合する。`node agents/builds/build-agent/scripts/ui-conformance.mjs --project <project> --profile <方式> --run-id <今回>`の記録をmanifestが再検査する。必須gateの未実施/削除/旧結果ではoutputsを確定しない。CLI等の非UIは理由と同方式の凍結根拠sourceFilesを明記する。方式ごとに適切な標準部品・単位・実測を使い、Access既定のクラシック外観/11ptをWeb等へ強制しない。
 
 ```powershell
 node agents/builds/build-agent/scripts/preflight.mjs --project sample-project1 --profile CSharp_ASPNET --run-id current

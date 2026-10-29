@@ -8,19 +8,24 @@ Private setupStep As Integer
 Private setupFirst As String
 Private setupAdmin As String
 Private setupStaff As String
+Private initialisingFormName As String
+Public Function UiIsInitialisingForm(ByVal f As Access.Form) As Boolean
+    UiIsInitialisingForm = (initialisingFormName <> "" And initialisingFormName = f.Name)
+End Function
 Public Sub UiLoad(ByVal f As Access.Form)
-    Dim result As clsResult, rows As New Collection
+    Dim result As clsResult, rows As New Collection, initialized As Boolean, priorInitialisingForm As String
     On Error GoTo Failed
+    priorInitialisingForm = initialisingFormName: initialisingFormName = f.Name
     gUiLoading = True: EnsureSession
     If f.Name = "frmLogin" Then
         f!txtPassword = Null
         If CurrentDb.Properties("SP2_Staging").Value And DCount("*", "m_app_user") = 0 Then
-            setupStep = 1: f!txtLoginId = "demoadmin": f!txtLoginId.Locked = True
-            f!lblMessage.Caption = "配布前初期設定：demoadmin のパスワードを入力してください（次に同じ値を再入力）。"
+            setupStep = 1: f!txtLoginId = "admin": f!txtLoginId.Locked = True
+            f!lblMessage.Caption = "配布前初期設定：admin のパスワードを入力してください（次に同じ値を再入力）。"
         Else
             setupStep = 0: f!txtLoginId.Locked = False
         End If
-        GoTo Done
+        initialized = True: GoTo Done
     End If
     Set result = UiAuthorize(f, IIf(f.Name = "frmCodeMaster", "ADMIN", "STAFF"))
     If result.Kind <> "OK" Then ShowResult f, result: GoTo Done
@@ -51,9 +56,27 @@ Public Sub UiLoad(ByVal f As Access.Form)
         SetRows f!cboCategory, rows: f!cboCategory = "DEPARTMENT": Set gCode = Nothing
         LoadCodeRows f: ClearCode f
     End Select
+    initialized = True
 Done:
-    gUiLoading = False: Exit Sub
+    initialisingFormName = priorInitialisingForm
+    gUiLoading = False
+    ' Initial loading uses logical busy protection without moving focus to a
+    ' footer on an as-yet unpainted form. Select the first field after setup.
+    If initialized Then
+        f.Repaint
+        Select Case f.Name
+        Case "frmLogin"
+            If setupStep > 0 Then f!txtPassword.SetFocus Else f!txtLoginId.SetFocus
+        Case "frmMenu": f!cmdEmployeeSearch.SetFocus
+        Case "frmEmployeeSearch": f!txtEmployeeNo.SetFocus
+        Case "frmEmployeeEditor"
+            If IsNull(gEditor.EmployeeId) Then f!txtEmployeeNo.SetFocus Else f!txtEmployeeName.SetFocus
+        Case "frmCodeMaster": f!cboCategory.SetFocus
+        End Select
+    End If
+    Exit Sub
 Failed:
+    initialisingFormName = priorInitialisingForm
     gUiLoading = False: Set result = MakeResult("ReadFailure", "MSG-040"): ShowResult f, result
 End Sub
 Public Sub UiTimer(ByVal f As Access.Form)
@@ -319,18 +342,18 @@ Private Sub ValidateLoginInput(ByVal f As Access.Form)
         If Not ((u >= 48 And u <= 57) Or (u >= 65 And u <= 90)) Then Reject "MSG-005", "ログインID"
     Next
     CheckText password, 128, True, "パスワード", False
-    If ScalarLength(password) < 12 Then Reject "MSG-005", "パスワード"
+    If ScalarLength(password) < MinimumPasswordScalars Then Reject "MSG-005", "パスワード"
 End Sub
 Private Sub SetupSubmit(ByVal f As Access.Form)
     Dim password As String, overlay As New clsUiBusyState, initialized As Boolean
     password = CStr(Nz(f!txtPassword, "")): CheckText password, 128, True, "パスワード", False
-    If ScalarLength(password) < 12 Then Reject "MSG-005", "パスワード"
+    If ScalarLength(password) < MinimumPasswordScalars Then Reject "MSG-005", "パスワード"
     If setupStep Mod 2 = 1 Then
         setupFirst = password: setupStep = setupStep + 1: f!lblMessage.Caption = "同じパスワードをもう一度入力してください。"
     Else
         If StrComp(setupFirst, password, vbBinaryCompare) <> 0 Then setupFirst = "": setupStep = setupStep - 1: Reject "MSG-005", "確認用パスワード"
         If setupStep = 2 Then
-            setupAdmin = password: setupStep = 3: f!txtLoginId = "demostaff": f!lblMessage.Caption = "demostaff のパスワードを入力してください。"
+            setupAdmin = password: setupStep = 3: f!txtLoginId = "staff": f!lblMessage.Caption = "staff のパスワードを入力してください。"
         Else
             setupStaff = password
             overlay.Acquire f: initialized = InitializeDemo(setupAdmin, setupStaff): overlay.Restore

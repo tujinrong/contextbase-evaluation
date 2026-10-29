@@ -6,7 +6,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 import build
 def main():
     p=argparse.ArgumentParser(); p.add_argument('--cycle',type=int,required=True,choices=(1,2,3)); args=p.parse_args()
-    source=build.ROOT/'.tmp/build/CareerManagement.accdb'
+    source=build.ROOT/'build/CareerManagement.accdb'
     owned=build.ROOT/'.tmp/tests'; owned.mkdir(parents=True,exist_ok=True)
     target=owned/'CareerManagement-test.accdb'; report=owned/'roundtrip.xlsx'
     if target.exists(): target.unlink()

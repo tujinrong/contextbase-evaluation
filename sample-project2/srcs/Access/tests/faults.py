@@ -12,7 +12,7 @@ Public TestReadFailure As Boolean
 Public Function RunFault(ByVal kind As String, ByVal password As String) As String
  Dim result As clsResult, e As clsEmployeeEdit, original As clsEmployeeEdit, after As clsEmployeeEdit
  Dim c As clsCareerDraft, id As Long, rs As DAO.Recordset, f As Access.Form, okay As Boolean
- Set result=Authenticate("demoadmin",password): If result.Kind<>"OK" Then RunFault="FAIL/login": Exit Function
+ Set result=Authenticate("admin",password): If result.Kind<>"OK" Then RunFault="FAIL/login": Exit Function
  id=DLookup("employee_id","m_employee","employee_no='000001'")
  If kind="read" Then
   PrepareUi "editor-edit": Set f=Forms("frmEmployeeEditor")
@@ -60,7 +60,7 @@ def main():
     folder=build.ROOT/'.tmp/faults'; folder.mkdir(parents=True,exist_ok=True); checks=[]
     secret=json.loads(build.win32crypt.CryptUnprotectData((build.ROOT/'.tmp/test-secrets.dpapi').read_bytes(),None,None,None,0)[1])[0]
     for kind in ('rollback','ack','read'):
-        path=folder/(kind+'.accdb'); shutil.copy2(build.ROOT/'.tmp/build/CareerManagement.accdb',path)
+        path=folder/(kind+'.accdb'); shutil.copy2(build.ROOT/'build/CareerManagement.accdb',path)
         app=None
         try:
             app=build.win32com.client.gencache.EnsureDispatch(build.win32com.client.DispatchEx('Access.Application')); app.OpenCurrentDatabase(str(path))
@@ -86,6 +86,6 @@ def main():
                 except Exception: pass
             app=None; build.release()
     secret=''
-    output={'artifactSha256':build.sha(build.ROOT/'.tmp/build/CareerManagement.accdb'),'checks':checks,'limitations':['logical API-boundary injection is not a power-loss/network-disconnection test'],'formalScore':None}
+    output={'artifactSha256':build.sha(build.ROOT/'build/CareerManagement.accdb'),'checks':checks,'limitations':['logical API-boundary injection is not a power-loss/network-disconnection test'],'formalScore':None}
     (build.ROOT/'build/test-results/faults.json').write_text(json.dumps(output,indent=2),encoding='utf-8'); print(json.dumps(output)); return int(any(x['status']!='PASS' for x in checks))
 if __name__=='__main__': sys.exit(main())

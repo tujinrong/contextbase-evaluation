@@ -8,7 +8,7 @@ for name,form in forms.FORMS.items():
     defects=[]
     for c in form['controls']:
         if c['kind'] not in (109,111,106): continue
-        x=c.get('label_x',max(450,c['x']-2250)); w=c.get('label_w',min(2100,c['x']-x-150)); rect=(x,c['y']+30,w,430)
+        x=c.get('label_x',max(450,c['x']-2250)); w=c.get('label_w',min(2100,c['x']-x-150)); rect=(x,c.get('label_y',c['y']+30),w,430)
         for other in form['controls']:
             if other['kind']==123 or c.get('page')!=other.get('page'): continue
             if intersects(rect,(other['x'],other['y'],other['w'],other['h'])): defects.append(c['name']+' label / '+other['name'])

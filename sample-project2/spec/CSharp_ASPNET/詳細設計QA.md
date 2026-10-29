@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-CSharp_ASPNET-DET-QA","version":"1.0","path":"sample-project2/spec/CSharp_ASPNET/詳細設計QA.md","sheets":[{"heading":"境界と継承","kind":"GRID","sheet":"01_境界と継承"},{"heading":"詳細設計の採用判断","kind":"LIST","sheet":"02_詳細採用判断","key":["QA-ID"]},{"heading":"残件と検証","kind":"LIST","sheet":"03_残件と検証","key":["QA-ID"]},{"heading":"既存版と後工程","kind":"GRID","sheet":"04_既存版と後工程"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-CSharp_ASPNET-DET-QA","version":"1.1","path":"sample-project2/spec/CSharp_ASPNET/詳細設計QA.md","sheets":[{"heading":"境界と継承","kind":"GRID","sheet":"01_境界と継承"},{"heading":"詳細設計の採用判断","kind":"LIST","sheet":"02_詳細採用判断","key":["QA-ID"]},{"heading":"残件と検証","kind":"LIST","sheet":"03_残件と検証","key":["QA-ID"]},{"heading":"既存版と後工程","kind":"GRID","sheet":"04_既存版と後工程"}]} -->
 # CSharp_ASPNET 詳細設計QA・採用判断
 
-版1.0／2026-10-28。stage=detail-design、generationMode=canonical-update。元[QA](QA.md)1.6、[プロジェクト情報](プロジェクト情報.md)1.6、[要件定義](要件定義書.md)1.0と既存基本設計を入力にする。新しい判断を利用者確定へ格上げせず、元文書を改訂しない。
+版1.1／2026-10-29。stage=detail-design、generationMode=canonical-update。元[QA](QA.md)1.6、[プロジェクト情報](プロジェクト情報.md)1.6、[要件定義](要件定義書.md)1.0と既存基本設計を入力にする。新しい判断を利用者確定へ格上げせず、元文書を改訂しない。
 
 ## 境界と継承
 
@@ -23,6 +23,7 @@
 | DQA-008 | 詳細設計採用 | 氏名/カナの検索キーは参照時に.NETでNFKC/空白除去/大小無視し、SQLで番号/部署/在籍を絞った全候補から最終一致201件目を判定。名前照合前TOP禁止 | F03、原論理テーブル共通制約、SQL-SEARCH | 原表記/メタ文字/検索失効/保存復帰を維持。実性能は未測定 |
 | DQA-009 | 詳細設計採用 | 画面状態を所有Session/Tab/Revisionで管理し、条件一字編集で旧結果/選択失効。親読込版と全LoadedCareerIdsをサーバーへ保存し、送信の保持/明示除去集合を照合。Unknown後CanSave=false | F03/F04/F06、元QA-022 | 状態の新DB列なし。直接要求/古い応答/不正集合の試験未実施 |
 | DQA-010 | 詳細設計採用 | 固定ReportSnapshotから生成、GDI GetTextExtentPoint32WとTextElementで長文分割、2シート全量読戻し。完成後再認可だけ行いResponse.HasStartedで開始前後を分け、既送信内容を撤回しない | F05、元QA-016/022 | GDI測定はExcel印刷保証ではない。実フォント/印刷/応答中断の実証が残る |
+| DQA-UI01 | 利用者確定 | 2026-10-29追加指示。Web標準HTML/CSS、14px以上、項目別基準寸法と狭幅折返し、確定条件を実装と検査へ追跡する共通適合検査 | F01～F06、[UI生成条件](規約/UI生成条件.md) | 最終publishの実ブラウザー測定と入力検査は今回のbuildで記録。Accessのクラシック外観をWebへ流用せず、未実施を過去PASSで補わない |
 
 ## 残件と検証
 

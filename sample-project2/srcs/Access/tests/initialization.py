@@ -15,7 +15,7 @@ def main():
     folder=build.ROOT/'.tmp/initialization'; folder.mkdir(parents=True,exist_ok=True); checks=[]
     passwords=json.loads(build.win32crypt.CryptUnprotectData((build.ROOT/'.tmp/test-secrets.dpapi').read_bytes(),None,None,None,0)[1])
     for staging in (False,True):
-        path=folder/('safe-staging.accdb' if staging else 'safe-distribution.accdb'); shutil.copy2(build.ROOT/'.tmp/build/CareerManagement.accdb',path)
+        path=folder/('safe-staging.accdb' if staging else 'safe-distribution.accdb'); shutil.copy2(build.ROOT/'build/CareerManagement.accdb',path)
         app=None; db=None
         try:
             app=build.win32com.client.gencache.EnsureDispatch(build.win32com.client.DispatchEx('Access.Application')); app.OpenCurrentDatabase(str(path))

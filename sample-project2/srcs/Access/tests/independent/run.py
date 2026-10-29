@@ -28,7 +28,7 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 def main():
-    source = ROOT / '.tmp/build/CareerManagement.accdb'
+    source = ROOT / 'build/CareerManagement.accdb'
     work = ROOT / '.tmp/independent-review'
     work.mkdir(parents=True, exist_ok=True)
     if work.resolve() != work.absolute():
