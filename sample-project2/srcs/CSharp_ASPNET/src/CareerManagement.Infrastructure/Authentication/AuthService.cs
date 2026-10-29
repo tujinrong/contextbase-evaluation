@@ -4,10 +4,11 @@ using CareerManagement.Infrastructure.Sql;
 using CareerManagement.Infrastructure.State;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 
 namespace CareerManagement.Infrastructure.Authentication;
 
-public sealed class AuthService(Database database,Repository repository,BusinessClock clock,SessionRegistry sessions)
+public sealed class AuthService(Database database,Repository repository,BusinessClock clock,SessionRegistry sessions,ILogger<AuthService>? logger=null)
 {
     public static PasswordHasher<AppUser> CreateHasher()=>new(Options.Create(new PasswordHasherOptions{CompatibilityMode=PasswordHasherCompatibilityMode.IdentityV3,IterationCount=100000}));
     private readonly PasswordHasher<AppUser> hasher=CreateHasher();
@@ -44,12 +45,18 @@ public sealed class AuthService(Database database,Repository repository,Business
             await unit.CommitAsync(ct);
             return verified?new(user.UserId,sessions.Create(user.UserId),user.DisplayName,user.Role):null;
         }
-        catch(BusinessException){return null;}
-        catch(System.Data.Common.DbException){return null;}
-        catch(FormatException){return null;}
-        catch(CryptographicException){return null;}
+        catch(BusinessException exception){logger?.LogWarning("Authentication operation rejected {MessageId}",exception.Outcome.MessageId);return null;}
+        catch(System.Data.Common.DbException exception)
+        {
+            // Log provider codes only. Keep credentials, SQL text and connection strings out of logs.
+            logger?.LogError("Authentication database failure. ProviderCode={ProviderCode} ErrorCode={ErrorCode}",
+                exception is Microsoft.Data.SqlClient.SqlException sql?sql.Number:0,exception.ErrorCode);
+            return null;
+        }
+        catch(FormatException){logger?.LogError("Authentication verifier format failure");return null;}
+        catch(CryptographicException){logger?.LogError("Authentication cryptographic operation failed");return null;}
         catch(OperationCanceledException){return null;}
-        catch(Exception ex)when(ex is not OutOfMemoryException){return null;}
+        catch(Exception ex)when(ex is not OutOfMemoryException){logger?.LogError("Authentication infrastructure failure {FailureType}",ex.GetType().FullName);return null;}
     }
 }
 public sealed class CurrentUserService(Database database,Repository repository,SessionRegistry sessions)

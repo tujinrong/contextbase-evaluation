@@ -1,4 +1,4 @@
-# build-agent 構造検査 20261029-sp2-demo-login
+# build-agent 構造検査 20261029-sp2-vs-debug
 
 対象：sample-project2 / CSharp_ASPNET。Agent版7.11。入力版・SHA-256はinputs.jsonを参照。
 

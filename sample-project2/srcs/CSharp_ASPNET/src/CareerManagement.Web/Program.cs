@@ -11,11 +11,14 @@ using Microsoft.AspNetCore.Http.Features;
 
 var builder=WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();builder.Logging.AddConsole();
+if(builder.Environment.IsDevelopment())builder.Logging.AddDebug();
 builder.Logging.AddFilter("Microsoft.AspNetCore",LogLevel.Warning);
 builder.WebHost.ConfigureKestrel(k=>k.Limits.MaxRequestBodySize=2*1024*1024);
-var database=Environment.GetEnvironmentVariable("SP2_DATABASE")??"SampleProject2_Career";
-var fixture=Environment.GetEnvironmentVariable("SP2_FIXTURE")=="true";
-var connection=Environment.GetEnvironmentVariable("SP2_CONNECTION_STRING")??"Server=.\\SQLEXPRESS;Database=SampleProject2_Career;Integrated Security=True;Encrypt=True;TrustServerCertificate=False";
+// The standard configuration pipeline loads project user-secrets only in Development.
+// Environment variables retain their normal higher priority over user-secrets.
+var database=builder.Configuration["SP2_DATABASE"]??"SampleProject2_Career";
+var fixture=builder.Configuration["SP2_FIXTURE"]=="true";
+var connection=builder.Configuration["SP2_CONNECTION_STRING"]??"Server=.\\SQLEXPRESS;Database=SampleProject2_Career;Integrated Security=True;Encrypt=True;TrustServerCertificate=False";
 var dbOptions=new DatabaseOptions{ConnectionString=connection,AllowedDatabase=database,Fixture=fixture};dbOptions.Validate();
 builder.Services.AddSingleton(dbOptions);builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 builder.Services.AddSingleton<BusinessClock>();builder.Services.AddSingleton<IDbFaults,NoDbFaults>();
@@ -24,7 +27,7 @@ builder.Services.AddSingleton<SessionRegistry>();builder.Services.AddSingleton<S
 builder.Services.AddSingleton<AuthService>();builder.Services.AddSingleton<CurrentUserService>();builder.Services.AddSingleton<EmployeeService>();builder.Services.AddSingleton<CodeService>();
 builder.Services.AddSingleton<ITextWidthMeasurer,GdiTextWidthMeasurer>();builder.Services.AddTransient<ReportService>();
 builder.Services.Configure<FormOptions>(o=>{o.ValueCountLimit=1024;o.ValueLengthLimit=16384;o.MultipartBodyLengthLimit=2*1024*1024;});
-var keys=Environment.GetEnvironmentVariable("SP2_DATA_KEYS")??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"CareerManagement","keys");
+var keys=builder.Configuration["SP2_DATA_KEYS"]??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"CareerManagement","keys");
 if(!OperatingSystem.IsWindows())throw new PlatformNotSupportedException("This profile requires Windows GDI and DPAPI.");
 builder.Services.AddDataProtection().SetApplicationName("SP2.CareerManagement").PersistKeysToFileSystem(new DirectoryInfo(keys)).ProtectKeysWithDpapi();
 builder.Services.AddAuthentication("SP2").AddCookie("SP2",o=>
@@ -37,6 +40,8 @@ builder.Services.AddAntiforgery(o=>{o.HeaderName="X-SP2-CSRF";o.FormFieldName="_
 builder.Services.AddControllersWithViews(o=>{o.Filters.Add<CurrentActorFilter>();o.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());})
     .AddJsonOptions(o=>HttpJson.Configure(o.JsonSerializerOptions));
 var app=builder.Build();
+app.Logger.LogInformation("Startup environment={Environment} database={Database} fixture={Fixture}",
+    app.Environment.EnvironmentName,database,fixture);
 app.Use(async(context,next)=>
 {
     context.Response.Headers.CacheControl="no-store";context.Response.Headers.Pragma="no-cache";

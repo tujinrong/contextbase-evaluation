@@ -4,6 +4,8 @@ sample-project2専用の .NET 10 MVC サンプルです。社員検索・社員�
 
 Windows 11、.NET SDK **10.0.401** / ASP.NET Core **10.0.12**、SQL Server 2022 Express、HTTPS、メイリオが必要です。今回の実DB検査ホストは SQL Server **2025** Express 17.0、互換レベル160です。SQL Server 2022の物理ホスト、正式受入、印刷品質をその検査結果で代替していません。
 
+VS2026では `CareerManagement.slnx` を開き、`CareerManagement.Web` をスタートアッププロジェクトにします。この作業環境の既存DEMOをF5で使う場合は、ソースルートで `./tools/Configure-DemoDebug.ps1` を一度実行してからデバッグを開始してください。明示した `.tmp/runtime/profile.json` のローカルfixture接続とキー保存先を、このWebプロジェクトのDevelopment用user-secretsへ保存します。さらに `Properties/launchSettings.json` の既存 `CareerManagement.Web` プロファイルに、両環境名のDevelopment指定、DB名・fixture指定・Windows統合接続の3設定、ログイン画面の起動先を同期します。これにより、起動済みVSから引き継いだ古い接続設定より明示したDEMO設定を優先します。launchSettingsの接続はSQLパスワードを含まないローカル専用値で、キー保存先はuser-secretsだけに保持します。他の起動プロファイルや設定値は維持します。DBの作成・投入・初期化は行わず、HTTPS証明書のパスワードやログイン情報もコピーしません。別の所有DEMO profileは `-ProfilePath` で明示し、検証だけなら `-ValidateOnly` を指定します。user-secretsはGit/配布物に含まれません。ソースだけを別環境へ配備する場合は、次の通常初期設定で専用DBを準備してください。通常環境のSQL証明書検証は維持します。
+
 `tools/Build.ps1` でlocked restore・Release build・固定 `build/publish` への配布を行います。中間出力は `.tmp/bin` / `.tmp/obj` です。`tools/Build.ps1 -RunTests -Cycle 3` は下記の専用DB試験も行うため、SQL Expressへの新規fixture作成権限を必要とします。
 
 通常の初期設定では、管理担当者が明示した **新規** `SampleProject2_Career` だけを作成します。既に存在する場合は停止し、初期化・再作成しません。接続は `SP2_CONNECTION_STRING` にWindows統合認証、`Encrypt=True;TrustServerCertificate=False`、明示DBを設定してください。サーバーや他DBを自動探索しません。
