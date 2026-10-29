@@ -1,6 +1,6 @@
 # build-agent 実行指示
 
-定義版7.8／2026-10-25。[契約](AGENT.md)と全体docsを読み、projectId・工程・方式・specRoot=project/spec/方式ID/・sourceRoot=project/srcs/方式ID/・許可範囲・入力版を固定する。原仕様は選択方式のspecRootだけとし、旧sourceRoot/specへfallbackしない。spec-eval・他方式の仕様／ソース・過去PASSは実装入力にしない。
+定義版7.9／2026-10-29。[契約](AGENT.md)と全体docsを読み、projectId・工程・方式・specRoot=project/spec/方式ID/・sourceRoot=project/srcs/方式ID/・許可範囲・入力版を固定する。原仕様は選択方式のspecRootだけとし、旧sourceRoot/specへfallbackしない。spec-eval・他方式の仕様／ソース・過去PASSは実装入力にしない。
 
 preflight.mjs --project <projectId> --profile <方式ID> --run-id <今回識別>を実行し、build/generation/inputs.json・structure.jsonで構造と入力hashを固定する。構造PASSとは別に意味整合を確認する。配置移動など検査だけの工程は`--inspect-only true`を付け、標準出力JSONを確認する。この場合は既存のbuild/記録・outputs.json・source.zipを書き換えず、生成工程の凍結入力記録としては使わない。構造問題は同固定先へ記録して中断し、未決の業務／DB共有契約を推測補完しない。
 
@@ -12,4 +12,6 @@ Accessは[Access生成チェック](docs/Access生成チェック.md)を読み�
 
 生成後は今回の入力版で利用可能な検査を実行し、実行コマンド・処理系・終了値・検査範囲・未実施を記録する。失敗・未検証を過去のPASSで補わない。原仕様を含まない逆生成入力はsourceRoot/build/source.zipへ更新する。逆生成の取得・独立検証ではproject/spec/全体とspec-evalを除外する。最後に同じproject/profile/run-idでmanifest.mjsを実行し、凍結入力と最終出力のhashを再照合してbuild/generation/outputs.jsonを更新する。
 
-全方式集約だけproject/build/、その中間物だけproject/.tmp/を使う。出力先の利用者指定は優先する。コード／仕様の横断共用は引き続き禁止。共有SQL Server、AccessのSQLフロントエンド化、IBM i接続などの未確定契約を配置修正だけで変更しない。生成・build・単体・結合・実機・正式受入・逆生成採点は別状態で報告する。
+全方式集約だけproject/build/、その中間物だけproject/.tmp/を使う。出力先の利用者指定は優先する。コード／仕様の横断共用は引き続き禁止。DB方式・共有の有無・成果物名は選択方式の採用プロファイルを優先し、別projectの共有SQL/Accessフロントエンド化等の指示を横展開しない。生成・build・単体・結合・実機・正式受入・逆生成採点は別状態で報告する。
+
+品質水準・改善回数を実行要求から固定し、品質「高」では正常・境界/複合/権限/競合/障害・独立テスト・利用可能な実UI・配布隔離の検査を行う。N回の検査→修正→回帰確認は固定build/test-results/quality-cycles.jsonへまとめ、実装/自己検証/独立テスト/製品受入を分ける。Agent不備の修正が許可されている場合は処理不備を回帰検査付きで修正する。別工程問題の報告先が明示されていればそのファイルへ根拠/影響/対応/残件を記録する。

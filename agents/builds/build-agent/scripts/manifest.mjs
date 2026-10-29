@@ -6,8 +6,8 @@ import {fileURLToPath} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {layout, writeJson} from './output-layout.mjs';
 import {assertRegular, collectInputFiles} from './input-scope.mjs';
+import {selectedProfiles, validProfile} from './project-scope.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../../..');
-const profiles=['VB.NET_WinForms','CSharp_WPF','CSharp_ASPNET','Vue_CSharpAPI','COBOL','AS400_RPG','Access'];
 const args=process.argv.slice(2);let project,runId,profile;
 if(args.length%2)throw new Error('Every option requires a value.');
 for(let i=0;i<args.length;i+=2) {
@@ -16,7 +16,8 @@ for(let i=0;i<args.length;i+=2) {
   else if(args[i]==='--profile'&&!profile) profile=args[i+1];
   else throw new Error('Usage: manifest.mjs --project sample-projectN --run-id <preflight-id> [--profile <profile-id>]');
 }
-if(!/^(?:sample|test)-project[1-9]\d*$/.test(project??'')||!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId??'')||(profile!==undefined&&!profiles.includes(profile))) throw new Error('Explicit safe project/run-id and supported profile required.');
+if(!/^(?:sample|test)-project[1-9]\d*$/.test(project??'')||!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId??'')||(profile!==undefined&&!validProfile(profile))) throw new Error('Explicit safe project/run-id and supported profile required.');
+const methods=selectedProfiles(root,project,profile);
 const outputLayout=layout(root,project,profile);
 const report=outputLayout.generation;
 const output=path.join(report,'outputs.json');
@@ -48,7 +49,7 @@ function walk(directory) {
     const data=fs.readFileSync(target);files.push({file:path.relative(root,target).split(path.sep).join('/'),bytes:data.length,sha256:hash(data)});
   }
 }
-const outputRoots=profile?['agents/builds/build-agent/scripts',`${project}/srcs/${profile}`]:['agents/builds/build-agent',`${project}/srcs`];
+const outputRoots=['agents/builds/build-agent/scripts',...methods.map(method=>`${project}/srcs/${method}`)];
 for(const directory of outputRoots)walk(path.join(root,directory));
 const changed=execFileSync('git',['diff','--name-only','-z','--',...(profile?outputRoots:['agents/builds/build-agent',project])],{cwd:root}).toString('utf8').split('\0').filter(Boolean);
 const documentChanges=[];
@@ -62,19 +63,25 @@ for(const file of [...documents].sort()) {
   documentChanges.push({file,status:!before?'created':!after?'archived-or-removed':'modified',beforeVersion:version(before),afterVersion:version(after),beforeSha256:before?hash(before):null,afterSha256:after?hash(after):null});
 }
 const artifacts=[];
-if(!profile||profile==='Access'){
- const access=path.join(root,project,'srcs/Access/build/StudentManagement.accdb');if(fs.existsSync(access)){const data=fs.readFileSync(access);artifacts.push({file:relativeArtifact(access),bytes:data.length,sha256:hash(data),kind:'standalone-access-database'});}
+if(methods.includes('Access')){
+ const accessBuild=path.join(root,project,'srcs/Access/build');
+ const accessFiles=fs.existsSync(accessBuild)?fs.readdirSync(accessBuild).filter(name=>/\.accdb$/i.test(name)):[];
+ if(accessFiles.length>1)throw new Error('Access delivery requires exactly one final ACCDB, without assuming its product name.');
+ for(const name of accessFiles){const access=path.join(accessBuild,name);assertRegular(access);const data=fs.readFileSync(access);artifacts.push({file:relativeArtifact(access),bytes:data.length,sha256:hash(data),kind:'standalone-access-database'});}
 }
 function relativeArtifact(target){return path.relative(root,target).split(path.sep).join('/');}
 const packagesPath=path.join(report,'source-packages.json');
 if(fs.existsSync(packagesPath)){
  const packages=JSON.parse(fs.readFileSync(packagesPath,'utf8'));
- if(packages.runId!==runId||!packages.sourceOnly||!Array.isArray(packages.packages)||(!profile&&packages.packages.length!==7))throw new Error('Matching source-only packages required.');
+ if(packages.projectId!==project||packages.runId!==runId||!packages.sourceOnly||!Array.isArray(packages.packages))throw new Error('Matching project/source-only packages required.');
+ const packageMethods=packages.packages.map(pack=>pack.profile);
+ if(packageMethods.length!==methods.length||new Set(packageMethods).size!==methods.length||methods.some(method=>!packageMethods.includes(method)))throw new Error('Exactly the registered selected source-only package set required.');
  const selectedPackages=profile?packages.packages.filter(pack=>pack.profile===profile):packages.packages;
  if(profile&&selectedPackages.length!==1)throw new Error('Exactly one source-only package for the selected profile required.');
  for(const pack of selectedPackages){
-  for(const entry of pack.entries){const original=path.join(root,project,'srcs',pack.profile,entry.file);if(hash(fs.readFileSync(original))!==entry.sourceSha256)throw new Error(`Source changed after packaging: ${pack.profile}/${entry.file}`);}
-  const data=fs.readFileSync(path.join(root,pack.file));if(hash(data)!==pack.sha256)throw new Error(`Package hash changed: ${pack.file}`);
+  if(pack.file!==`${project}/srcs/${pack.profile}/build/source.zip`||!Array.isArray(pack.entries)||!pack.entries.length)throw new Error('Package outside current selected delivery path.');
+  for(const entry of pack.entries){if(typeof entry.file!=='string'||entry.file.includes('\\')||entry.file.includes(':')||entry.file.startsWith('/')||entry.file.split('/').some(part=>!part||part==='.'||part==='..'))throw new Error('Unsafe source package entry.');const original=path.join(root,project,'srcs',pack.profile,entry.file);assertRegular(original);if(hash(fs.readFileSync(original))!==entry.sourceSha256)throw new Error(`Source changed after packaging: ${pack.profile}/${entry.file}`);}
+  assertRegular(path.join(root,pack.file));const data=fs.readFileSync(path.join(root,pack.file));if(hash(data)!==pack.sha256)throw new Error(`Package hash changed: ${pack.file}`);
   artifacts.push({file:pack.file,bytes:data.length,sha256:hash(data),kind:'independent-source-only-archive',profile:pack.profile});
  }
 }
@@ -103,7 +110,7 @@ function finalFiles(directory) {
   const data=fs.readFileSync(target);artifacts.push({file,bytes:data.length,sha256:hash(data),kind:'current-build-result'});
  }
 }
-for(const method of profile?[profile]:profiles)finalFiles(path.join(root,project,'srcs',method,'build'));
+for(const method of methods)finalFiles(path.join(root,project,'srcs',method,'build'));
 const result={projectId:project,...(profile?{profileId:profile}:{}),runId,inputCommit:input.inputCommit,recordedAt:new Date().toISOString(),outputVersion:runId,inputManifest:'inputs.json',structureReport:'structure.json',generationStatus:generationState?.status??'NOT_RECORDED',sourceOnly:true,historyPolicy:'git-only; fixed latest build paths',excluded:['.tmp/bin/obj/node_modules/dist/build/__pycache__/.vs in source inventory','spec-eval','local secrets/configuration',...(profile?['other profiles','build-agent files outside scripts']:[])],artifacts,delivery,documentChanges,files};
 writeJson(output,result,outputLayout.scratch);
 console.log(JSON.stringify({projectId:project,...(profile?{profileId:profile}:{}),runId,files:files.length,documentChanges:documentChanges.length,inputHashesVerified:true,output:path.relative(root,output).split(path.sep).join('/')}));

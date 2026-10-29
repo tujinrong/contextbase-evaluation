@@ -1,4 +1,4 @@
-"""Check the current seven build deliveries; never inspect evaluation inputs."""
+"""Check the selected project's current deliveries; never inspect evaluation inputs."""
 from pathlib import Path
 import argparse
 import datetime
@@ -10,16 +10,17 @@ import subprocess
 import sys
 sys.dont_write_bytecode=True
 from output_layout import write_json_latest
+from project_scope import selected_profiles
 
 ROOT=Path(__file__).resolve().parents[4]
-PROFILES=['VB.NET_WinForms','CSharp_WPF','CSharp_ASPNET','Vue_CSharpAPI','COBOL','AS400_RPG','Access']
-parser=argparse.ArgumentParser();parser.add_argument('--project',default='sample-project1')
+parser=argparse.ArgumentParser();parser.add_argument('--project',required=True);parser.add_argument('--profile')
 parser.add_argument('--allow-spec-repair',action='append',default=[],help='Exact specification file with a current local-spec-fix.json and matching before/after hashes')
 parser.add_argument('--allow-spec-update',action='append',default=[],help='Exact specification file with a user-requested spec-update.json and matching before/after/frozen hashes')
 args=parser.parse_args()
 if not re.fullmatch(r'(?:sample|test)-project[1-9]\d*',args.project):raise SystemExit('Explicit existing project required')
 project=ROOT/args.project
 if not project.is_dir():raise SystemExit('Project does not exist')
+PROFILES=selected_profiles(ROOT,args.project,args.profile)
 findings=[];methods=[];final_files=[]
 
 def redirected(target):
@@ -31,6 +32,8 @@ def redirected(target):
 
 def check_entries(entries):
     for entry in entries:
+        if not isinstance(entry,dict) or not isinstance(entry.get('file'),str) or not re.fullmatch(r'[0-9a-f]{64}',str(entry.get('sha256',''))):
+            findings.append({'code':'INVALID_MANIFEST_ENTRY'});continue
         file=entry['file'];target=ROOT/file
         if '.tmp' in Path(file).parts or 'spec-eval' in Path(file).parts or not target.resolve().is_relative_to(ROOT) or redirected(target):
             findings.append({'file':file,'code':'EXCLUDED_MANIFEST_ENTRY'});continue
@@ -40,14 +43,26 @@ def check_entries(entries):
 for profile in PROFILES:
     base=project/'srcs'/profile;build=base/'build';generation=build/'generation'
     before=len(findings)
-    inputs=json.loads((generation/'inputs.json').read_text('utf-8'))
-    output=json.loads((generation/'outputs.json').read_text('utf-8'))
-    structure=json.loads((generation/'structure.json').read_text('utf-8'))
-    if output['runId']!=inputs['runId'] or structure['runId']!=inputs['runId'] or structure['status']!='structure-check-passed':
+    try:
+        inputs=json.loads((generation/'inputs.json').read_text('utf-8'))
+        output=json.loads((generation/'outputs.json').read_text('utf-8'))
+        structure=json.loads((generation/'structure.json').read_text('utf-8'))
+        if not all(isinstance(record,dict) for record in [inputs,output,structure]) or not isinstance(inputs.get('files'),list) or not all(isinstance(output.get(section),list) for section in ['files','artifacts','delivery']):raise ValueError('Malformed current manifest')
+    except (OSError,ValueError) as error:
+        findings.append({'profile':profile,'code':'MISSING_OR_INVALID_CURRENT_RECORD','detail':str(error)})
+        methods.append({'profileId':profile,'status':'FAIL'});continue
+    if any(record.get('projectId')!=args.project or record.get('profileId')!=profile for record in [inputs,output,structure]) or not inputs.get('runId') or output.get('runId')!=inputs.get('runId') or structure.get('runId')!=inputs.get('runId') or structure.get('status')!='structure-check-passed' or inputs.get('inspectionOnly') is not False:
         findings.append({'profile':profile,'code':'NONCURRENT_CONTEXT'})
     for entries in [inputs['files'],output['files'],output['artifacts'],output['delivery']]:check_entries(entries)
     permitted={'app','publish','database','test-results','generation','spec-generation','source.zip','input-manifest.json'}
-    if profile=='Access':permitted.add('StudentManagement.accdb')
+    if profile=='Access':
+        permitted.add('seed-manifest.json')
+        databases=[entry for entry in output['artifacts'] if isinstance(entry,dict) and isinstance(entry.get('file'),str) and entry.get('kind')=='standalone-access-database']
+        if len(databases)!=1:findings.append({'profile':profile,'code':'EXACTLY_ONE_ACCESS_DELIVERY_REQUIRED'})
+        for entry in databases:
+            artifact=ROOT/entry['file']
+            if artifact.parent==build and artifact.suffix.lower()=='.accdb':permitted.add(artifact.name)
+            else:findings.append({'file':entry['file'],'code':'ACCESS_DELIVERY_OUTSIDE_FIXED_BUILD'})
     for child in build.iterdir():
         if child.name not in permitted:findings.append({'file':child.relative_to(ROOT).as_posix(),'code':'UNEXPECTED_BUILD_HISTORY_OR_WORK'})
     for directory,names,files in os.walk(base,topdown=True,followlinks=False):
@@ -63,7 +78,7 @@ for profile in PROFILES:
             if redirected(child):findings.append({'file':child.relative_to(ROOT).as_posix(),'code':'LINKED_SOURCE_DIRECTORY'});continue
             retained.append(name)
         names[:]=retained
-    coverage={entry['file'] for section in ['artifacts','delivery'] for entry in output[section]}
+    coverage={entry['file'] for section in ['artifacts','delivery'] for entry in output[section] if isinstance(entry,dict) and isinstance(entry.get('file'),str)}
     coverage.add((generation/'outputs.json').relative_to(ROOT).as_posix())
     for directory,names,files in os.walk(build,followlinks=False):
         safe=[]
@@ -81,18 +96,18 @@ for profile in PROFILES:
     probe=f'{args.project}/srcs/{profile}/.tmp/generated-probe.json'
     ignored=subprocess.run(['git','check-ignore','-q','--no-index',probe],cwd=ROOT).returncode==0
     if not ignored:findings.append({'profile':profile,'code':'TMP_NOT_IGNORED'})
-    methods.append({'profileId':profile,'runId':inputs['runId'],'inputFiles':len(inputs['files']),'sourceFiles':len(output['files']),'artifactFiles':len(output['artifacts']),'status':'PASS' if len(findings)==before else 'FAIL'})
+    methods.append({'profileId':profile,'runId':inputs.get('runId'),'inputFiles':len(inputs['files']),'sourceFiles':len(output['files']),'artifactFiles':len(output['artifacts']),'status':'PASS' if len(findings)==before else 'FAIL'})
 
 ignored=subprocess.run(['git','-c','core.quotePath=false','check-ignore','--stdin','--no-index'],cwd=ROOT,input='\n'.join(final_files)+'\n',capture_output=True,text=True,encoding='utf-8')
 for file in ignored.stdout.splitlines():findings.append({'file':file,'code':'FINAL_RESULT_GIT_IGNORED'})
-tracked=subprocess.run(['git','ls-files','-z'],cwd=ROOT,capture_output=True,check=True).stdout.decode('utf-8').split('\0')
+tracked=subprocess.run(['git','ls-files','-z','--',args.project,'agents/builds/build-agent'],cwd=ROOT,capture_output=True,check=True).stdout.decode('utf-8').split('\0')
 for file in tracked:
     if '.tmp' in Path(file).parts:findings.append({'file':file,'code':'TMP_TRACKED'})
 protected_paths=[f'{args.project}/spec',f'{args.project}/spec-eval',f'{args.project}/QA',f'{args.project}/qa',*[f':(glob){args.project}/srcs/*/{name}/**' for name in ['spec','spec-eval','QA','qa','fixtures']]]
 protected_paths.extend(f':(glob){args.project}/srcs/*/**/{pattern}' for pattern in ['*fixture*.json','*Fixture*.json'])
 protected_paths.append(f':(glob){args.project}/srcs/Access/tests/**/*.json')
 business=subprocess.run(['git','diff','--name-only','-z','HEAD','--',*protected_paths],cwd=ROOT,capture_output=True,text=True,encoding='utf-8',check=True)
-untracked=subprocess.run(['git','ls-files','-z','--others','--exclude-standard','--',*protected_paths],cwd=ROOT,capture_output=True,text=True,encoding='utf-8',check=True)
+untracked=subprocess.run(['git','ls-files','-z','--others','--exclude-standard','--',f'{args.project}/spec',f'{args.project}/spec-eval',f'{args.project}/QA',f'{args.project}/qa'],cwd=ROOT,capture_output=True,text=True,encoding='utf-8',check=True)
 protected_changes=sorted(set(file for file in (business.stdout+untracked.stdout).split('\0') if file))
 authorized_repairs=[];authorized_updates=[]
 for file in protected_changes:
@@ -127,7 +142,7 @@ for file in protected_changes:
         findings.append({'file':file,'code':'UNVERIFIED_SPEC_REPAIR','detail':str(error)})
 for file in set(args.allow_spec_repair)-set(protected_changes):findings.append({'file':file,'code':'UNUSED_SPEC_REPAIR_EXCEPTION'})
 for file in set(args.allow_spec_update)-set(protected_changes):findings.append({'file':file,'code':'UNUSED_SPEC_UPDATE_EXCEPTION'})
-whitespace=subprocess.run(['git','-c','core.safecrlf=false','diff','--check'],cwd=ROOT,capture_output=True,text=True,encoding='utf-8')
+whitespace=subprocess.run(['git','-c','core.safecrlf=false','diff','--check','--',args.project,'agents/builds/build-agent',f'{args.project}-build-report.md'],cwd=ROOT,capture_output=True,text=True,encoding='utf-8')
 if whitespace.returncode:findings.append({'code':'DIFF_CHECK','detail':whitespace.stdout})
 result={'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'projectId':args.project,'status':'PASS' if not findings else 'FAIL','methods':methods,'finalFiles':len(final_files),'tmpIgnoredAndUntracked':not any(x['code'] in {'TMP_TRACKED','TMP_NOT_IGNORED'} for x in findings),'protectedInputDiff':protected_changes,'authorizedLocalSpecRepairs':authorized_repairs,'authorizedUserSpecUpdates':authorized_updates,'diffCheck':whitespace.returncode,'findings':findings,'scope':'current frozen input/output/artifact/delivery hashes, complete final coverage, fixed layout, Git inclusion/exclusion, HEAD and untracked protected-input diff with explicit hash-verified local repairs and user-requested platform changes','notChecked':['runtime acceptance','SQL Server integration','IBM i native','formal scoring'],'formalScore':None}
 write_json_latest(project/'build/test-results/final-integrity.json',result,project/'.tmp/output-layout')

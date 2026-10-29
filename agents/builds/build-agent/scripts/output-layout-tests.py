@@ -13,7 +13,7 @@ class LayoutTests(unittest.TestCase):
  def setUp(self):
   self.temp=tempfile.TemporaryDirectory(prefix='work-',dir=WORK);self.root=Path(self.temp.name)/'repo'
   tools=self.root/'agents/builds/build-agent/scripts';tools.mkdir(parents=True)
-  for name in ['package-source.py','verify-packages.py','output_layout.py']:
+  for name in ['package-source.py','verify-packages.py','output_layout.py','project_scope.py']:
    shutil.copyfile(HERE/name,tools/name)
   for profile in PROFILES:
    base=self.root/'sample-project1/srcs'/profile;base.mkdir(parents=True)
@@ -22,14 +22,26 @@ class LayoutTests(unittest.TestCase):
    (base/'README.md').write_text('source fixture','utf-8');(base/'app.cs').write_text('// version one','utf-8')
    for excluded in ['.tmp','spec','spec-eval','spec-analysis','tests']:
     (base/excluded).mkdir();(base/excluded/'poison.txt').write_text('not an archive input','utf-8')
+  (self.root/'sample-project1/spec/README.md').write_text(self.routing('sample-project1',PROFILES),'utf-8')
   self.base=self.root/'sample-project1/srcs/Access'
-  (self.base/'profile.json').write_text(json.dumps({'name':'Access','specRoot':'../../spec/Access','inputRoot':'../../spec/Access'}),'utf-8')
+  (self.base/'profile.json').write_text(json.dumps({'name':'Access','specRoot':'../../spec/Access','inputRoot':'../../spec/Access','productionHelpers':['tools/GeneratedPaths.ps1']}),'utf-8')
   (self.base/'tools').mkdir();(self.base/'tools/GeneratedPaths.ps1').write_text('# required production helper','utf-8');(self.base/'tools/test-oracle.py').write_text('# excluded','utf-8')
-  # Use the real builder as fixture input, but never execute Access/VBA/DB or its build pipeline.
-  shutil.copyfile(ROOT/'sample-project1/srcs/Access/Build-Access.ps1',self.base/'Build-Access.ps1')
+  # A self-contained legacy evidence fixture; no application source is read.
+  (self.base/'Build-Access.ps1').write_text("""# Production builder fixture before input evidence
+function Invoke-FixtureBuild {
+        @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../../spec/Access') -Filter '*.md' -Recurse | ForEach-Object {
+            [ordered]@{file=$_.FullName;sha256='fixture-only'}
+        }) | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $taskReport 'inputs.json') -Encoding UTF8
+        [ordered]@{status='Generated';formalScore=$null} | ConvertTo-Json
+}
+# Production publication fixture remains unchanged
+""",'utf-8')
  def tearDown(self):self.temp.cleanup()
- def run_tool(self,name,*args,expected=0):
-  result=subprocess.run([sys.executable,'-X','utf8',str(self.root/'agents/builds/build-agent/scripts'/name),*args],capture_output=True,text=True,encoding='utf-8')
+ @staticmethod
+ def routing(project,profiles):
+  return '| 方式ID | specRoot | sourceRoot |\n| --- | --- | --- |\n'+''.join(f'| {p} | {project}/spec/{p}/ | {project}/srcs/{p}/ |\n' for p in profiles)
+ def run_tool(self,name,*args,expected=0,project='sample-project1'):
+  result=subprocess.run([sys.executable,'-X','utf8',str(self.root/'agents/builds/build-agent/scripts'/name),*args,'--project',project],capture_output=True,text=True,encoding='utf-8')
   self.assertEqual(result.returncode,expected,result.stdout+result.stderr);return result
  def package(self):self.run_tool('package-source.py','current','--profile','Access')
  def manifest(self):return self.base/'build/generation/source-packages.json'
@@ -81,6 +93,91 @@ class LayoutTests(unittest.TestCase):
   builder=self.base/'Build-Access.ps1';builder.write_text(builder.read_text('utf-8').replace("'../../spec/Access'","'unexpected-spec-root'"),'utf-8')
   self.run_tool('package-source.py','current','--profile','Access',expected=1)
   self.assertFalse((self.base/'build/source.zip').exists(),'An unreviewed builder was published')
+ def test_two_method_project_and_topic_independent_build_entry(self):
+  project='sample-project2';spec=self.root/project/'spec';spec.mkdir(parents=True)
+  (spec/'README.md').write_text(self.routing(project,['Access','CSharp_ASPNET']),'utf-8')
+  for profile in ['Access','CSharp_ASPNET']:
+   folder=self.root/project/'srcs'/profile;folder.mkdir(parents=True)
+   (folder/'README.md').write_text('Current project source instructions','utf-8')
+   (folder/'application.txt').write_text('production fixture','utf-8')
+  access=self.root/project/'srcs/Access';(access/'Build-Access.ps1').write_text('# Standalone builder; no original specification dependency','utf-8')
+  web=self.root/project/'srcs/CSharp_ASPNET';code=web/'src/EmployeePortal';code.mkdir(parents=True)
+  (web/'CareerPortal.slnx').write_text('<Solution><Project Path="src/EmployeePortal/Portal.csproj" /><Project Path="tools/SeedPortal/SeedPortal.csproj" /></Solution>','utf-8')
+  (web/'NuGet.Config').write_text('<configuration><packageSources><clear /></packageSources></configuration>','utf-8')
+  (code/'Portal.csproj').write_text('<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework></PropertyGroup></Project>','utf-8')
+  (code/'Program.cs').write_text('System.Console.WriteLine(StateStore.Value + Stateful.Value + Latest.Value);','utf-8')
+  for name in ('StateStore','Stateful','Latest'):
+   (code/(name+'.cs')).write_text('public static class '+name+' { public const int Value = 14; }','utf-8')
+  for name in ('TestSuite.cs','Test-Oracle.cs','PortalTests.cs'):
+   (code/name).write_text('invalid C# test oracle; must never enter production source ZIP','utf-8')
+  setup=web/'tools/SeedPortal';setup.mkdir(parents=True)
+  (setup/'SeedPortal.csproj').write_text('<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><ProjectReference Include="../../src/EmployeePortal/Portal.csproj" /></ItemGroup></Project>','utf-8')
+  (setup/'Program.cs').write_text('System.Console.WriteLine(SetupStateStore.Value + SetupLatest.Value);','utf-8')
+  (setup/'StateStore.cs').write_text('public static class SetupStateStore { public const int Value = 20; }','utf-8')
+  (setup/'Latest.cs').write_text('public static class SetupLatest { public const int Value = 22; }','utf-8')
+  (web/'profile.json').write_text(json.dumps({'productionHelpers':['tools/SeedPortal/SeedPortal.csproj','tools/SeedPortal/Program.cs','tools/SeedPortal/StateStore.cs','tools/SeedPortal/Latest.cs']}),'utf-8')
+  self.run_tool('package-source.py','current',project=project)
+  metadata=json.loads((self.root/project/'build/generation/source-packages.json').read_text('utf-8'))
+  self.assertEqual(metadata['projectId'],project);self.assertEqual({p['profile'] for p in metadata['packages']},{'Access','CSharp_ASPNET'})
+  with zipfile.ZipFile(web/'build/source.zip') as archive:
+   text=archive.read('README.md').decode();self.assertIn('CareerPortal.slnx',text);self.assertNotIn('StudentManagement',text);self.assertNotIn('authentication disabled',text)
+   self.assertIn('tools/SeedPortal/Program.cs',archive.namelist())
+   for name in ('StateStore.cs','Stateful.cs','Latest.cs'):
+    self.assertIn('src/EmployeePortal/'+name,archive.namelist())
+   for name in ('TestSuite.cs','Test-Oracle.cs','PortalTests.cs'):
+    self.assertNotIn('src/EmployeePortal/'+name,archive.namelist())
+   self.assertIn('tools/SeedPortal/StateStore.cs',archive.namelist());self.assertIn('tools/SeedPortal/Latest.cs',archive.namelist())
+  self.run_tool('verify-packages.py','current','--hashes-only',project=project)
+  self.run_tool('package-source.py','current','--profile','COBOL',project=project,expected=1)
+  if shutil.which('dotnet'):
+   self.run_tool('verify-packages.py','current',project=project)
+   result=json.loads((self.root/project/'build/test-results/source-package-validation.json').read_text('utf-8'))
+   self.assertEqual(len(result['runs']),1);self.assertIn('CareerPortal.slnx',result['runs'][0]['command']);self.assertEqual(result['runs'][0]['exitCode'],0)
+   self.assertTrue((web/'.tmp/source-isolation/tools/SeedPortal/bin/Release/net10.0/SeedPortal.dll').is_file(),'Packaged production setup did not compile standalone')
+ def test_exact_helper_allowlist_rebuild_and_license_resources(self):
+  (self.base/'Build-Access.ps1').unlink()
+  nested=self.base/'tools/native';nested.mkdir()
+  (nested/'producer.py').write_text("from pathlib import Path\ndef rebuild(root):\n output=root/'.tmp/compiled.txt';output.parent.mkdir(exist_ok=True);output.write_text((root/'app.cs').read_text(),encoding='utf-8')\n",'utf-8')
+  (self.base/'tools/build.py').write_text("from pathlib import Path\nfrom native.producer import rebuild\nrebuild(Path(__file__).resolve().parents[1])\n",'utf-8')
+  helpers=['tools/build.py','tools/native/producer.py']
+  (self.base/'profile.json').write_text(json.dumps({'productionHelpers':helpers}),'utf-8')
+  license_dir=self.base/'third-party/licenses/example';license_dir.mkdir(parents=True)
+  (license_dir/'Example.nuspec').write_text('<package><metadata><license type="expression">MIT</license></metadata></package>','utf-8')
+  (license_dir/'LICENSE.txt').write_text('fixture copyright and license','utf-8')
+  self.package();self.verify()
+  isolated=self.base/'.tmp/source-isolation'
+  result=subprocess.run([sys.executable,'-B','-X','utf8','tools/build.py'],cwd=isolated,capture_output=True,text=True)
+  self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+  self.assertEqual((isolated/'.tmp/compiled.txt').read_text('utf-8'),'// version one')
+  with zipfile.ZipFile(self.base/'build/source.zip') as archive:
+   names=archive.namelist();self.assertTrue(set(helpers).issubset(names));self.assertNotIn('tools/test-oracle.py',names);self.assertNotIn('tools/GeneratedPaths.ps1',names)
+   self.assertIn('third-party/licenses/example/Example.nuspec',names);self.assertIn('third-party/licenses/example/LICENSE.txt',names)
+   self.assertIn('tools/build.py',archive.read('README.md').decode())
+ def test_production_helpers_reject_scope_escape_and_nonfiles(self):
+  self.package();archive=self.base/'build/source.zip';before=hashlib.sha256(archive.read_bytes()).hexdigest()
+  (self.base/'tools/TestSuite.bas').write_text('test-only fixture','utf-8')
+  for helpers in [['../outside.py'],['tests/poison.txt'],['.tmp/poison.txt'],['spec/poison.txt'],['spec-eval/poison.txt'],['tools/*.py'],['tools\\GeneratedPaths.ps1'],['tools'],['tools/missing.py'],['tools/test-oracle.py'],['tools/TestSuite.bas'],['tools/GeneratedPaths.ps1','tools/generatedpaths.ps1']]:
+   with self.subTest(helpers=helpers):
+    (self.base/'profile.json').write_text(json.dumps({'productionHelpers':helpers}),'utf-8');self.run_tool('package-source.py','current','--profile','Access',expected=1)
+    self.assertEqual(hashlib.sha256(archive.read_bytes()).hexdigest(),before,'Unsafe declaration replaced a prior artifact')
+  external=self.root/'external';external.mkdir();(external/'builder.py').write_text('# must not be read','utf-8')
+  self.junction(external,self.base/'tools/redirected')
+  (self.base/'profile.json').write_text(json.dumps({'productionHelpers':['tools/redirected/builder.py']}),'utf-8')
+  self.run_tool('package-source.py','current','--profile','Access',expected=1)
+ def test_test_name_boundaries_preserve_production_words(self):
+  from project_scope import is_test_artifact
+  for name in ('StateStore.cs','Latest.cs','Contest.cs','Attestation.cs','tools/StateStore.cs','tools/Latest.ps1','latest:build'):
+   with self.subTest(name=name):self.assertFalse(is_test_artifact(name))
+  for name in ('TestSuite.bas','Test-Oracle.py','test_oracle.py','PortalTests.cs','Portal.Test.cs','Portal.TestSuite.cs','portal.test','module.test.json','preflight-tests.mjs','test:unit','tests/StateStore.cs'):
+   with self.subTest(name=name):self.assertTrue(is_test_artifact(name))
+ def test_undeclared_helper_in_archive_is_rejected(self):
+  self.package();metadata=json.loads(self.manifest().read_text('utf-8'));pack=metadata['packages'][0];archive=self.base/'build/source.zip';payload=(self.base/'tools/test-oracle.py').read_bytes()
+  with zipfile.ZipFile(archive,'a') as target:target.writestr('tools/test-oracle.py',payload)
+  pack['entries'].append({'file':'tools/test-oracle.py','sha256':hashlib.sha256(payload).hexdigest(),'sourceSha256':hashlib.sha256(payload).hexdigest()});pack['sha256']=hashlib.sha256(archive.read_bytes()).hexdigest()
+  self.manifest().write_text(json.dumps(metadata),'utf-8');self.verify(expected=1);self.assertIn('Undeclared production helper',self.result()['error'])
+ def test_source_changed_after_packaging_is_rejected(self):
+  self.package();(self.base/'app.cs').write_text('// changed after package','utf-8');self.verify(expected=1)
+  self.assertIn('Source changed after packaging',self.result()['error'])
  def test_unsafe_archive_member_rejected(self):
   self.package();metadata=json.loads(self.manifest().read_text('utf-8'));source=self.base/'build/source.zip';payload=b'no write outside scratch'
   with zipfile.ZipFile(source,'w') as archive:archive.writestr('../escape.txt',payload)
@@ -112,7 +209,7 @@ const redirected=path.join(base,'redirected');fs.symlinkSync(path.join(base,'spe
 
 if __name__=='__main__':
  stream=io.StringIO();result=unittest.TextTestRunner(stream=stream,verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(LayoutTests));text=stream.getvalue();print(text,end='')
- final=ROOT/'sample-project1/build/test-results';scratch=ROOT/'sample-project1/.tmp/layout-tests'
+ final=HERE.parent/'build/tool-tests';scratch=WORK/'result'
  write_json_latest(final/'output-layout-tests.json',{'status':'PASSED' if result.wasSuccessful() else 'FAILED','tests':result.testsRun,'failures':len(result.failures),'errors':len(result.errors),'scope':'fixed path/package/exclusion/filesystem contracts in disposable fixtures; no business/DB/native acceptance','formalScore':None},scratch)
  from output_layout import write_latest
  write_latest(final/'output-layout-tests.log',text,scratch)

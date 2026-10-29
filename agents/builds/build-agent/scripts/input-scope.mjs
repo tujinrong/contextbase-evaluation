@@ -1,7 +1,7 @@
 // Specification inputs live outside generated source trees; no legacy fallback.
 import fs from 'node:fs';
 import path from 'node:path';
-import {profiles} from './output-layout.mjs';
+import {selectedProfiles} from './project-scope.mjs';
 
 export function fixedInputFiles(project, profile) {
   return [
@@ -14,7 +14,7 @@ export function fixedInputFiles(project, profile) {
     'docs/評価規約.md', 'docs/MD構造・Excel変換規約.md', 'docs/テーブル仕様書記述規約.md',
     'docs/テストデータ整備規約.md',
     ...(!profile || profile === 'Access' ? ['agents/builds/build-agent/docs/Access生成チェック.md'] : []),
-    `${project}/README.md`, `${project}/プロジェクト情報.md`, `${project}/docs/開発規約.md`,
+    `${project}/README.md`, `${project}/プロジェクト情報.md`, `${project}/spec/README.md`,
   ];
 }
 
@@ -28,7 +28,7 @@ export function assertRegular(target, directory = false) {
 export const specificationRoot = (root, project, profile) => path.join(root, project, 'spec', profile);
 
 export function collectInputFiles(root, project, profile) {
-  if (!/^(?:sample|test)-project[1-9]\d*$/.test(project) || (profile !== undefined && !profiles.includes(profile))) throw new Error('Invalid input scope.');
+  const methods = selectedProfiles(root, project, profile);
   const files = [];
   function walk(directory) {
     assertRegular(directory, true);
@@ -42,20 +42,17 @@ export function collectInputFiles(root, project, profile) {
   }
   assertRegular(path.join(root, project), true);
   for (const name of fixedInputFiles(project, profile)) {const target = path.join(root, name); assertRegular(target); files.push(target);}
-  if (profile) walk(specificationRoot(root, project, profile));
-  else {
-    // The project index is routing only. Do not collect arbitrary sibling trees.
-    const index = path.join(root, project, 'spec', 'README.md');
-    assertRegular(index); files.push(index);
-    for (const method of profiles) walk(specificationRoot(root, project, method));
+  for (const method of methods) {
+    const spec = specificationRoot(root, project, method);
+    assertRegular(path.join(spec, '規約', '開発規約.md'));
+    walk(spec);
   }
-  return files.sort();
+  return [...new Set(files)].sort();
 }
 
 export function independentSpecPrefix(file, project) {
-  for (const method of profiles) {
-    const prefix = `${project}/spec/${method}/`;
-    if (file.startsWith(prefix)) return prefix;
-  }
-  return null;
+  const prefix = `${project}/spec/`;
+  if (!file.startsWith(prefix)) return null;
+  const remainder = file.slice(prefix.length), slash = remainder.indexOf('/');
+  return slash > 0 ? prefix + remainder.slice(0, slash + 1) : null;
 }

@@ -6,10 +6,10 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import {layout, ensureDirectory, writeLatest, writeJson} from './output-layout.mjs';
 import {assertRegular, collectInputFiles, fixedInputFiles, independentSpecPrefix} from './input-scope.mjs';
+import {selectedProfiles, validProfile} from './project-scope.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 const args = process.argv.slice(2);
-const profiles = ['VB.NET_WinForms', 'CSharp_WPF', 'CSharp_ASPNET', 'Vue_CSharpAPI', 'COBOL', 'AS400_RPG', 'Access'];
 let project, runId, profile, inspectOnly = false, inspectionOption = false;
 if (args.length % 2) throw new Error('Every option requires a value.');
 for (let i = 0; i < args.length; i += 2) {
@@ -19,10 +19,11 @@ for (let i = 0; i < args.length; i += 2) {
   else if (args[i] === '--inspect-only' && !inspectionOption && ['true', 'false'].includes(args[i + 1])) {inspectOnly = args[i + 1] === 'true'; inspectionOption = true;}
   else throw new Error('Usage: preflight.mjs --project sample-projectN --run-id <unique-id> [--profile <profile-id>] [--inspect-only true]');
 }
-if (!/^(?:sample|test)-project[1-9]\d*$/.test(project ?? '') || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId ?? '') || (profile !== undefined && !profiles.includes(profile))) {
+if (!/^(?:sample|test)-project[1-9]\d*$/.test(project ?? '') || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(runId ?? '') || (profile !== undefined && !validProfile(profile))) {
   throw new Error('Explicit project and safe unique run-id are required.');
 }
 const projectRoot = path.join(root, project);
+const methods = selectedProfiles(root, project, profile);
 const outputLayout = layout(root, project, profile);
 const reportRoot = outputLayout.generation;
 assertRegular(projectRoot, true);
@@ -67,7 +68,11 @@ function inspectTable(file, section, declared) {
     const value = JSON.stringify(indexes.map(index => values[index]));
     if (indexes.some(index => !values[index]) || keys.has(value)) add(file, row.line, 'TABLE_KEY', `Empty or duplicate key: ${value}`);
     keys.add(value);
-    if (values.some(value => /<(?!br\s*\/?>)[a-z][^>]*>/i.test(value))) add(file, row.line, 'LIST_HTML', 'HTML other than br in LIST.');
+    if (values.some(value => {
+      // Inline code and C# collection signatures are text, not rendered tags.
+      const text = value.replace(/(`+)[^\r\n]*?\1/g, '').replace(/\b(?:IReadOnlyList|IReadOnlySet|IReadOnlyDictionary|IEnumerable|ICollection|IList|IDictionary|List|Collection|Dictionary|HashSet|Task|ValueTask|Nullable|Func|Action|PasswordHasher)<(?:[A-Z][A-Za-z0-9_.]*|string|int|long|short|bool|byte|decimal|double|float|object)\??(?:,\s*(?:[A-Z][A-Za-z0-9_.]*|string|int|long|short|bool|byte|decimal|double|float|object)\??)*>/g, '');
+      return /<(?!br\s*\/?>)[a-z][^>]*>/i.test(text);
+    })) add(file, row.line, 'LIST_HTML', 'HTML other than br in LIST.');
   }
   return { headers, rows: rows.slice(2).map(cells) };
 }
@@ -118,10 +123,10 @@ for (const target of files.sort()) {
     }
   }
   const isolatedPrefix = independentSpecPrefix(file, project);
-  if (isolatedPrefix && file.startsWith(`${isolatedPrefix}詳細仕様書/`) && /\/0[12]_/.test(file)) {
+  if (isolatedPrefix && file.startsWith(`${isolatedPrefix}詳細仕様書/`)) {
     const required = ['処理概要', '処理手順', '処理フロー', 'SQL・テーブル関連（ER図）', 'DB操作の詳細', '結果・例外時の扱い'];
     for (let i = 0; i < lines.length; i++) {
-      if (!/^### EV-/.test(lines[i].text)) continue;
+      if (!/^### (?:EV-[A-Za-z0-9_-]+|F\d{2}-E\d{2})(?:\s|$)/.test(lines[i].text)) continue;
       const event = lines[i]; let end = i + 1;
       while (end < lines.length && !/^#{1,3} /.test(lines[end].text)) end++;
       const subheads = lines.slice(i + 1, end).filter(row => /^#### /.test(row.text)).map(row => row.text.slice(5));
@@ -136,6 +141,8 @@ for (const target of files.sort()) {
       const destination = path.resolve(path.dirname(target), decodeURIComponent(href.split('#')[0]));
       const local = relative(destination);
       if (isolatedPrefix && !local.startsWith(isolatedPrefix)) { add(file,row.line,'LINK_ISOLATION',`Reference leaves independent specification package: ${href}`); continue; }
+      // General routing documents may mention another project; never inspect it.
+      if (!isolatedPrefix && /^(?:sample|test)-project[1-9]\d*\//.test(local) && !local.startsWith(`${project}/`)) continue;
       if (local.split('/').includes('spec-eval')) continue; // Do not inspect evaluation inputs.
       // Shared entrypoints can list every profile; their unselected targets are not inputs.
       if (profile && local.startsWith(`${project}/`) && !fixed.includes(local) && !local.startsWith(selectedSpecPrefix)) continue;
@@ -169,7 +176,7 @@ for (const name of ['outputs.json', 'source-packages.json']) {
   const old = path.join(reportRoot, name);
   if (fs.existsSync(old)) { assertRegular(old); fs.unlinkSync(old); }
 }
-for (const method of profile ? [profile] : profiles) {
+for (const method of methods) {
   const own = layout(root, project, method);
   ensureDirectory(own.build);
   const sourceZip = path.join(own.build, 'source.zip');
