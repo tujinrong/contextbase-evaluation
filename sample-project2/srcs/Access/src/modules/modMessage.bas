@@ -46,17 +46,20 @@ Public Function MessageText(ByVal id As String, Optional ByVal field As String =
     MessageText = s
 End Function
 Public Sub ShowResult(ByVal f As Access.Form, ByVal result As clsResult)
-    If f.Name = "frmEmployeeSearch" Then
-        f.Controls("lblSelection").Caption = MessageText(result.MessageId, result.FieldId)
-    Else
-        f.Controls("lblMessage").Caption = MessageText(result.MessageId, result.FieldId)
+    If result.MessageId <> "" Then
+        If f.Name = "frmEmployeeSearch" Then
+            f.Controls("lblSelection").Caption = MessageText(result.MessageId, result.FieldId)
+        Else
+            f.Controls("lblMessage").Caption = MessageText(result.MessageId, result.FieldId)
+        End If
     End If
     If result.Kind = "CommitUnknown" Then
         If f.Name = "frmEmployeeEditor" Then
+            f!tabEmployee.SetFocus
             gEditor.Outcome = "CommitUnknown": f!cmdSave.Enabled = False
             f!cmdAddCareer.Enabled = False: f!cmdApplyCareer.Enabled = False: f!cmdRemoveCareer.Enabled = False
         End If
-        If f.Name = "frmCodeMaster" Then f!cmdSave.Enabled = False: f.Tag = "CommitUnknown"
+        If f.Name = "frmCodeMaster" Then f!cboCategory.SetFocus: f!cmdSave.Enabled = False: f.Tag = "CommitUnknown"
     End If
     If result.Kind = "AuthExpired" Then LogoutNow
     If result.Kind = "Validation" Then FocusResult f, result
@@ -67,7 +70,8 @@ Private Sub FocusResult(ByVal f As Access.Form, ByVal result As clsResult)
     If f.Name = "frmEmployeeEditor" Then
         If Not IsEmpty(result.CareerOrdinal) And Not IsNull(result.CareerOrdinal) Then
             If CLng(result.CareerOrdinal) >= 1 And CLng(result.CareerOrdinal) <= gEditor.Careers.Count Then
-                gUiLoading = True: f!tabEmployee = 1: f!lstCareers = CLng(result.CareerOrdinal): gUiLoading = False
+                UiForcePage f, 1
+                gUiLoading = True: f!lstCareers = CLng(result.CareerOrdinal): gUiLoading = False
                 UiFocusCareer f, CLng(result.CareerOrdinal)
             End If
         End If
@@ -93,7 +97,10 @@ Private Sub FocusResult(ByVal f As Access.Form, ByVal result As clsResult)
     Case "実績": name = "txtAchievements"
     Case "技術環境": name = "txtTechnologies"
     Case "工程": name = "txtPhases"
-    Case "役割": name = "cboRole"
+    Case "部署", "cboDepartment": name = "cboDepartment"
+    Case "在籍区分", "cboStatus": name = "cboStatus"
+    Case "分類", "cboCategory": name = "cboCategory"
+    Case "役割", "cboRole": name = "cboRole"
     Case "チーム人数": name = "txtTeamSize"
     Case "コード": name = "txtCode"
     Case "名称": name = "txtCodeName"
@@ -101,7 +108,7 @@ Private Sub FocusResult(ByVal f As Access.Form, ByVal result As clsResult)
     End Select
     If name = "" Then Exit Sub
     If f.Name = "frmEmployeeEditor" Then
-        If InStr(1, "|txtStartMonth|txtEndMonth|txtCompany|txtProject|txtDescription|txtDuties|txtAchievements|txtTechnologies|txtPhases|cboRole|txtTeamSize|", "|" & name & "|", vbBinaryCompare) > 0 Then f!tabEmployee = 1 Else f!tabEmployee = 0
+        If InStr(1, "|txtStartMonth|txtEndMonth|txtCompany|txtProject|txtDescription|txtDuties|txtAchievements|txtTechnologies|txtPhases|cboRole|txtTeamSize|", "|" & name & "|", vbBinaryCompare) > 0 Then UiForcePage f, 1 Else UiForcePage f, 0
     End If
     f.Controls(name).SetFocus
 End Sub

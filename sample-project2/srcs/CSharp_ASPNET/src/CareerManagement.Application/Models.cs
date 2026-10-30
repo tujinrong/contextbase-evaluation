@@ -1,13 +1,14 @@
 using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace CareerManagement.Application;
 
 public enum UserRole { ADMIN, STAFF }
 public enum CommitState { NotStarted, RolledBack, Committed, Unknown }
-public enum ResultStatus { Unsearched, Loading, Success, LimitExceeded, Failed }
+public enum ResultStatus { Unsearched, Unapplied, Loading, Success, LimitExceeded, Failed }
 public enum EditTab { Basic, Careers }
 public enum DraftAction { Add, Apply, Remove, Select, SwitchTab }
-public enum ConfirmationKind { None, ApplyPending, DiscardPending, RemoveRow }
+public enum ConfirmationKind { None, ApplyPending, DiscardPending, RemoveRow,StopCode }
 public enum ConfirmationChoice { None, Yes, No, Cancel }
 public enum OpenMode { New, Edit }
 public sealed record AppUser(string UserId, string LoginId, string DisplayName, string PasswordVerifier,
@@ -45,20 +46,50 @@ public sealed class BusinessException(Outcome outcome) : Exception(outcome.Messa
 // F01 / F02. Password is never included in any view model.
 public sealed record LoginInput(string LoginId, string Password);
 public sealed record LoginVm(string LoginId, string? Message, IReadOnlyList<FieldError> FieldErrors);
-public sealed record MenuVm(string DisplayName, UserRole CurrentRole, Outcome? Outcome);
-public sealed record LogoutInput(bool ConfirmDiscard);
+public sealed record MenuVm(string DisplayName,UserRole CurrentRole,Outcome? Outcome,UiStateInfo? Ui=null);
+public sealed record UiErrorVm(Outcome Outcome,UiStateInfo? Ui);
+public sealed record LogoutInput(RawUiEnvelope RawUiEnvelope,Guid? ConfirmationId,DiscardChoice? Choice);
 // F03. long is represented by a decimal JSON string at the HTTP boundary.
-public sealed record SearchInput(string StateId, int StateRevision, string? EmployeeNo, string? Name,
-    string? Department, string? EmploymentStatus);
+public sealed record SearchRaw(string EmployeeNo,string Name,string Department,string EmploymentStatus)
+{
+    public static SearchRaw Initial => new("","","","01");
+}
+[method: JsonConstructor]
+public sealed record SearchInput(string StateId,int StateRevision,string TabId,string DocumentLease,
+    [property:JsonConverter(typeof(CounterConverter))] long ClientSequence,SearchRaw Raw)
+{
+    // Source-compatible construction for the independent business-validation tests.
+    public SearchInput(string id,int revision,string? employeeNo,string? name,string? department,string? employmentStatus)
+        :this(id,revision,"","",0,new(employeeNo??"",name??"",department??"",employmentStatus??"")){}
+    [JsonIgnore] public string EmployeeNo=>Raw.EmployeeNo;
+    [JsonIgnore] public string Name=>Raw.Name;
+    [JsonIgnore] public string Department=>Raw.Department;
+    [JsonIgnore] public string EmploymentStatus=>Raw.EmploymentStatus;
+}
 public sealed record SearchCriteria(string? EmployeeNo, string? Name, string? Department, string? EmploymentStatus);
-public sealed record StateCommand(string StateId, int StateRevision);
-public sealed record OpenInput(string SearchStateId, int StateRevision, long? EmployeeId, OpenMode Mode);
+public sealed record StateCommand(string StateId,int StateRevision,string TabId="",string DocumentLease="");
+public sealed record InvalidateInput(string StateId,int StateRevision,string TabId,string DocumentLease,
+    [property:JsonConverter(typeof(CounterConverter))] long ClientSequence,SearchRaw Raw,double ScrollTop);
+public sealed record SelectionInput(string StateId,int StateRevision,string TabId,string DocumentLease,long EmployeeId);
+public sealed record OpenInput(string SearchStateId,int StateRevision,long? EmployeeId,OpenMode Mode,SearchRaw Raw,
+    [property:JsonConverter(typeof(CounterConverter))] long ClientSequence,double ScrollTop,string TabId,string DocumentLease,Guid OpenOperationId);
+public sealed record SearchResumeInput(string ResumeRef,string SourceTabId,string CurrentStateId,string CurrentTabId,string DocumentLease);
+public sealed record AttachInput(string StateId,string TabId,string DocumentId,string DocumentLease);
+public sealed record UiStateInfo(string StateId,int StateRevision,string TabId,string DocumentId,string DocumentLease,
+    string? ResumeRef,string? SourceTabId,string CanonicalUrl,bool CanOperate=true);
+public enum DiscardChoice { Discard,Continue }
+public enum UiDestination { Home,Employees,Codes,Logout }
+public sealed record RawUiEnvelope(string StateId,int StateRevision,string TabId,string DocumentLease,
+    EmployeeRaw? Employee,CareerRaw? Pending,CodeSaveInput? Code,EditTab? ActiveTab,Guid? SelectedClientRowKey);
+public sealed record NavigationInput(UiDestination Destination,RawUiEnvelope RawUiEnvelope,Guid? ConfirmationId,DiscardChoice? Choice);
+public sealed record DiscardQuestion(Guid ConfirmationId,string MessageId,string Message);
 public sealed record SearchRow(long EmployeeId, string EmployeeNo, string Name, string Kana, string DepartmentName,
     string EmploymentName, DateOnly JoinDate);
 public sealed record CodeRow(string Category, string Code, string Name, short SortOrder, bool Enabled, int Revision);
-public sealed record SearchVm(string StateId, int StateRevision, SearchCriteria Criteria, SearchCriteria? AppliedCriteria,
+public sealed record SearchVm(string StateId, int StateRevision, SearchRaw Raw, SearchCriteria? AppliedCriteria,
     IReadOnlyList<SearchRow> Rows, long? SelectedEmployeeId, int? TotalCount, ResultStatus ResultStatus,
-    Outcome? Outcome, IReadOnlyList<CodeRow> Codes, string? SelectionText = null);
+    Outcome? Outcome,IReadOnlyList<CodeRow> Codes,double ScrollTop,
+    [property:JsonConverter(typeof(CounterConverter))] long ClientSequence,UiStateInfo Ui,string? SelectionText=null);
 // F04-I01..I24. All raw user text is retained on validation failure.
 public sealed record EmployeeRaw(string EmployeeNo, string Name, string Kana, string DepartmentCode,
     string EmploymentStatus, string JoinDateRaw, string? CareerSummary, string? Skills, string? Qualifications, string? SelfPr)
@@ -79,31 +110,49 @@ public sealed record CareerDraft(long? CareerId, Guid ClientRowKey, CareerValues
 public sealed record EmployeeSnapshot(long EmployeeId, int Revision, EmployeeDraft Employee,
     IReadOnlyList<CareerDraft> Careers, DateTimeOffset UpdatedAt, string UpdatedBy);
 public sealed record SaveInput(string EditStateId, int StateRevision, EmployeeRaw Employee,
-    CareerRaw[] Careers, long[] RemovedCareerIds);
-public sealed record CancelInput(string EditStateId, int StateRevision, bool ConfirmDiscard, bool ReloadOnly, bool ReturnToMenu);
+    CareerRaw[] Careers,long[] RemovedCareerIds,CareerRaw? Pending=null,string TabId="",string DocumentLease="");
+public sealed record CancelInput(string EditStateId,int StateRevision,RawUiEnvelope RawUiEnvelope,
+    Guid? ConfirmationId,DiscardChoice? Choice,bool ReloadOnly,bool ReturnToMenu);
 public sealed record ConfirmationInput(ConfirmationKind Kind, ConfirmationChoice Choice, Guid? ConfirmationId);
 public sealed record DraftInput(string EditStateId, int StateRevision, DraftAction Action, CareerRaw? Fields,
-    Guid? TargetClientRowKey, EditTab? TargetTab, ConfirmationInput Confirm);
+    Guid? TargetClientRowKey,EditTab? TargetTab,ConfirmationInput Confirm,string TabId="",string DocumentLease="");
 public sealed record ConfirmationVm(Guid ConfirmationId, ConfirmationKind Kind, string MessageId,
     IReadOnlyList<ConfirmationChoice> AllowedChoices, Guid? TargetClientRowKey, EditTab? TargetTab);
 public sealed record EditVm(string EditStateId, int StateRevision, EmployeeRaw Employee, IReadOnlyList<CareerRaw> Careers,
     CareerRaw? Pending, Guid? SelectedClientRowKey, EditTab ActiveTab, ConfirmationVm? Confirmation,
-    Outcome? Outcome, bool CanSave, bool CanAdd, bool IsBusy, IReadOnlyList<CodeRow> Codes, IReadOnlyList<long> RemovedCareerIds, bool IsNew);
+    Outcome? Outcome,bool CanSave,bool CanAdd,bool IsBusy,IReadOnlyList<CodeRow> Codes,IReadOnlyList<long> RemovedCareerIds,bool IsNew,
+    UiStateInfo? Ui=null,DiscardQuestion? DiscardConfirmation=null);
 public sealed record SaveResult(long EmployeeId, string EmployeeNo, int Revision, Outcome Outcome);
 // F06. ExpectedRevision must also match the server-owned snapshot.
-public sealed record CodeOpenInput(string Category, string? Code, bool New, string? StateId, int? StateRevision);
+public sealed record CodeOpenInput(string Category,string? Code,bool New,string? StateId,int? StateRevision,
+    RawUiEnvelope? RawUiEnvelope=null,Guid? ConfirmationId=null,DiscardChoice? Choice=null,string TabId="",string DocumentLease="");
 public sealed record CodeSaveInput(string StateId, int StateRevision, string Category, string Code, string Name,
-    string SortOrderRaw, bool Enabled, int? ExpectedRevision);
-public sealed record CodeCancelInput(string StateId, int StateRevision, bool ConfirmDiscard, bool ReloadOnly, bool ReturnToMenu);
+    string SortOrderRaw,bool Enabled,int? ExpectedRevision,string TabId="",string DocumentLease="");
+public sealed record CodeCancelInput(string StateId,int StateRevision,RawUiEnvelope RawUiEnvelope,
+    Guid? ConfirmationId,DiscardChoice? Choice,bool ReloadOnly,bool ReturnToMenu);
 public sealed record CodeVm(string StateId, int StateRevision, string Category, IReadOnlyList<CodeRow> Rows,
-    string? SelectedCode, CodeSaveInput? Draft, string Note, Outcome? Outcome, bool CanSave, bool IsBusy);
+    string? SelectedCode,CodeSaveInput? Draft,string Note,Outcome? Outcome,bool CanSave,bool IsBusy,
+    UiStateInfo? Ui=null,DiscardQuestion? DiscardConfirmation=null,ConfirmationVm? Confirmation=null);
 public sealed record CodeDraft(string Category, string Code, string Name, short SortOrder, bool Enabled);
 // F05 snapshot contains only the selected saved aggregate and current names.
-public sealed record ExportInput(string SearchStateId, int StateRevision, long EmployeeId, Guid OperationId);
+public sealed record ExportInput(string SearchStateId,int StateRevision,long EmployeeId,Guid OperationId,
+    SearchRaw Raw,[property:JsonConverter(typeof(CounterConverter))] long ClientSequence,double ScrollTop,string TabId,string DocumentLease);
 public sealed record ExportCancelInput(string SearchStateId, Guid OperationId);
 public sealed record CancelResult(string Phase, string MessageId, string Message);
 public sealed record ReportSnapshot(BusinessInstant Captured, EmployeeSnapshot Employee,
     IReadOnlyList<CodeRow> Codes);
+
+// Sequence counters are JSON integers; business bigint identifiers remain decimal strings.
+public sealed class CounterConverter:JsonConverter<long>
+{
+    public override long Read(ref Utf8JsonReader reader,Type type,JsonSerializerOptions options)
+    {
+        if(reader.TokenType!=JsonTokenType.Number||!reader.TryGetInt64(out var value)||value<0)
+            throw new JsonException("Nonnegative sequence integer required.");
+        return value;
+    }
+    public override void Write(Utf8JsonWriter writer,long value,JsonSerializerOptions options)=>writer.WriteNumberValue(value);
+}
 
 public static class Mapping
 {

@@ -1,0 +1,623 @@
+{
+  "projectId": "sample-project2",
+  "methodId": "CSharp_ASPNET",
+  "runId": "sp2-ui-regenerate-20261029",
+  "stage": "basic-design",
+  "nextStage": "detail-design",
+  "nextStageStarted": false,
+  "generationMode": "canonical-update",
+  "specRoot": "sample-project2/spec/CSharp_ASPNET",
+  "sourceRoot": "sample-project2/srcs/CSharp_ASPNET",
+  "classification": {
+    "screenFamily": "WEB",
+    "renderer": "BROWSER",
+    "units": "CSS px/rem",
+    "accessScreenChecks": "not applicable: browser renderer; keep family-specific independent expectations in existing UI rules"
+  },
+  "preserve": [
+    "5 application screens, 6 functions, 5 logical tables; no employee delete, bulk export, additional search or dashboard",
+    "Requirement 1.1, DEMO authentication condition 1.0 and QA-025: admin/ADMIN, staff/STAFF, common public DEMO password 123; 3..128 Unicode scalar values, unchanged internal user IDs and business records",
+    ".NET 10 MVC, SQL Server 2022 Express / SampleProject2_Career, current authorization and atomic employee-plus-all-careers save",
+    "Existing detailed IdentityV3/100000 and ClosedXML 0.105.1 design decisions are adopted inputs; current implementation/compatibility/license/print evidence still must be obtained",
+    "200 employee maximum, 20 career maximum, 2 concurrent users; no pagination or page size selector, stable unique employee-number ascending order",
+    "One selected saved employee and all saved careers, two Excel sheets only; response start is distinct from client save completion"
+  ],
+  "screens": [
+    {
+      "screenId": "F01",
+      "screenType": "AUTH",
+      "mainPurpose": "P21_AUTH",
+      "auxiliaryPurposes": [],
+      "exceptions": "Public login; no protected-site navigation",
+      "states": [
+        "initial",
+        "authentication_error",
+        "locked",
+        "processing",
+        "session_expired"
+      ]
+    },
+    {
+      "screenId": "F02",
+      "screenType": "CUSTOM",
+      "purpose": "Retained entry for the existing two business functions; usage guidance without dashboard",
+      "mainPurpose": "P01_HOME",
+      "auxiliaryPurposes": [
+        "P00_APP_SHELL"
+      ],
+      "states": [
+        "ADMIN",
+        "STAFF",
+        "starting",
+        "authorization_error"
+      ]
+    },
+    {
+      "screenId": "F03",
+      "screenType": "SEARCH_LIST",
+      "mainPurpose": "P02_SEARCH_LIST",
+      "auxiliaryPurposes": [
+        "P00_APP_SHELL",
+        "P12_EXPORT"
+      ],
+      "states": [
+        "unsearched",
+        "unapplied",
+        "searching",
+        "0",
+        "1",
+        "200",
+        "201_overflow",
+        "unselected",
+        "selected",
+        "fetch_error",
+        "long_content",
+        "exporting"
+      ]
+    },
+    {
+      "screenId": "F04",
+      "screenType": "EDIT_FORM",
+      "childScreenType": "MASTER_DETAIL",
+      "mainPurpose": "P04_EDIT_FORM",
+      "auxiliaryPurposes": [
+        "P05_MASTER_DETAIL",
+        "P00_APP_SHELL"
+      ],
+      "states": [
+        "new",
+        "edit_basic",
+        "edit_career",
+        "no_careers",
+        "unapplied_detail",
+        "dirty",
+        "validation_error",
+        "saving",
+        "save_failed",
+        "conflict",
+        "save_result_unknown",
+        "discard_continue",
+        "long_content"
+      ]
+    },
+    {
+      "screenId": "F06",
+      "screenType": "SETTINGS",
+      "childScreenType": "MASTER_DETAIL",
+      "mainPurpose": "P13_SETTINGS",
+      "auxiliaryPurposes": [
+        "P05_MASTER_DETAIL",
+        "P00_APP_SHELL"
+      ],
+      "states": [
+        "unselected",
+        "new_code",
+        "edit_code",
+        "readonly_employment_status",
+        "dirty",
+        "saving",
+        "save_failed",
+        "conflict",
+        "save_result_unknown"
+      ]
+    }
+  ],
+  "tokens": {
+    "source": "共通/03_共通UI・入力設計.md 1.4",
+    "basis": "1366x768 CSS px / 100%; adopted design baseline, not all-environment qualification",
+    "fontFamily": "Yu Gothic UI, Meiryo, system-ui, sans-serif",
+    "fontRoles": {
+      "bodyInput": "1rem / 16px equivalent",
+      "uiTableHelp": ".875rem / 14px equivalent",
+      "title": "1.5rem / 24px equivalent",
+      "section": "1.125rem / 18px equivalent"
+    },
+    "spacing": [
+      4,
+      8,
+      12,
+      16,
+      24,
+      32
+    ],
+    "normalMinControlHeight": 40,
+    "normalMinRowHeight": 48,
+    "compactMinRowHeight": 40,
+    "textareaMinHeight": 112,
+    "shellHeaderMinHeight": 56,
+    "shellNavWidth": 208,
+    "pagePadding": 24,
+    "narrowPadding": 16,
+    "confirmedFixedWidths": {
+      "loginPanel": 460,
+      "loginId": 240,
+      "password": 320,
+      "employeeName": 260,
+      "employeeKana": 330,
+      "joinDate": 150
+    },
+    "contentWidths": {
+      "basicFormMax": 960,
+      "careerListMin": 260,
+      "careerDetail": "remaining available content; stack when insufficient",
+      "employeeTableMin": 880
+    },
+    "exceptions": [
+      "Small fixed 200-item list: all fetched, internal vertical scroll, no page sizes; QA-009/028 and REQ-F-006",
+      "Header/nav adjusted from reference initial proposals to 56/208 with purpose recorded; reference values are not user-confirmed obligations",
+      "Narrow viewport uses maximum field widths, top native disclosure navigation, wrapping and vertical scrolling; only the employee table has local horizontal scroll"
+    ]
+  },
+  "searchReturn": {
+    "ids": [
+      "F03-E01",
+      "F03-E02",
+      "F03-E03",
+      "F04-E01",
+      "F04-E03",
+      "F04-E04"
+    ],
+    "separateState": [
+      "raw four criteria including spaces/case",
+      "last successfully applied criteria or absent",
+      "unsearched/unapplied/searched/error status",
+      "result set",
+      "selection",
+      "table scroll",
+      "owning authenticated session/browser tab"
+    ],
+    "beforeNew": "Capture raw and prior state; no criteria validation, search or forced selection needed",
+    "returnUnsearchedOrUnapplied": "Restore raw four values and exact state on cancel/discard/save; no automatic search even if an older applied set exists, no reset to employment 01, no fake 0-count",
+    "returnSearched": "Re-fetch with prior successfully applied criteria only; cancel selects prior member, save selects saved employee only if still a result member; clamp/restore scroll, no substitute employee",
+    "clear": "Reset initial criteria/employment01, invalidate result/selection, wait unsearched; no automatic search",
+    "PH-05": "Basic specification gap defined by BUI-05/UI-P01/UI-P02; old product remains unverified until current downstream build/runtime evidence"
+  },
+  "saveBoundary": {
+    "F04": "Current unapplied detail is validated/reflected before explicit save; employee 1 plus all intended careers atomic; reflect/remove only edit the buffer; validation/DB failure retains all values/current tab/selection; unknown result stops repeat save and follows existing result enquiry",
+    "F06": "Explicit current code 1 only; fixed employment category remains read-only; cancel discards just pending edit and rereads current persisted key when required",
+    "navigation": "App menu/back/logout/target change checks unsaved parent/detail/buffer; MSG-015 approved means displayed discard result, rejected/closed means continue editing. Browser history/reload/close warning capabilities must be verified without claiming custom dialog equivalence",
+    "authenticationExpiry": "No automatic save or cross-session draft restoration; existing authenticated failure rules prevail"
+  },
+  "independentExpectations": [
+    {
+      "rule": "BUI-01",
+      "source": "WUI-01/02",
+      "targets": [
+        "F02",
+        "F03",
+        "F04",
+        "F06"
+      ],
+      "expected": "Shared shell/current position; direct permitted workflow navigation and role checks",
+      "proof": "Final publish DOM/screens, real keys and direct authorization requests"
+    },
+    {
+      "rule": "BUI-02",
+      "source": "UI generation condition 1.0, QA-027, WUI-03/04",
+      "targets": [
+        "F01",
+        "F02",
+        "F03",
+        "F04",
+        "F06"
+      ],
+      "expected": "Role tokens and confirmed minimum14/fixed dimensions, no overlaps",
+      "proof": "Independent computed styles/rectangles/font environment and source/publish hashes"
+    },
+    {
+      "rule": "BUI-03",
+      "source": "WUI-02/05/06",
+      "targets": [
+        "F04-I12",
+        "F04-I13",
+        "F04-I17"
+      ],
+      "expected": "Both tabs show same parent identity/mode, long project wraps and full input reachable",
+      "proof": "Maximum-length data, tab/full-text keyboard observations"
+    },
+    {
+      "rule": "BUI-04",
+      "source": "WUI-07",
+      "targets": [
+        "F03-I08",
+        "F03-I10",
+        "F03-I11",
+        "F03-I12",
+        "F03-E03"
+      ],
+      "expected": "New primary, row edit establishes exact row; Excel selected saved employee1",
+      "proof": "Unselected/row selection/result-external/disappeared-target and authorization checks"
+    },
+    {
+      "rule": "BUI-05",
+      "source": "QA-029",
+      "targets": [
+        "F03-E03",
+        "F04-E01",
+        "F04-E04"
+      ],
+      "expected": "UI-P01/02 raw state exact equality and automatic search request count0",
+      "proof": "Before/after raw4/applied/status/results/selection and request logs"
+    },
+    {
+      "rule": "BUI-06",
+      "source": "QA-028",
+      "targets": [
+        "F03-E01",
+        "F03-I07",
+        "F03-I08"
+      ],
+      "expected": "0/1/200/201 counts, all-range stable order, no partial 201 result",
+      "proof": "Isolated fixture result/count/order and scroll observations"
+    },
+    {
+      "rule": "BUI-07",
+      "source": "WUI-08",
+      "targets": [
+        "F04-E02",
+        "F04-E03"
+      ],
+      "expected": "Current unsent detail included, parent/all-child atomic, failure retains values/tab/selection",
+      "proof": "Composite validation/conflict/failure operations and DB reread"
+    },
+    {
+      "rule": "BUI-08",
+      "source": "WUI-08",
+      "targets": [
+        "F04-E04",
+        "F06-E02",
+        "F06-E03"
+      ],
+      "expected": "No unnecessary unchanged prompt; discard/continue and employee-vs-code save scope exact",
+      "proof": "Real operations and post-save/discard persisted reread"
+    },
+    {
+      "rule": "BUI-09",
+      "source": "WUI-09",
+      "targets": [
+        "F01",
+        "F02",
+        "F03",
+        "F04",
+        "F06"
+      ],
+      "expected": "Natural DOM Tab order, visible focus, multiline Enter, safe confirm focus/escape; reference values copyable",
+      "proof": "Actual Tab/Enter/Esc/native confirmation/focus/IME observations; static mock is insufficient"
+    },
+    {
+      "rule": "BUI-10",
+      "source": "WUI-06",
+      "targets": [
+        "F03",
+        "F04",
+        "F06"
+      ],
+      "expected": "Narrow/text enlarged flow reaches full data and actions, table-only local overflow",
+      "proof": "Each selected viewport/zoom/font/DPI screen and rectangles; identify untested environments"
+    },
+    {
+      "rule": "BUI-11",
+      "source": "WUI-07/08",
+      "targets": [
+        "F03",
+        "F04"
+      ],
+      "expected": "Route/history/tab owner/expiry authorization and owned state; no PII/raw/password in URL",
+      "proof": "Route/session/tab/expiry/browser history actual tests"
+    },
+    {
+      "rule": "BUI-12",
+      "source": "WUI-07/08",
+      "targets": [
+        "F05",
+        "F03-I12"
+      ],
+      "expected": "Two sheets/all careers of employee1, retained search state, response start distinguished from file saved",
+      "proof": "Generation response/full workbook reread/failure return; actual Excel/print separately"
+    }
+  ],
+  "detailActions": [
+    "Design-only .notes/state-sample annotations are specification evidence; omit them and any static sample credentials/data from ordinary product UI unless separately specified as public DEMO guidance",
+    "Map these source ID/version/hash expectations to actual MVC routes/components/HTML/DOM/CSS/ViewModels and existing UI expectation rules before implementation; do not transcribe measured runtime values as expectations",
+    "Define owned return-state identifier, session/tab lifecycle/expiry and allowed restore route; ensure initial display cannot overwrite raw before capture/restore",
+    "Implement semantic tabs with IDs/selection/panels/arrow keys and focus; preserve the natural order documented in F03/F04/F06",
+    "Update existing detailed documents and physical/component references only as required by the basic UI change while retaining accepted cryptography/save/Excel business contracts",
+    "Add product cases UI-P01..07 and BUI-01..12; perform final publish DOM and actual keyboard/state/DB/Excel verification in downstream authorized stage"
+  ],
+  "unperformed": [
+    "Detailed design regeneration in this stage",
+    "App generation/build/run",
+    "DB create/migrate/write/read",
+    "Product HTTP/DOM/runtime/keys/IME",
+    "Actual Excel/print",
+    "OS DPI or browser zoom qualification",
+    "User acceptance",
+    "Formal scoring"
+  ],
+  "formalScore": null,
+  "sourceDocuments": [
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/DB定義/SQLServer/01_DB定義書.md",
+      "documentId": "SP2-CSharp_ASPNET-DB-SQLSERVER",
+      "version": "1.1",
+      "sha256": "a498d8897d8743c20a74a2b1082048b7fc8a8fc1a9cef7c5fc6a52eb4fc8ec47"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/DB定義/SQLServer/テーブル/01_m_app_user.md",
+      "documentId": "SP2-CSharp_ASPNET-DB-T01",
+      "version": "1.0",
+      "sha256": "c2d58a7d2da2cc26252e808aa742866cd4df9b92bce01b1fdaca5ac9ba914f90"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/DB定義/SQLServer/テーブル/02_m_employee.md",
+      "documentId": "SP2-CSharp_ASPNET-DB-T02",
+      "version": "1.0",
+      "sha256": "3ea8e04e7837c7e62775545b473131f4ce310cf121005506407e6584cc894296"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/DB定義/SQLServer/テーブル/03_t_career.md",
+      "documentId": "SP2-CSharp_ASPNET-DB-T03",
+      "version": "1.0",
+      "sha256": "0bd4089a44cc48873f217a674dc2626d6576ef19a5abd757be5b23ce4d16f8f9"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/DB定義/SQLServer/テーブル/04_m_code_category.md",
+      "documentId": "SP2-CSharp_ASPNET-DB-T04",
+      "version": "1.0",
+      "sha256": "b3dc4e5f1ffb88f01a20f6ca71097f47438253eb9c070012df9bad9beeaad0cd"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/DB定義/SQLServer/テーブル/05_m_code.md",
+      "documentId": "SP2-CSharp_ASPNET-DB-T05",
+      "version": "1.0",
+      "sha256": "a77ad95ada1037ad300bc6c229279442029088c1d66aa834400988cf821f86e4"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/QA.md",
+      "documentId": "SP2-CSharp_ASPNET-QA",
+      "version": "1.8",
+      "sha256": "5802dd54769f7ce5a3d9f8fea011bbb6c5e45938d47495ce63031ae883562cb8"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/README.md",
+      "documentId": "SP2-CSharp_ASPNET-INDEX",
+      "version": "1.10",
+      "sha256": "69f7fe93a30e54323440586d0b827e5fcb66b228fd77a5987e05a5a370d0c8d7"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/プロジェクト情報.md",
+      "documentId": "SP2-CSharp_ASPNET-PROJECT",
+      "version": "1.8",
+      "sha256": "b6b83e115c4f146f4fb55b5934581e2a7bb44789b674436175c441c9673cb95e"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/共通/01_システム概要.md",
+      "documentId": "SP2-CSharp_ASPNET-COM-01",
+      "version": "1.1",
+      "sha256": "5b3650a61526c004b66dfd9f99b3f8c9ba781f254efa773f47c4e663a2db5ee0"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/共通/02_CRUD図.md",
+      "documentId": "SP2-CSharp_ASPNET-COM-02",
+      "version": "1.4",
+      "sha256": "c506cc8bd2afd5e0576c01f7df7fce1221d89fb5a5e3e3846616165991bd5792"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/共通/03_共通UI・入力設計.md",
+      "documentId": "SP2-CSharp_ASPNET-COM-03",
+      "version": "1.4",
+      "sha256": "5bb25a5e633a31d1fae754ab04f57c0bef32a3eb52f0dad342906e47c12b6661"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/共通/04_チェック・メッセージ設計.md",
+      "documentId": "SP2-CSharp_ASPNET-COM-04",
+      "version": "1.5",
+      "sha256": "2b296aa07a5da48c5d261c62f9ff4795e4f2e7be5ef0eaa141df7e9690d1248d"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/共通/05_日付・データアクセス仕様.md",
+      "documentId": "SP2-CSharp_ASPNET-COM-05",
+      "version": "1.4",
+      "sha256": "67e811ace0188086ff02bd960c765dccbd916e617bd1f2f65d5b7799e6fe42dd"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/共通/06_初期確認用データ.md",
+      "documentId": "SP2-CSharp_ASPNET-COM-06",
+      "version": "1.1",
+      "sha256": "f1c3b6e6812df48ca36c2511da98e7382953d60139ab69a0d9dfa5488a833358"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/共通/07_経歴書様式調査.md",
+      "documentId": "SP2-CSHARP_ASPNET-COM-07",
+      "version": "1.0",
+      "sha256": "a2ba0fc10573453e9a58a3dbfaca7c0c780bc3855ab5461d3ebbdba5c509b780"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/共通/08_処理整合性・Pilot検証設計.md",
+      "documentId": "SP2-CSharp_ASPNET-COM-08",
+      "version": "1.6",
+      "sha256": "92ae2ced76651af8bc01061494cbe365e80ff80bbfe09fc12891a501f9cd155d"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/共通/方式別/01_共通実装仕様.md",
+      "documentId": "SP2-CSharp_ASPNET-DET-COM-01",
+      "version": "1.2",
+      "sha256": "aee13358f4c68afe55b7ba34e73aeaea109638999ad363570a0deb3918fb2be1"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/基本設計書/01_ログイン画面.md",
+      "documentId": "SP2-CSHARP_ASPNET-F01",
+      "version": "1.7",
+      "sha256": "0622eaca12a79ae3dd708f9d82f8b1c8416dec77c11c6737abab29cdb0dcbbea"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/基本設計書/02_メニュー画面.md",
+      "documentId": "SP2-CSHARP_ASPNET-F02",
+      "version": "1.6",
+      "sha256": "77e2ae351248f1d2f69436c7189f21577a4753e36c91fc208c49a3bef7d6f277"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/基本設計書/03_社員検索画面.md",
+      "documentId": "SP2-CSHARP_ASPNET-F03",
+      "version": "1.6",
+      "sha256": "dde728759a0532bcdf0b0df38c22555163356ca33305d07f4256d8050efc8ac5"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/基本設計書/04_社員登録画面.md",
+      "documentId": "SP2-CSHARP_ASPNET-F04",
+      "version": "1.6",
+      "sha256": "d669b8d6a97dc0ae7eef4247eb57277e54ba46fedc49ae9e9992d136028e126a"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/基本設計書/05_経歴書出力.md",
+      "documentId": "SP2-CSHARP_ASPNET-BAS-F05",
+      "version": "1.6",
+      "sha256": "bce084bbdddd23d4d461636e38ece0350e3b999459e48ef99331ffd088dde622"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/基本設計書/06_汎用コードマスタ画面.md",
+      "documentId": "SP2-CSHARP_ASPNET-F06",
+      "version": "1.6",
+      "sha256": "53900d15e9a0b371e2183cb06c402d3d547ab386ed85e0a723c37d3348c734ae"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/基本設計書/07_テーブル仕様書.md",
+      "documentId": "SP2-CSharp_ASPNET-BAS-TABLES",
+      "version": "1.4",
+      "sha256": "638991431b1a0a3196122c5e23abaa0facc2a0ec8d37706a00a5455cc48fc448"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/基本設計書/08_コード設計書.md",
+      "documentId": "SP2-CSharp_ASPNET-BAS-CODES",
+      "version": "1.0",
+      "sha256": "dc0effb335dcda2bf772abc02c6a52a5598dd93881d60fc5deffdd718cefd8cb"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/基本設計書/テーブル/01_m_app_user.md",
+      "documentId": "SP2-CSharp_ASPNET-T01",
+      "version": "1.0",
+      "sha256": "715adef76b8a537eb306ec9f209bad11e385f566dad849b6e52dc15e87b6859b"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/基本設計書/テーブル/02_m_employee.md",
+      "documentId": "SP2-CSharp_ASPNET-T02",
+      "version": "1.0",
+      "sha256": "c0dba4d385a8db62693d050120a308fa228481bb0561f75d507388f0f5d0414d"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/基本設計書/テーブル/03_t_career.md",
+      "documentId": "SP2-CSharp_ASPNET-T03",
+      "version": "1.0",
+      "sha256": "bc6360bd0e494d55859d4f47bf98e906794fd7ace2b0f356ab1ded3a03223be8"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/基本設計書/テーブル/04_m_code_category.md",
+      "documentId": "SP2-CSharp_ASPNET-T04",
+      "version": "1.0",
+      "sha256": "9899bc6cf7fd3065288a28e9243061151d7a9e4cf4ad12f8854c436c00c8bdf7"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/基本設計書/テーブル/05_m_code.md",
+      "documentId": "SP2-CSharp_ASPNET-T05",
+      "version": "1.0",
+      "sha256": "01e717ed3688b68e70001be564164cbcbaedba82526ef68d3476b34c91a4802f"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/要件定義書.md",
+      "documentId": "SP2-CSharp_ASPNET-REQ-01",
+      "version": "1.1",
+      "sha256": "5e0a36697417620794fe8d04b056facad331f896cc9aee04f7a752e3b40613cd"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/規約/DEMO認証条件.md",
+      "documentId": "SP2-CSharp_ASPNET-DEMO-AUTH",
+      "version": "1.0",
+      "sha256": "f56a25c9fa8a12c8fff6615ea59ab5adb032ef0c8f3ee3bb7d064a0f7100f1bf"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/規約/UI生成条件.md",
+      "documentId": "SP2-CSharp_ASPNET-UI-BUILD",
+      "version": "1.0",
+      "sha256": "014f5f44b39668916be51943ee46c5b775563aa52d8bd42e34d4514d6ba3ca98"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/規約/基本設計作成条件.md",
+      "documentId": "SP2-CSharp_ASPNET-RULES",
+      "version": "1.6",
+      "sha256": "7834f12a9b2b440c5e272b7014cdcd9820c73a6038628312ae51ea3c9583d34b"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/規約/開発規約.md",
+      "documentId": "SP2-CSharp_ASPNET-DET-DEV",
+      "version": "1.0",
+      "sha256": "31b464c7cea1e9107af3b064c8d7dd462fa55014d8e2e37d5a972f02eea39bd3"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/詳細仕様書/01_ログイン画面.md",
+      "documentId": "SP2-CSharp_ASPNET-DET-F01",
+      "version": "1.1",
+      "sha256": "bbb67cd673037abd7f809ce2b8452c204f11a869886ce4cf25c55b254167fe4c"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/詳細仕様書/02_メニュー画面.md",
+      "documentId": "SP2-CSharp_ASPNET-DET-F02",
+      "version": "1.0",
+      "sha256": "b9915123669689d888d30176923c4200d940c6453170716ed00e34d813c6740c"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/詳細仕様書/03_社員検索画面.md",
+      "documentId": "SP2-CSharp_ASPNET-DET-F03",
+      "version": "1.0",
+      "sha256": "867c9aee74a068a9ae380bb892bae95f7efe12d5c168171ff29c5823a214fd14"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/詳細仕様書/04_社員登録画面.md",
+      "documentId": "SP2-CSharp_ASPNET-DET-F04",
+      "version": "1.0",
+      "sha256": "86b21df13e71d9ebfa85efd3b98ad606909a4cd054ab258ee1459ce0a9fa37a4"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/詳細仕様書/05_経歴書出力.md",
+      "documentId": "SP2-CSharp_ASPNET-DET-F05",
+      "version": "1.0",
+      "sha256": "9345ece8204adb55477ef80f1afed1321eb4299d57b8a72811542086a515e9e9"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/詳細仕様書/06_汎用コードマスタ画面.md",
+      "documentId": "SP2-CSharp_ASPNET-DET-F06",
+      "version": "1.0",
+      "sha256": "ca1add08e29a3d0f6743cffd580a0ebc7e68b452caed9f9b6f10c3c1bf2d952b"
+    },
+    {
+      "file": "sample-project2/spec/CSharp_ASPNET/詳細設計QA.md",
+      "documentId": "SP2-CSharp_ASPNET-DET-QA",
+      "version": "1.2",
+      "sha256": "b38058653414e7a8d761f78c14ac76acc6853e4f6313ba614fe3c6b3b507c5c2"
+    }
+  ],
+  "independentReview": {
+    "file": "sample-project2/srcs/CSharp_ASPNET/build/spec-generation/basic-design/review.json",
+    "sha256": "c9ec59ab96a47111d60941bfe1f6c22d200a59f841437f1bc0fcbb6d29823666",
+    "status": "PASS basic semantic/static only"
+  }
+}

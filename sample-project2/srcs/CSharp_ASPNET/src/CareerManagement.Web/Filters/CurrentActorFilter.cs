@@ -8,12 +8,27 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace CareerManagement.Web.Filters;
-public sealed class CurrentActorFilter(CurrentUserService current,SessionRegistry sessions,ScreenStateStore states):IAsyncActionFilter
+public sealed class CurrentActorFilter(CurrentUserService current,SessionRegistry sessions,ScreenStateStore states):IAsyncActionFilter,IAsyncAuthorizationFilter,IOrderedFilter
 {
+    // Missing/expired authentication must be classified before the antiforgery
+    // filter compares the old document's token to the now-anonymous identity.
+    // Authenticated requests still run the unchanged antiforgery validation.
+    public int Order=>0;
+    public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
+    {
+        var path=context.HttpContext.Request.Path;
+        if(path=="/account/login"||path=="/account/exit")return;
+        var user=context.HttpContext.User;
+        if(user.Identity?.IsAuthenticated==true&&user.FindFirstValue(ClaimTypes.NameIdentifier)is not null&&user.FindFirstValue("session_id")is not null)return;
+        await context.HttpContext.SignOutAsync("SP2");
+        context.Result=HttpMethods.IsGet(context.HttpContext.Request.Method)
+            ?new RedirectResult("/account/login?expired=1")
+            :new JsonResult(new{outcome=Outcome.Of(2,"Expired")},HttpJson.Options){StatusCode=401};
+    }
     public async Task OnActionExecutionAsync(ActionExecutingContext context,ActionExecutionDelegate next)
     {
         var path=context.HttpContext.Request.Path;
-        if(path=="/account/login"||path=="/account/exit"||path=="/account/logout"){await next();return;}
+        if(path=="/account/login"||path=="/account/exit"){await next();return;}
         var user=context.HttpContext.User;
         var id=user.FindFirstValue(ClaimTypes.NameIdentifier);var session=user.FindFirstValue("session_id");
         try
@@ -40,6 +55,14 @@ public sealed class CurrentActorFilter(CurrentUserService current,SessionRegistr
             {
                 if(session is not null){sessions.Remove(session);states.RemoveSession(session);}await context.HttpContext.SignOutAsync("SP2");
                 if(HttpMethods.IsGet(context.HttpContext.Request.Method)){context.Result=new RedirectResult("/account/login?expired=1");return;}
+            }
+            if(UiErrorPages.IsDocument(context.HttpContext.Request))
+            {
+                if(context.HttpContext.Items["Actor"] is null&&id is not null&&session is not null)
+                {
+                    try{context.HttpContext.Items["Actor"]=await current.RequireAsync(new(id,session,"",UserRole.STAFF),false,context.HttpContext.RequestAborted);}catch{}
+                }
+                context.Result=UiErrorPages.Create(context.HttpContext,outcome,states);return;
             }
             context.Result=new JsonResult(new{outcome},HttpJson.Options){StatusCode=HttpJson.Status(outcome)};
         }

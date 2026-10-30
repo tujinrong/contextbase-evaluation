@@ -1,8 +1,8 @@
-# build-agent 構造検査 20261029-sp2-vs-debug
+# build-agent 構造検査 sp2-ui-regenerate-20261029
 
-対象：sample-project2 / CSharp_ASPNET。Agent版7.11。入力版・SHA-256はinputs.jsonを参照。
+対象：sample-project2 / CSharp_ASPNET。Agent版7.12。入力版・SHA-256はinputs.jsonを参照。
 
-判定：structure-check-passed。現行入力63ファイルを検査。問題0件。
+判定：structure-check-passed。現行入力66ファイルを検査。問題0件。
 
 
 検査範囲：メタ情報、章/シート対応、LIST矩形・キー、TABLE列/項目ID/PK、イベント6節、入力範囲内のローカル参照先の存在。

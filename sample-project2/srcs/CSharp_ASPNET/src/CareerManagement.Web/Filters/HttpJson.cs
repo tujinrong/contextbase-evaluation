@@ -29,10 +29,24 @@ public static class HttpJson
             if(element.GetArrayLength()>1024)throw new JsonException("Array limit.");
             foreach(var item in element.EnumerateArray())Shape(item,type.GetElementType()!);return;
         }
-        if(type==typeof(string)||type.IsPrimitive||type.IsEnum||type==typeof(Guid)||type==typeof(DateOnly))return;
+        if(type==typeof(string))
+        {
+            if(element.ValueKind==JsonValueKind.String)
+            {
+                try{Validation.TechnicalRaw(element.GetString());}catch(ArgumentException){throw new JsonException("Raw transport bounds.");}
+            }
+            return;
+        }
+        if(type.IsPrimitive)
+        {
+            if(element.ValueKind==JsonValueKind.Number&&(element.GetRawText().Contains('e')||element.GetRawText().Contains('E')))
+                throw new JsonException("Exponent notation refused.");
+            return;
+        }
+        if(type.IsEnum||type==typeof(Guid)||type==typeof(DateOnly))return;
         if(element.ValueKind==JsonValueKind.Null)return;
         if(element.ValueKind!=JsonValueKind.Object)throw new JsonException("Object required.");
-        var properties=type.GetProperties(BindingFlags.Instance|BindingFlags.Public).ToDictionary(p=>JsonNamingPolicy.CamelCase.ConvertName(p.Name),StringComparer.Ordinal);
+        var properties=type.GetProperties(BindingFlags.Instance|BindingFlags.Public).Where(p=>p.GetCustomAttribute<JsonIgnoreAttribute>() is null).ToDictionary(p=>JsonNamingPolicy.CamelCase.ConvertName(p.Name),StringComparer.Ordinal);
         var seen=new HashSet<string>(StringComparer.Ordinal);var nullability=new NullabilityInfoContext();
         foreach(var property in element.EnumerateObject())
         {
@@ -42,7 +56,7 @@ public static class HttpJson
         }
         if(seen.Count!=properties.Count)throw new JsonException("Missing field.");
     }
-    public static int Status(Outcome o)=>o.Kind switch {"Expired"=>401,"Forbidden"=>403,"NotFound"=>404,"Conflict"=>409,"Busy"=>503,"RolledBack"=>503,"ResultUnknown"=>503,"Corrupt"=>503,"Validation"=>422,_=>200};
+    public static int Status(Outcome o)=>o.Kind switch {"Expired"=>401,"Forbidden"=>403,"NotFound"=>404,"Conflict"=>409,"UiExpired"=>409,"Busy"=>503,"RolledBack"=>503,"ResultUnknown"=>503,"Corrupt"=>503,"Validation"=>422,_=>200};
 }
 public sealed class DecimalIdConverter:JsonConverter<long>
 {

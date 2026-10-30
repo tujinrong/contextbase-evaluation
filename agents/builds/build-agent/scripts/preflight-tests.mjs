@@ -8,12 +8,16 @@ const uiInputs=['docs/UIパターン規約.md','docs/WEB画面品質規約.md','
 const files=['AGENTS.md','agents/README.md',...detailInputs,...uiInputs,'agents/builds/build-agent/AGENT.md','agents/builds/build-agent/PROMPT.md','agents/builds/build-agent/README.md','agents/reverses/reverse-agent/AGENT.md','docs/リポジトリ構成.md','docs/開発規約.md','docs/仕様書作成ルール.md','docs/評価規約.md','docs/MD構造・Excel変換規約.md','docs/テーブル仕様書記述規約.md','docs/テストデータ整備規約.md','docs/UI適合検査.md','docs/Access画面品質規約.md','agents/builds/build-agent/docs/Access生成チェック.md','sample-project1/README.md','sample-project1/プロジェクト情報.md','sample-project1/docs/開発規約.md'];
 function write(file,text){const target=path.join(root,file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,text);}
 function doc(file,id){return `<!-- spec-meta: ${JSON.stringify({schema:'spec-md/1.0',documentId:id,version:'1.0',path:file,sheets:[{heading:'定義',kind:'LIST',sheet:'01_定義',key:['ID']}]})} -->\n# fixture\n\n## 定義\n\n| ID | 内容 |\n| --- | --- |\n| A | fixture |\n`;}
-function exec(script,id,expected,profile,inspectOnly=false,project='sample-project1'){const r=spawnSync(process.execPath,[path.join(root,'agents/builds/build-agent/scripts',script),'--project',project,'--run-id',id,...(profile?['--profile',profile]:[]),...(inspectOnly?['--inspect-only','true']:[])],{encoding:'utf8'});if(r.status!==expected)throw new Error(`${script}: expected ${expected}, got ${r.status}: ${r.stderr}${r.stdout}`);passed++;return r;}
+const readGuard=path.join(fixture,'read-guard.cjs');
+fs.writeFileSync(readGuard,`const fs=require('node:fs'),path=require('node:path'),{fileURLToPath}=require('node:url');
+const denied=new Set(JSON.parse(process.env.PREFLIGHT_FORBIDDEN_READS||'[]').map(f=>path.resolve(f).toLowerCase()));
+const read=fs.readFileSync;fs.readFileSync=function(file,...args){const name=file instanceof URL?fileURLToPath(file):file;if(typeof name==='string'&&denied.has(path.resolve(name).toLowerCase()))throw new Error('Existence-only target content was read: '+name);return read.call(this,file,...args);};require('node:module').syncBuiltinESMExports();\n`);
+function exec(script,id,expected,profile,inspectOnly=false,project='sample-project1',unread=[]){const r=spawnSync(process.execPath,[...(unread.length?['--require',readGuard]:[]),path.join(root,'agents/builds/build-agent/scripts',script),'--project',project,'--run-id',id,...(profile?['--profile',profile]:[]),...(inspectOnly?['--inspect-only','true']:[])],{encoding:'utf8',env:{...process.env,PREFLIGHT_FORBIDDEN_READS:JSON.stringify(unread.map(file=>path.join(root,file)))}});if(r.status!==expected)throw new Error(`${script}: expected ${expected}, got ${r.status}: ${r.stderr}${r.stdout}`);passed++;return r;}
 function routing(project,methods){const file=`${project}/spec/README.md`;return `<!-- spec-meta: ${JSON.stringify({schema:'spec-md/1.0',documentId:`ROUTING-${project}`,version:'1.0',path:file,sheets:[{heading:'方式',kind:'LIST',sheet:'01_方式',key:['方式ID']}]})} -->\n# Routing fixture\n\n## 方式\n\n| 方式ID | specRoot | sourceRoot |\n| --- | --- | --- |\n${methods.map(method=>`| ${method} | ${project}/spec/${method}/ | ${project}/srcs/${method}/ |`).join('\n')}\n`;}
 const generation=profile=>path.join(root,'sample-project1',...(profile?['srcs',profile]:[]),'build/generation');
 const read=(name,profile)=>JSON.parse(fs.readFileSync(path.join(generation(profile),name),'utf8'));
 function assert(ok,text){if(!ok)throw new Error(text);passed++;}
-function snapshot(directory=root){return fs.readdirSync(directory,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name)).flatMap(entry=>{const target=path.join(directory,entry.name),file=path.relative(root,target);return entry.isDirectory()?[{file,directory:true},...snapshot(target)]:[{file,data:fs.readFileSync(target).toString('base64')}];});}
+function snapshot(directory=root){return fs.readdirSync(directory,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name)).flatMap(entry=>{const target=path.join(directory,entry.name),file=path.relative(root,target);return entry.isSymbolicLink()?[{file,symlink:fs.readlinkSync(target)}]:entry.isDirectory()?[{file,directory:true},...snapshot(target)]:[{file,data:fs.readFileSync(target).toString('base64')}];});}
 try{
  const initialized=spawnSync('git',['init',root],{encoding:'utf8'});if(initialized.status!==0)throw new Error(initialized.stderr);
  files.forEach((f,i)=>write(f,doc(f,f==='agents/builds/build-agent/AGENT.md'?'AG-BUILD':`FIX-${i}`)));
@@ -122,6 +126,95 @@ try{
  exec('preflight.mjs','new-current',2,profile);assert(read('structure.json',profile).findings.some(f=>f.code==='LINK_ISOLATION'),'Cross-profile reference not rejected');exec('manifest.mjs','new-current',1,profile);
  for(const href of ['../../spec-eval/poison.md',`../../srcs/${profile}/README.md`]){write(isolated,doc(isolated,'ISOLATED').replace('| A | fixture |',`| A | [outside](${href}) |`));before=JSON.stringify(snapshot());const failed=JSON.parse(exec('preflight.mjs','scope-failure',2,profile,true).stdout);assert(failed.structure.findings.some(f=>f.code==='LINK_ISOLATION'),'Independent package closure not enforced');assert(JSON.stringify(snapshot())===before,'Failed inspection changed files');}
  write(isolated,doc(isolated,'ISOLATED'));
+ // Links to provenance/guide material only check existence. They do not extend
+ // normative inputs, recursively parse poison text, or weaken package isolation.
+ const guides={
+  rule:'agents/designs/basic-design-agent/rules/基本設計書作成ルール.md',
+  directory:'agents/designs/basic-design-agent/rules',
+  basic:`sample-project1/srcs/${profile}/build/spec-generation/basic-design/report.md`,
+  detail:`sample-project1/srcs/${profile}/build/spec-generation/detail-design/report.md`,
+  raw:'references/web-ui-standard/README.md',
+ };
+ for(const name of [guides.rule,guides.basic,guides.detail,guides.raw])write(name,'Poison without metadata. Must not read/hash/freeze as a specification input.');
+ const uiIndex='docs/UIパターン規約.md',uiIndexBefore=fs.readFileSync(path.join(root,uiIndex));
+ const hrefFor=(destination,source=isolated)=>path.relative(path.dirname(path.join(root,source)),path.join(root,destination)).split(path.sep).join('/')||'.';
+ const link=(destination,source=isolated)=>write(source,doc(source,source===isolated?'ISOLATED':'UI-LINK').replace('| A | fixture |',`| A | [guide](${hrefFor(destination,source)}) |`));
+ link(guides.raw,uiIndex);
+ write(isolated,doc(isolated,'ISOLATED').replace('| A | fixture |',`| A | ${[guides.rule,guides.directory,guides.basic,guides.detail,'docs/仕様書作成ルール.md'].map(name=>`[guide](${hrefFor(name)})`).join(' ')} |`));
+ before=JSON.stringify(snapshot());
+ const guideResult=JSON.parse(exec('preflight.mjs','guide-references',0,profile,true,'sample-project1',[guides.rule,guides.basic,guides.detail,guides.raw]).stdout);
+ assert(JSON.stringify(snapshot())===before,'Guide inspection wrote or moved files');
+ assert([guides.rule,guides.basic,guides.detail,guides.raw].every(file=>!guideResult.inputs.files.some(record=>record.file===file)),'Existence-only references became normative inputs');
+ assert(['design-rule-existence','design-record-existence','reference-source-existence','common-rule-input'].every(kind=>guideResult.structure.referenceChecks.some(check=>check.kind===kind)),'Guide reference roles were not classified');
+ assert(guideResult.structure.referenceChecks.filter(check=>/^(?:design-|reference-source)/.test(check.kind)).every(check=>check.contentReadByReferenceCheck===false&&check.frozenInput===false),'Guide references were read or frozen');
+ for(const [destination,code] of [
+  ['sample-project1/spec/COBOL/README.md','LINK_ISOLATION'],
+  ['sample-project9/spec/Other/README.md','LINK_ISOLATION'],
+  [`sample-project1/srcs/${profile}/README.md`,'LINK_ISOLATION'],
+  ['sample-project1/srcs/Access/build/spec-generation/basic-design/report.md','LINK_ISOLATION'],
+  ['sample-project9/srcs/CSharp_ASPNET/build/spec-generation/basic-design/report.md','LINK_ISOLATION'],
+  [`sample-project1/srcs/${profile}/build/generation/inputs.json`,'LINK_ISOLATION'],
+  [`sample-project1/srcs/${profile}/build/spec-generation/basic-design/history/report.md`,'LINK_ISOLATION'],
+  ['sample-project1/spec-eval/poison.md','LINK_ISOLATION'],
+  ['agents/designs/basic-design-agent/.tmp/poison.md','LINK_ISOLATION'],
+  ['agents/designs/basic-design-agent/build/report.md','LINK_ISOLATION'],
+  ['agents/designs/basic-design-agent/rules/arbitrary.md','LINK_ISOLATION'],
+  ['docs/unfrozen-rule.md','LINK_ISOLATION'],
+  [guides.raw,'LINK_ISOLATION'],
+  [`sample-project1/spec/${profile}/spec-eval/poison.md`,'LINK_ISOLATION'],
+  [`sample-project1/spec/${profile}/spec-analysis/poison.md`,'LINK_ISOLATION'],
+  [`sample-project1/spec/${profile}/.tmp/poison.md`,'LINK_ISOLATION'],
+  [`sample-project1/spec/${profile}/build/poison.md`,'LINK_ISOLATION'],
+  [`sample-project1/spec/${profile}/.TMP/`,'LINK_ISOLATION'],
+  [`sample-project1/spec/${profile}/SPEC-EVAL/`,'LINK_ISOLATION'],
+ ]) {
+  link(destination);const failed=JSON.parse(exec('preflight.mjs','guide-isolation-negative',2,profile,true).stdout);
+  assert(failed.structure.findings.some(f=>f.code===code),'Guide exception permitted '+destination);
+ }
+ for(const branch of ['spec-eval','spec-analysis','.tmp','build']) {
+  const name=`sample-project1/spec/${profile}/${branch}/guide-unread.md`;
+  write(name,'Excluded fixture body must never become input');link(name);
+  const excluded=JSON.parse(exec('preflight.mjs','excluded-subtree',2,profile,true,'sample-project1',[name]).stdout);
+  assert(excluded.structure.findings.some(f=>f.code==='LINK_ISOLATION')&&!excluded.inputs.files.some(f=>f.file===name),'Selected excluded subtree was inspected');
+  fs.unlinkSync(path.join(root,name));fs.symlinkSync(fixture,path.join(root,name),'junction');
+  assert(JSON.parse(exec('preflight.mjs','linked-excluded-subtree',2,profile,true).stdout).structure.findings.some(f=>f.code==='LINK_ISOLATION'),'Linked excluded subtree was accepted');fs.unlinkSync(path.join(root,name));
+ }
+ link(`sample-project1/spec/${profile}`);
+ assert(JSON.parse(exec('preflight.mjs','spec-directory-guide',0,profile,true).stdout).structure.referenceChecks.some(check=>check.kind==='specification-directory-existence'&&!check.frozenInput),'Specification directory was misclassified as an input body');
+ // Case-preserving Windows directory names must also be excluded during input
+ // collection, before link inspection could protect against reading their body.
+ const lowerScratch=`sample-project1/spec/${profile}/.tmp`,upperScratch=`sample-project1/spec/${profile}/.TMP`,heldScratch=path.join(fixture,'held-excluded-scratch');
+ fs.renameSync(path.join(root,lowerScratch),heldScratch);fs.renameSync(heldScratch,path.join(root,upperScratch));
+ const upperPoison=upperScratch+'/UPPER.md';write(upperPoison,'Uppercase excluded input must not be read');write(isolated,doc(isolated,'ISOLATED'));
+ const uppercaseInput=JSON.parse(exec('preflight.mjs','uppercase-excluded-input',0,profile,true,'sample-project1',[upperPoison]).stdout);
+ assert(!uppercaseInput.inputs.files.some(record=>record.file.toLowerCase().includes('/.tmp/')),'Uppercase excluded directory became input');
+ fs.unlinkSync(path.join(root,upperPoison));fs.renameSync(path.join(root,upperScratch),heldScratch);fs.renameSync(heldScratch,path.join(root,lowerScratch));
+ // A raw source README is accepted only as a frozen common docs provenance link.
+ write(isolated,doc(isolated,'ISOLATED'));link('references/web-ui-standard/pattern.md',uiIndex);
+ assert(JSON.parse(exec('preflight.mjs','raw-body-denied',2,profile,true).stdout).structure.findings.some(f=>f.code==='LINK_SCOPE'),'Arbitrary raw reference was accepted');
+ const routingSource='agents/README.md',routingBefore=fs.readFileSync(path.join(root,routingSource));link(guides.raw,routingSource);write(uiIndex,uiIndexBefore);
+ assert(JSON.parse(exec('preflight.mjs','raw-source-denied',2,profile,true).stdout).structure.findings.some(f=>f.code==='LINK_SCOPE'),'Non-doc origin gained raw-reference exception');write(routingSource,routingBefore);
+ for(const name of [guides.rule,guides.basic,guides.detail,guides.raw]) {
+  const original=fs.readFileSync(path.join(root,name));fs.unlinkSync(path.join(root,name));
+  if(name===guides.raw){write(isolated,doc(isolated,'ISOLATED'));link(name,uiIndex);}else{write(uiIndex,uiIndexBefore);link(name);}
+  assert(JSON.parse(exec('preflight.mjs','missing-guide',2,profile,true).stdout).structure.findings.some(f=>f.code==='LINK_MISSING'),'Missing guide was not rejected: '+name);write(name,original);
+ }
+ write(uiIndex,uiIndexBefore);
+ // Directory junctions test linked leaves and redirected parents without relying
+ // on Windows file-symlink privilege. No target body is read in either case.
+ for(const [name,directory] of [[guides.rule,false],[guides.basic,false],[guides.raw,false],[guides.directory,true],[path.posix.dirname(guides.detail),true]]) {
+  const target=path.join(root,name),held=path.join(fixture,'held-guide');fs.renameSync(target,held);
+  fs.symlinkSync(directory?held:path.dirname(held),target,'junction');
+  const destination=name===guides.directory?guides.rule:name===path.posix.dirname(guides.detail)?guides.detail:name;
+  if(name===guides.raw){write(isolated,doc(isolated,'ISOLATED'));link(guides.raw,uiIndex);}else{write(uiIndex,uiIndexBefore);link(destination);}
+  assert(JSON.parse(exec('preflight.mjs','linked-guide',2,profile,true).stdout).structure.findings.some(f=>f.code==='LINK_NONREGULAR'),'Linked/redirected guide was accepted: '+name);
+  fs.unlinkSync(target);fs.renameSync(held,target);
+ }
+ write(uiIndex,uiIndexBefore);write(isolated,doc(isolated,'ISOLATED'));
+ // Encoded traversal cannot borrow a peer report through the own-report spelling.
+ write(isolated,doc(isolated,'ISOLATED').replace('| A | fixture |',`| A | [escape](${hrefFor(guides.basic).replace('CSharp_ASPNET/','CSharp_ASPNET/%2e%2e/Access/')}) |`));
+ assert(JSON.parse(exec('preflight.mjs','encoded-guide-escape',2,profile,true).stdout).structure.findings.some(f=>f.code==='LINK_ISOLATION'),'Encoded report path escape was accepted');
+ write(isolated,doc(isolated,'ISOLATED'));
  const detail=`sample-project1/spec/${profile}/詳細仕様書/01_学生検索画面.md`;write(detail,doc(detail,'DETAIL').replace('## 定義','## 定義\n\n### EV-SRC-001'));const event=JSON.parse(exec('preflight.mjs','event-failure',2,profile,true).stdout);assert(event.structure.findings.filter(f=>f.code==='EVENT_SECTIONS').length===6,'Relocated events were not inspected');fs.unlinkSync(path.join(root,detail));
  const modernDetail=`sample-project1/spec/${profile}/詳細仕様書/06_機能.md`;
  write(modernDetail,doc(modernDetail,'MODERN-DETAIL').replace('## 定義','## 定義\n\n### F06-E03 取消'));
@@ -186,7 +279,7 @@ try{
  for(const script of ['isolate-specs.mjs','finalize-isolation-docs.mjs','document-dotnet-projects.mjs']){before=JSON.stringify(snapshot());const retired=spawnSync(process.execPath,[path.join(root,'agents/builds/build-agent/scripts',script)],{encoding:'utf8'});assert(retired.status===1&&retired.stderr.includes('Retired migration'),'Historical writer was not refused');assert(JSON.stringify(snapshot())===before,'Historical writer changed files');}
  function isolation(expected){const r=spawnSync(process.execPath,[path.join(root,'agents/builds/build-agent/scripts/check-isolation.mjs'),'fixture-isolation','--project','sample-project1'],{encoding:'utf8'});assert(r.status===expected,`Isolation expected ${expected}: ${r.stderr}${r.stdout}`);}
  isolation(0);const ownReadme=`sample-project1/spec/${profile}/README.md`,ownOriginal=fs.readFileSync(path.join(root,ownReadme));write(ownReadme,`[source](../../srcs/${profile}/README.md)\n`);isolation(1);const isolatedResult=JSON.parse(fs.readFileSync(path.join(root,'sample-project1/build/test-results/isolation.json'),'utf8'));assert(isolatedResult.findings.some(f=>f.code==='SPECIFICATION_REFERENCE_OUTSIDE'),'Specification dependency on generated source was not rejected');write(ownReadme,ownOriginal);
- console.log(`PASS ${passed} assertions: canonical specification roots, independent closure, scoped WEB/WinForms/Text and Access policies, explicit extension metadata and renderer checks, read-only inspection, frozen-set checks, retired writers, latest replacement and source-only inventory; fixture only.`);
+ console.log(`PASS ${passed} assertions: canonical specification roots, independent closure, classified existence-only guide references with denied body reads/missing/link/escape checks, scoped WEB/WinForms/Text and Access policies, explicit extension metadata and renderer checks, read-only inspection, frozen-set checks, retired writers, latest replacement and source-only inventory; fixture only.`);
 }finally{
  const resolved=path.resolve(fixture);if(!resolved.startsWith(base+path.sep))throw new Error('Cleanup target outside fixture area');fs.rmSync(resolved,{recursive:true,force:true});
 }

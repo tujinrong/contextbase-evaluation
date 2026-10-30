@@ -5,6 +5,12 @@ namespace CareerManagement.Infrastructure.Sql;
 
 public sealed class EmployeeService(Database database,Repository repository,CurrentUserService current,BusinessClock clock)
 {
+    public async Task RequireNewCapacityAsync(Actor actor,CancellationToken ct)
+    {
+        await using var unit=await database.BeginAsync(false,ct);await current.RequireInAsync(unit,actor,false,ct);
+        if(await repository.EmployeeCountAsync(unit,ct)>=200)throw BusinessException.Error(18);
+        await unit.CommitAsync(ct);
+    }
     public async Task<(IReadOnlyList<SearchRow> Rows,IReadOnlyList<CodeRow> Codes)> SearchAsync(Actor actor,SearchCriteria criteria,CancellationToken ct)
     {
         database.Faults.BeforeRead();

@@ -1,1 +1,18 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>社員経歴管理</title><link rel="stylesheet" href="/css/site.css"><link rel="stylesheet" href="/css/app.css"></head><body>@RenderBody()<script src="/js/site.js" defer></script></body></html>
+@{
+    var actor=Context.Items["Actor"] as Actor;
+    var screen=ViewData["ScreenId"] as string??"F01";
+    var title=ViewData["Title"] as string??"社員経歴管理";
+    var section=screen=="F06"?"Codes":screen is "F03" or "F04"?"Employees":"Home";
+}
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>@title | 社員経歴管理</title><link rel="stylesheet" href="/css/site.css" asp-append-version="true"></head>
+<body><div class="sp2-ui" data-screen-id="@screen" data-pending-init="@(actor is null||ViewData["NoUiBootstrap"] is true?null:"true")">
+<a href="#main" class="skip-link">本文へ移動</a>
+<header class="header"><strong class="brand">社員経歴管理システム</strong>
+@if(actor is not null){<div class="usertools"><span data-ui="user" data-item-id="@(screen=="F02"?"F02-I01":null)">@actor.DisplayName ／ @actor.Role</span><button type="button" data-action="logout" data-item-id="@(screen=="F02"?"F02-I04":null)">ログアウト</button></div>}
+</header>
+@if(actor is not null){<p class="init-status" role="status">画面を準備しています…</p>}
+@if(actor is not null){<div class="shell"><nav class="nav" aria-label="サイトメニュー"><details open><summary>機能メニュー</summary><div class="nav-label">業務</div><a href="/menu" data-destination="Home" data-item-id="@(screen=="F03"?"F03-I13":screen=="F06"?"F06-I11":null)" aria-current="@(section=="Home"?"page":null)">業務の入口</a><a href="/employees" data-destination="Employees" data-item-id="@(screen=="F02"?"F02-I02":null)" aria-current="@(section=="Employees"?"page":null)">社員検索・登録</a>@if(actor.Role==UserRole.ADMIN){<a href="/codes" data-destination="Codes" data-item-id="@(screen=="F02"?"F02-I03":null)" aria-current="@(section=="Codes"?"page":null)">汎用コードマスタ</a>}</details></nav><main class="main" id="main" tabindex="-1">@RenderBody()</main></div>}
+else{<main id="main" tabindex="-1">@RenderBody()</main>}
+<dialog data-ui="discard" aria-labelledby="discard-title" aria-describedby="discard-message"><h2 id="discard-title" data-part="title">未保存の変更</h2><p id="discard-message" data-part="message"></p><div class="actions"><button type="button" data-part="continue" autofocus>編集を続ける</button><button type="button" class="danger" data-part="discard">変更を破棄して移動</button></div></dialog>
+</div><script src="/js/site.js" asp-append-version="true" defer></script></body></html>

@@ -1,0 +1,7 @@
+@model UiErrorVm
+<div data-ui-error="true" data-initial="@JsonSerializer.Serialize(Model,HttpJson.Options)"><partial name="_PageHeader"/><form class="token">@Html.AntiForgeryToken()</form>
+<h2>状態と次の操作</h2><section class="panel"><p class="notice error" data-ui="error-message" role="alert">@Model.Outcome.Message</p>
+@if(Model.Outcome.CommitState==CommitState.Committed){<p>保存は完了しています。保存を繰り返さず、社員検索から現在の保存値を確認してください。</p>}
+else if(Model.Outcome.CommitState==CommitState.Unknown){<p>結果が未確認です。同じ処理を再送せず、現在の保存値を確認してください。</p>}
+else{<p>対象または画面の状態を確認してから、必要な画面を開き直してください。</p>}
+<div class="actions"><a class="button" href="/employees" data-destination="Employees">社員検索を開く</a><a class="button" href="/menu" data-destination="Home">業務の入口</a><a class="button" href="/account/login">ログイン画面へ</a></div></section></div>

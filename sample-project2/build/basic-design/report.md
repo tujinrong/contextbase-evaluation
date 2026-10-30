@@ -1,26 +1,25 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-BASIC-DESIGN-REPORT","version":"1.5","path":"sample-project2/build/basic-design/report.md","sheets":[{"heading":"入力と改訂範囲","kind":"GRID","sheet":"01_入力と改訂範囲"},{"heading":"検査結果","kind":"LIST","sheet":"02_検査結果","key":["検査"]},{"heading":"未実施と引継ぎ","kind":"GRID","sheet":"03_未実施と引継ぎ"}]} -->
-# 基本設計 生成・検査記録
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-BASIC-DESIGN-REPORT","version":"1.6","path":"sample-project2/build/basic-design/report.md","sheets":[{"heading":"入力と改訂範囲","kind":"GRID","sheet":"01_入力と改訂範囲"},{"heading":"検査結果","kind":"LIST","sheet":"02_検査結果","key":["方式"]},{"heading":"未実施と引継ぎ","kind":"GRID","sheet":"03_未実施と引継ぎ"}]} -->
+# 基本設計 再生成・検査記録
 
-仕様セット版1.5／2026-10-28／projectId=sample-project2／stage=basic-design。
+版1.6／2026-10-29／projectId=sample-project2／stage=basic-design／runId=sp2-ui-regenerate-20261029。
 
 ## 入力と改訂範囲
 
-対象：Access・CSharp_ASPNET。変更前仕様セット1.4を入力とし、利用者の『4、5個以上の処理手順は階層化』をQA-023で継承する。入力/出力の各文書版とSHA-256はmanifest.jsonに固定した。Agent1.5、仕様書作成ルール7.12、MD構造・Excel変換規約7.9を適用する。
+利用者の依頼により、Access・CSharp_ASPNETの基本→詳細→実装を順に再生成する。本記録は最初の基本工程だけを対象とする。基本設計Agent1.11・専用規則1.2・工程1.3と方式に該当するUI品質規約を採用した。方式別の入力ID・版・SHA、確定前提、改訂/継承、出力版は各固定manifestに保存した。
 
-4手順以上は目的別の大項目と具体手順の小項目へ分け、同階層2～4項目を目安とする。手順2.1等の本文/CHK参照も同期した。両方式で32イベントを2階層化し、F01-E02の2イベントは3手順の平坦リストを維持。共通04の6検査とAgentの9実行手順も階層化した。業務条件・実行順・CHK/MSG・DB・項目表・画面と図は維持する。
+5画面・6機能・5表48列、DEMO認証、業務上限、社員・全経歴の原子保存、保存済み1人のExcel出力を継承した。要件本文・既存詳細・物理DB・アプリ・既存fixtureは変更していない。画面と対象の識別、一覧と編集領域、保存/反映/取消、自然なキー順、取消復帰の検索状態を具体化した。設計判断と利用者確定事項をQAで区別する。
 
 ## 検査結果
 
-| 検査 | 結果 | 対象・根拠 |
+| 方式 | 改訂と検査 | 記録 |
 | --- | --- | --- |
-| 文書構造・参照 | PASS | 61文書のspec-meta、章、LIST矩形/キー、ローカルリンク、方式内依存、MSG/CHK参照 |
-| 階層・原文・順序 | PASS | 34イベント、32階層化・2短手順維持、元216手順を保持。階層連番、インデント、参照経路を確認 |
-| 意味保持・独立レビュー | PASS | 番号変更とグループ見出しを除き処理内容・順序・分岐・エラーを維持。内部参照とCHK対応を独立確認 |
-| 不変部分 | PASS | 166項目行、14HTML断片、56Mermaid定義、10テーブル分冊の前版比較。DB/メッセージ/Pilot条件も維持 |
-| Markdown解釈・目視 | PASS | CommonMark/GFM解釈で34イベントの親子リスト/216末端項目を確認。F01-E01/F04-E03を1366×900・100%・Edge headlessで描画し目視 |
+| Access | 12改訂・1追加、30対象文書・342リンク、既存83項目/17イベント・5表48列を保持。8静的断片、Mermaid28図。全役割11ptと個別幅、親識別、54条件を引継ぎ。独立指摘とrootの領域見出し指摘を解消 | [結果](../../srcs/Access/build/spec-generation/basic-design/report.md)、[manifest](../../srcs/Access/build/spec-generation/basic-design/manifest.json)、[独立レビュー](../../srcs/Access/build/spec-generation/basic-design/review.json) |
+| CSharp_ASPNET | 13改訂、43文書・491リンク、既存83項目/17イベントと重要属性を保持。54図、42静的描画ケース。共通サイト枠、行編集、200件内部スクロールの既存例外、raw/適用済み条件と復帰を具体化。独立指摘5件を解消 | [結果](../../srcs/CSharp_ASPNET/build/spec-generation/basic-design/report.md)、[manifest](../../srcs/CSharp_ASPNET/build/spec-generation/basic-design/manifest.json)、[独立レビュー](../../srcs/CSharp_ASPNET/build/spec-generation/basic-design/review.json) |
 
 ## 未実施と引継ぎ
 
-今回の描画は仕様文書の手順階層の確認。変更のない画面HTMLやMermaid図の再描画は実施せず、現版と入力版の断片一致を確認した。過去の描画合格を今回の新規描画結果として転記していない。
+MD概要GRIDの同一断片を描画し、rootはAccess全8断片と改訂したF04/F06、Web通常6画面断片と狭幅2代表を目視した。静的構造、寸法計測、自己/独立意味レビュー、目視の対象を分けて記録した。これらは実Access・最終Web publishの動作や保存の証拠ではない。
 
-実装/ビルド、物理DB/実DB、実アプリ操作、Pilot41シナリオの実行、実Excel帳票、設計書のExcel変換/読戻し、印刷、性能、利用者受入、正式採点、Git commit/merge/pushは未実施。formalScore=null。既存Excel変換器での入れ子保持は別途対応・読戻し検証が必要であり、本改訂からExcel互換PASSとしない。固定JSONは今回の入力/出力と検査範囲を示す。
+次は詳細設計Agentへ方式別handoffと確定前提・QA・ID・版/SHAを渡す。Accessは全Form/Page/Dialogの物理部品・状態・9カテゴリと通常表示/復帰を、WebはURL/DTO/状態保持/共通部品と最終製品の検証を具体化する。Accessの保存後raw条件による再検索とWebの未適用状態での自動検索禁止は、それぞれの採用契約を維持する。
+
+この基本工程では実装・ビルド・DB実行・実キー/IME/DPI・Excel/印刷・仕様Excel/PDF変換・利用者受入・正式採点を行っていない。後続工程の状態は[工程記録](../generation/pipeline.json)で管理する。formalScore=null。今回の固定JSONが対象版を示し、履歴はGitを使用する。

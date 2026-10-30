@@ -24,6 +24,7 @@ builder.Services.AddSingleton(dbOptions);builder.Services.AddSingleton<TimeProvi
 builder.Services.AddSingleton<BusinessClock>();builder.Services.AddSingleton<IDbFaults,NoDbFaults>();
 builder.Services.AddSingleton<Database>();builder.Services.AddSingleton<Repository>();
 builder.Services.AddSingleton<SessionRegistry>();builder.Services.AddSingleton<ScreenStateStore>();builder.Services.AddSingleton<ExportOperationRegistry>();
+builder.Services.AddSingleton<SearchReturnCoordinator>();
 builder.Services.AddSingleton<AuthService>();builder.Services.AddSingleton<CurrentUserService>();builder.Services.AddSingleton<EmployeeService>();builder.Services.AddSingleton<CodeService>();
 builder.Services.AddSingleton<ITextWidthMeasurer,GdiTextWidthMeasurer>();builder.Services.AddTransient<ReportService>();
 builder.Services.Configure<FormOptions>(o=>{o.ValueCountLimit=1024;o.ValueLengthLimit=16384;o.MultipartBodyLengthLimit=2*1024*1024;});
@@ -52,7 +53,13 @@ app.Use(async(context,next)=>
     {
         var outcome=SqlErrors.Map(exception,40);
         app.Logger.LogWarning("Request failed {CorrelationId} {MessageId} {CommitState}",outcome.CorrelationId,outcome.MessageId,outcome.CommitState);
-        context.Response.StatusCode=exception is System.Text.Json.JsonException or BadHttpRequestException?400:HttpJson.Status(outcome);await context.Response.WriteAsJsonAsync(new{outcome},HttpJson.Options);
+        context.Response.StatusCode=exception is System.Text.Json.JsonException or BadHttpRequestException?400:HttpJson.Status(outcome);
+        if(UiErrorPages.IsDocument(context.Request))
+        {
+            var result=UiErrorPages.Create(context,outcome,context.RequestServices.GetRequiredService<ScreenStateStore>());
+            await result.ExecuteResultAsync(new Microsoft.AspNetCore.Mvc.ActionContext(context,new Microsoft.AspNetCore.Routing.RouteData(),new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor()));
+        }
+        else await context.Response.WriteAsJsonAsync(new{outcome},HttpJson.Options);
     }
 });
 app.UseHttpsRedirection();app.UseStaticFiles();app.UseAuthentication();app.UseAuthorization();

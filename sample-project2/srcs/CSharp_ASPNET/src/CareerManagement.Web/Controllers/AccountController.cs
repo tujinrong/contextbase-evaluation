@@ -25,12 +25,6 @@ public sealed class AccountController(AuthService auth,SessionRegistry sessions,
         }
         catch(BusinessException b){return View(new LoginVm(input.LoginId,b.Outcome.Message,b.Outcome.FieldErrors));}
     }
-    [HttpPost("logout")]
-    public async Task<IActionResult> Logout(CancellationToken ct)
-    {
-        var input=await HttpJson.ReadAsync<LogoutInput>(Request,ct);if(!input.ConfirmDiscard)return Conflict(new{outcome=Outcome.Of(15,"Confirmation")});
-        await ClearAsync();return Json(new{redirect="/account/login"});
-    }
     [HttpPost("exit")]
     public async Task<IActionResult> Exit(){await ClearAsync();return View("Exited");}
     private async Task ClearAsync()
@@ -40,8 +34,13 @@ public sealed class AccountController(AuthService auth,SessionRegistry sessions,
     }
 }
 [Route("menu")]
-public sealed class MenuController:Controller
+public sealed class MenuController(ScreenStateStore states):Controller
 {
     [HttpGet]
-    public IActionResult Index(){var actor=(Actor)HttpContext.Items["Actor"]!;return View(new MenuVm(actor.DisplayName,actor.Role,Request.Query.ContainsKey("denied")?Outcome.Of(3,"Forbidden"):null));}
+    public IActionResult Index(string? nav)
+    {
+        var actor=(Actor)HttpContext.Items["Actor"]!;
+        var state=nav is null?states.Add(new NavigationState(actor.SessionId)):states.Consume<NavigationState>(nav,actor.SessionId,"/menu");
+        return View(new MenuVm(actor.DisplayName,actor.Role,Request.Query.ContainsKey("denied")?Outcome.Of(3,"Forbidden"):null,states.Info(state,"/menu")));
+    }
 }

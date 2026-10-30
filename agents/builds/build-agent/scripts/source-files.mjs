@@ -9,7 +9,7 @@ export function sourceFiles(directory, {excludeSpec=false}={}) {
     const info=fs.lstatSync(current);
     if(!info.isDirectory()||info.isSymbolicLink()||fs.realpathSync(current).toLowerCase()!==path.resolve(current).toLowerCase())throw new Error(`Regular source directory required: ${current}`);
     for(const entry of fs.readdirSync(current,{withFileTypes:true})) {
-      if(skip.has(entry.name))continue;
+      if(skip.has(entry.name.toLowerCase()))continue;
       const target=path.join(current,entry.name);
       if(entry.isSymbolicLink())throw new Error(`Linked source refused: ${target}`);
       if(entry.isDirectory())walk(target);

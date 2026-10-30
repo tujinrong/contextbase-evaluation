@@ -24,24 +24,24 @@ DB所有者の設定後、Web実行用Windows主体には `database/application-
 
 HTTPSのURL/証明書はASP.NET Coreの通常構成で指定します。`SP2_DATA_KEYS` はサービス主体だけが読み書きするDPAPI鍵保存先を明示します。許可がない場合はWindowsの当該主体LocalAppDataを使います。CookieはSecure/HttpOnly/SameSite、無操作30分でサーバー認証と未保存値を失効し、各操作と確定直前に現在利用者を再照会します。停止利用者は次の操作から拒否します。
 
-操作確認はSTAFFでログイン→検索（初期在職2件）→000001を選択→編集と取消→経歴書Excel（2経歴、最新順）→新規000004を入力して保存→再検索です。000003は在籍未指定で検索でき、経歴0のためExcelは拒否されます。ADMINは部署04を新規追加・停止できます。社員番号は6桁文字列、既存番号は変更できません。経歴追加/反映/除去は未保存状態で、上部の保存だけが親子全体を確定します。確定成否不明のMSG-034では再保存せず、破棄確認後の再読込みで現在値を確認してください。
+操作は左サイトメニューから社員検索へ進みます。検索初期は在職、検索実行前のraw4条件と適用済み条件を分離します。行の編集は事前のラジオ選択なしでその社員を開き、Excelは選択した保存済み社員1人が対象です。対象社員は両タブで常時表示します。経歴追加・反映・除去はバッファ操作で、画面下部の「社員と全経歴を保存」は現在入力中の明細も含めて親子全体を原子的に保存します。入力・DB失敗はraw、タブ、選択を保持します。コード保守は現在の1件だけを保存します。
 
-既知制限 **PH05：OPEN／詳細設計の修正待ち**。未検索の状態で検索条件を編集し、再検索せず「新規登録」→社員欄を変更せず「取消・検索へ戻る」と進むと、未適用の検索条件raw値を保持できません。正式境界試験では社員番号`777777`が復帰後に空となり、DB変更は0件でした。現在のStateCommand/OpenInputは未適用raw条件を渡す契約を持たないため、追加APIを独断で作らず後続の詳細設計へ引き継いでいます。この境界は合格扱いにしていません。[実測記録](build/test-results/design-boundary.json)と[正式試験](tests/Web/design-boundary.cjs)を参照してください。保存成功後にAppliedCriteriaで再検索する採用済みの帰路は、この未検索→取消の制限とは別です。
+PH05は今回の基本・詳細設計と実装で解消しました。未検索・未適用のraw4条件は新規→無編集取消でも保持し、自動検索しません。検索済みからだけ適用済み条件を再取得します。通常の履歴・再読込は期限内の検索専用immutable snapshotから独立Stateへ復元します。別Tabの編集Draftと可変状態は共有しません。実観測は今回のui-regeneration検査記録に限定し、旧design-boundaryのFAILは旧候補証拠として扱います。
 
 経歴書は固定取得時点の全案件と全文を2枚の表示シートへ出力し、先頭ゼロ・アポストロフィ・式に見える原文を文字列として保存/再読込検査します。ブラウザーの「ダウンロードを開始しました」は端末保存成功を保証しません。保存済みファイルには社員経歴が含まれるので保存先と共有範囲を確認してください。サーバーにはブックを恒久保存しません。
 
 正式自己試験は `dotnet run --project tests/CareerManagement.Tests -c Release -- --cycle 1`（通常）、`--cycle 2`（境界・競合・障害を追加）、`--cycle 3`（全回帰）です。各回は **新しい** `SP2_WebFixture_Test_<乱数>` のみを作成し、DB所有markerを照合してその1件だけを最後に削除します。既存DBやブラウザー用DBを再利用しません。ローカルfixtureの自己署名SQL証明書だけ `TrustServerCertificate=True` を明示しています。製品既定へこの例外を持ち込んでいません。失敗結果も `build/test-results/self-cycle-N.json` に保存します。
 
-最終公開物のブラウザー検査では、テスト専用 `--prepare-ui` が新しい `SP2_WebFixture_UI_<乱数>` と `.tmp/ui-runtime/profile.json` / HTTPS証明書を作ります。同プロファイルが残っていれば停止し、既存DBを再初期化しません。`tools/Start-Fixture.ps1 -ProfilePath .tmp/ui-runtime/profile.json -Published` で `build/publish` だけをHTTPS 7445に起動します。終了時は `tools/Stop-UIFixture.ps1 -DropOwnedDatabase` が生成DB名・所有marker・PID開始時刻・実行DLLを照合して自分の資源だけを終了します。ランダム秘密はGit除外領域だけへ保存し、配布・ログ・manifestへ含めません。旧 `--prepare-browser` の固定名fixtureはこの検査で再利用しません。
+今回の最終publish検査は新しい専用DB SP2_WebFixture_UI_R20261029/HTTPS5182、独立監査はSP2_WebFixture_AUDIT_R20261029/5183で行います。tests/Web/New-RegenerationFixture.ps1は既存profile/DBを再作成せず、Stop-RegenerationHost.ps1は所有DB名・PID開始時刻・DLLが一致する自分のホストだけを停止します。秘密は.tmpだけに保存します。旧7445/ランダムDBの検査や過去PASSを今回へ流用しません。
 
-実装上の受渡し補足：EditVmの `removedCareerIds` はサーバー確認済み明示除去集合、`isNew` は番号欄の読取専用表示に使用します。停止確認MSG-038のYesだけ `X-SP2-Confirm-Stop: Yes` と改訂後StateRevisionで再送し、サーバーが同一の正規化入力/所有Stateとの一致を検査します。GET `/employees/edit?state=<乱数>` は表示専用で、URLに氏名/番号/経歴本文を含みません。その他の公開DTOは方式別共通契約に従います。
+実装上の受渡し：保護画面の変更操作はJSON POST成功200 envelopeから未消費の不透明ticketへ一度GETします。失敗JSONでは現在GETのDOM入力を保持し、想定外redirect/HTMLを成功として扱いません。通常ログインだけ303を維持します。待機中は入力・遷移を止め、応答後に元readonly/disabledを復元します。MSG-034は保存結果不明、MSG-041はUI状態失効として自動保存・再送・初期化を止めます。認証失効MSG-002は保存せずログインへ戻し、未保存Draftを復元しません。
 
 採用依存はSqlClient6.1.3/ClosedXML0.105.1、推移Pkcsのみ **10.0.13** を明示固定しました。2026-10-29の復元監査で旧Pkcs9.0.4がNU1902/1903となり、Microsoft公式の [GHSA-846f-f764-76mx](https://github.com/dotnet/runtime/security/advisories/GHSA-846f-f764-76mx) / [GHSA-2fmv-rv2c-59x7](https://github.com/dotnet/runtime/security/advisories/GHSA-2fmv-rv2c-59x7) と [修正版NuGet](https://www.nuget.org/packages/System.Security.Cryptography.Pkcs/10.0.13) を確認した補正です。監査やwarnings-as-errorsは無効化していません。依存ロックと今回のSBOM/検査記録を固定buildへ保存します。
 
-入力版と実装対応は `build/generation/inputs.json` / `spec-implementation-map.json` を参照してください。今回のDEMO認証変更は `build/test-results/self-cycle-3.json` の47件と `demo-credentials-http.json` の14件、既存DBの限定移行は `demo-credentials-migration.json` へ対象版付きで記録します。仕様の設計採用・ソース生成・実行試験・独立レビュー・利用者受入・正式採点は別状態です。
+今回の実行はsp2-ui-regenerate-20261029です。凍結入力はbuild/generation/inputs.json、対応はspec-implementation-map.json、3回の改善はbuild/test-results/quality-cycles.json、最終の範囲・未実施はfinal-verification.jsonです。仕様採用、ソース生成、実行試験、独立レビュー、利用者受入、正式採点を区別します。
 
-今回のUI再生成では、採用済みUI条件をRazorの項目classとCSSへ反映しました。基準幅1366pxでは氏名260px・氏名カナ330px・日付150px、狭幅ではmax-widthで収縮し、文字は14px以上を維持します。実測前に仕様根拠から固定した [UI期待値](tests/ui-contract.json) と、最終publishをEdgeで測る [収集器](tests/Web/ui-observations.cjs) を共通ゲートで照合します。未知の文字部品・Tab到達不能の負例も検査します。公開物tree・入力・期待値・収集器・判定器のSHAが変われば以前のUI合格は使用できません。UI実測の標準保存先は `build/test-results/ui-observations.json` と `ui-conformance.json` です。今回の認証改訂ではUI再測定を行っておらず、旧publishのUI/ブラウザー/印刷PASSを最新として提示しません。共通UIゲートは未実施として失敗状態を記録します。
+今回のUIは共通ヘッダー・左サイトメニュー・現在位置・独立見出しを備えます。基準1366pxで氏名260px・カナ330px・日付150px、文字14px以上/本文16px/見出し18・24px、狭幅では文字を縮小せず縦配置します。社員番号昇順・最大200件・ページングなしは理由付き採用済み例外です。仕様由来のtests/ui-contract.json3.3は204部品/202font/366ruleを固定しています。全matched部品・各状態・各環境を最終publishに束縛して観測し、未観測は未測定とします。UI gateが拒否ならoutputs.jsonを確定しません。ソースZIP再構築や部分検査は正式UI合格ではありません。
 
-今回の認証・SQL検査の実施範囲とPH05 OPENは別状態です。以前の3回品質検査やUI検査を今回のPASSへ転用しません。入力・実装・検査の対応は [生成記録](build/generation/regeneration.json) と今回の固定build記録を参照してください。
+今回のSQL実機は17.0.5005.3 RTM Express/互換160です。SQL Server2022実機、物理Windows IME/クリップボード、未到達の実BFCache、正式Pilot/受入/採点は未確認です。各記録はexact source/artifact/input SHAの範囲だけを示し、formalScoreはnullです。
 
 この作業環境の既存DEMOは `https://localhost:7443` です。停止中は `./tools/Start-Fixture.ps1 -ProfilePath .tmp/runtime/profile.json -Published` で最新 `build/publish` を起動します。既存の専用profileと所有DBを使い、生成済み業務データを初期化しません。これは当リポジトリの明示DEMO環境向けであり、source-only ZIPの配備先は前述の通常初期設定で用意します。

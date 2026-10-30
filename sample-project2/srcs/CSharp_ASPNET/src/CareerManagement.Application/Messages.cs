@@ -23,6 +23,7 @@ public static class Messages
         "ダウンロードを開始しました。", "ダウンロードが完了しなかった場合は、もう一度作成してください。",
         "経歴書の内容を確認できませんでした。管理者へ連絡してください。",
         "このコードを停止しますか。登録済みデータは保持され、新しい選択ができなくなります。",
-        "更新版が上限に達しています。管理者へ連絡してください。", "データを読み込めませんでした。時間をおいて再実行してください。"];
-    public static string Get(int id) => id is >0 and <=40 ? Text[id] : throw new ArgumentOutOfRangeException(nameof(id));
+        "更新版が上限に達しています。管理者へ連絡してください。", "データを読み込めませんでした。時間をおいて再実行してください。",
+        "画面の状態が失効しました。未保存の入力は自動で復元されません。"];
+    public static string Get(int id) => id is >0 and <=41 ? Text[id] : throw new ArgumentOutOfRangeException(nameof(id));
 }

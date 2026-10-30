@@ -52,6 +52,7 @@ for profile in selected:
             relative=source.relative_to(folder)
             helper=relative.as_posix() in helpers
             if (any(p in SKIP for p in relative.parts) and not helper) or source.name in OMIT:continue
+            if profile=='CSharp_ASPNET' and relative.parts[-2:]==('Properties','launchSettings.json'):continue
             if source.is_symlink():raise RuntimeError('Symlinks not allowed: '+str(source))
             if not source.is_file() or source.suffix.lower() in BINARY:continue
             if is_test_artifact(relative) or source.name.startswith('static_check'):continue
@@ -81,6 +82,12 @@ for profile in selected:
                 if count>1 or (not count and unknown_evidence) or re.search(r'(?:\.\./)+spec[/\\]',text):raise RuntimeError('Unreviewed Access specification-evidence dependency; source-only builder transformation requires review.')
                 if count:
                     data=text.encode();transformation='original specification hashes are explicitly unavailable in source-only build evidence; builder and artifact publication unchanged'
+            elif relative.as_posix()=='tools/Build.ps1' and profile=='CSharp_ASPNET':
+                text=data.decode('utf-8-sig')
+                text,parameters=re.subn(r'^param\([^\r\n]*\)\r?$', 'param()', text, count=1, flags=re.M)
+                text,tests=re.subn(r'^if\(\$RunTests\)\{\r?\n.*?^\}\r?\n', '', text, count=1, flags=re.M|re.S)
+                if parameters!=1 or tests!=1 or '$RunTests' in text or re.search(r'(?i)(?:^|[\s/])tests[/\\]',text):raise RuntimeError('Unreviewed .NET source-only build test boundary')
+                data=text.encode();transformation='source-only build retains restore/build/publish and omits the optional excluded-test phase'
             elif relative.as_posix()=='database/native/README.md':
                 data=('# Local native database deployment\n\nUse the included native build entry point and INTERFACE.md for the local call contract. Apply only the schema/deployment resources belonging to this source tree to an explicitly approved isolated application database. Keep the existing database security settings and configured application identity; no database, authentication mode or product name is inferred by packaging. Original-spec regeneration and test results are excluded.\n').encode()
                 transformation='production deployment instructions exclude specification links and test results'

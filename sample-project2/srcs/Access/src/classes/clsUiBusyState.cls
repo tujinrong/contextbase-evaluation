@@ -24,17 +24,24 @@ Public Sub Acquire(ByVal f As Access.Form)
     If priorDown < 0 Then priorDown = 0
     physicalOverlay = True
     Select Case f.Name
-    Case "frmLogin": anchor = "cmdExit"
-    Case "frmMenu": anchor = "cmdLogout"
-    Case "frmEmployeeEditor": anchor = "cmdCancel"
+    Case "frmLogin": anchor = "cmdLogin"
+    Case "frmMenu": anchor = "cmdEmployeeSearch"
+    Case "frmEmployeeEditor": anchor = "tabEmployee"
     Case Else: anchor = "cmdMenu"
     End Select
+    If f.Name <> "frmEmployeeEditor" And priorFocus <> "" Then
+        If f.Controls(priorFocus).ControlType = acCommandButton Then anchor = priorFocus
+    End If
     For Each c In f.Controls
         kind = c.ControlType
         If kind = acTextBox Or kind = acComboBox Or kind = acCheckBox Or kind = acListBox Or kind = acTabCtl Or kind = acCommandButton Then
             locked = Null
             If kind = acTextBox Or kind = acComboBox Or kind = acCheckBox Or kind = acListBox Then locked = CBool(c.Locked)
-            states.Add c.Name, Array(kind, CBool(c.Enabled), locked, CBool(c.TabStop))
+            If kind = acCommandButton Then
+                states.Add c.Name, Array(kind, CBool(c.Enabled), locked, CBool(c.TabStop), CStr(c.Caption))
+            Else
+                states.Add c.Name, Array(kind, CBool(c.Enabled), locked, CBool(c.TabStop), Null)
+            End If
         End If
     Next
     ' The anchor is outside all tabs. Its handler still refuses reentry with MSG-029.
@@ -44,7 +51,8 @@ Public Sub Acquire(ByVal f As Access.Form)
             kind = c.ControlType
             If kind = acTextBox Or kind = acComboBox Or kind = acCheckBox Or kind = acListBox Then c.Locked = True
             If c.Name <> anchor Then c.Enabled = False
-            c.TabStop = False
+            c.TabStop = (c.Name = anchor)
+            If c.Name = anchor And kind = acCommandButton Then c.Caption = "処理中"
         End If
     Next
     Exit Sub
@@ -74,6 +82,7 @@ Public Sub Restore()
         state = states(key): Set c = target.Controls(CStr(key))
         c.Enabled = CBool(state(1)): c.TabStop = CBool(state(3))
         If Not IsNull(state(2)) Then c.Locked = CBool(state(2))
+        If Not IsNull(state(4)) Then c.Caption = CStr(state(4))
     Next
     ' SetFocus alone scrolls only enough to expose the old control, leaving Tab
     ' captions above the viewport. Restore the saved native page offsets first.

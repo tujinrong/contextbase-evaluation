@@ -62,7 +62,7 @@ export function collectInputFiles(root, project, profile) {
   function walk(directory) {
     assertRegular(directory, true);
     for (const entry of fs.readdirSync(directory, {withFileTypes: true}).sort((a, b) => a.name.localeCompare(b.name, 'en'))) {
-      if (['spec-eval', 'spec-analysis', '.tmp', 'build', '.git'].includes(entry.name)) continue;
+      if (['spec-eval', 'spec-analysis', '.tmp', 'build', '.git'].includes(entry.name.toLowerCase())) continue;
       const target = path.join(directory, entry.name);
       if (entry.isSymbolicLink()) throw new Error(`Symlink input is not allowed: ${target}`);
       if (entry.isDirectory()) walk(target);

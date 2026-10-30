@@ -1,13 +1,13 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-CSharp_ASPNET-DET-QA","version":"1.2","path":"sample-project2/spec/CSharp_ASPNET/詳細設計QA.md","sheets":[{"heading":"境界と継承","kind":"GRID","sheet":"01_境界と継承"},{"heading":"詳細設計の採用判断","kind":"LIST","sheet":"02_詳細採用判断","key":["QA-ID"]},{"heading":"残件と検証","kind":"LIST","sheet":"03_残件と検証","key":["QA-ID"]},{"heading":"既存版と後工程","kind":"GRID","sheet":"04_既存版と後工程"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-CSharp_ASPNET-DET-QA","version":"1.4","path":"sample-project2/spec/CSharp_ASPNET/詳細設計QA.md","sheets":[{"heading":"境界と継承","kind":"GRID","sheet":"01_境界と継承"},{"heading":"詳細設計の採用判断","kind":"LIST","sheet":"02_詳細採用判断","key":["QA-ID"]},{"heading":"残件と検証","kind":"LIST","sheet":"03_残件と検証","key":["QA-ID"]},{"heading":"既存版と後工程","kind":"GRID","sheet":"04_既存版と後工程"}]} -->
 # CSharp_ASPNET 詳細設計QA・採用判断
 
-版1.2／2026-10-29。stage=detail-design、generationMode=canonical-update。現行の[QA](QA.md)、[プロジェクト情報](プロジェクト情報.md)、[要件定義](要件定義書.md)と既存基本設計を入力にする。設計者判断を利用者確定へ格上げせず、本改訂は利用者確定QA-025の認証条件だけを関係文書へ同期する。
+版1.4／2026-10-30。stage=detail-design、generationMode=canonical-update。現行の[QA](QA.md)、[プロジェクト情報](プロジェクト情報.md)、[要件定義](要件定義書.md)と既存基本設計を入力にする。設計者判断を利用者確定へ格上げせず、本改訂は基本QA-026～030とhandoffをUI操作契約へ具体化する。QA-025/確定UI条件1.0、業務/DB/保存/帳票を継承する。
 
 ## 境界と継承
 
 社員経歴管理の6機能/5画面/5論理表・48既存列、ログインあり、ADMIN/STAFF、社員削除なし、親子全体保存と経歴明示除去を継承する。社員200/経歴20/同時2セッション、初期3分類9コード・SP2-DEMO-01、2シート独自様式、11編集値完全重複/10秒待ち/成否不明等は既存の設計採用で、利用者承認済みとはしない。他方式/学生題材の認証なし/共有DB/独立操作履歴表を持ち込まない。
 
-今回の出力は詳細6機能、方式別共通、SQL Serverの設計索引/5TABLE、開発規約、本QA、READMEの入口だけ。ソース/DDLファイル/DB接続/実SQL/初期投入/Excel実体/印刷/実装/採点は行っていない。以下の設計採用は元QA-015/016を具体化するが、導入や性能/製品受入を意味しない。
+今回のUI改訂出力は詳細6機能、方式別共通、開発規約、本QA、方式情報/READMEとMSG-041の必要共通差分。SQL Serverの設計索引/5TABLEは点検し同じSHAのまま採用する。ソース/DDLファイル/DB接続/実SQL/初期投入/Excel実体/印刷/実装/採点は行っていない。以下の設計採用は元QA-015/016を具体化するが、導入や性能/製品受入を意味しない。
 
 ## 詳細設計の採用判断
 
@@ -23,8 +23,14 @@
 | DQA-008 | 詳細設計採用 | 氏名/カナの検索キーは参照時に.NETでNFKC/空白除去/大小無視し、SQLで番号/部署/在籍を絞った全候補から最終一致201件目を判定。名前照合前TOP禁止 | F03、原論理テーブル共通制約、SQL-SEARCH | 原表記/メタ文字/検索失効/保存復帰を維持。実性能は未測定 |
 | DQA-009 | 詳細設計採用 | 画面状態を所有Session/Tab/Revisionで管理し、条件一字編集で旧結果/選択失効。親読込版と全LoadedCareerIdsをサーバーへ保存し、送信の保持/明示除去集合を照合。Unknown後CanSave=false | F03/F04/F06、元QA-022 | 状態の新DB列なし。直接要求/古い応答/不正集合の試験未実施 |
 | DQA-010 | 詳細設計採用 | 固定ReportSnapshotから生成、GDI GetTextExtentPoint32WとTextElementで長文分割、2シート全量読戻し。完成後再認可だけ行いResponse.HasStartedで開始前後を分け、既送信内容を撤回しない | F05、元QA-016/022 | GDI測定はExcel印刷保証ではない。実フォント/印刷/応答中断の実証が残る |
-| DQA-UI01 | 利用者確定 | 2026-10-29追加指示。Web標準HTML/CSS、14px以上、項目別基準寸法と狭幅折返し、確定条件を実装と検査へ追跡する共通適合検査 | F01～F06、[UI生成条件](規約/UI生成条件.md) | 最終publishの実ブラウザー測定と入力検査は今回のbuildで記録。Accessのクラシック外観をWebへ流用せず、未実施を過去PASSで補わない |
+| DQA-UI01 | 利用者確定 | 2026-10-29追加指示。Web標準HTML/CSS、14px以上、項目別基準寸法と狭幅折返し、確定条件を実装と検査へ追跡する共通適合検査 | F01～F06、[UI生成条件](規約/UI生成条件.md) | 最終publishの実ブラウザー測定と入力検査は後続build工程で記録。Accessのクラシック外観をWebへ流用せず、未実施を過去PASSで補わない |
 | DQA-AUTH01 | 利用者確定 | QA-025のadmin/staff・共通123、最小3/最大128、新規seed1.1、既存2利用者だけの認証移行 | F01、SP2-DEMO-01、[DEMO認証条件](規約/DEMO認証条件.md) | IdentityV3/100000・内部ID/役割・業務行は維持。実適用/認証結果は今回build記録で確認 |
+
+| DQA-UI02 | 詳細設計採用 | 基本の同一HTML、共通Razor shell/現在位置/独立見出し、roleトークン・確定幅、行linkと1人出力、自然DOM/readonlyコピー/タブ・確認・IME/エラー焦点を実部品へ対応 | 全6機能、方式別共通DUI-01～12 | 静的同一断片/対応を検査。final publish/実キー/IME/DB/Excel未実施 |
+| DQA-UI03 | 詳細設計採用 | SearchRaw（空文字→nullを防ぐ専用Binder、移動rawは技術上限）と検証済みCriteria、完全なReturnSnapshot/seq/scrollを分離し、未検索/未適用/失敗/超過は無検証復元・検索0、Successだけapplied再取得。PH-05 untouched cancelを物理Cancelの無検証捕捉へ具体化 | F03-E01～03/F04-E01/03/04、BUI-05/UI-P01/02 | 元製品修正済みとせず、今回最終publishで4値/状態/検索回数を検証 |
+| DQA-UI04 | 詳細設計採用 | 既存ScreenStateStore内のSession/Tab/document lease/一回60秒ticketを最小拡張。通常アプリ復帰は全rawを保証。back/reloadは有効な検索専用immutable snapshotを新Stateへ独立copyし、Success/未検索/未適用/失敗/超過と選択/scrollを復元。直訪問や参照失効は初期表示、編集Draftは復旧/共有しない。現在document状態失効は入力保持/操作停止とMSG-041、明示再読込のみ | 共通方式別キー表/履歴、共通04/MSG-041、DUI-11 | 検索snapshotのcopyは編集Draft/可変State共有と区別し、copy先変更は元liveState不変。最後の未ack値の強制離脱限界は案内する。新DB/汎用基盤/heartbeatなし。認証/Busy/Unknownを優先、期限切れで自動初期化・再Saveしない。2Tab/履歴/期限実証は未実施 |
+
+| DQA-UI05 | 詳細設計採用・build実装前点検 | 保護UIは既存JSON fetchのContent-Type/application/jsonを維持。正常移動はHTTP200 NavigationEnvelopeで未消費ticket URLを返しclientが一回GET、失敗/確認はJSONで現在DOM/GET URLへ留まる。通常form POSTエラーのreload再POST、fetch303自動追随後のticket二重消費、全量JSONをform1値へ包む16k制限違反を避けるため旧303案を限定変更 | 方式別共通HTTP/所有表、F02/F03、DUI-05/07/08/11。Login成功303、業務/DB/auth/保存判定/2MiB/1値16384/60秒ticketは維持 | 実装前の仕様判断。実HTTP/再読込/通信断/GET失敗/一回消費は実装後に検証。旧詳細と旧UI契約のSHAを新版PASSへ流用しない |
 
 ## 残件と検証
 
@@ -32,11 +38,14 @@
 | --- | --- | --- | --- | --- |
 | DQA-R01 | 実装時の依存固定/検証 | .NET10の具体パッチ、直接/推移NuGet/SBOM/脆弱性/推移ライセンス、採用APIのコンパイル互換性 | 全体、元QA-015/016 | 明示実装工程で固定し、API/型変更は本詳細への影響をレビュー。今回未導入 |
 | DQA-R02 | 実機/DB/帳票未実施 | 2接続の認可/停止/上限/版/親子確定、10秒待ち、成否不明、最大入力、IME/Tab/DPI、全量xlsx読戻し/先頭アポストロフィ/改ページ/実フォント/保存開始後中断、検索2秒/Excel5秒 | F01～06、元QA-017、共通08の41シナリオ | 元Pilotと詳細API/SQLを対応させた実装後試験。今回の構造/描画とは分離 |
-| DQA-R03 | 元文書の版表示差を保持 | 基本F05はspec-meta.version=1.5/表紙1.3。元SHA-256とメタ版で今回入力を特定し、元本文は変更しない | F05、要件QA-REQ-02 | 基本設計の改訂担当へ引継ぎ。詳細は新文書1.0として記録し旧版PASSへ置換しない |
+| DQA-R03 | 基本工程で解消・対象版を採用 | 基本F05 1.6でメタ/表紙版を同期済み。今回入力SHAを固定し、新詳細F05 1.1へ対応する | F05、要件QA-REQ-02 | 元の版差は歴史的根拠。現候補で再発なしを静的検査。帳票実行の合格ではない |
 | DQA-R04 | 元の運用未指定を継承 | 保持年数/廃棄/バックアップ世代/具体復旧目標/本番運用適合、要件ごとの受入決定者/承認日 | 要件QA-REQ-01/03、全体 | 利用者/運用側の採用後に手順確認。具体年数/SLAを創作しない |
 | DQA-R05 | 利用者承認・受入未実施 | 元QAの設計採用全体と今回DQA-001～010は利用者レビュー前。詳細化したAPI/方式が要件採用又は製品受入を意味しない | 全成果 | 文書レビュー担当/対象版と利用者承認/実機/受入/正式採点を分けて記録。formalScore=null |
 
 ## 既存版と後工程
+
+runId=sp2-ui-regenerate-20261029、change_scope=ui_behavior。入力/出力全ID・版・SHA、基本からの採用差分・独立レビュー・未実施をsourceRoot/build/spec-generation/detail-design/へ固定する。基準基本HTMLを変えず、基本13候補/規約/入力と今回差分を区分。BUI/UI-P→DUI→部品/状態/検証方法をhandoffし、この工程からbuildを開始しない。
+
 
 旧入力の利用者指示QA-001～005/018～021/023/024と設計採用QA-006～014/022をそのまま保持した。新判断は本QAだけへ記録する。要求/基本の意味変更が必要なら担当工程へ影響を渡し、詳細の優先順位で矛盾を隠さない。元初期データSP2-DEMO-01のキー/値/基準日/安全投入を保持し、今回の設計を実際の初期化済み環境と説明しない。
 

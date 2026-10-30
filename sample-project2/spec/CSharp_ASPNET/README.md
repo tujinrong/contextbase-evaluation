@@ -1,13 +1,18 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-CSharp_ASPNET-INDEX","version":"1.9","path":"sample-project2/spec/CSharp_ASPNET/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-CSharp_ASPNET-INDEX","version":"1.12","path":"sample-project2/spec/CSharp_ASPNET/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
 # CSharp_ASPNET 基本設計書一覧
 
-索引版1.9／2026-10-29。社員経歴管理システム。利用者確定のDEMO資格情報を各工程の現行文書へ反映。
+索引版1.12／2026-10-30。社員経歴管理システム。今回の基本UI再設計と後工程への引継ぎを固定する。
 
 ## 対象と状態
 
+2026-10-29 / runId=sp2-ui-regenerate-20261029：今回の詳細工程は基本13文書を入力固定し、全6機能詳細と方式別共通/API・型/HTTP/URL/JS責務/意味HTML/CSS/キー/フォーカス/QA/規約をUI差分へ同期。raw/適用済み/状態を分離しPH-05の未検証raw復元と物理Cancel、所有PRG/直接URL/history、未保存/失敗/Unknownを具体化した。基本と同じ6配置断片、200件/ページなし、認証/DB/保存/seed/2シートを維持。今回の詳細成果/独立レビュー/全ID版SHA/未実施とbuild引継ぎはsourceRoot/build/spec-generation/detail-design/。アプリ/DB/製品用UI JSON/実測/受入/正式採点は未実施、buildは未開始。
+
+
+2026-10-29 / runId=sp2-ui-regenerate-20261029：basic-design-agentでWEB/BROWSERの基本設計を再生成。共通ヘッダー/左メニュー/現在位置、独立見出し、行編集、新規主操作、役割別トークン、raw/適用済み条件と復帰、対象社員の常時識別、保存単位・失敗時保持を基本6機能/静的モックへ具体化した。5画面6機能5表、DEMO認証条件1.0、UI生成条件1.0、要件1.1の業務/取得/出力条件を継承。200件・ページングなしはQA-028の理由付き例外、PH-05はUI-P01/02の設計契約化であり製品修正完了ではない。検査/版/ハッシュ/未実施/詳細handoffはsourceRoot/build/spec-generation/basic-design/の固定記録を参照。今回の詳細・実装・DB/実Excel・受入・正式採点は未実施。既存詳細のAPI/物理DBは再生成前の入力で、今回のUI改訂への追随は次工程。
+
 2026-10-28：detail-design-agentで本方式の詳細6機能、方式別共通、SQL Server物理設計5表、開発規約、詳細設計QAを新規作成した。原要件・基本・共通業務・QAは保全。採用判断と残件は[詳細設計QA](詳細設計QA.md)に記録し、文書・描画検査と実装/実DB/実Excel/受入/正式採点を区別する。
 
-2026-10-29：本方式の既存仕様から[要件定義書](要件定義書.md)1.0を逆生成した。確定指示・設計採用・詳細工程残件を区別し、根拠版/ハッシュと未実施の受入条件を対応付けた。今回の新たな利用者承認・基本/詳細設計改訂・アプリ/DB/実Excel/受入試験・正式採点は未実施。
+2026-10-29：本方式の既存仕様から[要件定義書](要件定義書.md)1.1を逆生成した。確定指示・設計採用・詳細工程残件を区別し、根拠版/ハッシュと未実施の受入条件を対応付けた。今回の新たな利用者承認・基本/詳細設計改訂・アプリ/DB/実Excel/受入試験・正式採点は未実施。
 
 本方式は2方式パターン（Access・CSharp_ASPNET）の一つ。フル方式の構造参照元はsample-project1（旧test-project1）。過去の依頼文・検査ハッシュは旧名の記録として保持する。
 
@@ -23,7 +28,7 @@
 | 詳細 | SQL Server物理設計 | [DB定義と5TABLE分冊](DB定義/SQLServer/01_DB定義書.md) |
 | 詳細 | 開発規約 | [配置/型/検査/実装後試験](規約/開発規約.md) |
 | 詳細 | 採用判断/残件 | [詳細設計QA](詳細設計QA.md) |
-| 要件 | 要件定義書 | [既存仕様から逆生成・1.0](要件定義書.md) |
+| 要件 | 要件定義書 | [既存仕様から逆生成・1.1](要件定義書.md) |
 | 前提 | プロジェクト情報 | [目的・方式・認証境界](プロジェクト情報.md) |
 | 前提 | QA | [確定要求・設計判断・残件](QA.md) |
 | 共通 | システム概要 | [目的・機能・業務遷移](共通/01_システム概要.md) |
@@ -50,3 +55,5 @@
 specRoot=sample-project2/spec/CSharp_ASPNET/、sourceRoot=sample-project2/srcs/CSharp_ASPNET/。業務定義と依存先はこのspecRoot内で完結する。他方式の仕様や旧sourceRoot/specへの代替読取りは行わない。最終検査記録はsourceRoot/build/spec-generation/、途中のHTML/画像はsourceRoot/.tmp/。
 
 基本設計を詳細仕様・DB定義・アプリ生成の実行許可として扱わない。実装前にQAの詳細工程残件を具体化し、機能ID/項目ID/イベントIDと業務制約を引き継ぐ。
+
+2026-10-30 / DQA-UI05：build実装前の詳細点検で保護UIの移動transportをJSON POST成功200 NavigationEnvelope→一回GETへ限定改訂した。POSTエラー画面の再送・fetch303のticket二重消費を避け、raw/失敗DOM保持と合法最大入力を守る。Login303と業務/DB/auth/保存判定、同一HTMLは維持。旧詳細PASSを新版へ流用せず、詳細再レビューと通常build preflight/UI根拠を更新する。

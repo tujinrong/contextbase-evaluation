@@ -1,6 +1,12 @@
 Option Compare Binary
 Option Explicit
 Private Declare PtrSafe Function MoveFileExW Lib "kernel32" (ByVal source As LongPtr, ByVal target As LongPtr, ByVal flags As Long) As Long
+Private Declare PtrSafe Function EnumProcesses Lib "psapi" (ByRef processes As Long, ByVal bytes As Long, ByRef needed As Long) As Long
+Private Declare PtrSafe Function GetWindowThreadProcessId Lib "user32" (ByVal hwnd As LongPtr, ByRef processId As Long) As Long
+Private Declare PtrSafe Function OpenProcess Lib "kernel32" (ByVal access As Long, ByVal inherit As Long, ByVal processId As Long) As LongPtr
+Private Declare PtrSafe Function WaitForSingleObject Lib "kernel32" (ByVal handle As LongPtr, ByVal milliseconds As Long) As Long
+Private Declare PtrSafe Function GetExitCodeProcess Lib "kernel32" (ByVal handle As LongPtr, ByRef code As Long) As Long
+Private Declare PtrSafe Function CloseHandle Lib "kernel32" (ByVal handle As LongPtr) As Long
 Private Declare PtrSafe Function GetStringTypeW Lib "kernel32" (ByVal kind As Long, ByVal source As LongPtr, ByVal chars As Long, ByRef flags As Integer) As Long
 Private Declare PtrSafe Function CreateCompatibleDC Lib "gdi32" (ByVal device As LongPtr) As LongPtr
 Private Declare PtrSafe Function CreateFontW Lib "gdi32" (ByVal height As Long, ByVal width As Long, ByVal escapement As Long, ByVal orientation As Long, ByVal weight As Long, ByVal italic As Long, ByVal underline As Long, ByVal strikeout As Long, ByVal charset As Long, ByVal outputPrecision As Long, ByVal clipPrecision As Long, ByVal quality As Long, ByVal pitch As Long, ByVal face As LongPtr) As LongPtr
@@ -26,7 +32,44 @@ Private pageEnds As Object
 Private pageCaps As Object
 Private caseContexts As Object
 Private sectionContexts As Object
+Private excelJournal As Collection
 Private textGroup As Long
+Private Function NewOwnedExcel(ByVal owned As Collection) As Object
+    Dim processes(0 To 8191) As Long, needed As Long, previous As Object, i As Long
+    Dim app As Object, pid As Long, handle As LongPtr, confirmed As Boolean, text As String
+    On Error GoTo Failed
+    If EnumProcesses(processes(0), 32768, needed) = 0 Or needed >= 32768 Then Reject "MSG-013"
+    Set previous = CreateObject("Scripting.Dictionary")
+    For i = 0 To needed \ 4 - 1: previous(CStr(processes(i))) = True: Next
+    Set app = CreateObject("Excel.Application")
+    GetWindowThreadProcessId CLngPtr(app.hwnd), pid
+    If pid = 0 Or previous.Exists(CStr(pid)) Then Reject "MSG-013"
+    confirmed = True
+    handle = OpenProcess(&H101000, 0, pid)
+    If handle = 0 Then Reject "MSG-013"
+    owned.Add Array(pid, handle)
+    Set NewOwnedExcel = app: Set app = Nothing: Exit Function
+Failed:
+    text = Err.Description
+    If confirmed And Not app Is Nothing Then app.Quit
+    Set app = Nothing
+    Err.Raise vbObjectError + 731, "SP2.NewOwnedExcel", text
+End Function
+Private Sub RecordOwnedExcelExit(ByVal owned As Collection)
+    Dim item As Variant, wait As Long, code As Long, handle As LongPtr
+    If excelJournal Is Nothing Then Set excelJournal = New Collection
+    For Each item In owned
+        handle = CLngPtr(item(1)): wait = WaitForSingleObject(handle, 10000): code = -1
+        GetExitCodeProcess handle, code
+        excelJournal.Add CStr(item(0)) & "|" & CStr(wait) & "|" & CStr(code)
+        CloseHandle handle
+    Next
+End Sub
+Public Function ExportOfficeJournalText() As String
+    Dim row As Variant
+    If excelJournal Is Nothing Then Exit Function
+    For Each row In excelJournal: ExportOfficeJournalText = ExportOfficeJournalText & CStr(row) & vbLf: Next
+End Function
 Private Function FitsText(ByVal value As String, Optional ByVal wide As Boolean = False) As Boolean
     Dim size As TEXTSIZE
     If value = "" Then FitsText = True: Exit Function
@@ -241,7 +284,7 @@ Private Sub WriteWideBlock(ByVal ws As Object, ByRef row As Long, ByVal label As
     Checkpoint
 End Sub
 Private Sub ConfigureSheet(ByVal ws As Object, ByVal title As String, ByVal snapshot As clsReportSnapshot, ByVal expected As Collection)
-    Dim setup As Object, zoom As Long, columnWidth As Double, available As Double, footer As String, piece As Variant, parts As Collection, nameDisplay As String, capacity As Long, planned As New Collection, page As Object, tooWide As Boolean
+    Dim setup As Object, zoom As Long, columnWidth As Double, available As Double, footer As String, piece As Variant, parts As Collection, nameDisplay As String, capacity As Long, planned As New Collection, page As Object, tooWide As Boolean, lowWidth As Double, highWidth As Double, actualWidth As Double, widthTry As Long
     ws.Cells.Font.Name = "メイリオ": ws.Cells.Font.Size = 10.5: ws.Cells.NumberFormat = "@"
     columnWidth = 3: ws.Columns("A:X").ColumnWidth = columnWidth: ws.Rows.RowHeight = 18
     Set setup = ws.PageSetup
@@ -251,19 +294,22 @@ Private Sub ConfigureSheet(ByVal ws As Object, ByVal title As String, ByVal snap
     setup.PrintHeadings = False: setup.PrintGridlines = False: setup.PrintTitleColumns = ""
     setup.FitToPagesWide = False: setup.FitToPagesTall = False: setup.Zoom = 100
     setup.PrintArea = "$A$1:$X$5": ws.Range("X5").Value2 = "x": ws.DisplayPageBreaks = True
-    ' A full-width probe uses the printer's actual page bands, with extra room for rounding/borders.
-    available = 595.27559 - 85.03937 - 24
-    Do
-        tooWide = (CDbl(ws.Range("A1:X1").Width) > available)
-        For Each page In ws.VPageBreaks
-            If page.Location.Column > 1 And page.Location.Column <= 24 Then tooWide = True
-        Next
-        If setup.Pages.Count <> 1 Then tooWide = True
-        If Not tooWide Then Exit Do
-        columnWidth = columnWidth - 0.1
-        If columnWidth < 2 Then Reject "MSG-037"
+    ' Adopt a real 20--21pt width per column, not a guessed ColumnWidth unit.
+    ' Binary search retains a one-page safety margin without shrinking fonts.
+    available = 504: lowWidth = 1: highWidth = 5
+    For widthTry = 1 To 24
+        actualWidth = CDbl(ws.Range("A1").Width)
+        If actualWidth >= 20 And actualWidth <= 21 Then Exit For
+        If actualWidth < 20 Then lowWidth = columnWidth Else highWidth = columnWidth
+        columnWidth = (lowWidth + highWidth) / 2
         ws.Columns("A:X").ColumnWidth = columnWidth
-    Loop
+    Next
+    If widthTry > 24 Then Reject "MSG-037"
+    If CDbl(ws.Range("A1:X1").Width) < 480 Or CDbl(ws.Range("A1:X1").Width) > 504 Then Reject "MSG-037"
+    For Each page In ws.VPageBreaks
+        If page.Location.Column > 1 And page.Location.Column <= 24 Then Reject "MSG-037"
+    Next
+    If setup.Pages.Count <> 1 Then Reject "MSG-037"
     EnsureMeasure ws
     If title = "案件経歴" Then
         ws.Range("A1:X1").Merge: ws.Rows(1).RowHeight = 36
@@ -280,21 +326,19 @@ Private Sub ConfigureSheet(ByVal ws As Object, ByVal title As String, ByVal snap
     ws.Range("A1").Font.Size = 18: ws.Range("A1").Font.Bold = True: PutText ws, "A1", title, expected
     ws.Range("A3:X3").Merge: PutText ws, "A3", Format$(snapshot.BusinessDate, "yyyy年mm月dd日") & "現在", expected
     ws.Range("A4:X4").Merge: PutText ws, "A4", "作成日時（JST）：" & Format$(DateAdd("h", 9, snapshot.CapturedAtUtc), "yyyy年mm月dd日 hh:nn"), expected
-    Set parts = TextPieces(snapshot.Employee.Name, True)
-    For Each piece In parts
-        If footer <> "" Then footer = footer & vbLf
-        footer = footer & Replace(CStr(piece(0)), "&", "&&")
-    Next
+    ' Forty-scalar name stays on the first footer line; the body wrapping
+    ' limit of 32 units must not insert extra footer lines.
+    footer = Replace(snapshot.Employee.Name, "&", "&&")
     footer = footer & vbLf & ws.Name & " ／ 作成JST " & Format$(DateAdd("h", 9, snapshot.CapturedAtUtc), "yyyy年mm月dd日 hh:nn") & "  &P/&N"
     zoom = Fix(available / CDbl(ws.Range("A1:X1").Width) * 100)
     If zoom < 100 Then Reject "MSG-037"
     If zoom > 100 Then zoom = 100
-    ' PH07 Access-only technical override: FitTo ignores manual breaks (Microsoft Support).
+    ' DQA-UI04/09: explicit Zoom keeps manual breaks and integer footer font.
     setup.FitToPagesWide = False: setup.FitToPagesTall = False: setup.Zoom = zoom
     setup.ScaleWithDocHeaderFooter = False: setup.AlignMarginsHeaderFooter = True
-    setup.PrintTitleRows = "$1:$4": setup.CenterFooter = "&""メイリオ,Regular""&11" & footer
-    capacity = Fix(((841.88976 - 85.03937 - 72) / (zoom / 100#) - CDbl(ws.Rows("1:4").Height)) / 18) - 1
-    If capacity > 32 Then capacity = 32
+    setup.PrintTitleRows = "$1:$4": setup.CenterFooter = "&11&""メイリオ,Regular""" & footer
+    capacity = Fix((720# - CDbl(ws.Rows("1:4").Height)) / 18#)
+    If capacity > 48 Then capacity = 48
     If capacity < 12 Then Reject "MSG-037"
     pageCaps.Add ws.Name, capacity: pageEnds.Add ws.Name, 5 + capacity: pagePlans.Add ws.Name, planned
     caseContexts.Add ws.Name, Array("", ""): sectionContexts.Add ws.Name, ""
@@ -369,7 +413,7 @@ Private Function FileStamp(ByVal path As String) As String
 End Function
 Public Function ExportCareer(ByVal employeeId As Long, ByVal session As clsSession, Optional ByVal verificationPath As String = "") As clsResult
     Dim snapshot As clsReportSnapshot, result As clsResult, xl As Object, book As Object, cover As Object, careers As Object, expected As New Collection
-    Dim c As clsCareerDraft, row As Long, ordinal As Long, months As Long, finish As Date, period As String, path As Variant, target As String, temporary As String, request As String, ownerRequest As String, overwrite As Boolean, stamp As String, u As clsUnitOfWork, text As String, published As Boolean, dot As Long, pageCount As Long, newPageCount As Long, retry As Long, ownedTemps As New Collection, ownedPath As Variant, face As String
+    Dim c As clsCareerDraft, row As Long, ordinal As Long, months As Long, finish As Date, period As String, path As Variant, target As String, temporary As String, request As String, ownerRequest As String, overwrite As Boolean, stamp As String, u As clsUnitOfWork, text As String, published As Boolean, dot As Long, pageCount As Long, newPageCount As Long, retry As Long, ownedTemps As New Collection, ownedPath As Variant, face As String, ownedOffice As New Collection
     On Error GoTo Failed
     If exportRunning Then Set ExportCareer = MakeResult("Busy", "MSG-029"): Exit Function
     exportRunning = True: request = NewRequestId(): ownerRequest = request: exportRequest = request
@@ -378,7 +422,7 @@ Public Function ExportCareer(ByVal employeeId As Long, ByVal session As clsSessi
     Set originalText = CreateObject("Scripting.Dictionary"): Set rowStyles = CreateObject("Scripting.Dictionary")
     Set pagePlans = CreateObject("Scripting.Dictionary"): Set pageEnds = CreateObject("Scripting.Dictionary"): Set pageCaps = CreateObject("Scripting.Dictionary")
     Set caseContexts = CreateObject("Scripting.Dictionary"): Set sectionContexts = CreateObject("Scripting.Dictionary"): textGroup = 0
-    Set xl = CreateObject("Excel.Application"): xl.Visible = False: xl.DisplayAlerts = False: xl.EnableEvents = False
+    Set xl = NewOwnedExcel(ownedOffice): xl.Visible = False: xl.DisplayAlerts = False: xl.EnableEvents = False
     Set book = xl.Workbooks.Add(-4167): Set cover = book.Worksheets(1): cover.Name = "職務経歴書"
     book.Styles("Normal").Font.Name = "メイリオ": book.Styles("Normal").Font.Size = 10.5
     Set careers = book.Worksheets.Add(, cover): careers.Name = "案件経歴"
@@ -444,7 +488,7 @@ ReconfirmDestination:
     If FileStamp(target) <> stamp Then
         If verificationPath <> "" Then Reject "MSG-013"
         If MsgBox("保存先のファイルが変更されています。現在のファイルを上書きしますか。", vbYesNo + vbQuestion + vbDefaultButton2) <> vbYes Then
-            Set xl = CreateObject("Excel.Application"): xl.Visible = False: xl.DisplayAlerts = False: xl.EnableEvents = False
+            Set xl = NewOwnedExcel(ownedOffice): xl.Visible = False: xl.DisplayAlerts = False: xl.EnableEvents = False
             Set book = xl.Workbooks.Open(temporary, 0, True)
             request = NewRequestId(): temporary = "": GoTo ChoosePath
         End If
@@ -479,6 +523,7 @@ Cleanup:
     Set book = Nothing: Set cover = Nothing: Set careers = Nothing
     If Not xl Is Nothing Then xl.Quit
     Set xl = Nothing
+    RecordOwnedExcelExit ownedOffice
     For Each ownedPath In ownedTemps
         If CStr(ownedPath) <> target Then If Len(Dir$(CStr(ownedPath))) > 0 Then Kill CStr(ownedPath)
     Next

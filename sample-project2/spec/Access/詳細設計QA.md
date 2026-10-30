@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-DETAIL-QA","version":"1.2","path":"sample-project2/spec/Access/詳細設計QA.md","sheets":[{"heading":"適用と決定","kind":"GRID","sheet":"01_適用と決定"},{"heading":"採用と残件","kind":"LIST","sheet":"02_採用と残件","key":["QA-ID"]},{"heading":"工程状態","kind":"GRID","sheet":"03_工程状態"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-DETAIL-QA","version":"1.4","path":"sample-project2/spec/Access/詳細設計QA.md","sheets":[{"heading":"適用と決定","kind":"GRID","sheet":"01_適用と決定"},{"heading":"採用と残件","kind":"LIST","sheet":"02_採用と残件","key":["QA-ID"]},{"heading":"工程状態","kind":"GRID","sheet":"03_工程状態"}]} -->
 # Access 詳細設計QA・技術採用
 
-版1.2／2026-10-29。stage=detail-design、generationMode=canonical-update。
+版1.4／2026-10-30。stage=detail-design、generationMode=canonical-update。
 
 ## 適用と決定
 
@@ -21,9 +21,19 @@
 | DQA-A08 | QA-REQ-OPERATIONS | 保持期間、復旧時間／復旧点、配布後の運用責任、バックアップ保管先 | 未確定を継承。詳細で具体値を創作せず、稼働前に利用者と採用範囲を決定する。復元／障害注入も未実施 | [要件](要件定義書.md)、[既存QA](QA.md) |
 | DQA-UI01 | 2026-10-29利用者追加指示、QA-017 | クラシックな標準Access部品、全text部品Yu Gothic UI11pt、項目別Twips、標準入力補助と共通適合検査を採用 | 利用者確定。生成と最終ACCDBの実測・実入力は今回のbuild記録で確認し、過去のPASSを流用しない | [UI生成条件](規約/UI生成条件.md) |
 | DQA-AUTH01 | QA-025、F01、SP2-DEMO-01 | 利用者確定のadmin/staff・共通123、最小3/最大128、新規seed1.1、既存2利用者の認証移行 | 利用者確定。CNG/600000・役割・内部IDと業務行を維持し、実適用/認証結果は今回build記録で確認する | [DEMO認証条件](規約/DEMO認証条件.md) |
+| DQA-UI02 | QA-026/027、共通09、F04 | FormHeaderにタイトル/親/標準Tabの空Page2つ、Detailに論理Pageの入力群、Footerに全体保存/取消。各Section別原点/属性/Resize・focus退避/再入抑止を選定 | 設計採用。実親と論理所属を分離し、Tab切替拒否で旧Page/raw/focus保持。2165回避・空Page→Detailキー・下端Tab可視性はbuild最初の実Formで未検証 | [UI部品・状態・検査契約](共通/方式別/02_UI部品・状態・検査契約.md) |
+| DQA-UI03 | QA-027、F03/F06 | native非client帯を確保しF03部署列を220→198px相当、F06名称列293→268px相当へ配分。氏名3900/カナ4950/日付2250twipとF04一覧420pxは維持 | 設計採用。基本/詳細HTMLは同一で、native物理列との差を明記。F03-I09 readonly全文部品1980twip高＋内部scroll、F06右欄から最大長をキー/コピー確認。実scroll帯/行高は未検証 | [UI契約](共通/方式別/02_UI部品・状態・検査契約.md)、F03/F06 |
+| DQA-UI04 | QA-028、DQA-A04、F05 | 手動改ページと可読サイズを両立するためZoom100/FitTo無効、横480～504pt/24列・縦720pt以内の実行高予算、HPageBreaks.Addで継続見出しを配置 | 設計採用。Microsoft一次資料を2026-10-29確認。各列3.0相当は初期近似、実ポイント幅で調整。実Excelの全件全文/印刷/境界が揃うまでPH-07は未検証 | [F05紙面契約](詳細仕様書/05_経歴書出力.md) |
+| DQA-UI05 | QA-026、F01/F03/F04/F06 | 非連結TextBoxの不正rawを画面状態へ保ち、BeforeUpdate一律Cancelで閉じ込めず検索/反映/保存の中央検査で拒否。Password以外のInputMask/Formatは空 | 設計採用。受理上限/保存条件は不変。未完成番号/年月・過長値から取消/継続/保存拒否、Date/Integerへの失敗変換なし、busyのfocus所有Control例外と状態復帰を実キーで未検証 | [UI契約](共通/方式別/02_UI部品・状態・検査契約.md)、共通実装 |
+| DQA-UI06 | QA-026、共通09、F03 | clsSearchReturnStateでraw4条件/検索状態/applied有無/結果/選択/位置/focusを別保持。取消は検索0、保存成功はraw同条件を再検査再検索 | 既存Access契約の詳細化。未検索/条件変更後からの新規取消、空白/全半角/大小保持、保存後raw不正でも保存成功維持を実機で未検証。他方式へ自動展開しない | [F03](詳細仕様書/03_社員検索画面.md)、UI契約 |
+| DQA-UI07 | DQA-UI05、F03/F04/F06 | LimitToListを維持しNotInListでNewDataを別保持、acDataErrContinue＋当該Control.Undoでfocus拒否を解き、取消拒否は同Comboへ未採用rawを再表示 | 設計採用。未知候補を追加/保存せず中央検査で拒否。UndoはControl表示だけの例外。NotInList→取消Click/Unload→No raw復元/Yes破棄、Esc、Timer復帰と認証期限非延長を実機未検証 | [UI契約](共通/方式別/02_UI部品・状態・検査契約.md)、Microsoft一次資料 |
+| DQA-UI08 | DQA-UI02/03、独立build checkpoint2 | Accessは非表示Control下端もSection保存最小高に含み、標準TabにPage帯の最小高がある。F03全文欄を初期330twip/非表示・選択時1980/Detail9450へ展開。F04はTab900/Header2400を余白付きで再設計し、Detail7920キャンバスを維持する | 現候補5a45b637…e584の独立DesignViewでDetail9090、Tab780/Header2145を確認したことが改訂契機。最小実測値への追従ではなく固定領域の必要余白/スクロールを設計。新候補の属性・通常復帰/下端・全文キー/コピー・固定Footer到達は再検証。基本8HTML/11pt/入力幅/保存/DBは不変 | [物理UI契約](共通/方式別/02_UI部品・状態・検査契約.md)1.1、F03/F04 |
+| DQA-UI09 | DQA-UI04、F05、Excel限定API/PDF小試験 | Excel CenterFooterの小数サイズコード&10.5はreadbackに残っても印字が約10ptかつ先頭に.5を出すため、Footerだけメイリオ整数11ptを採用。本文セル10.5/見出し11/表題18を維持し、氏名最大40字の1行＋他情報1行、数字先頭名のコード区切りを検査する | 現Office限定の小試験を作者とrootが独立PDF確認。&11は約11.04ptで余計な字なし。証拠はsourceRoot/build/test-results/independent-print-format.json（productPass=false）。製品帳票/実プレビュー/実印刷のPASSではなく、新候補の全文/継続/横1頁/非重なりを再検証 | [F05紙面契約](詳細仕様書/05_経歴書出力.md)1.2 |
 
 ## 工程状態
 
-今回作成するのはMarkdownの詳細仕様・方式別共通・DB物理設計・開発規約・本QAと入口である。SQL／VBAシグネチャ・処理説明を記述しても、ソースファイル・DDLファイル・ACCDB・実Excelを生成／実行した意味ではない。詳細初版での基本・要件・既存共通・元QAの保全を維持する。本改訂では利用者のQA-025に限り、関係する現行文書の認証条件を同期する。
+初版で作成した詳細/物理設計/QAを継承し、今回はrunId=sp2-ui-regenerate-20261029のui_behavior差分だけを更新する。基本の採用値/54条件を全6機能詳細・方式別共通・開発規約・本QA/入口へ同期する。要件/基本/元QA・認証/業務/seedを変更せず、物理DBは5表48列/キー/型の設計整合点検のみ。SQL/VBAのシグネチャや処理説明を記してもソース/DDL/ACCDB/実Excelを生成・実行した意味ではない。
 
 構造・原ID・リンク・HTML同一性・自己／独立レビュー・描画・実機・実DB・実Excel／印刷・利用者受入・正式採点を分ける。検査は対象版ハッシュ付きのsourceRoot/build/spec-generation/記録に従い、実行試験は未実施、formalScore=null。後工程は別の実行指示を要する。
+
+2026-10-30のDQA-UI08/09はbuildで見つかったネイティブ制約を担当詳細へ戻した最小技術改訂であり、利用者の業務条件や基礎UIの再設計ではない。初回詳細時点の未実施と、その後の候補別build検査を区別し、旧候補の属性/API合格を新候補へ転記しない。

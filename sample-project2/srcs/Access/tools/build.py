@@ -52,7 +52,13 @@ def invalidate_verification():
         if target.is_symlink() or target.resolve()!=expected: raise RuntimeError('Unsafe verification report directory')
         for child in target.rglob('*'):
             if child.is_symlink(): raise RuntimeError('Linked verification report refused')
-        shutil.rmtree(target)
+        # Contract-only independent review belongs to the current frozen spec,
+        # not the old product. Keep it and root-owned native evidence. Product
+        # gates are invalidated explicitly; all other current test reports are
+        # rewritten by their owners and checked against the final artifact SHA.
+        for name in ('ui-observations.json','ui-conformance.json'):
+            old=target/name
+            if old.exists():old.unlink()
     target.mkdir(parents=True,exist_ok=True)
 
 def classic_control(ctl, kind, *, header=False):
@@ -68,7 +74,7 @@ def classic_control(ctl, kind, *, header=False):
         ctl.FontName='Yu Gothic UI'; ctl.FontSize=11; ctl.FontWeight=700 if header else 400
         ctl.ForeThemeColorIndex=-1; ctl.ForeColor=0
         ctl.BackThemeColorIndex=-1
-        ctl.BackColor=16777215 if kind in (109,110,111) else 15790320
+        ctl.BackColor=16777215 if kind in (109,110,111) else 15724527
     if kind in (104,123):
         ctl.UseTheme=False; ctl.Shape=0; ctl.Gradient=0; ctl.BorderStyle=1
         ctl.HoverThemeColorIndex=-1; ctl.HoverForeThemeColorIndex=-1
@@ -78,100 +84,91 @@ def classic_control(ctl, kind, *, header=False):
     else:
         ctl.SpecialEffect=0; ctl.BorderStyle=0 if kind==100 else 1
     if kind in (100,109,111,104,123): ctl.BackStyle=0 if kind==100 else 1
-def create_forms(app):
+def create_forms(app, selected=None, code_factory=None):
+    """Create the specified native Sections and empty Header Pages.
+
+    Runtime visibility and safe focus transitions belong to VBA, not Pages.
+    The source-only production helper never reads specification/tests data.
+    """
     exports=ROOT/'.tmp/build/forms'; exports.mkdir(parents=True,exist_ok=True)
-    for name, d in forms.FORMS.items():
+    casts={100:'_Label',109:'_Textbox',104:'_CommandButton',106:'_Checkbox',110:'_ListBox',111:'_Combobox',123:'_TabControl'}
+    for name,d in forms.FORMS.items():
+        if selected is not None and name not in selected: continue
         print('Designing '+name,flush=True)
-        # Import a named native Access form before design automation. Creating an
-        # unnamed form can trigger an interactive Save As dialog in Office 365.
         template=ROOT/'.tmp/build/bootstrap-form.txt'
-        template.write_text('Version =20\r\nVersionRequired =20\r\nBegin Form\r\n    Width =20000\r\n    Begin\r\n        Begin Section\r\n            Height =10000\r\n            Name ="Detail"\r\n        End\r\n    End\r\nEnd\r\n',encoding='utf-16')
+        template.write_text('Version =20\r\nVersionRequired =20\r\nBegin Form\r\n    Width =18900\r\n    Begin\r\n        Begin FormHeader\r\n            Height =3000\r\n            Name ="FormHeader"\r\n        End\r\n        Begin Section\r\n            Height =10000\r\n            Name ="Detail"\r\n        End\r\n        Begin FormFooter\r\n            Height =1500\r\n            Name ="FormFooter"\r\n        End\r\n    End\r\nEnd\r\n',encoding='utf-16')
         app.LoadFromText(2,name,str(template)); app.DoCmd.OpenForm(name,1)
-        f=app.Forms(name); original=name; f.RecordSource=''; f.Caption=d['caption']; f.Width=d['width']
-        f.Section(0).Height=d['height']; f.DefaultView=0; f.NavigationButtons=False; f.RecordSelectors=False
-        f.DividingLines=False; f.AutoCenter=True; f.AutoResize=True; f.FitToScreen=False
-        f.BorderStyle=2; f.PopUp=False; f.Modal=False; f.ScrollBars=3; f.KeyPreview=True; f.TimerInterval=1000
-        section=f.Section(0); section.BackThemeColorIndex=-1; section.BackColor=15790320; section=None
-        f.OnLoad='[Event Procedure]'; f.OnTimer='[Event Procedure]'; f.OnKeyDown='[Event Procedure]'
-        f.OnMouseDown='[Event Procedure]'; f.OnUnload='[Event Procedure]'; f.OnClose='[Event Procedure]'
-        # Give the new form its definitive name before opening its code module.
-        # Access's Save command can request a name for an unnamed new form.
-        app.DoCmd.Save(2,original)
-        f.HasModule=True
-        tabs={}
+        f=app.Forms(name);f.RecordSource='';f.Caption=d['caption'];f.Width=d['width']
+        f.DefaultView=0;f.NavigationButtons=False;f.RecordSelectors=False;f.DividingLines=False
+        f.AutoCenter=False;f.AutoResize=False;f.FitToScreen=False;f.BorderStyle=2
+        f.PopUp=False;f.Modal=False;f.ScrollBars=3;f.KeyPreview=True;f.TimerInterval=1000
+        for sec in (1,0,2):
+            section=f.Section(sec);section.BackThemeColorIndex=-1;section.BackColor=15724527;section=None
+        for event in ('OnLoad','OnActivate','OnResize','OnTimer','OnKeyDown','OnMouseDown','OnUnload','OnClose'):
+            setattr(f,event,'[Event Procedure]')
+        app.DoCmd.Save(2,name);f.HasModule=True
+        section_order={}
         for c in d['controls']:
-            parent=''
-            if 'page' in c: parent=tabs[c['page']]
-            ctl=app.CreateControl(original,c['kind'],0,parent,'',c['x'],c['y'],c['w'],c['h'])
-            ctl=win32com.client.CastTo(ctl,{100:'_Label',109:'_Textbox',104:'_CommandButton',106:'_Checkbox',110:'_ListBox',111:'_Combobox',123:'_TabControl'}[c['kind']])
-            ctl.Name=c['name']
-            if c['kind'] in (100,104): ctl.Caption=c['label']
-            classic_control(ctl,c['kind'])
-            if c['kind'] in (109,111,110,106): ctl.ControlSource=''
-            if c['kind']==104: ctl.OnClick='[Event Procedure]'
+            # Only attached Labels have a Control parent. Page inputs remain
+            # physically in Detail and carry a logical membership Tag.
+            parent=c['name'][4:] if c['name'].startswith('lbl_') else ''
+            ctl=app.CreateControl(name,c['kind'],c['section'],parent,'',c['x'],c['y'],c['w'],c['h'])
+            ctl=win32com.client.CastTo(ctl,casts[c['kind']]);ctl.Name=c['name']
+            if c['kind'] in (100,104):ctl.Caption=c['label'].replace('\n','\r\n')
+            classic_control(ctl,c['kind'],header=c.get('bold',False))
+            ctl.Tag='PAGE:'+str(c['page']) if 'page' in c else 'COMMON'
+            ctl.Visible=c.get('visible',True) and ('page' not in c or c['page']==0)
+            if c['kind'] in (109,111,110,106):ctl.ControlSource=''
+            if c['kind']!=100:
+                ordinal=section_order.get(c['section'],0);ctl.TabIndex=ordinal;section_order[c['section']]=ordinal+1
+                ctl.TabStop=True
+                # Access TabControl has no OnGotFocus property; Detail inputs
+                # own LastEditFocus. Do not borrow the MSForms interface.
+                if c['kind']!=123:ctl.OnGotFocus='[Event Procedure]'
+            if c['kind']==104:
+                ctl.OnClick='[Event Procedure]';ctl.Default=c.get('default',False);ctl.Cancel=False
             if c['kind']==109:
-                ctl.OnChange='[Event Procedure]'; ctl.BeforeUpdate='[Event Procedure]'
-                # Length masks would silently truncate pasted employee numbers.
-                # Keep complete raw input; the existing service rejects overlength.
-                if c.get('password'): ctl.InputMask='Password'
-                if c.get('multiline'): ctl.EnterKeyBehavior=True; ctl.ScrollBars=2
-            if c['kind'] in (111,106,110): ctl.AfterUpdate='[Event Procedure]'
-            if c['kind']==123: ctl.OnChange='[Event Procedure]'
+                ctl.OnChange='[Event Procedure]';ctl.BeforeUpdate='[Event Procedure]'
+                ctl.InputMask='Password' if c.get('password') else '';ctl.Format=''
+                if c.get('multiline'):ctl.EnterKeyBehavior=True;ctl.ScrollBars=2
+                if c.get('readonly'):ctl.Enabled=True;ctl.Locked=True;ctl.TabStop=True
+            if c['kind'] in (111,106,110):ctl.AfterUpdate='[Event Procedure]'
             if c['kind']==111:
-                ctl.RowSourceType='Value List'; ctl.RowSource=''; ctl.ColumnCount=2; ctl.BoundColumn=1
-                ctl.ColumnWidths='0;4800'; ctl.LimitToList=True; ctl.AutoExpand=True
+                ctl.OnChange='[Event Procedure]';ctl.OnNotInList='[Event Procedure]'
+                ctl.RowSourceType='Value List';ctl.RowSource='';ctl.ColumnCount=2;ctl.BoundColumn=1
+                ctl.ColumnWidths='0;3300';ctl.LimitToList=True;ctl.AutoExpand=True
             if c['kind']==110:
-                ctl.RowSourceType='ListRows'; ctl.RowSource=''; ctl.ColumnCount=c['columns']; ctl.BoundColumn=1
-                ctl.ColumnWidths=c['widths']; ctl.MultiSelect=0
+                ctl.RowSourceType=c['callback'];ctl.RowSource='';ctl.ColumnCount=c['columns'];ctl.BoundColumn=1
+                ctl.ColumnWidths=c['widths'];ctl.MultiSelect=0;ctl.ColumnHeads=False
             if c['kind']==123:
-                for i,caption in enumerate(c['pages']):
+                ctl.OnChange='[Event Procedure]';ctl.Style=0;ctl.MultiRow=False
+                ctl.TabFixedHeight=510;ctl.TabFixedWidth=1800
+                for i,(page_name,caption) in enumerate(c['pages']):
                     page=ctl.Pages(i) if i<ctl.Pages.Count else ctl.Pages.Add()
-                    page.Name='page'+str(i); page.Caption=caption; tabs[i]=page.Name
-            if c['kind'] in (109,111,106,110) and c['label']:
-                # Lists have an independent header label; fields have attached labels.
-                label_parent=ctl.Name if c['kind'] !=110 else parent
-                ly=c.get('header_y',c['y']-520) if c['kind']==110 else c.get('label_y',c['y']+30)
-                lx=c['x'] if c['kind']==110 else c.get('label_x',max(450,c['x']-2250))
-                lw=c['w'] if c['kind']==110 else c.get('label_w',min(2100,c['x']-lx-150))
-                if c['kind']==110 and c.get('headers'):
-                    offset=0
-                    for index,(caption,width) in enumerate(zip(c['headers'],map(int,c['widths'].split(';')))):
-                        if width and caption:
-                            label=win32com.client.CastTo(app.CreateControl(original,100,0,parent,'',lx+offset,ly,width,c.get('header_h',430)),'_Label')
-                            label.Name='header_'+ctl.Name+'_'+str(index); label.Caption=caption; classic_control(label,100,header=True); label=None
-                        offset+=width
-                else:
-                    label=win32com.client.CastTo(app.CreateControl(original,100,0,label_parent,'',lx,ly,lw,430),'_Label')
-                    label.Name='label_'+ctl.Name; label.Caption=c['label']; classic_control(label,100); label=None
+                    page.Name=page_name;page.Caption=caption;page=None
+                ctl.Height=c['h']
             ctl=None
-        # Access CreateControl's implicit tab order can focus the last-created
-        # button. Set the order for the form and for each native Page explicitly.
-        tab_order={}
-        for c in d['controls']:
-            if c['kind']==100: continue
-            parent=c.get('page','form'); ordinal=tab_order.get(parent,0)
-            ctl=win32com.client.CastTo(f.Controls(c['name']),{109:'_Textbox',104:'_CommandButton',106:'_Checkbox',110:'_ListBox',111:'_Combobox',123:'_TabControl'}[c['kind']])
-            ctl.TabIndex=ordinal; ctl=None
-            tab_order[parent]=ordinal+1
-        for parent,names in d.get('tab_order',{}).items():
-            expected_names={c['name'] for c in d['controls'] if c.get('page','form')==parent and c['kind']!=100}
-            if len(names)!=len(set(names)) or set(names)!=expected_names: raise RuntimeError('Incomplete explicit native Tab order')
-            for ordinal,control_name in enumerate(names):
-                c=next(c for c in d['controls'] if c['name']==control_name)
-                ctl=win32com.client.CastTo(f.Controls(control_name),{109:'_Textbox',104:'_CommandButton',106:'_Checkbox',110:'_ListBox',111:'_Combobox',123:'_TabControl'}[c['kind']])
-                ctl.TabIndex=ordinal; ctl=None
-        print('Code '+name,flush=True)
+        # Native TabIndex is Section-local. Explicit cross-section/hidden-page
+        # keyboard routing is authored in VBA and verified by actual keys.
+        order=forms.TAB_ORDER[name]
+        if isinstance(order,dict):order=list(dict.fromkeys(order[0]+order[1]))
+        section_order={}
+        for control_name in order:
+            c=next(c for c in d['controls'] if c['name']==control_name)
+            ctl=win32com.client.CastTo(f.Controls(control_name),casts[c['kind']])
+            ordinal=section_order.get(c['section'],0);ctl.TabIndex=ordinal;section_order[c['section']]=ordinal+1;ctl=None
+        for sec,h in zip((1,0,2),d['sections']):f.Section(sec).Height=h;f.Section(sec).Visible=h>0
+        f.Width=d['width']
         module=f.Module
-        if module.CountOfLines: module.DeleteLines(1,module.CountOfLines)
-        module.AddFromString(forms.module_code(name,d)); module=None
-        app.DoCmd.Save(2,original); app.DoCmd.Close(2,original,1); f=None
-        if original != name: app.DoCmd.Rename(name,2,original)
-        # Native Form exports are canonical output, preserving code and standard properties.
-        export=exports/f'{name}.txt'
-        if export.exists(): export.unlink()
+        if module.CountOfLines:module.DeleteLines(1,module.CountOfLines)
+        module.AddFromString((code_factory or forms.module_code)(name,d));module=None
+        app.DoCmd.Save(2,name);app.DoCmd.Close(2,name,1);f=None
+        export=exports/(name+'.txt')
+        if export.exists():export.unlink()
         app.SaveAsText(2,name,str(export))
     release()
     return exports
+
 def import_code(app):
     for folder,kind in [('classes',2),('modules',1)]:
         for path in sorted((ROOT/'src'/folder).glob('*')):
@@ -188,7 +185,7 @@ def compile_gate(app):
     if not app.IsCompiled: raise RuntimeError('VBA project is not fully compiled')
     probe=app.VBE.ActiveVBProject.VBComponents.Add(1); probe.Name='BuildCompileProbe'; module=probe.CodeModule
     if module.CountOfLines: module.DeleteLines(1,module.CountOfLines)
-    module.AddFromString('''Option Explicit
+    smoke='''Option Explicit
 Public Function BuildClassInitializationSmoke() As Boolean
  Dim busy As New clsUiBusyState, session As New clsSession, criteria As New clsSearchCriteria
  Dim employee As New clsEmployeeEdit, career As New clsCareerDraft, code As New clsCodeEdit
@@ -197,7 +194,15 @@ Public Function BuildClassInitializationSmoke() As Boolean
  code.Name="": report.BusinessDate=DateSerial(2026,10,27): result.Kind="probe": unit.CloseUnit
  BuildClassInitializationSmoke=True
 End Function
-''')
+'''
+    # Every authored class, including added UI/return-state classes, must be
+    # instantiated. TypeName forces As New initialization before probe removal.
+    additions=[]
+    for index,path in enumerate(sorted((ROOT/'src/classes').glob('*.cls'))):
+        additions += [' Dim probeClass'+str(index)+' As New '+path.stem,
+                      ' If TypeName(probeClass'+str(index)+') <> "'+path.stem+'" Then Err.Raise 5']
+    smoke=smoke.replace(' BuildClassInitializationSmoke=True','\n'.join(additions)+'\n BuildClassInitializationSmoke=True')
+    module.AddFromString(smoke)
     app.DoCmd.RunCommand(126)
     if not app.IsCompiled: raise RuntimeError('VBA compile probe is not compiled')
     value=app.Run('BuildClassInitializationSmoke')
@@ -208,15 +213,50 @@ End Function
     if not app.IsCompiled: raise RuntimeError('VBA project lost compiled state after probe removal')
     return {'method':'RunCommand(126) + Application.IsCompiled=True + every-class initialization smoke',
             'sysCmd603':'Automation call rejected with argument-count error in owned API probe; not used as PASS',
-            'classInitializationSmoke':'PASS','temporaryProbeRemoved':True,'finalRecompile':'PASS','isCompiled':True}
+            'classInitializationSmoke':'PASS','classes':[p.stem for p in sorted((ROOT/'src/classes').glob('*.cls'))],'temporaryProbeRemoved':True,'finalRecompile':'PASS','isCompiled':True}
+
+def remove_owned_application_objects(app):
+    """Replace app objects on the owned staging copy, never business tables."""
+    expected=set(forms.FORMS)
+    actual={item.Name for item in app.CurrentProject.AllForms}
+    if actual!=expected:raise RuntimeError('Existing Form inventory differs; refusing an unreviewed application replacement')
+    for name in sorted(actual):
+        if app.CurrentProject.AllForms(name).IsLoaded:app.DoCmd.Close(2,name,2)
+    for name in sorted(actual):app.DoCmd.DeleteObject(2,name)
+    project=app.VBE.ActiveVBProject
+    names=[component.Name for component in project.VBComponents if component.Type in (1,2)]
+    for name in names:project.VBComponents.Remove(project.VBComponents(name))
+    project=None
+
+def suppress_owned_startup(path):
+    """Avoid executing old UI while replacing objects on the staging copy."""
+    pythoncom.CoInitialize();engine=db=None
+    try:
+        engine=win32com.client.DispatchEx('DAO.DBEngine.120');db=engine.OpenDatabase(str(path))
+        if 'StartupForm' in {item.Name for item in db.Properties}:db.Properties.Delete('StartupForm')
+        db.Close();db=None
+    finally:
+        if db is not None:db.Close()
+        db=engine=None;release();pythoncom.CoUninitialize()
 def main():
-    p=argparse.ArgumentParser(); p.add_argument('--publish',action='store_true'); p.add_argument('--publish-candidate',action='store_true'); p.add_argument('--interactive-initialize',action='store_true'); p.add_argument('--test-secrets',action='store_true',help='Compatibility alias for fixed public DEMO credentials'); p.add_argument('--demo-credentials',action='store_true',help='Use admin/staff and password123 (default for this sample)'); args=p.parse_args()
+    p=argparse.ArgumentParser(); p.add_argument('--publish',action='store_true'); p.add_argument('--publish-candidate',action='store_true'); p.add_argument('--preserve-existing',type=Path,help='Copy this existing ACCDB and replace only application Forms/VBA, preserving every typed business row'); p.add_argument('--interactive-initialize',action='store_true'); p.add_argument('--test-secrets',action='store_true',help='Compatibility alias for fixed public DEMO credentials'); p.add_argument('--demo-credentials',action='store_true',help='Use admin/staff and password123 (default for this sample)'); args=p.parse_args()
+    if args.preserve_existing and args.interactive_initialize:raise RuntimeError('Preservation cannot initialize credentials')
     work=(ROOT/'.tmp/build').resolve(); work.mkdir(parents=True,exist_ok=True)
     target=work/'CareerManagement.accdb'
     if target.exists():
         # Only this exact build-owned staging path can be replaced.
         if target.parent != (ROOT/'.tmp/build').resolve(): raise RuntimeError('Unsafe staging')
         target.unlink()
+    original_sha=None;prior_data=None;integrity=None
+    if args.preserve_existing:
+        original=args.preserve_existing.resolve()
+        if not original.is_file() or original.suffix.lower()!='.accdb':raise RuntimeError('Explicit existing ACCDB required')
+        if original.with_suffix('.laccdb').exists():raise RuntimeError('Existing database is live; preservation stopped before copying')
+        original_sha=sha(original);shutil.copy2(original,target)
+        if sha(target)!=original_sha:raise RuntimeError('Preserved input copy differs')
+        integrity=load(ROOT/'tools/data_integrity.py');prior_data=integrity.snapshot(target)
+        if not prior_data['sourceUnmodified']:raise RuntimeError('Read-only preservation inspection modified its owned copy')
+        suppress_owned_startup(target)
     before=set(win32process.EnumProcesses())
     pythoncom.CoInitialize(); app=None; db=None; process_handle=None
     try:
@@ -226,14 +266,22 @@ def main():
         owned_pid=win32process.GetWindowThreadProcessId(owned_window() if callable(owned_window) else owned_window)[1]
         if owned_pid in before: raise RuntimeError('Access instance is not newly owned')
         process_handle=win32api.OpenProcess(0x100000|0x400,False,owned_pid)
-        print('Creating owned staging database',flush=True)
-        app.NewCurrentDatabase(str(target),12)
-        db=app.CurrentDb(); schema.create(db); prop(db,'SP2_Staging',1,True); db.Close(); db=None
+        print(json.dumps({'step':'owned-office','pid':owned_pid,'hwnd':owned_window() if callable(owned_window) else owned_window,'staging':str(target)}),flush=True)
+        if args.preserve_existing:
+            print('Opening owned existing-data staging copy',flush=True)
+            app.OpenCurrentDatabase(str(target),True)
+            remove_owned_application_objects(app)
+        else:
+            print('Creating new isolated DEMO staging database',flush=True)
+            app.NewCurrentDatabase(str(target),12)
+            db=app.CurrentDb(); schema.create(db); prop(db,'SP2_Staging',1,True); db.Close(); db=None
         print('Importing VBA',flush=True)
         import_code(app); form_exports=create_forms(app)
         print('Compiling VBA',flush=True)
         compile_evidence=compile_gate(app)
-        if args.interactive_initialize:
+        if args.preserve_existing:
+            password=[]
+        elif args.interactive_initialize:
             password=[]
             for login in ('admin','staff'):
                 first=getpass.getpass(login+' password (3–128 Unicode scalar): ')
@@ -245,9 +293,10 @@ def main():
             password=['123','123']
             protected=win32crypt.CryptProtectData(json.dumps(password).encode(), 'SP2 isolated test credentials',None,None,None,0)
             (ROOT/'.tmp/test-secrets.dpapi').write_bytes(protected)
-        initialized=app.Run('InitializeDemo',*password)
-        if isinstance(initialized,tuple): initialized=initialized[0]
-        if not initialized: raise RuntimeError('Seed failed')
+        if not args.preserve_existing:
+            initialized=app.Run('InitializeDemo',*password)
+            if isinstance(initialized,tuple): initialized=initialized[0]
+            if not initialized: raise RuntimeError('Seed failed')
         password.clear()
         db=app.CurrentDb(); prop(db,'SP2_Staging',1,False); prop(db,'StartupForm',10,'frmLogin'); prop(db,'StartupShowDBWindow',1,False); db.Close(); db=None
         app.DoCmd.RunCommand(126)
@@ -256,6 +305,14 @@ def main():
         exit_wait=win32event.WaitForSingleObject(process_handle,10000)
         exit_code=win32process.GetExitCodeProcess(process_handle)
         if exit_wait!=0 or exit_code!=0: raise RuntimeError('Owned Access did not exit normally: '+str(exit_code))
+        preservation=None
+        if args.preserve_existing:
+            after_data=integrity.snapshot(target)
+            if not after_data['sourceUnmodified'] or prior_data['schemaFingerprint']!=after_data['schemaFingerprint'] or prior_data['businessDigest']!=after_data['businessDigest']:
+                raise RuntimeError('Existing business data/schema changed; publication stopped')
+            if sha(original)!=original_sha:raise RuntimeError('Original existing database changed during regeneration')
+            preservation={'originalArtifactSha256':original_sha,'before':prior_data,'after':after_data,'allBusinessRowsPreserved':True,'schemaPreserved':True,'credentialsReset':False,'seedExecuted':False}
+            (work/'data-preservation.json').write_text(json.dumps(preservation,ensure_ascii=False,indent=2),encoding='utf-8')
         # Native exports are committed only after the complete staged product
         # compiled and its owned Access process exited normally.
         for export in sorted(form_exports.glob('*.txt')):
@@ -272,14 +329,19 @@ def main():
         manifest['inputManifestAvailable']=input_manifest.exists()
         manifest['originalInputHashesReverified']=False
         manifest['compileGate']=compile_evidence
+        if preservation:
+            manifest['counts']={item['table']:item['rowCount'] for item in preservation['after']['tables']}
+            manifest['preservation']=preservation
+            manifest['credentials']='Existing verifier/failed count/lock/user IDs/roles preserved exactly; no credential initialization'
         manifest['officeProcess']={'ownedPid':owned_pid,'newInstance':True,'exitWait':exit_wait,'exitCode':exit_code}
-        manifest['releaseState']='sample-demo-credentials' if not args.interactive_initialize else 'operator-credentials-initialized-via-cli-ui-unverified'
+        manifest['releaseState']='existing-data-and-credentials-preserved-ui-unverified' if preservation else 'sample-demo-credentials' if not args.interactive_initialize else 'operator-credentials-initialized-via-cli-ui-unverified'
         (work/'seed-manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
         if args.publish or args.publish_candidate:
             final=ROOT/'build/CareerManagement.accdb'; final.parent.mkdir(exist_ok=True)
             prior=ROOT/'build/seed-manifest.json'
-            if final.exists() and (not prior.exists() or json.loads(prior.read_text(encoding='utf-8'))['artifactSha256']!=sha(final)):
-                raise RuntimeError('Existing final artifact was modified or ownership is unknown; publication stopped unchanged')
+            if final.exists():
+                if not preservation:raise RuntimeError('Fresh DEMO initialization cannot replace an existing final ACCDB; use explicit preservation')
+                if sha(final)!=original_sha:raise RuntimeError('Existing final artifact changed after preservation; publication stopped unchanged')
             transfer=work/'publish.accdb'; shutil.copy2(target,transfer); os.replace(transfer,final)
             shutil.copy2(work/'seed-manifest.json',prior)
             invalidate_verification()

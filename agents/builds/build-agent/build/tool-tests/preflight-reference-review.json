@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS_TOOL_REVIEW",
+  "reviewer": "ui_quality_audit",
+  "reviewRole": "independent",
+  "recordedAt": "2026-10-29T15:14:50.614Z",
+  "runId": "sp2-ui-regenerate-20261029",
+  "scope": "Build-agent preflight local-reference scope fix and synthetic regressions only. No product source reading, app generation/build/run, DB, actual UI, Office, acceptance or formal scoring.",
+  "reviewedCodeFiles": [
+    {
+      "file": "agents/builds/build-agent/scripts/preflight.mjs",
+      "sha256": "922345776c72fc3514f2db21a04f4f6b66e749234c0867ffbb86e3232434e63d"
+    },
+    {
+      "file": "agents/builds/build-agent/scripts/preflight-tests.mjs",
+      "sha256": "a25f75b1f48715c09db5e466090068429291f748167f1b3b8d3a93e2e5c7253c"
+    },
+    {
+      "file": "agents/builds/build-agent/scripts/input-scope.mjs",
+      "sha256": "609a6b0d6d5a290921f57010826c0b7575ad779e420faca85e1484e21cd76d42"
+    }
+  ],
+  "existingRegressionSource": {
+    "file": "agents/builds/build-agent/scripts/ui-conformance-tests.mjs",
+    "sha256": "5fd282362d36d75934b11e33399ae51c976057bde4fb3d42e627e6de56903bf9"
+  },
+  "sourceUnchangedAcrossFinalInspection": true,
+  "decision": "Limited existence-only reference checks may resolve approved guidance without expanding the normative input set or reading referenced bodies.",
+  "acceptedReferenceClasses": [
+    "Actual collected specification and frozen common-rule inputs",
+    "Exact requirement/basic/detail Agent entrypoints and named rules/workflows documents/directories for an isolated specification",
+    "Own method basic-design/report.md or detail-design/report.md only",
+    "Exact references/web-ui-standard/README.md provenance link from a frozen common docs input only",
+    "Normal selected-specification directory existence, classified separately from file inputs"
+  ],
+  "preservation": [
+    "Fixed input policy/list unchanged; collector only normalizes excluded directory names case-insensitively. New link exceptions never add their targets to files/records or hashes.",
+    "Reference-only check uses lstat/realpath/regular file-or-directory checks with no read/hash/recursive traversal",
+    "Other method/project/source README/spec-eval/spec-analysis/app source and arbitrary raw-reference body are not new allowed dependencies",
+    "inspect-only returns before directory creation, final-output invalidation or source.zip movement; synthetic snapshot regression confirms unchanged files/directories"
+  ],
+  "findings": [
+    {
+      "id": "T-01",
+      "priority": 1,
+      "status": "RESOLVED",
+      "issue": "Selected-spec prefix shortcut permitted excluded nested subtrees and bypassed regular/real-path checks",
+      "resolution": "Reject spec-eval/spec-analysis/.tmp/build/.git before classification, match excluded parts case-insensitively on Windows, classify actual file inputs from frozenInputs, treat non-input directories separately, and route every accepted local reference through assertRegular/realpath."
+    },
+    {
+      "id": "T-01-Windows",
+      "priority": 2,
+      "status": "RESOLVED",
+      "issue": "Uppercase .TMP/SPEC-EVAL directory spelling could bypass exact case comparison",
+      "resolution": "part.toLowerCase() comparison and explicit directory negative fixtures added. Input collector also folds actual directory entry names, with a real uppercase .TMP body-read guard regression."
+    }
+  ],
+  "verification": [
+    {
+      "command": "node agents/builds/build-agent/scripts/preflight-tests.mjs",
+      "result": "PASS",
+      "assertions": 285,
+      "scope": "Synthetic isolated fixture only",
+      "coverage": [
+        "Existing canonical roots, profile/family/renderer and manifest/UI gates",
+        "Positive frozen rule/design guide/own report/raw README existence-only references",
+        "fs.readFileSync guard rejects body reads of four non-input targets",
+        "Missing targets, linked leaf/junction parent, encoded peer escape, forbidden project/profile/source/metadata paths",
+        "Nested excluded normal and linked targets plus case-variant excluded directories",
+        "inspect-only complete fixture snapshot unchanged and ordinary non-inspect invalidation preserved",
+        "Actual uppercase .TMP directory excluded by input collector before any body read; normal input file/SHA sets unchanged"
+      ]
+    },
+    {
+      "command": "node agents/builds/build-agent/scripts/ui-conformance-tests.mjs",
+      "result": "PASS",
+      "assertions": 209,
+      "scope": "Synthetic UI contracts only; not an application UI acceptance result"
+    }
+  ],
+  "actualSpecificationInspection": {
+    "command": "node agents/builds/build-agent/scripts/preflight.mjs --project sample-project2 --run-id sp2-ui-regenerate-20261029 --profile <profile> --inspect-only true",
+    "scope": "Read-only current canonical specifications and approved fixed rules only",
+    "results": [
+      {
+        "profile": "Access",
+        "exit": 0,
+        "status": "structure-check-passed",
+        "inputFiles": 70,
+        "inputSetSha256": "64d3bd206ad177826025b6f82fda90f48ec8c8816f6cb00014c9c6885e81c184",
+        "referenceChecks": 616,
+        "referenceKinds": {
+          "routing-guide-existence": 96,
+          "common-rule-input": 109,
+          "reference-source-existence": 1,
+          "specification-input": 406,
+          "design-record-existence": 2,
+          "design-rule-existence": 2
+        },
+        "findings": [],
+        "rawOrReportInputs": [],
+        "nonInputGuideReferences": true
+      },
+      {
+        "profile": "CSharp_ASPNET",
+        "exit": 0,
+        "status": "structure-check-passed",
+        "inputFiles": 66,
+        "inputSetSha256": "662330abb9b524d2cfbef0259ff023838c650e45054c99b091440ea2b3b6801f",
+        "referenceChecks": 682,
+        "referenceKinds": {
+          "routing-guide-existence": 113,
+          "common-rule-input": 73,
+          "reference-source-existence": 2,
+          "specification-input": 494
+        },
+        "findings": [],
+        "rawOrReportInputs": [],
+        "nonInputGuideReferences": true
+      }
+    ],
+    "inputCountUnchangedFromReproducedPreFix": {
+      "Access": 70,
+      "CSharp_ASPNET": 66
+    },
+    "preFixFindings": {
+      "Access": 16,
+      "CSharp_ASPNET": 2
+    },
+    "reportOrRawReferenceInputsAdded": false
+  },
+  "unresolvedFindings": [],
+  "unexecuted": [
+    "External URL checks",
+    "Product source/app generation/build/run",
+    "DB create/read/write/migration or business tests",
+    "Native/Browser UI, keyboard/IME/DPI and Office/Excel/print",
+    "Product acceptance and formal scoring"
+  ],
+  "formalScore": null,
+  "sourceMatchedFrozenSetAcrossRecheck": true,
+  "normalInputSetsUnchangedAcrossCollectorFix": true
+}

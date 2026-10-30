@@ -1,24 +1,26 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-DETAIL-RUN","version":"1.0","path":"sample-project2/srcs/Access/build/spec-generation/detail-design/report.md","sheets":[{"heading":"入出力と成果物","kind":"GRID","sheet":"01_入出力と成果物"},{"heading":"文書と描画の確認","kind":"GRID","sheet":"02_文書と描画の確認"},{"heading":"採用判断と未実施","kind":"GRID","sheet":"03_採用判断と未実施"}]} -->
-# Access 詳細設計の今回記録
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-DETAIL-RESULT","version":"1.1","path":"sample-project2/srcs/Access/build/spec-generation/detail-design/report.md","sheets":[{"heading":"対象と出力","kind":"GRID","sheet":"01_対象と出力"},{"heading":"検査と限界","kind":"GRID","sheet":"02_検査と限界"},{"heading":"実装への引継ぎ","kind":"GRID","sheet":"03_実装への引継ぎ"}]} -->
+# Access 詳細設計再生成・技術補正結果
 
-版1.0／2026-10-29。projectId=sample-project2、stage=detail-design、generationMode=canonical-update、AG-DETAIL-DESIGN 1.1。
+版1.1／2026-10-30。runId=sp2-ui-regenerate-20261029、generationMode=canonical-update、change_scope=ui_behavior。DQA-UI08/09はbuildから担当詳細へ戻した最小技術改訂である。
 
-## 入出力と成果物
+## 対象と出力
 
-[方式別一覧](../../../../../spec/Access/README.md)から詳細6機能、方式別共通1件、DB総則/5TABLE、開発規約、詳細設計QAの15新規文書を参照できる。各新規文書は1.0。基本設計と同じ83項目・17イベントを物理部品/変数/型・API/引数戻り値・SQL/パラメーター・期待件数・確定/取消・CHK/MSGと復帰へ対応付けた。基本5表48論理項目を維持した物理DB定義は設計文書で、実DBへ適用していない。
+[inputs.json](inputs.json)1.1へ補正前の76入力（自方式spec45、規則19、project配置3、基本記録9）のID/版/SHAを凍結した。直前の詳細manifest SHAはf6ca6e6a9fc6fd82887154d77b65c3dc9cdfb65ab15930b65c39474040e3d659。ソース/ACCDBを業務仕様の代替入力にせず、限定実機確認は技術制約を発見した根拠として区別した。
 
-入力は同方式内の要件定義書1.0・基本設計・QA・プロジェクト情報・共通・論理TABLE・採用規約。対象25文書のID・版・SHA-256と今回の出力は[manifest](manifest.json)に固定。既存の要件/基本/共通/QAを編集せず、詳細工程の採用と残件は詳細設計QAへ分けた。
+45正本文書のうち7文書を技術補正し38文書を無変更継承する。物理UI共通1.1、F03/F04/F05詳細1.2、方式別共通01 1.3、詳細QA1.4、方式索引1.12。5画面/6機能/5表48列、既存92項目/17イベント、11pt・氏名3900/カナ4950/日付2250・経歴一覧6300/詳細11580twip、認証/保存/seedは変更しない。要件/基本/元QA/DB定義と8HTML断片は保持する。
 
-## 文書と描画の確認
+DQA-UI08：Accessの非表示Control下端/標準Tab最小帯を踏まえ、F03全文欄を初期330/Hidden、選択時1980/Detail9450へ展開する。F04はTab900/Header2400を余白込みで設計し、Detail設計7920を保持する。測定下限780/Header2145をそのまま期待値へ写していない。親/Tab/Footer固定と通常復帰・下端/キー到達は新候補で再検証する。
 
-spec-meta/LIST/TABLE9列・fieldIds、リンク/方式内依存、基本との全項目/イベントID、物理型/NULL/長さ/キーを検査してPASS。画面/帳票HTMLは基本と同じ断片をLF正規化後に照合した。今回のMDから再抽出し、Edge 156.0.4314.42で21静的画面/帳票モックケース、Mermaid 12.2.0で23図を解析・描画した。抽出方法、MD/断片/画像ハッシュ、サイズ/倍率/計測と目視したサンプルは[描画記録](render-review.json)へ残した。
+DQA-UI09：Excel Footerの小数書式コード&10.5は読戻しに残っても約10pt/.5文字混入となった。限定API/PDF小試験とroot独立確認に基づきFooterだけ整数11ptとし、本文セル10.5/見出し11/表題18を保つ。数字先頭名の書式境界・氏名40字全文/2行・改ページ/印字の確認を引き継ぐ。これは製品帳票/実印刷合格ではない。
 
-通常/狭幅は正本モック、エラー/空/未選択/参照/長文は状態又は値だけを一時DOMへ適用した静的fixtureである。後者は実装側の状態遷移・入力制限・権限を実証しない。描画の成功と、基本との配置一致・業務意味・実機動作を分ける。
+## 検査と限界
 
-作成担当が自己確認し、独立担当/root/req_desktopが原要件/基本/QAと新しい詳細/共通/物理DBを横断レビューした。指摘修正後の文書ハッシュを固定し、rootが最終構造/参照/保全検査を実行した。[検査結果](validation.json)の状態は文書工程に限定される。
+[validation.json](validation.json)：45文書、164H2、43LIST/586行、10TABLE（論理5/物理5の同48fieldIds）、423参照、基本/詳細92項目/17イベント/各6見出し、8HTMLバイト一致、54DUI、保護26文書を新改訂で再検査した。
 
-## 採用判断と未実施
+[render.json](render.json)と[render-review.json](render-review.json)：現詳細8断片をheadless Edge/1366×768/100%で再描画。基本と同じ静的断片の確認で、改訂したnative Header/Tab/全文欄や実操作を証明しない。[diagrams.json](diagrams.json)は現51図の構文/SVG確認。自己レビューは[design-review.md](design-review.md)、独立の新11候補/76入力SHA確認は[review.json](review.json)へ固定し、[manifest.json](manifest.json)で照合する。
 
-認証・API・排他・物理型・帳票生成/保存・初期設定手段は詳細工程の設計採用として具体化した。既存の200社員/20経歴/2シート等の設計採用、利用者確定と未承認の区分を継承し、新たな利用者承認として扱わない。社員削除や独立監査表を追加せず、経歴明示除去/親子全体保存/最終監査属性を維持した。
+旧build候補5a45b637…e584は全11classコンパイルと全5表typed data/schema保持・45件APIを確認したが、その合格は本改訂後の製品へ転記しない。Windowsロック中のnative描画/キー/IME/clipboard、通常復帰/Tab、TopVisibleEmployeeId捕捉復帰、DPI、製品印刷/実プレビュー、受入/正式採点は別の未完状態でformalScore=null。
 
-採用APIの動作・実機DPI/IME・DAO/SqlClient・実DB制約・競合/性能/回復・実Excel/印刷は未実施であり、詳細設計QAの受渡し条件に残す。アプリ実装・ACCDB・DB作成/接続/投入・仕様書Excel/PDF変換・利用者受入・正式採点も未実施。formalScore=null。既存の要件逆生成/基本設計のbuild記録は上書きしていない。
+## 実装への引継ぎ
+
+[handoff.md](handoff.md)へ採用値と新検査、未実装/未検証を記した。buildはこの再固定manifestから通常preflightを再実行し、独立UI契約を新ID/版/SHAへ再固定してから新候補を測る。過去の属性/描画/API/印刷PASSで新候補を代表させない。UI gateの未実施/FAILを強制的にPASSへ変えない。

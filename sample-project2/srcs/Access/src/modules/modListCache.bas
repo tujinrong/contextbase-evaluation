@@ -14,7 +14,14 @@ Public Sub SetRows(ByVal ctl As Access.Control, ByVal rows As Collection)
     EnsureCaches
     If caches.Exists(CacheKey(ctl)) Then caches.Remove CacheKey(ctl)
     caches.Add CacheKey(ctl), rows
-    ctl.RowSource = "": ctl.RowSourceType = "ListRows": ctl.Requery
+    ctl.RowSource = ""
+    Select Case ctl.Name
+    Case "lstEmployees": ctl.RowSourceType = "UiEmployeesRows"
+    Case "lstCareers": ctl.RowSourceType = "UiCareersRows"
+    Case "lstCodes": ctl.RowSourceType = "UiCodesRows"
+    Case Else: ctl.RowSourceType = "ListRows"
+    End Select
+    ctl.Requery
 End Sub
 Public Function CachedRows(ByVal ctl As Access.Control) As Collection
     EnsureCaches
@@ -53,16 +60,15 @@ Public Function ListRows(ByVal ctl As Control, ByVal id As Variant, ByVal row As
         values = rows(CLng(row) + 1)
         If col < 0 Or col > UBound(values) Then
             ListRows = Null
-        ElseIf ctl.Name = "lstCodes" And CLng(col) = 3 Then
-            ListRows = IIf(CBool(values(3)), "〇", "")
+        ElseIf ctl.Name = "lstCodes" And CLng(col) = 4 Then
+            ListRows = IIf(CBool(values(4)), "〇", "")
         Else
             ListRows = values(CLng(col))
         End If
     Case acLBGetFormat
         ListRows = Null
-    Case acLBClose
-        If handles.Exists(CStr(id)) Then handles.Remove CStr(id)
     Case acLBEnd
+        If handles.Exists(CStr(id)) Then handles.Remove CStr(id)
         ListRows = Null
     End Select
 End Function

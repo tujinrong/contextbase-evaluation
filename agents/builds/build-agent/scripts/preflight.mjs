@@ -32,8 +32,42 @@ const relative = target => path.relative(root, target).split(path.sep).join('/')
 const fixed = fixedInputFiles(project, profile);
 const files = collectInputFiles(root, project, profile);
 const selectedSpecPrefix = profile ? `${project}/spec/${profile}/` : null;
-const findings = [], records = [], ids = new Map();
+const findings = [], records = [], ids = new Map(), referenceChecks = [];
 const add = (file, line, code, detail) => findings.push({ file, line, code, detail });
+const frozenInputs = new Set(files.map(relative));
+// These are navigation to design rules, not additional implementation inputs.
+// Exact names keep Agent build/.tmp/scripts and arbitrary documents out of the exception.
+const designGuides = new Set(['requirement', 'basic-design', 'detail-design'].flatMap(agent => {
+  const name = agent === 'requirement' ? '要件定義' : agent === 'basic-design' ? '基本設計' : '詳細設計';
+  const base = `agents/designs/${agent}-agent`;
+  return ['AGENT.md', 'PROMPT.md', 'README.md', `rules/${name}書作成ルール.md`, `workflows/${name}.md`, 'rules', 'workflows'].map(leaf => `${base}/${leaf}`);
+}));
+function referenceKind(file, local, isolatedPrefix) {
+  if (isolatedPrefix && local === isolatedPrefix.slice(0, -1)) return 'specification-directory-existence';
+  if (isolatedPrefix && local.startsWith(isolatedPrefix)) return frozenInputs.has(local) ? 'specification-input' : 'specification-directory-existence';
+  const common = local === 'AGENTS.md' || local === 'agents/README.md' || /^(docs|agents)\//.test(local);
+  if (common && frozenInputs.has(local)) return 'common-rule-input';
+  if (isolatedPrefix && designGuides.has(local)) return 'design-rule-existence';
+  if (isolatedPrefix) {
+    const ownSource = isolatedPrefix.replace(`${project}/spec/`, `${project}/srcs/`);
+    if (['basic-design', 'detail-design'].some(stage => local === `${ownSource}build/spec-generation/${stage}/report.md`)) return 'design-record-existence';
+  }
+  if (file.startsWith('docs/') && frozenInputs.has(file) && local === 'references/web-ui-standard/README.md') return 'reference-source-existence';
+  return null;
+}
+function inspectReference(file, line, href, destination, local, kind) {
+  // No reads/hashes or recursive traversal: only the target and every ancestor are
+  // checked. realpath rejects a redirected parent as well as a linked leaf.
+  try {
+    const isGuideDirectory = kind === 'specification-directory-existence' || (kind === 'design-rule-existence' && /\/(rules|workflows)$/.test(local));
+    const directory = kind === 'routing-guide-existence' ? fs.lstatSync(destination).isDirectory() : isGuideDirectory;
+    assertRegular(destination, directory);
+  } catch (error) {
+    add(file, line, error.code === 'ENOENT' ? 'LINK_MISSING' : 'LINK_NONREGULAR', `Invalid ${kind} reference: ${href}`);
+    return;
+  }
+  referenceChecks.push({file, line, href, target: local, kind, contentReadByReferenceCheck: false, frozenInput: frozenInputs.has(local)});
+}
 function visibleLines(text) {
   let fence;
   return text.split(/\r?\n/).map((text, index) => {
@@ -138,24 +172,38 @@ for (const target of files.sort()) {
     for (const link of links) {
       const href = link[1];
       if (/^[a-z][a-z\d+.-]*:/i.test(href) || href.startsWith('#')) continue;
-      const destination = path.resolve(path.dirname(target), decodeURIComponent(href.split('#')[0]));
+      let destination;
+      try { destination = path.resolve(path.dirname(target), decodeURIComponent(href.split('#')[0])); }
+      catch { add(file, row.line, 'LINK_SCOPE', `Invalid local reference encoding: ${href}`); continue; }
       const local = relative(destination);
-      if (isolatedPrefix && !local.startsWith(isolatedPrefix)) { add(file,row.line,'LINK_ISOLATION',`Reference leaves independent specification package: ${href}`); continue; }
+      // Ignored subtrees remain forbidden even when nested in the selected root.
+      // Never follow them just because their normalized path shares its prefix.
+      if (isolatedPrefix && local.startsWith(isolatedPrefix) && local.slice(isolatedPrefix.length).split('/').some(part => ['spec-eval', 'spec-analysis', '.tmp', 'build', '.git'].includes(part.toLowerCase()))) {
+        add(file, row.line, 'LINK_ISOLATION', `Reference enters an excluded specification subtree: ${href}`); continue;
+      }
+      // Existence-only guide exceptions never expand files/records or grant a
+      // later reader access to their contents as normative business material.
+      const kind = referenceKind(file, local, isolatedPrefix);
+      if (kind && kind !== 'specification-input' && kind !== 'specification-directory-existence') {
+        inspectReference(file, row.line, href, destination, local, kind);
+        continue;
+      }
+      if (isolatedPrefix && !kind) { add(file,row.line,'LINK_ISOLATION',`Reference leaves independent specification package: ${href}`); continue; }
       // General routing documents may mention another project; never inspect it.
       if (!isolatedPrefix && /^(?:sample|test)-project[1-9]\d*\//.test(local) && !local.startsWith(`${project}/`)) continue;
       if (local.split('/').includes('spec-eval')) continue; // Do not inspect evaluation inputs.
       // Shared entrypoints can list every profile; their unselected targets are not inputs.
-      if (profile && local.startsWith(`${project}/`) && !fixed.includes(local) && !local.startsWith(selectedSpecPrefix)) continue;
+      if (!isolatedPrefix && profile && local.startsWith(`${project}/`) && !fixed.includes(local) && !local.startsWith(selectedSpecPrefix)) continue;
       const allowed = local === 'AGENTS.md' || /^(docs|agents)\//.test(local) || local.startsWith(`${project}/`);
       if (!allowed) { add(file, row.line, 'LINK_SCOPE', `Link outside allowed inputs: ${href}`); continue; }
-      if (!fs.existsSync(destination)) add(file, row.line, 'LINK_MISSING', `Missing local reference: ${href}`);
+      inspectReference(file, row.line, href, destination, local, kind ?? 'routing-guide-existence');
     }
   }
 }
 let commit = null;
 try { commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { /* Non-Git inputs still have file hashes. */ }
 const context = { agent: 'AG-BUILD', agentVersion: records.find(record=>record.documentId==='AG-BUILD')?.version, projectId: project, ...(profile ? { profileId: profile } : {}), stage: 'build-preflight', inspectionOnly: inspectOnly, specificationLayout: 'project/spec/profile', runId, recordedAt: new Date().toISOString(), inputCommit: commit, workingTreeHashes: true, excluded: ['spec-eval', 'spec-analysis', 'other projects', 'past reports', 'source trees', ...(profile ? ['other profiles', 'shared business specifications'] : [])], files: records };
-const result = { projectId: project, ...(profile ? { profileId: profile } : {}), runId, inspectionOnly: inspectOnly, status: findings.length ? 'interrupted-structure' : 'structure-check-passed', findings, checked: ['metadata', 'chapter/sheet mapping', 'LIST shape/keys', 'TABLE columns/fieldIds/PK', 'event sections', 'local reference existence within input scope'], notChecked: ['semantic consistency', 'external URLs', 'rendering/Excel conversion', 'application generation/build/tests', 'reverse generation/scoring', ...(profile ? ['shared entrypoint references outside the selected input scope'] : [])] };
+const result = { projectId: project, ...(profile ? { profileId: profile } : {}), runId, inspectionOnly: inspectOnly, status: findings.length ? 'interrupted-structure' : 'structure-check-passed', findings, referenceChecks, checked: ['metadata', 'chapter/sheet mapping', 'LIST shape/keys', 'TABLE columns/fieldIds/PK', 'event sections', 'classified local reference existence; guide exceptions require regular unredirected paths'], notChecked: ['semantic consistency', 'external URLs', 'contents of existence-only design rules, design records and raw-reference source guides; these are not input additions', 'rendering/Excel conversion', 'application generation/build/tests', 'reverse generation/scoring', ...(profile ? ['shared entrypoint references outside the selected input scope'] : [])] };
 const output = [
   `# build-agent 構造検査 ${runId}`, '', `対象：${project}${profile ? ` / ${profile}` : ''}。Agent版${context.agentVersion}。入力版・SHA-256は同実行IDのinputs.jsonを参照。`, '',
   `判定：${result.status}。現行入力${records.length}ファイルを検査。問題${findings.length}件。`, '',

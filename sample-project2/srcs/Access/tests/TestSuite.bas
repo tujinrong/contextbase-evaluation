@@ -99,6 +99,13 @@ Public Function RunSuite(ByVal adminPassword As String, ByVal staffPassword As S
     Set e = GetEdit("000001")
     Set result = ExportCareer(CLng(e.EmployeeId), gSession, reportPath)
     Assert "excel-two-sheet-roundtrip", result.Kind = "OK"
+    ' Regression for DQA-UI09: numeric-leading forty-scalar name plus '&'
+    ' must remain literal after the integer footer-size formatting code.
+    e.Name = "1234&" & String$(35, "界")
+    e.Summary = String$(1000, "要"): e.Careers(1).Description = String$(1000, "概")
+    Set result = SaveEmployee(e, gSession): Assert "API-numeric-leading-name40-save", result.Kind = "OK"
+    Set result = ExportCareer(CLng(e.EmployeeId), gSession, Replace(reportPath, ".xlsx", "-numeric.xlsx"))
+    Assert "API-numeric-name40-excel-roundtrip", result.Kind = "OK"
     If cycle >= 2 Then BoundarySuite adminPassword, staffPassword, reportPath
     RunSuite = evidence: Exit Function
 Failed:

@@ -16,14 +16,33 @@ Public Sub LogoutNow()
     gAllowClose = False: gDirty = False: gDraftDirty = False
     Set gEditor = Nothing: Set gOriginal = Nothing: Set gCode = Nothing: Set gCriteria = Nothing
     Set gSearchRaw = Nothing: Set gSearchRows = Nothing: gSearchWasExecuted = False
+    Set gSearchReturn = Nothing: Set gAppliedCriteria = Nothing: gAppliedValid = False
     If Not CurrentProject.AllForms("frmLogin").IsLoaded Then DoCmd.OpenForm "frmLogin"
 End Sub
 Public Sub Navigate(ByVal from As Access.Form, ByVal target As String)
-    gAllowClose = True: DoCmd.OpenForm target: DoCmd.Close acForm, from.Name, acSaveNo: gAllowClose = False
+    Dim priorAllow As Boolean, number As Long, description As String
+    On Error GoTo Failed
+    priorAllow = gAllowClose: gAllowClose = True
+    DoCmd.OpenForm target: DoCmd.Close acForm, from.Name, acSaveNo
+    gAllowClose = priorAllow: Exit Sub
+Failed:
+    number = Err.Number: description = Err.Description: gAllowClose = priorAllow
+    Err.Raise number, , description
 End Sub
-Public Function ConfirmDiscard() As Boolean
-    If Not gDirty And Not gDraftDirty Then ConfirmDiscard = True: Exit Function
-    ConfirmDiscard = (MsgBox(MessageText("MSG-015"), vbYesNo + vbQuestion + vbDefaultButton2, "入力確認") = vbYes)
+Public Function ConfirmDiscard(Optional ByVal f As Access.Form = Nothing) As Boolean
+    Dim pending As Boolean, title As String, scope As String
+    title = "入力確認"
+    If Not f Is Nothing Then
+        pending = (UiState(f).Pending.Count > 0)
+        title = UiDialogTitle(f)
+        If f.Name = "frmEmployeeEditor" Then scope = " 社員と全経歴の未保存変更を破棄します。"
+        If f.Name = "frmCodeMaster" Then scope = " 編集中のコード1件の未保存変更を破棄します。"
+    End If
+    If Not gDirty And Not gDraftDirty And Not pending Then ConfirmDiscard = True: Exit Function
+    ConfirmDiscard = (MsgBox(MessageText("MSG-015") & scope, vbYesNo + vbQuestion + vbDefaultButton2, title) = vbYes)
+    If Not f Is Nothing Then
+        If ConfirmDiscard Then UiClearPending f Else UiRestoreDeclined f
+    End If
 End Function
 Public Sub FillCombo(ByVal ctl As Control, ByVal category As String, ByVal includeStopped As Boolean, Optional ByVal current As String = "", Optional ByVal includeEmpty As Boolean = False)
     Dim u As New clsUnitOfWork, q As DAO.QueryDef, r As DAO.Recordset, rows As New Collection, caption As String, overlay As New clsUiBusyState

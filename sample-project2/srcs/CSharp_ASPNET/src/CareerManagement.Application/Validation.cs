@@ -76,11 +76,21 @@ public static partial class Validation
         if(no is not null && !EmployeeNoPattern().IsMatch(no)) throw Field(5,"F03-I01","社員番号（6桁）");
         var name=Text(raw.Name,40,false,"F03-I02","氏名・カナ");
         if(ScalarLength(SearchKey(name))>40)throw Field(5,"F03-I02","氏名・カナ（正規化後40文字）");
-        var dep=Text(raw.Department,2,false,"F03-I03","部署");
-        var status=Text(raw.EmploymentStatus,2,false,"F03-I04","在籍区分");
-        if(dep is not null) Code(dep,"F03-I03");
-        if(status is not null && status is not ("01" or "02" or "03")) throw Field(5,"F03-I04","在籍区分");
+        var dep=raw.Department.Length==0?null:raw.Department;
+        var status=raw.EmploymentStatus.Length==0?null:raw.EmploymentStatus;
+        if(dep is not null&&(!CodePattern().IsMatch(dep)||dep=="00"))throw BusinessException.Error(16);
+        if(status is not null&&status is not("01" or "02" or "03"))throw BusinessException.Error(16);
         return new(no,name,dep,status);
+    }
+    // Navigation raw is not business input validation or normalization.
+    public static void TechnicalRaw(SearchRaw raw)
+    {
+        foreach(var value in new[]{raw.EmployeeNo,raw.Name,raw.Department,raw.EmploymentStatus})TechnicalRaw(value);
+    }
+    public static void TechnicalRaw(string? value)
+    {
+        if(value is null||value.Length>16384)throw new ArgumentException("Raw text exceeds transport bounds.");
+        try{ScalarLength(value);}catch(BusinessException){throw new ArgumentException("Invalid UTF-16.");}
     }
     public static EmployeeDraft Employee(EmployeeRaw raw, DateOnly businessDate)
     {
