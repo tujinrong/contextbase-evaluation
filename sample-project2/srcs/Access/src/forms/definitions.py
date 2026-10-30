@@ -1,4 +1,4 @@
-"""Native unbound UI authored from Access detail UI 1.0; twips per Section.
+"""Native unbound UI authored from Access detail UI02 1.2; twips per Section.
 Header Tab Pages are empty; logical Page inputs belong physically to Detail.
 No specification or test file is needed by the distributed production helper.
 """
@@ -59,7 +59,8 @@ for form,d in FORMS.items():
         if form=='frmLogin':x,y,w=6345,ctl['y'],1200
         elif ctl['name']=='cboCategory':x,y,w,h=360,1740,480,480
         elif ctl['kind']==CHECK:x,y,w=ctl['x']+420,ctl['y'],8000
-        extra.append(l('lbl_'+ctl['name'],ctl['label'],ctl['section'],x,y,w,h,**({'page':ctl['page']} if 'page' in ctl else {})))
+        caption='分類' if ctl['name']=='cboCategory' else ctl['label']
+        extra.append(l('lbl_'+ctl['name'],caption,ctl['section'],x,y,w,h,**({'page':ctl['page']} if 'page' in ctl else {})))
     if form in HEADERS:
         name,columns=HEADERS[form];lst=next(x for x in d['controls'] if x['name']==name);offset=0
         for name,title,width in columns:
@@ -72,7 +73,22 @@ TAB_ORDER={
 'frmEmployeeSearch':['txtEmployeeNo','txtName','cboDepartment','cboStatus','cmdSearch','cmdClear','lstEmployees','txtSelectedDetails','cmdNew','cmdEdit','cmdExport','cmdMenu'],
 'frmEmployeeEditor':{0:['tabEmployee','txtEmployeeNo','txtEmployeeName','txtEmployeeKana','cboDepartment','cboStatus','txtJoinDate','txtSummary','txtSkills','txtQualifications','txtSelfPr','cmdSave','cmdCancel'],1:['tabEmployee','lstCareers','cmdAddCareer','cmdRemoveCareer','txtStartMonth','txtEndMonth','cboRole','txtTeamSize','txtCompany','txtProject','txtDescription','txtDuties','txtAchievements','txtTechnologies','txtPhases','cmdApplyCareer','cmdSave','cmdCancel']},
 'frmCodeMaster':['cboCategory','cmdNew','lstCodes','txtCode','txtCodeName','txtSortOrder','chkEnabled','cmdSave','cmdCancel','cmdMenu']}
-assert sum(len(d['controls']) for d in FORMS.values())==127
+PENDING_OWNERS={
+ 'frmEmployeeSearch':['cboDepartment','cboStatus'],
+ 'frmEmployeeEditor':['cboDepartment','cboStatus','cboRole'],
+ 'frmCodeMaster':['cboCategory']}
+for form,owners in PENDING_OWNERS.items():
+    d=FORMS[form];extra=[]
+    for owner_name in owners:
+        owner=next(x for x in d['controls'] if x['name']==owner_name)
+        label=next(x for x in d['controls'] if x['name']=='lbl_'+owner_name)
+        page={'page':owner['page']} if 'page' in owner else {}
+        name='txtPending_'+owner_name
+        hint=owner['label'].replace('※','')+'の未採用入力。候補はAlt+↓またはF4で選択'
+        extra.append(c(name,'',TEXT,owner['section'],owner['x'],owner['y'],owner['w']-360,owner['h'],visible=False,pending_owner=owner_name,hint=hint,**page))
+        extra.append(l('lbl_'+name,label['label'],label['section'],label['x'],label['y'],label['w'],label['h'],visible=False,pending_owner=owner_name,**page))
+    d['controls']+=extra
+assert sum(len(d['controls']) for d in FORMS.values())==139
 
 def module_code(form_name,definition):
     lines=['Option Compare Binary','Option Explicit',
@@ -90,7 +106,12 @@ def module_code(form_name,definition):
         if k!=TAB:lines += [f'Private Sub {n}_GotFocus()',f'    UiGotFocus Me, "{n}"','End Sub']
         if k==BUTTON:lines += [f'Private Sub {n}_Click()',f'    UiAction Me, "{n}"','End Sub']
         if k==TEXT:lines += [f'Private Sub {n}_Change()',f'    UiChanged Me, "{n}"','End Sub',f'Private Sub {n}_BeforeUpdate(Cancel As Integer)',f'    UiBeforeUpdate Me, "{n}", Cancel','End Sub']
-        if k in (COMBO,CHECK,LIST):lines += [f'Private Sub {n}_AfterUpdate()',f'    UiSelected Me, "{n}"','End Sub']
-        if k==COMBO:lines += [f'Private Sub {n}_Change()',f'    UiComboChanged Me, "{n}"','End Sub',f'Private Sub {n}_NotInList(NewData As String, Response As Integer)',f'    UiNotInList Me, "{n}", NewData, Response','End Sub']
+        if k in (COMBO,CHECK,LIST):lines += [f'Private Sub {n}_AfterUpdate()',f'    UiSelected Me, "{n}"'+(', True' if k==COMBO else ''),'End Sub']
+        if k==COMBO:
+            lines += [f'Private Sub {n}_Change()',f'    UiComboChanged Me, "{n}"','End Sub',f'Private Sub {n}_NotInList(NewData As String, Response As Integer)',f'    UiNotInList Me, "{n}", NewData, Response','End Sub',
+              f'Private Sub {n}_Click()',f'    UiPendingComboClick Me, "{n}"','End Sub',
+              f'Private Sub {n}_KeyUp(KeyCode As Integer, Shift As Integer)',f'    UiPendingComboKeyUp Me, "{n}", KeyCode, Shift','End Sub',
+              f'Private Sub {n}_MouseDown(Button As Integer, Shift As Integer, X As Single, Y As Single)',f'    UiPendingComboMouse Me, "{n}", Button, X, Y','End Sub',
+              f'Private Sub {n}_MouseUp(Button As Integer, Shift As Integer, X As Single, Y As Single)',f'    UiPendingComboMouse Me, "{n}", Button, X, Y','End Sub']
         if k==TAB:lines += [f'Private Sub {n}_Change()',f'    UiSelected Me, "{n}"','End Sub']
     return '\r\n'.join(lines)+'\r\n'

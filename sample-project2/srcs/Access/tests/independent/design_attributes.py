@@ -28,8 +28,9 @@ import win32process
 parser = argparse.ArgumentParser()
 parser.add_argument('--artifact-sha256', required=True)
 parser.add_argument('--contract-sha256', required=True)
+parser.add_argument('--scratch-name', choices=['independent-ui-attributes', 'independent-ui-attributes-current', 'independent-ui-attributes-final'], default='independent-ui-attributes')
 args = parser.parse_args()
-scratch = OWNER / '.tmp/independent-ui-attributes'
+scratch = OWNER / '.tmp' / args.scratch_name
 scratch.mkdir(parents=True, exist_ok=True)
 if scratch.resolve() != scratch.absolute():
     raise RuntimeError('Redirected scratch path')
@@ -139,12 +140,45 @@ def get(obj, name):
     return getattr(obj, name)
 
 SECTION_NAMES = {0: 'Detail', 1: 'Header', 2: 'Footer'}
+AC_LABEL = 100
+AC_TEXTBOX = 109
+PENDING_RUNTIME_DIMENSION_RULE_IDS = frozenset({
+    'PENDING-F03-LAYOUT', 'PENDING-F03-VIEWPORT-DIMENSIONS',
+    'PENDING-F04-LAYOUT', 'PENDING-F04-VIEWPORT-DIMENSIONS',
+    'PENDING-F06-LAYOUT', 'PENDING-F06-VIEWPORT-DIMENSIONS',
+})
 PROPERTY_MAP = {'designWidthTwip': 'Width', 'defaultView': 'DefaultView', 'recordSelectors': 'RecordSelectors', 'navigationButtons': 'NavigationButtons', 'dividingLines': 'DividingLines', 'autoResize': 'AutoResize', 'autoCenter': 'AutoCenter', 'popUp': 'PopUp', 'modal': 'Modal', 'scrollBars': 'ScrollBars', 'keyPreview': 'KeyPreview', 'designHeightTwip': 'Height', 'backColor': 'BackColor', 'visible': 'Visible', 'fontFamily': 'FontName', 'fontSize': 'FontSize', 'fontBold': 'FontBold', 'designLeft': 'Left', 'designTop': 'Top', 'designWidth': 'Width', 'designHeight': 'Height', 'foreColor': 'ForeColor', 'specialEffect': 'SpecialEffect', 'useTheme': 'UseTheme', 'shape': 'Shape', 'gradient': 'Gradient', 'limitToList': 'LimitToList', 'autoExpand': 'AutoExpand', 'boundColumn': 'BoundColumn', 'columnCount': 'ColumnCount', 'columnWidthsTwip': 'ColumnWidths', 'columnHeads': 'ColumnHeads', 'multiSelect': 'MultiSelect', 'rowSourceType': 'RowSourceType', 'style': 'Style', 'multiRow': 'MultiRow', 'tabFixedHeightTwip': 'TabFixedHeight', 'tabFixedWidthTwip': 'TabFixedWidth', 'enabled': 'Enabled', 'locked': 'Locked', 'tabStop': 'TabStop', 'enterKeyBehavior': 'EnterKeyBehavior'}
 EMPTY_PROPS = {'recordSourceEmpty': 'RecordSource', 'controlSourceEmpty': 'ControlSource', 'inputMaskEmpty': 'InputMask', 'formatEmpty': 'Format', 'rowSourceEmpty': 'RowSource'}
+
+PROPERTY_MAP.update({'caption': 'Caption', 'controlTipText': 'ControlTipText', 'statusBarText': 'StatusBarText'})
+
+
+def attached_label_names(obj):
+    """Read every acLabel in the actual TextBox.Controls; never infer links from Parent/name."""
+    if int(get(obj, 'ControlType')) != AC_TEXTBOX:
+        raise TypeError('Attached-label measurement requires an actual TextBox')
+    children = child = None
+    names = []
+    try:
+        children = get(obj, 'Controls')
+        for index in range(int(children.Count)):
+            child = children.Item(index)
+            if int(get(child, 'ControlType')) == AC_LABEL:
+                name = get(child, 'Name')
+                if not isinstance(name, str) or not name:
+                    raise TypeError('Actual attached Label.Name is unavailable')
+                names.append(name)
+            child = None
+        return sorted(names)
+    finally:
+        child = children = None  # Release child RCWs before owned Access shutdown.
+
 
 def observed(obj, name, form, component):
     if name in PROPERTY_MAP: return get(obj, PROPERTY_MAP[name])
     if name in EMPTY_PROPS: return get(obj, EMPTY_PROPS[name]) in ('', None)
+    if name == 'attachedLabelCount': return len(attached_label_names(obj))
+    if name == 'attachedLabelName': return '|'.join(attached_label_names(obj))
     if name == 'fontUnit': return 'pt'  # Access FontSize property is specified in points.
     if name == 'unit': return 'twip'  # Access design coordinates are specified in twips.
     if name == 'section': return SECTION_NAMES[int(obj.Section)]
@@ -174,7 +208,7 @@ def passes(value, expected):
 def canonical_vba(text):
     # Invert only literal concatenations introduced for VBE ANSI round-tripping.
     atom = r'(?:"(?:[^"\r\n]|"")*"|ChrW\(&H[0-9A-F]+\))'
-    pattern = re.compile(r'\(' + atom + r'(?:\s*&\s*' + atom + r')+\)', re.I)
+    pattern = re.compile(r'\(' + atom + r'(?:\s*&\s*(?:_\s*)?' + atom + r')+\)', re.I)
     def decode(match):
         parts = []
         for token in re.findall(atom, match[0], re.I):
@@ -184,11 +218,12 @@ def canonical_vba(text):
         return '"' + value.replace('"', '""') + '"'
     text = pattern.sub(decode, text)
     # Retain literal text/case, ignore comments and nonliteral spacing/case.
-    tokens = re.findall(r'"(?:[^"\r\n]|"")*"|\x27[^\r\n]*|[A-Za-z_][A-Za-z_0-9]*|[^\s]', text)
-    return [token if token.startswith('"') else token.casefold() for token in tokens if not token.startswith("'")]
+    tokens = re.findall(r'"(?:[^"\r\n]|"")*"|\x27[^\r\n]*|_[ \t]*(?:\r\n|\n)|[A-Za-z_][A-Za-z_0-9]*|[^\s]', text)
+    return [token if token.startswith('"') else token.casefold() for token in tokens if not token.startswith("'") and not re.fullmatch(r'_[ \t]*(?:\r\n|\n)', token)]
 
 record = {'schemaVersion': 1, 'projectId': 'sample-project2', 'profileId': 'Access', 'runId': 'sp2-ui-regenerate-20261029', 'checkpoint': 2, 'status': 'RUNNING', 'scope': 'Owned-copy DesignView saved attributes / normal VBA class initialization / read-only typed data only; no Form runtime, native input, viewport, drawing, Dialog behavior or acceptance.', 'formalScore': None, 'issues': [], 'rules': [], 'skippedRuntimeRules': [], 'inventory': [], 'compiledSourceComparison': [], 'unexecuted': ['Runtime Form rendering/viewport/initial focus', 'Physical keyboard/IME/clipboard and all Dialog actions', 'F03 top-visible-row capture/restore', 'F05 Excel/full-text/print/response interruption', 'Final published product and user acceptance']}
 app = process_handle = project = probe = module = form = obj = None
+record['notMeasuredProperties'] = []
 pid = None
 pythoncom.CoInitialize()
 try:
@@ -225,7 +260,7 @@ try:
         source_file = OWNER / 'src' / folder / (component.Name + suffix)
         code_module = component.CodeModule
         compiled_text = code_module.Lines(1, code_module.CountOfLines) if code_module.CountOfLines else ''
-        source_text = source_file.read_text(encoding='utf-8-sig')
+        source_text = source_file.read_text(encoding='cp932')
         equal = canonical_vba(compiled_text) == canonical_vba(source_text)
         record['compiledSourceComparison'].append({'component': component.Name, 'sourceFile': source_file.relative_to(ROOT).as_posix(), 'sourceSha256': sha(source_file), 'compiledCodeTextSha256': hashlib.sha256(compiled_text.encode()).hexdigest(), 'canonicalTokensEqual': equal})
         if not equal: record['issues'].append({'code': 'COMPILED_SOURCE_DIFFERENCE', 'component': component.Name})
@@ -277,7 +312,7 @@ try:
             if rule['target'] not in relevant or rule['kind'] not in ['font', 'dimensions', 'appearance']:
                 continue
             runtime_properties = {'groupsDoNotOverlap', 'actionsAssociatedWithScope', 'measuredClientAndDpi', 'mainActionsReachable', 'headerTabFooterRemainVisible', 'detailScrollDoesNotHideParent'}
-            if runtime_properties.intersection(rule['properties']):
+            if rule['id'] in PENDING_RUNTIME_DIMENSION_RULE_IDS or runtime_properties.intersection(rule['properties']):
                 record['skippedRuntimeRules'].append({'id': rule['id'], 'reason': 'Requires runtime drawing/viewport/meaning inspection; DesignView properties cannot establish it'})
                 continue
             component = components[rule['target']]
@@ -293,7 +328,8 @@ try:
                     values[prop] = value
                     if not passes(value, expected): failures.append({'property': prop, 'actual': value, 'expected': expected})
                 except Exception as error:
-                    failures.append({'property': prop, 'error': str(error)})
+                    failures.append({'property': prop, 'status': 'NOT_MEASURED', 'error': str(error)})
+                    record['notMeasuredProperties'].append({'ruleId': rule['id'], 'target': rule['target'], 'property': prop, 'reason': str(error)})
             record['rules'].append({'id': rule['id'], 'target': rule['target'], 'kind': rule['kind'], 'status': 'FAIL' if failures else 'PASS_DESIGN_ATTRIBUTE', 'observed': values, 'failures': failures})
             if failures: record['issues'].append({'code': 'SAVED_ATTRIBUTE', 'rule': rule['id'], 'failures': failures})
         if name == 'frmEmployeeEditor':

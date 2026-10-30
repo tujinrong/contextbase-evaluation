@@ -55,14 +55,16 @@ Public Sub ShowResult(ByVal f As Access.Form, ByVal result As clsResult)
     End If
     If result.Kind = "CommitUnknown" Then
         If f.Name = "frmEmployeeEditor" Then
-            f!tabEmployee.SetFocus
-            gEditor.Outcome = "CommitUnknown": f!cmdSave.Enabled = False
+            gEditor.Outcome = "CommitUnknown"
+            UiFocusTabHeader f
+            f!cmdSave.Enabled = False
             f!cmdAddCareer.Enabled = False: f!cmdApplyCareer.Enabled = False: f!cmdRemoveCareer.Enabled = False
         End If
         If f.Name = "frmCodeMaster" Then f!cboCategory.SetFocus: f!cmdSave.Enabled = False: f.Tag = "CommitUnknown"
     End If
     If result.Kind = "AuthExpired" Then LogoutNow
     If result.Kind = "Validation" Then FocusResult f, result
+    If result.MessageId = "MSG-016" Then UiPendingNotice f
 End Sub
 Private Sub FocusResult(ByVal f As Access.Form, ByVal result As clsResult)
     Dim name As String, field As String
@@ -110,5 +112,6 @@ Private Sub FocusResult(ByVal f As Access.Form, ByVal result As clsResult)
     If f.Name = "frmEmployeeEditor" Then
         If InStr(1, "|txtStartMonth|txtEndMonth|txtCompany|txtProject|txtDescription|txtDuties|txtAchievements|txtTechnologies|txtPhases|cboRole|txtTeamSize|", "|" & name & "|", vbBinaryCompare) > 0 Then UiForcePage f, 1 Else UiForcePage f, 0
     End If
-    f.Controls(name).SetFocus
+    UiSyncPendingEditors f
+    f.Controls(UiEffectiveFocus(f, name)).SetFocus
 End Sub

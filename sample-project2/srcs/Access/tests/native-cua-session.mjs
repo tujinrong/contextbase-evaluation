@@ -7,10 +7,12 @@ import crypto from 'node:crypto';
 
 const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const safeName = value => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(value);
-export function createNativeEvidenceSession({sky, sourceRoot, runId, artifact, ownerCopy, contractSha256}) {
+export function createNativeEvidenceSession({sky, sourceRoot, runId, artifact, ownerCopy, contractSha256, evidenceDirectory = 'build/test-results/native-ui'}) {
   if (!sky || !safeName(runId)) throw new Error('An initialized Sky client and safe run id are required.');
   const owner = path.resolve(sourceRoot);
-  const destination = path.join(owner, 'build/test-results/native-ui');
+  if (typeof evidenceDirectory !== 'string' || path.isAbsolute(evidenceDirectory) || evidenceDirectory.split(/[\\/]/).some(p => p === '..') || !(evidenceDirectory === 'build/test-results/native-ui' || evidenceDirectory.startsWith('.tmp/native-diagnostic/'))) throw new Error('Final native evidence or an owned diagnostic directory required.');
+  const destination = path.resolve(owner, evidenceDirectory);
+  if (!destination.toLowerCase().startsWith(owner.toLowerCase()+path.sep)) throw new Error('Evidence outside source root.');
   fs.mkdirSync(destination, {recursive:true});
   if (fs.realpathSync(destination).toLowerCase() !== destination.toLowerCase()) throw new Error('Evidence destination is redirected.');
   const local = name => {
@@ -79,14 +81,19 @@ export function createNativeEvidenceSession({sky, sourceRoot, runId, artifact, o
       const shot=previous.screenshots?.[parameters.screenshotIndex??0];
       if (!shot || !['x','y','scrollX','scrollY'].every(k=>Number.isFinite(parameters[k]))) throw new Error('Fresh screenshot and explicit scroll coordinates/deltas required.');
       args={...args,screenshotId:shot.id,x:parameters.x,y:parameters.y,scrollX:parameters.scrollX,scrollY:parameters.scrollY};
-    } else throw new Error('Supported individual inputs: click, key, text, scroll.');
+    } else if (kind==='drag') {
+      const shot=previous.screenshots?.[parameters.screenshotIndex??0];
+      if (!shot || !['from_x','from_y','to_x','to_y'].every(k=>Number.isFinite(parameters[k]))) throw new Error('Fresh screenshot and explicit drag points required.');
+      args={...args,from_x:parameters.from_x,from_y:parameters.from_y,to_x:parameters.to_x,to_y:parameters.to_y};
+    } else throw new Error('Supported individual inputs: click, key, text, scroll, drag.');
     state=null;
     const step={id:log.steps.length+1,at:new Date().toISOString(),caseId:activeCase?.id??null,kind,parameters,before};
     try {
       if (kind==='click') await sky.click(args);
       else if (kind==='key') await sky.press_key(args);
       else if (kind==='text') await sky.type_text(args);
-      else await sky.scroll(args);
+      else if (kind==='scroll') await sky.scroll(args);
+      else await sky.drag(args);
       state=await sky.get_window_state({window,include_screenshot:true,include_text:true});
       step.after=summary(state);step.status='INPUT_AND_REFRESH_COMPLETED';
       log.steps.push(step);save();

@@ -78,7 +78,7 @@ record = {"schemaVersion": 1, "projectId": "sample-project2", "profileId": "CSha
                                          "Actual browser BFCache persistence, physical IME/nativeWindows input and Office output are not proved here",
                                          "Major-action reachability is actual scroll/focus/hit-test; activation requires interaction evidence",
                                          "Text200 is measured CSS root-font enlargement, not physicalDPI or browser page zoom"],
-          "previousArtifactEvidencePolicy": "Old3f8/d287/a725 observations are not promoted to current4a607 evidence",
+          "previousArtifactEvidencePolicy": "Only freshly collected evidence bound to the artifact recorded above is compared; older artifact PASS is not promoted.",
           "formalScore": None}
 target = ROOT / "build/test-results/independent-checkpoint3-review.json"
 target.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

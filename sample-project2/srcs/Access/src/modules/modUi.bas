@@ -19,9 +19,9 @@ Public Sub UiLoad(ByVal f As Access.Form)
     priorInitialisingForm = initialisingFormName: initialisingFormName = f.Name
     gUiLoading = True: EnsureSession
     If f.Name = "frmLogin" Then
-        f!txtPassword = Null
+        UiSetTextValue f, "txtPassword", Null
         If CurrentDb.Properties("SP2_Staging").Value And DCount("*", "m_app_user") = 0 Then
-            setupStep = 1: f!txtLoginId = "admin": f!txtLoginId.Locked = True
+            setupStep = 1: UiSetTextValue f, "txtLoginId", "admin": f!txtLoginId.Locked = True
             f!lblMessage.Caption = "配布前初期設定：admin のパスワードを入力してください（次に同じ値を再入力）。"
         Else
             setupStep = 0: f!txtLoginId.Locked = False
@@ -62,7 +62,7 @@ Failed:
     gUiLoading = False: Set result = MakeResult("ReadFailure", "MSG-040"): ShowResult f, result
 End Sub
 Public Sub UiTimer(ByVal f As Access.Form)
-    UiDeferredPending f
+    UiDeferredWork f
     EnsureSession
     If Not gSession.IsAuthenticated Then Exit Sub
     If GetTickCount64() - gSession.LastActivityTick >= 1800000 Then
@@ -71,6 +71,9 @@ Public Sub UiTimer(ByVal f As Access.Form)
     End If
 End Sub
 Public Sub UiKey(ByVal f As Access.Form, ByRef key As Integer, Optional ByVal shift As Integer = 0)
+    Dim active As Object
+    UiCancelDeferredPending f
+    If f.Name = "frmEmployeeSearch" Then UiCancelViewportRestore f
     If gBusy Then
         If key = vbKeyEscape And f.Name = "frmEmployeeSearch" Then gExportCancel = True
         key = 0: Exit Sub
@@ -78,17 +81,22 @@ Public Sub UiKey(ByVal f As Access.Form, ByRef key As Integer, Optional ByVal sh
     If f.Name <> "frmLogin" Then
         If Not TouchActivity() Then key = 0: LogoutNow: Exit Sub
     End If
+    If UiPendingKey(f, key, shift) Then Exit Sub
     If key = vbKeyEscape And (f.Name = "frmEmployeeEditor" Or f.Name = "frmCodeMaster") Then
         UiCapturePendingOnEscape f: key = 0: UiAction f, "cmdCancel": Exit Sub
     End If
     If key = vbKeyReturn And f.Name = "frmEmployeeSearch" Then
-        If InStr(1, "|txtEmployeeNo|txtName|cboDepartment|cboStatus|", "|" & f.ActiveControl.Name & "|", vbBinaryCompare) > 0 Then
-            key = 0: UiAction f, "cmdSearch": Exit Sub
+        If UiTryGetActiveControl(f, active) Then
+            If InStr(1, "|txtEmployeeNo|txtName|cboDepartment|cboStatus|", "|" & UiLogicalOwner(f, active.Name) & "|", vbBinaryCompare) > 0 Then
+                key = 0: UiAction f, "cmdSearch": Exit Sub
+            End If
         End If
     End If
     UiRouteTab f, key, shift
 End Sub
 Public Sub UiMouse(ByVal f As Access.Form)
+    UiCancelDeferredPending f
+    If f.Name = "frmEmployeeSearch" Then UiCancelViewportRestore f
     If Not gBusy And f.Name <> "frmLogin" Then
         If Not TouchActivity() Then LogoutNow
     End If
@@ -97,8 +105,10 @@ Public Sub UiChanged(ByVal f As Access.Form, ByVal ctl As String)
     Dim raw As String, ui As clsFormUiState
     Set ui = UiState(f)
     If gUiLoading Or ui.IsInitializing Or ui.IsRestoringSelection Then Exit Sub
+    If UiLogicalOwner(f, ctl) <> ctl Then UiPendingChanged f, ctl: Exit Sub
+    If f.Name = "frmEmployeeSearch" Then UiCancelViewportRestore f
     If ctl = "txtSelectedDetails" Then Exit Sub
-    If f.Controls(ctl).ControlType = acTextBox Then raw = UiRaw(f, ctl)
+    If f.Controls(ctl).ControlType = acTextBox Then UiRecordTextChange f, ctl
     If f.Name = "frmEmployeeSearch" Then
         InvalidateSearch f
     ElseIf f.Name = "frmEmployeeEditor" Then
@@ -143,13 +153,15 @@ Invalid:
         f!lblMessage.Caption = MessageText("MSG-005", "入力欄（" & CStr(maximum) & "字以内）")
     End If
 End Sub
-Public Sub UiSelected(ByVal f As Access.Form, ByVal ctl As String)
+Public Sub UiSelected(ByVal f As Access.Form, ByVal ctl As String, Optional ByVal nativeComboCommit As Boolean = False)
     Dim row As Variant, index As Long, result As clsResult, ui As clsFormUiState, requested As Variant, previous As Variant
     On Error GoTo Failed
     Set ui = UiState(f)
     If gUiLoading Or ui.IsInitializing Or ui.IsRestoringSelection Then Exit Sub
     If ctl = "tabEmployee" Then UiSwitchPage f: Exit Sub
     If gBusy Then Exit Sub
+    If nativeComboCommit And f.Controls(ctl).ControlType = acComboBox Then UiMarkPendingCandidate f, ctl
+    If f.Name = "frmEmployeeSearch" Then UiCancelViewportRestore f
     If f.Name <> "frmLogin" Then If Not TouchActivity() Then LogoutNow: Exit Sub
     If f.Controls(ctl).ControlType = acComboBox And ctl <> "cboCategory" Then
         If Not UiAcceptCombo(f, ctl) Then Exit Sub
@@ -186,11 +198,16 @@ Public Sub UiSelected(ByVal f As Access.Form, ByVal ctl As String)
             If ui.Pending.Exists("cboCategory") Then
                 If Not ui.ExplicitComboChoice.Exists("cboCategory") Then UiRestoreDeclined f: Exit Sub
                 If Not CBool(ui.ExplicitComboChoice("cboCategory")) Then UiRestoreDeclined f: Exit Sub
+                If Same(requested, previous) Then
+                    ui.Pending.Remove "cboCategory": UiRememberCombo f, "cboCategory"
+                    UiFinishPendingChoice f, "cboCategory": Exit Sub
+                End If
             End If
             If Not ConfirmDiscard(f) Then UiRestoreDeclined f: Exit Sub
             UiClearPending f
             ui.IsRestoringSelection = True: f!cboCategory = requested: ui.IsRestoringSelection = False
             ui.AcceptedCategory = CStr(requested): UiRememberCombo f, "cboCategory"
+            UiFinishPendingChoice f, "cboCategory"
             LoadCodeRows f: ClearCode f
         ElseIf ctl = "lstCodes" Then
             requested = f!lstCodes.Value
@@ -220,6 +237,13 @@ Public Sub UiAction(ByVal f As Access.Form, ByVal action As String)
     Dim result As clsResult, e As clsEmployeeEdit, index As Long, id As Variant, text As String, category As String
     On Error GoTo Failed
     If gBusy Then ShowResult f, MakeResult("Busy", "MSG-029"): Exit Sub
+    If f.Name = "frmEmployeeSearch" Then UiCancelViewportRestore f
+    ' Capture before authorization overlays can disable/re-enable the list and
+    ' scroll its selected row into view. Selection and viewport are independent.
+    If f.Name = "frmEmployeeSearch" And (action = "cmdNew" Or action = "cmdEdit") Then
+        UiCapturePendingOnEscape f
+        UiCaptureSearchReturn f
+    End If
     UiCaptureText f
     If (f.Name = "frmEmployeeSearch" And action = "cmdSearch") Or (f.Name = "frmEmployeeEditor" And action <> "cmdCancel") Or (f.Name = "frmCodeMaster" And (action = "cmdSave" Or action = "cmdNew")) Then UiRequireNoPending f
     If action = "cmdExit" Then EnsureSession: gSession.Clear: Application.Quit acQuitSaveNone: Exit Sub
@@ -240,7 +264,7 @@ Public Sub UiAction(ByVal f As Access.Form, ByVal action As String)
         End If
         ValidateLoginInput f
         Set result = UiAuthenticate(f, CStr(Nz(f!txtLoginId, "")), CStr(Nz(f!txtPassword, "")))
-        f!txtPassword = Null: UiState(f).Raw("txtPassword") = ""
+        UiSetTextValue f, "txtPassword", Null
         If result.Kind = "OK" Then
             Navigate f, "frmMenu"
         Else
@@ -255,14 +279,15 @@ Public Sub UiAction(ByVal f As Access.Form, ByVal action As String)
         Select Case action
         Case "cmdSearch": ExecuteSearch f
         Case "cmdClear"
-            gUiLoading = True: f!txtEmployeeNo = Null: f!txtName = Null: f!cboDepartment = Null: f!cboStatus = "01": gUiLoading = False
+            gUiLoading = True
+            UiSetTextValue f, "txtEmployeeNo", Null: UiSetTextValue f, "txtName", Null
+            f!cboDepartment = Null: f!cboStatus = "01": gUiLoading = False
             UiClearPending f: UiRememberCombo f, "cboDepartment": UiRememberCombo f, "cboStatus"
             InvalidateSearch f
             gSearchState = "Unsearched": gSearchResultState = "NoResult": Set gAppliedCriteria = Nothing
             f!lblCount.Caption = "未検索": f!lblSelection.Caption = "条件を指定して検索してください。"
         Case "cmdMenu": Set gCriteria = Nothing: Set gSearchRaw = Nothing: Set gSearchReturn = Nothing: Set gAppliedCriteria = Nothing: gAppliedValid = False: gSearchWasExecuted = False: Set gSearchRows = Nothing: Navigate f, "frmMenu"
         Case "cmdNew", "cmdEdit"
-            UiCaptureSearchReturn f
             Set result = UiAuthorize(f, "STAFF"): If result.Kind <> "OK" Then ShowResult f, result: GoTo Done
             If action = "cmdNew" Then
                 Set gEditor = New clsEmployeeEdit: gEditor.Status = "01": Set gOriginal = Nothing
@@ -361,7 +386,7 @@ Done:
     gBusy = False: Exit Sub
 Failed:
     text = Err.Description: gUiLoading = False: gBusy = False
-    If f.Name = "frmLogin" Then f!txtPassword = Null
+    If f.Name = "frmLogin" Then UiSetTextValue f, "txtPassword", Null
     Set result = Failure(text, Nothing, True): ShowResult f, result
     If f.Name = "frmLogin" Then UiState(f).Raw("txtPassword") = "": f!txtPassword.SetFocus
 End Sub
@@ -386,20 +411,21 @@ Private Sub SetupSubmit(ByVal f As Access.Form)
     Else
         If StrComp(setupFirst, password, vbBinaryCompare) <> 0 Then setupFirst = "": setupStep = setupStep - 1: Reject "MSG-005", "確認用パスワード"
         If setupStep = 2 Then
-            setupAdmin = password: setupStep = 3: f!txtLoginId = "staff": f!lblMessage.Caption = "staff のパスワードを入力してください。"
+            setupAdmin = password: setupStep = 3: UiSetTextValue f, "txtLoginId", "staff": f!lblMessage.Caption = "staff のパスワードを入力してください。"
         Else
             setupStaff = password
             overlay.Acquire f: initialized = InitializeDemo(setupAdmin, setupStaff): overlay.Restore
             If initialized Then
                 setupStep = 0: setupAdmin = "": setupStaff = "": setupFirst = ""
-                f!txtLoginId.Locked = False: f!txtLoginId = Null: f!lblMessage.Caption = "初期設定が完了しました。配布前検査を行ってください。"
+                f!txtLoginId.Locked = False: UiSetTextValue f, "txtLoginId", Null: f!lblMessage.Caption = "初期設定が完了しました。配布前検査を行ってください。"
             End If
         End If
     End If
-    f!txtPassword = Null: UiState(f).Raw("txtPassword") = "": password = ""
+    UiSetTextValue f, "txtPassword", Null: password = ""
 End Sub
 Public Sub UiUnload(ByVal f As Access.Form, ByRef cancel As Integer)
     Dim ui As clsFormUiState: Set ui = UiState(f)
+    If f.Name = "frmEmployeeSearch" Then UiCancelViewportRestore f
     If gAllowClose Then Exit Sub
     If gBusy Then cancel = True: If f.Name = "frmEmployeeSearch" Then gExportCancel = True
     If gBusy Then Exit Sub
@@ -416,10 +442,18 @@ Public Sub UiClosed(ByVal f As Access.Form)
     If f.Name = "frmLogin" Then setupFirst = "": setupAdmin = "": setupStaff = ""
     If f.Name = "frmEmployeeEditor" Then
         Set gEditor = Nothing: Set gOriginal = Nothing: gDirty = False: gDraftDirty = False: gCareerIndex = 0
-        If Not gAllowClose And gSession.IsAuthenticated Then DoCmd.OpenForm "frmEmployeeSearch"
+        If Not gAllowClose Then
+            If Not gSession Is Nothing Then
+                If gSession.IsAuthenticated Then DoCmd.OpenForm "frmEmployeeSearch"
+            End If
+        End If
     ElseIf f.Name = "frmCodeMaster" Then
         Set gCode = Nothing: gDirty = False
-        If Not gAllowClose And gSession.IsAuthenticated Then DoCmd.OpenForm "frmMenu"
+        If Not gAllowClose Then
+            If Not gSession Is Nothing Then
+                If gSession.IsAuthenticated Then DoCmd.OpenForm "frmMenu"
+            End If
+        End If
     End If
 End Sub
 Public Sub InvalidateSearch(ByVal f As Access.Form)
@@ -485,10 +519,13 @@ Private Sub FillEditor(ByVal f As Access.Form)
     Dim e As clsEmployeeEdit: Set e = gEditor
     FillCombo f!cboDepartment, "DEPARTMENT", False, e.Department
     FillCombo f!cboStatus, "EMPLOYMENT_STATUS", False, e.Status
-    f!txtEmployeeNo = e.EmployeeNo: f!txtEmployeeNo.Locked = Not IsNull(e.EmployeeId): f!txtEmployeeNo.Enabled = True: f!txtEmployeeNo.TabStop = True
-    f!txtEmployeeName = e.Name: f!txtEmployeeKana = e.Kana: f!cboDepartment = SaveText(e.Department): f!cboStatus = SaveText(e.Status)
-    f!txtJoinDate = IIf(e.JoinDate = 0, Null, Format$(e.JoinDate, "yyyy-mm-dd"))
-    f!txtSummary = e.Summary: f!txtSkills = e.Skills: f!txtQualifications = e.Qualifications: f!txtSelfPr = e.SelfPr
+    UiSetTextValue f, "txtEmployeeNo", e.EmployeeNo
+    f!txtEmployeeNo.Locked = Not IsNull(e.EmployeeId): f!txtEmployeeNo.Enabled = True: f!txtEmployeeNo.TabStop = True
+    UiSetTextValue f, "txtEmployeeName", e.Name: UiSetTextValue f, "txtEmployeeKana", e.Kana
+    f!cboDepartment = SaveText(e.Department): f!cboStatus = SaveText(e.Status)
+    UiSetTextValue f, "txtJoinDate", IIf(e.JoinDate = 0, Null, Format$(e.JoinDate, "yyyy-mm-dd"))
+    UiSetTextValue f, "txtSummary", e.Summary: UiSetTextValue f, "txtSkills", e.Skills
+    UiSetTextValue f, "txtQualifications", e.Qualifications: UiSetTextValue f, "txtSelfPr", e.SelfPr
     RefreshCareers f: ClearDraft f
     UiState(f).AcceptedPage = 0: UiPageGroup f, 0: f!tabEmployee = 0
     UiRememberCombo f, "cboDepartment": UiRememberCombo f, "cboStatus"
@@ -541,7 +578,10 @@ Private Sub ClearDraft(ByVal f As Access.Form)
     Dim names As Variant, name As Variant
     gUiLoading = True
     names = Array("txtStartMonth", "txtEndMonth", "txtCompany", "txtProject", "txtDescription", "txtDuties", "txtAchievements", "txtTechnologies", "txtPhases", "cboRole", "txtTeamSize")
-    For Each name In names: f.Controls(CStr(name)).Value = Null: f.Controls(CStr(name)).Enabled = False: f.Controls(CStr(name)).Locked = True: f.Controls(CStr(name)).TabStop = False: Next
+    For Each name In names
+        If f.Controls(CStr(name)).ControlType = acTextBox Then UiSetTextValue f, CStr(name), Null Else f.Controls(CStr(name)).Value = Null
+        f.Controls(CStr(name)).Enabled = False: f.Controls(CStr(name)).Locked = True: f.Controls(CStr(name)).TabStop = False
+    Next
     f!cmdApplyCareer.Enabled = False: f!cmdRemoveCareer.Enabled = False: gUiLoading = False
     SyncCareerButtons f: UiUpdateIdentity f
 End Sub
@@ -551,9 +591,13 @@ Private Sub FillDraft(ByVal f As Access.Form, ByVal c As clsCareerDraft)
     FillCombo f!cboRole, "PROJECT_ROLE", False, c.RoleCode
     names = Array("txtStartMonth", "txtEndMonth", "txtCompany", "txtProject", "txtDescription", "txtDuties", "txtAchievements", "txtTechnologies", "txtPhases", "cboRole", "txtTeamSize")
     For Each name In names: f.Controls(CStr(name)).Enabled = True: f.Controls(CStr(name)).Locked = False: f.Controls(CStr(name)).TabStop = True: Next
-    f!txtStartMonth = IIf(c.StartMonth = 0, Null, Format$(c.StartMonth, "yyyy-mm")): f!txtEndMonth = IIf(IsNull(c.EndMonth), Null, Format$(Nz(c.EndMonth, 0), "yyyy-mm"))
-    f!txtCompany = c.Company: f!txtProject = c.Project: f!txtDescription = c.Description: f!txtDuties = c.Duties: f!txtAchievements = c.Achievements
-    f!txtTechnologies = c.Technologies: f!txtPhases = c.Phases: f!cboRole = SaveText(c.RoleCode): f!txtTeamSize = IIf(c.TeamSize = 0, Null, CStr(c.TeamSize))
+    UiSetTextValue f, "txtStartMonth", IIf(c.StartMonth = 0, Null, Format$(c.StartMonth, "yyyy-mm"))
+    UiSetTextValue f, "txtEndMonth", IIf(IsNull(c.EndMonth), Null, Format$(Nz(c.EndMonth, 0), "yyyy-mm"))
+    UiSetTextValue f, "txtCompany", c.Company: UiSetTextValue f, "txtProject", c.Project
+    UiSetTextValue f, "txtDescription", c.Description: UiSetTextValue f, "txtDuties", c.Duties
+    UiSetTextValue f, "txtAchievements", c.Achievements: UiSetTextValue f, "txtTechnologies", c.Technologies
+    UiSetTextValue f, "txtPhases", c.Phases: f!cboRole = SaveText(c.RoleCode)
+    UiSetTextValue f, "txtTeamSize", IIf(c.TeamSize = 0, Null, CStr(c.TeamSize))
     f!cmdApplyCareer.Enabled = True: f!cmdRemoveCareer.Enabled = (gCareerIndex > 0): gDraftDirty = False: gUiLoading = False
     UiRememberCombo f, "cboRole": UiCaptureText f: SyncCareerButtons f: UiUpdateIdentity f
 End Sub
@@ -615,7 +659,9 @@ Private Function LoadCodeRows(ByVal f As Access.Form) As Boolean
 End Function
 Private Sub ClearCode(ByVal f As Access.Form)
     gUiLoading = True: Set gCode = Nothing
-    f!txtCode = Null: f!txtCodeName = Null: f!txtSortOrder = Null: f!chkEnabled = False
+    UiClearPending f
+    UiSetTextValue f, "txtCode", Null: UiSetTextValue f, "txtCodeName", Null
+    UiSetTextValue f, "txtSortOrder", Null: f!chkEnabled = False
     f!txtCode.Enabled = False: f!txtCodeName.Enabled = False: f!txtSortOrder.Enabled = False: f!chkEnabled.Enabled = False
     f!cmdSave.Enabled = False: f!cmdCancel.Enabled = False: gDirty = False: gUiLoading = False
     UiState(f).AcceptedListKey = Null: UiUpdateIdentity f
@@ -623,7 +669,8 @@ End Sub
 Private Sub FillCode(ByVal f As Access.Form)
     Dim allowed As Boolean, names As Variant, name As Variant
     gUiLoading = True: allowed = (gCode.CategoryId <> "EMPLOYMENT_STATUS")
-    f!txtCode = gCode.Code: f!txtCodeName = gCode.Name: f!txtSortOrder = CStr(gCode.SortOrder): f!chkEnabled = gCode.IsEnabled
+    UiSetTextValue f, "txtCode", gCode.Code: UiSetTextValue f, "txtCodeName", gCode.Name
+    UiSetTextValue f, "txtSortOrder", CStr(gCode.SortOrder): f!chkEnabled = gCode.IsEnabled
     names = Array("txtCode", "txtCodeName", "txtSortOrder", "chkEnabled")
     For Each name In names
         f.Controls(CStr(name)).Enabled = True: f.Controls(CStr(name)).Locked = Not allowed: f.Controls(CStr(name)).TabStop = True

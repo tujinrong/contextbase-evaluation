@@ -69,7 +69,8 @@ Failed:
     s.IsResizing = False
 End Sub
 Public Sub UiActivate(ByVal f As Access.Form)
-    Dim s As clsFormUiState: Set s = UiState(f)
+    Dim s As clsFormUiState, target As String: Set s = UiState(f)
+    On Error GoTo Failed
     If s.Activated Or s.IsInitializing Then Exit Sub
     s.Activated = True
     UiResize f
@@ -78,35 +79,64 @@ Public Sub UiActivate(ByVal f As Access.Form)
     Case "frmLogin": If f!txtLoginId.Locked Then f!txtPassword.SetFocus Else f!txtLoginId.SetFocus
     Case "frmMenu": f!cmdEmployeeSearch.SetFocus
     Case "frmEmployeeSearch"
+        UiSyncPendingEditors f
         If Not gSearchReturn Is Nothing Then
             If gSearchReturn.FocusControl <> "" Then
-                If f.Controls(gSearchReturn.FocusControl).Visible And f.Controls(gSearchReturn.FocusControl).Enabled Then
-                    f.Controls(gSearchReturn.FocusControl).SetFocus
+                target = UiEffectiveFocus(f, gSearchReturn.FocusControl)
+                If f.Controls(target).Visible And f.Controls(target).Enabled Then
+                    f.Controls(target).SetFocus
                 Else
                     f!txtEmployeeNo.SetFocus
                 End If
             Else
                 f!txtEmployeeNo.SetFocus
             End If
-            UiRestoreFirstPending f
+            ' Activate precedes Current/GotFocus and the native OGrid may not yet
+            ' be visible. Restore only after this event returns to Access.
+            UiQueueViewportRestore f, gSearchReturn
         Else
             f!txtEmployeeNo.SetFocus
         End If
     Case "frmEmployeeEditor": If IsNull(gEditor.EmployeeId) Then f!txtEmployeeNo.SetFocus Else f!txtEmployeeName.SetFocus
     Case "frmCodeMaster": f!cboCategory.SetFocus
     End Select
+    Exit Sub
+Failed:
+    UiRecordLayoutFailure f, "ACTIVATE", Err.Number, Err.Description
+End Sub
+Public Sub UiRecordLayoutFailure(ByVal f As Access.Form, ByVal stage As String, ByVal number As Long, ByVal description As String)
+    ' Record an actual display failure without discarding raw/accepted/Pending
+    ' state or leaking an unhandled VBA dialog into normal navigation.
+    On Error Resume Next
+    UiState(f).LayoutFailure = stage & "|" & CStr(number) & "|" & description
+    If f.Name = "frmEmployeeSearch" Then
+        f!lblSelection.Caption = MessageText("MSG-040") & " 入力表示を復元できませんでした。原入力は保持しています。"
+    Else
+        f!lblMessage.Caption = MessageText("MSG-040") & " 入力表示を復元できませんでした。原入力は保持しています。"
+    End If
 End Sub
 Public Sub UiPageGroup(ByVal f As Access.Form, ByVal page As Integer)
     Dim ctl As Control
     For Each ctl In f.Controls
-        If Left$(ctl.Tag, 5) = "PAGE:" Then ctl.Visible = (ctl.Tag = "PAGE:" & CStr(page))
+        If Left$(ctl.Tag, 5) = "PAGE:" And Not UiIsPendingPhysical(ctl.Name) Then ctl.Visible = (ctl.Tag = "PAGE:" & CStr(page))
     Next
+    UiSyncPendingEditors f
+End Sub
+Public Sub UiFocusTabHeader(ByVal f As Access.Form)
+    Dim tabs As Access.TabControl, index As Integer
+    If UiIsInitialisingForm(f) Or UiState(f).IsInitializing Or Not UiState(f).Activated Then Exit Sub
+    Set tabs = f!tabEmployee
+    index = tabs.Value
+    If Not tabs.Visible Or Not tabs.Enabled Then Err.Raise 5, "SP2.UiFocusTabHeader", "The tab header is unavailable."
+    If index < 0 Or index >= tabs.Pages.Count Then Err.Raise 5, "SP2.UiFocusTabHeader", "The active page is invalid."
+    ' Access TabControl has no SetFocus method. Its active Page does.
+    tabs.Pages(index).SetFocus
 End Sub
 Public Sub UiForcePage(ByVal f As Access.Form, ByVal page As Integer)
     Dim s As clsFormUiState, number As Long, description As String
     Set s = UiState(f): On Error GoTo Failed
     s.IsSwitchingPage = True
-    f!tabEmployee.SetFocus
+    UiFocusTabHeader f
     UiPageGroup f, page
     s.AcceptedPage = page: f!tabEmployee.Value = page
     s.IsSwitchingPage = False: Exit Sub
@@ -126,7 +156,7 @@ Public Sub UiSwitchPage(ByVal f As Access.Form)
     If gBusy Then GoTo Declined
     UiRequireNoPending f
     If Not UiResolveDraft(f) Then GoTo Declined
-    f!tabEmployee.SetFocus
+    UiFocusTabHeader f
     UiPageGroup f, requested
     s.AcceptedPage = requested: f!tabEmployee.Value = requested
     f.GoToPage 1, 0, 0
@@ -148,20 +178,131 @@ Failed:
 End Sub
 Public Sub UiRestoreFirstPending(ByVal f As Access.Form)
     Dim s As clsFormUiState, key As Variant: Set s = UiState(f)
-    For Each key In s.Pending.Keys
-        If f.Controls(CStr(key)).Visible And f.Controls(CStr(key)).Enabled Then UiRestorePending f, CStr(key): Exit Sub
+    UiSyncPendingEditors f
+    For Each key In UiPendingOwners(f)
+        If s.Pending.Exists(CStr(key)) Then
+            If f.Name = "frmEmployeeEditor" And Not f.Controls(CStr(key)).Visible Then
+                UiForcePage f, IIf(CStr(key) = "cboRole", 1, 0)
+            End If
+            UiBindPendingEditor f, CStr(key), True: Exit Sub
+        End If
     Next
 End Sub
-Public Sub UiDeferredPending(ByVal f As Access.Form)
-    Dim s As clsFormUiState, name As String: Set s = UiState(f)
-    If s.RestorePendingControl = "" Then Exit Sub
-    name = s.RestorePendingControl: s.RestorePendingControl = ""
-    f.TimerInterval = s.OriginalTimerInterval
-    UiRestorePending f, name
+Public Sub UiArmDeferredTimer(ByVal f As Access.Form, ByVal interval As Long)
+    Dim s As clsFormUiState: Set s = UiState(f)
+    If Not s.DeferredTimerOwned Then
+        s.OriginalTimerInterval = f.TimerInterval: s.DeferredTimerOwned = True
+    End If
+    If f.TimerInterval = 0 Or f.TimerInterval > interval Then f.TimerInterval = interval
+End Sub
+Private Sub UiFinishDeferredTimer(ByVal f As Access.Form)
+    Dim s As clsFormUiState: Set s = UiState(f)
+    If Not s.DeferredTimerOwned Then Exit Sub
+    If s.RestorePendingControl <> "" Or Not s.ViewportRestoreState Is Nothing Then Exit Sub
+    f.TimerInterval = s.OriginalTimerInterval: s.DeferredTimerOwned = False
+End Sub
+Public Sub UiQueueViewportRestore(ByVal f As Access.Form, ByVal state As clsSearchReturnState)
+    Dim s As clsFormUiState: Set s = UiState(f)
+    If state Is Nothing Then Exit Sub
+    If state.ViewportPositionStatus = "NO_ROWS" Then Exit Sub
+    Set s.ViewportRestoreState = state: s.ViewportRestoreAttempts = 0
+    UiArmDeferredTimer f, 50
+End Sub
+Public Sub UiCancelViewportRestore(ByVal f As Access.Form)
+    Dim s As clsFormUiState: Set s = UiState(f)
+    If Not s.ViewportRestoreState Is Nothing Then
+        s.ViewportRestoreState.ViewportPositionStatus = "RESTORE_SUPERSEDED"
+        Set s.ViewportRestoreState = Nothing
+    End If
+    UiFinishDeferredTimer f
+End Sub
+Public Sub UiCancelDeferredPending(ByVal f As Access.Form)
+    Dim s As clsFormUiState: Set s = UiState(f)
+    ' Supersede only the display job; the original Pending/accepted/raw survives.
+    s.RestorePendingControl = "": s.RestorePendingPhase = 0
+    UiFinishDeferredTimer f
+End Sub
+Public Sub UiDeferredWork(ByVal f As Access.Form)
+    Dim s As clsFormUiState, name As String, rows As Collection, done As Boolean, number As Long, description As String
+    Set s = UiState(f)
+    If Not s.DeferredTimerOwned Or s.DeferredWorkRunning Then Exit Sub
+    On Error GoTo Failed
+    s.DeferredWorkRunning = True
+    If Not s.ViewportRestoreState Is Nothing Then
+        ' A new Search/Clear/condition change or a new return snapshot supersedes
+        ' this request. Never append an old warning to the new search result.
+        If gSearchReturn Is Nothing Then
+            UiCancelViewportRestore f
+        ElseIf Not (gSearchReturn Is s.ViewportRestoreState) Then
+            UiCancelViewportRestore f
+        Else
+            Set rows = CachedRows(f!lstEmployees)
+            If Not (rows Is s.ViewportRestoreState.ResultRows) Then UiCancelViewportRestore f
+        End If
+    End If
+    If s.RestorePendingControl <> "" Then
+        name = s.RestorePendingControl
+        s.RestorePendingAttempts = s.RestorePendingAttempts + 1
+        If s.IsInitializing Or s.IsUnloading Or gBusy Then
+            If s.RestorePendingAttempts >= 3 Then
+                UiRecordLayoutFailure f, "PENDING_FORM_NOT_READY", 5, "Pending display was not ready within three Timer events."
+                s.RestorePendingControl = ""
+            End If
+        ElseIf Not s.Pending.Exists(name) Then
+            s.RestorePendingControl = ""
+        Else
+            done = UiRestorePending(f, name)
+            s.RestorePendingControl = "": s.RestorePendingPhase = 0
+        End If
+        If s.RestorePendingControl <> "" Then GoTo Finished
+    End If
+    If Not s.ViewportRestoreState Is Nothing Then
+        s.ViewportRestoreAttempts = s.ViewportRestoreAttempts + 1
+        If s.IsInitializing Or s.IsUnloading Or gBusy Then
+            If s.ViewportRestoreAttempts >= 3 Then
+                s.ViewportRestoreState.ViewportPositionStatus = "RESTORE_UNAVAILABLE:FORM_NOT_READY"
+                f!lblSelection.Caption = f!lblSelection.Caption & " ／ 一覧位置は未復帰です。選択・検索条件は保持しています。"
+                Set s.ViewportRestoreState = Nothing
+            End If
+        Else
+            f.Repaint
+            done = UiRestoreEmployeeViewport(f, s.ViewportRestoreState, s.ViewportRestoreAttempts < 3)
+            If done Then Set s.ViewportRestoreState = Nothing
+        End If
+    End If
+Finished:
+    s.DeferredWorkRunning = False
+    If s.RestorePendingControl = "" And s.ViewportRestoreState Is Nothing Then
+        UiFinishDeferredTimer f
+    Else
+        f.TimerInterval = 50
+    End If
+    Exit Sub
+Failed:
+    number = Err.Number: description = Err.Description
+    s.IsRestoringSelection = False
+    UiRecordLayoutFailure f, "DEFERRED", number, description
+    If Not s.ViewportRestoreState Is Nothing Then
+        s.ViewportRestoreState.ViewportPositionStatus = "RESTORE_UNAVAILABLE:DEFERRED_ERROR_" & CStr(number)
+        Set s.ViewportRestoreState = Nothing
+        f!lblSelection.Caption = f!lblSelection.Caption & " ／ 一覧位置は未復帰です。選択・検索条件は保持しています。"
+    End If
+    s.RestorePendingControl = ""
+    Resume Finished
 End Sub
 Public Sub UiRouteTab(ByVal f As Access.Form, ByRef key As Integer, ByVal shift As Integer)
-    Dim sequence As String, names As Variant, current As String, i As Long, nextIndex As Long, count As Long, ctl As Object
+    Dim sequence As String, names As Variant, current As String, i As Long, nextIndex As Long, count As Long, ctl As Object, active As Object
+    Dim sourceName As String, sourceType As Long, sourceWasPicker As Boolean, targetName As String, number As Long, description As String
     If key <> vbKeyTab Or (shift And 6) <> 0 Then Exit Sub
+    On Error GoTo Failed
+    If Not UiTryGetActiveControl(f, active) Then Exit Sub
+    sourceName = active.Name: sourceType = active.ControlType
+    current = UiLogicalOwner(f, sourceName)
+    sourceWasPicker = (UiState(f).PickerOwner = current And UiState(f).Pending.Exists(current))
+    ' Preserve unknown text and finish this Control's Undo before SetFocus can
+    ' raise native NotInList while the destination focus move is in progress.
+    ' Existing picker acceptance/cancellation rules remain in the shared path.
+    UiCapturePendingOnEscape f
     Select Case f.Name
     Case "frmLogin": sequence = "txtLoginId|txtPassword|cmdLogin|cmdExit"
     Case "frmMenu": sequence = "cmdEmployeeSearch|cmdCodeMaster|cmdLogout"
@@ -175,7 +316,12 @@ Public Sub UiRouteTab(ByVal f As Access.Form, ByRef key As Integer, ByVal shift 
     Case "frmCodeMaster": sequence = "cboCategory|cmdNew|lstCodes|txtCode|txtCodeName|txtSortOrder|chkEnabled|cmdSave|cmdCancel|cmdMenu"
     End Select
     If sequence = "" Then Exit Sub
-    names = Split(sequence, "|"): current = f.ActiveControl.Name
+    ' Resolve the original logical source and each currently available target
+    ' after capture may have displayed a Pending proxy or ended its picker.
+    names = Split(sequence, "|"): current = UiLogicalOwner(f, sourceName)
+    If f.Name = "frmEmployeeEditor" Then
+        If sourceType = acPage Then current = "tabEmployee"
+    End If
     For i = 0 To UBound(names)
         If names(i) = current Then
             nextIndex = i
@@ -183,9 +329,17 @@ Public Sub UiRouteTab(ByVal f As Access.Form, ByRef key As Integer, ByVal shift 
                 nextIndex = nextIndex + IIf((shift And 1) <> 0, -1, 1)
                 If nextIndex < 0 Then nextIndex = UBound(names)
                 If nextIndex > UBound(names) Then nextIndex = 0
-                Set ctl = f.Controls(CStr(names(nextIndex)))
-                If ctl.Visible And ctl.Enabled And ctl.TabStop Then ctl.SetFocus: key = 0: Exit Sub
+                Set ctl = f.Controls(UiEffectiveFocus(f, CStr(names(nextIndex))))
+                If ctl.Visible And ctl.Enabled And ctl.TabStop Then
+                    targetName = ctl.Name: key = 0
+                    If ctl.ControlType = acTabCtl Then UiFocusTabHeader f Else ctl.SetFocus
+                    Exit Sub
+                End If
             Next
         End If
     Next
+    Exit Sub
+Failed:
+    number = Err.Number: description = Err.Description: key = 0
+    UiRecordLayoutFailure f, "TAB_ROUTE_" & current & "_" & targetName & IIf(sourceWasPicker, "_PICKER", ""), number, description
 End Sub

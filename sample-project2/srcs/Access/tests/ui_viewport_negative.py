@@ -19,7 +19,7 @@ End Function
 def run_negative():
  source=ROOT/'build/CareerManagement.accdb'; original=build.sha(source); folder=ROOT/'.tmp/ui-viewport-negative';folder.mkdir(parents=True,exist_ok=True)
  fixture=folder/'CareerManagement-legacy-scroll.accdb';shutil.copy2(source,fixture)
- canonical=(ROOT/'src/classes/clsUiBusyState.cls').read_text(encoding='utf-8')
+ canonical=(ROOT/'src/classes/clsUiBusyState.cls').read_text(encoding='cp932')
  a='If UiIsInitialisingForm(f) Then Exit Sub';b='If physicalOverlay Then target.GoToPage 1, priorRight, priorDown'
  if canonical.count(a)!=1 or canonical.count(b)!=1:raise RuntimeError('Unknown viewport protection boundary')
  legacy=canonical.replace(a,'If False Then Exit Sub').replace(b,"' Legacy fault fixture intentionally omits viewport restoration")

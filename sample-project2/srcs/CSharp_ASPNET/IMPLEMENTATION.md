@@ -8,4 +8,6 @@ Razor SharedのLayout/PageHeader/FieldErrors/UiErrorがサイト枠・現在位�
 
 認証なしの保護操作はCSRF検査の前に401/MSG-002へ分類します。有効認証は従来のCSRF検査必須です。権限・認証・DBを変更する新機能は加えていません。製品はOffice Automationを使用しません。
 
+出力取消は所有する出力workerの終了を最大30秒・要求の取消期限内で待ち、registry解放後のUI状態を返します。画面は取消応答の状態を同期するまで待機を保ち、元fetchの遅い終了で先に入力可能にしません。出力の通常失敗もUI状態を返し、利用者が同じ画面から再作成できます。自動再送は行いません。
+
 対応とSHAはbuild/generation/spec-implementation-map.json、UI期待値はtests/ui-contract.json、実観測/gateはbuild/test-results/ui-observations.json・ui-conformance.jsonです。部分実測/静的対応/ZIP再構築と正式受入を区別します。

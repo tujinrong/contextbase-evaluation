@@ -351,14 +351,26 @@ public sealed class EmployeesController(ScreenStateStore states,EmployeeService 
         catch(Exception exception)
         {
             var outcome=exception is OperationCanceledException?Outcome.Of(30,"Cancelled"):SqlErrors.Map(exception,13);
-            if(!Response.HasStarted){Response.Headers.Remove("Content-Disposition");Response.ContentLength=null;return Failure(outcome);}
+            if(!Response.HasStarted)
+            {
+                Response.Headers.Remove("Content-Disposition");Response.ContentLength=null;
+                await state.Gate.WaitAsync(CancellationToken.None);
+                try{return new JsonResult(new{outcome,ui=states.Info(state,"/employees")},HttpJson.Options){StatusCode=HttpJson.Status(outcome)};}
+                finally{state.Gate.Release();}
+            }
             logger.LogWarning("Export interrupted {OperationId} MSG-036",operation.Id);HttpContext.Abort();return new EmptyResult();
         }
         finally{exports.Finish(operation);}
     }
     [HttpPost("export/cancel")]
     public async Task<IActionResult> ExportCancel(CancellationToken ct)
-    {var input=await HttpJson.ReadAsync<ExportCancelInput>(Request,ct);states.Get<SearchState>(input.SearchStateId,Actor.SessionId);return Json(exports.Cancel(Actor.SessionId,input.SearchStateId,input.OperationId));}
+    {
+        var input=await HttpJson.ReadAsync<ExportCancelInput>(Request,ct);var state=states.Get<SearchState>(input.SearchStateId,Actor.SessionId);
+        var result=await exports.CancelAsync(Actor.SessionId,input.SearchStateId,input.OperationId,ct);
+        await state.Gate.WaitAsync(ct);
+        try{return Json(new{result.Phase,result.MessageId,result.Message,ui=states.Info(state,"/employees")});}
+        finally{state.Gate.Release();}
+    }
     private static void Selected(SearchState state,long? employee)
     {if(!state.Valid||employee is null||!state.Rows.Any(x=>x.EmployeeId==employee))throw BusinessException.Error(11);}
     private static void CanSave(EditState s)

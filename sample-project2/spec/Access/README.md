@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-INDEX","version":"1.12","path":"sample-project2/spec/Access/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-INDEX","version":"1.13","path":"sample-project2/spec/Access/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
 # Access 基本設計書一覧
 
-仕様セット版1.12／2026-10-30。社員経歴管理システム。
+仕様セット版1.13／2026-10-30。社員経歴管理システム。
 
 ## 対象と状態
 
@@ -23,7 +23,7 @@
 | 詳細 | F05 | [F05](詳細仕様書/05_経歴書出力.md) |
 | 詳細 | F06 | [F06](詳細仕様書/06_汎用コードマスタ画面.md) |
 | 詳細共通 | 方式内実装契約 | [方式内実装契約](共通/方式別/01_共通実装仕様.md) |
-| 詳細共通 | UI部品・状態・検査契約 | [物理Form/Section/Page・部品/寸法/状態/54期待条件](共通/方式別/02_UI部品・状態・検査契約.md) |
+| 詳細共通 | UI部品・状態・検査契約 | [物理Form/Section/Page・部品/寸法/状態/54条件とPending追加9条件](共通/方式別/02_UI部品・状態・検査契約.md) |
 | 物理DB設計 | ACE定義と5表分冊 | [ACE定義と5表分冊](DB定義/Access/01_DB定義書.md) |
 | 詳細規約 | 開発規約 | [開発規約](規約/開発規約.md) |
 | 詳細前提 | 詳細設計QA | [詳細設計QA](詳細設計QA.md) |
@@ -62,3 +62,5 @@ specRoot=sample-project2/spec/Access/、sourceRoot=sample-project2/srcs/Access/�
 後続の今回詳細工程は同runIdで全6機能のUI差分を更新し、基本と同じ8HTML断片、新表示9ID、Header/Detailの物理所属・列/全文・raw取消復元/保存成功再検索・中央入力検査・54DUI期待条件を同期する。F05の印刷API/ポイント予算も選定し、実Excel未検証を維持する。[詳細工程記録](../../srcs/Access/build/spec-generation/detail-design/report.md)と[詳細QA](詳細設計QA.md)をbuildへ渡す。要件/基本/業務DB/認証/seed本文を変更せず、この工程ではコード/ACCDB/DB/製品期待値JSONを生成しない。
 
 DQA-UI08/09により物理Section/標準Tab最小帯とExcel Footer書式の技術契約を補正した（2026-10-30）。F03全文の初期折畳み/選択時展開、F04 Tab900/Header2400、Footer専用11ptで、基本8HTML・DB・認証・保存単位は不変。新改訂の入力/期待値/製品検査は再凍結し、旧合格を流用しない。
+
+DQA-UI10は未採用Combo入力を実際に表示・修正できるよう、6論理Comboごとに専用unbound TextBoxと標準付属Labelを置く詳細技術改訂である。3組共有の草案は撤回し、F03の部署/在籍とF04の親/子Pendingを同時に保持する。物理UI共通1.2・共通実装1.4・F03/F04詳細1.3・F06詳細1.2・詳細QA1.5が正本。12Control追加後139Control/付属Label38、全アプリ管理文字11ptで、5Form/2Page/15Section・既存論理92項目/17イベント/8HTML・業務/認証/保存/DB/seedは変えない。spec意味レビュー/freeze→通常preflightで新入力凍結（製品生成なし）→そのSHAへ独立UI期待値改訂/Rootレビュー→製品実装/新候補観測の順に進める。新補助面の実表示/キー/候補選択/取消/保存前拒否は本書更新だけで合格にしない。

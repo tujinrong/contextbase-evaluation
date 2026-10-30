@@ -18,7 +18,9 @@ Public Sub UiCaptureSearchReturn(ByVal f As Access.Form)
     For Each row In CachedRows(f!cboDepartment): state.DepartmentRows.Add row: Next
     For Each row In CachedRows(f!cboStatus): state.StatusRows.Add row: Next
     state.SelectedEmployeeId = gSelectedEmployee
-    state.FocusControl = f.ActiveControl.Name
+    state.FocusControl = UiLogicalOwner(f, f.ActiveControl.Name)
+    If f.ActiveControl.ControlType = acCommandButton And s.Pending.Exists(s.LastEditFocus) Then state.FocusControl = s.LastEditFocus
+    UiCaptureEmployeeViewport f, state
     Set gSearchReturn = state
     ' gSearchRaw remains a compatibility raw-code snapshot for existing callers;
     ' the return class is authoritative and preserves display/Pending separately.
@@ -32,7 +34,8 @@ Public Sub UiLoadSearch(ByVal f As Access.Form)
     If gSearchReturn Is Nothing Then
         FillCombo f!cboDepartment, "DEPARTMENT", True, "", True
         FillCombo f!cboStatus, "EMPLOYMENT_STATUS", True, "", True
-        f!txtEmployeeNo = Null: f!txtName = Null: f!cboDepartment = Null: f!cboStatus = "01"
+        UiSetTextValue f, "txtEmployeeNo", Null: UiSetTextValue f, "txtName", Null
+        f!cboDepartment = Null: f!cboStatus = "01"
         Set gCriteria = New clsSearchCriteria: gCriteria.EmployeeNo = Null: gCriteria.Department = Null: gCriteria.Status = "01"
         Set gSearchRows = New Collection: gSelectedEmployee = Null
         gSearchWasExecuted = False: gSearchState = "Unsearched": gSearchResultState = "NoResult"
@@ -41,7 +44,8 @@ Public Sub UiLoadSearch(ByVal f As Access.Form)
     Else
         SetRows f!cboDepartment, gSearchReturn.DepartmentRows
         SetRows f!cboStatus, gSearchReturn.StatusRows
-        f!txtEmployeeNo = gSearchReturn.RawEmployeeNo: f!txtName = gSearchReturn.RawName
+        UiSetTextValue f, "txtEmployeeNo", gSearchReturn.RawEmployeeNo
+        UiSetTextValue f, "txtName", gSearchReturn.RawName
         f!cboDepartment = gSearchReturn.AcceptedDepartmentCode: f!cboStatus = gSearchReturn.AcceptedStatusCode
         s.AcceptedCodes("cboDepartment") = gSearchReturn.AcceptedDepartmentCode
         s.AcceptedCodes("cboStatus") = gSearchReturn.AcceptedStatusCode
@@ -57,6 +61,7 @@ Public Sub UiLoadSearch(ByVal f As Access.Form)
     f!cmdEdit.Enabled = False: f!cmdExport.Enabled = False
     UiCollapseSelectedDetails f
     RestoreEmployeeSelection f
+    UiSyncPendingEditors f
 End Sub
 Public Sub UiCollapseSelectedDetails(ByVal f As Access.Form)
     Dim activeName As String

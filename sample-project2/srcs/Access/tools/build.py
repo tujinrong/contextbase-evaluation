@@ -17,24 +17,9 @@ win32com.__gen_path__=str(ROOT/'.tmp/gen_py')
 Path(win32com.__gen_path__).mkdir(parents=True,exist_ok=True)
 import win32com.gen_py
 win32com.gen_py.__path__=[win32com.__gen_path__]
-def vbe_text(source):
-    """Protect literals from VBE's active ANSI codepage conversion (e.g. ACP936).
-    Source remains UTF-8; unrepresentable characters become explicit UTF-16 ChrW.
-    This is a lexical encoding transform, not business-code generation.
-    """
-    import re
-    def literal(match):
-        value=match.group()[1:-1].replace('""','"'); parts=[]; pending=''
-        for char in value:
-            try: safe=char.encode('mbcs').decode('mbcs')==char
-            except UnicodeError: safe=False
-            if safe: pending+=char; continue
-            if pending: parts.append('"'+pending.replace('"','""')+'"'); pending=''
-            raw=char.encode('utf-16-le')
-            parts += ['ChrW(&H'+format(int.from_bytes(raw[i:i+2],'little'),'X')+')' for i in range(0,len(raw),2)]
-        if pending: parts.append('"'+pending.replace('"','""')+'"')
-        return '('+' & '.join(parts)+')' if len(parts)>1 else parts[0] if parts else '""'
-    return re.sub(r'"(?:[^"\r\n]|"")*"',literal,source).replace('\n','\r\n')
+if str(ROOT/'tools') not in sys.path:
+    sys.path.insert(0,str(ROOT/'tools'))
+from vba_text import read_vba_source, vbe_text
 def load(path):
     spec=importlib.util.spec_from_file_location(path.stem,str(path)); m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m); return m
 schema=load(ROOT/'database/schema.py'); forms=load(ROOT/'src/forms/definitions.py')
@@ -132,9 +117,15 @@ def create_forms(app, selected=None, code_factory=None):
                 ctl.InputMask='Password' if c.get('password') else '';ctl.Format=''
                 if c.get('multiline'):ctl.EnterKeyBehavior=True;ctl.ScrollBars=2
                 if c.get('readonly'):ctl.Enabled=True;ctl.Locked=True;ctl.TabStop=True
+                if c.get('pending_owner'):
+                    ctl.Enabled=False;ctl.Locked=True;ctl.TabStop=False
+                    ctl.EnterKeyBehavior=False;ctl.ScrollBars=0
+                    ctl.ControlTipText=c['hint'];ctl.StatusBarText=c['hint']
             if c['kind'] in (111,106,110):ctl.AfterUpdate='[Event Procedure]'
             if c['kind']==111:
                 ctl.OnChange='[Event Procedure]';ctl.OnNotInList='[Event Procedure]'
+                ctl.OnClick='[Event Procedure]';ctl.OnKeyUp='[Event Procedure]'
+                ctl.OnMouseDown='[Event Procedure]';ctl.OnMouseUp='[Event Procedure]'
                 ctl.RowSourceType='Value List';ctl.RowSource='';ctl.ColumnCount=2;ctl.BoundColumn=1
                 ctl.ColumnWidths='0;3300';ctl.LimitToList=True;ctl.AutoExpand=True
             if c['kind']==110:
@@ -157,11 +148,15 @@ def create_forms(app, selected=None, code_factory=None):
             c=next(c for c in d['controls'] if c['name']==control_name)
             ctl=win32com.client.CastTo(f.Controls(control_name),casts[c['kind']])
             ordinal=section_order.get(c['section'],0);ctl.TabIndex=ordinal;section_order[c['section']]=ordinal+1;ctl=None
+        for c in d['controls']:
+            if c['kind']!=109 or not c.get('pending_owner'):continue
+            ctl=win32com.client.CastTo(f.Controls(c['name']),casts[109])
+            ordinal=section_order.get(c['section'],0);ctl.TabIndex=ordinal;section_order[c['section']]=ordinal+1;ctl=None
         for sec,h in zip((1,0,2),d['sections']):f.Section(sec).Height=h;f.Section(sec).Visible=h>0
         f.Width=d['width']
         module=f.Module
         if module.CountOfLines:module.DeleteLines(1,module.CountOfLines)
-        module.AddFromString((code_factory or forms.module_code)(name,d));module=None
+        module.AddFromString(vbe_text((code_factory or forms.module_code)(name,d)));module=None
         app.DoCmd.Save(2,name);app.DoCmd.Close(2,name,1);f=None
         export=exports/(name+'.txt')
         if export.exists():export.unlink()
@@ -176,7 +171,7 @@ def import_code(app):
             component=app.VBE.ActiveVBProject.VBComponents.Add(kind); component.Name=path.stem
             module=component.CodeModule
             if module.CountOfLines: module.DeleteLines(1,module.CountOfLines)
-            module.AddFromString(vbe_text(path.read_text(encoding='utf-8'))); module=None
+            module.AddFromString(vbe_text(read_vba_source(path))); module=None
             component=None
 def compile_gate(app):
     # This Office build rejects SysCmd(603) through Automation. RunCommand plus

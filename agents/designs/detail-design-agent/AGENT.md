@@ -1,9 +1,11 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN","version":"1.3","path":"agents/designs/detail-design-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"実行コンテキスト","kind":"LIST","sheet":"02_実行コンテキスト","key":["項目"]},{"heading":"入出力と境界","kind":"LIST","sheet":"03_入出力と境界","key":["区分"]},{"heading":"成果物の構成","kind":"GRID","sheet":"04_成果物の構成"},{"heading":"実行手順","kind":"GRID","sheet":"05_実行手順"},{"heading":"検査と完了","kind":"GRID","sheet":"06_検査と完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-DETAIL-DESIGN","version":"1.5","path":"agents/designs/detail-design-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"実行コンテキスト","kind":"LIST","sheet":"02_実行コンテキスト","key":["項目"]},{"heading":"入出力と境界","kind":"LIST","sheet":"03_入出力と境界","key":["区分"]},{"heading":"成果物の構成","kind":"GRID","sheet":"04_成果物の構成"},{"heading":"実行手順","kind":"GRID","sheet":"05_実行手順"},{"heading":"検査と完了","kind":"GRID","sheet":"06_検査と完了"}]} -->
 # 詳細設計書作成Agent 契約
 
-定義版1.3／2026-10-29。詳細仕様書の新規作成・改善・レビューに専念する独立契約。WEB系・WinForms系・Text系のUI品質を各方式の部品、操作・保存境界、検証条件へ具体化する。
+定義版1.5／2026-10-30。詳細仕様書の新規作成・改善・レビューに専念する独立契約。WEB系・WinForms系・Text系のUI品質を各方式の部品、操作・保存境界、検証条件へ具体化する。
 
 ## 概要
+
+AUI-05a～05cのタイトル/本文・文字領域/Control高・CP932/Unicode境界を物理部品と個別期待条件へ具体化する。具体手順と文書形式は当Agentのrules/workflowsに保持し、未計測の字体/行高やホストACPを確定値にしない。
 
 AG-DETAIL-DESIGN。指定project・方式の要件と基本設計を、実装者が処理・データ・例外・確定境界を追跡できる詳細仕様へ具体化する。[起動指示](PROMPT.md)、[運用案内](README.md)、[詳細設計書作成ルール](rules/詳細設計書作成ルール.md)、[詳細設計の処理手順](workflows/詳細設計.md)を正本とする。専用ルール・処理は当Agent内で改訂し、共通docsや他Agentへ別正本を作らない。
 
@@ -16,6 +18,8 @@ AIが設計判断と詳細仕様本文を執筆する。機械処理は目録、
 UIの分類と段階横断の引継ぎは[UIパターン規約](../../../docs/UIパターン規約.md)、方式別品質は[WEB画面品質規約](../../../docs/WEB画面品質規約.md)、[WinForms画面品質規約](../../../docs/WinForms画面品質規約.md)、[Text画面品質規約](../../../docs/Text画面品質規約.md)の該当範囲を採用する。WEB系に含むWPFもXAML・DIP・バインド/コマンド・ネイティブ操作を維持し、URL/DOM/CSS/ブラウザーを必須にしない。24の用途パターンは主/補助の必要分だけを選び、3系統の分類やscreen_typeと区別する。
 
 Accessでは段階横断の[Access画面品質規約](../../../docs/Access画面品質規約.md)と[UI適合検査](../../../docs/UI適合検査.md)を採用し、詳細設計での具体化は当Agentの専用規則と工程へ従う。画面タイプ別の目的、合理性・統一性・見やすさ・操作性の合格条件を、物理部品・状態遷移・保存単位・実装後の検査方法まで対応付ける。外部レビューの初期値や画像の見た目を、利用者の確定条件や実動作の証拠へ読み替えない。
+
+UIP-03aの共通幅トークン・整列群を、部品ID/親/単位/具体的寸法と状態別の個別期待条件へ落とす。専用規則と工程に従い、生成済みの不揃いな実値を期待値へ転記せず、入力制約を保持する。
 
 ## 実行コンテキスト
 

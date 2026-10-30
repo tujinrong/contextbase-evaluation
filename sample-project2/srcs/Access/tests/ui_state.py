@@ -120,7 +120,7 @@ def main():
   import_module(app,'UiStateTests',HARNESS)
   # Test-copy-only instrumentation records the real initialization/runtime
   # branch and does not alter flags, focus, controls, viewport or service result.
-  busy_source=(build.ROOT/'src/classes/clsUiBusyState.cls').read_text(encoding='utf-8')
+  busy_source=(build.ROOT/'src/classes/clsUiBusyState.cls').read_text(encoding='cp932')
   needle='If UiIsInitialisingForm(f) Then Exit Sub'
   if busy_source.count(needle)!=1: raise RuntimeError('Unknown initialization boundary')
   instrumented=busy_source.replace(needle,'If UiIsInitialisingForm(f) Then\n        UiStateRecordBoundary f,"initialising"\n        Exit Sub\n    End If\n    UiStateRecordBoundary f,"runtime"')

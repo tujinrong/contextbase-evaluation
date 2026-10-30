@@ -1,6 +1,6 @@
 # 独立配置検査 sp2-ui-regenerate-20261029
 
-PASSED。sample-project2、1方式、122ファイル、423参照。
+PASSED。sample-project2、1方式、129ファイル、427参照。
 
 
 

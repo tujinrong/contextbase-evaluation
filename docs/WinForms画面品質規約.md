@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-WINFORMS-UI-QUALITY","version":"1.0","path":"docs/WinForms画面品質規約.md","sheets":[{"heading":"適用と標準部品","kind":"GRID","sheet":"01_適用と標準部品"},{"heading":"字体と寸法と配置","kind":"GRID","sheet":"02_字体と寸法と配置"},{"heading":"一覧と入力と状態","kind":"GRID","sheet":"03_一覧と入力と状態"},{"heading":"保存とキーボード","kind":"GRID","sheet":"04_保存とキーボード"},{"heading":"Accessへの適用","kind":"GRID","sheet":"05_Accessへの適用"},{"heading":"完了条件","kind":"GRID","sheet":"06_完了条件"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"DOC-WINFORMS-UI-QUALITY","version":"1.1","path":"docs/WinForms画面品質規約.md","sheets":[{"heading":"適用と標準部品","kind":"GRID","sheet":"01_適用と標準部品"},{"heading":"字体と寸法と配置","kind":"GRID","sheet":"02_字体と寸法と配置"},{"heading":"一覧と入力と状態","kind":"GRID","sheet":"03_一覧と入力と状態"},{"heading":"保存とキーボード","kind":"GRID","sheet":"04_保存とキーボード"},{"heading":"Accessへの適用","kind":"GRID","sheet":"05_Accessへの適用"},{"heading":"完了条件","kind":"GRID","sheet":"06_完了条件"}]} -->
 # WinForms系画面の設計・実装品質
 
-版1.0／2026-10-29。[UIパターン規約](UIパターン規約.md)のWINFORMSを具体化する。Web参照標準から利用者タスク・識別・状態/保存の目的を採用し、従来フォームと標準部品の制約で実現する。
+版1.1／2026-10-30。[UIパターン規約](UIパターン規約.md)のWINFORMSを具体化する。Web参照標準から利用者タスク・識別・状態/保存の目的を採用し、従来フォームと標準部品の制約で実現する。
 
 ## 適用と標準部品
 
@@ -15,7 +15,9 @@
 
 **FUI-03［必須］** 最小ClientSize、有効領域、ウィンドウ枠/メニュー/状態欄、対象DPI/表示倍率を別に記す。VB.NET_WinFormsは採用AutoScaleMode/基準寸法、Anchor/Dock、TableLayoutPanel等の配置とMin/Max制約、AutoScroll、Tab/子画面内部を定義する。Accessは専用規約に従う。二重の手動拡大で部品を変形させず、実フォント・実DPIで文字欠け/重なりを確認する。
 
-短い番号/日付/数量と長い名称/備考で必要幅を分け、見出しとデータの列定義を共有する。一覧/詳細は双方の識別/入力最小幅から配分し、固定比率・均等幅・全画面中央寄せ・文字縮小で収めない。長文は複数行/欄内スクロール/拡大入力等で全文に到達させる。主要操作は縦スクロール等で到達でき、隠れた入力やボタンを最大化だけで解決したとしない。
+短い番号/日付/数量と長い名称/備考で必要幅を分け、見出しとデータの列定義を共有する。一覧/詳細は双方の識別/入力最小幅から配分し、固定比率・用途を無視した全項目の一律均等幅・全画面中央寄せ・文字縮小で収めない。長文は複数行/欄内スクロール/拡大入力等で全文に到達させる。主要操作は縦スクロール等で到達でき、隠れた入力やボタンを最大化だけで解決したとしない。
+
+**FUI-02a［必須］** [UIパターン規約](UIパターン規約.md)のUIP-03aに従い、ログインID/パスワードと既存の同型ペアは同じ親座標系で幅・高さを統一し、縦配置の左右端又は横配置の上下端を揃える。共通トークンと配置定義で実現し、MaxLength、PasswordChar等の入力属性から別々の幅を作らない。初期化・再表示・エラー・採用DPI/伸縮でAnchor/Dock/AutoSize等が片側だけを変えないことを実Controlと描画で確認する。AccessはAUI-06aのTwipsと標準部品に従い、業務上限や他用途の短い欄まで同幅へ変更しない。
 
 ## 一覧と入力と状態
 

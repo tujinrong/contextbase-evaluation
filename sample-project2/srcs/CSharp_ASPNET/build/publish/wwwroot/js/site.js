@@ -179,10 +179,15 @@ if(screen==="F03"&&!isError){
    const revision=Number(r.headers.get('X-SP2-State-Revision'));if(Number.isInteger(revision)&&revision>0)updateUi({...ui,stateRevision:revision,resumeRef:r.headers.get('X-SP2-Resume-Ref'),sourceTabId:r.headers.get('X-SP2-Source-Tab')});checkpointHistory();
    notice('ダウンロードを開始しました。');const blob=await r.blob(),encoded=r.headers.get('Content-Disposition')?.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
    const name=encoded?decodeURIComponent(encoded):'career.xlsx',url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-  }catch{notice('ダウンロードが完了しなかった場合は、もう一度作成してください。');}
-  finally{if(exportOp===op){exportOp=null;$('#export-cancel').hidden=true;setBusy(false);}}
+  }catch{if(!op.cancelling)notice('ダウンロードが完了しなかった場合は、もう一度作成してください。');}
+  finally{if(exportOp===op&&!op.cancelling){exportOp=null;$('#export-cancel').hidden=true;setBusy(false);}}
  });
- $('#export-cancel').addEventListener('click',async()=>{const op=exportOp;if(!op)return;try{const r=await api('/employees/export/cancel',{searchStateId:ui.stateId,operationId:op.operationId});notice(r.message);}finally{op.abort.abort();}});
+ $('#export-cancel').addEventListener('click',async()=>{
+  const op=exportOp;if(!op||op.cancelling)return;op.cancelling=true;$('#export-cancel').disabled=true;
+  try{const r=await api('/employees/export/cancel',{searchStateId:ui.stateId,operationId:op.operationId});if(!r.ui)throw new Error('Missing export state');updateUi(r.ui);checkpointHistory();notice(r.message);}
+  catch{blocked=true;notice('取消結果を確認できません。現在の条件を保持しています。再読込してから作成してください。');}
+  finally{op.abort.abort();if(exportOp===op){exportOp=null;$('#export-cancel').hidden=true;$('#export-cancel').disabled=false;setBusy(false);}}
+ });
  beforeNavigate=async()=>{clearTimeout(scrollTimer);await queue;if(syncFailed)throw new Error('Unsynchronized raw');const r=await api('/employees/checkpoint',{...context(),clientSequence:sequence,raw:raw(),scrollTop:scroll()});if(r.ui)updateUi(r.ui);outcome(r);checkpointHistory();};
  dirty=()=>unacknowledged>0||syncFailed;apply=r=>accept(r,true);render(true);
 }

@@ -25,8 +25,7 @@ Private Sub Class_Initialize()
     Set DepartmentRows = New Collection: Set StatusRows = New Collection
     AcceptedDepartmentCode = Null: AcceptedStatusCode = Null
     SelectedEmployeeId = Null: TopVisibleEmployeeId = Null
-    ' A selection ID is not the first visible row. Native capture/restore is
-    ' explicitly incomplete until the owned-control API is verified.
-    ViewportPositionStatus = "NOT_CAPTURED_UNIMPLEMENTED"
+    ' The viewport is captured independently from the selected employee ID.
+    ViewportPositionStatus = "NOT_CAPTURED"
     SearchState = "Unsearched": ResultState = "NoResult"
 End Sub

@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN-README","version":"1.11","path":"agents/designs/basic-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物","kind":"GRID","sheet":"02_成果物"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BASIC-DESIGN-README","version":"1.12","path":"agents/designs/basic-design-agent/README.md","sheets":[{"heading":"使い方","kind":"GRID","sheet":"01_使い方"},{"heading":"成果物","kind":"GRID","sheet":"02_成果物"},{"heading":"確認と引継ぎ","kind":"GRID","sheet":"03_確認と引継ぎ"}]} -->
 # basic-design-agent
 
-定義版1.11／2026-10-29。基本設計専用の正本とAccess品質条件を維持し、3分類のUIパターンと実行基盤別の設計・確認・引継ぎを接続する。
+定義版1.12／2026-10-30。基本設計専用の正本とAccess品質条件を維持し、3分類のUIパターンと実行基盤別の設計・確認・引継ぎを接続する。
 
 ## 使い方
 
@@ -39,7 +39,7 @@ Accessの段階横断UI品質は[Access画面品質規約](../../../docs/Access�
 
 AccessではForm/Page/Dialogと状態を列挙し、identity/layout/content/selection/saveCancel/navigation/keyboard/states/viewportの9カテゴリに個別の合格条件、適用/対象外理由、根拠、設計確認結果、下流での実画面検証方法を対応付ける。4観点を単一のreadable=trueに集約せず、重要な未決・不適合・未検証があれば影響と次の確認条件を明記する。製品検査用JSONはこの工程では生成しない。
 
-暫定の寸法/倍率を正式な対応環境へ自動昇格せず、画像から保存・取消・キー操作を確定しない。既存確定前提と変更範囲を守り、全画面中央寄せ・均等幅・全11pt・認証復活・自動保存への変更を画面品質の名目で強制しない。
+暫定の寸法/倍率を正式な対応環境へ自動昇格せず、画像から保存・取消・キー操作を確定しない。既存確定前提と変更範囲を守り、全画面中央寄せ・用途を無視した全項目の一律均等幅・全11pt・認証復活・自動保存への変更を画面品質の名目で強制しない。
 
 3分類の完了時はscreenFamily/renderer・必要purposePatternIds・採用理由/差分、画面/領域と遷移・状態/環境・個別合格条件を要求IDと根拠付きで照合し、下流へ実基盤ごとの検査方法と未実施を渡す。参照資料の独立HTMLやJSデモを正本として併置せず、MD概要GRID内の同じ静的断片を.tmp/へ抽出して描画する。全24パターンやWebの20件等の提案値を全方式へ強制せず、既存のAccess取得/保存/字体条件を維持する。
 

@@ -297,6 +297,7 @@ public sealed class ExportOperation(string session,string state,Guid id):IDispos
     public string Session {get;}=session;public string State {get;}=state; public Guid Id {get;}=id;
     public object Gate {get;}=new();public string Phase {get;set;}="Reading";
     public CancellationTokenSource Cancellation {get;}=new();
+    public TaskCompletionSource Finished {get;}=new(TaskCreationOptions.RunContinuationsAsynchronously);
     public void Dispose()=>Cancellation.Dispose();
 }
 public sealed class ExportOperationRegistry
@@ -325,9 +326,16 @@ public sealed class ExportOperationRegistry
             return new(before?"CancelledBeforeStart":"AfterStart",before?"MSG-030":"MSG-036",Messages.Get(before?30:36));
         }
     }
+    public async Task<CancelResult> CancelAsync(string session,string state,Guid id,CancellationToken ct)
+    {
+        ExportOperation? operation;lock(gate)active.TryGetValue(state,out operation);
+        var result=Cancel(session,state,id);
+        if(operation is not null)await operation.Finished.Task.WaitAsync(TimeSpan.FromSeconds(30),ct);
+        return result;
+    }
     public void Finish(ExportOperation op)
     {
         lock(gate) {if(active.TryGetValue(op.State,out var current)&&ReferenceEquals(current,op))active.Remove(op.State);}
-        lock(op.Gate)op.Phase="Finished";op.Dispose();
+        lock(op.Gate)op.Phase="Finished";op.Dispose();op.Finished.TrySetResult();
     }
 }

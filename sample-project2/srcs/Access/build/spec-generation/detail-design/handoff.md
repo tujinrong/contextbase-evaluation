@@ -1,24 +1,28 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-DETAIL-HANDOFF","version":"1.1","path":"sample-project2/srcs/Access/build/spec-generation/detail-design/handoff.md","sheets":[{"heading":"固定契約","kind":"GRID","sheet":"01_固定契約"},{"heading":"実装と検査","kind":"GRID","sheet":"02_実装と検査"},{"heading":"未実施と境界","kind":"GRID","sheet":"03_未実施と境界"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-DETAIL-HANDOFF","version":"1.2","path":"sample-project2/srcs/Access/build/spec-generation/detail-design/handoff.md","sheets":[{"heading":"固定契約","kind":"GRID","sheet":"01_固定契約"},{"heading":"実装と検査","kind":"GRID","sheet":"02_実装と検査"},{"heading":"未実施と境界","kind":"GRID","sheet":"03_未実施と境界"}]} -->
 # Access 詳細から実装への引継ぎ
 
-版1.1／2026-10-30。runId=sp2-ui-regenerate-20261029。DQA-UI08/09の技術補正を含む現版/SHAは[manifest](manifest.json)、独立所見は[review](review.json)。
+版1.2／2026-10-30。runId=sp2-ui-regenerate-20261029。DQA-UI10の現版/SHAは[manifest](manifest.json)、Rootの独立意味所見は[review](review.json)。DQA-UI08/09も継承する。
 
 ## 固定契約
 
-DEMO admin/ADMIN・staff/STAFF・共通123、3～128scalar、既存ID/役割/業務行、単体ACCDB、5表48列、seed1.1、200/20/99上限、社員全体1Tx・明示経歴除去・結果不明再保存禁止を保持する。基本8HTMLは厳密一致、92項目/17イベントと全54DUIを継承する。
+DEMO admin/ADMIN・staff/STAFF・共通123、3～128scalar、既存ID/役割/業務行、単体ACCDB、5表48列、seed1.1、200/20/99上限、社員全体1Tx・明示経歴除去・結果不明再保存禁止を保持する。基本8HTMLは厳密一致、92項目/17イベント・54DUIを保持し、補助面の9条件を追加する。
 
-UI正本は物理UI1.1、F03/F04/F05詳細1.2。11pt、氏名3900/カナ4950/日付2250、入力480/操作510、Form幅18900、経歴一覧6300/詳細11580twipは不変。F03全文TextBoxは初期330/HiddenでDetail7500、選択時1980/Detail9450、解除はfocus退避後に畳む。F04はHeader基準2400/Tab900/TabTop1365、親Label折返し増分はHeaderへ加え、Detail設計7920は縮めない。
+物理UI正本1.2、方式別共通01 1.4、F03/F04詳細1.3、F06詳細1.2、詳細QA1.5。既存の11pt・氏名3900/カナ4950/日付2250・入力480/操作510・Form幅18900twipを保持する。F03全文欄の初期330/Hidden→選択1980/Detail9450、F04 Header2400/Tab900/Detail7920、F05 Footer整数11ptも不変。
+
+DQA-UI10は6Comboごとに固定されたTextBoxと付属Labelの12Controlを追加する。F03部署/在籍、F04部署/在籍/役割、F06分類のTextBox名はtxtPending_＋元Combo名、Label名はlbl_＋TextBox名。計139Control/付属Label38・5Form/2Page/15Sectionで、業務fieldや基本論理項目を追加しない。3共有面の草案は撤回した。正本の12行inventoryと6矩形表を実装/期待値の同じ根拠とする。
 
 ## 実装と検査
 
-新候補で全127Control/15Section/5Form/空Page2/出力Surface/標準Dialog8、全管理文字のFontと実親/論理所属・状態を測る。固定Header/Tab/Footer、空Page→Detail、通常復帰/下端、未反映確認拒否で旧Page/キー/raw/focus保持、2165回避を実キーで検証する。最小native帯の実測を期待値へ転記して通さない。
+全6TextBox/LabelはYu Gothic UI11pt、初期hidden。TextBoxはunbound、L/T/H=元Combo、W=元Combo.W−360twip、Labelは元同Caption/矩形。F06 Captionは元/補助とも「分類」（navigation横Labelの必須印例外）。Pendingかつowner Page可視の時だけ専用面を同時表示し、元Labelを隠す。元Combo/矢印・LimitTrue/Bound1/正常候補・AcceptedCodes/F06 AcceptedCategoryを維持する。不正rawを正規候補に加えず、補助ChangeはRaw/Pendingだけ更新する。
 
-TextBox rawはString、Password以外InputMask/Format空。Combo accepted code/表示/Pendingを分け、NotInListのNewData捕捉＋表示だけUndo、Noで同raw、Yesで承認範囲だけ破棄。Tab/行/コード切替にもPending拒否を適用する。F03の新規はPendingでも無検証捕捉し、取消は検索0、保存成功だけraw再検査再検索。保存後のPending拒否はF03自身で014＋016を示し、閉じたF04へ例外を返して再保存しない。
+全Pending表示同期とfocus回復を分ける。通常の移動やTimerで先頭Pendingへfocusを奪わず、No/復帰/中央MSG016だけ指定論理欄へ回復する。既存TabIndexは維持し追加入力を実Section末尾へ固定owner順に採番、Form.KeyDownの正逆Tabで元Combo位置に置換する。Alt+Down/F4/矢印は実候補へ渡し、選ばずEscは原文へ戻る。正常候補の明示選択だけ当該Pendingを消し、同値再選択/開閉だけ/偶然の名称一致を区別する。畳む前は元Combo/可視選択Page.SetFocus/安全Buttonへ退避し、TabControl.SetFocusを使わない。
 
-F05はZoom100/FitTo無効、各列実幅20～21pt/総480～504pt、頁行高720pt以内、全20経歴/元LF/型/継続見出し/手動境界/横1頁を保存再Openと製品PDF/実プレビューで検証する。Footerだけ整数11pt（本文セル10.5は維持）、40字氏名を1行/残り次行、数字先頭氏名の書式コード誤解釈と&escapeも確認する。APIや小試験PDFだけでPH07を合格にしない。
+Search/反映/保存は全Pendingの中央MSG016ガードでサービス/DAO0。F04反映は役割Pendingを拒否し、親Pendingを消さない。Noは全raw/文字/対象/Page/focusを保持し、Yesは承認された親子/明細/コードの範囲だけ破棄。F03新規はPendingも無検証捕捉、無編集取消は検索0で2補助面とも可視復元。保存成功は既存Access契約のraw再検査再検索、Pendingは014＋016/検索0で保存成功を維持する。
+
+全139Control/全管理文字・実Label付属・Section/Page・Enabled/Locked/TabStop・表示/修正可能性・同時Pending・実候補選択・busy・DB再読込を新候補から観測する。原文がshadowに残るだけ/入力面空欄/旧採用値表示は不合格。F05の新候補Excel/PDF/全件全文/継続/横1頁/非重なりは別に再検証し、旧PDFの合格を転記しない。
 
 ## 未実施と境界
 
-Windowsロック中はnative操作/代替入力注入を止める。TopVisibleEmployeeIdは宣言だけで完了にせず、先頭可視行と選択を別に捕捉/復帰/観測する。検証できないAPIや選択IDを先頭IDの代替にしない。未実装と未実施を具体的に分け、UI gateは未完のまま維持する。
+spec意味レビュー/freeze→通常preflightで新入力凍結（製品生成なし）→そのSHAへ独立UI期待値改訂/Rootレビュー→製品実装/新候補観測の順とする。この詳細工程ではsrc/tests/UI契約/ACCDB/DBを変更・実行しない。通常preflightは後続build担当が実施する。
 
-既存最終ACCDBの全5表/資格情報/ID/版を型付きdigest/schemaで保全し、Forms/VBAだけ更新する。fresh source-only再構築は別DEMO seed、利用者Officeは触らない。旧候補PASSは無効、新候補compile/API/保全/ZIPを完了し、native未検証なら候補を明示して正式outputsを確定しない。正式受入/採点は未実施、formalScore=null。
+既存最終ACCDB全5表/資格情報/ID/版を型付きdigest/schemaで保全し、Forms/VBAだけを更新する。fresh source-only再構築は別所有fixture、利用者Officeは触らない。旧候補のnative/PDF/API合格は新候補へ流用しない。IME/clipboard/倍率/最終製品GUI/DB保存再読込/帳票/受入の状態は個別記録とし、未実施をPASSへ変えない。formalScore=null。

@@ -29,13 +29,17 @@ def main():
     protected=[p for p in preserved+changed if p['file'].startswith(('database/','fixtures/','src/CareerManagement.Infrastructure/Authentication/','src/CareerManagement.Infrastructure/Reports/')) or p['file'].endswith('Properties/launchSettings.json')]
     assert all(p['unchanged'] for p in protected),'Protected auth/DB/report/fixture/user config source changed'
     write(ROOT/'build/test-results/source-preservation.json',{'runId':RUN,'sourceBaselineRecordedAt':baseline['recordedAt'],'protectedFiles':protected,'unchangedFiles':preserved,'uiImplementationChangedFiles':changed,'existingDemoDdlOrSeedExecuted':False,'debugUserSecretsModified':False,'formalScore':None})
-    spec=ROOT.parents[1]/'spec/CSharp_ASPNET';changes=[]
+    spec=ROOT.parents[1]/'spec/CSharp_ASPNET';changes=[];prior_update=read(ROOT/'build/generation/spec-update.json') if (ROOT/'build/generation/spec-update.json').exists() else None
+    original_head=prior_update['headAtRecord'] if prior_update else subprocess.check_output(['git','rev-parse','HEAD'],cwd=REPO,text=True).strip()
     for p in sorted(spec.rglob('*.md')):
         rel=p.relative_to(REPO).as_posix();after=p.read_bytes();current=meta(after)
-        prior=subprocess.run(['git','show','HEAD:'+rel],cwd=REPO,capture_output=True);before=prior.stdout if prior.returncode==0 else None;old=meta(before) if before else {}
+        prior=subprocess.run(['git','show',original_head+':'+rel],cwd=REPO,capture_output=True);before=prior.stdout if prior.returncode==0 else None;old=meta(before) if before else {}
         changes.append({'file':rel,'documentId':current.get('documentId'),'beforeVersion':old.get('version'),'beforeSha256':hashlib.sha256(before).hexdigest() if before is not None else None,'afterVersion':current.get('version'),'afterSha256':hashlib.sha256(after).hexdigest(),'changed':before!=after,'reason':'User-authorized high-quality UI basic/detail regeneration and explicit DQA-UI05 transport refinement; inherited business/auth/DB/report decisions retained.' if before!=after else 'Unchanged adopted specification input inherited exactly.'})
     assert len(changes)==43
-    write(ROOT/'build/generation/spec-update.json',{'projectId':'sample-project2','profileId':'CSharp_ASPNET','runId':RUN,'classification':'user-requested-ui-change','userInstruction':'外部レビューを反映してAgentを改善しsample-project2のAccess/CSharp_ASPNETを基本設計→詳細設計→実装の順で高品質UIへ再生成する。利用者確定の認証・DB・保存・業務条件を継承する。','recordedAt':now,'headAtRecord':subprocess.check_output(['git','rev-parse','HEAD'],cwd=REPO,text=True).strip(),'scope':'Own canonical specification exact HEAD-before/current-frozen-after inventory, basic and detail including adopted technical correction; unrelated auth/VS run not reused.','allCanonicalSpecifications':True,'changes':changes,'formalScore':None})
+    if prior_update:
+        assert prior_update['changes']==changes,'Original run specification before/after inventory changed'
+    else:
+        write(ROOT/'build/generation/spec-update.json',{'projectId':'sample-project2','profileId':'CSharp_ASPNET','runId':RUN,'classification':'user-requested-ui-change','userInstruction':'外部レビューを反映してAgentを改善しsample-project2のAccess/CSharp_ASPNETを基本設計→詳細設計→実装の順で高品質UIへ再生成する。利用者確定の認証・DB・保存・業務条件を継承する。','recordedAt':now,'headAtRecord':original_head,'scope':'Own canonical specification exact initial HEAD-before/current-frozen-after inventory, basic and detail including adopted technical correction; concurrent later user Git commits do not rewrite the run baseline.','allCanonicalSpecifications':True,'changes':changes,'formalScore':None})
     audit=read(ROOT/'.tmp/build-agent/nuget-audit.json');vulnerabilities=[(p.get('path'),f.get('framework'),package) for p in audit.get('projects',[]) for f in p.get('frameworks',[]) for package in f.get('topLevelPackages',[])+f.get('transitivePackages',[]) if package.get('vulnerabilities')]
     assert not vulnerabilities
     write(ROOT/'build/test-results/nuget-audit.json',{'runId':RUN,'recordedAt':now,'status':'PASS_NO_REPORTED_VULNERABILITIES','command':'dotnet list CareerManagement.slnx package --vulnerable --include-transitive --format json','vulnerabilities':vulnerabilities,'raw':audit,'formalScore':None})
@@ -50,6 +54,18 @@ def main():
         cycle['sourceVersionPolicy']='Earlier intermediate source files were not archived; exact loaded application/infrastructure DLL hashes identify tested code. Full final source hashes are claimed only for the final cycle.'
         cycle['sourceFiles']=freeze['files'] if cycle['cycle']==3 else []
         cycle['testSources']=[proof(ROOT/name) for name in ('tests/CareerManagement.Tests/Program.cs','tests/CareerManagement.Tests/CareerManagement.Tests.csproj')]
+    cycles[-1]['findings']+=' Additional actual testing found export cancellation left the client revision stale; duplicate rejection could also advance the server revision.'
+    cycles[-1]['corrections']+=' Await only the owned export worker (request cancellation/30-second bound), return current UI on cancel/failure, and retain busy until synchronization. Final-source additional measurements and all 28 browser cases were rerun.'
+    cycles[-1]['exportRegressionEvidence']=proof(ROOT/'build/test-results/export-cancel-regression.json')
+    pack_path=ROOT/'build/test-results/source-package-validation.json';pack=read(pack_path)
+    initial_native=ROOT/'build/test-results/source-package-initial-native.json'
+    if pack.get('initialProtectedInputObservability',{}).get('initialNativeUserSecretsBeforeAfterShaObserved') is True:
+        initial=read(initial_native);assert initial['beforeNative']==initial['afterNative'] and initial['status']=='PASS_NATIVE_INITIAL_ZIP_BUILD_AND_INITIALIZATION_PROTECTION'
+        native_path=ROOT/'build/test-results/source-package-preservation.json';native=read(native_path)
+        native['historicalPriorArtifactInitialInterval']='Prior4a Store-Python initial native user-secrets interval remains NOT_MEASURED. Current final ZIP initial interval has independent Native parent evidence.'
+        native['initialUserSecretsInterval']='Current final ZIP initial build/create/seed/SKIP Native before/after measured unchanged; see source-package-initial-native.json. The supplementary build/SKIP interval is separately measured.'
+        native['currentInitialNativeProtection']=proof(initial_native);native['metadataScopeClarificationSource']=proof(Path(__file__))
+        write(native_path,native);pack['supplementaryNativeProtection']=proof(native_path);write(pack_path,pack)
     write(ROOT/'build/test-results/quality-cycles.json',{'runId':RUN,'quality':'high','requestedCycles':3,'recordedAt':now,'cycles':cycles,'finalCandidateArtifact':art,'notExecuted':['Physical Windows IME/clipboard','Native BFCache persisted path not entered','SQL Server2022 physical host','Formal Pilot/user acceptance/scoring'],'formalScore':None})
     print(json.dumps({'artifact':art,'suites':sum(x['cases'] for x in copies),'specifications':len(changes),'cycles':len(cycles)}))
 if __name__=='__main__':main()

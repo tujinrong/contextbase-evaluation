@@ -116,12 +116,38 @@ supplements = set()
 for function, names in zip(['F01', 'F02', 'F04'], match.groups()):
     supplements |= {FORMS[function] + '.' + name for name in re.findall(r'\blbl[A-Z][A-Za-z0-9_]*', names)}
 expected_controls |= supplements
-if (len(attached), len(headings), len(supplements), len(expected_controls)) != (32, 13, 8, 127):
-    fail('SPEC_AUXILIARY_COUNT', str((len(attached), len(headings), len(supplements), len(expected_controls))))
+primary_control_count = len(expected_controls)
+# DQA-UI10 auxiliary inventory comes from its explicit specification table,
+# not the form definitions or a generated ACCDB. Normal fields remain73.
+pending_controls = {}
+for line in ui_text.splitlines():
+    if not re.match(r'^\| AUX-F(?:03|04|06)-', line):
+        continue
+    row = [cell.strip() for cell in line.strip().strip('|').split('|')]
+    if len(row) != 5 or not re.fullmatch(r'frm[A-Za-z]+\.(?:txtPending_cbo[A-Za-z]+|lbl_txtPending_cbo[A-Za-z]+)', row[1]):
+        fail('PENDING_SPEC_ROW', line)
+        continue
+    coordinates = row[3].split('/')
+    if len(coordinates) != 4 or not all(n.isdigit() for n in coordinates):
+        fail('PENDING_SPEC_GEOMETRY', row[0])
+        continue
+    page = re.search(r'論理Page([01])', row[2])
+    pending_controls[row[1]] = {'auxiliaryId': row[0], 'section': 'Header' if 'FormHeader' in row[2] else 'Detail',
+                               'logicalPage': int(page[1]) if page else None,
+                               'rectangle': tuple(map(int, coordinates)), 'kind': 'Label' if 'Label' in row[2] else 'TextBox'}
+pending_inputs = {name for name, value in pending_controls.items() if value['kind'] == 'TextBox'}
+pending_labels = set(pending_controls) - pending_inputs
+expected_controls |= set(pending_controls)
+if (len(attached), len(headings), len(supplements), primary_control_count, len(pending_inputs), len(pending_labels), len(expected_controls)) != (32, 13, 8, 127, 6, 6, 139):
+    fail('SPEC_AUXILIARY_COUNT', str((len(attached), len(headings), len(supplements), primary_control_count, len(pending_inputs), len(pending_labels), len(expected_controls))))
+for name, item in pending_controls.items():
+    component = component_by_id.get(name, {})
+    if component.get('kind') != item['kind'] or component.get('auxiliaryId') != item['auxiliaryId'] or component.get('physicalParent') != name.split('.')[0] + '.' + item['section'] or component.get('logicalPage') != item['logicalPage']:
+        fail('PENDING_COMPONENT_MAPPING', name)
 expected_surfaces = set(re.findall(r'^\| (SC-F[A-Z0-9-]+|DLG-F[A-Z0-9-]+) \|', ui_text, re.M))
 expected_sections = {form + '.' + section for form in FORMS.values() for section in ['Header', 'Detail', 'Footer']}
 expected_components = expected_controls | expected_surfaces | expected_sections
-if len(expected_surfaces) != 16 or len(expected_components) != 158:
+if len(expected_surfaces) != 16 or len(expected_components) != 170:
     fail('SPEC_SURFACE_COUNT', str((len(expected_surfaces), len(expected_components))))
 if expected_components != set(component_by_id):
     fail('COMPONENT_COVERAGE', {'missing': sorted(expected_components - set(component_by_id)), 'unexpected': sorted(set(component_by_id) - expected_components)})
@@ -151,6 +177,7 @@ for label in attached:
         rectangle = (left, top - 330, 2580 if native_input == 'txtEndMonth' else width, 330)
     spec_geometry[label] = (section, rectangle)
 spec_geometry['frmCodeMaster.lbl_cboCategory'] = ('Header', (360, 1740, 480, 480))
+spec_geometry.update({name: (item['section'], item['rectangle']) for name, item in pending_controls.items()})
 for target, (section, rectangle) in spec_geometry.items():
     rule = rule_by_id.get('GEOMETRY-' + target)
     props = rule.get('properties', {}) if rule else {}
@@ -165,6 +192,37 @@ for target, (section, rectangle) in spec_geometry.items():
             valid = isinstance(value, list) and len(value) == 2 and expected_value - 30 <= value[0] <= expected_value <= value[1] <= expected_value + 30
         if not valid:
             fail('SPEC_GEOMETRY_VALUE', target + '/' + property_name)
+
+# The UI10 caption table is a separate source-level check, including the
+# navigation-label exception: F06 uses 分類 without a required marker.
+pending_captions = {}
+for line in ui_text.splitlines():
+    match = re.match(r'^\| (F(?:03|04|06))(?: Page[01])? (cbo[A-Za-z]+) \| [0-9/]+ \| [0-9/]+・([^|]+) \|$', line)
+    if match:
+        pending_captions[(FORMS[match[1]], match[2])] = match[3].strip().split('（')[0]
+if len(pending_captions) != 6 or pending_captions.get(('frmCodeMaster', 'cboCategory')) != '分類':
+    fail('PENDING_CAPTION_SOURCE', str(pending_captions))
+for target, item in pending_controls.items():
+    form, native_name = target.split('.', 1)
+    owner_name = re.search(r'cbo[A-Za-z]+', native_name)[0]
+    props = rule_by_id.get('STYLE-' + target, {}).get('properties', {})
+    if props.get('visible') != {'op': 'eq', 'value': False}:
+        fail('PENDING_INITIAL_VISIBILITY', target)
+    if item['kind'] == 'Label':
+        if props.get('caption') != {'op': 'eq', 'value': pending_captions[(form, owner_name)]}:
+            fail('PENDING_LABEL_CAPTION', target)
+    else:
+        values = {'controlSourceEmpty': True, 'inputMaskEmpty': True, 'formatEmpty': True, 'enterKeyBehavior': False,
+                  'scrollBars': 0, 'enabled': False, 'locked': True, 'tabStop': False,
+                  'attachedLabelCount': 1, 'attachedLabelName': 'lbl_' + native_name}
+        for key, expected_value in values.items():
+            if props.get(key) != {'op': 'eq', 'value': expected_value}:
+                fail('PENDING_SAVED_ATTRIBUTE', target + '/' + key)
+for item in rules:
+    if item['id'].startswith('PENDING-F03-'):
+        forbidden = {'noRetainsAllRawPendingAndTarget', 'yesDiscardsOnlyConfirmedScope', 'declineRestoresVisibleRawAndFocus', 'declineStillAllowsEditing'}
+        if any(any(key.endswith('_' + suffix) for suffix in forbidden) for key in item.get('properties', {})):
+            fail('F03_CONFIRMATION_INVENTED', item['id'])
 
 font_targets = {item['target'] for item in rules if item.get('kind') == 'font'}
 amendment_expectations = [

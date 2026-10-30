@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BUILD-UI-PATTERNS","version":"1.0","path":"agents/builds/build-agent/docs/UIパターン生成チェック.md","sheets":[{"heading":"適用と入力","kind":"GRID","sheet":"01_適用と入力"},{"heading":"共通の生成手順","kind":"GRID","sheet":"02_共通の生成手順"},{"heading":"WEB配置とブラウザー実装","kind":"GRID","sheet":"03_WEBとブラウザー"},{"heading":"WPFへの適用","kind":"GRID","sheet":"04_WPFへの適用"},{"heading":"WinForms配置とAccess","kind":"GRID","sheet":"05_WinFormsとAccess"},{"heading":"Text配置","kind":"GRID","sheet":"06_Text配置"},{"heading":"検証と完了","kind":"GRID","sheet":"07_検証と完了"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BUILD-UI-PATTERNS","version":"1.1","path":"agents/builds/build-agent/docs/UIパターン生成チェック.md","sheets":[{"heading":"適用と入力","kind":"GRID","sheet":"01_適用と入力"},{"heading":"共通の生成手順","kind":"GRID","sheet":"02_共通の生成手順"},{"heading":"WEB配置とブラウザー実装","kind":"GRID","sheet":"03_WEBとブラウザー"},{"heading":"WPFへの適用","kind":"GRID","sheet":"04_WPFへの適用"},{"heading":"WinForms配置とAccess","kind":"GRID","sheet":"05_WinFormsとAccess"},{"heading":"Text配置","kind":"GRID","sheet":"06_Text配置"},{"heading":"検証と完了","kind":"GRID","sheet":"07_検証と完了"}]} -->
 # UIパターンを実装・検証へ接続する生成チェック
 
-版1.0／2026-10-29。build-agentの実装工程に適用する。配置familyと描画技術を分け、[UIパターン規約](../../../../docs/UIパターン規約.md)と同方式specRootの採用仕様を、実装・独立期待値・最終製品の検査へ対応させる。設計工程の専用ルール・書式をこの文書へ複製しない。
+版1.1／2026-10-30。build-agentの実装工程に適用する。配置familyと描画技術を分け、[UIパターン規約](../../../../docs/UIパターン規約.md)と同方式specRootの採用仕様を、実装・独立期待値・最終製品の検査へ対応させる。設計工程の専用ルール・書式をこの文書へ複製しない。
 
 ## 適用と入力
 
@@ -16,6 +16,8 @@
 未知profileでJSONがない場合は共通indexと生成チェックだけで構造preflightを許容し、UI生成ではfamily未確定をFAILにする。JSONがあれば該当family規約も入力へ追加し、JSON自体も同方式仕様として凍結する。非UIは既存のuiConformance.required=false・理由・同方式の凍結根拠を用いる。CLIへサイトメニューや端末画面を追加せず、未確定を既知familyへ無理に割り当てない。
 
 ## 共通の生成手順
+
+UIP-03aの認証入力群・既存の同型ペアは、方式内の共通トークン/部品へ幅・高さ・配置を集約する。size/maxlength/MaxLengthや入力値から個別の表示幅を決めず、採用済み補助部品やエラー表示、AutoSize/伸縮・初期化/再表示でも整列を保つ。実装を読む前に共通トークンから各部品の期待値を定め、最終製品のDOM矩形、ネイティブControl又は可視入力域のセル位置で初期/エラー/無効/再表示と採用環境を比較する。縦配置は左右端、横配置は上下端と欄間を確認する。認証/入力上限は保持し、用途別の別幅と、可視枠のない端末パスワード等の理由付き適用外を区別する。単一部品の幅だけの合格や、描画未検証を群全体の適合にしない。
 
 1. 今回の要求、確定済み前提・規約/QA、最小有効領域、対象環境、family、描画技術、採用パターン、共通トークン、画面/項目/操作/検査IDと版/SHAを対応付ける。変更範囲がlayout_onlyなら保存方式・DB・認証・出力対象を変えない。
 2. MDに埋め込んだ静的HTMLと文章・項目/イベント仕様を同じ設計版として読む。外部レビューの単独HTML、デモ配列、JSの保存成功表示、YAML例、CSS値を本番実装や採用済み業務条件へ昇格しない。正式なMDとHTMLの矛盾は先に報告する。

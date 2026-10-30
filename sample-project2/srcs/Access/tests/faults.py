@@ -67,14 +67,14 @@ def main():
             import_module(app,'FaultHarness',HARNESS)
             import_module(app,'UiHarness',(build.ROOT/'tests/UiHarness.bas').read_text(encoding='utf-8'))
             if kind=='ack':
-                text=(build.ROOT/'src/classes/clsUnitOfWork.cls').read_text(encoding='utf-8').replace('ws.CommitTrans dbForceOSFlush','ws.CommitTrans dbForceOSFlush\n    If TestAckLoss Then TestAckLoss=False: Err.Raise vbObjectError+999, , "Injected acknowledgement loss"')
+                text=(build.ROOT/'src/classes/clsUnitOfWork.cls').read_text(encoding='cp932').replace('ws.CommitTrans dbForceOSFlush','ws.CommitTrans dbForceOSFlush\n    If TestAckLoss Then TestAckLoss=False: Err.Raise vbObjectError+999, , "Injected acknowledgement loss"')
                 import_module(app,'clsUnitOfWork',text,2)
-                text=(build.ROOT/'src/modules/modEmployeeEditor.bas').read_text(encoding='utf-8').replace('at = UtcNow()','at = UtcNow(): TestAckLoss=True')
+                text=(build.ROOT/'src/modules/modEmployeeEditor.bas').read_text(encoding='cp932').replace('at = UtcNow()','at = UtcNow(): TestAckLoss=True')
                 import_module(app,'modEmployeeEditor',text)
             if kind=='read':
-                text=(build.ROOT/'src/modules/modEmployeeEditor.bas').read_text(encoding='utf-8').replace('e.EmployeeId = employeeId:','TestReadFailure=True\n    e.EmployeeId = employeeId:')
+                text=(build.ROOT/'src/modules/modEmployeeEditor.bas').read_text(encoding='cp932').replace('e.EmployeeId = employeeId:','TestReadFailure=True\n    e.EmployeeId = employeeId:')
                 import_module(app,'modEmployeeEditor',text)
-                text=(build.ROOT/'src/modules/modEmployeeSearch.bas').read_text(encoding='utf-8').replace('On Error GoTo Failed','On Error GoTo Failed\n    If TestReadFailure Then Err.Raise vbObjectError+998, , "Injected post-commit read failure"',1)
+                text=(build.ROOT/'src/modules/modEmployeeSearch.bas').read_text(encoding='cp932').replace('On Error GoTo Failed','On Error GoTo Failed\n    If TestReadFailure Then Err.Raise vbObjectError+998, , "Injected post-commit read failure"',1)
                 import_module(app,'modEmployeeSearch',text)
             app.DoCmd.RunCommand(126)
             result=call(app,'RunFault',kind,secret)

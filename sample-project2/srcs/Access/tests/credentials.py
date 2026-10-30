@@ -26,12 +26,12 @@ Public Function CredentialRegression(ByVal oldAdmin As String,ByVal oldStaff As 
  On Error GoTo Failed
  report="":Reset "SP2ADMIN":Reset "SP2STAFF"
  Call LogoutNow
- Set f=Forms("frmLogin"):f!txtLoginId="admin":f!txtPassword="12":UiAction f,"cmdLogin"
+ Set f=Forms("frmLogin"):f!txtLoginId="admin":UiChanged f,"txtLoginId":f!txtPassword="12":UiChanged f,"txtPassword":UiAction f,"cmdLogin"
  Need "login-form-rejects-two-scalars",Not gSession.IsAuthenticated And IsNull(Forms("frmLogin")!txtPassword)
- f!txtPassword="123":UiAction f,"cmdLogin":Set f=Nothing
+ f!txtPassword="123":UiChanged f,"txtPassword":UiAction f,"cmdLogin":Set f=Nothing
  Need "login-form-admin123",gSession.IsAuthenticated And gSession.RoleId="ADMIN" And CurrentProject.AllForms("frmMenu").IsLoaded
  Call LogoutNow
- Set f=Forms("frmLogin"):f!txtLoginId="staff":f!txtPassword="123":UiAction f,"cmdLogin":Set f=Nothing
+ Set f=Forms("frmLogin"):f!txtLoginId="staff":UiChanged f,"txtLoginId":f!txtPassword="123":UiChanged f,"txtPassword":UiAction f,"cmdLogin":Set f=Nothing
  Need "login-form-staff123",gSession.IsAuthenticated And gSession.RoleId="STAFF" And CurrentProject.AllForms("frmMenu").IsLoaded
  Need "policy-minimum-three",MinimumPasswordScalars=3
  Set r=Authenticate("admin","123"):Need "admin-123-login",r.Kind="OK" And gSession.UserId="SP2ADMIN" And gSession.RoleId="ADMIN"

@@ -20,8 +20,10 @@ def main():
     for status in ('Unsearched','Unapplied','Success','Failed','LimitExceeded'):
         exclusions['DUI11.history.'+status]='Old /ui/attach HTTP200 proves lease validity; it does not compare all old live raw/applied/result/selection/scroll fields.'
     collected={};sources=[];records={};artifact=None;excluded_partials=[]
+    base_test_sources={'browser-smoke':'ui-regeneration-smoke.py','history':'ui-regeneration-history.py','functional':'ui-regeneration-scenarios.py','boundaries':'ui-regeneration-boundaries.py'}
     for folder in ('browser-smoke','history','functional','boundaries'):
         path=ROOT/'build/test-results/ui-regeneration'/folder/'result.json';record=read(path);records[folder]=record
+        assert record['testSha256']==sha(ROOT/'tests/Web'/base_test_sources[folder]),'Base measurement source changed'
         assert all(r['status']=='PASS' for r in record['results']) and not record['pageErrors'];assert artifact is None or artifact==record['artifactSha256'];artifact=record['artifactSha256'];sources.append(proof(path))
         for id,actual in record.get('observed',{}).items():
             if id not in descriptors:continue
@@ -41,7 +43,34 @@ def main():
     # LimitExceeded was assembled separately from the boundary record and is subject to the same old-live-state limitation.
     if 'DUI11.history.LimitExceeded' in collected:
         excluded_partials.append({'ruleId':'DUI11.history.LimitExceeded','reason':exclusions['DUI11.history.LimitExceeded'],'recordedButNotAdoptedProperties':collected['DUI11.history.LimitExceeded']['properties'],'evidence':collected['DUI11.history.LimitExceeded']['evidence'],'notConformanceObservation':True});del collected['DUI11.history.LimitExceeded']
-    missing=[{'ruleId':id,'properties':sorted(d['properties']-set(collected.get(id,{}).get('properties',{}))),'reason':exclusions.get(id,'Not independently observed in the completed records. Native BFCache was not entered; physical IME/clipboard and remaining branches are not inferred.')} for id,d in descriptors.items() if d['properties']-set(collected.get(id,{}).get('properties',{}))]
-    result={'schemaVersion':1,'projectId':'sample-project2','profileId':'CSharp_ASPNET','runId':contract['runId'],'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'status':'PARTIAL_ACTUAL_INTERACTION_COLLECTION','artifactSha256':artifact,'contractSha256':sha(ROOT/'tests/ui-contract.json'),'inputManifestSha256':sha(ROOT/'build/generation/inputs.json'),'measurementSources':[proof(ROOT/'tests/Web'/name) for name in ('merge-interaction-observations.py','ui-regeneration-smoke.py','ui-regeneration-history.py','ui-regeneration-scenarios.py','ui-regeneration-boundaries.py','fixture_sql.py')],'executionRecords':sources,'observations':list(collected.values()),'notMeasured':missing,'excludedPartialRuleRecords':excluded_partials,'independentAuditCorrection':'Unmeasured zero counters, lease-only state assertions, unprepared EditDraft isolation and insufficient automatic-query counting are not adopted as actual conformance values. Original execution records are retained at their partial scope.','formalScore':None}
+    additional_sources={};property_sources={};partial_rules=[]
+    paths=[ROOT/'build/test-results/ui-regeneration-additional'/name for name in ('author.json','behavior.json','sql-diagnostic.json','busy.json','protocol.json','export.json')]
+    paths.append(ROOT/'build/test-results/independent-additional-interactions/partial-observations.json')
+    paths.append(ROOT/'build/test-results/independent-native-bfcache/partial-observations.json')
+    for path in paths:
+        record=read(path);assert record['artifact']['sha256']==artifact and record['contractSha256']==sha(ROOT/'tests/ui-contract.json') and record['inputManifestSha256']==sha(ROOT/'build/generation/inputs.json')
+        assert not record.get('pageErrors',record.get('errors',[]))
+        assert all(x['status']=='PASS' for x in record.get('results',[]))
+        for source in record['measurementSources']:
+            assert sha(ROOT/source['file'])==source['sha256'],'Additional measurement source changed: '+source['file']
+            assert source['file'] not in additional_sources or additional_sources[source['file']]==source
+            additional_sources[source['file']]=source
+        sources.append(proof(path))
+        for actual in record['observations']:
+            id=actual['ruleId'];assert id in descriptors;assert actual.get('evidence')
+            if 'target' in actual:assert actual['target']==descriptors[id]['target'],'Actual target conflicts with rule descriptor'
+            for evidence in actual['evidence']:assert sha(ROOT/evidence['file'])==evidence['sha256']
+            item=collected.setdefault(id,{'ruleId':id,'target':descriptors[id]['target'],'method':'keyboard-operation','properties':{},'evidence':[]})
+            for key,value in actual['properties'].items():
+                if key not in descriptors[id]['properties']:continue
+                if key in item['properties']:assert item['properties'][key]==value and type(item['properties'][key]) is type(value),(id,key,'Conflicting actual values')
+                item['properties'][key]=value;property_sources.setdefault(id,{}).setdefault(key,[]).append({'executionRecord':proof(path),'evidence':actual['evidence']})
+            for evidence in actual['evidence']+[proof(path)]:
+                if evidence not in item['evidence']:item['evidence'].append(evidence)
+    for id,item in list(collected.items()):
+        if descriptors[id]['properties']-set(item['properties']):partial_rules.append(item);del collected[id]
+    partial_by_id={x['ruleId']:x for x in partial_rules}
+    missing=[{'ruleId':id,'properties':sorted(d['properties']-set(collected.get(id,partial_by_id.get(id,{})).get('properties',{}))),'reason':'Individual properties remain unobserved. The measured portion is preserved separately; physical IME/clipboard or a native BFCache path are not inferred.'} for id,d in descriptors.items() if id not in collected]
+    result={'schemaVersion':1,'projectId':'sample-project2','profileId':'CSharp_ASPNET','runId':contract['runId'],'recordedAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'status':'PARTIAL_ACTUAL_INTERACTION_COLLECTION','artifactSha256':artifact,'contractSha256':sha(ROOT/'tests/ui-contract.json'),'inputManifestSha256':sha(ROOT/'build/generation/inputs.json'),'measurementSources':[proof(ROOT/'tests/Web'/name) for name in ('merge-interaction-observations.py','ui-regeneration-smoke.py','ui-regeneration-history.py','ui-regeneration-scenarios.py','ui-regeneration-boundaries.py','fixture_sql.py')]+list(additional_sources.values()),'executionRecords':sources,'observations':list(collected.values()),'partialRuleObservations':partial_rules,'propertySources':property_sources,'notMeasured':missing,'excludedPartialRuleRecords':excluded_partials,'independentAuditCorrection':'Old unsupported zero/lease-only/unprepared claims remain excluded. New actual properties are joined only from exact current-artifact records, stable measurement sources and individual evidence. Physical IME/clipboard and an unentered native BFCache branch are never inferred.','formalScore':None}
     target=ROOT/'build/test-results/ui-regeneration/interaction-observations.json';target.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf8');print(json.dumps({'observedRules':len(collected),'incompleteRules':len(missing),'artifactSha256':artifact}))
 if __name__=='__main__':main()

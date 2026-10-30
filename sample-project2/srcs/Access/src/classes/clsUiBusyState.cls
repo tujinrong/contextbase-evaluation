@@ -8,6 +8,8 @@ Private priorRight As Long
 Private priorDown As Long
 Private physicalOverlay As Boolean
 Private active As Boolean
+Private overlayState As clsFormUiState
+Private overlayRegistered As Boolean
 Public Sub Acquire(ByVal f As Access.Form)
     Dim c As Object, kind As Long, locked As Variant, anchor As String
     On Error GoTo Failed
@@ -23,6 +25,7 @@ Public Sub Acquire(ByVal f As Access.Form)
     If priorRight < 0 Then priorRight = 0
     If priorDown < 0 Then priorDown = 0
     physicalOverlay = True
+    Set overlayState = UiState(f): overlayState.BusyOverlayDepth = overlayState.BusyOverlayDepth + 1: overlayRegistered = True
     Select Case f.Name
     Case "frmLogin": anchor = "cmdLogin"
     Case "frmMenu": anchor = "cmdEmployeeSearch"
@@ -45,7 +48,7 @@ Public Sub Acquire(ByVal f As Access.Form)
         End If
     Next
     ' The anchor is outside all tabs. Its handler still refuses reentry with MSG-029.
-    f.Controls(anchor).SetFocus
+    If f.Controls(anchor).ControlType = acTabCtl Then UiFocusTabHeader f Else f.Controls(anchor).SetFocus
     For Each c In f.Controls
         If states.Exists(c.Name) Then
             kind = c.ControlType
@@ -68,7 +71,7 @@ Private Function FocusName(ByVal f As Access.Form) As String
 Missing:
 End Function
 Public Sub Restore()
-    Dim key As Variant, state As Variant, c As Object, canFocus As Boolean
+    Dim key As Variant, state As Variant, c As Object, canFocus As Boolean, focusTarget As String
     If Not active Then Exit Sub
     active = False
     On Error GoTo Finished
@@ -87,10 +90,22 @@ Public Sub Restore()
     ' SetFocus alone scrolls only enough to expose the old control, leaving Tab
     ' captions above the viewport. Restore the saved native page offsets first.
     If physicalOverlay Then target.GoToPage 1, priorRight, priorDown
+    If overlayRegistered Then
+        overlayState.BusyOverlayDepth = overlayState.BusyOverlayDepth - 1: overlayRegistered = False
+    End If
+    gBusy = previousBusy
+    UiSyncPendingEditors target
     If priorFocus <> "" Then
-        If target.Controls(priorFocus).Enabled And target.Controls(priorFocus).Visible Then target.Controls(priorFocus).SetFocus
+        focusTarget = UiEffectiveFocus(target, UiLogicalOwner(target, priorFocus))
+        If target.Controls(focusTarget).Enabled And target.Controls(focusTarget).Visible Then
+            If target.Controls(focusTarget).ControlType = acTabCtl Then UiFocusTabHeader target Else target.Controls(focusTarget).SetFocus
+        End If
     End If
 Finished:
+    If overlayRegistered Then
+        overlayState.BusyOverlayDepth = overlayState.BusyOverlayDepth - 1: overlayRegistered = False
+    End If
+    Set overlayState = Nothing
     gBusy = previousBusy: Set target = Nothing: Set states = Nothing
 End Sub
 Private Sub Class_Terminate()

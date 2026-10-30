@@ -1,11 +1,13 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BUILD","version":"7.12","path":"agents/builds/build-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"実行手順","kind":"GRID","sheet":"03_実行手順"},{"heading":"問題の分類と中断","kind":"GRID","sheet":"04_問題の分類と中断"},{"heading":"完了条件","kind":"GRID","sheet":"05_完了条件"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BUILD","version":"7.14","path":"agents/builds/build-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"実行手順","kind":"GRID","sheet":"03_実行手順"},{"heading":"問題の分類と中断","kind":"GRID","sheet":"04_問題の分類と中断"},{"heading":"完了条件","kind":"GRID","sheet":"05_完了条件"}]} -->
 # 仕様からシステム生成Agent 契約
 
-版7.12／2026-10-29。固定build/・方式内.tmp/・Git履歴とAccess品質gateを維持し、WEB/WinForms/Textの配置familyと描画技術を、独立期待値・実製品の検査へ接続する。
+版7.14／2026-10-30。固定build/・方式内.tmp/・Git履歴とAccess品質gateを維持し、WEB/WinForms/Textの配置familyと描画技術を、独立期待値・実製品の検査へ接続する。
 
 ## 概要
 
 AG-BUILD。Codexが本契約を読み、選択projectの仕様から各方式のソースを生成する。対象projectIdと工程を明示した実行で使用する。[実行指示](PROMPT.md)を入口とし、[事前検査スクリプト](scripts/preflight.mjs)で入力版・SHA-256・構造検査結果を保存する。スクリプトは文書検査であり、コード生成器や業務実装の合格判定ではない。
+
+UIP-03aの認証入力群・同型ペアを、[UIパターン生成チェック](docs/UIパターン生成チェック.md)に従って共通の幅/配置定義へ実装する。AccessはAUI-06aと専用チェックを併用し、入力上限とは別に、各状態の実部品と描画の整列を検査する。Agent改善だけの依頼では既存仕様・アプリを再生成しない。
 
 ## 入出力
 
@@ -36,6 +38,8 @@ AG-BUILD。Codexが本契約を読み、選択projectの仕様から各方式の
 
    Accessは[Access画面品質規約](../../../docs/Access画面品質規約.md)を凍結入力へ含め、画面タイプ・各Form/Page/Dialog・状態ごとに合理性/統一性/見やすさ/操作性を確認する。既存改修の範囲未指定はlayout_onlyとし、対象の常時識別、列幅/全文到達、操作の近接、選択一致を保存/認証/DBの無断変更と切り離す。仕様からaccessScreenChecksの9カテゴリと個別ruleを先に定義し、対象外理由を記す。保存方式/単位、入力中/未反映の明細、別対象への移動/離脱、保存失敗後の保持は実キー/クリックとデータ再読込で検査し、interactionにも証拠を残す。
 
+AUI-05a～05cにより、タイトルの本文フォントへの上書き、TextBox高と文字領域の不整合、CP932/Unicode境界の文字化けを全Form/Page/Dialogへ横断検査する。VBAの厳密往復と実行/実表示を別々に記録し、非日本語ACPでの暗黙変換や過去のPASSで補わない。
+
    [テストデータ整備規約](../../../docs/テストデータ整備規約.md)に従い、必要マスタと架空の初期確認用業務データ・投入処理・操作手順を作成する。初回の空の確認用環境へ投入し、既存利用者データを自動リセットせず、再実行の冪等性・参照整合・通常の検索/新規保存経路を検査する。データ定義・正式fixtureはsourceRootの正本、実行コピーは.tmp、今回のデータmanifest/検査/手順はbuildの固定先へ置く。データ整備は全方式の次回生成に適用し、別方式を今回の実行範囲へ追加する根拠にしない。
 
 各方式は独立したテスト材料とする。仕様は `project/spec/方式ID/` のspecRoot内で独立して完結し、コード・DB資源・生成器・ビルド・試験は `project/srcs/方式ID/` のsourceRoot内で完結する。方式内閉包はこの対応する2つの領域を意味し、仕様をソース内へ戻す条件ではない。specRootの不足は構造問題として記録し、旧sourceRoot/specや横断共有仕様から補わない。他方式の仕様・ライブラリー・ソースを引用しない。共通ファイル、外部ProjectReference、リンクによる共用は使用しない。方式に適した言語・構成で作成する。逆生成へ渡すsource-onlyパッケージから原仕様を除外し、逆生成のallowedPathsへproject/spec/全体・spec-eval・他方式を含めない。DB共有・Access単体/サーバーDB・成果物名は選択project/方式の採用プロファイルで固定する。特定題材の過去指示を全projectへ強制しない。共有プロファイルが明示採用された場合だけ同方式内の共有契約を使い、独立ACCDBを採用する方式を暗黙にSQLフロントエンドへ変更しない。成果物名やsolution名も題材固定とせず、方式の実装配置契約・配布設定を参照する。
@@ -60,6 +64,6 @@ source-onlyの再構築・通常初期設定に必要なhelperはsourceRoot/prof
 
 初期確認用データの件数/版/基準日/用途、投入と再投入の結果、利用者向け確認手順を残す。Accessは今回生成したACCDBで、新規キーの実入力、マスク対象の桁/貼付/保存再読込、編集/参照の保護、フォント/見出し/一覧/ダイアログを検査する。実機の版・bit・DPI・サイズ・範囲を明示し、未導入の環境や未実施を過去のPASSで補わない。
 
-Accessでは4観点レビューの各指摘を画面/状態・利用者の支障・修正・個別合格条件・再検証へ対応させる。全画面のaccessScreenChecks・操作証拠の欠落をUI gateとmanifestで拒否し、全欄同幅・余白削減・文字縮小だけを品質達成にしない。通常表示以外の長文/未選択/空/失敗/未保存離脱と対象環境の実施範囲を示す。仕様HTMLの描画、構造検査、実ACCDBの見やすさ、実操作/再読込、利用者受入は別状態で報告する。
+Accessでは4観点レビューの各指摘を画面/状態・利用者の支障・修正・個別合格条件・再検証へ対応させる。全画面のaccessScreenChecks・操作証拠の欠落をUI gateとmanifestで拒否し、用途を無視した全欄の一律同幅・余白削減・文字縮小だけを品質達成にしない。通常表示以外の長文/未選択/空/失敗/未保存離脱と対象環境の実施範囲を示す。仕様HTMLの描画、構造検査、実ACCDBの見やすさ、実操作/再読込、利用者受入は別状態で報告する。
 
 各familyで設計ID→実装/部品→UI契約の個別rule→最終製品の属性/描画/操作証拠を追跡できることを完了条件にする。描画技術に合う単位・方法を使い、WPFのHTMLモック、Textのstdout整列、参考パッケージの過去PASSを製品UI合格にしない。既知/明示family規約の削除・更新ではpreflight/manifestを失効させ、非該当familyの規約を方式固有入力に混ぜない。構造・ビルド・実UI・DB/API再読込・正式受入と未実施を分ける。

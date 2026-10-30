@@ -58,12 +58,13 @@ Public Function RunBusySuite(ByVal password As String) As String
     Set f = Forms("frmEmployeeEditor")
     before = State(f): Set overlay = New clsUiBusyState: overlay.Acquire f: overlay.Restore: Set overlay = Nothing
     Check "existing-key-stays-readonly", f!txtEmployeeNo.Enabled And f!txtEmployeeNo.Locked And before = State(f)
-    f!txtEmployeeName = "": UiAction f, "cmdSave"
+    f!txtEmployeeName = "": UiChanged f, "txtEmployeeName": UiAction f, "cmdSave"
     Check "validation-restores-input-mode", f!txtEmployeeName.Enabled And Not f!txtEmployeeName.Locked And f!txtEmployeeNo.Locked And f!cmdSave.Enabled And Not gBusy
     Check "open-code", PrepareUi("code")
     Set f = Forms("frmCodeMaster"): UiAction f, "cmdNew"
     Check "new-code-key-editable", f!txtCode.Enabled And Not f!txtCode.Locked
     f!txtCode = "04": f!txtCodeName = "busy架空部署": f!txtSortOrder = "4": f!chkEnabled = True
+    UiChanged f, "txtCode": UiChanged f, "txtCodeName": UiChanged f, "txtSortOrder"
     UiAction f, "cmdSave"
     Check "saved-code-key-becomes-readonly", f!txtCode.Enabled And f!txtCode.Locked And Not gCode.IsNew And f!cmdSave.Enabled And Not gBusy
     Check "open-search", PrepareUi("search")

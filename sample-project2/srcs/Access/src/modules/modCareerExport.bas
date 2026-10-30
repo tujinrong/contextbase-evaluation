@@ -441,7 +441,7 @@ Public Function ExportCareer(ByVal employeeId As Long, ByVal session As clsSessi
         ordinal = ordinal + 1: finish = DateSerial(Year(snapshot.BusinessDate), Month(snapshot.BusinessDate), 1)
         If Not IsNull(c.EndMonth) Then finish = c.EndMonth
         months = DateDiff("m", c.StartMonth, finish) + 1
-        period = Format$(c.StartMonth, "yyyy年mm月") & " ～ " & IIf(IsNull(c.EndMonth), "現在", Format$(finish, "yyyy年mm月")) & "（" & CStr(months \ 12) & "年" & CStr(months Mod 12) & "か月）"
+        period = Format$(c.StartMonth, "yyyy年mm月") & " 〜 " & IIf(IsNull(c.EndMonth), "現在", Format$(finish, "yyyy年mm月")) & "（" & CStr(months \ 12) & "年" & CStr(months Mod 12) & "か月）"
         BeginCase careers, row, ordinal, c.Project, expected
         WriteBlock careers, row, Format$(ordinal, "00") & " 案件", c.Project, expected, True
         WriteBlock careers, row, "期間", period, expected

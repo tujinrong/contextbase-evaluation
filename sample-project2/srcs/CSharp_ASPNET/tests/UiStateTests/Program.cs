@@ -57,6 +57,23 @@ Check("RAW-TECHNICAL-LIMITS-NOT-BUSINESS",()=>{
  try{Validation.TechnicalRaw("\ud800");throw new Exception("Expected encoding rejection");}catch(ArgumentException){}
  var input=new SearchInput("",1,"12x",null,null,null);Message(5,()=>Validation.Search(input));
 });
+Check("EXPORT-CANCEL-WAITS-OWN-WORKER",()=>{
+ var registry=new ExportOperationRegistry();var operation=registry.Start("A","export-state",Guid.NewGuid());
+ var pending=registry.CancelAsync("A","export-state",operation.Id,CancellationToken.None);
+ Assert(operation.Cancellation.IsCancellationRequested&&!pending.IsCompleted);
+ Message(29,()=>registry.Start("A","export-state",Guid.NewGuid()));
+ registry.Finish(operation);Assert(pending.GetAwaiter().GetResult().Phase=="CancelledBeforeStart");
+ var retry=registry.Start("A","export-state",Guid.NewGuid());registry.Finish(retry);
+});
+Check("EXPORT-CANCEL-OWNERSHIP-AND-REQUEST-CT",()=>{
+ var registry=new ExportOperationRegistry();var operation=registry.Start("A","export-state",Guid.NewGuid());
+ Message(3,()=>registry.CancelAsync("B","export-state",operation.Id,CancellationToken.None).GetAwaiter().GetResult());
+ Assert(!operation.Cancellation.IsCancellationRequested);
+ using var cancelled=new CancellationTokenSource();cancelled.Cancel();
+ try{registry.CancelAsync("A","export-state",operation.Id,cancelled.Token).GetAwaiter().GetResult();throw new Exception("Expected cancellation");}
+ catch(OperationCanceledException){Assert(operation.Cancellation.IsCancellationRequested);}
+ finally{registry.Finish(operation);}
+});
 var root=Environment.CurrentDirectory;var artifact=typeof(ScreenStateStore).Assembly.Location;
 var record=new{runId="sp2-ui-regenerate-20261029",scope="State/key/immutable-copy/technical-boundary unit tests; not browser/HTTP/DB acceptance",results,failures,assemblySha256=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(artifact))),sourceSha256=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(Path.Combine(root,"tests/UiStateTests/Program.cs"))))};
 Directory.CreateDirectory(Path.Combine(root,"build/test-results"));File.WriteAllText(Path.Combine(root,"build/test-results/ui-state-unit.json"),JsonSerializer.Serialize(record,new JsonSerializerOptions{WriteIndented=true})+"\n");return failures==0?0:1;
