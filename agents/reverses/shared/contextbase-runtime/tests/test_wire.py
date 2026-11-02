@@ -92,7 +92,7 @@ class WireDiscoveryTests(unittest.TestCase):
     def tearDown(self):
         self.temporary.cleanup()
 
-    def provider(self, workspace, directory, prompt, schema, timeout):
+    def provider(self, workspace, directory, prompt, schema, timeout, *, instruction_role='analysis'):
         context = json.loads(prompt[prompt.index('{"request":'):])
         task_id = context['task']['id']
         canonical = self.agent.session.store.get('tasks/' + task_id + '/canonical-context.json')

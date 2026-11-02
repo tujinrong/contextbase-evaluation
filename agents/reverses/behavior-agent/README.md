@@ -1,6 +1,8 @@
 # behavior-agent — 独立した動作深化
 
-版1.3／2026-10-28。package／CLIはcontextbase-behavior、Pythonモジュールはcontextbase_behavior。reverse-agentのインストール・import・統括起動を必要としない。新配置とportable受渡しの構造・合成検証は通過した。
+版1.4／2026-10-30。package／CLIはcontextbase-behavior、Pythonモジュールはcontextbase_behavior。reverse-agentのインストール・import・統括起動を必要としない。新配置とportable受渡しの構造・合成検証は通過した。
+
+Codexの基礎指示は[共有runtimeの解析・検証用指示](../shared/contextbase-runtime/README.md#解析用の基礎指示)へ明示置換する。動作抽出は解析者、受領前提の再検証と動作の独立検証は検証者の指示を使用する。
 
 新workのinit --incremental又はcontext_mode="incremental"で[分割調査・独立検証](../shared/contextbase-runtime/docs/分割調査・独立検証プロトコル.md)を選べる。関係前提を自分の原文で再検証し、質問別草稿と独立レビューを保存する。全体義務の採用条件と独立起動は維持する。B固有事実の型拡張と実業務精度は別の残作業で、今回Bの実解析は行っていない。
 

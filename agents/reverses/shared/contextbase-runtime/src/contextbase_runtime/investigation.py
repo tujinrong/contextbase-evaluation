@@ -22,7 +22,8 @@ def _assigned(task):
     if (len(task['requirements']) != len(set(task['requirements']))
             or not set(task['requirements']).issubset(obligations)):
         raise ValueError('Draft obligations must be unique original requirements')
-    if any(obligations[key]['stage'] != task['stage'] for key in task['requirements']):
+    contracts.validate_task_scope(task)
+    if not task.get('jointPolicy') and any(obligations[key]['stage'] != task['stage'] for key in task['requirements']):
         raise ValueError('Draft obligations must belong to the original extraction stage')
     return obligations
 

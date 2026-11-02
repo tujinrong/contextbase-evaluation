@@ -33,7 +33,7 @@ class EvidenceLaunchTests(unittest.TestCase):
     def tearDown(self):
         self.temporary.cleanup()
 
-    def provider(self, workspace, job, prompt, schema, timeout):
+    def provider(self, workspace, job, prompt, schema, timeout, *, instruction_role='analysis'):
         context = json.loads(prompt.rsplit('\n', 1)[-1])
         self.calls.append(deepcopy(context))
         task = context['task']

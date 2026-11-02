@@ -15,6 +15,9 @@ VERSION = 'contextbase-analysis/2'
 STAGES = ('discovery', 'relationship', 'behavior')
 ROLES = STAGES
 OPERATIONS = ('extract', 'verify')
+JOINT_POLICY = 'contextbase-joint-analysis/1'
+AMENDMENT_POLICY = 'contextbase-candidate-amendment/1'
+NATIVE_AMENDMENT_POLICY = 'contextbase-candidate-amendment/2'
 
 
 def digest(value) -> str:
@@ -106,17 +109,79 @@ def _scoped_strings(values):
         'type': 'array', 'items': TEXT, 'maxItems': 0, 'uniqueItems': True}
 
 
+def amendment_bindings(task):
+    """Require an explicit, complete amendment policy only for verification."""
+    if task.get('operation') != 'verify':
+        return []
+    if 'amendmentPolicy' not in task and 'amendmentIssueBindings' not in task:
+        return []
+    if task.get('amendmentPolicy') not in {AMENDMENT_POLICY, NATIVE_AMENDMENT_POLICY}:
+        raise ValueError('Unsupported amendment verification policy')
+    if task.get('amendmentPolicy') == NATIVE_AMENDMENT_POLICY:
+        validate_task_scope(task)
+        if (task.get('jointPolicy') != JOINT_POLICY
+                or task['requirements'] != [row['id'] for row in task['goalRequirements']]):
+            raise ValueError('Native amendment verification requires joint execution')
+    bindings = task.get('amendmentIssueBindings')
+    validate(bindings, arr(obj({'id': TEXT, 'sha256': SHA256,
+                               'dispositionSha256': SHA256, 'requirement': TEXT}), 1))
+    _unique_ids(bindings, 'id', 'amendment issue binding')
+    if any(row['requirement'] not in task['requirements'] for row in bindings):
+        raise ValueError('Amendment issue must belong to an assigned obligation')
+    return bindings
+
+
+def _amendment_check_schema(bindings):
+    return {'anyOf': [obj({
+        'issueId': {'type': 'string', 'const': row['id']},
+        'issueSha256': {'type': 'string', 'const': row['sha256']},
+        'dispositionSha256': {'type': 'string', 'const': row['dispositionSha256']},
+        'status': {'enum': ['pass', 'fail', 'unknown']}, 'reason': TEXT,
+        'evidence': arr(EVIDENCE)}) for row in bindings]}
+
+
+def validate_amendment_checks(checks, bindings):
+    """Check complete issue/disposition identity and positive source support."""
+    expected = {row['id']: row for row in bindings}
+    ids = _unique_ids(checks, 'issueId', 'amendment issue check')
+    if set(ids) != set(expected):
+        raise ValueError('Verification must account for every amendment issue exactly once')
+    for row in checks:
+        binding = expected[row['issueId']]
+        if (row['issueSha256'] != binding['sha256']
+                or row['dispositionSha256'] != binding['dispositionSha256']):
+            raise ValueError('Amendment issue or disposition content binding changed')
+        if row['status'] == 'pass' and not row['evidence']:
+            raise ValueError('Positive amendment issue review requires original source evidence')
+
+
+def validate_task_scope(task: dict) -> None:
+    """Execution grouping is distinct from the business stages in the request."""
+    if task.get('jointPolicy') is not None:
+        if (task['jointPolicy'] != JOINT_POLICY or task.get('stage') is not None
+                or task.get('nativeToolsPolicy') != 'contextbase-native-tools/1'
+                or task.get('executionScope') != task.get('requirements')):
+            raise ValueError('Invalid joint native execution scope')
+        identifiers = task.get('requirements', [])
+        obligations = {row['id']: row for row in task.get('goalRequirements', [])}
+        if (not identifiers or len(set(identifiers)) != len(identifiers)
+                or not set(identifiers).issubset(obligations)):
+            raise ValueError('Joint execution requires explicit original obligations')
+    elif task.get('stage') not in STAGES or 'executionScope' in task:
+        raise ValueError('Unknown extraction stage')
+
+
 def result_schema(task: dict) -> dict:
     if task['operation'] not in OPERATIONS:
         raise ValueError('Unknown analysis operation')
-    if task['stage'] not in STAGES:
-        raise ValueError('Unknown extraction stage')
+    validate_task_scope(task)
     binding = {'taskId': {'type': 'string', 'const': task['id']}}
     requirement = _enum(task['requirements'])
     goal_ids = task.get('goalRequirementIds', [])
     unknown = obj({**UNKNOWN['properties'], 'relatedRequirements': _scoped_strings(goal_ids),
                    'blocksRequirements': _scoped_strings(goal_ids)})
     if task['operation'] == 'verify':
+        amendment = amendment_bindings(task)
         bindings = task['unknownBindings']
         unknown_check = obj({
             'unknownId': _enum(item['id'] for item in bindings), 'unknownSha256': SHA256,
@@ -132,6 +197,8 @@ def result_schema(task: dict) -> dict:
                     'findings': arr(obj({'id': TEXT, 'severity': {'enum': ['blocking', 'minor']},
                         'requirement': requirement, 'detail': TEXT, 'evidence': arr(EVIDENCE)})),
                     'unknowns': arr(unknown)}
+        if amendment:
+            properties['amendmentIssueChecks'] = _exact_array(_amendment_check_schema(amendment), len(amendment))
         if task.get('catalogPolicy') == catalog.VERSION:
             properties.update(catalog.CHECKS_SCHEMA(task))
         from .facts import response_properties
@@ -256,6 +323,14 @@ def validate_result(answer: dict, task: dict, source, existing_keys=()) -> None:
                             and record['ownerRequirement'] not in unknown['blocksRequirements']):
                         raise ValueError('Pending count or coverage must block its assigned obligation')
     if verification:
+        amendment = amendment_bindings(task)
+        if amendment:
+            validate_amendment_checks(answer['amendmentIssueChecks'], amendment)
+            severity = {'pass': 0, 'unknown': 1, 'fail': 2}
+            owners = {row['id']: row['requirement'] for row in amendment}
+            for row in answer['amendmentIssueChecks']:
+                if severity[coverage[owners[row['issueId']]]['status']] < severity[row['status']]:
+                    raise ValueError('Requirement verdict cannot conceal an amendment issue verdict')
         if (task.get('sourceFactsSha256') and answer['factUsageCheck']['status'] == 'pass'
                 and not answer['factUsageCheck']['evidence']):
             raise ValueError('Positive source-fact usage verification requires source evidence')
@@ -277,6 +352,8 @@ def validate_result(answer: dict, task: dict, source, existing_keys=()) -> None:
             elif not blocked:
                 raise ValueError('A blocking/unresolved unknown must identify impacted obligations')
     groups = [records, checks, answer.get('findings', []), answer.get('unknownChecks', [])]
+    if verification and task.get('amendmentPolicy') in {AMENDMENT_POLICY, NATIVE_AMENDMENT_POLICY}:
+        groups.append(answer['amendmentIssueChecks'])
     if verification and task.get('sourceFactsSha256'):
         groups.append([answer['factUsageCheck']])
     if verification and task.get('catalogPolicy') == catalog.VERSION:

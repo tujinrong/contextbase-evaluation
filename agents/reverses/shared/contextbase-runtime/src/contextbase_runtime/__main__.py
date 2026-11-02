@@ -17,10 +17,16 @@ def load(path: Path) -> dict:
 
 
 def main(argv=None) -> int:
+    actual = list(sys.argv[1:] if argv is None else argv)
+    if actual and actual[0] == 'analyze':
+        from .cli import main as agent_main
+        from .project_analysis import ProjectAnalysisAgent
+        return agent_main(ProjectAnalysisAgent, actual[1:])
     parser = argparse.ArgumentParser(
         description='ContextBase 取得・関係構築・動作深化と独立検証（仕様書は生成しない）',
         epilog='v2: 抽出には step --stage、独立検証には verify を使用する。旧 --role は受理しない。')
     commands = parser.add_subparsers(dest='command', required=True)
+    commands.add_parser('analyze', help='Codexの連続工具会話で元要求全体を解析・独立検証する')
     init = commands.add_parser('init', help='選択範囲を封印し、新しい解析セッションを作る')
     init.add_argument('--source', type=Path, required=True)
     init.add_argument('--request', type=Path, required=True)
@@ -53,7 +59,6 @@ def main(argv=None) -> int:
     resume.add_argument('--request', type=Path, required=True)
     for command in commands.choices.values():
         command.add_argument('--work', type=Path, required=True, help='承認した専用の作業ディレクトリ')
-    actual = list(sys.argv[1:] if argv is None else argv)
     if any(item == '--role' or item.startswith('--role=') for item in actual):
         parser.error('旧 --role は使用できない。v2 の抽出は step --stage、独立検証は verify を使用する。'
                      'investigation を relationship／behavior へ自動変換しない。')

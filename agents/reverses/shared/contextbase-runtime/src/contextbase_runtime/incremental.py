@@ -284,6 +284,11 @@ def _base_context(root_context, child, phase, unit, materials):
     task_fields = ('id', 'contextId', 'rootTaskId', 'stage', 'operation', 'requirements',
                    'goalRequirements', 'goalRequirementIds', 'snapshotId', 'candidate',
                    'viewSha256', 'sourceFactsSha256', 'catalogPolicy', 'recordKinds')
+    if child.get('semanticPolicy'):
+        task_fields += ('semanticPolicy', 'semanticIndexSha256')
+    if child.get('amendmentPolicy'):
+        task_fields += ('amendmentPolicy', 'amendmentSeedSha256', 'amendmentSpecSha256',
+                        'amendmentOperationId', 'requestSha256', 'amendmentIssueBindings')
     task = {field: deepcopy(child[field]) for field in task_fields if field in child}
     targets = {}
     for collection, keys in (('records', (unit or {}).get('recordKeys', [])),
@@ -326,6 +331,8 @@ def _base_context(root_context, child, phase, unit, materials):
         'reviewTargets': targets,
         'sourceDelivery': {'mode': 'host-incremental-requests',
                            'instruction': 'All sealed files remain available through inventory/query/search/read.'}}
+    if child.get('semanticPolicy'):
+        result['semanticAnalysis'] = deepcopy(root_context['semanticAnalysis'])
     if phase == 'review':
         classifications = {item['key']: item['sha256'] for item in child.get('classificationBindings', [])}
         questions = {item['id']: item['sha256'] for item in child.get('unknownBindings', [])}
@@ -343,7 +350,29 @@ def _base_context(root_context, child, phase, unit, materials):
             'unknowns': [{'unknownId': key, 'materialSha256': c.digest(materials['unknowns'][key]),
                           'unknownSha256': questions[key]}
                          for key in (unit or {}).get('unknownIds', [])]}
-    if phase == 'draft':
+    if child.get('amendmentPolicy'):
+        if 'amendmentAudit' in root_context:
+            result['amendmentAudit'] = deepcopy(root_context['amendmentAudit'])
+        if 'candidateAmendment' in root_context:
+            seed = root_context['candidateAmendment']['seed']
+            spec = root_context['candidateAmendment']['spec']
+            result['candidateAmendment'] = {
+                'operationId': child['amendmentOperationId'],
+                'seedSha256': spec['seedSha256'], 'baseCandidateSha256': seed['baseCandidateSha256'],
+                'baseViewSha256': seed['baseViewSha256'], 'issues': deepcopy(seed['issues']),
+                'replaceRecords': {key: deepcopy(seed['view']['records'][key]) for key in spec['replaceKeys']},
+                'addKinds': deepcopy(spec['addKinds']),
+                'trust': 'Untrusted frozen base. All records and unknowns remain pageable. '
+                         'Return only add/replace delta and every issue disposition; no whole-base output.'}
+    if phase == 'amend':
+        result['incremental']['instruction'] = (
+            'Return only the explicit amendment schema. operationId in that answer is '
+            'candidateAmendment.operationId, while the enclosing envelope uses this child task.id. '
+            'Inspect original source for each issue. Retained record versions are CAS inputs, not proof. '
+            'Omitted base records, unknowns, followups and fact usage are retained mechanically. '
+            'Already-addressed/source-refuted require current frozen record references and fresh source evidence. '
+            'Unresolved current issues remain explicit and prevent starting the full review.')
+    elif phase == 'draft':
         result['incremental']['instruction'] = (
             'Continue from the exact checkpoint summary when present; inspect only its remaining '
             'executable actions and meaningful new gaps, rather than restarting the original question. '
@@ -377,6 +406,17 @@ def _base_context(root_context, child, phase, unit, materials):
             result['incremental']['obligationClosurePackage'] = block
     elif phase == 'review' and unit['kind'] == 'global':
         result['incremental']['instruction'] = 'Independently search original registrations, reverse uses, project membership, data definitions and unsupported materials for objects absent from the catalog and cross-unit contradictions. Local passes do not prove coverage.'
+    if phase == 'review' and child.get('amendmentPolicy'):
+        result['incremental']['instruction'] = result['incremental'].get('instruction', '') + (
+            '\nIndependently evaluate only this unit.issueIds in amendmentIssueChecks; other units use []. '
+            'The amendmentAudit contains old investigation issues and new author dispositions, all untrusted. '
+            'Check changed against the complete new candidate; check already-addressed against current '
+            'record contents; check source-refuted against fresh original source and actively seek '
+            'counterexamples. Reject an unsupported author declaration even when it labels itself fixed. '
+            'Bind issueId, issueSha256 and dispositionSha256 to the exact task.amendmentIssueBindings. '
+            'Use fail or unknown when the original issue is not independently resolved; author labels '
+            'and old review passes confer no verdict or source delivery. Full-catalog omissions and '
+            'unchanged claims still require the separately assigned record and global reviews.')
     return result
 
 
@@ -427,14 +467,35 @@ def _dialog(source, index, store, task, root_context, phase, unit, materials,
     previous = c.digest(setup)
     latest, pairs, notes, pointers = [], [], '', []
     progress, material_progress, repeated = _DeliveryProgress(), _MaterialProgress(), 0
+    if child.get('semanticPolicy'):
+        from .semantic_support import initial_pairs
+        initial = initial_pairs(access, index, child, unit=unit, materials=materials)
+        initial_artifact = {'semanticIndexSha256': child['semanticIndexSha256'], 'pairs': initial}
+        if cached:
+            if store.get(prefix + '/semantic-initial.json') != initial_artifact:
+                raise ValueError('Automatic semantic delivery changed during incremental replay')
+        else:
+            store.put(prefix + '/semantic-initial.json', initial_artifact)
+        latest, pairs = deepcopy(initial), deepcopy(initial)
+        progress.consume(initial)
     number = 1
     completed = store.get(prefix + '/complete.json') if cached else None
+    retained_rounds = []
+    if cached:
+        # Validate actual retained source deliveries once per completed invocation.
+        # Only these operation-local verified replies may rebuild its transcript;
+        # material receipts and every context/hash binding are still replayed below.
+        retained_rounds = [store.get(prefix + f'/round-{position:04d}.json')
+                           for position in range(1, len(completed['rounds']) + 1)]
+        access.verify_replies((pair['request'], pair['reply'])
+                              for retained in retained_rounds for pair in retained['pairs']
+                              if pair['request']['operation'] not in {'listing', 'material'})
     while True:
         check_current()
         context = _context(base, number, notes, latest, pairs, instruction, wire_schema, materials)
         prompt = instruction + '\n' + POLICY + '\n' + _json(context)
         if cached:
-            row = store.get(prefix + f'/round-{number:04d}.json')
+            row = retained_rounds[number - 1]
             response = row['response']
             if row['context'] != context or row['promptSha256'] != hashlib.sha256(prompt.encode('utf-8')).hexdigest():
                 raise ValueError('Incremental prompt or context replay changed')
@@ -455,13 +516,18 @@ def _dialog(source, index, store, task, root_context, phase, unit, materials,
         elif wrapper['action'] == 'checkpoint' and phase != 'draft':
             raise ValueError('Only investigation drafts support intermediate checkpoints')
         latest = []
-        for request in wrapper['requests']:
+        for position, request in enumerate(wrapper['requests']):
             check_current()
             if request['operation'] in {'listing', 'material'}:
                 try:
                     reply = _material_reply(request, materials, child)
                 except EvidenceRequestError as error:
                     reply = _material_error_reply(request, error, child)
+            elif cached:
+                retained = row['pairs'][position]
+                if retained['request'] != request:
+                    raise ValueError('Incremental source deliveries or provider trace changed')
+                reply = deepcopy(retained['reply'])
             else:
                 try:
                     reply = access.handle(request)
@@ -489,6 +555,8 @@ def _dialog(source, index, store, task, root_context, phase, unit, materials,
             if cached and completed != result:
                 raise ValueError('Incremental completed invocation binding changed')
             check_current()
+            if cached:
+                access._assert_binding()
             if not cached:
                 store.put(prefix + '/complete.json', result)
             return answer, call_id
@@ -611,6 +679,8 @@ def _drive(task, context, invoke, validate_final=None):
         units = review_set.make_units(task, view)
         usages = context['candidate']['answer'].get('factUsage', [])
         materials = _collections(view['records'], view['unknowns'], usages, units)
+        if task.get('amendmentPolicy'):
+            materials['feedback']['amendment-audit'] = deepcopy(context['amendmentAudit'])
         answers = []
         for unit in units:
             answer = invoke('review', unit, materials, review_set.unit_schema(task, view, unit))
@@ -622,6 +692,9 @@ def _drive(task, context, invoke, validate_final=None):
             invoke.commit()
             answers.append(answer)
         return review_set.aggregate(task, view, units, answers)
+    if task.get('amendmentPolicy'):
+        from .amendment_runtime import drive
+        return drive(task, context, invoke, validate_final)
     retained = context.get('currentRecords', {})
     old_unknowns = context.get('currentUnknowns', {})
     plan = invoke('plan', None, _collections(retained, old_unknowns), investigation.plan_schema(task))

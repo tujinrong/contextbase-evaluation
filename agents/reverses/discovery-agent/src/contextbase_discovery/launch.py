@@ -20,6 +20,7 @@ from .reporting import prepare_report
 
 
 OWNER = '.discovery-launch.json'
+AMENDMENT = 'amendment-operation.json'
 FILES = ('target.json', 'README.md', 'review.md', 'facts/source-facts.json',
          'facts/validation.json', 'facts/facts-review.md', 'result/validation.json',
          'contextbase.json')
@@ -99,7 +100,8 @@ def _work_marker(owner, kind):
 
 def _owned(home, directory, owner):
     directory = safe_path(directory)
-    if directory.parent != home or directory.name not in {'current', 'staging'}:
+    if directory.parent != home or directory.name not in {
+            'current', 'staging', 'amendment-current', 'amendment-staging'}:
         raise ValueError('Refusing to manage a directory outside launcher ownership')
     if not directory.is_dir() or read_json(directory / OWNER) != _work_marker(owner, directory.name):
         raise ValueError('Refusing to manage unowned launcher work: ' + str(directory))
@@ -245,7 +247,105 @@ def _incremental_continuation(profile, work, staging):
                          'within the same owned target, or select a separate work path.') from exc
 
 
-def start(config, profile_name=None, *, timeout=1800, publish_work=None, fresh=False, emit=print):
+def _amendment_request(profile, home, owner, bundle, verification, findings, replace_keys, add_kinds):
+    """Select the explicit operation without touching either execution workspace."""
+    from contextbase_runtime import amendment_seed
+    from contextbase_runtime.controller import engine_fingerprint
+    import hashlib
+
+    supplied = bundle is not None
+    if not supplied and any((verification is not None, findings is not None, replace_keys, add_kinds)):
+        raise ValueError('Amendment scope requires an explicit --amend-bundle')
+    path = safe_path(home / AMENDMENT)
+    previous = read_json(path) if path.exists() else None
+    if previous is None and not supplied:
+        return None
+    if profile.context_mode != 'incremental':
+        raise ValueError('Candidate amendment requires context_mode="incremental"')
+    if supplied:
+        bundle = safe_path(Path(bundle))
+        if not verification:
+            raise ValueError('Candidate amendment requires the source verification identity')
+        for protected in (home, profile.source, profile.output_root):
+            if bundle == protected or protected in bundle.parents or bundle in protected.parents:
+                raise ValueError('Amendment custody input must be outside launch, source and output trees')
+        selected = {'bundle': str(bundle), 'verification': verification,
+                    'findings': findings, 'replaceKeys': list(replace_keys), 'addKinds': list(add_kinds)}
+    else:
+        selected = previous.get('selection')
+        if not isinstance(selected, dict) or set(selected) != {
+                'bundle', 'verification', 'findings', 'replaceKeys', 'addKinds'}:
+            raise ValueError('Invalid amendment operation selection; retain the descriptor')
+        bundle = safe_path(Path(selected['bundle']))
+    manifest = amendment_seed.inspect_bundle(bundle)
+    operation = {'schema': 'contextbase-discovery-amendment-operation/1',
+                 'ownerSha256': contracts.digest(owner), 'selection': selected,
+                 'work': str(home / 'amendment-current' / 'work'),
+                 'engineSha256': engine_fingerprint(),
+                 'agentBindingSha256': contracts.digest(DiscoveryAgent.binding()),
+                 'launcherSha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                 'bundleSha256': contracts.digest(manifest),
+                 'snapshotId': manifest['sourceSnapshotId'], 'indexSha256': manifest['sourceFactsSha256']}
+    if previous is not None:
+        if (set(previous) not in (set(operation), set(operation) | {'seedSha256', 'specSha256', 'operationId'})
+                or any(previous.get(key) != value for key, value in operation.items())):
+            raise ValueError('Amendment operation changed; retain the old work and select a separate configured work path')
+        return previous
+    # The selection survives interruption during installation; no model starts
+    # until the completed descriptor also pins the imported seed and CAS spec.
+    _json(path, operation)
+    return operation
+
+
+def _bind_amendment(profile, home, operation, agent):
+    """Install once; thereafter reject any seed/spec/source substitution."""
+    from contextbase_runtime import amendment_seed
+    from contextbase_runtime.amendment_runtime import operation_id
+    store = agent.session.store
+    selection = operation['selection']
+    if not all(store.path(name).exists() for name in ('amendment-seed.json', 'amendment-spec.json')):
+        amendment_seed.install(agent, Path(selection['bundle']), selection['verification'],
+            selection['findings'], replace_keys=selection['replaceKeys'], add_kinds=selection['addKinds'])
+    seed, spec = store.get('amendment-seed.json'), store.get('amendment-spec.json')
+    bindings = {'seedSha256': contracts.digest(seed), 'specSha256': contracts.digest(spec),
+                'operationId': operation_id(seed, spec),
+                'snapshotId': agent.session.source.snapshot_id, 'indexSha256': agent.session.fact_index().sha256}
+    if (seed['custody']['bundleSha256'] != operation['bundleSha256']
+            or seed['custody']['bundlePath'] != selection['bundle']
+            or seed['custody']['sourceVerificationSha256'] != selection['verification']
+            or spec['replaceKeys'] != selection['replaceKeys'] or spec['addKinds'] != selection['addKinds']
+            or seed['requestSha256'] != contracts.digest(profile.request)
+            or seed['snapshotId'] != bindings['snapshotId'] or seed['indexSha256'] != bindings['indexSha256']):
+        raise ValueError('Amendment seed no longer matches the selected input')
+    if any(operation[key] != bindings[key] for key in ('snapshotId', 'indexSha256')):
+        raise ValueError('Current source/index differs from the selected amendment')
+    if selection['findings'] is not None and [row['finding']['id'] for row in seed['issues']] != selection['findings']:
+        raise ValueError('Installed amendment findings differ from the operation selection')
+    complete = {**operation, **bindings}
+    if 'seedSha256' in operation and complete != operation:
+        raise ValueError('Installed amendment seed/spec binding changed')
+    _json(home / AMENDMENT, complete)
+    return complete
+
+
+def _amendment_fresh_preflight(profile, operation, staging):
+    """Check the current input even when initial work creation was interrupted."""
+    from contextbase_runtime.facts import FactIndex
+    from contextbase_runtime.sources import SourceAccess
+    from contextbase_runtime.storage import ArtifactStore
+    observed = SourceAccess.create(profile.source, staging / 'fresh-source',
+        project_id=profile.request['projectId'], allowed_paths=profile.request['allowedPaths'],
+        excluded_paths=profile.request['excludedPaths'])
+    if observed.snapshot_id != operation['snapshotId']:
+        raise ValueError('Current source inventory or contents changed; amendment work was retained')
+    index = FactIndex.open(observed, ArtifactStore(staging / 'fresh-index'))
+    if index.sha256 != operation['indexSha256']:
+        raise ValueError('Current fact index changed; amendment work was retained')
+
+
+def start(config, profile_name=None, *, timeout=1800, publish_work=None, fresh=False,
+          amend_bundle=None, amend_verification=None, amend_findings=None,
+          replace_keys=(), add_kinds=(), emit=print):
     """Run discovery only, or finish delivery from an already-adopted local work."""
     if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
         raise ValueError('A positive finite per-operation timeout is required')
@@ -259,9 +359,20 @@ def start(config, profile_name=None, *, timeout=1800, publish_work=None, fresh=F
             raise
         raise ValueError(str(exc) + '. Existing work was retained. Select a separate configured work path, '
                          'or restore the original target before using --fresh.') from exc
-    current, staging = home / 'current', home / 'staging'
     with _lock(home):
+        operation = _amendment_request(profile, home, owner, amend_bundle, amend_verification,
+                                      amend_findings, replace_keys, add_kinds)
+        if operation is not None and publish_work is not None:
+            raise ValueError('An active amendment operation cannot be mixed with publish-work')
+        current = home / ('amendment-current' if operation else 'current')
+        staging = home / ('amendment-staging' if operation else 'staging')
         _recover(profile, home, staging, owner)
+        # A pinned amendment cannot silently switch source even when fresh is requested.
+        # Check before deleting any execution state. Custody stays outside this home.
+        if operation and fresh and (current / 'work').exists():
+            _create_owned(staging, owner)
+            _amendment_fresh_preflight(profile, operation, staging)
+            _clean(home, staging, owner)
         if publish_work is not None:
             publish_work = safe_path(Path(publish_work))
             if publish_work == current or current in publish_work.parents:
@@ -302,8 +413,11 @@ def start(config, profile_name=None, *, timeout=1800, publish_work=None, fresh=F
                         raise ValueError('Incremental work is not resumable; retain diagnostics and use --fresh')
                 else:
                     agent = DiscoveryAgent.create(profile.source, work, profile.request,
-                                                  evidence_mode=evidence_mode, incremental_mode=incremental_mode)
+                        evidence_mode=evidence_mode, incremental_mode=incremental_mode,
+                        semantic_options=profile.semantic_options_for('discovery'))
                     profile.bind(agent)
+                if operation:
+                    operation = _bind_amendment(profile, home, operation, agent)
                 checked = agent.session.fact_index().validate()
                 progress('analysis', '索引検査pass。抽出と別文脈の独立検証を実行中です。',
                          work=str(work), sourceFactsSha256=checked['indexSha256'])
@@ -347,9 +461,16 @@ def main(argv=None):
     parser.add_argument('--publish-work', type=Path, help='採用済みworkからの配布だけを行う。モデルは起動しない')
     parser.add_argument('--fresh', action='store_true',
                         help='incrementalの保存済み作業を、所有を確認した範囲内で明示的に作り直す')
+    parser.add_argument('--amend-bundle', type=Path, help='未採用候補の封印入力。新しい改訂操作を明示選択する')
+    parser.add_argument('--amend-verification', help='指摘の発生元verification SHA')
+    parser.add_argument('--amend-finding', action='append', help='発生元の指摘ID。省略時は全指摘')
+    parser.add_argument('--replace-key', action='append', default=[], help='置換を許す既存record key')
+    parser.add_argument('--add-kind', action='append', default=[], help='追加を許すrecord kind')
     args = parser.parse_args(argv)
     try:
         result = start(args.config, args.profile, timeout=args.timeout, publish_work=args.publish_work, fresh=args.fresh,
+                       amend_bundle=args.amend_bundle, amend_verification=args.amend_verification,
+                       amend_findings=args.amend_finding, replace_keys=args.replace_key, add_kinds=args.add_kind,
                        emit=lambda message: print(message, flush=True))
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result.get('published') else 2

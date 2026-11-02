@@ -248,7 +248,7 @@ completeは現在の権限・入力での調査終了であり、未知解決や
 
 前改訂の実Discoveryは37分51秒で停止した。6/7調査単位の106件の草稿を保存したが、`query(path="deployment/")`が完全一致するファイルパスの契約に違反し、要求単位の例外が抽出タスクへ伝播した。候補・独立検証・採用は0件で、全体の循環解消や高速化を証明していない。今回の続行状況と成果は[案件レビュー](../../../../sample-project1/spec-reverse/discovery-agent/review.md)を参照する。
 
-本改訂のquery／searchは末尾`/`を封印manifest内のディレクトリ接頭辞として扱う。readは完全一致のまま維持する。修正可能な要求だけをEvidenceRequestErrorとして返し、incrementalの同batch正常返答を保存する。失敗返答は証拠・fact・候補材料・進展へ数えず、source／index／版の破損は引き続き停止する。旧正常replyとpromptは変えず、明示checkpoint_upgradeで旧engine・依存・Agent・入力・全完成呼出しを再生検査し、草稿・未知・followupと原呼出しの識別情報を保つ。候補や旧passは移行しない。具体的な保守手順と中断回復は[分割調査プロトコル](../../shared/contextbase-runtime/docs/分割調査・独立検証プロトコル.md)を参照する。
+本改訂のquery／searchは末尾`/`を封印manifest内のディレクトリ接頭辞として扱う。readは完全一致のまま維持する。修正可能な要求だけをEvidenceRequestErrorとして返し、incrementalの同batch正常返答を保存する。失敗返答は証拠・fact・候補材料・進展へ数えず、source／index／版の破損は引き続き停止する。旧正常replyとpromptは変えない。過去の限定移行では旧engine・依存・Agent・入力・全完成呼出しを再生検査し、草稿・未知・followupと原呼出しの識別情報を保持した。その専用保守処理は現行engineを対象にできないため廃止し、保存済み監査・候補・原記録は変更しない。現行の再開条件と版変更時の扱いは[分割調査プロトコル](../../shared/contextbase-runtime/docs/分割調査・独立検証プロトコル.md)を参照する。
 
 前改訂の要求回復では関連129件が成功した（incremental49、directory／error新規15、既存EvidenceAccess16、既存取証対話28、明示互換移行14、一括起動7）。合成providerの成功を実Discoveryの採用・速度・人手受入れへ外挿しない。実案件の続行では同じworkを使い、保存済み草稿の再抽出やfresh初期化を行わない。
 

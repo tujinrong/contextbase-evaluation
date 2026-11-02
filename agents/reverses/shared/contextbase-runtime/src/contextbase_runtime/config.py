@@ -71,6 +71,19 @@ class ProjectProfile:
     work_root: Path
     request: dict
     context_mode: str = 'full'
+    semantic_project: str | None = None
+    semantic_configuration: str = 'Release'
+    role_specs: dict | None = None
+
+    @property
+    def semantic_options(self):
+        if self.semantic_project is None:
+            return None
+        from .semantic_support import normalize_options
+        return normalize_options({'project': self.semantic_project, 'configuration': self.semantic_configuration})
+
+    def semantic_options_for(self, stage):
+        return self.semantic_options if stage is None or stage.removesuffix('-agent') in {'discovery', 'relationship'} else None
 
     @classmethod
     def load(cls, config_path, name=None):
@@ -89,12 +102,27 @@ class ProjectProfile:
         section = document['profiles'][selected]
         required = {'source', 'request', 'output', 'work'}
         if (not isinstance(section, dict) or not required.issubset(section)
-                or set(section) - required - {'context_mode'}
+                or set(section) - required - {'context_mode', 'semantic_project', 'semantic_configuration', 'roles'}
                 or any(not isinstance(section[key], str) or not section[key].strip() for key in required)):
             raise ValueError('A profile requires source, request, output and work paths')
         context_mode = section.get('context_mode', 'full')
-        if not isinstance(context_mode, str) or context_mode not in {'full', 'evidence', 'incremental'}:
-            raise ValueError('Profile context_mode must be full, evidence or incremental')
+        if not isinstance(context_mode, str) or context_mode not in {'full', 'evidence', 'incremental', 'native'}:
+            raise ValueError('Profile context_mode must be full, evidence, incremental or native')
+        role_specs = None
+        if context_mode == 'native':
+            from .roles import normalize_roles
+            role_specs = normalize_roles(section.get('roles'), path.parent)
+        elif 'roles' in section:
+            raise ValueError('Role profiles require native context_mode')
+        from .semantic_support import normalize_options
+        semantic = None
+        if 'semantic_project' in section:
+            semantic = normalize_options({'project': section['semantic_project'],
+                                          'configuration': section.get('semantic_configuration', 'Release')})
+            if context_mode == 'full':
+                raise ValueError('Semantic profile requires evidence or incremental context_mode')
+        elif 'semantic_configuration' in section:
+            raise ValueError('semantic_configuration requires semantic_project')
 
         def resolve(key):
             value = Path(section[key])
@@ -107,7 +135,8 @@ class ProjectProfile:
             raise ValueError('Configuration and request inputs must be outside work and output trees')
         request = read_json(request_path)
         contracts.validate_request(request)
-        return cls(path, selected, source, request_path, output, work, request, context_mode)
+        return cls(path, selected, source, request_path, output, work, request, context_mode,
+                   semantic['project'] if semantic else None, semantic['configuration'] if semantic else 'Release', role_specs)
 
     def work(self, agent_name):
         return safe_path(self.work_root / agent_name)
@@ -123,11 +152,20 @@ class ProjectProfile:
 
     def describe(self, agent_type):
         previous = PREVIOUS.get(agent_type.stage)
-        return {'profile': self.name, 'source': str(self.source), 'request': str(self.request_path),
+        result = {'profile': self.name, 'source': str(self.source), 'request': str(self.request_path),
                 'work': str(self.work(agent_type.name)), 'output': str(self.output(agent_type.name)),
                 'handoff': str(self.output(previous + '-agent')) if previous else None,
                 'sourceMode': 'sealed-snapshot-on-init', 'contextMode': self.context_mode,
                 'agent': agent_type.name}
+        semantic = self.semantic_options_for(agent_type.stage)
+        if semantic is not None:
+            result['semanticOptions'] = semantic
+        if self.role_specs is not None:
+            result['roles'] = {key: {field: spec[field] for field in
+                ('id', 'instructions_path', 'instructions_sha256', 'model', 'model_reasoning_effort',
+                 'model_provider', 'configuration_sources') if field in spec}
+                for key, spec in self.role_specs.items()}
+        return result
 
     def _validate_context_mode(self, agent):
         expected = {}
@@ -137,13 +175,20 @@ class ProjectProfile:
         elif self.context_mode == 'incremental':
             from .incremental import VERSION as INCREMENTAL_POLICY
             expected['incrementalPolicy'] = INCREMENTAL_POLICY
+        elif self.context_mode == 'native':
+            from .native_tools import VERSION as NATIVE_POLICY
+            expected['nativeToolsPolicy'] = NATIVE_POLICY
         elif self.context_mode != 'full':
             raise ValueError('Unknown project context_mode')
-        actual = {key: agent.session.config[key] for key in ('evidencePolicy', 'incrementalPolicy')
+        actual = {key: agent.session.config[key] for key in ('evidencePolicy', 'incrementalPolicy', 'nativeToolsPolicy')
                   if key in agent.session.config}
         if actual != expected:
             raise ValueError('Project context_mode differs from the initialized workspace; '
                              'select a separate work directory and initialize it with the matching mode')
+        if agent.session.config.get('semanticOptions') != self.semantic_options_for(agent.stage):
+            raise ValueError('Project semantic settings differ from the initialized workspace; select a new work directory')
+        if self.context_mode == 'native' and agent.session.config.get('roleSpecs') != self.role_specs:
+            raise ValueError('Project role settings differ from the initialized workspace; select a new work directory')
 
     def bind(self, agent):
         self._validate_context_mode(agent)
@@ -209,6 +254,12 @@ class ProjectProfile:
         if (not isinstance(envelope, dict) or set(envelope) != {'sha256', 'payload'}
                 or envelope['sha256'] != contracts.digest(envelope['payload'])):
             raise ValueError('Configured result content fingerprint mismatch')
+        if agent_name == 'project-analysis':
+            from .project_analysis import validate_export
+            validate_export(envelope)
+            if envelope['payload']['request'] != self.request:
+                raise ValueError('Configured project result request does not match this target')
+            return
         contracts.validate(envelope['payload'], PAYLOAD)
         validate_lineage(envelope['payload'])
         validate_catalog_policy(envelope['payload'])

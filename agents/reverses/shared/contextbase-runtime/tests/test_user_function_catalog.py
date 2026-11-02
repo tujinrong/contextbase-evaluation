@@ -111,7 +111,7 @@ class UserFunctionCatalogTests(unittest.TestCase):
             records += [record(key + '.entry', 'entry', line), record(key + '.operation', kind, line, classification)]
         return records
 
-    def provider(self, workspace, directory, prompt, schema, timeout):
+    def provider(self, workspace, directory, prompt, schema, timeout, *, instruction_role='analysis'):
         context = json.loads(prompt[prompt.index('{"request":'):])
         self.contexts.append(context)
         answer = simulated_answer(context)

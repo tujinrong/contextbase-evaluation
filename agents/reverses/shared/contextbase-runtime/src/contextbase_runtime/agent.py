@@ -20,7 +20,7 @@ class AgentWorkspace(Session):
 
     def _prepare(self, stage, operation, requirements, candidate, origin, feedback=None, *, compact=False):
         if operation == 'extract' and stage != self.agent.stage:
-            raise ValueError('This agent only extracts ' + self.agent.stage)
+            raise ValueError('This agent only extracts its configured scope: ' + str(self.agent.stage))
         return super()._prepare(stage, operation, requirements, candidate, origin, feedback, compact=compact)
 
     def _task_extensions(self, task, view):
@@ -39,6 +39,11 @@ class AgentWorkspace(Session):
         if task['origin'] != 'external-handoff':
             from .repair import extensions as repair_extensions
             extensions.update(repair_extensions(self, task))
+            from .amendment_runtime import extensions as amendment_extensions
+            extensions.update(amendment_extensions(self, {**task, **extensions}))
+        if self.config.get('semanticOptions'):
+            from .semantic_support import task_extensions
+            extensions.update(task_extensions(self))
         return extensions
 
     def _catalog_policy(self):
@@ -52,16 +57,17 @@ class AgentWorkspace(Session):
         if task['operation'] == 'extract':
             from .facts import POLICY, EVIDENCE_POLICY
             from .repair import POLICY as REPAIR_POLICY
-            fact_policy = EVIDENCE_POLICY if task.get('evidencePolicy') or task.get('incrementalPolicy') else POLICY
-            return self.agent.instruction + ('\n' + fact_policy if task.get('sourceFactsSha256') else '') + ('\n' + REPAIR_POLICY if task.get('repairSeedSha256') else '') + '''
+            from .candidate_amendment import POLICY as AMENDMENT_POLICY
+            fact_policy = EVIDENCE_POLICY if task.get('evidencePolicy') or task.get('incrementalPolicy') or task.get('nativeToolsPolicy') else POLICY
+            return self.agent.instruction + self._semantic_instruction(task) + ('\n' + fact_policy if task.get('sourceFactsSha256') else '') + ('\n' + REPAIR_POLICY if task.get('repairSeedSha256') else '') + ('\n' + AMENDMENT_POLICY if task.get('amendmentPolicy') else '') + '''
 Follow-up paths name acquired files from task.authorizedSourcePaths only.
 For missing or omitted materials, preserve the requested names in the question
 and unknown, using paths:[] unless an acquired file actually supports the query.
 Do not fabricate an anchor. Follow-up stage and requirement must match an
 original goal obligation in the assigned scope; requirement may be null.'''
         from .facts import VERIFY_POLICY, EVIDENCE_VERIFY_POLICY
-        fact_policy = EVIDENCE_VERIFY_POLICY if task.get('evidencePolicy') or task.get('incrementalPolicy') else VERIFY_POLICY
-        return super()._instruction(task) + ('\n' + fact_policy if task.get('sourceFactsSha256') else '') + (catalog.VERIFICATION_RULES
+        fact_policy = EVIDENCE_VERIFY_POLICY if task.get('evidencePolicy') or task.get('incrementalPolicy') or task.get('nativeToolsPolicy') else VERIFY_POLICY
+        return super()._instruction(task) + self._semantic_instruction(task) + ('\n' + fact_policy if task.get('sourceFactsSha256') else '') + (catalog.VERIFICATION_RULES
             if task.get('catalogPolicy') == catalog.VERSION else '') + '''\nQuestions whose ID starts with followup:
 are explicit investigation requests. Mark one resolved with exact source evidence
 only after its question has been answered. A non-blocking judgment permits work
@@ -71,16 +77,25 @@ acceptance of the target requirement alone is not proof of resolution.'''
     def _incremental_instruction(self, task):
         from .facts import EVIDENCE_POLICY, EVIDENCE_VERIFY_POLICY
         if task['operation'] == 'extract':
-            return (self.agent.instruction + ('\n' + EVIDENCE_POLICY if task.get('sourceFactsSha256') else '')
+            from .candidate_amendment import POLICY as AMENDMENT_POLICY
+            return (self.agent.instruction + self._semantic_instruction(task) + ('\n' + EVIDENCE_POLICY if task.get('sourceFactsSha256') else '')
+                    + ('\n' + AMENDMENT_POLICY if task.get('amendmentPolicy') else '')
                     + '\nPreserve original scope/owner and return only this phase schema. '
                     'Followup paths must name acquired files; missing materials use paths:[].')
-        return (super()._incremental_instruction(task)
+        return (super()._incremental_instruction(task) + self._semantic_instruction(task)
                 + ('\n' + catalog.EXTRACTION_RULES if task.get('catalogPolicy') == catalog.VERSION else '')
                 + ('\n' + EVIDENCE_VERIFY_POLICY if task.get('sourceFactsSha256') else '')
                 + '\nThe current host unit alone assigns returned record/unknown/scope/check arrays. '
                   'Root requirements remain complete and the host exhaustively assigns all other units. '
                   'Independently resolve inherited followup questions from source; historical acceptance '
                   'and non-blocking judgments do not prove a followup was answered.')
+
+    @staticmethod
+    def _semantic_instruction(task):
+        if not task.get('semanticPolicy'):
+            return ''
+        from .semantic_support import POLICY
+        return '\n' + POLICY
 
     def _validate_incremental_answer(self, task, answer):
         if task['operation'] == 'extract':
@@ -93,6 +108,18 @@ acceptance of the target requirement alone is not proof of resolution.'''
         context = super()._context(task, inline_sources)
         context['agent'] = {'name': self.agent.name, 'stage': self.agent.stage}
         context['currentUnknowns'] = deepcopy(self._current(self._state())['unknowns'])
+        if task.get('semanticPolicy'):
+            from .semantic_support import capabilities
+            context['semanticAnalysis'] = capabilities(self)
+        if task.get('amendmentPolicy'):
+            from . import amendment_runtime
+            seed, spec = amendment_runtime.installed(self, task)
+            if task['operation'] == 'extract':
+                context['candidateAmendment'] = {'seed': deepcopy(seed), 'spec': deepcopy(spec)}
+            else:
+                proposal = self.store.get('candidates/' + task['candidate'] + '.json')
+                author = self.store.get('tasks/' + proposal['taskId'] + '/request.json')
+                context['amendmentAudit'] = amendment_runtime.audit(self, author)
         if task['operation'] == 'extract':
             context['assignment'] = self.agent.build_context(context)
             if task.get('repairSeedSha256'):
@@ -201,13 +228,17 @@ class AnalysisAgent:
                 'implementationSha256': contracts.digest(files)}
 
     @classmethod
-    def create(cls, source, work, request, *, handoff=None, evidence_mode=False, incremental_mode=False):
+    def create(cls, source, work, request, *, handoff=None, evidence_mode=False, incremental_mode=False,
+               native_mode=False, joint_analysis=False, role_specs=None, semantic_options=None):
         contracts.validate_request(request)
         cls.validate_request(request)
+        if semantic_options is not None and cls.stage not in {'discovery', 'relationship', None}:
+            raise ValueError('Normal semantic evidence is currently supported by Discovery and Relationship only')
         if cls.stage == 'discovery' and handoff is not None:
             raise ValueError('Discovery starts from source and does not accept upstream handoffs')
         session = Session.create(Path(source), Path(work), request, evidence_mode=evidence_mode,
-                                 incremental_mode=incremental_mode)
+                                 incremental_mode=incremental_mode, native_mode=native_mode,
+                                 joint_analysis=joint_analysis, role_specs=role_specs, semantic_options=semantic_options)
         session.store.put('agent.json', cls.binding())
         agent = cls(work)
         if handoff is not None:
@@ -239,13 +270,30 @@ class AnalysisAgent:
 
     def _execute_attempt(self, requirements, *, timeout, inline_sources, runner, compact,
                          feedback=None, attempt_key=None):
+        if self.session.config.get('nativeToolsPolicy') and runner is None:
+            from .native_environment import scope
+            environment = None
+            try:
+                with scope(excluded_roots=(self.session.store.root, self.session.source.root)) as environment:
+                    return self._execute_attempt_scoped(requirements, timeout=timeout,
+                        inline_sources=inline_sources, runner=runner, compact=compact,
+                        feedback=feedback, attempt_key=attempt_key)
+            finally:
+                if environment is not None:
+                    self.session.store.put('native-environments/' + environment.identifier + '.json', environment.report())
+        return self._execute_attempt_scoped(requirements, timeout=timeout,
+            inline_sources=inline_sources, runner=runner, compact=compact,
+            feedback=feedback, attempt_key=attempt_key)
+
+    def _execute_attempt_scoped(self, requirements, *, timeout, inline_sources, runner, compact,
+                         feedback=None, attempt_key=None):
         """Extract, independently verify and adopt once, retaining a rejected result."""
         proposed = None
-        if self.session.config.get('incrementalPolicy') and feedback is None:
+        if (self.session.config.get('incrementalPolicy') or self.session.config.get('nativeToolsPolicy')) and feedback is None:
             # A transport failure in verification must not re-extract the
             # already frozen candidate. Resumed review uses the same view.
             state = self.session._state()
-            expected_origin = 'host-composed' if runner is None else 'injected-test-transport'
+            expected_origin = ('host-composed' if self.session.config.get('incrementalPolicy') else 'host-executed') if runner is None else 'injected-test-transport'
             for key in reversed(state['candidates']):
                 saved = self.session.store.get('candidates/' + key + '.json')
                 if (saved['stage'] == self.stage and saved['requirements'] == requirements
@@ -261,6 +309,35 @@ class AnalysisAgent:
             proposed = self.session.execute(self.stage, requirements=requirements, feedback=feedback,
                                             timeout=timeout, inline_sources=inline_sources,
                                             runner=runner, compact=compact)
+        from .amendment_runtime import unresolved
+        open_issues = unresolved(self.session, proposed['id'])
+        if open_issues:
+            action = {'agent': self.name, 'requirements': requirements,
+                      'candidate': proposed['id'], 'verification': None}
+            pending = {**action, 'reason': 'Selected current amendment issues remain unresolved; '
+                       'full independent review has not started.', 'unresolvedIssues': open_issues,
+                       'followups': proposed['result']['followups'], 'findings': []}
+            with self.session.store.transaction() as latest:
+                key = attempt_key if attempt_key is not None else self.session._attempt_key(latest, requirements)
+                latest['attempts'][key] = pending
+                latest['stopReason'] = pending['reason']
+                self.session.store.save_state(latest)
+            return action, pending
+        if self.session.config.get('nativeToolsPolicy'):
+            from .native_readiness import assess
+            candidate = self.session.store.get('candidates/' + proposed['id'] + '.json')
+            readiness = assess(proposed['result'], candidate['view']['acceptedRequirements'])
+            if not readiness['readyForReview']:
+                action = {'agent': self.name, 'requirements': requirements,
+                          'candidate': proposed['id'], 'verification': None}
+                pending = {**action, 'reason': readiness['reason'], 'readiness': readiness,
+                           'followups': proposed['result']['followups'], 'findings': []}
+                with self.session.store.transaction() as latest:
+                    key = attempt_key if attempt_key is not None else self.session._attempt_key(latest, requirements)
+                    latest['attempts'][key] = pending
+                    latest['stopReason'] = pending['reason']
+                    self.session.store.save_state(latest)
+                return action, pending
         verified = self.session.verify(proposed['id'], timeout=timeout,
                                        inline_sources=inline_sources, runner=runner, compact=compact)
         action = {'agent': self.name, 'requirements': requirements,
@@ -281,6 +358,7 @@ class AnalysisAgent:
         return action, None
 
     def run(self, *, requirements=None, timeout=1800, inline_sources=False, runner=None, compact=False):
+        self._check_semantic_source()
         targets = self.session._select(requirements, self.stage)
         state = self.session._state()
         if state['status'] not in {'active', 'complete'}:
@@ -317,7 +395,15 @@ class AnalysisAgent:
                 return {'status': 'needs-investigation', 'pending': pending,
                         'actions': actions, 'session': self.status()}
 
+    def _check_semantic_source(self):
+        if self.session.config.get('semanticOptions'):
+            from .semantic_support import initialize
+            index = initialize(self.session)
+            index.validate()
+            index.assert_current_source()
+
     def export(self):
+        self._check_semantic_source()
         from .handoff import export
         return export(self)
 
@@ -329,8 +415,20 @@ class AnalysisAgent:
         return self.run(requirements=seed['originalTask']['requirements'], timeout=timeout,
                         inline_sources=inline_sources, runner=runner, compact=compact)
 
+    def amend_candidate(self, bundle, verification_id, finding_ids=None, *, replace_keys,
+                        add_kinds, timeout=1800, inline_sources=False, runner=None, compact=False):
+        """Import an untrusted frozen candidate in fresh D work, then amend and reverify."""
+        if self.stage != 'discovery' or inline_sources or compact:
+            raise ValueError('Candidate amendment requires Discovery incremental request mode')
+        from .amendment_seed import install
+        seed, _ = install(self, bundle, verification_id, finding_ids,
+                          replace_keys=replace_keys, add_kinds=add_kinds)
+        return self.run(requirements=seed['requirements'], timeout=timeout,
+                        inline_sources=False, runner=runner, compact=False)
+
     def retry(self, feedback, *, requirements=None, timeout=1800, inline_sources=False, runner=None, compact=False):
         """One explicit source re-investigation; never clear a blocked run implicitly."""
+        self._check_semantic_source()
         state = self.session._state()
         if feedback not in state['candidates']:
             raise ValueError('Retry requires a known candidate from this agent')

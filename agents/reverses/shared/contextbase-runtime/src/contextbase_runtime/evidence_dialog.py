@@ -121,6 +121,9 @@ def _delivered(pairs):
             source_refs.extend(row['evidence'] for row in result['matches'])
         elif request['operation'] == 'query':
             fact_ids.update(row['id'] for row in result['facts'])
+            if reply.get('semanticIndexSha256'):
+                fact_ids.update(row['id'] for row in result.get('declarationFacts', []))
+                fact_ids.update(row['id'] for row in result.get('registrationFacts', []))
     return source_refs, fact_ids
 
 
@@ -145,13 +148,19 @@ class _DeliveryProgress:
         self.source_refs = []
         self.fact_ids = set()
         self.materials = set()
+        self.semantic_bindings = set()
 
     def consume(self, pairs):
         source_refs, fact_ids = _delivered(pairs)
         materials = {(row['materialKind'], row['path']) for pair in pairs
                      if pair['request']['operation'] == 'inventory' and pair['reply']['status'] == 'ok'
                      for row in pair['reply']['result']['materials']}
-        changed = bool(fact_ids - self.fact_ids or materials - self.materials)
+        semantic = {(kind, *_semantic_identity(row)) for pair in pairs
+                    if pair['request']['operation'] == 'query' and pair['reply']['status'] == 'ok'
+                    and pair['reply'].get('semanticIndexSha256')
+                    for kind, field in [('semantic', 'semanticBindings'), ('registration', 'registrationObservations')]
+                    for row in pair['reply']['result'].get(field, [])}
+        changed = bool(fact_ids - self.fact_ids or materials - self.materials or semantic - self.semantic_bindings)
         for ref in source_refs:
             if not _covers(ref, self.source_refs):
                 changed = True
@@ -173,6 +182,7 @@ class _DeliveryProgress:
                                     for start, end in merged)
         self.fact_ids.update(fact_ids)
         self.materials.update(materials)
+        self.semantic_bindings.update(semantic)
         return changed
 
 
@@ -198,6 +208,10 @@ def _summary(pair):
                      ('matchedCount', 'returnedCount', 'truncated', 'nextOffset', 'nextLine') if key in result}}
 
 
+def _semantic_identity(binding):
+    return (binding['semanticIndexSha256'], binding['projectId'], binding['callSiteId'])
+
+
 def _materials(pairs):
     """Project receipts into origin-labelled material, without changing source."""
     for pair in pairs:
@@ -216,6 +230,15 @@ def _materials(pairs):
         elif request['operation'] == 'query':
             for fact in result['facts']:
                 yield {**origin, 'kind': 'fact', 'fact': deepcopy(fact)}
+            if reply.get('semanticIndexSha256'):
+                for fact in result.get('declarationFacts', []):
+                    yield {**origin, 'kind': 'fact', 'fact': deepcopy(fact)}
+                for fact in result.get('registrationFacts', []):
+                    yield {**origin, 'kind': 'fact', 'fact': deepcopy(fact)}
+                for binding in result.get('semanticBindings', []):
+                    yield {**origin, 'kind': 'semantic', 'binding': deepcopy(binding)}
+                for registration in result.get('registrationObservations', []):
+                    yield {**origin, 'kind': 'registration', 'binding': deepcopy(registration)}
         elif request['operation'] == 'inventory':
             for material in result['materials']:
                 yield {**origin, 'kind': 'inventory', 'material': deepcopy(material)}
@@ -227,6 +250,9 @@ def _material_summary(material):
         result['evidence'] = deepcopy(material['evidence'])
     elif material['kind'] == 'fact':
         result['factId'] = material['fact']['id']
+    elif material['kind'] in {'semantic', 'registration'}:
+        result.update({key: material['binding'][key] for key in
+                       ('semanticIndexSha256', 'projectId', 'callSiteId')})
     else:
         result.update({key: material['material'][key] for key in ('materialKind', 'path')})
     return result
@@ -258,6 +284,8 @@ def _prior_materials(latest, pairs):
     facts = {item['fact']['id'] for item in visible if item['kind'] == 'fact'}
     inventory = {(item['material']['materialKind'], item['material']['path'])
                  for item in visible if item['kind'] == 'inventory'}
+    semantic = {(item['kind'], *_semantic_identity(item['binding'])) for item in visible
+                if item['kind'] in {'semantic', 'registration'}}
     latest_ids = {pair['reply']['replySha256'] for pair in latest}
     prior = []
     for pair in reversed(pairs):
@@ -279,6 +307,11 @@ def _prior_materials(latest, pairs):
                 if identifier not in facts:
                     prior.append(material)
                     facts.add(identifier)
+            elif material['kind'] in {'semantic', 'registration'}:
+                identifier = (material['kind'], *_semantic_identity(material['binding']))
+                if identifier not in semantic:
+                    prior.append(material)
+                    semantic.add(identifier)
             else:
                 key = (material['material']['materialKind'], material['material']['path'])
                 if key not in inventory:
@@ -363,6 +396,13 @@ def run(source, index, store, task, context, instruction, result_schema, provide
                                       'instruction': instruction, 'resultSchema': result_schema})
     pairs, latest, rounds, notes = [], [], [], ''
     progress = _DeliveryProgress()
+    if task.get('semanticPolicy'):
+        from .semantic_support import initial_pairs
+        initial = initial_pairs(access, index, task)
+        store.put(prefix + '/semantic-initial.json', {
+            'semanticIndexSha256': task['semanticIndexSha256'], 'pairs': initial})
+        pairs, latest = deepcopy(initial), deepcopy(initial)
+        progress.consume(initial)
     previous, number, repeated = contracts.digest(binding), 1, 0
     usage = {}
     try:
@@ -437,6 +477,14 @@ def replay(source, index, store, task, answer, transcript_sha256):
     transport_schema = contracts.transport_schema(task, schema)
     pairs, latest, notes = [], [], ''
     progress, repeated = _DeliveryProgress(), 0
+    if task.get('semanticPolicy'):
+        from .semantic_support import initial_pairs
+        initial = initial_pairs(access, index, task)
+        if store.get(prefix + '/semantic-initial.json') != {
+                'semanticIndexSha256': task['semanticIndexSha256'], 'pairs': initial}:
+            raise ValueError('Automatic semantic delivery changed during evidence replay')
+        pairs, latest = deepcopy(initial), deepcopy(initial)
+        progress.consume(initial)
     previous = contracts.digest(binding)
     finished = False
     for number, pointer in enumerate(transcript['rounds'], 1):

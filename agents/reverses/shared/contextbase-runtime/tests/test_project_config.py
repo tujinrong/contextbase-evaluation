@@ -92,7 +92,7 @@ class ProjectConfigTests(unittest.TestCase):
         self.assertEqual(expected, code, (argv, result, errors.getvalue()))
         return result
 
-    def provider(self, workspace, job, prompt, schema, timeout):
+    def provider(self, workspace, job, prompt, schema, timeout, *, instruction_role='analysis'):
         context = json.loads(prompt[prompt.index('{"request":'):])
         self.calls.append(context)
         answer = simulated_answer(context)

@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from functools import partial
 import importlib.metadata
 import json
 import math
 from pathlib import Path
 import time
+from types import SimpleNamespace
 import uuid
 
 from .paths import safe_path
@@ -25,7 +27,13 @@ def engine_fingerprint() -> str:
              for name in ('agents.py', 'contracts.py', 'controller.py', 'storage.py',
                           'sources.py', 'adapters.py', 'paths.py', 'provider.py', 'catalog.py', 'facts.py', 'wire.py', 'repair.py',
                           'evidence.py', 'evidence_dialog.py', 'incremental.py',
-                          'investigation.py', 'review_set.py', 'material_window.py')}
+                          'investigation.py', 'review_set.py', 'material_window.py',
+                          'candidate_amendment.py', 'amendment_seed.py', 'amendment_runtime.py', 'native_amendment.py',
+                          'semantic_support.py', 'semantic_calls.py', 'semantic_project.py', 'dotnet_host.py',
+                          'analysis_instructions.md', 'verification_instructions.md',
+                          'roles.py', 'native_tools.py', 'native_contracts.py', 'native_mcp.py', 'native_environment.py',
+                          'native_evidence.py', 'native_readiness.py', 'project_analysis.py',
+                          'native_analysis_instructions.md', 'native_verification_instructions.md')}
     versions = {}
     for package in ('jsonschema', 'tree-sitter', 'tree-sitter-c-sharp', 'tree-sitter-java'):
         try:
@@ -51,19 +59,52 @@ class Session:
             from .incremental import VERSION
             if self.config['incrementalPolicy'] != VERSION or 'evidencePolicy' in self.config:
                 raise ValueError('Unknown or conflicting incremental policy; create a fresh workspace')
+        if 'nativeToolsPolicy' in self.config:
+            from .native_tools import VERSION
+            if (self.config['nativeToolsPolicy'] != VERSION
+                    or self.config.get('evidencePolicy') or self.config.get('incrementalPolicy')):
+                raise ValueError('Unknown or conflicting native tools policy')
+        if self.config.get('jointPolicy') is not None:
+            if (self.config['jointPolicy'] != contracts.JOINT_POLICY
+                    or not self.config.get('nativeToolsPolicy')):
+                raise ValueError('Joint analysis requires its explicit native tools policy')
+        if 'roleSpecs' in self.config:
+            from .roles import validate_roles
+            validate_roles(self.config['roleSpecs'])
         self.source = SourceAccess.open(self.store.path('snapshot'))
         if self.source.snapshot_id != self.config['snapshotId']:
             raise ValueError('Session source binding changed')
         self._state()
+        if 'semanticOptions' in self.config:
+            from .semantic_support import initialize, normalize_options
+            if normalize_options(self.config['semanticOptions']) != self.config['semanticOptions']:
+                raise ValueError('Semantic options are not canonical')
+            if not (self.config.get('evidencePolicy') or self.config.get('incrementalPolicy') or self.config.get('nativeToolsPolicy')):
+                raise ValueError('Semantic evidence requires evidence or incremental mode')
+            initialize(self)
 
     @classmethod
     def create(cls, source: Path, work: Path, request: dict, *, evidence_mode=False,
-               incremental_mode=False) -> 'Session':
+               incremental_mode=False, native_mode=False, joint_analysis=False,
+               role_specs=None, semantic_options=None) -> 'Session':
         contracts.validate_request(request)
-        if type(evidence_mode) is not bool or type(incremental_mode) is not bool:
+        if any(type(value) is not bool for value in (evidence_mode, incremental_mode, native_mode, joint_analysis)):
             raise ValueError('Investigation modes must be explicitly enabled with booleans')
-        if evidence_mode and incremental_mode:
+        if sum((evidence_mode, incremental_mode, native_mode)) > 1:
             raise ValueError('Evidence and incremental are distinct workspace modes')
+        from .semantic_support import normalize_options
+        semantic_options = normalize_options(semantic_options)
+        if joint_analysis and not native_mode:
+            raise ValueError('Joint analysis requires native tools mode')
+        if role_specs is not None and not native_mode:
+            raise ValueError('Explicit role snapshots require native tools mode')
+        if semantic_options is not None and not (evidence_mode or incremental_mode or native_mode):
+            raise ValueError('Semantic evidence requires evidence or incremental mode')
+        if native_mode or role_specs is not None:
+            from .roles import normalize_roles, validate_roles
+            role_specs = (validate_roles(role_specs) if role_specs and
+                          all(isinstance(row, dict) and 'schema' in row for row in role_specs.values())
+                          else normalize_roles(role_specs))
         source, work = safe_path(source), safe_path(work)
         if source == work or source in work.parents or work in source.parents:
             raise ValueError('Session and source trees must be disjoint')
@@ -82,11 +123,23 @@ class Session:
         if incremental_mode:
             from .incremental import VERSION
             config['incrementalPolicy'] = VERSION
+        if native_mode:
+            from .native_tools import VERSION
+            config['nativeToolsPolicy'] = VERSION
+        if joint_analysis:
+            config['jointPolicy'] = contracts.JOINT_POLICY
+        if role_specs is not None:
+            config['roleSpecs'] = role_specs
+        if semantic_options is not None:
+            config['semanticOptions'] = semantic_options
         store.put('session.json', config)
         store.save_state({'sessionSha256': contracts.digest(config), 'version': 0, 'revision': None,
                           'status': 'active', 'executionEpoch': 0, 'acceptedRequirements': [],
                           'invalidatedRequirements': {}, 'tasks': {}, 'candidates': [],
                           'verifications': [], 'attempts': {}, 'stopReason': None})
+        if semantic_options is not None:
+            from .semantic_support import initialize
+            initialize(SimpleNamespace(store=store, source=access, config=config), create=True)
         return cls(work)
 
     @classmethod
@@ -168,7 +221,11 @@ class Session:
 
     def fact_index(self):
         from .facts import FactIndex
-        return FactIndex.open(self.source, self.store)
+        index = FactIndex.open(self.source, self.store)
+        if self.config.get('semanticOptions'):
+            from .semantic_support import fact_index
+            return fact_index(self, index)
+        return index
 
     def _structure_context(self) -> dict:
         return self.fact_index().context()
@@ -209,6 +266,10 @@ class Session:
 
     def _proposal_view(self, state, task, answer) -> dict:
         current = self._current(state)
+        amendment_seed = None
+        if task.get('amendmentPolicy'):
+            from .amendment_runtime import installed
+            amendment_seed, _ = installed(self, task)
         assigned = set(task['requirements'])
         hashes = {key: self._proposal_hash(answer, key) for key in assigned}
         changed = {key for key in assigned if key in current['receipts']
@@ -239,8 +300,12 @@ class Session:
                     and task['origin'] != 'external-handoff'):
                 # Freeze author-local unknown references before hashing the
                 # record. Portable imports already contain these global IDs.
-                classification['unknownIds'] = [task['id'] + ':' + identifier
-                                                for identifier in classification['unknownIds']]
+                if amendment_seed is None:
+                    classification['unknownIds'] = [task['id'] + ':' + identifier
+                                                    for identifier in classification['unknownIds']]
+                else:
+                    from .amendment_runtime import pending_ids
+                    classification['unknownIds'] = pending_ids(amendment_seed, task, record)
             owner = record['ownerRequirement']
             dependencies = []
             for dep_key in record['dependsOn']:
@@ -273,6 +338,8 @@ class Session:
         # Verify unchanged descendants still refer to exactly the same versions.
         self._validate_records(records)
         unknowns = {}
+        if amendment_seed is not None:
+            unknowns.update(deepcopy(amendment_seed['view']['unknowns']))
         for key, item in current['unknowns'].items():
             # Open questions outlive the records/owners that first found them.
             # Replacing an author response must not silently resolve a blocker.
@@ -280,6 +347,11 @@ class Session:
                              ('id', 'sha256', 'content', 'owners')}
         for item in answer['unknowns']:
             key = task['id'] + ':' + item['id']
+            if amendment_seed is not None:
+                original = amendment_seed['answer']['taskId'] + ':' + item['id']
+                if (original in unknowns and unknowns[original]['content'] == item
+                        and any(row == item for row in amendment_seed['answer']['unknowns'])):
+                    continue
             unknowns[key] = {'id': key, 'sha256': contracts.digest(item),
                              'content': deepcopy(item), 'owners': list(task['requirements'])}
         return {'records': records, 'unknowns': unknowns,
@@ -288,7 +360,8 @@ class Session:
                 'contentHashes': hashes}
 
     def _prepare(self, stage, operation, requirements, candidate, origin, feedback=None, *, compact=False) -> dict:
-        if stage not in contracts.STAGES:
+        joint = stage is None and self.config.get('jointPolicy') == contracts.JOINT_POLICY
+        if stage not in contracts.STAGES and not joint:
             raise ValueError('Unknown extraction stage; v1 investigation/review are not stage aliases')
         self.source.verify()
         self._state()
@@ -313,7 +386,7 @@ class Session:
             else:
                 ids = self._select(requirements, stage)
                 missing = {dep for key in ids for dep in self.obligations[key]['requires']
-                           if dep not in state['acceptedRequirements']}
+                           if dep not in state['acceptedRequirements'] and not (joint and dep in ids)}
                 if missing:
                     raise ValueError('Stage requires independently verified prerequisites: ' + ', '.join(sorted(missing)))
                 if feedback is not None:
@@ -339,10 +412,13 @@ class Session:
                     'prerequisites': {dep: deepcopy(current['receipts'][dep])
                                       for key in ids for dep in self.obligations[key]['requires']
                                       if dep in current['receipts']}}
+            if joint:
+                task.update(jointPolicy=contracts.JOINT_POLICY, executionScope=list(ids))
             extensions = self._task_extensions(task, view)
             if set(extensions) & set(task):
                 raise ValueError('Task extensions cannot replace host-owned bindings')
             task.update(extensions)
+            contracts.validate_task_scope(task)
             if compact:
                 if not task.get('sourceFactsSha256'):
                     raise ValueError('Compact transport requires a source-fact-aware agent')
@@ -354,6 +430,11 @@ class Session:
         return task
 
     def _task_extensions(self, task, view):
+        if self.config.get('nativeToolsPolicy'):
+            from .native_tools import VERSION
+            role = 'verification' if task['operation'] == 'verify' else 'analysis'
+            return {'nativeToolsPolicy': VERSION,
+                    'roleSpecSha256': contracts.digest(self.config['roleSpecs'][role])}
         if self.config.get('incrementalPolicy'):
             from .review_set import VERSION as REVIEW_VERSION
             return {'incrementalPolicy': self.config['incrementalPolicy'],
@@ -416,7 +497,7 @@ class Session:
 
     def _context(self, task, inline_sources):
         state = self._state()
-        if task.get('evidencePolicy') or task.get('incrementalPolicy'):
+        if task.get('evidencePolicy') or task.get('incrementalPolicy') or task.get('nativeToolsPolicy'):
             index = self.fact_index()
             from collections import Counter
             structure = {'schema': index.document['schema'], 'indexSha256': index.sha256,
@@ -435,7 +516,7 @@ class Session:
             for identifier in sorted(candidates):
                 prior = self.store.get('candidates/' + identifier + '.json')
                 notes.extend(deepcopy(note) for note in prior['answer']['followups']
-                             if note['stage'] == task['stage'] and note['requirement'] in task['requirements'])
+                             if (task.get('jointPolicy') or note['stage'] == task['stage']) and note['requirement'] in task['requirements'])
             context['handoffQuestions'] = notes
         if task['operation'] == 'verify':
             proposal = self.store.get('candidates/' + task['candidate'] + '.json')
@@ -450,7 +531,10 @@ class Session:
             context['feedback'] = {'candidate': prior, 'verifications': [
                 self.store.get('verifications/' + key + '.json') for key in state['verifications']
                 if self.store.get('verifications/' + key + '.json')['candidate'] == task['feedback']]}
-        if task.get('incrementalPolicy'):
+        if task.get('nativeToolsPolicy'):
+            context['sourceDelivery'] = {'mode': 'native-tools',
+                'instruction': 'Use the authorized ContextBase tools for sealed originals and indexed facts.'}
+        elif task.get('incrementalPolicy'):
             context['sourceDelivery'] = {'mode': 'host-incremental-requests',
                 'instruction': 'All sealed originals and facts are available through host queries.'}
         elif task.get('evidencePolicy'):
@@ -501,7 +585,7 @@ class Session:
         if (isinstance(timeout, bool) or not isinstance(timeout, (int, float))
                 or not math.isfinite(timeout) or timeout <= 0):
             raise ValueError('A positive finite per-operation timeout is required')
-        if ((self.config.get('evidencePolicy') or self.config.get('incrementalPolicy'))
+        if ((self.config.get('evidencePolicy') or self.config.get('incrementalPolicy') or self.config.get('nativeToolsPolicy'))
                 and (inline_sources or compact or self.store.path('repair-seed.json').exists())):
             raise ValueError('Host investigation uses requests; inline sources, compact and rejected-draft repair are separate modes')
         trusted = runner is None
@@ -512,13 +596,18 @@ class Session:
         start = time.perf_counter()
         try:
             context = self._context(task, inline_sources)
-            instruction = self._instruction(task)
-            schema = contracts.transport_schema(task)
+            instruction = (self._incremental_instruction(task) if task.get('incrementalPolicy')
+                           else self._instruction(task))
+            # Tool/dialog transports construct their own task-bound schemas.
+            # Only direct and evidence providers consume this outer schema.
+            schema = None
             seed = None
             if task.get('repairSeedSha256'):
                 from . import repair
                 seed = self.store.get('repair-seed.json')
                 schema = contracts.transport_schema(task, repair.response_schema(seed, task))
+            elif not task.get('nativeToolsPolicy') and not task.get('incrementalPolicy'):
+                schema = contracts.transport_schema(task)
             codec = None
             if task.get('wireBinding'):
                 from .wire import CompactWire, POLICY as WIRE_POLICY
@@ -527,18 +616,29 @@ class Session:
                 context = codec.context(context)
                 schema = codec.schema(schema)
                 instruction += '\n' + WIRE_POLICY
-            prompt = POLICY + '\n' + instruction + '\n' + json.dumps(context, ensure_ascii=False)
-            self.store.put('tasks/' + task['id'] + '/context.json', context)
+            if not task.get('nativeToolsPolicy') and not task.get('incrementalPolicy'):
+                self.store.put('tasks/' + task['id'] + '/context.json', context)
+                if not task.get('evidencePolicy'):
+                    prompt = POLICY + '\n' + instruction + '\n' + json.dumps(context, ensure_ascii=False)
             phases['contextAndEncoding'] = time.perf_counter() - start
             provider = runner
             if provider is None:
                 from .provider import run_job
-                provider = run_job
+                provider = partial(run_job, instruction_role=(
+                    'verification' if task['operation'] == 'verify' else 'analysis'))
             provider_at = time.perf_counter()
-            if task.get('incrementalPolicy'):
+            if task.get('nativeToolsPolicy'):
+                from .native_tools import run
+                role = 'verification' if operation == 'verify' else 'analysis'
+                response = run(self.source, self.fact_index(), self.store, task, context,
+                               instruction, provider, timeout,
+                               check_current=lambda: self._check_task_current(task),
+                               validate_final=lambda answer: self._validate_incremental_answer(task, answer),
+                               role_spec=self.config['roleSpecs'][role])
+            elif task.get('incrementalPolicy'):
                 from .incremental import run
                 response = run(self.source, self.fact_index(), self.store, task, context,
-                               self._incremental_instruction(task), provider, timeout,
+                               instruction, provider, timeout,
                                check_current=lambda: self._check_task_current(task),
                                validate_final=lambda answer: self._validate_incremental_answer(task, answer))
             elif task.get('evidencePolicy'):
@@ -580,12 +680,19 @@ class Session:
                           'transport': self._execution_transport(task) if trusted else 'injected-test-transport',
                           'elapsedSeconds': time.perf_counter() - start,
                           'answerSha256': contracts.digest(answer)}
+            if task.get('nativeToolsPolicy'):
+                from .native_tools import ORIGIN
+                provenance.update(nativeTranscriptSha256=response['metadata']['nativeTranscriptSha256'],
+                                  responseOrigin=ORIGIN, roleSpecSha256=task['roleSpecSha256'])
             if task.get('incrementalPolicy'):
                 from .incremental import ORIGIN
                 if trusted:
                     provenance['kind'] = 'host-composed'
                 provenance.update(incrementalTranscriptSha256=response['metadata']['incrementalTranscriptSha256'],
                                   responseOrigin=ORIGIN, executionMode='composite')
+            if task.get('amendmentPolicy') and operation == 'extract':
+                from .amendment_runtime import provenance as amendment_provenance
+                provenance.update(amendment_provenance(self, task, answer))
             if task.get('evidencePolicy'):
                 provenance.update(evidenceTranscriptSha256=response['metadata']['evidenceTranscriptSha256'],
                                   responseOrigin='host-assembled-evidence-dialog')
@@ -620,6 +727,12 @@ class Session:
 
     def _check_task_current(self, task):
         """Fence each evidence round against cancellation and concurrent revisions."""
+        if task.get('nativeToolsPolicy'):
+            from .roles import validate_role
+            role = 'verification' if task['operation'] == 'verify' else 'analysis'
+            spec = validate_role(self.config['roleSpecs'][role], role)
+            if contracts.digest(spec) != task.get('roleSpecSha256'):
+                raise ValueError('Native role binding changed')
         state = self._state()
         if (state['status'] != 'active' or state['tasks'].get(task['id']) != 'issued'
                 or state['executionEpoch'] != task['executionEpoch']
@@ -628,18 +741,44 @@ class Session:
 
     @staticmethod
     def _execution_transport(task):
+        if task.get('nativeToolsPolicy'):
+            from .native_tools import TRANSPORT
+            return TRANSPORT
         if task.get('incrementalPolicy'):
             from .incremental import TRANSPORT
             return TRANSPORT
         return 'codex-ephemeral-evidence-dialog' if task.get('evidencePolicy') else 'codex-ephemeral'
 
     def _replay_evidence(self, task, artifact):
+        if task.get('nativeToolsPolicy'):
+            from .native_tools import VERSION, ORIGIN, replay
+            role = 'verification' if task['operation'] == 'verify' else 'analysis'
+            role_hash = contracts.digest(self.config['roleSpecs'][role])
+            if (self.config.get('nativeToolsPolicy') != VERSION
+                    or task['nativeToolsPolicy'] != VERSION
+                    or artifact['provenance'].get('responseOrigin') != ORIGIN
+                    or task.get('roleSpecSha256') != role_hash
+                    or artifact['provenance'].get('roleSpecSha256') != role_hash):
+                raise AcceptanceError('Native role or execution policy binding changed')
+            manifest = self.store.get('native-transcripts/' + artifact['provenance']['nativeTranscriptSha256'] + '.json')
+            if contracts.digest(manifest.get('roleSpec')) != role_hash:
+                raise AcceptanceError('Native transcript role binding changed')
+            if task.get('amendmentPolicy'):
+                from .amendment_runtime import validate_replay
+                validate_replay(self, task, artifact)
+            replay(self.source, self.fact_index(), self.store, task, artifact['answer'],
+                   artifact['provenance'].get('nativeTranscriptSha256'),
+                   validate_final=lambda answer: self._validate_incremental_answer(task, answer))
+            return
         if task.get('incrementalPolicy'):
             from .incremental import VERSION, ORIGIN, replay
             if (self.config.get('incrementalPolicy') != VERSION
                     or artifact['provenance'].get('responseOrigin') != ORIGIN
                     or artifact['provenance'].get('executionMode') != 'composite'):
                 raise AcceptanceError('Incremental execution policy binding changed')
+            if task.get('amendmentPolicy'):
+                from .amendment_runtime import validate_replay
+                validate_replay(self, task, artifact)
             replay(self.source, self.fact_index(), self.store, task, artifact['answer'],
                    artifact['provenance'].get('incrementalTranscriptSha256'),
                    validate_final=lambda answer: self._validate_incremental_answer(task, answer))
@@ -757,10 +896,10 @@ class Session:
                     or any(set(item['blocksRequirements']) & accepted for item in answer['unknownChecks'])
                     or any(set(item['blocksRequirements']) & accepted for item in answer['unknowns'])):
                 raise AcceptanceError('Verification has unresolved obligations or blocking findings')
-            if (any(item['status'] == 'unresolved' for item in proposal['answer']['coverage'])
-                    or any(item['requirement'] in accepted
-                           for item in proposal['answer']['followups'])):
-                raise AcceptanceError('Candidate has unfinished assigned obligations; retain the partial result')
+            from .native_readiness import assess
+            readiness = assess(proposal['answer'], view['acceptedRequirements'])
+            if not readiness['readyForReview']:
+                raise AcceptanceError(readiness['reason'])
             self._check_adoption(view, answer)
             current = self._current(state)
             identities = deepcopy(current['identities'])
@@ -771,7 +910,9 @@ class Session:
                 receipts[key] = {'stage': self.obligations[key]['stage'], 'scope': self.obligations[key]['scope'],
                                  'contentSha256': view['contentHashes'][key], 'candidate': candidate,
                                  'verification': contracts.digest(verification),
-                                 'requires': {dep: current['receipts'][dep]['contentSha256']
+                                  'requires': {dep: (view['contentHashes'][dep]
+                                                    if author_task.get('jointPolicy') and dep in proposal['requirements']
+                                                    else current['receipts'][dep]['contentSha256'])
                                               for dep in self.obligations[key]['requires']}}
             for receipt in receipts.values():
                 receipt['verification'] = contracts.digest(verification)

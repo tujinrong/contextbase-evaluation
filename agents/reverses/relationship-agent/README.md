@@ -1,8 +1,12 @@
 # relationship-agent — 独立した関係構築
 
-版1.4／2026-10-28。package／CLIはcontextbase-relationship、Pythonモジュールはcontextbase_relationship。reverse-agentのインストール・import・統括起動を必要としない。新配置とportable受渡しの構造・合成検証は通過した。
+版1.7／2026-10-30。package／CLIはcontextbase-relationship、Pythonモジュールはcontextbase_relationship。reverse-agentのインストール・import・統括起動を必要としない。新配置とportable受渡しの構造・合成検証は通過した。
 
-新workのinit --incremental又はcontext_mode="incremental"で[分割調査・独立検証](../shared/contextbase-runtime/docs/分割調査・独立検証プロトコル.md)を選べる。受領前提を自分の原文で再検証し、関係草稿と検証を分割して保存する。全体義務の採用条件と独立起動は維持する。R固有の関係型拡張と実業務精度は別の残作業で、今回Rの実解析は行っていない。
+Codexの基礎指示は[共有runtimeの解析・検証用指示](../shared/contextbase-runtime/README.md#解析用の基礎指示)へ明示置換する。関係抽出は解析者、受領前提の再検証と関係の独立検証は検証者の指示を使用する。
+
+選択profileの`semantic_project`と`semantic_configuration`を新workへ固定すると、通常のevidence／incremental解析と受領前提の独立検証へ[C#静的宣言束縛](../shared/contextbase-runtime/docs/CSharp呼出先の静的解決.md#6-通常drへの接続)を接続する。自身の封印ソース・metadataで索引を作成し、上流の解析hashをローカル証明の代用にしない。各調査・検証へ初期の接続を自動交付し、以後のqueryにも宣言・実装候補・条件付きDI登録を添える。モデルは確定済み宣言を探し直さず、業務上の関連・条件・SQL・不確実部分を原文で確認する。元ソースが変わった場合は通常run／retry／exportの前に拒否し、新workを要求する。通常full／behaviorへの接続は今回の範囲外である。
+
+新workのinit --incremental又はcontext_mode="incremental"で[分割調査・独立検証](../shared/contextbase-runtime/docs/分割調査・独立検証プロトコル.md)を選べる。受領前提を自分の原文で再検証し、関係草稿と検証を分割して保存する。全体義務の採用条件と独立起動は維持する。R固有の関係型拡張と実業務精度は別の残作業で、今回の実施・採用状態はprojectの成果索引へ記録する。
 
 新規workはinit --evidence、設定モードはprofileのcontext_mode="evidence"で[ホスト取証](../shared/contextbase-runtime/docs/ホスト取証プロトコル.md)を明示できる。受領前提と関係候補を別contextで原文から確認し、完全view採用を維持する。前提recordは文脈へ一度だけ置く。旧fullモードは既定で、新モードへ--inline-sources／--compactを併用しない。
 
@@ -51,4 +55,4 @@ workは設定work基点/relationship-agent。後続層は同じ設定の前層�
 
 独立導入と合成受渡しの検証範囲は [実装ガイド](../reverse-agent/docs/ContextBase初期実装.md)を参照する。これはreverse-agentの実行依存ではなく検証記録の参照である。
 
-新sample-project1の既定出力はspec-reverse/CSharp_ASPNET/各Agent/。根のspec-reverse/各Agent/は旧test-project1の保持記録であり、新projectの前提成果へ自動転用しない。新projectの解析は未実施。
+新sample-project1の既定出力はspec-reverse/CSharp_ASPNET/各Agent/。根のspec-reverse/各Agent/は旧test-project1の保持記録であり、新projectの前提成果へ自動転用しない。最新の実行・未採用・採用は[成果索引](../../../sample-project1/spec-reverse/README.md)で確認する。

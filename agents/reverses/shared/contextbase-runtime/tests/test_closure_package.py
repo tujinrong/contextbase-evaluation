@@ -201,10 +201,10 @@ class ClosurePackageTests(unittest.TestCase):
         agent = case.create()
         original = case.provider
 
-        def provider(workspace, job, prompt, schema, timeout):
+        def provider(workspace, job, prompt, schema, timeout, *, instruction_role='analysis'):
             context = json.loads(prompt.rsplit('\n', 1)[-1])
             if context['incremental']['phase'] != 'closure':
-                return original(workspace, job, prompt, schema, timeout)
+                return original(workspace, job, prompt, schema, timeout, instruction_role=instruction_role)
             package = context['incremental']['obligationClosurePackage']['package']
             return {'exit_code': 0, 'metadata': {'status': 'passed'}, 'answer': {
                 'protocol': incremental.VERSION, 'taskId': context['task']['id'], 'action': 'finish',

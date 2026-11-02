@@ -27,6 +27,7 @@ def _exact(items, field, expected, description):
 
 
 def _root(task, view):
+    c.amendment_bindings(task)
     if task.get('operation') != 'verify' or task.get('viewSha256') != c.digest(view):
         raise ValueError('Review set requires the exact frozen verification view')
     if (len(task['requirements']) != len(set(task['requirements']))
@@ -55,7 +56,24 @@ def _scopes(task):
 
 
 def _unit(task, view, unit):
-    c.validate(unit, _UNIT)
+    amendment = c.amendment_bindings(task)
+    schema = _UNIT
+    if amendment:
+        schema = deepcopy(_UNIT)
+        schema['properties']['kind'] = {'enum': ['records', 'global', 'issues']}
+        schema['properties']['issueIds'] = c.STRINGS
+        schema['required'].append('issueIds')
+    c.validate(unit, schema)
+    if amendment:
+        if not set(unit['issueIds']).issubset(row['id'] for row in amendment):
+            raise ValueError('Review unit expands the assigned amendment issues')
+        if unit['kind'] == 'issues':
+            if not unit['issueIds'] or any(unit[field] for field in
+                    ('recordKeys', 'unknownIds', 'requirements', 'scopes')):
+                raise ValueError('Issue review must have only assigned issue targets')
+            return
+        if unit['issueIds']:
+            raise ValueError('Only issue review units may check amendment issues')
     if (not set(unit['recordKeys']).issubset(view['records'])
             or not set(unit['unknownIds']).issubset(view['unknowns'])
             or not set(unit['requirements']).issubset(task['requirements'])
@@ -85,10 +103,17 @@ def make_units(task, view, *, max_records=6, max_chars=16_000):
         raise ValueError('Review grouping requires positive integer limits')
     units, group, size = [], [], 0
 
-    def append(kind, *, keys=(), unknowns=(), requirements=(), scopes=()):
+    amendment = c.amendment_bindings(task)
+
+    def append(kind, *, keys=(), unknowns=(), requirements=(), scopes=(), issues=()):
         units.append({'id': kind + '-' + str(len(units)).zfill(4), 'kind': kind,
                       'recordKeys': list(keys), 'unknownIds': list(unknowns),
                       'requirements': list(requirements), 'scopes': list(scopes)})
+        if amendment:
+            units[-1]['issueIds'] = list(issues)
+
+    for offset in range(0, len(amendment), max_records):
+        append('issues', issues=[row['id'] for row in amendment[offset:offset + max_records]])
 
     for key in sorted(view['records']):
         row_size = len(json.dumps(view['records'][key], ensure_ascii=False, separators=(',', ':')))
@@ -153,7 +178,7 @@ def unit_schema(task, view, unit):
     requirement_check = deepcopy(canonical['checks']['items'])
     requirement_check['properties']['requirement'] = c._enum(unit['requirements'])
     scope_check = c.obj({'scope': c._enum(unit['scopes']), **result})
-    return c.obj({
+    properties = {
         'unitId': {'type': 'string', 'const': unit['id']},
         'candidateSha256': {'type': 'string', 'const': task['candidate']},
         'viewSha256': {'type': 'string', 'const': task['viewSha256']},
@@ -165,12 +190,23 @@ def unit_schema(task, view, unit):
         'findings': deepcopy(canonical['findings']), 'unknowns': deepcopy(canonical['unknowns']),
         'factUsageCheck': deepcopy(canonical['factUsageCheck'])
             if task.get('sourceFactsSha256') else {'type': 'null'},
-    })
+    }
+    amendment = c.amendment_bindings(task)
+    if amendment:
+        bindings = [row for row in amendment if row['id'] in unit['issueIds']]
+        # Keep a legal nonempty item schema even for the mandatory empty array.
+        properties['amendmentIssueChecks'] = _array(
+            c._amendment_check_schema(bindings or amendment), len(bindings))
+    return c.obj(properties)
 
 
 def validate_unit(task, view, unit, answer):
     """Validate identities and judgments; source delivery is checked by the host."""
     c.validate(answer, unit_schema(task, view, unit))
+    amendment = c.amendment_bindings(task)
+    if amendment:
+        c.validate_amendment_checks(answer['amendmentIssueChecks'],
+                                   [row for row in amendment if row['id'] in unit['issueIds']])
     _exact(answer['recordChecks'], 'key', unit['recordKeys'], 'record checks')
     for row in answer['recordChecks']:
         if row['recordSha256'] != view['records'][row['key']]['version']:
@@ -217,6 +253,11 @@ def _partition(task, view, units):
         counts = Counter(key for unit in units for key in unit[field])
         if set(counts) != set(expected) or any(count != 1 for count in counts.values()):
             raise ValueError('Incomplete or overlapping review partition: ' + field)
+    amendment = c.amendment_bindings(task)
+    if amendment:
+        counts = Counter(key for unit in units for key in unit['issueIds'])
+        if set(counts) != {row['id'] for row in amendment} or any(count != 1 for count in counts.values()):
+            raise ValueError('Incomplete or overlapping review partition: issueIds')
 
 
 def _combine(rows):
@@ -253,10 +294,15 @@ def aggregate(task, view, units, answers):
     ordered = [by_id[unit['id']] for unit in units]
     global_checks = {row['requirement']: row for result in ordered for row in result['checks']}
     record_checks = {row['key']: row for result in ordered for row in result['recordChecks']}
+    amendment = c.amendment_bindings(task)
+    issue_checks = ([row for result in ordered for row in result['amendmentIssueChecks']]
+                    if amendment else [])
+    issue_owners = {row['id']: row['requirement'] for row in amendment}
     checks = []
     for key in task['requirements']:
         rows = [global_checks[key], *[record_checks[record_key]
                 for record_key, record in view['records'].items() if record['ownerRequirement'] == key]]
+        rows.extend(row for row in issue_checks if issue_owners[row['issueId']] == key)
         checks.append({'requirement': key, **_combine(rows)})
     findings, unknowns = [], []
     for unit in units:
@@ -267,6 +313,8 @@ def aggregate(task, view, units, answers):
               'viewSha256': task['viewSha256'], 'checks': checks,
               'unknownChecks': [deepcopy(row) for item in ordered for row in item['unknownChecks']],
               'findings': findings, 'unknowns': unknowns}
+    if amendment:
+        result['amendmentIssueChecks'] = deepcopy(issue_checks)
     if task.get('catalogPolicy') == catalog.VERSION:
         result.update(classificationChecks=[deepcopy(row) for item in ordered for row in item['classificationChecks']],
                       scopeChecks=[deepcopy(row) for item in ordered for row in item['scopeChecks']])

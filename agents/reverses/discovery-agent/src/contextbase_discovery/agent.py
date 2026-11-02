@@ -14,6 +14,9 @@ class DiscoveryAgent(AnalysisAgent):
     instruction = '''Acquire an evidence-backed system outline, user-facing function
 catalog, technical entries, data targets and common processing from original
 source. Use the language adapters' syntax facts and their explicit limitations.
+When semanticAnalysis is enabled, use the host's supplied declaration bindings
+for call targets; do not repeat source searches merely to rediscover a resolved
+declaration. Read source for user purpose, responsibilities and classification.
 Classify business and system functions by complete user tasks, including supported
 standalone login screens. Navigation-only menus remain common navigation even
 with a dedicated screen or role-filtered links. A workbench needs an evidenced
@@ -47,7 +50,8 @@ instead of fabricating links or deep behavior. Return only catalog record kinds.
                 'languageAcquisition': {'indexSha256': context['structure']['indexSha256'],
                                        'location': 'host evidence queries (all indexed facts available)'
                                            if (context.get('task', {}).get('evidencePolicy')
-                                               or context.get('task', {}).get('incrementalPolicy')) else
+                                               or context.get('task', {}).get('incrementalPolicy')
+                                               or context.get('task', {}).get('nativeToolsPolicy')) else
                                            'structure (one complete source-fact table set)'},
                 'omittedMaterials': context['inventory']['omitted'],
                 'completion': 'Every assigned scope has source evidence, coverage and explicit unresolved gaps.'}

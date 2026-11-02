@@ -96,7 +96,7 @@ def bind_facts(context, answer, evidence):
         answer['factUsage'].append({'recordKey': record['key'], 'factIds': available[:1],
             'reason': 'Synthetic overlapping source fact.' if available else 'No indexed fact overlaps this source evidence.'})
 
-def synthetic(workspace, job, prompt, schema, timeout):
+def synthetic(workspace, job, prompt, schema, timeout, *, instruction_role='analysis'):
     context = json.loads(prompt[prompt.index('{"request":'):])
     contexts.append(context)
     task = context['task']

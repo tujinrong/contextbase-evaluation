@@ -1,6 +1,6 @@
 # discovery-agent 実行指示
 
-版1.8／2026-10-27。[契約](AGENT.md)と[運用案内](README.md)を読み、独立したsource・request・workを指定する。
+版1.9／2026-10-29。[契約](AGENT.md)と[運用案内](README.md)を読み、独立したsource・request・workを指定する。
 
 ## 目録化・粒度レビューの参照
 
@@ -38,6 +38,25 @@ contextbase-discovery retry --work WORK --feedback CANDIDATE_SHA256
 
 自層の既知候補だけをfeedbackに指定し、必要なら --requirements ID...／--inline-sources／--timeoutを加える。初稿拒否後も一度だけ再調査できる。同basisのrunは既存pendingを返し、自動の無限再試行にはしない。採用済み自層義務を変える場合は先にreviseする。外部前提を本層で書き直さず、新handoffを新workで受ける。故障停止時は同requestでresumeした後にretryする。
 
+## 未採用候補を明示改訂するとき
+
+[候補の部分改訂設計](../reverse-agent/docs/ContextBase候補の部分改訂設計.md)に従い、封印bundleの未採用候補と、指摘が発生したverificationのSHAを明示する。`amend-candidate` はD専用で、初回は新規にinitしたincremental workを使う。既存taskや採用状態を持つworkへ導入しない。元候補・旧storeを保持し、bundleは新workの清掃対象外へ置く。
+
+```text
+contextbase-discovery init --source SOURCE --request REQUEST.json --work FRESH_WORK --incremental
+contextbase-discovery amend-candidate --work FRESH_WORK --bundle BUNDLE --verification VERIFICATION_SHA --finding FINDING_ID --replace-key RECORD_KEY --add-kind material
+```
+
+`--finding` は複数指定でき、省略時は指定verificationの全指摘を選ぶ。`--replace-key` は置換を許す既存key、`--add-kind` は追加を許すkindを複数指定する。各指定の省略時はその操作を許可しない。`--timeout SECONDS` も指定できる。incrementalでは `--inline-sources`／`--compact` を付けない。設定経由なら、同じ入力を持つ新しい設定work先と `context_mode="incremental"` を選び、initとamend-candidateの両方へ同じ `--config`／`--profile` を渡す。明示 `--work` 等は混在させない。
+
+作者は全recordを再抽出せず、許可したadd／replace差分と、選択した各指摘への処置を一度ずつ提出する。置換は期待版を照合し、無断削除・owner／kind変更を認めない。未変更record・未知・未閉鎖followupを保持する。旧coverageの転記だけで完了とはせず、新候補への明示closureを必要とする。
+
+作者の対応済み宣言や原文反証だけで指摘を閉じない。新しい別task・文脈で、完全viewの全record・分類・scope・factUsage・保持未知と、指摘／処置の各hashへ束縛した全指摘検査を行う。旧候補の合格・旧receipt・途中passを継承せず、指摘のfail／unknownは担当義務の採否へ反映する。原文交付や機械gateが不足すれば診断と未採用候補を保存する。
+
+導入後の同じworkは通常の `run --work FRESH_WORK` で改訂を継続する。ワンクリックの初回選択には `--amend-bundle`／`--amend-verification`／`--amend-finding`／`--replace-key`／`--add-kind` を使い、以後はhomeの `amendment-operation.json` に固定した操作を通常クリックで継続する。専用のamendment-current／amendment-staging、入力変更の拒否、`--fresh` の清掃範囲は[運用案内](README.md#未採用候補の改訂を選択する)に従う。
+
+このコマンドはR／Bを起動しない。Dの正式採用・公開後、明示した後続操作としてRへ引き渡し、R自身の原文再検証を通す。Bは自動開始しない。本節は実装した操作の説明であり、実案件の新候補採用・D→R完了・品質／性能の成功を記録するものではない。
+
 ## 設定ファイルを使う場合
 
 Agentディレクトリからの例。相対パスの解決基準はconfigファイルの位置である。
@@ -55,11 +74,11 @@ pathsは表示だけで原文封印・LLMを起動しない。init／run等の�
 
 設定にはcsharp_wpfもあり、--profile csharp_wpfでsource・work・outputをWPF用へ分けられる。既定csharp_aspnetは変えず、他profileの解析は個別の実行要求に従う。
 
-## 今回のD単独再実行
+## 過去のD単独再実行（2026-10-27版の記録）
 
 source／request／固定outputは維持し、新work .tmp/contextbase/csharp_aspnet-compact-repairで明示repairを実行した。旧work・旧結果は新候補の独立検証と採用が済むまで保持し、採用後だけ固定discovery成果を原子的に更新する。比較材料は旧work／.tmpに残し、正式archiveを作らない。
 
-R／Bを起動・作成しない。実測件数・検証・採用・失敗の状態は確定結果に従って記録し、LLMが答えたことや形式合格だけで人手受入れ済みとしない。
+この過去試行の範囲ではR／Bを起動・作成しなかった。現在のD→Rの明示依頼を禁止する記述ではない。実測件数・検証・採用・失敗の状態は対象版の確定結果に従って記録し、LLMが答えたことや形式合格だけで人手受入れ済みとしない。
 
 作者はホスト固定sourceFactsSha256と全recordのfactUsageを返す。独立検証者は全索引とinventoryからfactUsageCheckを返し、passを追加採用条件とする。詳細な検査条件は索引契約へ集約する。今回の新機構の構造・合成回帰は確認済みで実Dは69候補の独立検証を完了し、fact利用はpass・catalogは要追加調査で未採用である。
 

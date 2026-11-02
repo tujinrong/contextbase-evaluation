@@ -1,8 +1,12 @@
 # discovery-agent — 独立した取得・目録化
 
-版1.10／2026-10-28。package／CLIはcontextbase-discovery、Pythonモジュールはcontextbase_discovery。reverse-agentのインストール・import・統括起動を必要としない。ワンクリック起動も本Agentだけを対象にする。
+版1.14／2026-10-30。package／CLIはcontextbase-discovery、Pythonモジュールはcontextbase_discovery。reverse-agentのインストール・import・統括起動を必要としない。ワンクリック起動も本Agentだけを対象にする。
 
-新workのinit --incremental又はcontext_mode="incremental"で[分割調査・独立検証](../shared/contextbase-runtime/docs/分割調査・独立検証プロトコル.md)を選べる。単位草稿と対象別／全体レビューを保存し、元catalog義務全体で採用する。選択C#ではディレクトリ検索と要求回復を修正し、保存済み106件から同じworkで続行した。7単位・123件の未検証草稿を保存したが、全体closure中にモデルが満載と返し、候補化・独立検証・採用へ到達していない。[案件レビュー](../../../sample-project1/spec-reverse/discovery-agent/review.md)に時間と制限を記録し、前回正式成果を保持する。
+Codexの基礎指示は[共有runtimeの解析・検証用指示](../shared/contextbase-runtime/README.md#解析用の基礎指示)へ明示置換する。抽出・候補改訂と独立検証は別の指示を使用し、実際に選択したroleと指示の版を保存する。
+
+選択profileの`semantic_project`と`semantic_configuration`を設定すると、通常のevidence／incremental解析へ[C#静的宣言束縛](../shared/contextbase-runtime/docs/CSharp呼出先の静的解決.md#6-通常drへの接続)を接続する。初期化で索引版を固定し、作者と独立検証へ担当pathの少量の接続を自動交付する。以後の通常queryにも宣言先と候補・条件付きDI観測を添え、モデルは業務分類や条件の原文調査へ集中する。原文引用・分類・独立採用の規則は維持する。SDKとローカルmetadataが必要で、対象projectのMSBuild／restore／実行は行わない。既定C# profileは新work `.tmp/contextbase/csharp_aspnet-semantic`を使い、旧119件の草稿は変更しない。
+
+新workのinit --incremental又はcontext_mode="incremental"で[分割調査・独立検証](../shared/contextbase-runtime/docs/分割調査・独立検証プロトコル.md)を選べる。単位草稿と対象別／全体レビューを保存し、元catalog義務全体で採用する。2026-10-28版の実行記録では、選択C#のディレクトリ検索と要求回復を修正し、保存済み106件から同じworkで続行した。7単位・123件の未検証草稿を保存したが、全体closure中にモデルが満載と返し、候補化・独立検証・採用へ到達しなかった。[案件レビュー](../../../sample-project1/spec-reverse/discovery-agent/review.md)の記録はその版の時間と制限であり、今回の候補改訂の成功証拠には使わない。
 
 新規workはinit --evidence、設定モードはprofileのcontext_mode="evidence"で[ホスト取証](../shared/contextbase-runtime/docs/ホスト取証プロトコル.md)を明示できる。必要な索引・原文をhostから取得し、別contextの独立検証と完全view採用は維持する。旧fullモードは既定のまま。新モードではrunへ--inline-sources／--compactを付けない。
 
@@ -16,7 +20,7 @@ Windowsでは [sample-project1/run-discovery.cmd](../../../sample-project1/run-d
 
 起動処理は環境準備から解析終了までOSのロックを保持する。重ねてクリックした場合は「実行中」とロックの位置を表示して終了し、モデルを二重に呼ばない。単なるPIDファイルの存在を根拠にロックを削除しない。
 
-解析は設定のwork基点/discovery-agent-launch配下のcurrent／stagingで管理する。毎回新しい原文封印・目録抽出・別文脈の独立検証・host採用を行い、採用後のJSONと人手reviewを同一版として公開する。拒否、故障、取消、報告作成失敗時は成功とせず、前回の正式成果を保持する。手動CLIのwork基点/discovery-agentとは別であり、既存の手動workや所有不明の内容を整理対象にしない。
+通常解析は設定のwork基点/discovery-agent-launch配下のcurrent／stagingで管理する。新規解析では原文封印・目録抽出・別文脈の独立検証・host採用を行い、incrementalでは同じ入力条件の保存済み作業を継続する。採用後のJSONと人手reviewを同一版として公開する。拒否、故障、取消、報告作成失敗時は成功とせず、前回の正式成果を保持する。手動CLIのwork基点/discovery-agentとは別であり、既存の手動workや所有不明の内容を整理対象にしない。
 
 結果の入口は選択profileのoutput/discovery-agent/review.md。正式成果はcontextbase.json、構文索引はfacts/、最終目録検証はresult/validation.json。候補・実行診断・テストログは.tmpへ置き、正式成果とは区別する。人手受入れや後続層の完了を自動判定しない。
 
@@ -29,6 +33,24 @@ Windowsでは [sample-project1/run-discovery.cmd](../../../sample-project1/run-d
 ダブルクリックでは終了時に画面を残す。自動実行では先頭の--no-pause、または環境変数CONTEXTBASE_DISCOVERY_NO_PAUSE=1で停止待ちを省略し、解析の終了コードをそのまま受け取る。作業ディレクトリが異なっても、設定と起動コードはcmdファイルの位置から解決する。
 
 別projectの設定を指定する場合は、Pythonから `launch.py --config CONFIG --profile NAME` を実行する。直接導入済みの環境からは `python -m contextbase_discovery.launch --config CONFIG` を使える。通常の単独コマンドを細かく使う場合は以下の手動導入・実行手順に従う。
+
+### 未採用候補の改訂を選択する
+
+`context_mode="incremental"` のDで、未採用の凍結候補を封印bundleから新workへ取り込める。契約の正本は[候補の部分改訂設計](../reverse-agent/docs/ContextBase候補の部分改訂設計.md)、手動操作は[実行指示](PROMPT.md#未採用候補を明示改訂するとき)を参照する。作者は許可したadd／replace差分と各指摘の処置を提出し、未変更record・未知・未閉鎖followupを保持する。全件を作者に再出力させず、新候補の完全viewと全指摘処置を新しい独立検証へ通す。旧候補のpassや途中レビューは継承しない。
+
+初回だけ、選択するbundle・指摘元verification・変更範囲を明示する。以下はAgentディレクトリからの例で、BUNDLEはlaunch・source・正式outputの各ツリー外に置く。
+
+```text
+python launch.py --config CONFIG --profile NAME --amend-bundle BUNDLE --amend-verification VERIFICATION_SHA --amend-finding FINDING_ID --replace-key RECORD_KEY --add-kind material
+```
+
+`--amend-finding` は複数指定でき、省略時は指定verificationの全指摘を選ぶ。`--replace-key`／`--add-kind` も複数指定でき、省略時はそれぞれ置換・追加を許可しない。
+
+操作選択はhome（設定work基点/discovery-agent-launch）の `amendment-operation.json` に固定する。以後の通常ワンクリックも選択済みの改訂を継続し、通常抽出へ戻らない。改訂は `amendment-current`／`amendment-staging` を使い、通常のcurrent／stagingと分ける。完了済みならモデルを再実行せず、採用済みの同じ版を再公開する。
+
+bundle・指摘集合・変更範囲・source・request・索引・実装版などの束縛が変われば、旧workとdescriptorを保持して拒否する。別操作は別の設定work先を明示する。`--fresh` は同じ操作の所有確認済み実行workを作り直す指定であり、入力の変更や旧workの移行を許可しない。外部bundle・seed入力と旧storeは清掃しない。選択中の改訂と `--publish-work` は併用できない。
+
+この入口はDだけを実行する。Dの正式採用・公開後に、明示した別操作としてRへ引き渡し、R自身の原文再検証を行う。Bは自動開始しない。ここで示す操作手順は、実案件のD採用・R完了や品質・性能の成功を示すものではない。
 
 ## 導入
 
@@ -87,4 +109,4 @@ full／evidenceは報告作成失敗後の通常クリックも従来どおり�
 
 独立導入と合成受渡しの検証範囲は [実装ガイド](../reverse-agent/docs/ContextBase初期実装.md)を参照する。これはreverse-agentの実行依存ではなく検証記録の参照である。
 
-新sample-project1の既定出力はspec-reverse/CSharp_ASPNET/各Agent/。根のspec-reverse/各Agent/は旧test-project1の保持記録であり、新projectの前提成果へ自動転用しない。新projectの解析は未実施。
+新sample-project1の既定出力はspec-reverse/CSharp_ASPNET/各Agent/。根のspec-reverse/各Agent/は旧test-project1の保持記録であり、新projectの前提成果へ自動転用しない。過去版の「新projectの解析は未実施」という記録を現在状態へ転記せず、最新の実施状態は成果案内で確認する。

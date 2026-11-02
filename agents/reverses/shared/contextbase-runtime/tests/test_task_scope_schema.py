@@ -155,7 +155,7 @@ class TaskScopeSchemaTests(unittest.TestCase):
                 with self.subTest(compact=compact):
                     agent = DiscoveryAgent.create(source, root / ('work-' + str(compact)), req)
                     tasks = []
-                    def provider(workspace, directory, prompt, schema, timeout):
+                    def provider(workspace, directory, prompt, schema, timeout, *, instruction_role='analysis'):
                         delivered = json.loads(prompt[prompt.index('{"request":'):])
                         identifier = delivered['task']['id']
                         canonical = agent.session.store.get('tasks/' + identifier + '/canonical-context.json') \

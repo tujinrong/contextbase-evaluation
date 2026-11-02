@@ -117,7 +117,7 @@ class IndependentAgentTests(unittest.TestCase):
     def tearDown(self):
         self.temporary.cleanup()
 
-    def provider(self, workspace, job, prompt, schema, timeout):
+    def provider(self, workspace, job, prompt, schema, timeout, *, instruction_role='analysis'):
         context = json.loads(prompt[prompt.index('{"request":'):])
         self.calls.append(context)
         return {'exit_code': 0, 'metadata': {'status': 'passed'}, 'answer': simulated_answer(context)}
@@ -190,8 +190,8 @@ class IndependentAgentTests(unittest.TestCase):
     def test_receiver_rechecks_prerequisites_and_can_reject_a_prior_pass(self):
         envelope = self.discovery().export()
         relation = RelationshipAgent.create(self.source, self.root / 'relation', request(), handoff=envelope)
-        def fail(*args):
-            result = self.provider(*args)
+        def fail(*args, instruction_role='analysis'):
+            result = self.provider(*args, instruction_role=instruction_role)
             result['answer']['checks'][0]['status'] = 'fail'
             return result
         result = self.run_agent(relation, fail)
@@ -236,8 +236,8 @@ class IndependentAgentTests(unittest.TestCase):
                 RelationshipAgent.create(self.source, self.root / ('bad-' + str(index)), request(), handoff=damaged)
 
     def test_unknowns_remain_bound_and_receiver_must_judge_every_one(self):
-        def with_unknown(*args):
-            result = self.provider(*args)
+        def with_unknown(*args, instruction_role='analysis'):
+            result = self.provider(*args, instruction_role=instruction_role)
             if 'coverage' in result['answer']:
                 result['answer']['unknowns'] = [{'id': 'deployment', 'question': 'Deployment not observed.',
                     'relatedRequirements': ['catalog', 'links'], 'blocksRequirements': [],
@@ -260,8 +260,8 @@ class IndependentAgentTests(unittest.TestCase):
     def test_relationship_and_behavior_require_record_dependencies(self):
         envelope = self.discovery().export()
         relation = RelationshipAgent.create(self.source, self.root / 'relation', request(), handoff=envelope)
-        def detached(*args):
-            result = self.provider(*args)
+        def detached(*args, instruction_role='analysis'):
+            result = self.provider(*args, instruction_role=instruction_role)
             for record in result['answer'].get('records', []):
                 record['dependsOn'] = []
             return result
@@ -339,8 +339,8 @@ class IndependentAgentTests(unittest.TestCase):
         envelope['payload']['unknowns'] = {}
         envelope['sha256'] = contracts.digest(envelope['payload'])
         relation = RelationshipAgent.create(self.source, self.root / 'relation', request(), handoff=envelope)
-        def discovers_blocker(*args):
-            result = self.provider(*args)
+        def discovers_blocker(*args, instruction_role='analysis'):
+            result = self.provider(*args, instruction_role=instruction_role)
             result['answer']['unknowns'] = [{'id': 'omitted', 'question': 'Missing registration.',
                 'relatedRequirements': ['catalog'], 'blocksRequirements': ['catalog'],
                 'scopeReason': 'This omission affects the claimed catalog.'}]
@@ -364,8 +364,8 @@ class IndependentAgentTests(unittest.TestCase):
         self.assertEqual(['catalog'], relation.status()['acceptedRequirements'])
 
     def followup_provider(self, *, resolve=False):
-        def provider(*args):
-            result = self.provider(*args)
+        def provider(*args, instruction_role='analysis'):
+            result = self.provider(*args, instruction_role=instruction_role)
             context = self.calls[-1]
             if context['task']['operation'] == 'extract' and context['task']['stage'] == 'discovery':
                 result['answer']['followups'] = [{'stage': 'relationship',
@@ -425,8 +425,8 @@ class IndependentAgentTests(unittest.TestCase):
     def test_final_behavior_cannot_complete_with_an_unresolved_inherited_question(self):
         envelope = self.discovery().export()
         relation = RelationshipAgent.create(self.source, self.root / 'relation', request(), handoff=envelope)
-        def future_behavior(*args):
-            result = self.provider(*args)
+        def future_behavior(*args, instruction_role='analysis'):
+            result = self.provider(*args, instruction_role=instruction_role)
             context = self.calls[-1]
             if context['task']['operation'] == 'extract' and context['task']['stage'] == 'relationship':
                 result['answer']['followups'] = [{'stage': 'behavior', 'question': 'Check the rejection condition.',
@@ -438,8 +438,8 @@ class IndependentAgentTests(unittest.TestCase):
         self.assertEqual('needs-investigation', result['status'])
         self.assertEqual(['catalog', 'links'], behavior.status()['acceptedRequirements'])
         self.assertNotEqual('complete', behavior.status()['status'])
-        def resolved(*args):
-            response = self.provider(*args)
+        def resolved(*args, instruction_role='analysis'):
+            response = self.provider(*args, instruction_role=instruction_role)
             for check in response['answer'].get('unknownChecks', []):
                 if check['unknownId'].startswith('followup:'):
                     check['status'] = 'resolved'
@@ -458,8 +458,8 @@ class IndependentAgentTests(unittest.TestCase):
     def test_cli_retry_reinvestigates_rejected_first_draft_with_feedback(self):
         from contextbase_discovery.__main__ import main
         first = DiscoveryAgent.create(self.source, self.root / 'discovery', request())
-        def rejects(*args):
-            result = self.provider(*args)
+        def rejects(*args, instruction_role='analysis'):
+            result = self.provider(*args, instruction_role=instruction_role)
             if 'checks' in result['answer']:
                 result['answer']['checks'][0]['status'] = 'fail'
             return result
@@ -480,8 +480,8 @@ class IndependentAgentTests(unittest.TestCase):
     def test_rejected_retry_persists_latest_pending_and_reopened_run_does_not_repeat(self):
         agent = DiscoveryAgent.create(self.source, self.root / 'discovery', request())
 
-        def rejects(*args):
-            result = self.provider(*args)
+        def rejects(*args, instruction_role='analysis'):
+            result = self.provider(*args, instruction_role=instruction_role)
             if 'checks' in result['answer']:
                 result['answer']['checks'][0]['status'] = 'fail'
             return result

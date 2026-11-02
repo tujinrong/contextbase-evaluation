@@ -11,7 +11,11 @@ class RelationshipAgent(AnalysisAgent):
     instruction = '''Build source-evidenced relationships from the revalidated
 catalog. Trace entries to definitions, caller/callee direction, inputs/outputs,
 data operations and common processing. Read conditions, arguments and configuration
-as needed to determine applicability. Name the catalog keys in each relation's
+as needed to determine applicability. When semanticAnalysis is enabled, use host-resolved declaration
+bindings directly; do not search/read source again solely to identify those
+targets. Keep interface declarations, implementation candidates and conditional
+DI registrations separate. Read source for business applicability, arguments,
+data operations and unresolved connections. Name the catalog keys in each relation's
 dependsOn, keep unresolved targets explicit, and check reverse uses for omissions.
 Do not fabricate absent objects. Return discovery followups for missing catalog
 premises. You own relationship obligations only; do not execute another agent.
@@ -28,7 +32,7 @@ or claim resolution merely to satisfy this output invariant.'''
         catalog = {key: deepcopy(record) for key, record in context['currentRecords'].items()
                    if record['ownerRequirement'] in required}
         references = ({'catalogKeys': sorted(catalog), 'recordsLocation': 'currentRecords'}
-                      if context['task'].get('evidencePolicy') or context['task'].get('incrementalPolicy')
+                      if context['task'].get('evidencePolicy') or context['task'].get('incrementalPolicy') or context['task'].get('nativeToolsPolicy')
                       else {'verifiedCatalog': catalog})
         return {**references,
                 'catalogByKind': {kind: [key for key, record in catalog.items() if record['kind'] == kind]

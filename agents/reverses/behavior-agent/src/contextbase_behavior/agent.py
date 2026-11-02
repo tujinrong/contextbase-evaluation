@@ -25,7 +25,7 @@ from unresolved links or run another agent. Produce facts, not specification pro
         references = ({'relationshipKeys': sorted(graph),
                        'supportingCatalogKeys': sorted(key for key in dependencies if key in context['currentRecords']),
                        'recordsLocation': 'currentRecords'}
-                      if context['task'].get('evidencePolicy') or context['task'].get('incrementalPolicy') else {
+                      if context['task'].get('evidencePolicy') or context['task'].get('incrementalPolicy') or context['task'].get('nativeToolsPolicy') else {
                            'verifiedRelationships': graph,
                            'supportingCatalog': {key: deepcopy(record) for key, record in context['currentRecords'].items()
                                                  if key in dependencies}})

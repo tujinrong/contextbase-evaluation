@@ -16,6 +16,7 @@ from .sources import source_lines
 
 
 VERSION = 'contextbase-evidence/1'
+SEMANTIC_POLICY = 'contextbase-semantic-evidence/1'
 MAX_REPLY_CHARS = 32_768
 MAX_PAGE_SIZE = 100
 _OFFSET = {'type': 'integer', 'minimum': 0}
@@ -60,10 +61,17 @@ REQUEST_SCHEMA = {'anyOf': [
 class EvidenceAccess:
     """A small read/query Interface with task and source identity invariants."""
 
-    def __init__(self, source, index, task):
+    def __init__(self, source, index, task, *, reply_size=None, max_reply_size=None, reply_policy=None):
         if (not isinstance(task, dict) or any(not isinstance(task.get(key), str)
                 or not task[key].strip() for key in ('id', 'contextId'))):
             raise ValueError('Evidence access requires a host-owned task and context identity')
+        if reply_size is not None and not callable(reply_size):
+            raise TypeError('Reply size policy must be callable')
+        if max_reply_size is not None and (type(max_reply_size) is not int or max_reply_size <= 0):
+            raise ValueError('Reply size limit must be a positive integer')
+        self._reply_measure = reply_size
+        self._max_reply_size = max_reply_size
+        self._reply_policy = deepcopy(reply_policy)
         self.source, self.index = source, index
         self.task = deepcopy(task)
         index.validate()
@@ -77,6 +85,23 @@ class EvidenceAccess:
                 raise ValueError('Evidence task belongs to another source-fact index')
         self.binding = {'taskId': task['id'], 'contextId': task['contextId'],
                         'snapshotId': snapshot, 'indexSha256': index.sha256}
+        if reply_policy is not None:
+            self.binding['replyPolicy'] = deepcopy(reply_policy)
+        self.semantic_index = None
+        if 'semanticPolicy' in task or 'semanticIndexSha256' in task:
+            semantic = getattr(index, 'semantic_index', None)
+            if (task.get('semanticPolicy') != SEMANTIC_POLICY or semantic is None
+                    or task.get('semanticIndexSha256') != semantic.sha256
+                    or semantic.facts.sha256 != index.sha256
+                    or semantic.facts.source.snapshot_id != snapshot):
+                raise ValueError('Evidence semantic capability or index binding changed')
+            self.semantic_index = semantic
+            self.binding['semanticPolicy'] = SEMANTIC_POLICY
+            self.binding['semanticIndexSha256'] = semantic.sha256
+        self._semantic_calls = {}
+        if self.semantic_index is not None:
+            for row in self.semantic_index.document['results']:
+                self._semantic_calls.setdefault(row['callSiteId'], []).append(row)
         self._manifest = source.manifest
         self._files = {row['path']: row for row in self._manifest['files']}
         self._index_files = {row['path']: row for row in index.document['files']}
@@ -84,12 +109,19 @@ class EvidenceAccess:
 
     def _assert_binding(self):
         self.source.verify()
+        if self._reply_policy != self.binding.get('replyPolicy'):
+            raise ValueError('Evidence reply policy binding changed')
         if (self.source.snapshot_id != self.binding['snapshotId']
                 or self.index.sha256 != self.binding['indexSha256']
                 or contracts.digest(self.index.document) != self.binding['indexSha256']
                 or self.index.document['snapshotId'] != self.binding['snapshotId']
                 or self.index.by_id != {fact['id']: fact for fact in self.index.document['facts']}):
             raise ValueError('Evidence source or fact-index binding changed')
+        if self.semantic_index is not None:
+            if (getattr(self.index, 'semantic_index', None) is not self.semantic_index
+                    or self.semantic_index.sha256 != self.binding['semanticIndexSha256']):
+                raise ValueError('Evidence semantic index binding changed')
+            self.semantic_index.validate()
 
     def _path(self, path):
         if path not in self._files:
@@ -151,25 +183,32 @@ class EvidenceAccess:
     def _size(value):
         return len(json.dumps(value, ensure_ascii=False, separators=(',', ':'), allow_nan=False))
 
+    def _reply_limit(self):
+        return MAX_REPLY_CHARS if self._max_reply_size is None else self._max_reply_size
+
+    def _measure_reply(self, reply):
+        return self._size(reply) if self._reply_measure is None else self._reply_measure(reply)
+
     def _page(self, request, rows, field, extra=None):
         offset, limit = request['offset'], request['limit']
         count = len(rows)
         selected = []
+        additions = lambda items: extra(items) if callable(extra) else (extra or {})
         base = {'matchedCount': count, 'returnedCount': 0,
                 'truncated': offset < count, 'nextOffset': offset if offset < count else None,
-                field: [], **(extra or {})}
+                field: [], **additions([])}
         for item in rows[offset:offset + limit]:
             candidate = [*selected, item]
             next_offset = offset + len(candidate)
             result = {**base, field: candidate, 'returnedCount': len(candidate),
                       'truncated': next_offset < count,
-                      'nextOffset': next_offset if next_offset < count else None}
-            if self._size(self._receipt(request, result)) > MAX_REPLY_CHARS:
+                      'nextOffset': next_offset if next_offset < count else None, **additions(candidate)}
+            if self._measure_reply(self._receipt(request, result)) > self._reply_limit():
                 break
             selected = candidate
         end = offset + len(selected)
         result = {**base, field: selected, 'returnedCount': len(selected),
-                  'truncated': end < count, 'nextOffset': end if end < count else None}
+                  'truncated': end < count, 'nextOffset': end if end < count else None, **additions(selected)}
         if not selected and offset < count:
             result['unavailableReason'] = 'One complete result exceeds the evidence reply capacity'
             return self._receipt(request, result, 'oversized-item')
@@ -215,8 +254,57 @@ class EvidenceAccess:
             values.pop('path', None)
         found = self.index.query(**values)
         facts = [row for row in found['facts'] if row['path'] in selected] if selector is not None else found['facts']
-        return self._page(request, facts, 'facts', {
-            'matchBasis': found['matchBasis'], 'coverage': self._coverage(path)})
+        extra = {'matchBasis': found['matchBasis'], 'coverage': self._coverage(path)}
+        if self.semantic_index is not None:
+            return self._page(request, facts, 'facts', lambda selected: {
+                **extra, **self._semantic_delivery(selected)})
+        return self._page(request, facts, 'facts', extra)
+
+    def _semantic_delivery(self, facts):
+        """Project only selected calls, keeping canonical raw facts separate."""
+        symbols = self.semantic_index.document['symbols']
+        declarations, bindings, registrations, registration_facts = {}, [], [], {}
+        service_types = set()
+
+        def target(key):
+            if key is None:
+                return None
+            row = symbols[key]
+            for identifier in row['sourceSymbolIds']:
+                declarations[identifier] = deepcopy(self.index.by_id[identifier])
+            return {field: deepcopy(row[field]) for field in
+                    ('name', 'qualifiedName', 'signature',
+                     'origin', 'sourceSymbolIds', 'evidence') if field in row}
+
+        for fact in facts:
+            if fact['kind'] != 'call':
+                continue
+            for row in self._semantic_calls.get(fact['id'], []):
+                if row['declaredTargetKey'] is not None:
+                    service_types.add(symbols[row['declaredTargetKey']].get('containingTypeKey'))
+                bindings.append({**{field: deepcopy(row[field]) for field in
+                    ('projectId', 'callSiteId', 'path', 'callerId', 'callerContext', 'calleeText',
+                     'status', 'compilerStatus', 'dispatchKind', 'runtimeTargetConfirmed',
+                     'candidateReason', 'bindingDiagnostics', 'evidence')},
+                    'semanticIndexSha256': self.semantic_index.sha256,
+                    'declaredTarget': target(row['declaredTargetKey']),
+                    'candidates': [target(key) for key in row['candidateKeys']],
+                    'implementationCandidates': [target(key) for key in row['implementationCandidateKeys']]})
+        for row in self.semantic_index.document['registrations']:
+            if row['serviceTypeKey'] not in service_types:
+                continue
+            registration_facts[row['callSiteId']] = deepcopy(self.index.by_id[row['callSiteId']])
+            registrations.append({**{field: deepcopy(row[field]) for field in
+                ('projectId', 'callSiteId', 'evidence', 'factory', 'registrationMethod',
+                 'conditional', 'runtimeTargetConfirmed')},
+                'semanticIndexSha256': self.semantic_index.sha256,
+                'serviceType': target(row['serviceTypeKey']),
+                'implementationTypes': [target(key) for key in row['implementationTypeKeys']]})
+        return {'semanticBindings': bindings, 'declarationFacts': list(declarations.values()),
+                'registrationObservations': registrations, 'registrationFacts': list(registration_facts.values()),
+                'semanticMeaning': 'Compiler-selected declarations under the task-bound analysis context. '
+                                   'Implementation candidates and conditional registrations are not runtime targets. Query pointers '
+                                   'and declaration facts do not deliver original source text.'}
 
     def _search(self, request, texts=None):
         path, needle = request['path'], request['text']
@@ -268,8 +356,13 @@ class EvidenceAccess:
             line_chars = self._size(line) - 2
             # Hash fields have fixed width. Measure the small empty-text receipt
             # plus encoded rows, avoiding quadratic joins of long source pages.
-            if self._size(self._receipt(request, result)) + encoded_chars + line_chars > MAX_REPLY_CHARS:
-                break
+            if self._reply_measure is None:
+                if self._size(self._receipt(request, result)) + encoded_chars + line_chars > self._reply_limit():
+                    break
+            else:
+                complete = {**result, 'sourceText': ''.join(selected) + line}
+                if self._measure_reply(self._receipt(request, complete)) > self._reply_limit():
+                    break
             selected.append(line)
             encoded_chars += line_chars
         if not selected:
@@ -302,7 +395,7 @@ class EvidenceAccess:
         operation = request['operation']
         reply = (getattr(self, '_' + operation)(request, texts=texts) if operation in {'read', 'search'}
                  else getattr(self, '_' + operation)(request))
-        if self._size(reply) > MAX_REPLY_CHARS:
+        if self._measure_reply(reply) > self._reply_limit():
             raise ValueError('Evidence reply metadata exceeds its capacity')
         return reply
 

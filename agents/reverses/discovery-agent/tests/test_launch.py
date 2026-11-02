@@ -35,7 +35,7 @@ class LaunchTests(unittest.TestCase):
     def tearDown(self):
         self.temporary.cleanup()
 
-    def provider(self, workspace, job, prompt, schema, timeout):
+    def provider(self, workspace, job, prompt, schema, timeout, *, instruction_role='analysis'):
         canonical_path = Path(job).parent / 'canonical-context.json'
         if canonical_path.exists():
             canonical = json.loads(canonical_path.read_text(encoding='utf-8'))['payload']

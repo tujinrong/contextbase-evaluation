@@ -23,7 +23,7 @@ def request():
             'allowedPaths': ['.'], 'excludedPaths': []}
 
 
-def synthetic_provider(workspace, job, prompt, schema, timeout):
+def synthetic_provider(workspace, job, prompt, schema, timeout, *, instruction_role='analysis'):
     context = json.loads(prompt[prompt.index('{"request":'):])
     task = context['task']
     original = context['inventory']['files'][0]
@@ -163,8 +163,8 @@ class ReportingTests(unittest.TestCase):
         self.assertEqual('preserve', marker.read_text(encoding='utf-8'))
 
     def test_adopted_minor_findings_are_visible_in_human_review(self):
-        def advisory(*args):
-            result = synthetic_provider(*args)
+        def advisory(*args, instruction_role='analysis'):
+            result = synthetic_provider(*args, instruction_role=instruction_role)
             if 'checks' in result['answer']:
                 check = result['answer']['checks'][0]
                 result['answer']['findings'] = [{'id': 'advice', 'severity': 'minor',

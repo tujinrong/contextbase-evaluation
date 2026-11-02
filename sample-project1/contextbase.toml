@@ -10,8 +10,31 @@ request = "contextbase-request.json"
 output = "spec-reverse/CSharp_ASPNET"
 # 次回試行は分割調査・草稿保存・分割独立検証を明示利用する。
 # 旧workを移行せず、実モデルの品質・性能の確認済みを意味しない。
-work = ".tmp/contextbase/csharp_aspnet-incremental"
+# 解析者／独立検証者の基礎指示を分離した版を新規計測する。
+work = ".tmp/contextbase/csharp_aspnet-role-separated-registration"
 context_mode = "incremental"
+# D/Rの通常取証へ静的な宣言束縛を接続する。旧workは変更せず保持する。
+semantic_project = "StudentManagement.Web.csproj"
+semantic_configuration = "Release"
+
+# 全ソースを一つの解析会話で調査し、別役割が候補全体を検証する。
+# python -m contextbase_runtime analyze init|run|export --config ... --profile csharp_aspnet_native
+[profiles.csharp_aspnet_native]
+source = "srcs/CSharp_ASPNET"
+request = "contextbase-request.json"
+output = "spec-reverse/CSharp_ASPNET/native"
+work = ".tmp/contextbase/csharp_aspnet-native-amended"
+context_mode = "native"
+semantic_project = "StudentManagement.Web.csproj"
+semantic_configuration = "Release"
+
+[profiles.csharp_aspnet_native.roles.analysis]
+id = "source-analysis"
+instructions = "../agents/reverses/shared/contextbase-runtime/src/contextbase_runtime/native_analysis_instructions.md"
+
+[profiles.csharp_aspnet_native.roles.verification]
+id = "independent-verification"
+instructions = "../agents/reverses/shared/contextbase-runtime/src/contextbase_runtime/native_verification_instructions.md"
 
 # 切替例。別方式の成果・作業先を分け、既存のASP.NET成果を上書きしない。
 [profiles.csharp_wpf]

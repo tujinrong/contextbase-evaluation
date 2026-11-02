@@ -1,6 +1,6 @@
 # reverse-agent — ソースから ContextBase を構築・検証する
 
-版8.7／2026-10-26。reverse-agentは任意の互換連続実行入口。3つの解析Agentは平級の独立プロジェクトへ分離する。新配置の構造・合成検証は通過した。仕様書生成は下流の責務とする。
+版8.9／2026-10-29。reverse-agentは任意の互換連続実行入口。3つの解析Agentは平級の独立プロジェクトへ分離する。未採用候補の部分改訂をDiscoveryの明示incremental操作へ追加し、未変更内容を保ちながら完全な新候補を独立検証する。実案件の採用・性能は成果索引で確認する。仕様書生成は下流の責務とする。
 
 ## 独立プロジェクトの入口
 
@@ -24,8 +24,10 @@
 
 ## 設計・計画・既存経路
 
-- [段階的抽出・検証設計](docs/ContextBase段階的抽出・検証フロー.md)：v0.9、D01～D12と新しい層分担。
-- [実装計画](docs/ContextBase実装計画.md)：v0.7、P0～P8の移行・部分実装と残作業。
+- [段階的抽出・検証設計](docs/ContextBase段階的抽出・検証フロー.md)：v0.19、D01～D12、独立3層と現実装・後続設計の区別。
+- [候補の部分改訂設計](docs/ContextBase候補の部分改訂設計.md)：v0.2。指摘処置、未信頼seed、CAS差分、完全な新候補の独立検証。
+- [実装計画](docs/ContextBase実装計画.md)：v0.17。P0～P8と既存実装の履歴、CA0～CA5の初期実装とCA6の実案件確認条件。
+- [参考実装ノート](docs/ContextBase調査フローの参考実装.md)：索引、階層取得、由来・失効、経験記憶から得る示唆。外部製品の導入・互換性・性能保証とは区別する。
 - [初期実装ガイド](docs/ContextBase初期実装.md)：現CLIの操作、request、制約。
 
 既存の文書単位 AI plan／analysis／draft／review、foundation／detail／specification、docsite の変換処理は残る。[旧契約・実行説明](docs/legacy/README.md)を明示選択した場合だけ使い、新しい extract と区別する。旧 ContextBase、identities、人工QA、既存outputを自動移行・置換しない。

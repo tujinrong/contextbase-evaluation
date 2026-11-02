@@ -24,7 +24,7 @@ class RepairTests(unittest.TestCase):
         (self.source / 'Registration.cs').write_bytes(
             b'class Registration {\n bool Save(int value) { return value > 0; }\n}\n')
         self.old = DiscoveryAgent.create(self.source, self.root / 'rejected', request())
-        def rejected(workspace, directory, prompt, schema, timeout):
+        def rejected(workspace, directory, prompt, schema, timeout, *, instruction_role='analysis'):
             context = json.loads(prompt[prompt.index('{"request":'):])
             self.old_task = context['task']['id']
             answer = simulated_answer(context)
@@ -61,7 +61,7 @@ class RepairTests(unittest.TestCase):
                 'replacements': [{'key': selected['key'], 'expectedRecordHash': selected['expectedRecordHash'],
                                   'replacement': replacement, 'factUsage': None}]}
 
-    def provider(self, workspace, directory, prompt, schema, timeout):
+    def provider(self, workspace, directory, prompt, schema, timeout, *, instruction_role='analysis'):
         delivered = json.loads(prompt[prompt.index('{"request":'):])
         task = delivered['task']
         canonical = self.agent.session.store.get('tasks/' + task['id'] + '/canonical-context.json') \

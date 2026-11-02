@@ -111,7 +111,7 @@ class IncrementalCliConfigTests(unittest.TestCase):
         for mode, valid in configurations.items():
             self.write_config(mode)
             profile = ProjectProfile.load(self.config_path)
-            profile._validate_context_mode(SimpleNamespace(session=SimpleNamespace(config=valid)))
+            profile._validate_context_mode(SimpleNamespace(stage='discovery', session=SimpleNamespace(config=valid)))
             invalid = [value for other, value in configurations.items() if other != mode]
             invalid += [{'incrementalPolicy': INCREMENTAL_POLICY, 'evidencePolicy': EVIDENCE_POLICY},
                         {'incrementalPolicy': 'unknown'}, {'incrementalPolicy': None},
@@ -119,7 +119,7 @@ class IncrementalCliConfigTests(unittest.TestCase):
             for configuration in invalid:
                 with self.subTest(mode=mode, configuration=configuration), self.assertRaises(ValueError):
                     profile._validate_context_mode(
-                        SimpleNamespace(session=SimpleNamespace(config=configuration)))
+                        SimpleNamespace(stage='discovery', session=SimpleNamespace(config=configuration)))
 
     def test_changing_profile_mode_does_not_mutate_its_existing_workspace(self):
         self.invoke(DiscoveryAgent, ['init', '--config', str(self.config_path)])

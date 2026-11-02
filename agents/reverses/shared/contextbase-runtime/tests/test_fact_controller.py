@@ -40,7 +40,7 @@ public class RegistrationController {
     def tearDown(self):
         self.temporary.cleanup()
 
-    def provider(self, workspace, job, prompt, schema, timeout):
+    def provider(self, workspace, job, prompt, schema, timeout, *, instruction_role='analysis'):
         context = json.loads(prompt[prompt.index('{"request":'):])
         self.contexts.append(context)
         answer = simulated_answer(context)
@@ -98,7 +98,7 @@ public class RegistrationController {
     def test_discovery_author_task_and_transport_schema_only_offer_its_owned_record_kinds(self):
         expected = set(DiscoveryAgent.record_kinds)
         observed = []
-        def scoped_provider(workspace, job, prompt, schema, timeout):
+        def scoped_provider(workspace, job, prompt, schema, timeout, *, instruction_role='analysis'):
             context = json.loads(prompt[prompt.index('{"request":'):])
             if context['task']['operation'] == 'extract':
                 kinds = context['task'].get('recordKinds')
@@ -108,7 +108,7 @@ public class RegistrationController {
                 self.assertEqual(expected, set(enum))
                 self.assertFalse({'fact', 'relation'} & set(enum))
                 observed.append(context['task']['id'])
-            return self.provider(workspace, job, prompt, schema, timeout)
+            return self.provider(workspace, job, prompt, schema, timeout, instruction_role=instruction_role)
         with patch('contextbase_runtime.provider.run_job', side_effect=scoped_provider):
             self.assertEqual('complete', self.agent.run(inline_sources=True)['status'])
         self.assertEqual(1, len(observed))

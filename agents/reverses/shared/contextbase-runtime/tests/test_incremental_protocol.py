@@ -29,6 +29,13 @@ class NoSourceAccess:
     def __init__(self, source, index, task):
         pass
 
+    def _assert_binding(self):
+        pass
+
+    def verify_replies(self, pairs):
+        if list(pairs):
+            raise AssertionError('This protocol test must not replay a source request')
+
     def handle(self, request):
         raise AssertionError('This protocol test must not issue a source request')
 

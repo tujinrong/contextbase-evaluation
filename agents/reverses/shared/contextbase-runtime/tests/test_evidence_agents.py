@@ -42,7 +42,7 @@ class EvidenceAgentTests(unittest.TestCase):
         self.agents[agent.session.source.root] = agent
         return agent
 
-    def provider(self, workspace, job, prompt, schema, timeout):
+    def provider(self, workspace, job, prompt, schema, timeout, *, instruction_role='analysis'):
         # Only the final JSON line is context; policy prose is not parsed as data.
         context = json.loads(prompt.rsplit('\n', 1)[-1])
         self.calls.append(deepcopy(context))

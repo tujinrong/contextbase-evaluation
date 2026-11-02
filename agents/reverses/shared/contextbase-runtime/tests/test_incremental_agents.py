@@ -167,7 +167,7 @@ class IncrementalAgentTests(unittest.TestCase):
                 'findings': [], 'unknowns': [],
                 'factUsageCheck': positive if task.get('sourceFactsSha256') else None}
 
-    def provider(self, workspace, job, prompt, schema, timeout):
+    def provider(self, workspace, job, prompt, schema, timeout, *, instruction_role='analysis'):
         context = json.loads(prompt.rsplit('\n', 1)[-1])
         self.calls.append(deepcopy(context))
         agent = self.agents[Path(workspace)]

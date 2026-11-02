@@ -126,6 +126,12 @@ def prepare_report(agent, envelope: dict, directory: Path, final_directory: Path
     index = agent.session.fact_index()
     fact_validation = index.validate()
     verification, usage = _accepted_artifacts(agent, status, payload, index)
+    amendment_audit = None
+    candidate = agent.session.store.get('candidates/' + verification['candidate'] + '.json')
+    if candidate['provenance'].get('proposalOrigin') == 'amended-untrusted-candidate':
+        from contextbase_runtime import amendment_runtime
+        author_task = agent.session.store.get('tasks/' + candidate['taskId'] + '/request.json')
+        amendment_audit = amendment_runtime.audit(agent.session, author_task)
     records, questions = payload['records'], deepcopy(payload['unknowns'])
     for key, item in questions.items():
         current = status['unknowns'].get(key)
@@ -203,6 +209,33 @@ def prepare_report(agent, envelope: dict, directory: Path, final_directory: Path
     if fact_check:
         review += ['### 事実利用', '', _md(fact_check['status']) + ': ' + _md(fact_check['reason']),
                    '', evidence(fact_check['evidence']), '']
+    if amendment_audit is not None:
+        dispositions = {item['issueId']: item for item in amendment_audit['dispositions']}
+        issue_checks = {item['issueId']: item for item in verification['answer']['amendmentIssueChecks']}
+        author_status = {'changed': '変更した', 'already-addressed': '既に反映されている',
+                         'source-refuted': '原文根拠で異議を示す', 'unresolved': '未解決'}
+        independent_status = {'pass': '合格', 'fail': '不合格', 'unknown': '未確認'}
+        review += ['### 改訂指摘と処置', '',
+                   '旧指摘は調査入力であり、新候補への正式判定ではない。作者の処置宣言と今回の独立判定を区別する。', '',
+                   '- 改訂元候補 SHA-256: `' + amendment_audit['baseCandidateSha256'] + '`',
+                   '- 今回の検証対象候補 SHA-256: `' + verification['candidate'] + '`',
+                   '- 今回の完全view SHA-256: `' + verification['viewSha256'] + '`', '']
+        for issue in amendment_audit['issues']:
+            finding, disposition, check = issue['finding'], dispositions[issue['id']], issue_checks[issue['id']]
+            review += ['#### ' + _md(finding['id']), '',
+                       '- 指摘ID: ' + _md(issue['id']),
+                       '- 指摘元候補 SHA-256: `' + issue['sourceCandidateSha256'] + '`',
+                       '- 指摘元verification SHA-256: `' + issue['sourceVerificationSha256'] + '`',
+                       '- 担当要求: ' + _md(finding['requirement']),
+                       '- 元指摘の内容: ' + _md(finding['detail']),
+                       '- 元指摘の原文参照: ' + evidence(finding['evidence']), '',
+                       '- 作者処置（未信頼の申告）: ' + author_status[disposition['status']],
+                       '- 作者の理由: ' + _md(disposition['reason']),
+                       '- 作者が示すrecord: ' + value(disposition['recordKeys']),
+                       '- 作者の原文根拠: ' + evidence(disposition['evidence']), '',
+                       '- 今回の独立判定: ' + independent_status[check['status']],
+                       '- 独立判定の理由: ' + _md(check['reason']),
+                       '- 独立判定の原文根拠: ' + evidence(check['evidence']), '']
     review += ['### 検証指摘', '']
     for item in verification['answer']['findings']:
         review += ['- ' + _md(item['severity']) + ' / ' + _md(item['requirement']) + ': ' +
