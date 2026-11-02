@@ -97,6 +97,9 @@ class ProjectAnalysisTests(unittest.TestCase):
         self.assertEqual('complete', result['status'])
         self.assertEqual(2, len(self.calls))
         self.assertEqual(['analysis', 'verification'], [row['instruction_role'] for row in self.calls])
+        for call in self.calls:
+            self.assertEqual('contextbase-draft-unknowns/2', call['task']['draftUnknownPolicy'])
+            self.assertEqual('contextbase-fact-usage/2', call['task']['factUsagePolicy'])
         self.assertNotEqual(self.calls[0]['task']['contextId'], self.calls[1]['task']['contextId'])
         self.assertNotEqual(self.calls[0]['role']['instructions_sha256'], self.calls[1]['role']['instructions_sha256'])
         exported = self.agent.export()

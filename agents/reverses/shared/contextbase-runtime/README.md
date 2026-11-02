@@ -1,8 +1,20 @@
 # ContextBase 共通ランタイム
 
-文書版0.1.21／2026-11-02。文書版はpackage版と区別する。ソース全体の連続解析入口と、独立した [discovery-agent](../../discovery-agent/README.md)、[relationship-agent](../../relationship-agent/README.md)、[behavior-agent](../../behavior-agent/README.md)が利用するPythonライブラリー。reverse-agentは依存先に含めない。
+文書版0.1.22／2026-11-02。文書版はpackage版と区別する。ソース全体の連続解析入口と、独立した [discovery-agent](../../discovery-agent/README.md)、[relationship-agent](../../relationship-agent/README.md)、[behavior-agent](../../behavior-agent/README.md)が利用するPythonライブラリー。reverse-agentは依存先に含めない。
 
 `analyze`入口では、解析者が元要求の全義務を一つのCodex工具会話で調査し、別文脈の検証者が凍結候補全体を確認する。目録・関係・振舞いは成果の責務・依存を表し、3 Agentの固定起動を要求しない。従来の独立CLIも維持する。導入・実行は下記のnative手順、独立経路は [独立Agentガイド](../../reverse-agent/docs/ContextBase初期実装.md)を参照する。
+
+新規native taskは`draftUnknownPolicy=contextbase-draft-unknowns/2`と`factUsagePolicy=contextbase-fact-usage/2`を固定する。unknownの作成はunit内の局所ID、既存問題の参照はsummaryの`referenceId`を使用する。保存済み問題は後続草稿でも保持されるため、unit終了時に新規問題がなければ`unknowns=[]`とする。完全IDを新規定義へ入れた場合は状態変更前に拒否する。問題文による自動統合やblocking判断の変更は行わない。新policyを持たない過去のtask・記録は従来の意味で回放し、既存候補を移行しない。
+
+原文が主張を支持していても、索引の範囲重複だけでは適用可能なFactがあるとは限らない。新policyでは作者が`factUsage.indexedEvidence="not-applicable"`、空の`factIds`、具体的な`reason`を提出できる。これは作者の未検証判断であり、原文交付・hash・引用範囲の検査を代替しない。該当record keyを凍結候補から検証taskへ束縛し、検証者は`factUsageCheck.sourceOnlyChecks`で各keyを一度ずつ確認する。一件でもfail／unknownなら、全体のfactUsageCheckがpassでも採用しない。宣言のない空関連と不正なFact IDは従来どおり拒否する。
+
+[411件の凍結回帰検査](build/native-tools/flow-repair-validation.json)が555.50秒で通過し、skipは0件だった。[旧8会話・362成功呼出しの回放と新インターフェイスの検査](build/native-tools/flow-repair-replay.json)は、旧回执・候補・状態が不変であることを確認した。最新作者の記録済み引数を明示的に調整した回放では、71記録を保持し、unknownは元の8項目から4質問となり、`support.build`は無関係なimportの照会・関連付けを行わず不適用宣言を保存した。変更記録は重複説明を除いたsystem集計一件だけで、候補は凍結するが採用しない。これは新しいAI実行結果ではなく、指示の学習効果・解析品質の改善・実時間短縮を示すものではない。
+
+現在の[正式成果](../../../../sample-project1/spec-reverse/CSharp_ASPNET/native/project-analysis/contextbase.json)は、下記の3記録を限定改訂した後、候補全体の独立検証と[追加原文核查](../../../../sample-project1/.tmp/contextbase/csharp_aspnet-native-corrected/source-spotcheck.json)を通過した78記録である。fact.browser-stateは取消と確認の両経路で理由をコピーすることを明記し、data.confirmation／data.runtimeはC#の登録・保存先の原文引用と適用Factを補った。他75記録の宣言内容、unknown3件とfuture followup1件は保持した。目録・関係・振舞い、17件の原文主体の適用性判断、2件の改訂指摘が全てpassで、blocking findingはない。[改訂・全量再検証の実行記録](../../../../sample-project1/.tmp/contextbase/corrected-review/contextbase-native-run.json)は1,388.80秒（23分09秒）であり、全量新規抽出との性能比較には使わない。これは静的ソース解析の成果で、人手受入れや入力program・DB実行の記録ではない。
+
+改訂元の[実モデル全量実行](../../../../sample-project1/.tmp/contextbase/flow-repair-review/contextbase-native-run.json)は、同じ78ファイル・4,797行、CLI・model／reasoningで1,715.14秒（28分35秒、作者962.00秒・検証684.17秒）を要した。前回より38.00秒／2.17%短い単回観測だったが、目録と振舞いの検証が不合格のため、この段階では全義務未採用で正式exportを更新しなかった。78候補記録・主機能6・unknown3を生成し、旧unknown重複定義の修復環は発生しなかった。19件の不適用判断のうち3件が拒否された。ブラウザーの重複確認取消でも理由が主フォームへコピーされるのに、作者は確認時だけと誤記した。data.confirmation／data.runtimeはSQL定義にC#登録・保存先の主張を混在させ、SQL引用だけで索引不適用としていた。引用範囲の索引重複が0でも、必要なC#引用の欠落に起因し得るため自動免除できない。
+
+[逐次I/O](../../../../sample-project1/.tmp/contextbase/flow-repair-review/contextbase-native-io/index.html)は235原始ファイル・100完了イベントを保存した。MCPは98試行・97成功・1失敗。検証者のfuture followup判定でunresolvedと空blocking義務を併記し、一件のstatus／reasonを修正して約57 KBの審査オブジェクトを再提出した。再試行区間25.12秒はモデル・サービス・通信等を含み、全文再生成時間ではない。二重inventory照会と一行の範囲重複も残る。原文の[追加Agent核查](../../../../sample-project1/.tmp/contextbase/csharp_aspnet-native-flow-repair/source-spotcheck.json)も3件の不備を確認した。実モデルによる本実行と、前段の受控回放を混同せず、人手受入れや入力program実行の結果とはしない。
 
 ## 実装の読み方
 
@@ -31,7 +43,7 @@ controllerは実行モードが消費する指示・schema・promptだけを準�
 
 `analysis_state(collection=summary)`はrecord件数、unit状態とunknown一覧を返す。件数は指定された保存viewの統計であり、意味上の完全性を保証しない。同じ不確実性を別unitで扱う場合は、適用範囲と阻害責任を確認して既存の完全なunknown IDを参照する。問題文一致による自動統合は行わない。工具試行の経過時間はcanonical回放とは別の`timings/`に保存し、失敗も記録する。
 
-草稿工具には`include_diagnostics=true`を指定する。変更対象recordのfactUsageについて、recordKey・問題コード・既存引用範囲を持つ非阻害の機械診断を返す。全問題は`analysis_state(collection=fact_usage_diagnostics)`の文字ページで取得する。古い指定なし呼出しの返信と回放は維持する。未完了草稿は保存できるが、終提出の既存の厳密な検査は緩和しない。範囲重複は意味上の支持ではなく、宿主がfactIdsを補充したり未取得Factの交付権を与えたりしない。
+草稿工具には`include_diagnostics=true`を指定する。変更対象recordのfactUsageについて、recordKey・問題コード・既存引用範囲を持つ非阻害の機械診断を返す。全問題は`analysis_state(collection=fact_usage_diagnostics)`の文字ページで取得する。古い指定なし呼出しの返信と回放は維持する。未完了草稿は保存できるが、終提出ではtaskに固定した規則で検査する。範囲重複は意味上の支持ではなく、宿主がfactIdsを補充したり未取得Factの交付権を与えたりしない。
 
 共有validatorの`completeReport`案内はnative工具会話向けである。legacy呼出しには`analysis_state`工具がないため、programmaticな全量診断は`FactIndex.usage_diagnostics`を利用する。検査条件自体は共通である。
 

@@ -44,6 +44,12 @@ class AgentWorkspace(Session):
         if self.config.get('semanticOptions'):
             from .semantic_support import task_extensions
             extensions.update(task_extensions(self))
+        from .facts import USAGE_POLICY
+        if extensions.get('factUsagePolicy') == USAGE_POLICY and task['operation'] == 'verify':
+            proposal = self.store.get('candidates/' + task['candidate'] + '.json')
+            extensions['sourceOnlyRecordKeys'] = sorted(row['recordKey']
+                for row in proposal['answer'].get('factUsage', [])
+                if row.get('indexedEvidence') == 'not-applicable')
         return extensions
 
     def _catalog_policy(self):
@@ -55,18 +61,18 @@ class AgentWorkspace(Session):
 
     def _instruction(self, task):
         if task['operation'] == 'extract':
-            from .facts import POLICY, EVIDENCE_POLICY
+            from .facts import instruction as fact_instruction
             from .repair import POLICY as REPAIR_POLICY
             from .candidate_amendment import POLICY as AMENDMENT_POLICY
-            fact_policy = EVIDENCE_POLICY if task.get('evidencePolicy') or task.get('incrementalPolicy') or task.get('nativeToolsPolicy') else POLICY
+            fact_policy = fact_instruction(task, evidence=bool(task.get('evidencePolicy') or task.get('incrementalPolicy') or task.get('nativeToolsPolicy')))
             return self.agent.instruction + self._semantic_instruction(task) + ('\n' + fact_policy if task.get('sourceFactsSha256') else '') + ('\n' + REPAIR_POLICY if task.get('repairSeedSha256') else '') + ('\n' + AMENDMENT_POLICY if task.get('amendmentPolicy') else '') + '''
 Follow-up paths name acquired files from task.authorizedSourcePaths only.
 For missing or omitted materials, preserve the requested names in the question
 and unknown, using paths:[] unless an acquired file actually supports the query.
 Do not fabricate an anchor. Follow-up stage and requirement must match an
 original goal obligation in the assigned scope; requirement may be null.'''
-        from .facts import VERIFY_POLICY, EVIDENCE_VERIFY_POLICY
-        fact_policy = EVIDENCE_VERIFY_POLICY if task.get('evidencePolicy') or task.get('incrementalPolicy') or task.get('nativeToolsPolicy') else VERIFY_POLICY
+        from .facts import instruction as fact_instruction
+        fact_policy = fact_instruction(task, verification=True, evidence=bool(task.get('evidencePolicy') or task.get('incrementalPolicy') or task.get('nativeToolsPolicy')))
         return super()._instruction(task) + self._semantic_instruction(task) + ('\n' + fact_policy if task.get('sourceFactsSha256') else '') + (catalog.VERIFICATION_RULES
             if task.get('catalogPolicy') == catalog.VERSION else '') + '''\nQuestions whose ID starts with followup:
 are explicit investigation requests. Mark one resolved with exact source evidence
@@ -75,16 +81,16 @@ in a narrower scope but does not close the investigation request. Historical
 acceptance of the target requirement alone is not proof of resolution.'''
 
     def _incremental_instruction(self, task):
-        from .facts import EVIDENCE_POLICY, EVIDENCE_VERIFY_POLICY
+        from .facts import instruction as fact_instruction
         if task['operation'] == 'extract':
             from .candidate_amendment import POLICY as AMENDMENT_POLICY
-            return (self.agent.instruction + self._semantic_instruction(task) + ('\n' + EVIDENCE_POLICY if task.get('sourceFactsSha256') else '')
+            return (self.agent.instruction + self._semantic_instruction(task) + ('\n' + fact_instruction(task, evidence=True) if task.get('sourceFactsSha256') else '')
                     + ('\n' + AMENDMENT_POLICY if task.get('amendmentPolicy') else '')
                     + '\nPreserve original scope/owner and return only this phase schema. '
                     'Followup paths must name acquired files; missing materials use paths:[].')
         return (super()._incremental_instruction(task) + self._semantic_instruction(task)
                 + ('\n' + catalog.EXTRACTION_RULES if task.get('catalogPolicy') == catalog.VERSION else '')
-                + ('\n' + EVIDENCE_VERIFY_POLICY if task.get('sourceFactsSha256') else '')
+                + ('\n' + fact_instruction(task, evidence=True, verification=True) if task.get('sourceFactsSha256') else '')
                 + '\nThe current host unit alone assigns returned record/unknown/scope/check arrays. '
                   'Root requirements remain complete and the host exhaustively assigns all other units. '
                   'Independently resolve inherited followup questions from source; historical acceptance '
@@ -161,6 +167,9 @@ acceptance of the target requirement alone is not proof of resolution.'''
             if (answer.get('sourceFactsSha256') != self.fact_index().sha256
                     or answer.get('factUsageCheck', {}).get('status') != 'pass'):
                 raise AcceptanceError('Independent source-fact usage verification must pass')
+            if any(row['status'] != 'pass'
+                   for row in answer['factUsageCheck'].get('sourceOnlyChecks', [])):
+                raise AcceptanceError('Independent source-only applicability verification must pass')
         modern = self._catalog_policy() == catalog.VERSION
         if modern:
             try:

@@ -8,6 +8,8 @@ from . import investigation
 def summarize(task, events, units, revision, context=None):
     """Expose bookkeeping without interpreting claims or merging unknowns."""
     context = context or {}
+    explicit = investigation.explicit_unknown_definitions(task)
+    definition_ids = {}
     if task['operation'] == 'verify':
         view = context.get('verificationView', {})
         records = list(view.get('records', {}).values())
@@ -15,6 +17,8 @@ def summarize(task, events, units, revision, context=None):
             {**deepcopy(row['content']), 'id': identifier,
              'contentSha256': row['sha256']}
             for identifier, row in sorted(view.get('unknowns', {}).items())]
+        definition_ids = {identifier: row['content']['id']
+                          for identifier, row in view.get('unknowns', {}).items()}
         scope = 'frozen-verification-view'
         unit_states = []
     else:
@@ -29,12 +33,29 @@ def summarize(task, events, units, revision, context=None):
              'complete': latest.get(unit['id'], {}).get('complete', False),
              'remainingQuestions': deepcopy(latest.get(unit['id'], {}).get('remainingQuestions', []))}
             for unit in units]
+    if explicit:
+        for question in questions:
+            identifier = question['id']
+            definition = definition_ids.get(identifier, identifier)
+            # Frozen future followups have identities but no draft definition.
+            if task['operation'] == 'verify' and identifier.startswith('followup:'):
+                owner, local = None, None
+            else:
+                owner, separator, local = definition.partition(':')
+                if not separator:
+                    owner, local = None, None
+            question.update(referenceId=identifier, definitionId=local, unitId=owner)
+    meaning = ('Counts of saved records only, not semantic completeness or acceptance. '
+               'Unknown IDs name separate questions; reuse an existing ID only when its '
+               'scope, related obligations and blocking rationale apply.')
+    if explicit:
+        meaning += (' referenceId is for classification.unknownIds; definitionId is local to unitId. '
+                    'Saved questions remain retained; close a unit with unknowns=[] when no new '
+                    'definitions are needed.')
     return {
         'scope': scope,
         'revision': revision,
-        'meaning': 'Counts of saved records only, not semantic completeness or acceptance. '
-                   'Unknown IDs name separate questions; reuse an existing ID only when its '
-                   'scope, related obligations and blocking rationale apply.',
+        'meaning': meaning,
         'recordCounts': {
             'total': len(records),
             'byKind': dict(sorted(Counter(row['kind'] for row in records).items())),

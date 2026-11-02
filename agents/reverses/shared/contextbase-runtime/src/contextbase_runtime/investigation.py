@@ -6,16 +6,41 @@ These functions never infer coverage, resolve semantic identities or adopt data.
 from __future__ import annotations
 
 from copy import deepcopy
+import re
 
 from . import contracts
 
 
 VERSION = 'contextbase-drafts/1'
+UNKNOWN_POLICY = 'contextbase-draft-unknowns/2'
 _UNIT_ID = {'type': 'string', 'pattern': '^[A-Za-z0-9_-]{1,64}$'}
 _VERSION_REF = contracts.obj({'key': contracts.TEXT, 'sha256': contracts.SHA256})
 
 
+def explicit_unknown_definitions(task):
+    """Keep legacy event semantics unless a task binds the new identity policy."""
+    policy = task.get('draftUnknownPolicy')
+    if policy not in (None, UNKNOWN_POLICY):
+        raise ValueError('Unsupported draft unknown policy')
+    return policy == UNKNOWN_POLICY
+
+
+def validate_unknown_definitions(task, definitions):
+    """Reject a reference supplied as a new definition before any state changes."""
+    if not explicit_unknown_definitions(task) or not isinstance(definitions, list):
+        return
+    for definition in definitions:
+        if not isinstance(definition, dict):
+            continue
+        identifier = definition.get('id')
+        if isinstance(identifier, str) and (not identifier or re.search(r'[:\s]', identifier)):
+            raise ValueError('Unknown id must be a local definition ID without colons or whitespace. '
+                             'Existing questions are retained automatically; close a unit with unknowns=[]. '
+                             'Reference an existing referenceId in classification.unknownIds.')
+
+
 def _assigned(task):
+    explicit_unknown_definitions(task)
     if task.get('operation') != 'extract' or not task.get('requirements'):
         raise ValueError('Drafts require an extraction task with original obligations')
     obligations = {item['id']: item for item in task['goalRequirements']}
@@ -59,13 +84,23 @@ def draft_schema(task, unit):
     records = deepcopy(properties['records'])
     records['items']['properties']['ownerRequirement'] = {
         'type': 'string', 'const': unit['requirement']}
+    unknowns = deepcopy(properties['unknowns'])
+    if explicit_unknown_definitions(task):
+        unknowns['description'] = (
+            'New local unknown definitions. Existing questions are retained automatically; '
+            'use unknowns=[] when closing a unit without new questions. Reuse an existing '
+            'referenceId in classification.unknownIds instead of declaring it again.')
+        unknowns['items']['properties']['id'] = {
+            **unknowns['items']['properties']['id'], 'pattern': r'^[^:\s]+$',
+            'description': 'Local definition ID without colons or whitespace, scoped to this unit. '
+                           'Existing referenceId values belong in classification.unknownIds.'}
     return contracts.obj({
         'unitId': {'type': 'string', 'const': unit['id']},
         'records': records,
         'expectedVersions': contracts.arr(deepcopy(_VERSION_REF)),
         'removals': contracts.arr(contracts.obj({
             **deepcopy(_VERSION_REF['properties']), 'reason': deepcopy(contracts.TEXT)})),
-        'unknowns': deepcopy(properties['unknowns']),
+        'unknowns': unknowns,
         'followups': deepcopy(properties['followups']),
         'factUsage': deepcopy(properties.get('factUsage', {
             'type': 'array', 'items': deepcopy(contracts.TEXT), 'maxItems': 0})),
@@ -128,6 +163,8 @@ def _reduce(task, events):
         if not isinstance(event, dict) or set(event) != {'unit', 'answer'}:
             raise ValueError('Draft event must contain exactly its unit and model answer')
         unit, answer = event['unit'], event['answer']
+        if isinstance(answer, dict):
+            validate_unknown_definitions(task, answer.get('unknowns'))
         contracts.validate(answer, draft_schema(task, unit))
         _register(units, unit)
         for added in answer['addUnits']:

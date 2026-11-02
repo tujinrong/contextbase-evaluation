@@ -334,6 +334,9 @@ def validate_result(answer: dict, task: dict, source, existing_keys=()) -> None:
         if (task.get('sourceFactsSha256') and answer['factUsageCheck']['status'] == 'pass'
                 and not answer['factUsageCheck']['evidence']):
             raise ValueError('Positive source-fact usage verification requires source evidence')
+        if task.get('sourceFactsSha256'):
+            from .facts import validate_source_only_checks
+            validate_source_only_checks(task, answer['factUsageCheck'])
         bindings = {item['id']: item['sha256'] for item in task['unknownBindings']}
         unknown_ids = _unique_ids(answer['unknownChecks'], 'unknownId', 'unknown verification')
         if set(unknown_ids) != set(bindings):
@@ -356,6 +359,7 @@ def validate_result(answer: dict, task: dict, source, existing_keys=()) -> None:
         groups.append(answer['amendmentIssueChecks'])
     if verification and task.get('sourceFactsSha256'):
         groups.append([answer['factUsageCheck']])
+        groups.append(answer['factUsageCheck'].get('sourceOnlyChecks', []))
     if verification and task.get('catalogPolicy') == catalog.VERSION:
         groups.extend([answer['classificationChecks'], answer['scopeChecks']])
     source.verify_evidence_many([ref for group in groups for item in group

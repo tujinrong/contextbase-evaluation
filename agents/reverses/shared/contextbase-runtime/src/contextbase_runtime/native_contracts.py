@@ -18,6 +18,7 @@ class ToolContracts:
 
     def __init__(self, task, retained_amendment=None):
         task = deepcopy(task)
+        self._task = task
         retained_amendment = deepcopy(retained_amendment)
         definitions = _common_tools(retained_amendment)
         if retained_amendment:
@@ -49,6 +50,8 @@ class ToolContracts:
         validator = self._validators.get(name)
         if validator is None:
             raise ValueError('Tool is not authorized for this role')
+        if name == 'draft_apply' and isinstance(arguments, dict) and isinstance(arguments.get('draft'), dict):
+            investigation.validate_unknown_definitions(self._task, arguments['draft'].get('unknowns'))
         _raise_argument_errors(list(validator.iter_errors(arguments)))
 
     def describe(self, contract, category):
@@ -129,7 +132,7 @@ def _author_tools(task):
     patch_fields = c.obj({name: deepcopy(record_properties[name]) for name in PATCH_FIELDS
                          if name in record_properties}, required=[])
     patch_fields['minProperties'] = 1
-    return [
+    definitions = [
         {'name': 'plan_update', 'description': 'Save or extend your investigation plan; choose execution order yourself.',
          'inputSchema': c.obj({**mutation, 'plan': investigation.plan_schema(task)})},
         {'name': 'draft_apply', 'description': 'Persist a typed draft with exact record versions. Required record fields include key, ownerRequirement, kind, name, statement, basis, evidence and dependsOn. Before replacing or removing a record, retrieve analysis_state(collection=draft_versions, offset=0, limit=12000) and follow next_offset if present; copy its exact normalized {key,sha256} into expectedVersions or removals, and use the reply revision as expected_revision. Never compute or guess these hashes. Use classification=null on noncatalog kinds; inspect contract_schema for exact classified variants. Inspect plan for unit definitions.',
@@ -145,6 +148,12 @@ def _author_tools(task):
              required=['operation_id', 'expected_revision', 'unit_id'])},
         {'name': 'submit_candidate', 'description': 'Freeze ended draft units and coverage declarations for independent verification. Blocking unknowns may remain; submission is not acceptance.',
          'inputSchema': c.obj({**mutation, 'closures': c.arr(closure_schema)})}]
+    if investigation.explicit_unknown_definitions(task):
+        definitions[1]['description'] += (
+            ' unknowns creates local definitions only. Existing questions remain saved; '
+            'close with unknowns=[] when there are no new questions. Reference a saved '
+            'referenceId in classification.unknownIds without redeclaring its definition.')
+    return definitions
 
 
 def _describe_followups(schema):

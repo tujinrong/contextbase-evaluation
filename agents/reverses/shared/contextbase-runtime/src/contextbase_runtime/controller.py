@@ -432,8 +432,12 @@ class Session:
     def _task_extensions(self, task, view):
         if self.config.get('nativeToolsPolicy'):
             from .native_tools import VERSION
+            from .investigation import UNKNOWN_POLICY
+            from .facts import USAGE_POLICY
             role = 'verification' if task['operation'] == 'verify' else 'analysis'
             return {'nativeToolsPolicy': VERSION,
+                    'draftUnknownPolicy': UNKNOWN_POLICY,
+                    'factUsagePolicy': USAGE_POLICY,
                     'roleSpecSha256': contracts.digest(self.config['roleSpecs'][role])}
         if self.config.get('incrementalPolicy'):
             from .review_set import VERSION as REVIEW_VERSION

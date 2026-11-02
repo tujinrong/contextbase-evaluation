@@ -18,6 +18,7 @@ from .sources import decode
 
 
 VERSION = 'contextbase-source-facts/1'
+USAGE_POLICY = 'contextbase-fact-usage/2'
 _USAGE_POLICY = '''Fact IDs, source hashes and line ranges are host-owned.
 Calls are syntax observations, not resolved semantic edges. A caller is the
 containing declaration; lambda bodies retain their enclosing declared caller.
@@ -61,6 +62,33 @@ actually supplied to this verifier task. Preserve syntax/semantic and
 registration/reachability distinctions. Return the host's sourceFactsSha256.
 The entire candidate and retained verification view remain assigned; evidence
 pagination does not narrow the requirements or permit skipping unknowns.'''
+
+
+def instruction(task, *, evidence=False, verification=False):
+    """Select the task-bound evidence rules without changing historical prompts."""
+    if verification:
+        text = EVIDENCE_VERIFY_POLICY if evidence else VERIFY_POLICY
+        if task.get('factUsagePolicy') == USAGE_POLICY and source_only_record_keys(task):
+            text += '''
+For every task.sourceOnlyRecordKeys entry, return exactly one sourceOnlyChecks
+item inside factUsageCheck with recordKey, status, reason and original-source
+evidence. Independently assess the frozen author's indexedEvidence=not-applicable
+explanation against the claim, cited source and available index. Use fail when
+applicable indexed evidence was bypassed, unknown when applicability remains
+unresolved, and pass with evidence only when original text supports the claim
+and the index cannot express its support. Any fail or unknown prevents adoption,
+including when the overall factUsageCheck is pass.'''
+        return text
+    text = EVIDENCE_POLICY if evidence else POLICY
+    if task.get('factUsagePolicy') == USAGE_POLICY:
+        text = text.replace('''Empty factIds are allowed only when the record's evidence has no indexed facts;
+explain the unsupported or uncovered material instead.''', '''Use factIds for indexed facts that support the claim. Empty factIds need an
+explanation when no indexed facts overlap the cited source. When indexed rows
+overlap but cannot express support for this claim, set indexedEvidence to
+not-applicable with empty factIds and explain that applicability judgment in
+reason. Keep the original-source citations. This declaration remains subject to
+explicit independent review; a range overlap alone is not semantic support.''')
+    return text
 
 
 def extractor_fingerprint():
@@ -306,12 +334,17 @@ class FactIndex:
                 ref['path'] == evidence['path'] and ref['startLine'] <= evidence['endLine']
                 and evidence['startLine'] <= ref['endLine'] for ref in fact['data']['evidence']
                 for evidence in record['evidence'])}
+            declaration = item.get('indexedEvidence')
             missing = set(item['factIds']) - set(self.by_id)
-            if missing:
+            if 'indexedEvidence' in item and (declaration != 'not-applicable'
+                    or item['factIds'] or not item.get('reason', '').strip()):
+                issue(key, 'invalid-applicability',
+                      'Indexed evidence not-applicable requires empty factIds and a nonblank explanation', available)
+            elif missing:
                 issue(key, 'unknown-fact', 'Source-fact identifier does not exist', available)
             elif set(item['factIds']) - available:
                 issue(key, 'disjoint-fact', 'Source-fact evidence is not cited by record', available)
-            elif available and not item['factIds']:
+            elif available and not item['factIds'] and declaration != 'not-applicable':
                 issue(key, 'empty-usage', 'Available indexed evidence cannot be bypassed with empty fact usage', available)
         if record_keys is None:
             for key in sorted(set(usage) - set(records)):
@@ -348,11 +381,51 @@ def bound_usage_diagnostics(diagnostics, max_issues=8, max_ranges=3, max_bytes=8
 def response_properties(task, verification):
     if not task.get('sourceFactsSha256'):
         return {}
+    policy = task.get('factUsagePolicy')
+    if policy not in (None, USAGE_POLICY):
+        raise ValueError('Unknown fact-usage policy')
     properties = {'sourceFactsSha256': {'type': 'string', 'const': task['sourceFactsSha256']}}
     if verification:
-        properties['factUsageCheck'] = contracts.obj({'status': {'enum': ['pass', 'fail', 'unknown']},
-            'reason': contracts.TEXT, 'evidence': contracts.arr(contracts.EVIDENCE)})
+        check = {'status': {'enum': ['pass', 'fail', 'unknown']},
+                 'reason': contracts.TEXT, 'evidence': contracts.arr(contracts.EVIDENCE)}
+        keys = source_only_record_keys(task)
+        if keys:
+            check['sourceOnlyChecks'] = {**contracts.arr(contracts.obj({
+                'recordKey': {'type': 'string', 'enum': keys},
+                'status': {'enum': ['pass', 'fail', 'unknown']},
+                'reason': contracts.TEXT, 'evidence': contracts.arr(contracts.EVIDENCE)})),
+                'minItems': len(keys), 'maxItems': len(keys)}
+        properties['factUsageCheck'] = contracts.obj(check)
     else:
-        properties['factUsage'] = contracts.arr(contracts.obj({'recordKey': contracts.TEXT,
-            'factIds': contracts.STRINGS, 'reason': contracts.TEXT}))
+        usage = {'recordKey': contracts.TEXT, 'factIds': contracts.STRINGS, 'reason': contracts.TEXT}
+        if policy == USAGE_POLICY:
+            usage['indexedEvidence'] = {'enum': ['not-applicable'], 'description':
+                'Use with empty factIds only when indexed facts cannot support this claim. '
+                'Explain applicability in reason. Original source evidence and independent per-record review remain required.'}
+        properties['factUsage'] = contracts.arr(contracts.obj(usage,
+            required=['recordKey', 'factIds', 'reason']))
     return properties
+
+
+def source_only_record_keys(task):
+    """Read host-bound keys; absence preserves the original review contract."""
+    keys = task.get('sourceOnlyRecordKeys', [])
+    if (not isinstance(keys, list) or any(not isinstance(key, str) or not key.strip() for key in keys)
+            or len(keys) != len(set(keys))
+            or (keys and task.get('factUsagePolicy') != USAGE_POLICY)):
+        raise ValueError('Invalid source-only record review binding')
+    return list(keys)
+
+
+def validate_source_only_checks(task, fact_check):
+    """Check coverage and evidence, leaving applicability judgment to the verifier."""
+    keys = source_only_record_keys(task)
+    checks = fact_check.get('sourceOnlyChecks', [])
+    actual = [row['recordKey'] for row in checks]
+    if len(actual) != len(set(actual)) or set(actual) != set(keys):
+        raise ValueError('Source-only verification must account for every bound record exactly once')
+    for row in checks:
+        if not row['reason'].strip():
+            raise ValueError('Source-only verification requires a nonblank explanation')
+        if row['status'] == 'pass' and not row['evidence']:
+            raise ValueError('Positive source-only verification requires original source evidence')
