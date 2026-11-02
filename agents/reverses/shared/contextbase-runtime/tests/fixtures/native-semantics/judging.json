@@ -1,0 +1,52 @@
+{
+  "schema": "contextbase-native-semantics-judging/1",
+  "purpose": "Human evaluation only. This file is outside the authorized source capsule and is never supplied to either model role.",
+  "sourcePath": "InputRules.cs",
+  "sourceSha256": "15123f655db8de23ebc9d98c90ada2868f697c014252bfb43537d940d158ee05",
+  "cases": [
+    {
+      "id": "returned-value",
+      "symbols": [
+        "PrepareA",
+        "PrepareB",
+        "Normalize"
+      ],
+      "expected": "PrepareA discards Normalize's returned trimmed string and returns the original argument. PrepareB assigns the returned string and returns the trimmed value. An argument with surrounding spaces distinguishes the two methods.",
+      "counterclaim": "Calling Normalize proves that PrepareA returns normalized input.",
+      "evidenceAnchors": [
+        "Normalize(value);",
+        "value = Normalize(value);",
+        "return value.Trim();"
+      ]
+    },
+    {
+      "id": "boundary-predicate",
+      "symbols": [
+        "CheckA",
+        "CheckB"
+      ],
+      "expected": "For a non-null string with length 8, CheckA returns true and CheckB returns false. Both accept lengths below 8 and reject lengths above 8. The predicates inspect string.Length, not byte length or a trimmed value.",
+      "counterclaim": "Both methods accept an identical maximum length, or both inspect normalized length.",
+      "evidenceAnchors": [
+        "return value.Length <= 8;",
+        "return value.Length < 8;"
+      ]
+    },
+    {
+      "id": "exception-path",
+      "symbols": [
+        "ReadA",
+        "ReadB"
+      ],
+      "expected": "Both return a parsed Int32 on success and -1 for FormatException. ReadB additionally catches OverflowException and returns -2, while ReadA has no local overflow handler. Neither method locally catches ArgumentNullException. A general claim that every parse failure is converted to -1 is unsupported.",
+      "counterclaim": "ReadA and ReadB handle all parse failures identically or catch every exception.",
+      "evidenceAnchors": [
+        "return int.Parse(value);",
+        "catch (FormatException)",
+        "catch (OverflowException)",
+        "return -2;"
+      ]
+    }
+  ],
+  "reviewPolicy": "For each case, inspect the candidate's exact claim and original source citations, including contradictory claims elsewhere. Record pass, fail, omitted or uncertain manually. Host acceptance and a matching phrase are not a semantic verdict. Do not execute the capsule."
+}

@@ -31,3 +31,30 @@ class RoleTests(unittest.TestCase):
     def test_custom_provider_is_not_silently_replaced(self):
         with self.assertRaises(ValueError):
             normalize_roles({'analysis': {'model_provider': 'private'}})
+
+    def test_role_capabilities_are_explicit_and_preserve_legacy_snapshots(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            skill = root / 'review/SKILL.md'
+            skill.parent.mkdir()
+            skill.write_text('---\nname: source-review\ndescription: Review fixture.\n---\nRead source.\n',
+                             encoding='utf-8')
+            with patch.dict('os.environ', {'CODEX_HOME': str(root)}):
+                legacy = normalize_roles()
+                selected = normalize_roles({'analysis': {'capabilities': {
+                    'skills': ['review/SKILL.md'], 'web_search': 'cached', 'subagents': True}}}, root)
+            self.assertNotIn('capabilities', legacy['analysis'])
+            self.assertEqual(legacy, validate_roles(legacy))
+            self.assertNotIn('capabilities', selected['verification'])
+            policy = selected['analysis']['capabilities']
+            self.assertEqual('cached', policy['web_search'])
+            self.assertEqual(str(skill.resolve()), policy['skills'][0]['path'])
+            self.assertEqual(selected, validate_roles(selected))
+            skill.write_text('Changed Skill.', encoding='utf-8')
+            with self.assertRaises(ValueError):
+                validate_roles(selected)
+            self.assertEqual(selected, validate_roles(selected, check_file=False))
+
+    def test_unsupported_role_capability_fails_explicitly(self):
+        with self.assertRaisesRegex(ValueError, 'Unsupported role capabilities: shell'):
+            normalize_roles({'analysis': {'capabilities': {'shell': True}}})

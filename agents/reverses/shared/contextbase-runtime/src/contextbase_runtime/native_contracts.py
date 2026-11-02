@@ -7,6 +7,7 @@ import json
 from jsonschema import Draft202012Validator
 
 from . import catalog, candidate_amendment as amendment, contracts as c, investigation
+from .native_draft_patch import FIELDS as PATCH_FIELDS
 from .evidence import REQUEST_SCHEMA
 
 MAX_STATE_CHARACTERS = 32768
@@ -73,7 +74,10 @@ def _common_tools(retained_amendment):
         schema = deepcopy(schema)
         name = schema['properties'].pop('operation')['const']
         schema['required'].remove('operation')
-        result.append({'name': name, 'description': 'Retrieve sealed source evidence: ' + name,
+        description = 'Retrieve sealed source evidence: ' + name
+        if name in {'inventory', 'query', 'search'}:
+            description += '. offset and limit count ITEMS, not characters or bytes; limit is at most 100.'
+        result.append({'name': name, 'description': description,
                        'inputSchema': schema})
     result.append({'name': 'evidence_batch',
         'description': 'Retrieve up to 8 independent read/query/search requests in one call. Prefer this when the needed paths or filters are already known. Replies are complete, bounded by serialized UTF-8 bytes, and in request order. Follow next_request_index by resubmitting only the remaining suffix. Query pointers do not deliver original source text.',
@@ -84,7 +88,7 @@ def _common_tools(retained_amendment):
         'inputSchema': c.obj({'contract': {'enum': ['record', 'classification', 'result']},
                              'category': {'type': ['string', 'null']}})})
     result.append({'name': 'analysis_state', 'description': 'Read task, source scope, drafts and frozen review material as a JSON text page. offset and limit are CHARACTERS. Request limit=32768; the server may return fewer characters to fit its serialized UTF-8 byte budget. Always continue at next_offset, never offset+limit.',
-        'inputSchema': c.obj({'collection': {'enum': ['task', 'context', 'drafts', 'draft_versions', 'plan', 'submission'] + (['amendment'] if retained_amendment else [])},
+        'inputSchema': c.obj({'collection': {'enum': ['task', 'context', 'drafts', 'draft_versions', 'summary', 'fact_usage_diagnostics', 'plan', 'submission'] + (['amendment'] if retained_amendment else [])},
                              'offset': {'type': 'integer', 'minimum': 0, 'description': 'Character offset, initially 0.'},
                              'limit': {'type': 'integer', 'minimum': 1, 'maximum': MAX_STATE_CHARACTERS, 'description': 'Maximum character count; use 32768 and follow the actual next_offset.'},
                              'field': {'type': 'string', 'minLength': 1, 'description': 'Optional single top-level dictionary field; retrieve only missing material named in bootstrap directory.'}}, required=['collection', 'offset', 'limit'])})
@@ -104,6 +108,7 @@ def _amendment_tools(task, retained_amendment):
 
 def _author_tools(task):
     mutation = {'operation_id': c.TEXT, 'expected_revision': {'type': 'integer', 'minimum': 0}}
+    diagnostics = {'type': 'boolean', 'description': 'Use true to return bounded nonblocking fact-usage diagnostics for records affected by this mutation. No fact IDs or source content are delivered. Full current diagnostics: analysis_state(collection=fact_usage_diagnostics).'}
     sample = {'id': 'unit', 'requirement': task['requirements'][0],
               'question': 'Investigate the assigned source', 'paths': []}
     draft_schema = investigation.draft_schema(task, sample)
@@ -120,13 +125,24 @@ def _author_tools(task):
         'type': 'string', 'enum': task['requirements']}
     closure_schema = investigation.closure_schema(task, task['requirements'][0])
     closure_schema['properties']['requirement'] = {'type': 'string', 'enum': task['requirements']}
+    record_properties = draft_schema['properties']['records']['items']['properties']
+    patch_fields = c.obj({name: deepcopy(record_properties[name]) for name in PATCH_FIELDS
+                         if name in record_properties}, required=[])
+    patch_fields['minProperties'] = 1
     return [
         {'name': 'plan_update', 'description': 'Save or extend your investigation plan; choose execution order yourself.',
          'inputSchema': c.obj({**mutation, 'plan': investigation.plan_schema(task)})},
         {'name': 'draft_apply', 'description': 'Persist a typed draft with exact record versions. Required record fields include key, ownerRequirement, kind, name, statement, basis, evidence and dependsOn. Before replacing or removing a record, retrieve analysis_state(collection=draft_versions, offset=0, limit=12000) and follow next_offset if present; copy its exact normalized {key,sha256} into expectedVersions or removals, and use the reply revision as expected_revision. Never compute or guess these hashes. Use classification=null on noncatalog kinds; inspect contract_schema for exact classified variants. Inspect plan for unit definitions.',
          'inputSchema': c.obj({**mutation, 'unit_id': c.TEXT, 'draft': draft_schema,
+             'include_diagnostics': diagnostics,
              'retain_blocking_followups': {'type': 'boolean', 'description': 'Default false. Set true only to intentionally preserve NEW followups assigned to the current task, acknowledging that they prevent adoption. This never resolves or waives them. For current investigation use plans/remainingQuestions; preserve source uncertainty as unknowns. Classify genuinely unassigned future work explicitly rather than assigning its related topic as a completion target.'}},
              required=['operation_id', 'expected_revision', 'unit_id', 'draft'])},
+        {'name': 'draft_patch', 'description': 'Update existing records or replace their factUsage without resending unchanged record bodies or copying hashes. Supply the current expected_revision; the host checks it before deriving exact record versions. updates replaces only the named whole fields. factUsage replaces only the named record associations, which you must support from delivered facts/source. Keys must belong to this unit. This preserves its completion state, remaining questions, unknowns and followups. Inspect analysis_state(summary) for host counts and stable unknown identities.',
+         'inputSchema': c.obj({**mutation, 'unit_id': c.TEXT,
+             'include_diagnostics': diagnostics,
+             'updates': c.arr(c.obj({'key': c.TEXT, 'fields': patch_fields})),
+             'factUsage': deepcopy(draft_schema['properties']['factUsage'])},
+             required=['operation_id', 'expected_revision', 'unit_id'])},
         {'name': 'submit_candidate', 'description': 'Freeze ended draft units and coverage declarations for independent verification. Blocking unknowns may remain; submission is not acceptance.',
          'inputSchema': c.obj({**mutation, 'closures': c.arr(closure_schema)})}]
 

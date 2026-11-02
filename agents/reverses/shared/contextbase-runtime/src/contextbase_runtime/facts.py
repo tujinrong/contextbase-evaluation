@@ -9,6 +9,7 @@ from collections import Counter
 from copy import deepcopy
 import hashlib
 import importlib.metadata
+import json
 from pathlib import Path
 
 from . import contracts
@@ -259,26 +260,89 @@ class FactIndex:
         return result
 
     def validate_usage(self, answer, expected_sha256):
-        if expected_sha256 != self.sha256 or answer['sourceFactsSha256'] != self.sha256:
-            raise ValueError('Source-fact usage belongs to another index or snapshot')
+        diagnostics = self.usage_diagnostics(answer, expected_sha256)
+        if diagnostics['issues']:
+            bounded = bound_usage_diagnostics(diagnostics)
+            raise ValueError('Source-fact usage invalid: ' + json.dumps(bounded, ensure_ascii=False, sort_keys=True))
+
+    def usage_diagnostics(self, answer, expected_sha256, record_keys=None):
+        """Report mechanical association errors without selecting or delivering facts.
+
+        Source ranges come only from the proposed record. An index overlap does
+        not establish semantic relevance or authorize use of an undelivered ID.
+        """
         records = {item['key']: item for item in answer['records']}
-        usage = answer['factUsage']
-        if len(usage) != len(records) or {item['recordKey'] for item in usage} != set(records):
-            raise ValueError('Source-fact usage must account for every proposed record exactly once')
-        for item in usage:
-            record = records[item['recordKey']]
+        selected = set(records) if record_keys is None else set(record_keys)
+        issues = []
+
+        def issue(key, code, message, available=None):
+            record = records.get(key, {})
+            ranges = sorted({(ref['path'], ref['startLine'], ref['endLine'])
+                             for ref in record.get('evidence', [])})
+            row = {'recordKey': key, 'code': code, 'message': message,
+                   'sourceRanges': [{'path': path, 'startLine': first, 'endLine': last}
+                                    for path, first, last in ranges],
+                   'queryPaths': sorted({path for path, _, _ in ranges})}
+            if available is not None:
+                row['overlappingFactCount'] = len(available)
+            issues.append(row)
+
+        if expected_sha256 != self.sha256 or answer['sourceFactsSha256'] != self.sha256:
+            issue(None, 'index-mismatch', 'Source-fact usage belongs to another index or snapshot')
+            return _usage_diagnostics(self.sha256, len(selected), issues)
+        usage = {}
+        for item in answer['factUsage']:
+            usage.setdefault(item['recordKey'], []).append(item)
+        for key in sorted(selected):
+            entries = usage.get(key, [])
+            if key not in records:
+                continue
+            if len(entries) != 1:
+                issue(key, 'missing-usage' if not entries else 'duplicate-usage',
+                      'Source-fact usage must account for every proposed record exactly once')
+                continue
+            item, record = entries[0], records[key]
             available = {fact['id'] for fact in self.document['facts'] if any(
                 ref['path'] == evidence['path'] and ref['startLine'] <= evidence['endLine']
                 and evidence['startLine'] <= ref['endLine'] for ref in fact['data']['evidence']
                 for evidence in record['evidence'])}
             missing = set(item['factIds']) - set(self.by_id)
             if missing:
-                raise ValueError('Source-fact identifier does not exist: ' + item['recordKey'])
-            disjoint = set(item['factIds']) - available
-            if disjoint:
-                raise ValueError('Source-fact evidence is not cited by record: ' + item['recordKey'])
-            if available and not item['factIds']:
-                raise ValueError('Available indexed evidence cannot be bypassed with empty fact usage')
+                issue(key, 'unknown-fact', 'Source-fact identifier does not exist', available)
+            elif set(item['factIds']) - available:
+                issue(key, 'disjoint-fact', 'Source-fact evidence is not cited by record', available)
+            elif available and not item['factIds']:
+                issue(key, 'empty-usage', 'Available indexed evidence cannot be bypassed with empty fact usage', available)
+        if record_keys is None:
+            for key in sorted(set(usage) - set(records)):
+                issue(key, 'unknown-record', 'Source-fact usage must account for every proposed record exactly once')
+        return _usage_diagnostics(self.sha256, len(selected), issues)
+
+
+def _usage_diagnostics(index_sha256, count, issues):
+    return {'schema': 'contextbase-fact-usage-diagnostics/1', 'enabled': True,
+            'indexSha256': index_sha256, 'recordCount': count, 'issueCount': len(issues),
+            'meaning': 'Mechanical index/range overlap only; not semantic support, evidence delivery, completion or acceptance. Query the cited paths and choose associations from delivered facts.',
+            'issues': issues}
+
+
+def bound_usage_diagnostics(diagnostics, max_issues=8, max_ranges=3, max_bytes=8192):
+    """Bound preview details; the native state collection exposes the full report."""
+    result = deepcopy(diagnostics)
+    result['issues'] = result['issues'][:max_issues]
+    result['remainingCount'] = diagnostics['issueCount'] - len(result['issues'])
+    for issue in result['issues']:
+        ranges, paths = issue['sourceRanges'], issue['queryPaths']
+        issue['sourceRanges'] = ranges[:max_ranges]
+        issue['remainingSourceRangeCount'] = len(ranges) - len(issue['sourceRanges'])
+        issue['queryPaths'] = paths[:max_ranges]
+        issue['remainingQueryPathCount'] = len(paths) - len(issue['queryPaths'])
+    result['completeReport'] = {'tool': 'analysis_state', 'collection': 'fact_usage_diagnostics',
+                                'offset': 0, 'limit': 32768, 'continuation': 'Follow next_offset until null.'}
+    while result['issues'] and len(json.dumps(result, ensure_ascii=False, separators=(',', ':')).encode('utf-8')) > max_bytes:
+        result['issues'].pop()
+        result['remainingCount'] += 1
+    return result
 
 
 def response_properties(task, verification):

@@ -31,8 +31,8 @@ def engine_fingerprint() -> str:
                           'candidate_amendment.py', 'amendment_seed.py', 'amendment_runtime.py', 'native_amendment.py',
                           'semantic_support.py', 'semantic_calls.py', 'semantic_project.py', 'dotnet_host.py',
                           'analysis_instructions.md', 'verification_instructions.md',
-                          'roles.py', 'native_tools.py', 'native_contracts.py', 'native_mcp.py', 'native_environment.py',
-                          'native_evidence.py', 'native_readiness.py', 'project_analysis.py',
+                          'roles.py', 'capabilities.py', 'native_tools.py', 'native_contracts.py', 'native_mcp.py', 'native_environment.py',
+                          'native_evidence.py', 'native_readiness.py', 'native_state.py', 'native_draft_patch.py', 'project_analysis.py',
                           'native_analysis_instructions.md', 'native_verification_instructions.md')}
     versions = {}
     for package in ('jsonschema', 'tree-sitter', 'tree-sitter-c-sharp', 'tree-sitter-java'):

@@ -8,6 +8,10 @@ In Code Mode, display one ContextBase response per functions.exec cell. Start th
 
 Distinguish syntax observations, static binding, interpretation, and runtime claims. Check whether each cited source supports the claim and its applicability. Delivery, hashes, record counts, and mechanical checks do not prove semantic completeness.
 
+Challenge behavioral assertions with concrete source-supported counterexamples. Follow returned values to their actual consumers, distinguish validation from applied transformation, and derive accepted inputs from all relevant predicates and parser semantics. Inspect equality boundaries, alternate accepted representations, caught failures and effects after exceptional paths. State the precise path and evidence for each contradiction rather than treating a matching call name or citation as proof.
+
+Use analysis_state(collection=summary) for mechanical counts and bound unknown identities when needed. Review each distinct question's scope and blocking rationale; shared wording alone does not establish shared identity. Continue to examine the complete frozen view and original scope even when its counts agree.
+
 Assess unknowns independently from original source. A followup's stage names the investigating role; its requirement names a completion obligation, rather than a related area. An assigned open followup still prevents host acceptance even if review checks pass. An unassigned future action does not itself prove a current omission: evaluate whether the current source-analysis goal actually requires that work. Preserve genuine blocking investigations and explain decisions about source uncertainty; the frozen candidate remains unchanged.
 
 Submit checks, findings, and unknown decisions through the designated submission tool. Keep the candidate immutable. Return its immutable submission reference in the requested final schema. The host decides acceptance.

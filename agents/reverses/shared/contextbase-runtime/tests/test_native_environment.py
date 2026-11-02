@@ -134,6 +134,96 @@ class NativeEnvironmentTests(unittest.TestCase):
                 _, report = environment.prepare_role('fake-cli', self.root, command, environment.child_env())
             self.assertEqual(262144, report['probes'][0]['config']['tool_output_token_limit'])
 
+    def test_selected_skill_is_staged_and_only_unselected_skills_are_disabled(self):
+        from contextbase_runtime.capabilities import normalize_capabilities
+        source_skill = self.root / 'selected/SKILL.md'
+        source_skill.parent.mkdir()
+        source_skill.write_text('---\nname: selected-review\ndescription: Fixture.\n---\nRead notes.md.\n',
+                                encoding='utf-8')
+        support = source_skill.parent / 'notes.md'
+        support.write_text('Keep exact source evidence.\n', encoding='utf-8')
+        capabilities = normalize_capabilities({'skills': [str(source_skill)]})
+        cwd = self.root / 'workspace'
+        cwd.mkdir()
+        staged = cwd / '.agents/skills/selected-review/SKILL.md'
+        calls = []
+        with module.NativeEnvironment(auth_source=self.auth) as environment:
+            ambient = str(environment.home / 'skills/.system/ambient/SKILL.md')
+            def observe(cli, directory, overrides, child_env):
+                calls.append(overrides)
+                disabled = any(value.startswith('skills.config=') for value in overrides)
+                self.assertEqual(source_skill.read_bytes(), staged.read_bytes())
+                self.assertEqual(support.read_bytes(), (staged.parent / 'notes.md').read_bytes())
+                return {'skills': [{'path': str(staged), 'enabled': True},
+                                   {'path': ambient, 'enabled': not disabled}],
+                        'enabledSkillCount': 1 if disabled else 2, 'instructionSources': [],
+                        'config': {}, 'cliVersion': 'fixture-cli', 'mcpServers': []}
+            with patch.object(module, 'probe', side_effect=observe):
+                arguments, report = environment.prepare_role('fake-cli', cwd, ['fake-cli', 'exec'],
+                    environment.child_env(), capabilities)
+            self.assertEqual(2, len(calls))
+            self.assertIn(ambient.replace('\\', '\\\\'), arguments[1])
+            self.assertNotIn(str(staged).replace('\\', '\\\\'), arguments[1])
+            self.assertEqual([str(staged.resolve())], report['probes'][0]['selectedSkills'])
+            self.assertEqual(capabilities, report['probes'][0]['capabilities'])
+
+    def test_selected_skill_must_actually_be_discovered(self):
+        from contextbase_runtime.capabilities import normalize_capabilities
+        skill = self.root / 'selected/SKILL.md'
+        skill.parent.mkdir()
+        skill.write_text('---\nname: selected-review\ndescription: Fixture.\n---\nReview source.\n',
+                         encoding='utf-8')
+        capabilities = normalize_capabilities({'skills': [str(skill)]})
+        observed = {'skills': [], 'enabledSkillCount': 0, 'instructionSources': [],
+                    'config': {}, 'cliVersion': 'fixture-cli', 'mcpServers': []}
+        with module.NativeEnvironment(auth_source=self.auth) as environment, \
+                patch.object(module, 'probe', return_value=observed):
+            with self.assertRaisesRegex(module.EnvironmentError, 'unexpected Skills'):
+                environment.prepare_role('fake-cli', self.root / 'workspace', ['fake-cli', 'exec'],
+                                         environment.child_env(), capabilities)
+
+    def test_effective_optional_features_must_match_role_overrides(self):
+        from contextbase_runtime.capabilities import normalize_capabilities
+        capabilities = normalize_capabilities({'web_search': 'cached', 'subagents': True})
+        observed = {'skills': [], 'enabledSkillCount': 0, 'instructionSources': [],
+                    'config': {'features': {'multi_agent': True, 'apps': False}, 'web_search': 'cached'},
+                    'cliVersion': 'fixture-cli', 'mcpServers': []}
+        command = ['fake-cli', 'exec', '-c', 'features.multi_agent=true',
+                   '-c', 'features.apps=false', '-c', 'web_search="cached"']
+        with module.NativeEnvironment(auth_source=self.auth) as environment:
+            observed['config']['features']['multi_agent'] = False
+            with patch.object(module, 'probe', return_value=observed), \
+                    self.assertRaisesRegex(module.EnvironmentError, 'configuration differs'):
+                environment.prepare_role('fake-cli', self.root, command,
+                                         environment.child_env(), capabilities)
+            observed['config']['features']['multi_agent'] = True
+            with patch.object(module, 'probe', return_value=observed):
+                _, report = environment.prepare_role('fake-cli', self.root, command,
+                                                     environment.child_env(), capabilities)
+            self.assertTrue(report['probes'][0]['config']['features']['multi_agent'])
+
+    def test_actual_mcp_inventory_rejects_foreign_missing_or_extra_tools(self):
+        observed = {'skills': [], 'enabledSkillCount': 0, 'instructionSources': [],
+                    'config': {}, 'cliVersion': 'fixture-cli'}
+        command = ['fake-cli', 'exec', '-c', 'mcp_servers.contextbase.enabled_tools=["read"]']
+        allowed = {'name': 'contextbase', 'pluginId': None, 'tools': ['read'], 'toolsError': None}
+        variants = [[], [{**allowed, 'name': 'foreign'}],
+                    [{**allowed, 'tools': []}], [{**allowed, 'tools': ['read', 'draft_apply']}],
+                    [{**allowed, 'tools': ['read', 'read']}],
+                    [{**allowed, 'pluginId': 'ambient-plugin'}],
+                    [{**allowed, 'toolsError': 'discovery failed'}],
+                    [allowed, {**allowed, 'name': 'foreign'}]]
+        with module.NativeEnvironment(auth_source=self.auth) as environment:
+            for servers in variants:
+                observed['mcpServers'] = servers
+                with self.subTest(servers=servers), patch.object(module, 'probe', return_value=observed), \
+                        self.assertRaisesRegex(module.EnvironmentError, 'MCP tool inventory'):
+                    environment.prepare_role('fake-cli', self.root, command, environment.child_env())
+            observed['mcpServers'] = [allowed]
+            with patch.object(module, 'probe', return_value=observed):
+                _, report = environment.prepare_role('fake-cli', self.root, command, environment.child_env())
+            self.assertEqual([allowed], report['probes'][0]['mcpServers'])
+
 
 if __name__ == '__main__':
     unittest.main()

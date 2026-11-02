@@ -163,7 +163,7 @@ class ProjectProfile:
         if self.role_specs is not None:
             result['roles'] = {key: {field: spec[field] for field in
                 ('id', 'instructions_path', 'instructions_sha256', 'model', 'model_reasoning_effort',
-                 'model_provider', 'configuration_sources') if field in spec}
+                 'model_provider', 'configuration_sources', 'capabilities') if field in spec}
                 for key, spec in self.role_specs.items()}
         return result
 

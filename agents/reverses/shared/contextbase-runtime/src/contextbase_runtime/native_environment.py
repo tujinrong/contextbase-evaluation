@@ -17,7 +17,7 @@ POLICY = 'contextbase-native-environment/1'
 _CURRENT = ContextVar('contextbase_native_environment', default=None)
 _SECRET_ENV = ('OPENAI_API_KEY', 'CODEX_API_KEY', 'OPENAI_BASE_URL', 'AZURE_OPENAI_API_KEY', 'OPENAI_API_BASE', 'CHATGPT_BASE_URL')
 _CONFIG_KEYS = ('model', 'model_provider', 'model_reasoning_effort', 'project_doc_max_bytes', 'model_instructions_file',
-                'tool_output_token_limit')
+                'tool_output_token_limit', 'web_search', 'features', 'agents')
 
 
 def current():
@@ -99,36 +99,59 @@ class NativeEnvironment:
         result['CODEX_HOME'] = str(self.home)
         return result
 
-    def prepare_role(self, cli, cwd, command, child_env):
+    def prepare_role(self, cli, cwd, command, child_env, capability_spec=None):
+        from .capabilities import normalize_capabilities, stage_skills, validate_capabilities
+        capabilities = validate_capabilities(capability_spec or normalize_capabilities())
+        selected = {str(path.resolve()) for path in
+                    stage_skills(capabilities, Path(cwd) / '.agents' / 'skills')}
+        self.disabled_skills = [path for path in self.disabled_skills if path not in selected]
         # Only -c overrides carry configuration; no inference command is launched.
         overrides = []
         for index, argument in enumerate(command[:-1]):
             if argument in ('-c', '--config'):
                 overrides.extend(['-c', command[index + 1]])
         observed = self._probe(cli, cwd, overrides, child_env, self.disabled_skills)
-        enabled = [row['path'] for row in observed['skills'] if row['enabled']]
-        if enabled:
-            self.disabled_skills = sorted(set(self.disabled_skills + enabled))
+        unwanted = [row['path'] for row in observed['skills']
+                    if row['enabled'] and str(Path(row['path']).resolve()) not in selected]
+        if unwanted:
+            self.disabled_skills = sorted(set(self.disabled_skills + unwanted))
             observed = self._probe(cli, cwd, overrides, child_env, self.disabled_skills)
-        if observed['enabledSkillCount'] != 0 or observed['instructionSources'] != []:
+        enabled = {str(Path(row['path']).resolve()) for row in observed['skills'] if row['enabled']}
+        if enabled != selected or observed['instructionSources'] != []:
             raise EnvironmentError('Native bootstrap contains unexpected Skills or file instructions')
-        expected, output_limits = {}, {}
+        expected, output_limits, allowed_tools = {}, {}, None
         for index in range(0, len(overrides), 2):
             key, separator, text = overrides[index + 1].partition('=')
             prefix, suffix = 'mcp_servers.contextbase.tools.', '.output_token_limit'
             if separator and key.startswith(prefix) and key.endswith(suffix):
                 output_limits[key[len(prefix):-len(suffix)]] = json.loads(text)
-            if separator and key in _CONFIG_KEYS:
+            if key == 'mcp_servers.contextbase.enabled_tools':
+                allowed_tools = sorted(json.loads(text))
+            if separator and (key in _CONFIG_KEYS or key.startswith(('features.', 'agents.'))):
                 try:
                     expected[key] = json.loads(text)
                 except ValueError:
                     raise EnvironmentError('Unsupported role bootstrap configuration encoding: ' + key)
-        if any(observed['config'].get(key) != value for key, value in expected.items()):
+        def setting(key):
+            value = observed['config']
+            for part in key.split('.'):
+                value = value.get(part) if isinstance(value, dict) else None
+            return value
+        if any(setting(key) != value for key, value in expected.items()):
             raise EnvironmentError('Role bootstrap configuration differs from the actual execution overrides')
         if output_limits and observed.get('mcpToolOutputLimits') != output_limits:
             raise EnvironmentError('Native bootstrap MCP tool output limits differ from execution overrides')
+        if allowed_tools is not None:
+            servers = observed.get('mcpServers', [])
+            if (len(servers) != 1 or servers[0]['name'] != 'contextbase'
+                    or servers[0].get('toolsError') or servers[0].get('pluginId')
+                    or sorted(servers[0]['tools']) != allowed_tools):
+                raise EnvironmentError('Native bootstrap contains an unexpected MCP tool inventory')
         self.probes.append({key: observed[key] for key in ('enabledSkillCount', 'instructionSources', 'config', 'cliVersion')})
         self.probes[-1]['mcpToolOutputLimits'] = observed.get('mcpToolOutputLimits', {})
+        self.probes[-1]['mcpServers'] = observed.get('mcpServers', [])
+        self.probes[-1]['selectedSkills'] = sorted(selected)
+        self.probes[-1]['capabilities'] = capabilities
         return self.skill_arguments(), self.report()
 
     def skill_arguments(self):
@@ -227,11 +250,19 @@ def probe(cli, cwd, overrides, child_env):
         sources = thread.get('instructionSources')
         if not isinstance(sources, list):
             raise EnvironmentError('CLI does not expose bootstrap instruction sources')
+        inventory_params = {'limit': 100, 'threadId': thread['thread']['id']}
+        inventory = rpc('mcpServerStatus/list', inventory_params)
+        if inventory.get('nextCursor'):
+            raise EnvironmentError('Native bootstrap MCP inventory exceeds the expected server set')
+        servers = [{'name': row['name'], 'pluginId': row.get('pluginId'),
+                    'tools': sorted(row.get('tools', {})), 'toolsError': row.get('toolsError')}
+                   for row in inventory.get('data', [])]
         tools = config.get('mcp_servers', {}).get('contextbase', {}).get('tools', {})
         limits = {name: row.get('output_token_limit') for name, row in tools.items()
                   if isinstance(row, dict) and 'output_token_limit' in row}
         return {'config': {key: config.get(key) for key in _CONFIG_KEYS}, 'skills': rows,
                 'mcpToolOutputLimits': limits,
+                'mcpServers': servers,
                 'enabledSkillCount': sum(row['enabled'] for row in rows), 'instructionSources': sources,
                 'cliVersion': subprocess.check_output([str(cli), '--version'], text=True, **options).strip()}
     finally:

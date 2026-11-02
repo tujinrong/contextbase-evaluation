@@ -228,6 +228,8 @@ def run_job(
     if role_spec is not None:
         from .roles import validate_role
         role_spec = validate_role(role_spec, instruction_role)
+    from .capabilities import normalize_capabilities
+    capabilities = (role_spec or {}).get('capabilities', normalize_capabilities())
     if isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, (int, float)):
         raise TypeError("timeout_seconds must be a positive finite number")
     if not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
@@ -313,6 +315,18 @@ The host owns the source snapshot, draft storage, independent review and accepta
 Analyze input programs without executing, importing, compiling, installing or modifying them.
 Use the submission tool to freeze your result, then return its submission_id.
 '''
+        if capabilities['skills']:
+            boundary += 'Use the selected role Skills: ' + ', '.join(
+                '$' + skill['name'] for skill in capabilities['skills']) + '.\n'
+        if capabilities['web_search'] != 'disabled':
+            boundary += ('Web search is available for public language/framework documentation. '
+                         'Keep private source text out of queries. External documentation is background; '
+                         'source citations and fact usage still require the ContextBase evidence tools.\n')
+        if capabilities['subagents']:
+            boundary += ('You may delegate independent read-only investigations to subagents using the inherited '
+                         'ContextBase tools and the same role. Collect their findings before submitting. '
+                         'Delegate source reads and reasoning; keep draft mutations and final submission in this parent. '
+                         'Author subagents are not the separate independent verification role.\n')
     effective_prompt = boundary + "\nUser task (within that boundary):\n" + prompt
     prompt_bytes = effective_prompt.encode("utf-8")
     with (job_dir / "prompt.txt").open("xb") as stream:
@@ -407,7 +421,8 @@ Use the submission tool to freeze your result, then return its submission_id.
             'features.shell_tool': False,
             'features.hooks': False,
             'features.plugins': False,
-            'features.multi_agent': False,
+            'features.apps': False,
+            'features.multi_agent': capabilities['subagents'],
             'features.multi_agent_v2': False,
             'features.sleep_tool': False,
             'features.memories': False,
@@ -416,27 +431,39 @@ Use the submission tool to freeze your result, then return its submission_id.
             'features.image_generation': False,
             'features.in_app_browser': False,
             'features.shell_snapshot': False,
-            'web_search': 'disabled',
+            'web_search': capabilities['web_search'],
             'mcp_servers.contextbase.url': tool_connection['url'],
             'mcp_servers.contextbase.bearer_token_env_var': token_var,
             'mcp_servers.contextbase.enabled_tools': tool_connection['enabled_tools'],
             'mcp_servers.contextbase.required': True,
             'mcp_servers.contextbase.default_tools_approval_mode': 'approve',
         }
+        if capabilities['subagents']:
+            # Child creation needs the parent's rollout. It lives only in the
+            # private run home, which is removed when the scope closes.
+            command.remove('--ephemeral')
+            settings.update({'agents.enabled': True, 'agents.max_concurrent_threads_per_session': 2,
+                             'agents.max_depth': 1})
+            for role_key, agent_key in (('model', 'default_subagent_model'),
+                                       ('model_reasoning_effort', 'default_subagent_reasoning_effort')):
+                if role_key in (role_spec or {}):
+                    settings['agents.' + agent_key] = role_spec[role_key]
         for name in tool_connection['enabled_tools']:
             settings['mcp_servers.contextbase.tools.' + name + '.output_token_limit'] = 262144
         # Keep authentication in CODEX_HOME while excluding its ambient runtime config.
         command += ['--ignore-user-config', '--skip-git-repo-check']
-        native_cwd = job_dir / 'workspace'
+        native_cwd = native_environment.home / ('workspace-' + uuid.uuid4().hex)
         native_cwd.mkdir()
         metadata['execution_workspace'] = str(native_cwd)
         for key, value in settings.items():
             command += ['-c', key + '=' + json.dumps(value)]
-        skill_arguments, probe_report = native_environment.prepare_role(cli, native_cwd, command, child_env)
+        skill_arguments, probe_report = native_environment.prepare_role(
+            cli, native_cwd, command, child_env, capabilities)
         command += skill_arguments
         metadata['native_environment'] = probe_report
         metadata['native_environment_cleanup_report'] = 'Scope report is persisted after both roles finish; direct calls use native-environment.json.'
         metadata['native_tools_policy'] = 'contextbase-native-tools/1'
+        metadata['role_capabilities'] = capabilities
         metadata['native_tools'] = list(tool_connection['enabled_tools'])
     for image in image_inputs:
         command += ['--image', image['path']]
@@ -489,7 +516,7 @@ Use the submission tool to freeze your result, then return its submission_id.
     result["usage"], event_metadata = _events(job_dir / "events.jsonl")
     metadata.update(event_metadata)
     if tool_connection is not None:
-        audit = _audit_native_events(job_dir / 'events.jsonl', tool_connection['enabled_tools'])
+        audit = _audit_native_events(job_dir / 'events.jsonl', tool_connection['enabled_tools'], capabilities)
         metadata.update(audit)
         metadata['native_tool_audit_scope'] = 'reported-cli-events-only'
         if audit['disallowed_tool_events'] and status is None:
@@ -557,8 +584,10 @@ Use the submission tool to freeze your result, then return its submission_id.
     return finish(status or "passed")
 
 
-def _audit_native_events(path, allowed_tools):
-    observed, denied, harmless = {}, [], []
+def _audit_native_events(path, allowed_tools, capabilities=None):
+    from .capabilities import normalize_capabilities, validate_capabilities
+    capabilities = validate_capabilities(capabilities or normalize_capabilities(), check_files=False)
+    observed, denied, harmless, permitted = {}, [], [], []
     for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
         if not line.strip():
             continue
@@ -580,9 +609,14 @@ def _audit_native_events(path, allowed_tools):
                 denied.append(row)
         elif kind == 'collab_tool_call' and tool == 'wait':
             harmless.append(row)
+        elif kind in {'web_search', 'web_search_call'} and capabilities['web_search'] != 'disabled':
+            permitted.append(row)
+        elif (kind == 'collab_tool_call' and capabilities['subagents']
+              and tool in {'spawn_agent', 'send_input', 'wait', 'close_agent', 'resume_agent'}):
+            permitted.append(row)
         elif (kind in {'command_execution', 'file_change', 'web_search', 'web_search_call',
                         'image_generation', 'image_generation_call', 'collab_tool_call'}
               or 'tool_call' in kind or kind == 'function_call'):
             denied.append(row)
     return {'observed_item_types': observed, 'disallowed_tool_events': denied,
-            'harmless_control_events': harmless}
+            'harmless_control_events': harmless, 'permitted_capability_events': permitted}

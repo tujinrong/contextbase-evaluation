@@ -50,6 +50,23 @@ model = "test-model"
         with self.assertRaisesRegex(ValueError, 'Role profiles require native'):
             ProjectProfile.load(self.config)
 
+    def test_profile_preserves_and_describes_role_capabilities(self):
+        skill = self.root / 'skills' / 'source-reader' / 'SKILL.md'
+        skill.parent.mkdir(parents=True)
+        skill.write_text('---\nname: source-reader\ndescription: Read source.\n---\nUse evidence.\n', encoding='utf-8')
+        with self.config.open('a', encoding='utf-8') as stream:
+            stream.write('\n[profiles.sample.roles.analysis.capabilities]\n'
+                         'skills = ["skills/source-reader/SKILL.md"]\n'
+                         'web_search = "cached"\nsubagents = true\n')
+        profile = ProjectProfile.load(self.config)
+        capabilities = profile.role_specs['analysis']['capabilities']
+        self.assertEqual(str(skill.resolve()), capabilities['skills'][0]['path'])
+        self.assertEqual('cached', capabilities['web_search'])
+        self.assertTrue(capabilities['subagents'])
+        from contextbase_runtime.project_analysis import ProjectAnalysisAgent
+        self.assertEqual(capabilities, profile.describe(ProjectAnalysisAgent)['roles']['analysis']['capabilities'])
+        self.assertNotIn('capabilities', profile.role_specs['verification'])
+
     def test_project_init_selects_native_with_roles(self):
         calls = []
         class Agent:

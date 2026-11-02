@@ -10,6 +10,8 @@ from .evidence_dialog import validate_delivery
 from .native_mcp import Broker
 from .native_evidence import run_batch, native_access, reply_size, MAX_BATCH_BYTES, replay_evidence
 from .native_readiness import assess, require_followup_acknowledgement
+from .native_draft_patch import expand as expand_draft_patch
+from .facts import bound_usage_diagnostics
 
 VERSION = 'contextbase-native-tools/1'
 TRANSPORT = 'codex-native-tools'
@@ -124,11 +126,26 @@ class Tools:
             return self._submission_ref() if self.submission else None
         if collection == 'amendment':
             return _amendment_material(self.task, self.amendment)
+        if collection == 'summary':
+            from .native_state import summarize
+            return summarize(self.task, self.events, self.units, self.revision, context=self.context)
         drafts = investigation.reduce_drafts(self.task, self.events) if self.events else {}
+        if collection == 'fact_usage_diagnostics':
+            return self._usage_diagnostics(drafts)
         if collection == 'drafts':
             return drafts
         return [{'key': row['key'], 'sha256': c.digest(row)}
                 for row in sorted(drafts.get('records', []), key=lambda row: row['key'])]
+
+    def _usage_diagnostics(self, drafts, record_keys=None):
+        if self.task.get('operation') != 'extract' or not self.task.get('sourceFactsSha256'):
+            return {'schema': 'contextbase-fact-usage-diagnostics/1', 'enabled': False,
+                    'recordCount': 0, 'issueCount': 0, 'issues': [],
+                    'meaning': 'Fact-usage diagnostics apply to indexed author drafts only.'}
+        self.access._assert_binding()
+        answer = {'sourceFactsSha256': self.task['sourceFactsSha256'],
+                  'records': drafts.get('records', []), 'factUsage': drafts.get('factUsage', [])}
+        return self.access.index.usage_diagnostics(answer, self.task['sourceFactsSha256'], record_keys)
 
     def _read_state(self, args):
         data = self._state_value(args['collection'])
@@ -153,7 +170,7 @@ class Tools:
                     'readiness': _readiness(self.submission['answer'], self.task['requirements'])}
         if name == 'review_submit' and args['review'] == self.submission['answer']:
             return self._submission_ref()
-        if name in {'plan_update', 'draft_apply', 'submit_candidate'} and args.get('operation_id') in self.operations:
+        if name in {'plan_update', 'draft_apply', 'draft_patch', 'submit_candidate'} and args.get('operation_id') in self.operations:
             old = self.operations[args['operation_id']]
             if old['arguments'] == args and old['name'] == name:
                 return deepcopy(old['reply'])
@@ -189,6 +206,10 @@ class Tools:
             reply = self._update_plan(args['plan'])
         elif name == 'draft_apply':
             reply = self._apply_draft(args)
+        elif name == 'draft_patch':
+            draft = expand_draft_patch(self.task, self.events, args['unit_id'],
+                                       args.get('updates', []), args.get('factUsage', []))
+            reply = self._apply_draft({**args, 'draft': draft})
         else:
             reply = self._submit_candidate(args['closures'])
         self.revision += 1
@@ -215,12 +236,24 @@ class Tools:
             retain_blocking_followups=args.get('retain_blocking_followups', False))
         events = [*self.events, {'unit': unit, 'answer': args['draft']}]
         reduced = investigation.reduce_drafts(self.task, events)
+        reply = {'revision': self.revision + 1,
+                 'readiness': _readiness({'coverage': [], 'followups': reduced['followups']}, self.task['requirements'])}
+        if args.get('include_diagnostics') is True:
+            affected = [row['key'] for row in args['draft']['records']]
+            diagnostics = self._usage_diagnostics(reduced, affected)
+            reply['factUsageDiagnostics'] = bound_usage_diagnostics(diagnostics)
+            # Preserve complete identities in the full paged state; the preview
+            # may contain fewer rows to satisfy the existing byte budget.
+            while reply_size(reply) > MAX_BATCH_BYTES and reply['factUsageDiagnostics']['issues']:
+                reply['factUsageDiagnostics']['issues'].pop()
+                reply['factUsageDiagnostics']['remainingCount'] += 1
+            if reply_size(reply) > MAX_BATCH_BYTES:
+                raise ValueError('Native draft diagnostic metadata exceeds the reply capacity')
         self.events = deepcopy(events)
         for added in args['draft']['addUnits']:
             if not any(unit['id'] == added['id'] for unit in self.units):
                 self.units.append(deepcopy(added))
-        return {'revision': self.revision + 1,
-                'readiness': _readiness({'coverage': [], 'followups': reduced['followups']}, self.task['requirements'])}
+        return reply
 
     def _submit_candidate(self, closures):
         if not self.units:
@@ -270,14 +303,31 @@ def run(source, index, store, task, context, instruction, provider, timeout,
     store.put(prefix + '/setup.json', setup)
     # Persist every completed tool call before returning its reply to Codex.
     original = tools.handle
+    attempt_number = 0
     def invoke(name, arguments):
-        reply = original(name, arguments)
-        store.put(prefix + '/calls/' + str(len(tools.calls)).zfill(8) + '.json', tools.calls[-1])
-        if name in {'plan_update', 'draft_apply'}:
-            checkpoint = {'basis': basis, 'state': _state(tools), 'producerTask': deepcopy(task),
-                          'callPrefix': prefix, 'callCount': len(tools.calls)}
-            store.put('native-checkpoints/' + basis + '/' + str(time.time_ns()) + '-' + uuid.uuid4().hex + '.json', checkpoint)
-        return reply
+        nonlocal attempt_number
+        # Broker serializes invocations. Timings remain outside canonical replay:
+        # wall-clock observation never becomes evidence or an acceptance input.
+        attempt_number += 1
+        started_wall, started_clock = time.time(), time.perf_counter()
+        timing = {'tool': name, 'argumentsSha256': c.digest(arguments),
+                  'startedUnixSeconds': started_wall, 'successfulCallNumber': None,
+                  'errorType': None}
+        try:
+            reply = original(name, arguments)
+            store.put(prefix + '/calls/' + str(len(tools.calls)).zfill(8) + '.json', tools.calls[-1])
+            if name in {'plan_update', 'draft_apply', 'draft_patch'}:
+                checkpoint = {'basis': basis, 'state': _state(tools), 'producerTask': deepcopy(task),
+                              'callPrefix': prefix, 'callCount': len(tools.calls)}
+                store.put('native-checkpoints/' + basis + '/' + str(time.time_ns()) + '-' + uuid.uuid4().hex + '.json', checkpoint)
+            timing['successfulCallNumber'] = len(tools.calls)
+            return reply
+        except BaseException as exc:
+            timing['errorType'] = type(exc).__name__
+            raise
+        finally:
+            timing.update(finishedUnixSeconds=time.time(), elapsedSeconds=time.perf_counter() - started_clock)
+            store.put(prefix + '/timings/' + str(attempt_number).zfill(8) + '.json', timing)
     try:
         with Broker(tools.schemas(), invoke) as broker:
             prompt = instruction + '\nUse the ContextBase MCP tools to investigate continuously. '
