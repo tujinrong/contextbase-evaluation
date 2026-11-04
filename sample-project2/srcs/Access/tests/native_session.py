@@ -1,6 +1,6 @@
 """Owned Access session. No input injection, window movement or periodic COM polling."""
 from pathlib import Path
-import ctypes,datetime as dt,hashlib,json,shutil,sys
+import argparse,ctypes,datetime as dt,hashlib,json,re,shutil,sys
 sys.dont_write_bytecode=True
 ROOT=Path(__file__).resolve().parents[1]
 HERE=ROOT/'.tmp/native-current'
@@ -10,7 +10,12 @@ sys.path.insert(0,str(ROOT/'tools'))
 import build
 import data_integrity
 import win32gui
-FINAL='4629fe0c714e2ab3d34b75134c1f482d1cad5431075c08c6e00d67808acab0fc'
+parser=argparse.ArgumentParser()
+parser.add_argument('--artifact-sha256',required=True)
+parser.add_argument('--start-mode',choices=('login','menu','search-unsearched','search','editor-new','editor-edit','careers','code'),default='search')
+args=parser.parse_args()
+if not re.fullmatch('[0-9a-f]{64}',args.artifact_sha256):raise RuntimeError('Explicit candidate SHA-256 required')
+FINAL=args.artifact_sha256
 LOG=HERE/'session.jsonl'
 def log(event,**data):
     item={'at':dt.datetime.now(dt.timezone.utc).isoformat(),'event':event,**data}
@@ -29,6 +34,9 @@ def state(app):
     result['flags']=dict(zip(('employeeDirty','draftDirty','busy','loading'),[x.lower()=='true' for x in str(flags).split('|')]))
     viewport=app.Run('NativeViewportState');result['searchReturnViewport']=str(viewport[0] if isinstance(viewport,tuple) else viewport)
     failure=app.Run('NativeLayoutFailure');result['layoutFailure']=str(failure[0] if isinstance(failure,tuple) else failure)
+    result['drawing']={}
+    for key,function in (('depth','UiPaintDepth'),('ownsEcho','UiPaintOwnsEcho'),('layoutWrites','UiLayoutWriteCount')):
+        value=app.Run(function);result['drawing'][key]=value[0] if isinstance(value,tuple) else value
     if f.Name=='frmEmployeeSearch':
         control=f.Controls('lstEmployees');properties={}
         for name in ('ListCount','ListIndex','Top','Left','Height','Width','ColumnCount','ColumnWidths','ColumnHeads','MultiSelect','TopIndex','ScrollBars','hWnd'):
@@ -84,7 +92,7 @@ def main():
         module.AddFromString(build.vbe_text((HARNESS).read_text('utf8')));module=None;component=None
         gate=step('compile-all-classes-remove-probe-recompile',lambda:build.compile_gate(app))
         app.Visible=True
-        prepared=step('business-api-auth-and-search-preparation',lambda:app.Run('NativePrepare','search','123'))
+        prepared=step('business-api-owned-copy-preparation',lambda:app.Run('NativePrepare',args.start_mode,'123'))
         if isinstance(prepared,tuple):prepared=prepared[0]
         if not prepared:raise RuntimeError('Business API preparation returned False')
         ready={'ownedPid':pid,'hwnd':hwnd,'copy':str(target),'initialCopySha256':FINAL,'finalSha256':build.sha(source),'sourceTreeSha256':sourceDigest,'helperSha256':helperSha,'harnessSha256':harnessSha,'compile':gate,'state':state(app),'inputEvidence':'COM business preparation only; native input is root Sky responsibility','commands':['state','search-values','form-values','data-digest','windows','fixture-search-rows','prepare login|menu|search-unsearched|search|editor-new|editor-edit|careers|code','quit']}

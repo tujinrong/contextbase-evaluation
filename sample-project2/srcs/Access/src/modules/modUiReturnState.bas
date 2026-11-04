@@ -64,60 +64,87 @@ Public Sub UiLoadSearch(ByVal f As Access.Form)
     UiSyncPendingEditors f
 End Sub
 Public Sub UiCollapseSelectedDetails(ByVal f As Access.Form)
-    Dim activeName As String
-    On Error GoTo NoActive
+    Dim activeName As String, paint As Long, number As Long, description As String
+    On Error Resume Next
     activeName = f.ActiveControl.Name
-NoActive:
-    On Error GoTo 0
+    Err.Clear
+    On Error GoTo Failed
+    paint = UiBeginPaint()
     If activeName = "txtSelectedDetails" Then f!lstEmployees.SetFocus
-    f!txtSelectedDetails = Null: f!txtSelectedDetails.Visible = False
-    f!txtSelectedDetails.Height = 330: f.Section(acDetail).Height = 7500
+    UiSetIfChanged f!txtSelectedDetails, "Value", Null
+    UiSetIfChanged f!txtSelectedDetails, "Visible", False
+    UiSetIfChanged f!txtSelectedDetails, "Height", 330
+    UiSetIfChanged f.Section(acDetail), "Height", 7500
+    UiEndPaint paint: Exit Sub
+Failed:
+    number = Err.Number: description = Err.Description
+    On Error Resume Next
+    UiEndPaint paint
+    On Error GoTo 0
+    Err.Raise number, "SP2.UiCollapseSelectedDetails", description
 End Sub
 Public Sub UiSelectedEmployeeDetails(ByVal f As Access.Form)
-    Dim row As Variant
-    UiCollapseSelectedDetails f
-    If IsNull(gSelectedEmployee) Or gSearchRows Is Nothing Then Exit Sub
+    Dim row As Variant, paint As Long, number As Long, description As String, activeName As String
+    On Error Resume Next
+    activeName = f.ActiveControl.Name
+    Err.Clear
+    On Error GoTo Failed
+    paint = UiBeginPaint()
+    If activeName = "txtSelectedDetails" Then f!lstEmployees.SetFocus
+    If IsNull(gSelectedEmployee) Or gSearchRows Is Nothing Then GoTo EmptySelection
     For Each row In gSearchRows
         If CLng(row(0)) = CLng(gSelectedEmployee) Then
-            f!lblSelection.Caption = CStr(row(1)) & "  " & CStr(row(2))
-            f!txtSelectedDetails = "社員番号：" & CStr(row(1)) & vbCrLf & "氏名：" & CStr(row(2)) & vbCrLf & "氏名カナ：" & CStr(row(3)) & vbCrLf & "部署：" & CStr(row(4)) & vbCrLf & "在籍：" & CStr(row(5)) & " ／ 入社日：" & CStr(row(6))
-            f!txtSelectedDetails.Height = 1980: f.Section(acDetail).Height = 9450: f!txtSelectedDetails.Visible = True
-            Exit Sub
+            UiSetIfChanged f!lblSelection, "Caption", CStr(row(1)) & "  " & CStr(row(2))
+            UiSetIfChanged f!txtSelectedDetails, "Value", "社員番号：" & CStr(row(1)) & vbCrLf & "氏名：" & CStr(row(2)) & vbCrLf & "氏名カナ：" & CStr(row(3)) & vbCrLf & "部署：" & CStr(row(4)) & vbCrLf & "在籍：" & CStr(row(5)) & " ／ 入社日：" & CStr(row(6))
+            UiSetIfChanged f!txtSelectedDetails, "Height", 1980
+            UiSetIfChanged f.Section(acDetail), "Height", 9450
+            UiSetIfChanged f!txtSelectedDetails, "Visible", True
+            UiEndPaint paint: Exit Sub
         End If
     Next
+EmptySelection:
+    UiCollapseSelectedDetails f
+    UiEndPaint paint: Exit Sub
+Failed:
+    number = Err.Number: description = Err.Description
+    On Error Resume Next
+    UiEndPaint paint
+    On Error GoTo 0
+    Err.Raise number, "SP2.UiSelectedEmployeeDetails", description
 End Sub
 Public Sub UiUpdateIdentity(ByVal f As Access.Form)
-    Dim s As clsFormUiState, name As String, code As String, mode As String
+    Dim s As clsFormUiState, name As String, code As String, mode As String, identityChanged As Boolean
     Set s = UiState(f)
     If f.Name = "frmEmployeeEditor" Then
         mode = IIf(IsNull(gEditor.EmployeeId), "新規", "編集")
-        f!lblScreenTitle.Caption = "社員登録・編集［" & mode & "］"
+        UiSetIfChanged f!lblScreenTitle, "Caption", "社員登録・編集［" & mode & "］"
         name = UiRaw(f, "txtEmployeeName"): code = UiRaw(f, "txtEmployeeNo")
-        f!lblEmployeeIdentity.Caption = IIf(mode = "新規", "新規社員：", "") & code & " " & name
-        f!pgCareer.Caption = "経歴（" & CStr(gEditor.Careers.Count + IIf(gCareerIndex = 0 And Not gEditor.ActiveDraft Is Nothing, 1, 0)) & "件）"
+        identityChanged = UiSetIfChanged(f!lblEmployeeIdentity, "Caption", IIf(mode = "新規", "新規社員：", "") & code & " " & name)
+        UiSetIfChanged f!pgCareer, "Caption", "経歴（" & CStr(gEditor.Careers.Count + IIf(gCareerIndex = 0 And Not gEditor.ActiveDraft Is Nothing, 1, 0)) & "件）"
         If gEditor.ActiveDraft Is Nothing Then
-            f!lblCareerEditHeading.Caption = "選択経歴の編集（未選択）": f!lblDraftState.Caption = "経歴未選択"
+            UiSetIfChanged f!lblCareerEditHeading, "Caption", "選択経歴の編集（未選択）"
+            UiSetIfChanged f!lblDraftState, "Caption", "経歴未選択"
         Else
-            f!lblCareerEditHeading.Caption = "選択経歴の編集：" & UiRaw(f, "txtProject")
+            UiSetIfChanged f!lblCareerEditHeading, "Caption", "選択経歴の編集：" & UiRaw(f, "txtProject")
             If gDraftDirty Then
-                f!lblDraftState.Caption = "未反映・未保存"
+                UiSetIfChanged f!lblDraftState, "Caption", "未反映・未保存"
             ElseIf s.DraftReflected Then
-                f!lblDraftState.Caption = "反映済み・未保存"
+                UiSetIfChanged f!lblDraftState, "Caption", "反映済み・未保存"
             Else
-                f!lblDraftState.Caption = "保存済みの経歴（入力変更なし）"
+                UiSetIfChanged f!lblDraftState, "Caption", "保存済みの経歴（入力変更なし）"
             End If
         End If
-        f!lblSaveScope.Caption = "社員と全経歴の追加・変更・除去をまとめて保存します。"
-        UiResize f
+        UiSetIfChanged f!lblSaveScope, "Caption", "社員と全経歴の追加・変更・除去をまとめて保存します。"
+        If identityChanged And Not s.IsInitializing Then UiResize f
     ElseIf f.Name = "frmCodeMaster" Then
         name = CStr(Nz(f!cboCategory.Column(1), ""))
         If gCode Is Nothing Then
-            f!lblCodeIdentity.Caption = name & " ／ 未選択"
+            UiSetIfChanged f!lblCodeIdentity, "Caption", name & " ／ 未選択"
         Else
             mode = IIf(gCode.IsNew, "新規", "編集")
             If gCode.CategoryId = "EMPLOYMENT_STATUS" Then mode = "参照専用"
-            f!lblCodeIdentity.Caption = name & " / " & UiRaw(f, "txtCode") & " " & UiRaw(f, "txtCodeName") & "［" & mode & "］"
+            UiSetIfChanged f!lblCodeIdentity, "Caption", name & " / " & UiRaw(f, "txtCode") & " " & UiRaw(f, "txtCodeName") & "［" & mode & "］"
         End If
-        f!lblCodeEditHeading.Caption = "選択コードの編集" & IIf(CStr(Nz(f!cboCategory.Value, "")) = "EMPLOYMENT_STATUS", "（固定在籍は参照専用）", "")
+        UiSetIfChanged f!lblCodeEditHeading, "Caption", "選択コードの編集" & IIf(CStr(Nz(f!cboCategory.Value, "")) = "EMPLOYMENT_STATUS", "（固定在籍は参照専用）", "")
     End If
 End Sub

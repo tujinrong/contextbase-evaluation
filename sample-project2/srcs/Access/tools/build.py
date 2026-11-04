@@ -56,7 +56,7 @@ def classic_control(ctl, kind, *, header=False):
     ctl.HorizontalAnchor=0; ctl.VerticalAnchor=0
     ctl.BorderThemeColorIndex=-1; ctl.BorderColor=8421504
     if kind !=106:
-        ctl.FontName='Yu Gothic UI'; ctl.FontSize=11; ctl.FontWeight=700 if header else 400
+        ctl.FontName=forms.FONT_FAMILY; ctl.FontSize=forms.BODY_FONT_SIZE; ctl.FontWeight=700 if header else 400
         ctl.ForeThemeColorIndex=-1; ctl.ForeColor=0
         ctl.BackThemeColorIndex=-1
         ctl.BackColor=16777215 if kind in (109,110,111) else 15724527
@@ -101,9 +101,16 @@ def create_forms(app, selected=None, code_factory=None):
             ctl=win32com.client.CastTo(ctl,casts[c['kind']]);ctl.Name=c['name']
             if c['kind'] in (100,104):ctl.Caption=c['label'].replace('\n','\r\n')
             classic_control(ctl,c['kind'],header=c.get('bold',False))
+            # Role-specific typography follows the default factory so a title
+            # is never reset to the body size by common initialization.
+            if 'font_size' in c:ctl.FontSize=c['font_size']
+            if c.get('role')=='screen_title':ctl.FontWeight=700
             ctl.Tag='PAGE:'+str(c['page']) if 'page' in c else 'COMMON'
             ctl.Visible=c.get('visible',True) and ('page' not in c or c['page']==0)
             if c['kind'] in (109,111,110,106):ctl.ControlSource=''
+            if c['kind'] in (109,111):
+                ctl.LeftMargin=forms.INPUT_MARGIN_X;ctl.RightMargin=forms.INPUT_MARGIN_X
+                ctl.TopMargin=forms.INPUT_MARGIN_Y;ctl.BottomMargin=forms.INPUT_MARGIN_Y
             if c['kind']!=100:
                 ordinal=section_order.get(c['section'],0);ctl.TabIndex=ordinal;section_order[c['section']]=ordinal+1
                 ctl.TabStop=True

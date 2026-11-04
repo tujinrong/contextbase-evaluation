@@ -1,11 +1,9 @@
-# Access 文字コード修正と残る画面改善
+# Access 入力欄・配置・描画制御の修正結果
 
-2026-10-30。現在の配布候補は4629fe0c…acab0fc。文字コードの修正を確認し、画面全体の適合は未完了です。
+2026-11-04。本文11pt、単行入力高360twip、ログイン同幅4800twip、タイトル階層、操作/ラベルの整列、描画制御と処理後のスクロール復帰を修正しました。
 
-- VBA正本33ファイルはCP932、Form native exportはUTF-16 BOM、文書/Python/JSONと業務データのUnicodeは保持。
-- ホストACP936・Office UI1041で33モジュール意味一致、11文字列の実行とexport/reimport、5画面の固定文言、4MSGを確認。境界単体11件、業務API67件、認証39件を通過。
-- 5Form/6表示を実Accessで確認。文字化けは観測せず、既存タイトル11pt/Label330twipは未改修として記録。全体のタイトル/入力高はDQA-UI11で後続再設計。
-- 現source.zip47memberを別展開し、原仕様/試験を含めず通常build/11class/probe除去再compile/所有Office正常終了を確認。
-- 既存5表の全typed row/schema、資格情報を保全。seed/資格情報resetなし。
+最終候補のコンパイル、保存属性475条件、描画11条件/7状態、画面状態API104条件、認証39条件、日本語34モジュール/11文字列、5表データ保全、ZIP48ファイルと別展開からの再構築を確認しています。
 
-[文字コード検査](japanese-encoding.json)、[日本語実画面](root-native-resume-review.json)、[配布再構築](source-package-rebuild.json)を参照。旧0810の属性475/Pending129/PDF等は新候補へ流用していません。Agent規約とQA改訂後の入力再凍結/独立期待値更新・全UI検査は未実施で、正式outputsは未発行、formalScore=nullです。
+**最終候補の実画面確認はデスクトップの解除状態の確認待ちです。** 中間候補の実画面PASSを流用していません。Excel出力MSG-037は変更前の元ACCDBでも再現し、原因未確定です。
+
+[変更内容・検査と未実施](ui-compact-review.md)、[検査記録](ui-compact-review.json)を参照してください。全UI適合・正式受入は未完了、正式outputsは未発行、formalScore=nullです。

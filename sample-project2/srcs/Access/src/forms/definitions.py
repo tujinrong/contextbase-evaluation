@@ -4,35 +4,44 @@ No specification or test file is needed by the distributed production helper.
 """
 LABEL,TEXT,BUTTON,CHECK,LIST,COMBO,TAB=100,109,104,106,110,111,123
 HEADER,DETAIL,FOOTER=1,0,2
-def c(name,label,kind,section,x,y,w,h=480,**kw):
+FONT_FAMILY='Yu Gothic UI'
+BODY_FONT_SIZE=11
+TITLE_FONT_SIZE=18
+INPUT_HEIGHT=360
+TITLE_HEIGHT=540
+INPUT_MARGIN_X=30
+INPUT_MARGIN_Y=15
+def c(name,label,kind,section,x,y,w,h=INPUT_HEIGHT,**kw):
     return dict(name=name,label=label,kind=kind,section=section,x=x,y=y,w=w,h=h,**kw)
 def l(name,text,section,x,y,w,h=330,**kw):return c(name,text,LABEL,section,x,y,w,h,**kw)
+def title(text,section,x,y,w):
+    return l('lblScreenTitle',text,section,x,y,w,TITLE_HEIGHT,bold=True,role='screen_title',font_size=TITLE_FONT_SIZE)
 FORMS={
 'frmLogin':dict(caption='社員経歴管理 — ログイン',width=18900,sections=(2520,3240,0),controls=[
- l('lblScreenTitle','社員経歴管理システム — ログイン',HEADER,6345,1440,6200,bold=True),l('lblLoginHelp','ログインIDとパスワードを入力してください。',HEADER,6345,2040,6200),
- c('txtLoginId','ログインID※',TEXT,DETAIL,7725,90,3600),c('txtPassword','パスワード※',TEXT,DETAIL,7725,750,4800,password=True),
+ title('社員経歴管理システム — ログイン',HEADER,6345,1440,6200),l('lblLoginHelp','ログインIDとパスワードを入力してください。',HEADER,6345,2040,6200),
+ c('txtLoginId','ログインID※',TEXT,DETAIL,7725,90,4800),c('txtPassword','パスワード※',TEXT,DETAIL,7725,750,4800,password=True),
  l('lblMessage','',DETAIL,6345,1380,6200,660),c('cmdLogin','ログイン',BUTTON,DETAIL,7725,2370,1650,510,bold=True,default=True),c('cmdExit','終了',BUTTON,DETAIL,9555,2370,1650,510)]),
 'frmMenu':dict(caption='社員経歴管理 — メニュー',width=18900,sections=(1500,7800,0),controls=[
- l('lblScreenTitle','社員経歴管理システム — メニュー',HEADER,360,360,18180,bold=True),l('lblActor','',HEADER,360,900,15000),
+ title('社員経歴管理システム — メニュー',HEADER,360,240,18180),l('lblActor','',HEADER,360,900,15000),
  c('cmdEmployeeSearch','社員検索',BUTTON,DETAIL,360,60,3150,510,bold=True),l('lblSearchHelp','社員を探し、基本情報・経歴を登録・編集します。',DETAIL,3810,150,9000),
  c('cmdCodeMaster','汎用コードマスタ',BUTTON,DETAIL,360,810,3150,510),l('lblCodeHelp','管理者：部署・案件役割を管理します。',DETAIL,3810,900,9000),
  c('cmdLogout','ログアウト',BUTTON,DETAIL,360,2100,2250,510),l('lblMessage','',DETAIL,360,2940,15000,660)]),
 'frmEmployeeSearch':dict(caption='社員経歴管理 — 社員検索',width=18900,sections=(1080,7500,1140),controls=[
- l('lblScreenTitle','社員検索',HEADER,360,360,15000,bold=True),c('cmdMenu','メニュー',BUTTON,HEADER,17400,360,1140,510),
+ title('社員検索',HEADER,360,240,15000),c('cmdMenu','メニュー',BUTTON,HEADER,17400,360,1140,510),
  c('txtEmployeeNo','社員番号条件',TEXT,DETAIL,360,450,1650),c('txtName','氏名条件',TEXT,DETAIL,2250,450,3900),c('cboDepartment','部署条件',COMBO,DETAIL,6390,450,2700),c('cboStatus','在籍区分条件',COMBO,DETAIL,9330,450,2700),
- c('cmdSearch','検索',BUTTON,DETAIL,12270,435,1050,510,bold=True),c('cmdClear','クリア',BUTTON,DETAIL,13560,435,1050,510),l('lblCount','未検索',DETAIL,360,1320,15000),
+ c('cmdSearch','検索',BUTTON,DETAIL,12270,375,1050,510,bold=True),c('cmdClear','クリア',BUTTON,DETAIL,13560,375,1050,510),l('lblCount','未検索',DETAIL,360,1320,15000),
  c('lstEmployees','',LIST,DETAIL,360,2115,18180,4380,columns=7,widths='0;1500;3900;4950;2970;2250;2250',callback='UiEmployeesRows'),
  l('lblSelection','条件を指定して検索してください。',DETAIL,360,6720,18180),c('txtSelectedDetails','',TEXT,DETAIL,360,7110,18180,330,multiline=True,readonly=True,visible=False),
- c('cmdNew','新規登録',BUTTON,FOOTER,360,240,1650,510),c('cmdEdit','編集',BUTTON,FOOTER,2190,240,2250,510),c('cmdExport','経歴書Excel',BUTTON,FOOTER,4620,240,3150,510)]),
+ c('cmdNew','新規登録',BUTTON,FOOTER,360,240,1650,510),c('cmdEdit','編集',BUTTON,FOOTER,2190,240,1650,510),c('cmdExport','経歴書Excel',BUTTON,FOOTER,4020,240,2250,510)]),
 'frmEmployeeEditor':dict(caption='社員経歴管理 — 社員登録・編集',width=18900,sections=(2400,7920,1140),controls=[
- l('lblScreenTitle','社員登録・編集［新規］',HEADER,360,360,18180,bold=True),l('lblEmployeeIdentity','新規社員',HEADER,360,810,18180),
+ title('社員登録・編集［新規］',HEADER,360,240,18180),l('lblEmployeeIdentity','新規社員',HEADER,360,810,18180),
  c('tabEmployee','',TAB,HEADER,360,1365,18180,900,pages=[('pgBasic','基本情報・職務'),('pgCareer','経歴（0件）')]),
  c('txtEmployeeNo','社員番号※',TEXT,DETAIL,360,480,1650,page=0),c('txtEmployeeName','氏名※',TEXT,DETAIL,2310,480,3900,page=0),c('txtEmployeeKana','氏名カナ※',TEXT,DETAIL,6510,480,4950,page=0),
  c('cboDepartment','部署※',COMBO,DETAIL,360,1530,3300,page=0),c('cboStatus','在籍区分※',COMBO,DETAIL,3960,1530,3300,page=0),c('txtJoinDate','入社日※',TEXT,DETAIL,7560,1530,2250,page=0),
  c('txtSummary','職務要約',TEXT,DETAIL,360,2565,8940,1320,page=0,multiline=True),c('txtSkills','得意技術・スキル',TEXT,DETAIL,9600,2565,8940,1320,page=0,multiline=True),
  c('txtQualifications','資格',TEXT,DETAIL,360,4380,8940,1320,page=0,multiline=True),c('txtSelfPr','自己PR',TEXT,DETAIL,9600,4380,8940,1320,page=0,multiline=True),
  l('lblCareerListHeading','経歴一覧',DETAIL,360,210,6300,page=1,bold=True),c('lstCareers','',LIST,DETAIL,360,1020,6300,3990,page=1,columns=4,widths='0;1200;1200;3600',callback='UiCareersRows'),
- c('cmdAddCareer','経歴追加',BUTTON,DETAIL,360,5190,1650,510,page=1),c('cmdRemoveCareer','経歴除去',BUTTON,DETAIL,2190,5190,2250,510,page=1),
+ c('cmdAddCareer','経歴追加',BUTTON,DETAIL,360,5190,1650,510,page=1),c('cmdRemoveCareer','経歴除去',BUTTON,DETAIL,2190,5190,1650,510,page=1),
  l('lblCareerHint','一覧への反映・除去は未保存です。\n最後に「社員・経歴を保存」で確定します。',DETAIL,360,5940,6300,1320,page=1),
  l('lblCareerEditHeading','選択経歴の編集',DETAIL,6960,210,11580,page=1,bold=True),
  c('txtStartMonth','開始年月※',TEXT,DETAIL,6960,915,1875,page=1),c('txtEndMonth','終了年月（空＝継続中）',TEXT,DETAIL,9075,915,1875,page=1,label_w=2580),c('cboRole','役割※',COMBO,DETAIL,11880,915,2400,page=1),c('txtTeamSize','人数※',TEXT,DETAIL,14520,915,1050,page=1),
@@ -40,10 +49,10 @@ FORMS={
  c('txtDescription','業務・案件概要※',TEXT,DETAIL,6960,2865,5670,990,page=1,multiline=True),c('txtDuties','担当業務※',TEXT,DETAIL,12870,2865,5670,990,page=1,multiline=True),
  c('txtAchievements','成果・工夫',TEXT,DETAIL,6960,4335,5670,990,page=1,multiline=True),c('txtTechnologies','使用技術',TEXT,DETAIL,12870,4335,5670,990,page=1,multiline=True),c('txtPhases','担当工程',TEXT,DETAIL,6960,5790,11580,720,page=1,multiline=True),
  c('cmdApplyCareer','経歴一覧へ反映',BUTTON,DETAIL,6960,6690,2250,510,page=1),l('lblDraftState','経歴未選択',DETAIL,9450,6780,9090,page=1),
- l('lblMessage','',DETAIL,360,7440,18180),l('lblSaveScope','社員と全経歴の変更をまとめて保存します。',FOOTER,360,300,10800,660),c('cmdSave','社員・経歴を保存',BUTTON,FOOTER,14550,240,1980,510,bold=True),c('cmdCancel','取消・検索へ戻る',BUTTON,FOOTER,16710,240,1830,510)]),
+ l('lblMessage','',DETAIL,360,7440,18180),l('lblSaveScope','社員と全経歴の変更をまとめて保存します。',FOOTER,360,330,10800,330),c('cmdSave','社員・経歴を保存',BUTTON,FOOTER,13860,240,2250,510,bold=True),c('cmdCancel','取消・検索へ戻る',BUTTON,FOOTER,16290,240,2250,510)]),
 'frmCodeMaster':dict(caption='社員経歴管理 — 汎用コードマスタ',width=18900,sections=(2520,5520,960),controls=[
- l('lblScreenTitle','汎用コードマスタ',HEADER,360,360,15000,bold=True),l('lblCodeIdentity','部署／未選択',HEADER,360,1080,18180),c('cmdMenu','メニュー',BUTTON,HEADER,17400,360,1140,510),
- c('cboCategory','分類※',COMBO,HEADER,900,1740,2700),c('cmdNew','新規',BUTTON,HEADER,3840,1740,1200,510),
+ title('汎用コードマスタ',HEADER,360,240,15000),l('lblCodeIdentity','部署／未選択',HEADER,360,1080,18180),c('cmdMenu','メニュー',BUTTON,HEADER,17400,360,1140,510),
+ c('cboCategory','分類※',COMBO,HEADER,1080,1740,2700),c('cmdNew','新規',BUTTON,HEADER,3960,1665,1200,510),
  l('lblCodeListHeading','コード一覧',DETAIL,360,120,7950,bold=True),c('lstCodes','',LIST,DETAIL,360,930,7950,4380,columns=5,widths='0;1125;4020;1275;1125',callback='UiCodesRows'),
  l('lblCodeEditHeading','選択コードの編集',DETAIL,8670,120,9870,bold=True),c('txtCode','コード※',TEXT,DETAIL,8670,780,1350),c('txtCodeName','名称※',TEXT,DETAIL,8670,1755,5100),c('txtSortOrder','並び順※',TEXT,DETAIL,8670,2730,1350),c('chkEnabled','有効※',CHECK,DETAIL,8670,3450,240,240),
  l('lblUsage','停止しても保存済み業務データを置換しません。',DETAIL,8670,3990,9870,660),c('cmdSave','このコードを保存',BUTTON,DETAIL,8670,4770,2250,510,bold=True),c('cmdCancel','編集を取消',BUTTON,DETAIL,11100,4770,1800,510),l('lblMessage','',FOOTER,360,180,18180,660)])}
@@ -56,8 +65,8 @@ for form,d in FORMS.items():
     for ctl in d['controls']:
         if ctl['kind'] not in (TEXT,COMBO,CHECK) or not ctl['label']:continue
         x,y,w,h=ctl['x'],ctl['y']-330,ctl.get('label_w',ctl['w']),330
-        if form=='frmLogin':x,y,w=6345,ctl['y'],1200
-        elif ctl['name']=='cboCategory':x,y,w,h=360,1740,480,480
+        if form=='frmLogin':x,y,w=6345,ctl['y']+15,1200
+        elif ctl['name']=='cboCategory':x,y,w,h=360,1755,600,330
         elif ctl['kind']==CHECK:x,y,w=ctl['x']+420,ctl['y'],8000
         caption='分類' if ctl['name']=='cboCategory' else ctl['label']
         extra.append(l('lbl_'+ctl['name'],caption,ctl['section'],x,y,w,h,**({'page':ctl['page']} if 'page' in ctl else {})))

@@ -10,7 +10,7 @@ const safeName = value => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9_-
 export function createNativeEvidenceSession({sky, sourceRoot, runId, artifact, ownerCopy, contractSha256, evidenceDirectory = 'build/test-results/native-ui'}) {
   if (!sky || !safeName(runId)) throw new Error('An initialized Sky client and safe run id are required.');
   const owner = path.resolve(sourceRoot);
-  if (typeof evidenceDirectory !== 'string' || path.isAbsolute(evidenceDirectory) || evidenceDirectory.split(/[\\/]/).some(p => p === '..') || !(evidenceDirectory === 'build/test-results/native-ui' || evidenceDirectory.startsWith('.tmp/native-diagnostic/'))) throw new Error('Final native evidence or an owned diagnostic directory required.');
+  if (typeof evidenceDirectory !== 'string' || path.isAbsolute(evidenceDirectory) || evidenceDirectory.split(/[\\/]/).some(p => p === '..') || !(['build/test-results/native-ui', 'build/test-results/native-ui-compact'].includes(evidenceDirectory) || evidenceDirectory.startsWith('.tmp/native-diagnostic/'))) throw new Error('Final native evidence or an owned diagnostic directory required.');
   const destination = path.resolve(owner, evidenceDirectory);
   if (!destination.toLowerCase().startsWith(owner.toLowerCase()+path.sep)) throw new Error('Evidence outside source root.');
   fs.mkdirSync(destination, {recursive:true});

@@ -27,52 +27,76 @@ Cleanup:
     If dc <> 0 Then ReleaseDC 0, dc
 End Function
 Public Sub UiResize(ByVal f As Access.Form)
-    Dim s As clsFormUiState, available As Long, delta As Long, titleWidth As Long
+    Dim s As clsFormUiState, available As Long, delta As Long, paint As Long
+    Dim ctl As Access.Control, groupLeft As Long, groupRight As Long, targetLeft As Long, positions As Object
     Set s = UiState(f)
     If s.IsResizing Then Exit Sub
     On Error GoTo Failed
     s.IsResizing = True: available = f.InsideWidth - 720
     If available < 3000 Then GoTo Finished
+    paint = UiBeginPaint()
     If f.Name = "frmLogin" Then
-        titleWidth = IIf(available < 6200, available, 6200)
-        f!lblScreenTitle.Width = titleWidth: f!lblLoginHelp.Width = titleWidth
-        f!lblScreenTitle.Left = IIf(f.InsideWidth - titleWidth - 360 < 6345, f.InsideWidth - titleWidth - 360, 6345)
-        f!lblLoginHelp.Left = f!lblScreenTitle.Left
+        ' All auth controls and their labels form one group. Move the group,
+        ' never only its heading; widths do not depend on accepted text length.
+        groupLeft = 2147483647
+        For Each ctl In f.Controls
+            If ctl.Left < groupLeft Then groupLeft = ctl.Left
+            If ctl.Left + ctl.Width > groupRight Then groupRight = ctl.Left + ctl.Width
+        Next
+        targetLeft = (f.InsideWidth - (groupRight - groupLeft)) \ 2
+        If targetLeft < 360 Then targetLeft = 360
+        delta = targetLeft - groupLeft
+        If delta <> 0 Then
+            Set positions = CreateObject("Scripting.Dictionary")
+            For Each ctl In f.Controls: positions.Add ctl.Name, CLng(ctl.Left): Next
+            ' Set owners first, labels last: an Access attached label may move
+            ' with its owner, so never apply delta to an already shifted label.
+            For Each ctl In f.Controls
+                If ctl.ControlType <> acLabel Then UiSetIfChanged ctl, "Left", CLng(positions(ctl.Name)) + delta
+            Next
+            For Each ctl In f.Controls
+                If ctl.ControlType = acLabel Then UiSetIfChanged ctl, "Left", CLng(positions(ctl.Name)) + delta
+            Next
+        End If
         GoTo Finished
     End If
-    f!lblScreenTitle.Width = IIf(available < 18180, available, 18180)
     Select Case f.Name
     Case "frmMenu"
-        f!lblActor.Width = IIf(available < 15000, available, 15000)
+        UiSetIfChanged f!lblScreenTitle, "Width", IIf(available < 18180, available, 18180)
+        UiSetIfChanged f!lblActor, "Width", IIf(available < 15000, available, 15000)
     Case "frmEmployeeSearch"
-        f!cmdMenu.Left = f.InsideWidth - 360 - f!cmdMenu.Width
-        f!lblScreenTitle.Width = f!cmdMenu.Left - 540
+        UiSetIfChanged f!cmdMenu, "Left", f.InsideWidth - 360 - f!cmdMenu.Width
+        UiSetIfChanged f!lblScreenTitle, "Width", f!cmdMenu.Left - 540
     Case "frmEmployeeEditor"
-        f!lblEmployeeIdentity.Width = IIf(available < 18180, available, 18180)
+        UiSetIfChanged f!lblScreenTitle, "Width", IIf(available < 18180, available, 18180)
+        UiSetIfChanged f!lblEmployeeIdentity, "Width", IIf(available < 18180, available, 18180)
         If CaptionWidth(f!lblEmployeeIdentity.Caption) + 120 > f!lblEmployeeIdentity.Width Then delta = 330
-        f!lblEmployeeIdentity.Height = 330 + delta
-        f!tabEmployee.Top = 1365 + delta: f!tabEmployee.Width = IIf(available < 18180, available, 18180)
-        f.Section(acHeader).Height = 2400 + delta: f.Section(acDetail).Height = 7920
-        f!cmdCancel.Left = f.InsideWidth - 360 - f!cmdCancel.Width
-        f!cmdSave.Left = f!cmdCancel.Left - 180 - f!cmdSave.Width
-        If f!cmdSave.Left > 540 Then f!lblSaveScope.Width = IIf(f!cmdSave.Left - 540 < 10800, f!cmdSave.Left - 540, 10800)
+        UiSetIfChanged f!lblEmployeeIdentity, "Height", 330 + delta
+        UiSetIfChanged f!tabEmployee, "Top", 1365 + delta
+        UiSetIfChanged f!tabEmployee, "Width", IIf(available < 18180, available, 18180)
+        UiSetIfChanged f.Section(acHeader), "Height", 2400 + delta
+        UiSetIfChanged f.Section(acDetail), "Height", 7920
+        UiSetIfChanged f!cmdCancel, "Left", f.InsideWidth - 360 - f!cmdCancel.Width
+        UiSetIfChanged f!cmdSave, "Left", f!cmdCancel.Left - 180 - f!cmdSave.Width
+        If f!cmdSave.Left > 540 Then UiSetIfChanged f!lblSaveScope, "Width", IIf(f!cmdSave.Left - 540 < 10800, f!cmdSave.Left - 540, 10800)
     Case "frmCodeMaster"
-        f!cmdMenu.Left = f.InsideWidth - 360 - f!cmdMenu.Width
-        f!lblScreenTitle.Width = f!cmdMenu.Left - 540
-        f!lblCodeIdentity.Width = IIf(available < 18180, available, 18180)
+        UiSetIfChanged f!cmdMenu, "Left", f.InsideWidth - 360 - f!cmdMenu.Width
+        UiSetIfChanged f!lblScreenTitle, "Width", f!cmdMenu.Left - 540
+        UiSetIfChanged f!lblCodeIdentity, "Width", IIf(available < 18180, available, 18180)
     End Select
 Finished:
-    s.IsResizing = False
+    UiEndPaint paint: s.IsResizing = False
     Exit Sub
 Failed:
     s.LayoutFailure = CStr(Err.Number) & ": " & Err.Description
-    s.IsResizing = False
+    On Error Resume Next
+    UiEndPaint paint: s.IsResizing = False
 End Sub
 Public Sub UiActivate(ByVal f As Access.Form)
-    Dim s As clsFormUiState, target As String: Set s = UiState(f)
+    Dim s As clsFormUiState, target As String, paint As Long, number As Long, description As String: Set s = UiState(f)
     On Error GoTo Failed
     If s.Activated Or s.IsInitializing Then Exit Sub
-    s.Activated = True
+    paint = UiBeginPaint(): s.Activated = True
     UiResize f
     f.GoToPage 1, 0, 0
     Select Case f.Name
@@ -100,9 +124,12 @@ Public Sub UiActivate(ByVal f As Access.Form)
     Case "frmEmployeeEditor": If IsNull(gEditor.EmployeeId) Then f!txtEmployeeNo.SetFocus Else f!txtEmployeeName.SetFocus
     Case "frmCodeMaster": f!cboCategory.SetFocus
     End Select
-    Exit Sub
+    UiEndPaint paint: Exit Sub
 Failed:
-    UiRecordLayoutFailure f, "ACTIVATE", Err.Number, Err.Description
+    number = Err.Number: description = Err.Description
+    On Error Resume Next
+    UiEndPaint paint
+    UiRecordLayoutFailure f, "ACTIVATE", number, description
 End Sub
 Public Sub UiRecordLayoutFailure(ByVal f As Access.Form, ByVal stage As String, ByVal number As Long, ByVal description As String)
     ' Record an actual display failure without discarding raw/accepted/Pending
@@ -116,11 +143,20 @@ Public Sub UiRecordLayoutFailure(ByVal f As Access.Form, ByVal stage As String, 
     End If
 End Sub
 Public Sub UiPageGroup(ByVal f As Access.Form, ByVal page As Integer)
-    Dim ctl As Control
+    Dim ctl As Control, paint As Long, number As Long, description As String
+    On Error GoTo Failed
+    paint = UiBeginPaint()
     For Each ctl In f.Controls
-        If Left$(ctl.Tag, 5) = "PAGE:" And Not UiIsPendingPhysical(ctl.Name) Then ctl.Visible = (ctl.Tag = "PAGE:" & CStr(page))
+        If Left$(ctl.Tag, 5) = "PAGE:" And Not UiIsPendingPhysical(ctl.Name) Then UiSetIfChanged ctl, "Visible", (ctl.Tag = "PAGE:" & CStr(page))
     Next
     UiSyncPendingEditors f
+    UiEndPaint paint: Exit Sub
+Failed:
+    number = Err.Number: description = Err.Description
+    On Error Resume Next
+    UiEndPaint paint
+    On Error GoTo 0
+    Err.Raise number, "SP2.UiPageGroup", description
 End Sub
 Public Sub UiFocusTabHeader(ByVal f As Access.Form)
     Dim tabs As Access.TabControl, index As Integer
@@ -133,29 +169,34 @@ Public Sub UiFocusTabHeader(ByVal f As Access.Form)
     tabs.Pages(index).SetFocus
 End Sub
 Public Sub UiForcePage(ByVal f As Access.Form, ByVal page As Integer)
-    Dim s As clsFormUiState, number As Long, description As String
+    Dim s As clsFormUiState, number As Long, description As String, paint As Long
     Set s = UiState(f): On Error GoTo Failed
-    s.IsSwitchingPage = True
+    paint = UiBeginPaint(): s.IsSwitchingPage = True
     UiFocusTabHeader f
     UiPageGroup f, page
     s.AcceptedPage = page: f!tabEmployee.Value = page
-    s.IsSwitchingPage = False: Exit Sub
+    s.IsSwitchingPage = False: UiEndPaint paint: Exit Sub
 Failed:
     number = Err.Number: description = Err.Description: s.IsSwitchingPage = False
-    Err.Raise number, , description
+    On Error Resume Next
+    UiEndPaint paint
+    On Error GoTo 0
+    Err.Raise number, "SP2.UiForcePage", description
 End Sub
 Public Sub UiSwitchPage(ByVal f As Access.Form)
-    Dim s As clsFormUiState, requested As Integer, errorText As String
+    Dim s As clsFormUiState, requested As Integer, errorText As String, paint As Long
     Set s = UiState(f)
     If s.IsSwitchingPage Or s.IsInitializing Or gUiLoading Then Exit Sub
     requested = f!tabEmployee.Value
     If requested = s.AcceptedPage Then Exit Sub
     On Error GoTo Failed
-    s.IsSwitchingPage = True: f!tabEmployee.Value = s.AcceptedPage
+    paint = UiBeginPaint(): s.IsSwitchingPage = True: f!tabEmployee.Value = s.AcceptedPage
+    UiEndPaint paint
     UiCaptureText f
     If gBusy Then GoTo Declined
     UiRequireNoPending f
     If Not UiResolveDraft(f) Then GoTo Declined
+    paint = UiBeginPaint()
     UiFocusTabHeader f
     UiPageGroup f, requested
     s.AcceptedPage = requested: f!tabEmployee.Value = requested
@@ -165,15 +206,19 @@ Public Sub UiSwitchPage(ByVal f As Access.Form)
     Else
         If gEditor.Careers.Count = 0 Then f!cmdAddCareer.SetFocus Else f!lstCareers.SetFocus
     End If
-    s.IsSwitchingPage = False: Exit Sub
+    s.IsSwitchingPage = False: UiEndPaint paint: Exit Sub
 Declined:
+    paint = UiBeginPaint()
     If s.LastEditFocus <> "" Then
         If f.Controls(s.LastEditFocus).Visible And f.Controls(s.LastEditFocus).Enabled Then f.Controls(s.LastEditFocus).SetFocus
     End If
     UiRestoreFirstPending f
-    s.IsSwitchingPage = False: Exit Sub
+    s.IsSwitchingPage = False: UiEndPaint paint: Exit Sub
 Failed:
     errorText = Err.Description: s.IsSwitchingPage = False
+    On Error Resume Next
+    UiEndPaint paint
+    On Error GoTo 0
     Err.Raise vbObjectError + 731, "SP2.UiSwitchPage", errorText
 End Sub
 Public Sub UiRestoreFirstPending(ByVal f As Access.Form)

@@ -1,40 +1,32 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-BUILD-REPORT","version":"2.0","path":"sample-project2-build-report.md","sheets":[{"heading":"実行条件","kind":"GRID","sheet":"01_実行条件"},{"heading":"工程の状態","kind":"GRID","sheet":"02_工程の状態"},{"heading":"検証の範囲","kind":"GRID","sheet":"03_検証の範囲"}]} -->
-# sample-project2 再生成・追加品質対応
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-BUILD-REPORT","version":"2.1","path":"sample-project2-build-report.md","sheets":[{"heading":"実行条件","kind":"GRID","sheet":"01_実行条件"},{"heading":"工程の状態","kind":"GRID","sheet":"02_工程の状態"},{"heading":"検証の範囲","kind":"GRID","sheet":"03_検証の範囲"}]} -->
+# sample-project2 追加画面品質対応
 
-2026-10-30。実行ID `sp2-ui-regenerate-20261029`。関連Agentへタイトル・文字と入力高・日本語文字コードの規約を横展開し、Accessの文字コードを修正して配布候補を更新した。**文字コードの確認と、画面レイアウト全体の完成は別であり、全体UIは未完了。** タイトル拡大・入力高の全面再設計は今回は実行していない。
+2026-11-04。今回の追加対象はAccessの入力高・整列・描画制御・スクロール復帰です。本文11pt、単行入力高360twip、ログイン同幅4800twip、タイトル18pt/540twipを適用しました。最終候補のコード/API検査は実施済みで、最終実画面の確認はデスクトップの解除状態の確認待ちです。
 
 ## 実行条件
 
-|項目|内容|
-|---|---|
-|元の依頼|sample-project2 / Access・CSharp_ASPNETの基本設計→詳細設計→実装。要件の業務条件は継承|
-|今回の追加|関連Agentの改善と、AccessのCP932修正・実行/表示確認。DQA-UI11/DQA-ENC01へ確定指示を保持|
-|Agent横展開|要件規則、基本/詳細の契約・規則・工程、build契約/生成チェック、共通Access品質規約の計10文書|
-|保全|5表48列の全typed row/schema・認証情報を保持。seed/資格情報resetなし。他project・Web製品は更新しない|
-|配置|方式別specRoot/sourceRoot、固定build/、試行.tmp/、履歴Git。commit/pushは実施していない|
+| 項目 | 内容 |
+| --- | --- |
+| 今回の実行ID | sp2-access-ui-compact-20261104 |
+| 対象 | sample-project2 / Access。CSharp_ASPNETは今回変更・再検査していない |
+| 仕様 | Accessの基本/詳細・共通・QA等19文書をUI限定で同期。DQA-UI12/13を採用 |
+| 入力凍結 | 70入力、構造指摘0、独立期待663条件/170部品 |
+| データ | 元5表48列の全typed row/schema・認証情報を保持。seed/資格情報resetなし |
+| 配置 | 固定build/、試行.tmp/、履歴Git。commit/pushは実施していない |
 
 ## 工程の状態
 
-|工程|状態|
-|---|---|
-|既実行の基本・詳細設計|元の要求に対する記録を保持。今回のタイトル/入力高要求へ全面改訂済みとは扱わない|
-|Agent改善|タイトル18pt標準/最低16ptかつ本文より4pt以上、Label/Header高も連動。TextBoxは実フォント行高＋上下余白＋境界から算定。全Form/Page/Dialogへ同種指摘を展開|
-|文字コード修正|VBA正本33ファイルをCP932（Windows版Shift-JIS/BOMなし）、VBE輸送をASCII/正確なChrW式へ。Form native exportはUTF-16 BOM、文書/Python/JSON・業務データUnicodeを保持|
-|Access候補|[CareerManagement.accdb](sample-project2/srcs/Access/build/CareerManagement.accdb) SHA4629fe0c…acab0fc、[source.zip](sample-project2/srcs/Access/build/source.zip) 47member。文字コード確認済み/全UI未確認の候補|
-|Web|publish SHAaad4998c…deca4を変更していない。前回の363rule/1017propertyは元の対象版/規約での結果で、新Agent改訂後の再評価ではない|
-|残る設計/実装|タイトル/入力高の基本→詳細→期待値→画面への全面反映、正常入力/離脱/Tab/同値マウス選択等。新規約/QAの通常入力再凍結も必要|
+| 工程 | 現在の状態 |
+| --- | --- |
+| 画面/Agent規約 | 過大な単行高、自動サイズ機能の誤認、短い描画scopeと復元責務を共通Access規約・build契約/チェックへ反映 |
+| Accessコード | 高さ/余白・同型ペア・タイトル・操作/ラベル、描画scope、同値更新抑止とセクション別スクロール復帰を実装 |
+| 配布物 | Access/build/CareerManagement.accdbとsource.zipを固定先へ更新 |
+| 正式UI適合 | 最終実画面と全663条件の証拠は未完。正式outputs未発行、formalScore=null |
 
 ## 検証の範囲
 
-|対象|今回の確認と限界|
-|---|---|
-|文字コード|Office UI=1041（日本語）、Windows ACP=936を実取得。33モジュールの意味一致/ASCII輸送readback、11文字列の実行＋export/reimport、4MSG・5Formの文言を確認。[詳細](sample-project2/srcs/Access/build/test-results/japanese-encoding.json)|
-|実画面|5Form/6表示（ログイン/メニュー/検索/社員基本/経歴/コード）で日本語文字化けを観測しなかった。準備は通常業務API、見た目は実Accessで確認。ログインへの入力/送信なし。全操作や他環境の合格ではない。[実画面記録](sample-project2/srcs/Access/build/test-results/root-native-resume-review.json)|
-|タイトル/高さ|実値は全5タイトル11pt/330twip。利用者の指摘を残し、文字コード修正で改善済みとしない。18pt等の新設計とTextBox高の組合せはDQA-UI11の後続再設計|
-|回帰とデータ|境界単体11件、業務API67件、認証39件、11class初期化/probe除去再compileを確認。既存データ/資格情報保持、全所有プロセスは今回記録の終了0を確認|
-|ソース配布|現47member ZIPを原仕様/試験なしで別展開し、通常build/初期設定/compile/所有Office正常終了。CP932 payloadとGit変換規則を確認。[再構築](sample-project2/srcs/Access/build/test-results/source-package-rebuild.json)|
-|規約検査|改訂10文書のpath/版/H2-sheets/ローカルファイル参照を確認。構造検査で意味/実機/受入を代替しない。[Agent改訂](agents/builds/build-agent/build/access-ui-quality/typography-encoding-adoption.json)|
-|未実施|全UI契約の再観測、属性/描画/操作の網羅、物理IME/clipboard/倍率/Dialog、同値マウス確定、現版Tab2110回帰、全帳票/印刷、Windows ACP932の別環境とVBE自体の表示条件|
-|判定|正式ui-observations/outputsは未発行。旧0810の属性475/Pending129/PDF等を新4629の合格に流用しない。正式受入・採点は未実施、formalScore=null|
+コンパイル/全11クラス、保存属性475条件、描画制御11条件/7状態、画面状態API104条件、認証39条件、日本語34モジュール/11文字列、全データ保全、48ファイルのZIPと独立source-only再構築を確認しました。中間候補の5Form/6表示の結果を、最終候補の実画面PASSへ流用していません。
 
-新規約の採用は後続生成へ引き継ぐ。現在の候補・ソースZIP・検査記録と、未実施のレイアウト再設計を区別した継続地点である。
+Excel出力は44条件通過後に内容検査MSG-037で失敗しました。変更前の元ACCDBでも同じ失敗を対照確認し、今回Excel出力の実装は変更していません。原因は未確定です。
+
+最終候補のSHAと詳しい範囲・未実施は[Access修正報告](sample-project2/srcs/Access/build/test-results/ui-compact-review.md)と[検査記録](sample-project2/srcs/Access/build/test-results/ui-compact-review.json)を参照してください。IME/clipboard/他環境、同値Pendingのマウス採用、実Excelプレビュー/紙印刷、利用者受入・正式採点は別に残ります。

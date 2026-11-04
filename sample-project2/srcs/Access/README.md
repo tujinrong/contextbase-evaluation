@@ -2,7 +2,7 @@
 
 Windows 11 / Microsoft 365 Access・Excel 64bit / VBA7 / DAO・ACE の単一ACCDBです。5画面、6機能、5表48列を持ち、社員と全経歴を一つのトランザクションで明示保存します。社員削除はなく、経歴除去は全体保存で確定します。
 
-今回のrunIdは `sp2-ui-regenerate-20261029`、採用詳細はDQA-UI08/09/10を含む現版です。配布候補は `build/CareerManagement.accdb`、正本ソースは `src/`、DB構造は `database/`、正式試験は `tests/`、検査記録は `build/test-results/` に置きます。日本語VBA正本 `src/modules/*.bas`・`src/classes/*.cls` はCP932（Windows版Shift-JIS、BOMなし）、native exportの `src/forms/*.txt` はBOM付きUTF-16、文書・Python・JSONはUTF-8です。読込みは種類ごとに明示し、一括変換しません。再構築定義 `src/forms/definitions.py` は原仕様/試験期待値を読みません。
+今回のrunIdは `sp2-access-ui-compact-20261104`、採用詳細はDQA-UI12/13の単行入力高・認証欄整列・描画制御を含む現版です。配布候補は `build/CareerManagement.accdb`、正本ソースは `src/`、DB構造は `database/`、正式試験は `tests/`、検査記録は `build/test-results/` に置きます。日本語VBA正本 `src/modules/*.bas`・`src/classes/*.cls` はCP932（Windows版Shift-JIS、BOMなし）、native exportの `src/forms/*.txt` はBOM付きUTF-16、文書・Python・JSONはUTF-8です。読込みは種類ごとに明示し、一括変換しません。再構築定義 `src/forms/definitions.py` は原仕様/試験期待値を読みません。
 
 ## 現在の品質状態
 
@@ -35,7 +35,7 @@ python -B -X utf8 tools/build.py --demo-credentials --publish-candidate
 
 ## UIと保存
 
-標準未連結Form/Control、灰色背景・黒字・白入力・矩形のクラシック外観、全アプリ管理文字Yu Gothic UI11ptを採用します。タイトル/領域見出し/主操作は太字、Fontを持たないCheckBox記号とOS管理Dialog子文字は理由付き別範囲です。付属Label/列見出し/Tab/Pageの字体を省きません。
+標準未連結Form/Control、灰色背景・黒字・白入力・矩形のクラシック外観、本文・入力・通常ラベルはYu Gothic UI11pt、画面タイトルは18pt/540twip高を採用します。タイトル/領域見出し/主操作は太字、Fontを持たないCheckBox記号とOS管理Dialog子文字は理由付き別範囲です。付属Label/列見出し/Tab/Pageの字体を省きません。
 
 F04はHeader2400twipにタイトル/親社員識別/高さ900の標準Tabと空Page2つを置き、入力群はDetail7920の実親/論理Page所属を分けます。Footerの保存/取消は全体操作です。経歴一覧6300twipと詳細11580twip、氏名3900/カナ4950/日付2250twipを維持し、Header/Detail/Footer各原点を使います。実clientと1366×768静的モックを同一視しません。
 
@@ -63,4 +63,10 @@ python -B -X utf8 tests/run.py --cycle 3
 
 `--artifact` / `--manifest` / `--output-root` で未公開stagingを明示して検査できます。Value代入/Application.Runは業務API/状態設定であり、物理キー・貼付・IMEの証拠ではありません。native操作はrootのcomputer-useと `tests/native-cua-session.mjs`、範囲は `tests/native-ui-checklist.md` の現SHAへ対応させます。ロック画面越しの操作や独自の入力注入は行いません。
 
-`tests/ui-contract.json` は最終仕様のID/版/SHAから独立固定した期待値で、170部品/139Control/140字体/658rule・16surfaceの9カテゴリと個別状態を持ちます。実測値を期待値へ転記しません。新改訂/新ACCDB/測定コード変更で旧結果を失効させ、未観測・未実装をPASSへ集約しません。source-only ZIPは原仕様・正式tests/期待値・検査結果を含まず、明示した4production helperだけでfresh再構築します。配布再現と仕様に対する正式受入は別です。
+`tests/ui-contract.json` は最終仕様のID/版/SHAから独立固定した期待値で、170部品/139Control/140字体/663rule・16surfaceの9カテゴリと個別状態を持ちます。実測値を期待値へ転記しません。新改訂/新ACCDB/測定コード変更で旧結果を失効させ、未観測・未実装をPASSへ集約しません。source-only ZIPは原仕様・正式tests/期待値・検査結果を含まず、明示した5production helperだけでfresh再構築します。配布再現と仕様に対する正式受入は別です。
+
+## 単行入力と描画制御の改訂
+
+DQA-UI12/13により、単行TextBox/ComboBoxと未採用入力面は360twip、上下余白15twip・左右30twipとし、複数行は既存の可視行数と内部スクロールを維持します。ログインID/パスワードは4800twipの同幅、同高とし、表示幅と入力上限を区別します。画面切替・領域更新は短い同期処理の間だけ描画をまとめ、同じ位置/寸法の再設定や空一覧の再問合せを抑えます。例外/早期終了後も描画を戻し、確認Dialog・長い出力・遅延Timerを停止状態で待ちません。対象版の確認結果と未実施はbuild/test-results/ui-compact-review.jsonへ記録します。
+
+処理中表示からの復帰では、Detailの原点とHeader/Footerの固定位置を区別してスクロール量を扱います。Header/Footerの位置からDetailのスクロールを推測して先頭へ戻す処理を避け、入力・選択・焦点と利用者の表示位置を保持します。

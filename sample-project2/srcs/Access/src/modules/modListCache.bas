@@ -11,16 +11,24 @@ Private Function CacheKey(ByVal ctl As Access.Control) As String
     CacheKey = ctl.Parent.Name & "." & ctl.Name
 End Function
 Public Sub SetRows(ByVal ctl As Access.Control, ByVal rows As Collection)
-    EnsureCaches
-    If caches.Exists(CacheKey(ctl)) Then caches.Remove CacheKey(ctl)
-    caches.Add CacheKey(ctl), rows
-    ctl.RowSource = ""
+    Dim key As String, callback As String, unchangedEmpty As Boolean
+    EnsureCaches: key = CacheKey(ctl)
     Select Case ctl.Name
-    Case "lstEmployees": ctl.RowSourceType = "UiEmployeesRows"
-    Case "lstCareers": ctl.RowSourceType = "UiCareersRows"
-    Case "lstCodes": ctl.RowSourceType = "UiCodesRows"
-    Case Else: ctl.RowSourceType = "ListRows"
+    Case "lstEmployees": callback = "UiEmployeesRows"
+    Case "lstCareers": callback = "UiCareersRows"
+    Case "lstCodes": callback = "UiCodesRows"
+    Case Else: callback = "ListRows"
     End Select
+    ' Retain the new collection identity used to supersede deferred jobs. Only
+    ' an already empty native list is a safe no-op; nonempty/mutable caches requery.
+    If caches.Exists(key) Then
+        unchangedEmpty = (rows.Count = 0 And caches(key).Count = 0 And ctl.ListCount = 0 And ctl.RowSource = "" And ctl.RowSourceType = callback)
+        caches.Remove key
+    End If
+    caches.Add key, rows
+    If unchangedEmpty Then Exit Sub
+    If ctl.RowSource <> "" Then ctl.RowSource = ""
+    If ctl.RowSourceType <> callback Then ctl.RowSourceType = callback
     ctl.Requery
 End Sub
 Public Function CachedRows(ByVal ctl As Access.Control) As Collection

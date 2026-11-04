@@ -170,13 +170,19 @@ for label in attached:
         continue
     section, (left, top, width, height) = own
     if form == 'frmLogin':
-        rectangle = (6345, top, 1200, 330)
+        rectangle = (6345, top + 15, 1200, 330)
     elif native_input == 'chkEnabled':
         rectangle = (left + 420, top, 8000, 330)
     else:
         rectangle = (left, top - 330, 2580 if native_input == 'txtEndMonth' else width, 330)
     spec_geometry[label] = (section, rectangle)
-spec_geometry['frmCodeMaster.lbl_cboCategory'] = ('Header', (360, 1740, 480, 480))
+spec_geometry['frmCodeMaster.lbl_cboCategory'] = ('Header', (360, 1755, 600, 330))
+spec_geometry['frmCodeMaster.cboCategory'] = ('Header', (1080, 1740, 2700, 360))
+spec_geometry['frmCodeMaster.cmdNew'] = ('Header', (3960, 1665, 1200, 510))
+for form in FORMS.values():
+    spec_geometry[form + '.lblScreenTitle'] = ('Header',
+        (6345, 1440, 6200, 540) if form == 'frmLogin' else
+        (360, 240, 18180 if form in ['frmMenu', 'frmEmployeeEditor'] else 15000, 540))
 spec_geometry.update({name: (item['section'], item['rectangle']) for name, item in pending_controls.items()})
 for target, (section, rectangle) in spec_geometry.items():
     rule = rule_by_id.get('GEOMETRY-' + target)
@@ -192,6 +198,12 @@ for target, (section, rectangle) in spec_geometry.items():
             valid = isinstance(value, list) and len(value) == 2 and expected_value - 30 <= value[0] <= expected_value <= value[1] <= expected_value + 30
         if not valid:
             fail('SPEC_GEOMETRY_VALUE', target + '/' + property_name)
+    component_kind = component_by_id.get(target, {}).get('kind')
+    if component_kind in ['TextBox', 'ComboBox'] and rectangle[3] == 360:
+        for property_name, expected_value in [('topMarginTwip', 15), ('bottomMarginTwip', 15),
+                                               ('leftMarginTwip', 30), ('rightMarginTwip', 30)]:
+            if props.get(property_name) != {'op': 'eq', 'value': expected_value}:
+                fail('DQA_UI12_INPUT_MARGIN', target + '/' + property_name)
 
 # The UI10 caption table is a separate source-level check, including the
 # navigation-label exception: F06 uses 分類 without a required marker.
@@ -255,13 +267,28 @@ for item in rules:
         if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]{0,79}', key) or not expectation_valid(value):
             fail('EXPECTED_INVALID', item['id'] + '/' + key)
     if item.get('kind') == 'font':
-        for key, expected in [('fontFamily', 'Yu Gothic UI'), ('fontSize', 11), ('fontUnit', 'pt')]:
+        title_size = 18 if target.endswith('.lblScreenTitle') else 11
+        for key, expected in [('fontFamily', 'Yu Gothic UI'), ('fontSize', title_size), ('fontUnit', 'pt')]:
             if item['properties'].get(key) != {'op': 'eq', 'value': expected}:
                 fail('FONT_VALUE', item['id'] + '/' + key)
     if item.get('kind') == 'interaction' and any('oneOf' == value.get('op') for key, value in item.get('properties', {}).items() if 'state' in key.lower() or 'path' in key.lower()):
         fail('STATE_WEAKENING', item['id'])
 if set(item.get('kind') for item in rules) != {'font', 'dimensions', 'appearance', 'render', 'interaction'}:
     fail('RULE_KINDS', 'All five existing kinds required')
+for target in ['frmLogin.txtLoginId', 'frmLogin.txtPassword']:
+    props = rule_by_id.get('GEOMETRY-' + target, {}).get('properties', {})
+    for key, expected in [('designLeft', 7725), ('designWidth', 4800), ('designHeight', 360)]:
+        if props.get(key) != {'op': 'eq', 'value': expected}:
+            fail('DQA_UI12_AUTH_FRAME', target + '/' + key)
+for surface in ['SC-F01', 'SC-F02', 'SC-F03', 'SC-F04', 'SC-F06']:
+    paint = rule_by_id.get('PAINT-' + surface, {})
+    for key in ['paintScopeReleasedAfterDisplay', 'paintScopeReleasedAfterError', 'nestedPaintScopeBalanced',
+                'resizeIsIdempotent', 'dialogsShownWithPaintingEnabled', 'focusAndInputRetainedByPaintScope']:
+        if paint.get('properties', {}).get(key) != {'op': 'eq', 'value': True}:
+            fail('DQA_UI13_PAINT_EXPECTATION', surface + '/' + key)
+    states = rule_by_id.get(surface + '-STATES', {})
+    if states.get('properties', {}).get('displayTransitionsDoNotExposePartialLayout') != {'op': 'eq', 'value': True}:
+        fail('DQA_UI13_TRANSITION_EXPECTATION', surface)
 for component in components:
     if not isinstance(component.get('id'), str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}', component['id']) or not isinstance(component.get('kind'), str) or not component['kind'] or type(component.get('textCapable')) is not bool:
         fail('COMPONENT_SHAPE', str(component.get('id')))

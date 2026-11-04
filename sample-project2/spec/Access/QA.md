@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-QA","version":"1.8","path":"sample-project2/spec/Access/QA.md","sheets":[{"heading":"状態の区別","kind":"GRID","sheet":"01_状態の区別"},{"heading":"要求・判断一覧","kind":"LIST","sheet":"02_要求と判断","key":["QA-ID"]},{"heading":"次工程への引継ぎ","kind":"GRID","sheet":"03_次工程への引継ぎ"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-QA","version":"1.9","path":"sample-project2/spec/Access/QA.md","sheets":[{"heading":"状態の区別","kind":"GRID","sheet":"01_状態の区別"},{"heading":"要求・判断一覧","kind":"LIST","sheet":"02_要求と判断","key":["QA-ID"]},{"heading":"次工程への引継ぎ","kind":"GRID","sheet":"03_次工程への引継ぎ"}]} -->
 # 要求・QA・設計判断
 
-版1.8／2026-10-29。改訂版。未確認を承認扱いにしない。
+版1.9／2026-11-04。改訂版。未確認を承認扱いにしない。
 
 ## 状態の区別
 
@@ -37,7 +37,7 @@
 | QA-024 | 利用者確定 | sample-project1は旧test-project1を改名したフル方式パターン、sample-project2はAccess・CSharp_ASPNETの2方式パターン | 2026-10-28追加指示。元の構造参照依頼は旧名による当時の記録として保持 |
 | QA-025 | 利用者確定 | sample-project2のDEMOはadmin/ADMINとstaff/STAFF、共通パスワード123。入力長3～128スカラー。新規seed1.1、既存は内部利用者ID/業務値を保った2利用者だけの認証移行。次回生成も継承 | 2026-10-29利用者指示。[DEMO認証条件](規約/DEMO認証条件.md)、共通06、F01、DQA-AUTH01。他project/本番へ固定値や短い長さを展開しない |
 | QA-026 | 利用者確定 | sample-project2を基本→詳細→実装の順で再生成し、利用者視点の合理性・統一性・見やすさ・操作性を反映する。今回の担当工程はAccess基本だけで停止 | 2026-10-29再生成依頼、runId=sp2-ui-regenerate-20261029。現行5画面/6機能/5表・DEMO認証・保存・帳票の条件を継承。[共通09](共通/09_UIパターン・状態・受入条件.md)へ4観点・状態・9カテゴリを具体化 |
-| QA-027 | 設計採用 | screenFamily=WINFORMS、renderer=ACCESS。全画面root1260px、外周24px、経歴一覧420px（80/80/240）と詳細約772pxを1366×768・100%のモックへ採用。タイトル/親社員をタブ外に置き、反映と全体保存を表示名で区別。追加表示IDのみで既存ID・DB項目を保持 | [共通UI](共通/03_共通UI・入力設計.md)・F01～F06。UI生成条件1.1の全役割Yu Gothic UI11pt、氏名3900/カナ4950/日付2250twipを優先し、共通規約のタイトル16pt推奨は採用しない。モック寸法・100%は物理環境の正式受入値へ格上げしない |
+| QA-027 | 設計採用 | screenFamily=WINFORMS、renderer=ACCESS。全画面root1260px、外周24px、経歴一覧420px（80/80/240）と詳細約772pxを1366×768・100%のモックへ採用。タイトル/親社員をタブ外に置き、反映と全体保存を表示名で区別。追加表示IDのみで既存ID・DB項目を保持 | [共通UI](共通/03_共通UI・入力設計.md)・F01～F06。当時のUI生成条件1.1は全役割11ptであったが、タイトルは後続のDQA-UI11/12で18ptへ改訂する。氏名3900/カナ4950/日付2250twipは保持する。モック寸法・100%は物理環境の正式受入値へ格上げしない |
 | QA-028 | 詳細工程残件 | F05の横1ページ/縦自動・全件全文・既定文字サイズ・手動継続見出しを同時に満たす。FitTo等のAPI値は結果契約と分け、詳細で選択し実Excelの長文20件/改ページを検証 | [F05の印刷契約](基本設計書/05_経歴書出力.md)。未検証のZoom100固定や全体一枚縮小へ変更しない。過去PH-07の状態を本版のPASSへ転記しない |
 
 ## 次工程への引継ぎ

@@ -1,6 +1,6 @@
-# build-agent 構造検査 sp2-ui-regenerate-20261029
+# build-agent 構造検査 sp2-access-ui-compact-20261104
 
-対象：sample-project2 / Access。Agent版7.12。入力版・SHA-256はinputs.jsonを参照。
+対象：sample-project2 / Access。Agent版7.15。入力版・SHA-256はinputs.jsonを参照。
 
 判定：structure-check-passed。現行入力70ファイルを検査。問題0件。
 

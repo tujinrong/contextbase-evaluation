@@ -143,7 +143,10 @@ def main():
             if not ascii_only or not equal:
                 record['issues'].append({'code': 'COMPILED_TEXT_DIFFERENCE', 'component': component.Name})
         component = module = None
-        assert len(record['compiledSourceComparisons']) == 33
+        expected_components = {p.stem for folder, pattern in (('modules', '*.bas'), ('classes', '*.cls'))
+                               for p in (ROOT/'src'/folder).glob(pattern)}
+        assert {row['component'] for row in record['compiledSourceComparisons']} == expected_components
+        assert len(record['compiledSourceComparisons']) == len(expected_components)
         component = project.VBComponents.Add(1)
         component.Name = 'EncodingFixture'
         component.CodeModule.AddFromString(vbe_text(read_vba_source(FIXTURE)))

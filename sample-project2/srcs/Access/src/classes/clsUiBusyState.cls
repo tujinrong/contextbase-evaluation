@@ -7,6 +7,7 @@ Private priorFocus As String
 Private priorRight As Long
 Private priorDown As Long
 Private physicalOverlay As Boolean
+Private viewportCaptured As Boolean
 Private active As Boolean
 Private overlayState As clsFormUiState
 Private overlayRegistered As Boolean
@@ -14,16 +15,24 @@ Public Sub Acquire(ByVal f As Access.Form)
     Dim c As Object, kind As Long, locked As Variant, anchor As String
     On Error GoTo Failed
     Set target = f: Set states = CreateObject("Scripting.Dictionary")
-    previousBusy = gBusy: gBusy = True: active = True: priorFocus = "": physicalOverlay = False
+    previousBusy = gBusy: gBusy = True: active = True: priorFocus = "": physicalOverlay = False: viewportCaptured = False
     ' Form.Load runs before the first normal paint. Moving to a footer here
     ' scrolls the new form before it is visible and leaves its Tab header above
     ' the viewport. Keep the logical guard; native controls need no overlay
     ' until the initial form setup has finished. Runtime overlays are unchanged.
     If UiIsInitialisingForm(f) Then Exit Sub
     priorFocus = FocusName(f)
-    priorRight = -CLng(f.CurrentSectionLeft): priorDown = -CLng(f.CurrentSectionTop)
-    If priorRight < 0 Then priorRight = 0
-    If priorDown < 0 Then priorDown = 0
+    ' CurrentSectionTop is the active section's origin, not a scroll offset.
+    ' Detail starts below a visible Header; fixed Header/Footer origins do not
+    ' reveal Detail scrolling. Leave that viewport untouched when focus is fixed.
+    If FocusSection(f) = acDetail Then
+        priorRight = -CLng(f.CurrentSectionLeft)
+        priorDown = -CLng(f.CurrentSectionTop)
+        If f.Section(acHeader).Visible Then priorDown = priorDown + CLng(f.Section(acHeader).Height)
+        If priorRight < 0 Then priorRight = 0
+        If priorDown < 0 Then priorDown = 0
+        viewportCaptured = True
+    End If
     physicalOverlay = True
     Set overlayState = UiState(f): overlayState.BusyOverlayDepth = overlayState.BusyOverlayDepth + 1: overlayRegistered = True
     Select Case f.Name
@@ -70,6 +79,20 @@ Private Function FocusName(ByVal f As Access.Form) As String
     FocusName = f.ActiveControl.Name
 Missing:
 End Function
+Private Function FocusSection(ByVal f As Access.Form) As Long
+    Dim owner As Object, depth As Long, section As Long
+    FocusSection = -1
+    On Error Resume Next
+    Set owner = f.ActiveControl
+    For depth = 1 To 8
+        Err.Clear
+        section = owner.Section
+        If Err.Number = 0 Then FocusSection = section: Exit Function
+        Err.Clear
+        Set owner = owner.Parent
+        If Err.Number <> 0 Or owner Is Nothing Then Exit Function
+    Next
+End Function
 Public Sub Restore()
     Dim key As Variant, state As Variant, c As Object, canFocus As Boolean, focusTarget As String
     If Not active Then Exit Sub
@@ -89,7 +112,7 @@ Public Sub Restore()
     Next
     ' SetFocus alone scrolls only enough to expose the old control, leaving Tab
     ' captions above the viewport. Restore the saved native page offsets first.
-    If physicalOverlay Then target.GoToPage 1, priorRight, priorDown
+    If physicalOverlay And viewportCaptured Then target.GoToPage 1, priorRight, priorDown
     If overlayRegistered Then
         overlayState.BusyOverlayDepth = overlayState.BusyOverlayDepth - 1: overlayRegistered = False
     End If

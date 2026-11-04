@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-INDEX","version":"1.13","path":"sample-project2/spec/Access/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-INDEX","version":"1.14","path":"sample-project2/spec/Access/README.md","sheets":[{"heading":"対象と状態","kind":"GRID","sheet":"01_対象と状態"},{"heading":"設計書一覧","kind":"LIST","sheet":"02_設計書一覧","key":["区分","文書"]},{"heading":"独立入力と次工程","kind":"GRID","sheet":"03_独立入力と次工程"}]} -->
 # Access 基本設計書一覧
 
-仕様セット版1.13／2026-10-30。社員経歴管理システム。
+仕様セット版1.14／2026-11-04。社員経歴管理システム。
 
 ## 対象と状態
 
@@ -64,3 +64,5 @@ specRoot=sample-project2/spec/Access/、sourceRoot=sample-project2/srcs/Access/�
 DQA-UI08/09により物理Section/標準Tab最小帯とExcel Footer書式の技術契約を補正した（2026-10-30）。F03全文の初期折畳み/選択時展開、F04 Tab900/Header2400、Footer専用11ptで、基本8HTML・DB・認証・保存単位は不変。新改訂の入力/期待値/製品検査は再凍結し、旧合格を流用しない。
 
 DQA-UI10は未採用Combo入力を実際に表示・修正できるよう、6論理Comboごとに専用unbound TextBoxと標準付属Labelを置く詳細技術改訂である。3組共有の草案は撤回し、F03の部署/在籍とF04の親/子Pendingを同時に保持する。物理UI共通1.2・共通実装1.4・F03/F04詳細1.3・F06詳細1.2・詳細QA1.5が正本。12Control追加後139Control/付属Label38、全アプリ管理文字11ptで、5Form/2Page/15Section・既存論理92項目/17イベント/8HTML・業務/認証/保存/DB/seedは変えない。spec意味レビュー/freeze→通常preflightで新入力凍結（製品生成なし）→そのSHAへ独立UI期待値改訂/Rootレビュー→製品実装/新候補観測の順に進める。新補助面の実表示/キー/候補選択/取消/保存前拒否は本書更新だけで合格にしない。
+
+2026-11-04の利用者修正依頼をDQA-UI12/13として採用する。本文11pt/画面タイトル18pt・高540twip、単行TextBox/ComboBox/Pending高360twip、認証2欄の共通幅4800twipと作用範囲別操作の整列を基本/詳細の同一画面断片へ反映する。短い描画scopeの入れ子/例外復旧と同値レイアウト再代入抑止を具体化する。業務ID/項目/認証/保存/5表48列/seedは保持し、新入力凍結→独立期待値→新候補の検査を行う。本設計改訂は製品の実画面/点滅/実キー/IME/別倍率/正式受入の合格記録ではない。

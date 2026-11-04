@@ -7,7 +7,10 @@ Public gCareerIndex As Long
 Public gAllowClose As Boolean
 Public gExportCancel As Boolean
 Public Sub LogoutNow()
-    Dim names As Variant, n As Variant
+    Dim names As Variant, n As Variant, paint As Long, priorAllow As Boolean
+    Dim number As Long, description As String
+    On Error GoTo Failed
+    priorAllow = gAllowClose: paint = UiBeginPaint()
     Call EnsureSession: gSession.Clear: gAllowClose = True
     names = Array("frmEmployeeEditor", "frmCodeMaster", "frmEmployeeSearch", "frmMenu")
     For Each n In names
@@ -17,17 +20,39 @@ Public Sub LogoutNow()
     Set gEditor = Nothing: Set gOriginal = Nothing: Set gCode = Nothing: Set gCriteria = Nothing
     Set gSearchRaw = Nothing: Set gSearchRows = Nothing: gSearchWasExecuted = False
     Set gSearchReturn = Nothing: Set gAppliedCriteria = Nothing: gAppliedValid = False
-    If Not CurrentProject.AllForms("frmLogin").IsLoaded Then DoCmd.OpenForm "frmLogin"
-End Sub
-Public Sub Navigate(ByVal from As Access.Form, ByVal target As String)
-    Dim priorAllow As Boolean, number As Long, description As String
-    On Error GoTo Failed
-    priorAllow = gAllowClose: gAllowClose = True
-    DoCmd.OpenForm target: DoCmd.Close acForm, from.Name, acSaveNo
-    gAllowClose = priorAllow: Exit Sub
+    If Not CurrentProject.AllForms("frmLogin").IsLoaded Then UiOpenForm "frmLogin"
+    UiEndPaint paint: Exit Sub
 Failed:
     number = Err.Number: description = Err.Description: gAllowClose = priorAllow
-    Err.Raise number, , description
+    On Error Resume Next
+    UiEndPaint paint
+    On Error GoTo 0
+    Err.Raise number, "SP2.LogoutNow", description
+End Sub
+Public Sub Navigate(ByVal from As Access.Form, ByVal target As String)
+    Dim priorAllow As Boolean, number As Long, description As String, paint As Long
+    On Error GoTo Failed
+    priorAllow = gAllowClose: paint = UiBeginPaint(): gAllowClose = True
+    DoCmd.OpenForm target: DoCmd.Close acForm, from.Name, acSaveNo
+    gAllowClose = priorAllow: UiEndPaint paint: Exit Sub
+Failed:
+    number = Err.Number: description = Err.Description: gAllowClose = priorAllow
+    On Error Resume Next
+    UiEndPaint paint
+    On Error GoTo 0
+    Err.Raise number, "SP2.Navigate", description
+End Sub
+Public Sub UiOpenForm(ByVal target As String)
+    Dim paint As Long, number As Long, description As String
+    On Error GoTo Failed
+    paint = UiBeginPaint(): DoCmd.OpenForm target
+    UiEndPaint paint: Exit Sub
+Failed:
+    number = Err.Number: description = Err.Description
+    On Error Resume Next
+    UiEndPaint paint
+    On Error GoTo 0
+    Err.Raise number, "SP2.UiOpenForm", description
 End Sub
 Public Function ConfirmDiscard(Optional ByVal f As Access.Form = Nothing) As Boolean
     Dim pending As Boolean, title As String, scope As String

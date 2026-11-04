@@ -27,8 +27,11 @@ import win32process
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--artifact-sha256', required=True)
+parser.add_argument('--run-id', required=True)
 parser.add_argument('--contract-sha256', required=True)
-parser.add_argument('--scratch-name', choices=['independent-ui-attributes', 'independent-ui-attributes-current', 'independent-ui-attributes-final'], default='independent-ui-attributes')
+parser.add_argument('--artifact', type=Path, default=OWNER / 'build/CareerManagement.accdb')
+parser.add_argument('--baseline', type=Path, required=True)
+parser.add_argument('--scratch-name', choices=['independent-ui-attributes', 'independent-ui-attributes-current', 'independent-ui-attributes-final', 'independent-ui-attributes-compact'], default='independent-ui-attributes')
 args = parser.parse_args()
 scratch = OWNER / '.tmp' / args.scratch_name
 scratch.mkdir(parents=True, exist_ok=True)
@@ -36,8 +39,8 @@ if scratch.resolve() != scratch.absolute():
     raise RuntimeError('Redirected scratch path')
 output = OWNER / 'build/test-results/independent-design-attributes.json'
 contract_path = OWNER / 'tests/ui-contract.json'
-artifact = OWNER / '.tmp/build/CareerManagement.accdb'
-baseline = OWNER / '.tmp/build-agent/ui-regeneration/preserved-input.accdb'
+artifact = args.artifact.absolute()
+baseline = args.baseline.absolute()
 candidate_copy = scratch / 'candidate.accdb'
 baseline_copy = scratch / 'baseline.accdb'
 TABLES = ['m_app_user', 'm_employee', 't_career', 'm_code_category', 'm_code']
@@ -150,7 +153,9 @@ PENDING_RUNTIME_DIMENSION_RULE_IDS = frozenset({
 PROPERTY_MAP = {'designWidthTwip': 'Width', 'defaultView': 'DefaultView', 'recordSelectors': 'RecordSelectors', 'navigationButtons': 'NavigationButtons', 'dividingLines': 'DividingLines', 'autoResize': 'AutoResize', 'autoCenter': 'AutoCenter', 'popUp': 'PopUp', 'modal': 'Modal', 'scrollBars': 'ScrollBars', 'keyPreview': 'KeyPreview', 'designHeightTwip': 'Height', 'backColor': 'BackColor', 'visible': 'Visible', 'fontFamily': 'FontName', 'fontSize': 'FontSize', 'fontBold': 'FontBold', 'designLeft': 'Left', 'designTop': 'Top', 'designWidth': 'Width', 'designHeight': 'Height', 'foreColor': 'ForeColor', 'specialEffect': 'SpecialEffect', 'useTheme': 'UseTheme', 'shape': 'Shape', 'gradient': 'Gradient', 'limitToList': 'LimitToList', 'autoExpand': 'AutoExpand', 'boundColumn': 'BoundColumn', 'columnCount': 'ColumnCount', 'columnWidthsTwip': 'ColumnWidths', 'columnHeads': 'ColumnHeads', 'multiSelect': 'MultiSelect', 'rowSourceType': 'RowSourceType', 'style': 'Style', 'multiRow': 'MultiRow', 'tabFixedHeightTwip': 'TabFixedHeight', 'tabFixedWidthTwip': 'TabFixedWidth', 'enabled': 'Enabled', 'locked': 'Locked', 'tabStop': 'TabStop', 'enterKeyBehavior': 'EnterKeyBehavior'}
 EMPTY_PROPS = {'recordSourceEmpty': 'RecordSource', 'controlSourceEmpty': 'ControlSource', 'inputMaskEmpty': 'InputMask', 'formatEmpty': 'Format', 'rowSourceEmpty': 'RowSource'}
 
-PROPERTY_MAP.update({'caption': 'Caption', 'controlTipText': 'ControlTipText', 'statusBarText': 'StatusBarText'})
+PROPERTY_MAP.update({'caption': 'Caption', 'controlTipText': 'ControlTipText', 'statusBarText': 'StatusBarText',
+                     'topMarginTwip': 'TopMargin', 'bottomMarginTwip': 'BottomMargin',
+                     'leftMarginTwip': 'LeftMargin', 'rightMarginTwip': 'RightMargin'})
 
 
 def attached_label_names(obj):
@@ -221,7 +226,7 @@ def canonical_vba(text):
     tokens = re.findall(r'"(?:[^"\r\n]|"")*"|\x27[^\r\n]*|_[ \t]*(?:\r\n|\n)|[A-Za-z_][A-Za-z_0-9]*|[^\s]', text)
     return [token if token.startswith('"') else token.casefold() for token in tokens if not token.startswith("'") and not re.fullmatch(r'_[ \t]*(?:\r\n|\n)', token)]
 
-record = {'schemaVersion': 1, 'projectId': 'sample-project2', 'profileId': 'Access', 'runId': 'sp2-ui-regenerate-20261029', 'checkpoint': 2, 'status': 'RUNNING', 'scope': 'Owned-copy DesignView saved attributes / normal VBA class initialization / read-only typed data only; no Form runtime, native input, viewport, drawing, Dialog behavior or acceptance.', 'formalScore': None, 'issues': [], 'rules': [], 'skippedRuntimeRules': [], 'inventory': [], 'compiledSourceComparison': [], 'unexecuted': ['Runtime Form rendering/viewport/initial focus', 'Physical keyboard/IME/clipboard and all Dialog actions', 'F03 top-visible-row capture/restore', 'F05 Excel/full-text/print/response interruption', 'Final published product and user acceptance']}
+record = {'schemaVersion': 1, 'projectId': 'sample-project2', 'profileId': 'Access', 'runId': args.run_id, 'checkpoint': 2, 'status': 'RUNNING', 'scope': 'Owned-copy DesignView saved attributes / normal VBA class initialization / read-only typed data only; no Form runtime, native input, viewport, drawing, Dialog behavior or acceptance.', 'formalScore': None, 'issues': [], 'rules': [], 'skippedRuntimeRules': [], 'inventory': [], 'compiledSourceComparison': [], 'unexecuted': ['Runtime Form rendering/viewport/initial focus', 'Physical keyboard/IME/clipboard and all Dialog actions', 'F03 top-visible-row capture/restore', 'F05 Excel/full-text/print/response interruption', 'Final published product and user acceptance']}
 app = process_handle = project = probe = module = form = obj = None
 record['notMeasuredProperties'] = []
 pid = None

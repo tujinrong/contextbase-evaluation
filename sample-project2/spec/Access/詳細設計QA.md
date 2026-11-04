@@ -1,7 +1,7 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-DETAIL-QA","version":"1.6","path":"sample-project2/spec/Access/詳細設計QA.md","sheets":[{"heading":"適用と決定","kind":"GRID","sheet":"01_適用と決定"},{"heading":"採用と残件","kind":"LIST","sheet":"02_採用と残件","key":["QA-ID"]},{"heading":"工程状態","kind":"GRID","sheet":"03_工程状態"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"SP2-Access-DETAIL-QA","version":"1.8","path":"sample-project2/spec/Access/詳細設計QA.md","sheets":[{"heading":"適用と決定","kind":"GRID","sheet":"01_適用と決定"},{"heading":"採用と残件","kind":"LIST","sheet":"02_採用と残件","key":["QA-ID"]},{"heading":"工程状態","kind":"GRID","sheet":"03_工程状態"}]} -->
 # Access 詳細設計QA・技術採用
 
-版1.6／2026-10-30。stage=detail-design、generationMode=canonical-update。DQA-UI10の物理補助面を詳細採用する。
+版1.8／2026-11-04。stage=detail-design、generationMode=canonical-update。DQA-UI10の物理補助面を詳細採用する。
 
 ## 適用と決定
 
@@ -27,14 +27,17 @@
 | DQA-UI05 | QA-026、F01/F03/F04/F06 | 非連結TextBoxの不正rawを画面状態へ保ち、BeforeUpdate一律Cancelで閉じ込めず検索/反映/保存の中央検査で拒否。Password以外のInputMask/Formatは空 | 設計採用。受理上限/保存条件は不変。未完成番号/年月・過長値から取消/継続/保存拒否、Date/Integerへの失敗変換なし、busyのfocus所有Control例外と状態復帰を実キーで未検証 | [UI契約](共通/方式別/02_UI部品・状態・検査契約.md)、共通実装 |
 | DQA-UI06 | QA-026、共通09、F03 | clsSearchReturnStateでraw4条件/検索状態/applied有無/結果/選択/位置/focusを別保持。取消は検索0、保存成功はraw同条件を再検査再検索 | 既存Access契約の詳細化。未検索/条件変更後からの新規取消、空白/全半角/大小保持、保存後raw不正でも保存成功維持を実機で未検証。他方式へ自動展開しない | [F03](詳細仕様書/03_社員検索画面.md)、UI契約 |
 | DQA-UI07 | DQA-UI05、F03/F04/F06 | LimitToListを維持しNotInListでNewDataを別保持、acDataErrContinue＋当該Control.Undoでfocus拒否を解く。候補外rawの再表示はDQA-UI10の同一論理欄専用TextBoxへ移し、Combo.Text setterによる復元を廃止 | 設計採用。未知候補を追加/保存せず中央検査で拒否。UndoはControl表示だけの例外。Noの原文字可視/修正、Yes破棄、Esc、Timer復帰と認証期限非延長は新候補で再検証 | [UI契約](共通/方式別/02_UI部品・状態・検査契約.md)、Microsoft一次資料 |
-| DQA-UI08 | DQA-UI02/03、独立build checkpoint2 | Accessは非表示Control下端もSection保存最小高に含み、標準TabにPage帯の最小高がある。F03全文欄を初期330twip/非表示・選択時1980/Detail9450へ展開。F04はTab900/Header2400を余白付きで再設計し、Detail7920キャンバスを維持する | 現候補5a45b637…e584の独立DesignViewでDetail9090、Tab780/Header2145を確認したことが改訂契機。最小実測値への追従ではなく固定領域の必要余白/スクロールを設計。新候補の属性・通常復帰/下端・全文キー/コピー・固定Footer到達は再検証。基本8HTML/11pt/入力幅/保存/DBは不変 | [物理UI契約](共通/方式別/02_UI部品・状態・検査契約.md)1.1、F03/F04 |
+| DQA-UI08 | DQA-UI02/03、独立build checkpoint2 | Accessは非表示Control下端もSection保存最小高に含み、標準TabにPage帯の最小高がある。F03全文欄を初期330twip/非表示・選択時1980/Detail9450へ展開。F04はTab900/Header2400を余白付きで再設計し、Detail7920キャンバスを維持する | 現候補5a45b637…e584の独立DesignViewでDetail9090、Tab780/Header2145を確認したことが改訂契機。最小実測値への追従ではなく固定領域の必要余白/スクロールを設計。新候補の属性・通常復帰/下端・全文キー/コピー・固定Footer到達は再検証。基本8HTML/11pt/入力幅/保存/DBは不変 | [物理UI契約](共通/方式別/02_UI部品・状態・検査契約.md)1.3、F03/F04 |
 | DQA-UI09 | DQA-UI04、F05、Excel限定API/PDF小試験 | Excel CenterFooterの小数サイズコード&10.5はreadbackに残っても印字が約10ptかつ先頭に.5を出すため、Footerだけメイリオ整数11ptを採用。本文セル10.5/見出し11/表題18を維持し、氏名最大40字の1行＋他情報1行、数字先頭名のコード区切りを検査する | 現Office限定の小試験を作者とrootが独立PDF確認。&11は約11.04ptで余計な字なし。証拠はsourceRoot/build/test-results/independent-print-format.json（productPass=false）。製品帳票/実プレビュー/実印刷のPASSではなく、新候補の全文/継続/横1頁/非重なりを再検証 | [F05紙面契約](詳細仕様書/05_経歴書出力.md)1.2 |
 | DQA-UI10 | DQA-UI05/06/07、F03/F04/F06、native f002診断 | Combo.Textによる候補外復元の2101を避け、6論理Comboごとに標準unbound TextBox＋標準付属Labelを固定対応で追加（12Control）。元L/T/H・W−360twip、Labelは元同Caption/矩形、全件11pt、初期hidden。F03部署/在籍、F04基本部署/在籍・経歴役割、F06分類。各Form1組計3組の共有案は複数Pendingを同時表示できないため撤回 | 詳細設計採用。既存の論理項目/8HTML/92項目/17イベント・LimitTrue/Bound1/正常候補・AcceptedCodes/F06 AcceptedCategory・保存/DB不変。Raw/Pendingだけ編集し全件表示、正常候補の明示選択だけ当該Pendingを解消。MSG016検索/反映/保存0、Noは原文/焦点、Yesは承認範囲だけ。自然Tab/逆Tab・AltDown/F4・Esc・Page/Busy・同時Pending・可視編集/末尾空白を独立期待値→新候補nativeで再検証。shadow保持だけを合格にしない | [物理UI契約1.2](共通/方式別/02_UI部品・状態・検査契約.md)、共通実装1.4、F03/F04詳細1.3/F06詳細1.2 |
-
-| DQA-UI11 | 2026-10-30利用者追加指示、全Form/Tab/Dialog | タイトルが小さい、文字サイズとTextBox高が合わない指摘を横展開する。AUI-05a～05bの役割階層と実行高/余白/境界の組合せを採用し、旧タイトル11ptを維持する指定は再設計対象とする | 利用者の変更指示確定。Agent規約へ反映済み。基本/詳細の全画面・モック・寸法・期待値と製品への全面反映は未実施、後続再設計で実施する。本文11ptの維持とタイトル11ptの維持を混同せず、既存候補を新規約適合としない | [Access品質規約](../../../docs/Access画面品質規約.md)、共通UI/物理UI契約の次回改訂 |
+| DQA-UI11 | 2026-10-30利用者追加指示、全Form/Tab/Dialog | タイトルが小さい、文字サイズとTextBox高が合わない指摘を横展開する。AUI-05a～05bの役割階層と実行高/余白/境界の組合せを採用し、旧タイトル11ptを維持する指定は再設計対象とする | 利用者の変更指示確定。Agent規約へ反映済み。当時は基本/詳細・製品へ未反映。2026-11-04のDQA-UI12で表示設計へ反映し、製品/実機の適合は新候補記録で判定する。本文11ptの維持とタイトル11ptの維持を混同せず、既存候補を新規約適合としない | [Access品質規約](../../../docs/Access画面品質規約.md)、共通UI/物理UI契約の次回改訂 |
 | DQA-ENC01 | 2026-10-30利用者追加指示、全VBA/固定文言/MSG | 日本語VBAテキストはCP932（Windows版Shift-JIS、BOMなし）。文書/JSON/PythonのUTF-8、Form native exportのUTF-16 BOM、VBA String/DBのUnicodeは維持。ホストACPに依存しないASCII/ChrW輸送、厳密往復、変換不能時停止を採用する | 利用者指示に基づく文字コード修正。現在ホストACP936で33モジュール意味一致・11文字列の実行/再取込み・5Form文言・4MSGを限定確認。対象版/範囲はsourceRoot/build/test-results/japanese-encoding.json。ACP932の別Windows環境・VBE自体の日本語UI・全画面操作の合格へ拡張しない | [開発規約](規約/開発規約.md)、[Access品質規約](../../../docs/Access画面品質規約.md) |
+| DQA-UI12 | 2026-11-04利用者修正依頼、全Form/既存同型ペア | 本文Yu Gothic UI11ptを保持し、単行TextBox/ComboBox/Pending高360twip・内余白上下15/左右30、画面タイトル18pt太字/高540、通常Top240/loginTop1440を採用。認証2欄は幅4800、分類横Labelと作用範囲別ボタンを整列する | 利用者の変更指示を基本/詳細の共通トークン・同一モック・物理矩形・独立期待値へ採用。測定字高300twip＋上下30＋境界余裕30、18ptタイトル字高480＋余裕60を根拠とし、実Formの文字/caret/矢印・エラー/無効/再表示・採用倍率で新候補を検査する。入力上限/業務ID/認証/保存/DBは不変 | [共通UI](共通/03_共通UI・入力設計.md)、[物理UI契約](共通/方式別/02_UI部品・状態・検査契約.md)、各基本/詳細 |
+| DQA-UI13 | 同利用者修正依頼、表示時点滅/全Form通常遷移 | 所有tokenによる短い描画scope、入れ子/例外/早期returnの最終解放、同値属性再代入を避けるidempotentなResize/状態表示を採用する | 設計採用。正常/例外終了で深さ0・Echo所有なし、Dialog/Timer/長時間待機へ停止を持ち越さず、focus/raw/Pending/対象/viewportを保持する。busy前後のDetail位置は可視Header高−CurrentSectionTopで捕捉し、Header/Footer焦点ではDetail位置を推測せずGoToPage復帰を省略する。状態トレースと通常遷移の連続画面を別に確認し、静止画やフラグだけで点滅改善を合格としない | [共通実装](共通/方式別/01_共通実装仕様.md)、[物理UI契約](共通/方式別/02_UI部品・状態・検査契約.md)、開発規約 |
 
 ## 工程状態
+
+2026-11-04の利用者修正依頼はDQA-UI12/13へ採用し、本文11pt・コンパクトな単行入力/認証整列・役割別タイトル・描画scope/例外復旧を今回の基本/詳細UI条件へ反映する。画面の実表示・点滅・キー/IME・他倍率と正式受入は新候補のbuild記録で判定する。旧版のUI未完/文字コード限定PASSを今回の製品合格へ転用しない。
 
 初版で作成した詳細/物理設計/QAを継承し、今回はrunId=sp2-ui-regenerate-20261029のui_behavior差分だけを更新する。基本の採用値/54条件を全6機能詳細・方式別共通・開発規約・本QA/入口へ同期する。要件/基本/元QA・認証/業務/seedを変更せず、物理DBは5表48列/キー/型の設計整合点検のみ。SQL/VBAのシグネチャや処理説明を記してもソース/DDL/ACCDB/実Excelを生成・実行した意味ではない。
 

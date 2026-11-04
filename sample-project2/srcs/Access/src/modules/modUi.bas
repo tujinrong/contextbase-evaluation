@@ -13,8 +13,9 @@ Public Function UiIsInitialisingForm(ByVal f As Access.Form) As Boolean
     UiIsInitialisingForm = (initialisingFormName <> "" And initialisingFormName = f.Name)
 End Function
 Public Sub UiLoad(ByVal f As Access.Form)
-    Dim result As clsResult, rows As New Collection, initialized As Boolean, priorInitialisingForm As String, ui As clsFormUiState
+    Dim result As clsResult, rows As New Collection, initialized As Boolean, priorInitialisingForm As String, ui As clsFormUiState, paint As Long
     On Error GoTo Failed
+    paint = UiBeginPaint()
     Set ui = UiState(f): ui.IsInitializing = True
     priorInitialisingForm = initialisingFormName: initialisingFormName = f.Name
     gUiLoading = True: EnsureSession
@@ -29,7 +30,7 @@ Public Sub UiLoad(ByVal f As Access.Form)
         initialized = True: GoTo Done
     End If
     Set result = UiAuthorize(f, IIf(f.Name = "frmCodeMaster", "ADMIN", "STAFF"))
-    If result.Kind <> "OK" Then ShowResult f, result: GoTo Done
+    If result.Kind <> "OK" Then UiEndPaint paint: ShowResult f, result: GoTo Done
     Select Case f.Name
     Case "frmMenu"
         f!lblActor.Caption = gSession.DisplayName & " ／ " & gSession.RoleId
@@ -55,11 +56,15 @@ Done:
         UiCaptureText f
         If f.Name = "frmEmployeeEditor" Or f.Name = "frmCodeMaster" Then UiUpdateIdentity f
     End If
-    Exit Sub
+    UiEndPaint paint: Exit Sub
 Failed:
     initialisingFormName = priorInitialisingForm
     If Not ui Is Nothing Then ui.IsInitializing = False
-    gUiLoading = False: Set result = MakeResult("ReadFailure", "MSG-040"): ShowResult f, result
+    gUiLoading = False
+    On Error Resume Next
+    UiEndPaint paint
+    On Error GoTo 0
+    Set result = MakeResult("ReadFailure", "MSG-040"): ShowResult f, result
 End Sub
 Public Sub UiTimer(ByVal f As Access.Form)
     UiDeferredWork f
@@ -444,14 +449,14 @@ Public Sub UiClosed(ByVal f As Access.Form)
         Set gEditor = Nothing: Set gOriginal = Nothing: gDirty = False: gDraftDirty = False: gCareerIndex = 0
         If Not gAllowClose Then
             If Not gSession Is Nothing Then
-                If gSession.IsAuthenticated Then DoCmd.OpenForm "frmEmployeeSearch"
+                If gSession.IsAuthenticated Then UiOpenForm "frmEmployeeSearch"
             End If
         End If
     ElseIf f.Name = "frmCodeMaster" Then
         Set gCode = Nothing: gDirty = False
         If Not gAllowClose Then
             If Not gSession Is Nothing Then
-                If gSession.IsAuthenticated Then DoCmd.OpenForm "frmMenu"
+                If gSession.IsAuthenticated Then UiOpenForm "frmMenu"
             End If
         End If
     End If
@@ -461,8 +466,12 @@ Public Sub InvalidateSearch(ByVal f As Access.Form)
     Set gSearchRows = rows: gSelectedEmployee = Null
     gSearchWasExecuted = False: gSearchState = "Changed": gSearchResultState = "NoResult": gAppliedValid = False
     UiCollapseSelectedDetails f
-    SetRows f!lstEmployees, rows: f!lstEmployees = Null: f!lblCount.Caption = "未検索": f!lblSelection.Caption = "条件が変更されました。検索してください。"
-    f!cmdEdit.Enabled = False: f!cmdExport.Enabled = False
+    SetRows f!lstEmployees, rows
+    UiSetIfChanged f!lstEmployees, "Value", Null
+    UiSetIfChanged f!lblCount, "Caption", "未検索"
+    UiSetIfChanged f!lblSelection, "Caption", "条件が変更されました。検索してください。"
+    UiSetIfChanged f!cmdEdit, "Enabled", False
+    UiSetIfChanged f!cmdExport, "Enabled", False
 End Sub
 Private Function SelectedId(ByVal f As Access.Form) As Long
     If IsNull(f!lstEmployees) Or gSearchRows Is Nothing Then Reject "MSG-011"

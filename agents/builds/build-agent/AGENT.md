@@ -1,13 +1,15 @@
-<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BUILD","version":"7.14","path":"agents/builds/build-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"実行手順","kind":"GRID","sheet":"03_実行手順"},{"heading":"問題の分類と中断","kind":"GRID","sheet":"04_問題の分類と中断"},{"heading":"完了条件","kind":"GRID","sheet":"05_完了条件"}]} -->
+<!-- spec-meta: {"schema":"spec-md/1.0","documentId":"AG-BUILD","version":"7.15","path":"agents/builds/build-agent/AGENT.md","sheets":[{"heading":"概要","kind":"GRID","sheet":"01_概要"},{"heading":"入出力","kind":"LIST","sheet":"02_入出力","key":["区分"]},{"heading":"実行手順","kind":"GRID","sheet":"03_実行手順"},{"heading":"問題の分類と中断","kind":"GRID","sheet":"04_問題の分類と中断"},{"heading":"完了条件","kind":"GRID","sheet":"05_完了条件"}]} -->
 # 仕様からシステム生成Agent 契約
 
-版7.14／2026-10-30。固定build/・方式内.tmp/・Git履歴とAccess品質gateを維持し、WEB/WinForms/Textの配置familyと描画技術を、独立期待値・実製品の検査へ接続する。
+版7.15／2026-11-04。固定build/・方式内.tmp/・Git履歴とAccess品質gateを維持し、WEB/WinForms/Textの配置familyと描画技術を、独立期待値・実製品の検査へ接続する。
 
 ## 概要
 
 AG-BUILD。Codexが本契約を読み、選択projectの仕様から各方式のソースを生成する。対象projectIdと工程を明示した実行で使用する。[実行指示](PROMPT.md)を入口とし、[事前検査スクリプト](scripts/preflight.mjs)で入力版・SHA-256・構造検査結果を保存する。スクリプトは文書検査であり、コード生成器や業務実装の合格判定ではない。
 
 UIP-03aの認証入力群・同型ペアを、[UIパターン生成チェック](docs/UIパターン生成チェック.md)に従って共通の幅/配置定義へ実装する。AccessはAUI-06aと専用チェックを併用し、入力上限とは別に、各状態の実部品と描画の整列を検査する。Agent改善だけの依頼では既存仕様・アプリを再生成しない。
+
+AUI-05dの過大でない単行入力高とAUI-18aの描画制御をAccess生成チェックへ接続する。実行基盤に存在しない自動サイズ機能を仮定せず、入れ子/例外/遷移後の復元と実画面での操作継続を検査する。
 
 ## 入出力
 
